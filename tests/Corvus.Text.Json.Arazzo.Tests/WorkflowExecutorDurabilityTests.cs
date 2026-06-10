@@ -266,6 +266,59 @@ public partial class WorkflowExecutorEndToEndTests
         }
         """;
 
+    private const string DurableReceiveHeaderDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./events.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "listenDurableHeader",
+              "steps": [
+                {
+                  "stepId": "receive",
+                  "channelPath": "measurements",
+                  "action": "receive",
+                  "outputs": { "trace": "$message.header.x-trace-id", "lumens": "$message.payload#/lumens" }
+                }
+              ],
+              "outputs": { "trace": "$steps.receive.outputs.trace" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public void Durable_receive_that_projects_a_message_header_declares_headers_on_the_delivered_path()
+    {
+        // A durable receive whose outputs read $message.header must still expose the headers local on the
+        // resume-with-delivered-message path (where the worker hands in only the payload).
+        var descriptor = new AsyncApiChannelDescriptor(
+            "measurements",
+            OperationAction.Receive,
+            "onMeasured",
+            ProducerClassName: null,
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("measured", "Corvus.Text.Json.JsonElement", null, null, null)]);
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        string source;
+        using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(DurableReceiveHeaderDocument)))
+        {
+            ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+            source = WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions("GeneratedWorkflows", "ListenDurableHeaderWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement", null, true));
+        }
+
+        source.ShouldContain("JsonElement messageHeaders = default;");
+        Assembly assembly = CompileInMemory(source);
+        assembly.GetType("GeneratedWorkflows.ListenDurableHeaderWorkflow").ShouldNotBeNull();
+    }
+
     [TestMethod]
     public async Task Durable_executor_suspends_on_a_receive_then_resumes_with_the_delivered_message()
     {

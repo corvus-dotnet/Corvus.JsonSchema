@@ -147,6 +147,44 @@ public partial class WorkflowExecutorEndToEndTests
         return (after - before) / measured;
     }
 
+    [TestMethod]
+    public async Task Durable_executor_does_not_retain_memory_across_runs()
+    {
+        // Each durable run serialises a checkpoint (pooled writer + ArrayBufferWriter) and writes it to the
+        // store; the run is dropped and the store is reset each iteration, so a leak — an unreturned pooled
+        // buffer, or a store that accumulates checkpoints — would retain memory proportional to the run count.
+        string source = EmitGetPetExecutor(Document, "AdoptDurableLeakWorkflow", durable: true);
+        Assembly assembly = CompileInMemory(source);
+        var execute = assembly.GetType("GeneratedWorkflows.AdoptDurableLeakWorkflow")!.GetMethod("ExecuteAsync")!
+            .CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, IWorkflowRun?, CancellationToken, ValueTask<WorkflowRunResult<JsonElement>>>>();
+
+        var transport = new FixedResponseTransport(200, """{"name":"Fido"}""");
+        var store = new Durability.InMemoryWorkflowStateStore();
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+        JsonElement inputs = inputsDocument.RootElement;
+
+        async Task RunBatchAsync(int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                workspace.Reset();
+                await store.DeleteAsync("leak", default).ConfigureAwait(false);
+                using var run = Durability.WorkflowRun.CreateNew(store, "leak", "adopt", inputs);
+                _ = await execute(transport, workspace, inputs, run, default).ConfigureAwait(false);
+            }
+        }
+
+        await RunBatchAsync(2_000).ConfigureAwait(false);
+        long before = StableManagedMemory();
+        await RunBatchAsync(50_000).ConfigureAwait(false);
+        long growth = StableManagedMemory() - before;
+
+        growth.ShouldBeLessThan(
+            1024 * 1024,
+            $"retained {growth} bytes across 50k durable runs (~{growth / 50_000.0:0.0} B/run) — expected a flat footprint");
+    }
+
     private static async Task AssertNoRetainedGrowthAsync(string source, string typeName, string inputsJson, string responseJson)
     {
         Assembly assembly = CompileInMemory(source);

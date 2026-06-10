@@ -33,6 +33,8 @@ executor.Setup();
 Console.WriteLine();
 Console.WriteLine("Generated executor end-to-end allocation (bytes/op):");
 Measure("RunWorkflow", executor.RunWorkflow);
+Measure("DurableNullRun", executor.RunDurableWorkflowNullRun);
+Measure("Durable", executor.RunDurableWorkflow);
 Measure("StatusOnly", executor.RunStatusOnlyWorkflow);
 Measure("Interpolation", executor.RunInterpolationWorkflow);
 Measure("SimpleCriteria", executor.RunSimpleCriteriaWorkflow);
