@@ -191,6 +191,21 @@ jobs:
       - name: Install dotnet-coverage
         run: dotnet tool install --global dotnet-coverage
 
+      # The "Restore build cache" step above is only a best-effort speed-up. This job
+      # runs after the whole `build` workflow (it `needs: build`), by which point the
+      # run-scoped `-compile` cache has often been LRU-evicted by the other ~2.3 GB
+      # per-run caches under GitHub's 10 GB per-repo limit, so the restore misses and
+      # the test assembly is absent. Build it explicitly here so the run does not depend
+      # on the cache surviving; on a cache hit this is an incremental no-op.
+      - name: Build integration test project
+        run: |
+          dotnet build tests/Corvus.Text.Json.AsyncApi.Transport.IntegrationTests/Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.csproj \
+            -f net10.0 \
+            -c Release
+        timeout-minutes: 15
+        env:
+          NUGET_PACKAGES: ${{ github.workspace }}/.nuget-packages
+
       - name: Run Integration Tests
         run: |
           dotnet-coverage collect \

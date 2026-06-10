@@ -33,6 +33,19 @@ public static class SchemaReferenceNormalization
     {
         if (!IsValid(schemaFile, out Uri? uri) || uri.IsFile)
         {
+            // If the reference is an absolute file:// URI (for example
+            // "file:///C:/schemas/foo.json" or "file:///home/me/schemas/foo.json"),
+            // convert it to its local filesystem path before treating it as one.
+            // Uri.LocalPath handles percent-decoding and the platform-specific path
+            // shape, whereas passing the raw URI string to Path.GetFullPath would treat
+            // the scheme as part of a relative path and produce a bogus result.
+            // uri is null only when IsValid short-circuited (a relative reference), and
+            // IsFile must not be read on a relative Uri, so guard on IsAbsoluteUri.
+            if (uri is { IsAbsoluteUri: true, IsFile: true })
+            {
+                schemaFile = uri.LocalPath;
+            }
+
             if (IsPartiallyQualified(schemaFile.AsSpan()))
             {
                 if (!string.IsNullOrEmpty(basePath))
