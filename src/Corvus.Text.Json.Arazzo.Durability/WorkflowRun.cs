@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics;
 using Corvus.Text.Json;
 
 namespace Corvus.Text.Json.Arazzo.Durability;
@@ -234,6 +235,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         var w = WorkflowWait.Timer(this.timeProvider.GetUtcNow() + delay);
         this.wait = w;
         await this.PersistAsync(default, cancellationToken).ConfigureAwait(false);
+        ArazzoTelemetry.WorkflowsSuspended.Add(1, new KeyValuePair<string, object?>(ArazzoTelemetry.WorkflowIdTag, this.WorkflowId));
         return w;
     }
 
@@ -247,6 +249,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         var w = WorkflowWait.Message(channel, correlationId);
         this.wait = w;
         await this.PersistAsync(default, cancellationToken).ConfigureAwait(false);
+        ArazzoTelemetry.WorkflowsSuspended.Add(1, new KeyValuePair<string, object?>(ArazzoTelemetry.WorkflowIdTag, this.WorkflowId));
         return w;
     }
 
@@ -295,6 +298,15 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
 
     private async ValueTask PersistAsync(JsonElement outputs, CancellationToken cancellationToken)
     {
+        using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity("workflow.checkpoint");
+        if (activity is { IsAllDataRequested: true })
+        {
+            activity.SetTag(ArazzoTelemetry.RunIdTag, this.Id.Value);
+            activity.SetTag(ArazzoTelemetry.WorkflowIdTag, this.WorkflowId);
+            activity.SetTag(ArazzoTelemetry.StatusTag, this.Status.ToString());
+            activity.SetTag("corvus.arazzo.cursor", this.Cursor);
+        }
+
         byte[] checkpoint = WorkflowCheckpointSerializer.Serialize(
             this.Id,
             this.WorkflowId,
@@ -319,6 +331,11 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             AwaitingCorrelationId: this.wait is { Kind: WorkflowWaitKind.Message } messageCorrelation ? messageCorrelation.CorrelationId : null,
             ErrorType: this.fault?.Error);
 
+        long startedAt = Stopwatch.GetTimestamp();
         this.etag = await this.store.SaveAsync(this.Id, checkpoint, index, this.etag, cancellationToken).ConfigureAwait(false);
+        ArazzoTelemetry.CheckpointDuration.Record(
+            Stopwatch.GetElapsedTime(startedAt).TotalSeconds,
+            new KeyValuePair<string, object?>(ArazzoTelemetry.WorkflowIdTag, this.WorkflowId),
+            new KeyValuePair<string, object?>(ArazzoTelemetry.StatusTag, this.Status.ToString()));
     }
 }

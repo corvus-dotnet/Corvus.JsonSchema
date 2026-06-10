@@ -2,7 +2,10 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
+using System.Diagnostics;
 using Corvus.Text.Json;
+using Corvus.Text.Json.Patch;
 
 namespace Corvus.Text.Json.Arazzo.Durability;
 
@@ -66,34 +69,59 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
     /// <inheritdoc/>
     public async ValueTask<bool> ResumeAsync(WorkflowRunId id, ResumeOptions options, CancellationToken cancellationToken)
     {
-        if (options.Mode != ResumeMode.RetryFaultedStep)
-        {
-            throw new NotSupportedException($"Resume mode '{options.Mode}' is not yet supported.");
-        }
-
         if (this.resumer is null)
         {
             throw new InvalidOperationException("This management client was created without a resumer; ResumeAsync requires one.");
+        }
+
+        using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity("workflow.resume");
+        if (activity is { IsAllDataRequested: true })
+        {
+            activity.SetTag(ArazzoTelemetry.RunIdTag, id.Value);
+            activity.SetTag(ArazzoTelemetry.ActorTag, this.owner);
+            activity.SetTag(ArazzoTelemetry.ResumeModeTag, options.Mode.ToString());
         }
 
         WorkflowLease? lease = await this.store.AcquireLeaseAsync(id, this.owner, this.leaseTtl, cancellationToken).ConfigureAwait(false);
         if (lease is null)
         {
             // Another owner (operator or worker) is acting on this run.
+            activity?.SetTag(ArazzoTelemetry.OutcomeTag, "leased-by-other");
             return false;
         }
 
         try
         {
+            // For every mode but a plain retry, mutate the checkpoint (cursor/state) under optimistic concurrency
+            // before re-entering: rewind the cursor, skip past the faulted step, or apply a state patch. The run
+            // stays Faulted, so the re-entered executor still clears the fault on its first checkpoint.
+            if (options.Mode != ResumeMode.RetryFaultedStep &&
+                !await this.TryApplyResumeMutationAsync(id, options, activity, cancellationToken).ConfigureAwait(false))
+            {
+                return false;
+            }
+
             using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.store, id, this.timeProvider, cancellationToken).ConfigureAwait(false);
             if (run is null || run.Status != WorkflowRunStatus.Faulted)
             {
                 // Only a faulted run is retriable; it may have been resumed, cancelled, or deleted meanwhile.
+                activity?.SetTag(ArazzoTelemetry.OutcomeTag, "not-faulted");
                 return false;
             }
 
-            // Re-enter the executor at the faulted step; its first checkpoint clears the fault and sets Running.
+            // Re-enter the executor at the (possibly mutated) cursor; its first checkpoint clears the fault and sets Running.
             await this.resumer(run, cancellationToken).ConfigureAwait(false);
+
+            if (activity is { IsAllDataRequested: true })
+            {
+                activity.SetTag(ArazzoTelemetry.WorkflowIdTag, run.WorkflowId);
+                activity.SetTag(ArazzoTelemetry.OutcomeTag, "resumed");
+            }
+
+            ArazzoTelemetry.WorkflowsResumed.Add(
+                1,
+                new KeyValuePair<string, object?>(ArazzoTelemetry.WorkflowIdTag, run.WorkflowId),
+                new KeyValuePair<string, object?>(ArazzoTelemetry.ResumeModeTag, options.Mode.ToString()));
             return true;
         }
         finally
@@ -107,9 +135,18 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
     {
         ArgumentNullException.ThrowIfNull(reason);
 
+        using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity("workflow.cancel");
+        if (activity is { IsAllDataRequested: true })
+        {
+            activity.SetTag(ArazzoTelemetry.RunIdTag, id.Value);
+            activity.SetTag(ArazzoTelemetry.ActorTag, this.owner);
+            activity.SetTag("corvus.arazzo.cancel_reason", reason);
+        }
+
         WorkflowLease? lease = await this.store.AcquireLeaseAsync(id, this.owner, this.leaseTtl, cancellationToken).ConfigureAwait(false);
         if (lease is null)
         {
+            activity?.SetTag(ArazzoTelemetry.OutcomeTag, "leased-by-other");
             return false;
         }
 
@@ -118,18 +155,23 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
             WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(id, cancellationToken).ConfigureAwait(false);
             if (checkpoint is not { } cp)
             {
+                activity?.SetTag(ArazzoTelemetry.OutcomeTag, "missing");
                 return false;
             }
 
             byte[] updated;
             WorkflowRunIndexEntry indexEntry;
+            string workflowId;
             using (WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(cp.Utf8))
             {
                 if (state.Status is WorkflowRunStatus.Completed or WorkflowRunStatus.Cancelled)
                 {
                     // Terminal already; nothing to cancel.
+                    activity?.SetTag(ArazzoTelemetry.OutcomeTag, "already-terminal");
                     return false;
                 }
+
+                workflowId = state.WorkflowId;
 
                 // Mark cancelled, clear any wait, but keep the fault record (if any) for post-mortem visibility.
                 updated = WorkflowCheckpointSerializer.Serialize(
@@ -155,11 +197,20 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
             }
 
             await this.store.SaveAsync(id, updated, indexEntry, cp.Etag, cancellationToken).ConfigureAwait(false);
+
+            if (activity is { IsAllDataRequested: true })
+            {
+                activity.SetTag(ArazzoTelemetry.WorkflowIdTag, workflowId);
+                activity.SetTag(ArazzoTelemetry.OutcomeTag, "cancelled");
+            }
+
+            ArazzoTelemetry.WorkflowsCancelled.Add(1, new KeyValuePair<string, object?>(ArazzoTelemetry.WorkflowIdTag, workflowId));
             return true;
         }
         catch (WorkflowConflictException)
         {
             // A worker or another operator wrote concurrently; the caller can retry.
+            activity?.SetTag(ArazzoTelemetry.OutcomeTag, "conflict");
             return false;
         }
         finally
@@ -173,6 +224,13 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
     {
         IWorkflowWaitIndex waitIndex = this.RequireIndex();
 
+        using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity("workflow.purge");
+        if (activity is { IsAllDataRequested: true })
+        {
+            activity.SetTag(ArazzoTelemetry.ActorTag, this.owner);
+            activity.SetTag("corvus.arazzo.older_than", query.OlderThan.ToString("O"));
+        }
+
         int purged = 0;
         foreach (WorkflowRunStatus status in new[] { WorkflowRunStatus.Completed, WorkflowRunStatus.Cancelled })
         {
@@ -185,6 +243,8 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
                 {
                     if (purged >= query.Limit)
                     {
+                        activity?.SetTag("corvus.arazzo.purged_count", purged);
+                        ArazzoTelemetry.WorkflowsPurged.Add(purged);
                         return purged;
                     }
 
@@ -202,7 +262,236 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
             while (token is not null);
         }
 
+        activity?.SetTag("corvus.arazzo.purged_count", purged);
+        if (purged > 0)
+        {
+            ArazzoTelemetry.WorkflowsPurged.Add(purged);
+        }
+
         return purged;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<bool> DeleteAsync(WorkflowRunId id, CancellationToken cancellationToken)
+    {
+        using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity("workflow.delete");
+        if (activity is { IsAllDataRequested: true })
+        {
+            activity.SetTag(ArazzoTelemetry.RunIdTag, id.Value);
+            activity.SetTag(ArazzoTelemetry.ActorTag, this.owner);
+        }
+
+        // Take the lease so we don't delete a run a worker or operator is mid-operation on.
+        WorkflowLease? lease = await this.store.AcquireLeaseAsync(id, this.owner, this.leaseTtl, cancellationToken).ConfigureAwait(false);
+        if (lease is null)
+        {
+            activity?.SetTag(ArazzoTelemetry.OutcomeTag, "leased-by-other");
+            return false;
+        }
+
+        try
+        {
+            WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(id, cancellationToken).ConfigureAwait(false);
+            if (checkpoint is null)
+            {
+                activity?.SetTag(ArazzoTelemetry.OutcomeTag, "missing");
+                return false;
+            }
+
+            await this.store.DeleteAsync(id, cancellationToken).ConfigureAwait(false);
+            activity?.SetTag(ArazzoTelemetry.OutcomeTag, "deleted");
+            ArazzoTelemetry.WorkflowsDeleted.Add(1);
+            return true;
+        }
+        finally
+        {
+            await this.store.ReleaseLeaseAsync(lease.Value, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// Applies a resume mode's mutation (rewind / skip / state-patch) to a faulted run's checkpoint under
+    /// optimistic concurrency, leaving it Faulted at the new cursor/state ready for the executor to re-enter.
+    /// </summary>
+    private async ValueTask<bool> TryApplyResumeMutationAsync(WorkflowRunId id, ResumeOptions options, Activity? activity, CancellationToken cancellationToken)
+    {
+        WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(id, cancellationToken).ConfigureAwait(false);
+        if (checkpoint is not { } cp)
+        {
+            activity?.SetTag(ArazzoTelemetry.OutcomeTag, "missing");
+            return false;
+        }
+
+        byte[] mutated;
+        WorkflowRunIndexEntry indexEntry;
+
+        // The patched/composed context document must outlive the call to Serialize that reads its elements.
+        ParsedJsonDocument<JsonElement>? patchedContext = null;
+        try
+        {
+            using (WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(cp.Utf8))
+            {
+                if (state.Status != WorkflowRunStatus.Faulted)
+                {
+                    activity?.SetTag(ArazzoTelemetry.OutcomeTag, "not-faulted");
+                    return false;
+                }
+
+                int cursor = state.Cursor;
+                JsonElement inputs = state.Inputs;
+                Dictionary<string, JsonElement> stepOutputs = state.StepOutputs;
+
+                switch (options.Mode)
+                {
+                    case ResumeMode.Rewind:
+                        cursor = options.TargetCursor
+                            ?? throw new ArgumentException("Rewind requires a target cursor.", nameof(options));
+                        break;
+
+                    case ResumeMode.Skip:
+                        if (state.Fault is { } fault && options.SkipOutputs.ValueKind != JsonValueKind.Undefined)
+                        {
+                            stepOutputs[fault.StepId] = options.SkipOutputs;
+                        }
+
+                        cursor = options.TargetCursor ?? state.Cursor + 1;
+                        break;
+
+                    case ResumeMode.StatePatch:
+                        if (!TryApplyStatePatch(state.Inputs, state.StepOutputs, options.Patch, out patchedContext))
+                        {
+                            activity?.SetTag(ArazzoTelemetry.OutcomeTag, "patch-failed");
+                            return false;
+                        }
+
+                        JsonElement context = patchedContext!.RootElement;
+                        inputs = context.TryGetProperty("inputs"u8, out JsonElement patchedInputs) ? patchedInputs : default;
+                        stepOutputs = ReadStepOutputs(context);
+                        break;
+
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(options), options.Mode, "Unknown resume mode.");
+                }
+
+                mutated = WorkflowCheckpointSerializer.Serialize(
+                    state.RunId,
+                    state.WorkflowId,
+                    WorkflowRunStatus.Faulted,
+                    cursor,
+                    state.CreatedAt,
+                    state.RetryCounters,
+                    state.CorrelationTokens,
+                    inputs,
+                    stepOutputs,
+                    default,
+                    wait: null,
+                    fault: state.Fault);
+
+                indexEntry = new WorkflowRunIndexEntry(
+                    state.WorkflowId,
+                    WorkflowRunStatus.Faulted,
+                    state.CreatedAt,
+                    this.timeProvider.GetUtcNow(),
+                    ErrorType: state.Fault?.Error);
+            }
+        }
+        finally
+        {
+            patchedContext?.Dispose();
+        }
+
+        try
+        {
+            await this.store.SaveAsync(id, mutated, indexEntry, cp.Etag, cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch (WorkflowConflictException)
+        {
+            // A worker or another operator wrote concurrently; the caller can retry.
+            activity?.SetTag(ArazzoTelemetry.OutcomeTag, "conflict");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Applies an RFC 6902 JSON Patch to a run's context — the object <c>{ "inputs": …, "stepOutputs": { … } }</c> —
+    /// returning the patched document for the caller to read the new inputs/step outputs from.
+    /// </summary>
+    private static bool TryApplyStatePatch(
+        in JsonElement inputs,
+        Dictionary<string, JsonElement> stepOutputs,
+        in JsonElement patch,
+        out ParsedJsonDocument<JsonElement>? patched)
+    {
+        byte[] contextBytes = ComposeContext(inputs, stepOutputs);
+
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using ParsedJsonDocument<JsonElement> sourceDoc = ParsedJsonDocument<JsonElement>.Parse(contextBytes);
+        using JsonDocumentBuilder<JsonElement.Mutable> builder = sourceDoc.RootElement.CreateBuilder(workspace);
+        JsonElement.Mutable root = builder.RootElement;
+
+        JsonPatchDocument patchDocument = patch;
+        if (!root.TryValidateAndApplyPatch(in patchDocument))
+        {
+            patched = null;
+            return false;
+        }
+
+        var buffer = new ArrayBufferWriter<byte>();
+        using (var writer = new Utf8JsonWriter(buffer))
+        {
+            root.WriteTo(writer);
+        }
+
+        patched = ParsedJsonDocument<JsonElement>.Parse(buffer.WrittenMemory);
+        return true;
+    }
+
+    private static byte[] ComposeContext(in JsonElement inputs, Dictionary<string, JsonElement> stepOutputs)
+    {
+        var buffer = new ArrayBufferWriter<byte>();
+        using (var writer = new Utf8JsonWriter(buffer))
+        {
+            writer.WriteStartObject();
+
+            // Omit undefined values rather than writing null: "not present" is Undefined.
+            if (inputs.ValueKind != JsonValueKind.Undefined)
+            {
+                writer.WritePropertyName("inputs"u8);
+                inputs.WriteTo(writer);
+            }
+
+            writer.WriteStartObject("stepOutputs"u8);
+            foreach (KeyValuePair<string, JsonElement> step in stepOutputs)
+            {
+                if (step.Value.ValueKind == JsonValueKind.Undefined)
+                {
+                    continue;
+                }
+
+                writer.WritePropertyName(step.Key);
+                step.Value.WriteTo(writer);
+            }
+
+            writer.WriteEndObject();
+            writer.WriteEndObject();
+        }
+
+        return buffer.WrittenSpan.ToArray();
+    }
+
+    private static Dictionary<string, JsonElement> ReadStepOutputs(in JsonElement context)
+    {
+        Dictionary<string, JsonElement> stepOutputs = [];
+        if (context.TryGetProperty("stepOutputs"u8, out JsonElement stepOutputsElement))
+        {
+            foreach (JsonProperty<JsonElement> step in stepOutputsElement.EnumerateObject())
+            {
+                stepOutputs[step.Name] = step.Value;
+            }
+        }
+
+        return stepOutputs;
     }
 
     private IWorkflowWaitIndex RequireIndex()
