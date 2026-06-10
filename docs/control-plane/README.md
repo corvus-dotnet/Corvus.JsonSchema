@@ -16,7 +16,29 @@ operation onto the corresponding `IWorkflowManagementClient` method over a chose
 | `PURGE /runs` | `purgeRuns` | `PurgeAsync` | Reap completed/cancelled runs older than `olderThan`. |
 
 Successful `resume`/`cancel` return the run's new `WorkflowRunDetail`. Errors use `application/problem+json`
-(RFC 9457). The control plane is privileged, so the document requires a bearer token (`bearerAuth`).
+(RFC 9457).
+
+## Security model
+
+The control plane is privileged, and its operations fall into capability tiers, so authorization is **scoped**:
+
+| Scope | Grants | Operations |
+|-------|--------|------------|
+| `runs:read` | Visibility | `listRuns`, `getRun` |
+| `runs:write` | Remediation | `resumeRun`, `cancelRun` |
+| `runs:purge` | Destructive (permanent delete) | `purgeRuns` |
+
+Authentication is one of (any satisfies a request):
+
+- **OAuth2** (`oauth2`) — bearer access tokens; authorization-code (PKCE/device-code) for interactive operators,
+  client-credentials for services and the CLI. Scopes as above.
+- **OpenID Connect** (`openIdConnect`) — the same tokens/scopes via IdP discovery.
+- **Mutual TLS** (`mtls`) — client certificates for zero-trust callers. Mutual TLS carries no scopes, so the
+  host maps the certificate identity to a tier out of band.
+
+The authorization server / discovery / issuer is **deployment-chosen** (the URLs in the document are
+placeholders). Transport is **HTTPS** (the `http` server variant is for local development only). The
+authenticated principal is what the control plane records in a run's audit history for each action.
 
 ## OpenAPI 3.2 features used
 
