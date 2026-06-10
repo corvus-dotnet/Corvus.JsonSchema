@@ -1,0 +1,352 @@
+// <copyright file="NatsJetStreamWorkflowStateStore.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+using System.Buffers;
+using System.Buffers.Binary;
+using System.Globalization;
+using System.Text.Json;
+using NATS.Client.Core;
+using NATS.Client.JetStream;
+using NATS.Client.KeyValueStore;
+
+namespace Corvus.Text.Json.Arazzo.Durability.NatsJetStream;
+
+/// <summary>
+/// A NATS JetStream key/value-backed <see cref="IWorkflowStateStore"/> and <see cref="IWorkflowWaitIndex"/>.
+/// Each run's value is an envelope (the projected index header plus the opaque checkpoint); the KV entry's
+/// native revision is the optimistic-concurrency token, and the single-owner lease lives in a second bucket
+/// guarded by the same compare-and-set on revision.
+/// </summary>
+/// <remarks>
+/// Wait/visibility queries scan the bucket's keys and filter on the index header. Create instances with
+/// <see cref="CreateAsync"/>.
+/// </remarks>
+public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IAsyncDisposable
+{
+    private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
+    private const string RunsBucket = "arazzo_runs";
+    private const string LeasesBucket = "arazzo_leases";
+
+    private readonly NatsConnection? ownedConnection;
+    private readonly INatsKVStore runs;
+    private readonly INatsKVStore leases;
+    private readonly TimeProvider timeProvider;
+
+    private NatsJetStreamWorkflowStateStore(NatsConnection? ownedConnection, INatsKVStore runs, INatsKVStore leases, TimeProvider timeProvider)
+    {
+        this.ownedConnection = ownedConnection;
+        this.runs = runs;
+        this.leases = leases;
+        this.timeProvider = timeProvider;
+    }
+
+    /// <summary>Opens a store over the given NATS URL, creating its key/value buckets.</summary>
+    /// <param name="url">A NATS server URL (e.g. <c>nats://localhost:4222</c>).</param>
+    /// <param name="timeProvider">The time source for lease expiry; defaults to <see cref="TimeProvider.System"/>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The opened store (it owns and disposes the connection).</returns>
+    public static async ValueTask<NatsJetStreamWorkflowStateStore> CreateAsync(
+        string url,
+        TimeProvider? timeProvider = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(url);
+        var connection = new NatsConnection(NatsOpts.Default with { Url = url });
+        try
+        {
+            var kv = new NatsKVContext(new NatsJSContext(connection));
+            INatsKVStore runs = await kv.CreateStoreAsync(new NatsKVConfig(RunsBucket), cancellationToken).ConfigureAwait(false);
+            INatsKVStore leases = await kv.CreateStoreAsync(new NatsKVConfig(LeasesBucket), cancellationToken).ConfigureAwait(false);
+            return new NatsJetStreamWorkflowStateStore(connection, runs, leases, timeProvider ?? TimeProvider.System);
+        }
+        catch
+        {
+            await connection.DisposeAsync().ConfigureAwait(false);
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<WorkflowEtag> SaveAsync(
+        WorkflowRunId id,
+        ReadOnlyMemory<byte> checkpointUtf8,
+        in WorkflowRunIndexEntry index,
+        WorkflowEtag expected,
+        CancellationToken cancellationToken)
+        => this.SaveCoreAsync(id, Envelope.Encode(index, checkpointUtf8.Span), expected, cancellationToken);
+
+    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunId id, byte[] value, WorkflowEtag expected, CancellationToken cancellationToken)
+    {
+        try
+        {
+            ulong revision = expected.IsNone
+                ? await this.runs.CreateAsync(id.Value, value, cancellationToken: cancellationToken).ConfigureAwait(false)
+                : await this.runs.UpdateAsync(id.Value, value, ulong.Parse(expected.Value!, CultureInfo.InvariantCulture), cancellationToken: cancellationToken).ConfigureAwait(false);
+            return new WorkflowEtag(revision.ToString(CultureInfo.InvariantCulture));
+        }
+        catch (NatsKVException)
+        {
+            throw new WorkflowConflictException(id, expected);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunId id, CancellationToken cancellationToken)
+    {
+        NatsKVEntry<byte[]>? entry = await this.TryGetAsync(this.runs, id.Value, cancellationToken).ConfigureAwait(false);
+        if (entry is not { Value: { } value })
+        {
+            return null;
+        }
+
+        byte[] checkpoint = Envelope.DecodeCheckpoint(value);
+        return new WorkflowCheckpoint(checkpoint, new WorkflowEtag(entry.Value.Revision.ToString(CultureInfo.InvariantCulture)));
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunId id, string owner, TimeSpan ttl, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(owner);
+
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        DateTimeOffset expiresAt = now + ttl;
+        string token = Guid.NewGuid().ToString("N");
+        byte[] value = LeaseCodec.Encode(owner, token, expiresAt.ToUnixTimeMilliseconds());
+
+        NatsKVEntry<byte[]>? entry = await this.TryGetAsync(this.leases, id.Value, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (entry is not { Value: { } current })
+            {
+                await this.leases.CreateAsync(id.Value, value, cancellationToken: cancellationToken).ConfigureAwait(false);
+                return new WorkflowLease(id, owner, token, expiresAt);
+            }
+
+            (string currentOwner, _, long currentExpiresAt) = LeaseCodec.Decode(current);
+            if (currentExpiresAt > now.ToUnixTimeMilliseconds() && currentOwner != owner)
+            {
+                return null;
+            }
+
+            await this.leases.UpdateAsync(id.Value, value, entry.Value.Revision, cancellationToken: cancellationToken).ConfigureAwait(false);
+            return new WorkflowLease(id, owner, token, expiresAt);
+        }
+        catch (NatsKVException)
+        {
+            // Another worker created or advanced the lease concurrently.
+            return null;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken cancellationToken)
+    {
+        NatsKVEntry<byte[]>? entry = await this.TryGetAsync(this.leases, lease.RunId.Value, cancellationToken).ConfigureAwait(false);
+        if (entry is { Value: { } current } && LeaseCodec.Decode(current).Token == lease.Token)
+        {
+            await this.leases.DeleteAsync(lease.RunId.Value, cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask DeleteAsync(WorkflowRunId id, CancellationToken cancellationToken)
+    {
+        await this.PurgeAsync(this.runs, id.Value, cancellationToken).ConfigureAwait(false);
+        await this.PurgeAsync(this.leases, id.Value, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        long cutoff = before.ToUnixTimeMilliseconds();
+        await foreach ((WorkflowRunId runId, WorkflowRunIndexEntry index) in this.ScanAsync(cancellationToken).ConfigureAwait(false))
+        {
+            if (index.Status == WorkflowRunStatus.Suspended && index.DueAt is { } due && due.ToUnixTimeMilliseconds() <= cutoff)
+            {
+                yield return runId;
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(channel);
+        await foreach ((WorkflowRunId runId, WorkflowRunIndexEntry index) in this.ScanAsync(cancellationToken).ConfigureAwait(false))
+        {
+            if (index.Status == WorkflowRunStatus.Suspended
+                && index.AwaitingChannel == channel
+                && (correlationId is null || index.AwaitingCorrelationId is null || index.AwaitingCorrelationId == correlationId))
+            {
+                yield return runId;
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
+    {
+        var listings = new List<WorkflowRunListing>();
+        await foreach ((WorkflowRunId runId, WorkflowRunIndexEntry index) in this.ScanAsync(cancellationToken).ConfigureAwait(false))
+        {
+            if (listings.Count >= query.Limit)
+            {
+                break;
+            }
+
+            if ((query.Status is not { } status || index.Status == status)
+                && (query.WorkflowId is not { } workflowId || index.WorkflowId == workflowId))
+            {
+                listings.Add(new WorkflowRunListing(runId, index));
+            }
+        }
+
+        return new WorkflowRunPage(listings);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask DisposeAsync()
+    {
+        if (this.ownedConnection is not null)
+        {
+            await this.ownedConnection.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    private async IAsyncEnumerable<(WorkflowRunId Id, WorkflowRunIndexEntry Index)> ScanAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        await foreach (string key in this.runs.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            NatsKVEntry<byte[]>? entry = await this.TryGetAsync(this.runs, key, cancellationToken).ConfigureAwait(false);
+            if (entry is { Value: { } value })
+            {
+                yield return (new WorkflowRunId(key), Envelope.DecodeIndex(value));
+            }
+        }
+    }
+
+    private async ValueTask<NatsKVEntry<byte[]>?> TryGetAsync(INatsKVStore store, string key, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await store.GetEntryAsync<byte[]>(key, cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        catch (NatsKVKeyNotFoundException)
+        {
+            return null;
+        }
+        catch (NatsKVKeyDeletedException)
+        {
+            return null;
+        }
+    }
+
+    private async ValueTask PurgeAsync(INatsKVStore store, string key, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await store.PurgeAsync(key, cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        catch (NatsKVKeyNotFoundException)
+        {
+        }
+        catch (NatsKVKeyDeletedException)
+        {
+        }
+    }
+
+    private static class Envelope
+    {
+        public static byte[] Encode(in WorkflowRunIndexEntry index, ReadOnlySpan<byte> checkpoint)
+        {
+            var headerBuffer = new ArrayBufferWriter<byte>();
+            using (var writer = new Utf8JsonWriter(headerBuffer))
+            {
+                writer.WriteStartObject();
+                writer.WriteString("status", index.Status.ToString());
+                writer.WriteString("workflowId", index.WorkflowId);
+                writer.WriteNumber("createdAt", index.CreatedAt.ToUnixTimeMilliseconds());
+                writer.WriteNumber("updatedAt", index.UpdatedAt.ToUnixTimeMilliseconds());
+                if (index.DueAt is { } due)
+                {
+                    writer.WriteNumber("dueAt", due.ToUnixTimeMilliseconds());
+                }
+
+                if (index.AwaitingChannel is { } channel)
+                {
+                    writer.WriteString("awaitingChannel", channel);
+                }
+
+                if (index.AwaitingCorrelationId is { } correlationId)
+                {
+                    writer.WriteString("awaitingCorrelationId", correlationId);
+                }
+
+                if (index.ErrorType is { } errorType)
+                {
+                    writer.WriteString("errorType", errorType);
+                }
+
+                writer.WriteEndObject();
+            }
+
+            ReadOnlySpan<byte> header = headerBuffer.WrittenSpan;
+            var result = new byte[4 + header.Length + checkpoint.Length];
+            BinaryPrimitives.WriteInt32LittleEndian(result, header.Length);
+            header.CopyTo(result.AsSpan(4));
+            checkpoint.CopyTo(result.AsSpan(4 + header.Length));
+            return result;
+        }
+
+        public static byte[] DecodeCheckpoint(byte[] value)
+        {
+            int headerLength = BinaryPrimitives.ReadInt32LittleEndian(value);
+            return value.AsSpan(4 + headerLength).ToArray();
+        }
+
+        public static WorkflowRunIndexEntry DecodeIndex(byte[] value)
+        {
+            int headerLength = BinaryPrimitives.ReadInt32LittleEndian(value);
+            using var document = JsonDocument.Parse(value.AsMemory(4, headerLength));
+            System.Text.Json.JsonElement root = document.RootElement;
+            return new WorkflowRunIndexEntry(
+                root.GetProperty("workflowId").GetString()!,
+                Enum.Parse<WorkflowRunStatus>(root.GetProperty("status").GetString()!),
+                DateTimeOffset.FromUnixTimeMilliseconds(root.GetProperty("createdAt").GetInt64()),
+                DateTimeOffset.FromUnixTimeMilliseconds(root.GetProperty("updatedAt").GetInt64()),
+                root.TryGetProperty("dueAt", out System.Text.Json.JsonElement dueAt) ? DateTimeOffset.FromUnixTimeMilliseconds(dueAt.GetInt64()) : null,
+                root.TryGetProperty("awaitingChannel", out System.Text.Json.JsonElement channel) ? channel.GetString() : null,
+                root.TryGetProperty("awaitingCorrelationId", out System.Text.Json.JsonElement correlationId) ? correlationId.GetString() : null,
+                root.TryGetProperty("errorType", out System.Text.Json.JsonElement errorType) ? errorType.GetString() : null);
+        }
+    }
+
+    private static class LeaseCodec
+    {
+        public static byte[] Encode(string owner, string token, long expiresAt)
+        {
+            var buffer = new ArrayBufferWriter<byte>();
+            using (var writer = new Utf8JsonWriter(buffer))
+            {
+                writer.WriteStartObject();
+                writer.WriteString("owner", owner);
+                writer.WriteString("token", token);
+                writer.WriteNumber("expiresAt", expiresAt);
+                writer.WriteEndObject();
+            }
+
+            return buffer.WrittenSpan.ToArray();
+        }
+
+        public static (string Owner, string Token, long ExpiresAt) Decode(byte[] value)
+        {
+            using var document = JsonDocument.Parse(value);
+            System.Text.Json.JsonElement root = document.RootElement;
+            return (
+                root.GetProperty("owner").GetString()!,
+                root.GetProperty("token").GetString()!,
+                root.GetProperty("expiresAt").GetInt64());
+        }
+    }
+}
