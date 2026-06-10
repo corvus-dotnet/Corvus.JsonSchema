@@ -248,22 +248,26 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
     /// <inheritdoc/>
     public async ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
     {
+        // The KV bucket has no server-side ordering, so collect matches, sort by run id, and keyset-page here.
+        string? after = WorkflowContinuationToken.Decode(query.ContinuationToken);
         var listings = new List<WorkflowRunListing>();
         await foreach ((WorkflowRunId runId, WorkflowRunIndexEntry index) in this.ScanAsync(cancellationToken).ConfigureAwait(false))
         {
-            if (listings.Count >= query.Limit)
-            {
-                break;
-            }
-
             if ((query.Status is not { } status || index.Status == status)
-                && (query.WorkflowId is not { } workflowId || index.WorkflowId == workflowId))
+                && (query.WorkflowId is not { } workflowId || index.WorkflowId == workflowId)
+                && (after is null || string.CompareOrdinal(runId.Value, after) > 0))
             {
                 listings.Add(new WorkflowRunListing(runId, index));
             }
         }
 
-        return new WorkflowRunPage(listings);
+        listings.Sort(static (a, b) => string.CompareOrdinal(a.Id.Value, b.Id.Value));
+        if (listings.Count > query.Limit + 1)
+        {
+            listings = listings.GetRange(0, query.Limit + 1);
+        }
+
+        return WorkflowContinuationToken.Paginate(listings, query.Limit);
     }
 
     /// <inheritdoc/>

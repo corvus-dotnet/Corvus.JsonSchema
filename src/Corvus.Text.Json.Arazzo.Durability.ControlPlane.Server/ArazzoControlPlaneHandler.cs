@@ -34,8 +34,9 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         WorkflowRunStatus? status = parameters.Status.IsNotUndefined() ? Enum.Parse<WorkflowRunStatus>((string)parameters.Status) : null;
         string? workflowId = parameters.WorkflowId.IsNotUndefined() ? (string)parameters.WorkflowId : null;
         int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 100;
+        string? pageToken = parameters.PageToken.IsNotUndefined() ? (string)parameters.PageToken : null;
 
-        WorkflowRunPage page = await this.management.ListAsync(new WorkflowQuery(status, workflowId, limit), cancellationToken).ConfigureAwait(false);
+        WorkflowRunPage page = await this.management.ListAsync(new WorkflowQuery(status, workflowId, limit, pageToken), cancellationToken).ConfigureAwait(false);
         return ListRunsResult.Ok(BuildPage(page), workspace);
     }
 
@@ -125,14 +126,24 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
 
     private static Models.WorkflowRunPage.Source BuildPage(WorkflowRunPage page)
         => new((ref Models.WorkflowRunPage.Builder b) =>
-            b.Create(runs: new Models.WorkflowRunPage.WorkflowRunSummaryArray.Source(
-                (ref Models.WorkflowRunPage.WorkflowRunSummaryArray.Builder ab) =>
-                {
-                    foreach (WorkflowRunListing listing in page.Runs)
+        {
+            Models.WorkflowRunPage.NextPageTokenEntity.Source nextPageToken = default;
+            if (page.ContinuationToken is { } token)
+            {
+                nextPageToken = token;
+            }
+
+            b.Create(
+                runs: new Models.WorkflowRunPage.WorkflowRunSummaryArray.Source(
+                    (ref Models.WorkflowRunPage.WorkflowRunSummaryArray.Builder ab) =>
                     {
-                        ab.AddItem(BuildSummary(listing));
-                    }
-                })));
+                        foreach (WorkflowRunListing listing in page.Runs)
+                        {
+                            ab.AddItem(BuildSummary(listing));
+                        }
+                    }),
+                nextPageToken: nextPageToken);
+        });
 
     private static Models.WorkflowRunSummary.Source BuildSummary(WorkflowRunListing listing)
         => new((ref Models.WorkflowRunSummary.Builder b) =>

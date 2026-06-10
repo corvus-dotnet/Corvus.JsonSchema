@@ -55,6 +55,9 @@
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/WorkflowRunPage" }
               }
+            },
+            "links": {
+              "next": { "$ref": "#/components/links/NextPage" }
             }
           },
           "400": { "$ref": "#/components/responses/BadRequest" }
@@ -325,6 +328,16 @@
       }
     },
     "links": {
+      "NextPage": {
+        "operationId": "listRuns",
+        "description": "Fetch the next page of runs; absent in effect when nextPageToken is null (the last page).",
+        "parameters": {
+          "pageToken": "$response.body#/nextPageToken",
+          "status": "$request.query.status",
+          "workflowId": "$request.query.workflowId",
+          "limit": "$request.query.limit"
+        }
+      },
       "ResumeRun": {
         "operationId": "resumeRun",
         "description": "Resume this run from its last checkpoint (only applies if it is faulted).",
