@@ -133,7 +133,7 @@ public partial class WorkflowExecutorEndToEndTests
         // The send runs synchronously and registers token "abc-123"; the receive then subscribes to "replies".
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
 
         // A message carrying the wrong correlation token is ignored; the receive keeps waiting...
         await messageTransport.DeliverAsync<JsonElement>("replies", Encoding.UTF8.GetBytes("""{"correlationId":"WRONG","v":1}"""));
@@ -170,7 +170,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
 
         await messageTransport.DeliverAsync<JsonElement>("replies", Encoding.UTF8.GetBytes("""{"correlationId":"WRONG","v":1}"""));
         await messageTransport.DeliverAsync<JsonElement>("replies", Encoding.UTF8.GetBytes("""{"correlationId":"abc-123","v":42}"""));
@@ -214,7 +214,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
 
         WorkflowStepFailedException? caught = null;
         try

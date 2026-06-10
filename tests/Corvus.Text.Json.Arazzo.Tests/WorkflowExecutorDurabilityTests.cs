@@ -113,7 +113,7 @@ public partial class WorkflowExecutorEndToEndTests
             {
                 var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(
                     null,
-                    [transport, workspace, inputsDocument.RootElement, run, default(CancellationToken)])!;
+                    [transport, workspace, inputsDocument.RootElement, run, default(CancellationToken), null])!;
                 await pending;
             }
             catch (InvalidOperationException ex)
@@ -145,7 +145,7 @@ public partial class WorkflowExecutorEndToEndTests
 
             var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(
                 null,
-                [transport, workspace, resumed.Inputs, resumed, default(CancellationToken)])!;
+                [transport, workspace, resumed.Inputs, resumed, default(CancellationToken), null])!;
             WorkflowRunResult<JsonElement> result = await pending;
 
             result.IsCompleted.ShouldBeTrue();
@@ -185,7 +185,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(
             null,
-            [transport, workspace, inputsDocument.RootElement, run, default(CancellationToken)])!;
+            [transport, workspace, inputsDocument.RootElement, run, default(CancellationToken), null])!;
         WorkflowRunResult<JsonElement> result = await pending;
 
         result.IsFaulted.ShouldBeTrue();
@@ -220,7 +220,7 @@ public partial class WorkflowExecutorEndToEndTests
 
             var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(
                 null,
-                [transport, workspace, inputsDocument.RootElement, run, default(CancellationToken)])!;
+                [transport, workspace, inputsDocument.RootElement, run, default(CancellationToken), null])!;
             (await pending).IsFaulted.ShouldBeTrue();
         }
 
@@ -230,7 +230,7 @@ public partial class WorkflowExecutorEndToEndTests
             using var ws = JsonWorkspace.Create();
             var healthy = new MockApiTransport();
             healthy.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Alpha"}""");
-            var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(null, [healthy, ws, run.Inputs, run, ct])!;
+            var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(null, [healthy, ws, run.Inputs, run, ct, null])!;
             return (await pending).Kind;
         }
 
@@ -269,7 +269,7 @@ public partial class WorkflowExecutorEndToEndTests
 
             var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(
                 null,
-                [transport, workspace, inputsDocument.RootElement, run, default(CancellationToken)])!;
+                [transport, workspace, inputsDocument.RootElement, run, default(CancellationToken), null])!;
             WorkflowRunResult<JsonElement> result = await pending;
 
             result.IsSuspended.ShouldBeTrue();
@@ -289,7 +289,7 @@ public partial class WorkflowExecutorEndToEndTests
 
             var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(
                 null,
-                [transport, workspace, resumed.Inputs, resumed, default(CancellationToken)])!;
+                [transport, workspace, resumed.Inputs, resumed, default(CancellationToken), null])!;
             WorkflowRunResult<JsonElement> result = await pending;
 
             result.IsCompleted.ShouldBeTrue();
@@ -409,7 +409,7 @@ public partial class WorkflowExecutorEndToEndTests
         {
             var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(
                 null,
-                [apiTransport, messageTransport, workspace, inputsDocument.RootElement, run, default(CancellationToken)])!;
+                [apiTransport, messageTransport, workspace, inputsDocument.RootElement, run, default(CancellationToken), null])!;
             WorkflowRunResult<JsonElement> result = await pending;
 
             result.IsSuspended.ShouldBeTrue();
@@ -428,7 +428,7 @@ public partial class WorkflowExecutorEndToEndTests
 
             var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(
                 null,
-                [apiTransport, messageTransport, workspace, resumed.Inputs, resumed, default(CancellationToken)])!;
+                [apiTransport, messageTransport, workspace, resumed.Inputs, resumed, default(CancellationToken), null])!;
             WorkflowRunResult<JsonElement> result = await pending;
 
             result.IsCompleted.ShouldBeTrue();
@@ -458,7 +458,7 @@ public partial class WorkflowExecutorEndToEndTests
             var failing = new MockApiTransport();
             failing.SetResponse(OperationMethod.Get, "/pets/{petId}", 500, "{}");
             var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(
-                null, [failing, workspace, inputsDocument.RootElement, run, default(CancellationToken)])!;
+                null, [failing, workspace, inputsDocument.RootElement, run, default(CancellationToken), null])!;
             (await pending).IsSuspended.ShouldBeTrue();
         }
 
@@ -469,7 +469,7 @@ public partial class WorkflowExecutorEndToEndTests
         async ValueTask<WorkflowRunResultKind> Resume(WorkflowRun run, CancellationToken ct)
         {
             using var ws = JsonWorkspace.Create();
-            var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(null, [succeeding, ws, run.Inputs, run, ct])!;
+            var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(null, [succeeding, ws, run.Inputs, run, ct, null])!;
             return (await pending).Kind;
         }
 
@@ -523,14 +523,14 @@ public partial class WorkflowExecutorEndToEndTests
         using (var run = WorkflowRun.CreateNew(store, runId, "listenDurable", inputsDocument.RootElement))
         {
             var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(
-                null, [apiTransport, messageTransport, workspace, inputsDocument.RootElement, run, default(CancellationToken)])!;
+                null, [apiTransport, messageTransport, workspace, inputsDocument.RootElement, run, default(CancellationToken), null])!;
             (await pending).IsSuspended.ShouldBeTrue();
         }
 
         async ValueTask<WorkflowRunResultKind> Resume(WorkflowRun run, CancellationToken ct)
         {
             using var ws = JsonWorkspace.Create();
-            var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(null, [apiTransport, messageTransport, ws, run.Inputs, run, ct])!;
+            var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(null, [apiTransport, messageTransport, ws, run.Inputs, run, ct, null])!;
             return (await pending).Kind;
         }
 
@@ -565,7 +565,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(
             null,
-            [transport, workspace, inputsDocument.RootElement, null, default(CancellationToken)])!;
+            [transport, workspace, inputsDocument.RootElement, null, default(CancellationToken), null])!;
         WorkflowRunResult<JsonElement> result = await pending;
 
         result.IsCompleted.ShouldBeTrue();

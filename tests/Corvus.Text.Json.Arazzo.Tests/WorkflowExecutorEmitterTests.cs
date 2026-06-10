@@ -44,7 +44,7 @@ public class WorkflowExecutorEmitterTests
         string source = Emit();
 
         source.ShouldContain("public static partial class AdoptWorkflow");
-        source.ShouldContain("public static async ValueTask<Acme.Pets.AdoptOutputs> ExecuteAsync(IApiTransport transport, JsonWorkspace workspace, Acme.Pets.AdoptInputs inputs, CancellationToken cancellationToken = default)");
+        source.ShouldContain("public static async ValueTask<Acme.Pets.AdoptOutputs> ExecuteAsync(IApiTransport transport, JsonWorkspace workspace, Acme.Pets.AdoptInputs inputs, CancellationToken cancellationToken = default, TimeProvider? timeProvider = null)");
 
         // Every criterion and value in this workflow resolves statically, so no WorkflowExecutionContext
         // is created at all.

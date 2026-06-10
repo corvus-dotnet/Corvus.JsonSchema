@@ -68,7 +68,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
         JsonElement outputs = await pending;
 
         // The workflow output `name` flows: $response.body#/name → step output petName → workflow output name.
@@ -125,7 +125,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
         JsonElement outputs = await pending;
 
         // The request body ($inputs.pet) was resolved and passed to the client's body parameter.
@@ -191,7 +191,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
         _ = await pending;
 
         // The body sent to the client: the base pet with /name replaced ($inputs.newName) and /status added.
@@ -263,7 +263,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
         JsonElement outputs = await pending;
 
         // "pet-{$inputs.id}" interpolated to "pet-42" and bound to the path parameter.
@@ -291,7 +291,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
         JsonElement outputs = await pending;
 
         // The literal "42" was bound to the path parameter with no inputs involved.
@@ -387,7 +387,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
         _ = await pending;
 
         // The literal `true` body was bound from the shared singleton and flowed to the client.
@@ -446,7 +446,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
         JsonElement outputs = await pending;
 
         outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
@@ -474,7 +474,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
 
         // Await directly (as the other end-to-end tests do) so the continuation — and the pooled
         // workspace's dispose — stays on this thread.
@@ -535,7 +535,7 @@ public partial class WorkflowExecutorEndToEndTests
 
             var pending = (ValueTask<JsonElement>)execute.Invoke(
                 null,
-                [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+                [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
             JsonElement outputs = await pending;
             outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
             name.GetString().ShouldBe("Fido");
@@ -550,7 +550,7 @@ public partial class WorkflowExecutorEndToEndTests
 
             var pending = (ValueTask<JsonElement>)execute.Invoke(
                 null,
-                [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+                [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
 
             WorkflowStepFailedException? caught = null;
             try
@@ -691,7 +691,7 @@ public partial class WorkflowExecutorEndToEndTests
 
             var pending = (ValueTask<JsonElement>)execute.Invoke(
                 null,
-                [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+                [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
             JsonElement outputs = await pending;
             outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
             name.GetString().ShouldBe("Fido");
@@ -706,7 +706,7 @@ public partial class WorkflowExecutorEndToEndTests
 
             var pending = (ValueTask<JsonElement>)execute.Invoke(
                 null,
-                [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+                [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
 
             WorkflowStepFailedException? caught = null;
             try
@@ -768,7 +768,7 @@ public partial class WorkflowExecutorEndToEndTests
 
             var pending = (ValueTask<JsonElement>)execute.Invoke(
                 null,
-                [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+                [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
             JsonElement outputs = await pending;
             outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
             name.GetString().ShouldBe("Fido");
@@ -783,7 +783,7 @@ public partial class WorkflowExecutorEndToEndTests
 
             var pending = (ValueTask<JsonElement>)execute.Invoke(
                 null,
-                [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+                [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
 
             WorkflowStepFailedException? caught = null;
             try
@@ -845,7 +845,7 @@ public partial class WorkflowExecutorEndToEndTests
 
             var pending = (ValueTask<JsonElement>)execute.Invoke(
                 null,
-                [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+                [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
             JsonElement outputs = await pending;
             outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
             name.GetString().ShouldBe("Fido");
@@ -860,7 +860,7 @@ public partial class WorkflowExecutorEndToEndTests
 
             var pending = (ValueTask<JsonElement>)execute.Invoke(
                 null,
-                [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+                [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
 
             WorkflowStepFailedException? caught = null;
             try
@@ -920,7 +920,7 @@ public partial class WorkflowExecutorEndToEndTests
 
             var pending = (ValueTask<JsonElement>)execute.Invoke(
                 null,
-                [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+                [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
             JsonElement outputs = await pending;
             outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
             name.GetString().ShouldBe("Fido");
@@ -935,7 +935,7 @@ public partial class WorkflowExecutorEndToEndTests
 
             var pending = (ValueTask<JsonElement>)execute.Invoke(
                 null,
-                [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+                [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
 
             WorkflowStepFailedException? caught = null;
             try
@@ -1017,7 +1017,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [transport, workspace, inputsInstance, default(CancellationToken)])!;
+            [transport, workspace, inputsInstance, default(CancellationToken), null])!;
         JsonElement outputs = await pending;
 
         // The typed accessor inputs.PetId flowed into the path and the workflow output.
