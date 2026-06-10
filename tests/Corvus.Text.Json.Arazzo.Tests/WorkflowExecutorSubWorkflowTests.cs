@@ -335,6 +335,65 @@ public partial class WorkflowExecutorEndToEndTests
         name.GetString().ShouldBe("Fido");
     }
 
+    private const string WorkflowsInputsCriterionDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "parent",
+              "steps": [
+                {
+                  "stepId": "callChild",
+                  "workflowId": "child",
+                  "parameters": [ { "name": "petId", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$workflows.child.inputs.petId == '42'" } ],
+                  "onSuccess": [ { "name": "done", "type": "end" } ]
+                }
+              ],
+              "outputs": { "name": "$steps.callChild.outputs.petName" }
+            },
+            {
+              "workflowId": "child",
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "outputs": { "petName": "$response.body#/name" }
+                }
+              ],
+              "outputs": { "petName": "$steps.getPet.outputs.petName" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_parent_resolves_a_workflows_inputs_criterion_against_a_sub_workflow()
+    {
+        // The parent passes petId to the child; $workflows.child.inputs.petId must resolve to the passed
+        // value ("42"). The inputs qualifier was previously never wired into the generated executor (it
+        // resolved to undefined, failing the action-less step), so a clean completion proves it now
+        // resolves — navigated statically from the passed-inputs local.
+        Assembly assembly = await GenerateAndCompileWorkflows(WorkflowsInputsCriterionDocument);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.Workflows.ParentWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var transport = new MockApiTransport();
+        transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
+
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
+        JsonElement outputs = await pending;
+
+        outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
+        name.GetString().ShouldBe("Fido");
+    }
+
     private static async Task<Assembly> GenerateAndCompileWorkflows(string document)
     {
         OperationDescriptor[] operations =
