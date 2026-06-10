@@ -498,10 +498,14 @@ criteria half of this phase.
       reusable parameters/actions resolve same-document (correct, since components are within the
       description). All pinned with conformance tests (`WorkflowOperationBinderTests`,
       `ArazzoVirtualizedDocumentTests`).
-    - **Still open:** cross-**document** `workflowId` (`$sourceDescriptions.<name>.<workflowId>`
-      into a separate Arazzo description) — sub-workflows resolve same-document only; and
-      absolute-URI **identity** matching via a target document's `$self` (§5.5.2) — the base URI
-      honours `$self` but cross-document `$self`-identity resolution is not yet implemented.
+    - **Absolute-URI `$self` identity (§5.5.2) — implemented.** A registered document that declares a
+      top-level absolute `$self` resolves under that identity as well as its registration URI, so an
+      absolute `sourceDescriptions[].url` is matched by identity rather than by where the document was
+      registered (`ArazzoVirtualizedDocumentTests`).
+    - **Still open:** cross-**document** `workflowId` (`$sourceDescriptions.<name>.<workflowId>` into a
+      separate Arazzo description) — sub-workflows resolve same-document only; this needs recursive
+      generation of `arazzo`-type sources into a per-source namespace plus cross-namespace sub-workflow
+      target resolution.
 
 ## 8. Recommended next step
 
