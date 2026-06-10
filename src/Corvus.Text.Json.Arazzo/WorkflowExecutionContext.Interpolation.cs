@@ -27,6 +27,16 @@ public sealed partial class WorkflowExecutionContext
     private byte[]? method;
     private int? statusCode;
 
+    // Scratch buffers for building a $url criterion's relative URL. Thread-static and reused across runs
+    // (allocated once per thread, like the OpenAPI transport's URI writer) — the URL is built synchronously
+    // within a single step, so the buffer never overlaps, and the path allocates no per-step/per-run writer.
+    [ThreadStatic]
+    private static ArrayBufferWriter<byte>? t_urlBuffer;
+    [ThreadStatic]
+    private static ArrayBufferWriter<byte>? t_urlQueryBuffer;
+    [ThreadStatic]
+    private static bool t_urlHasQuery;
+
     /// <summary>
     /// Sets the request URL and HTTP method (resolved by <c>$url</c> and <c>$method</c>).
     /// </summary>
@@ -38,6 +48,53 @@ public sealed partial class WorkflowExecutionContext
         ArgumentNullException.ThrowIfNull(httpMethod);
         this.url = Encoding.UTF8.GetBytes(requestUrl);
         this.method = Encoding.UTF8.GetBytes(httpMethod);
+    }
+
+    /// <summary>
+    /// Begins building the request URL for a <c>$url</c> criterion: returns a reused, cleared buffer for
+    /// the generated executor to write the resolved path into (it owns the buffer, so the <c>$url</c> path
+    /// allocates no per-step writer). Pair with <see cref="EndRequestUrl"/>.
+    /// </summary>
+    /// <returns>A buffer to write the resolved path into.</returns>
+    public IBufferWriter<byte> BeginRequestUrl()
+    {
+        ArrayBufferWriter<byte> buffer = t_urlBuffer ??= new ArrayBufferWriter<byte>(128);
+        buffer.ResetWrittenCount();
+        t_urlHasQuery = false;
+        return buffer;
+    }
+
+    /// <summary>
+    /// Begins the query-string portion of the request URL being built: returns a reused, cleared buffer
+    /// for the generated executor to write the query string into (without the leading <c>?</c>).
+    /// <see cref="EndRequestUrl"/> appends it to the path when non-empty.
+    /// </summary>
+    /// <returns>A buffer to write the query string into.</returns>
+    public IBufferWriter<byte> BeginRequestUrlQuery()
+    {
+        ArrayBufferWriter<byte> buffer = t_urlQueryBuffer ??= new ArrayBufferWriter<byte>(64);
+        buffer.ResetWrittenCount();
+        t_urlHasQuery = true;
+        return buffer;
+    }
+
+    /// <summary>
+    /// Completes the request URL begun by <see cref="BeginRequestUrl"/> (appending the query begun by
+    /// <see cref="BeginRequestUrlQuery"/> when non-empty) and stores it together with the HTTP method, so
+    /// <c>$url</c> and <c>$method</c> resolve against them.
+    /// </summary>
+    /// <param name="httpMethod">The HTTP method as UTF-8.</param>
+    public void EndRequestUrl(ReadOnlySpan<byte> httpMethod)
+    {
+        ArrayBufferWriter<byte> buffer = t_urlBuffer!;
+        if (t_urlHasQuery && t_urlQueryBuffer is { WrittenCount: > 0 } query)
+        {
+            buffer.Write("?"u8);
+            buffer.Write(query.WrittenSpan);
+        }
+
+        this.url = buffer.WrittenSpan.ToArray();
+        this.method = httpMethod.ToArray();
     }
 
     /// <summary>
