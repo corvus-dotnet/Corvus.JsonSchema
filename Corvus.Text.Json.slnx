@@ -95,6 +95,7 @@
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Cosmos.Tests/Corvus.Text.Json.Arazzo.Durability.Cosmos.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.KeyVault.Tests/Corvus.Text.Json.Arazzo.Durability.KeyVault.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Kms.Tests/Corvus.Text.Json.Arazzo.Durability.Kms.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Analyzers.Tests/Corvus.Text.Json.Analyzers.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Migration.Analyzers.Tests/Corvus.Text.Json.Migration.Analyzers.Tests.csproj" />
     <Project Path="tests/Corvus.JsonSchemaTestSuite.CodeGenerator/Corvus.JsonSchemaTestSuite.CodeGenerator.csproj" Id="fc46ebe0-6bd7-4a8a-abae-6271aff53420" />
@@ -153,6 +154,7 @@
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Cosmos/Corvus.Text.Json.Arazzo.Durability.Cosmos.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.KeyVault/Corvus.Text.Json.Arazzo.Durability.KeyVault.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Kms/Corvus.Text.Json.Arazzo.Durability.Kms.csproj" />
+    <Project Path="src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.CodeGeneration/Corvus.Text.Json.Arazzo.CodeGeneration.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Testing/Corvus.Text.Json.Arazzo.Testing.csproj" />
   </Folder>
