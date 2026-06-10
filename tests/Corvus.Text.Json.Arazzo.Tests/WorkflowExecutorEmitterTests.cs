@@ -184,7 +184,179 @@ public class WorkflowExecutorEmitterTests
         source.ShouldContain("context.TryResolveValue(");
     }
 
-    private static string Emit(string document = Document, IReadOnlyDictionary<string, string>? inputAccessors = null)
+    [TestMethod]
+    public void Emits_url_resolution_for_query_and_static_path_operations()
+    {
+        // A $url criterion on an operation with both a path and a query parameter resolves path + query;
+        // and on an operation with neither, it writes the static path template. Exercises the
+        // RequestUrlEmitter query/separator/static-path branches at generation time.
+        const string document = """
+            {
+              "arazzo": "1.0.1",
+              "info": { "title": "t", "version": "1.0.0" },
+              "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+              "workflows": [
+                {
+                  "workflowId": "urlcov",
+                  "steps": [
+                    {
+                      "stepId": "search",
+                      "operationId": "searchPets",
+                      "parameters": [
+                        { "name": "petId", "in": "path", "value": "42" },
+                        { "name": "status", "in": "query", "value": "available" }
+                      ],
+                      "successCriteria": [ { "condition": "$url == '/pets/42?status=available'" } ]
+                    },
+                    {
+                      "stepId": "make",
+                      "operationId": "createThing",
+                      "successCriteria": [ { "condition": "$url == '/things'" } ]
+                    }
+                  ],
+                  "outputs": {}
+                }
+              ]
+            }
+            """;
+
+        OperationDescriptor[] operations =
+        [
+            new(
+                "/pets/{petId}", OperationMethod.Get, "searchPets", "SearchPets",
+                "Acme.Pets.SearchPetsRequest", "Acme.Pets.SearchPetsResponse",
+                [
+                    new RequestParameterInfo("petId", ParameterLocation.Path, "PetId", "Acme.Pets.JsonString", true, "petId"),
+                    new RequestParameterInfo("status", ParameterLocation.Query, "Status", "Acme.Pets.JsonString", false, "status"),
+                ],
+                false, [], "Acme.Pets.PetsClient", "SearchPetsAsync", null),
+            new(
+                "/things", OperationMethod.Post, "createThing", "CreateThing",
+                "Acme.Pets.CreateThingRequest", "Acme.Pets.CreateThingResponse",
+                [], false, [], "Acme.Pets.PetsClient", "CreateThingAsync", null),
+        ];
+
+        var binder = new WorkflowOperationBinder([new SourceDescriptionClient("petstore", OperationResolver.Create("petstore", operations))]);
+        using var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(document));
+
+        string source = string.Empty;
+        foreach (ArazzoDocument.WorkflowObject workflow in doc.RootElement.Workflows.EnumerateArray())
+        {
+            source = WorkflowExecutorEmitter.Emit(
+                workflow, binder,
+                new WorkflowExecutorOptions("Acme.Pets.Workflows", "UrlCovWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+            break;
+        }
+
+        // Path + query operation: builds the request, writes the resolved path and the query string.
+        source.ShouldContain("new Acme.Pets.SearchPetsRequest {");
+        source.ShouldContain(".WriteResolvedPath(");
+        source.ShouldContain(".WriteQueryString(");
+        source.ShouldContain("\"?\"u8");
+
+        // Static-path operation (no parameters): writes the path template, no request struct needed.
+        source.ShouldContain("Acme.Pets.CreateThingRequest.PathTemplateUtf8");
+        source.ShouldContain(".SetRequest(");
+    }
+
+    [TestMethod]
+    public void Emits_a_cross_document_sub_workflow_step_into_the_source_namespace()
+    {
+        const string document = """
+            {
+              "arazzo": "1.0.1",
+              "info": { "title": "t", "version": "1.0.0" },
+              "sourceDescriptions": [ { "name": "child", "url": "./c.arazzo.json", "type": "arazzo" } ],
+              "workflows": [
+                {
+                  "workflowId": "parent",
+                  "steps": [
+                    { "stepId": "run", "workflowId": "$sourceDescriptions.child.lookup", "parameters": [ { "name": "petId", "value": "$inputs.petId" } ] }
+                  ],
+                  "outputs": {}
+                }
+              ]
+            }
+            """;
+
+        string source = EmitSubWorkflow(document, new Dictionary<string, string>(StringComparer.Ordinal) { ["child"] = "Acme.Child.Workflows" });
+        source.ShouldContain("Acme.Child.Workflows.LookupWorkflow");
+    }
+
+    [TestMethod]
+    public void Cross_document_sub_workflow_with_an_unmapped_source_throws()
+    {
+        const string document = """
+            {
+              "arazzo": "1.0.1",
+              "info": { "title": "t", "version": "1.0.0" },
+              "sourceDescriptions": [ { "name": "child", "url": "./c.arazzo.json", "type": "arazzo" } ],
+              "workflows": [
+                {
+                  "workflowId": "parent",
+                  "steps": [
+                    { "stepId": "run", "workflowId": "$sourceDescriptions.child.lookup", "parameters": [ { "name": "petId", "value": "$inputs.petId" } ] }
+                  ],
+                  "outputs": {}
+                }
+              ]
+            }
+            """;
+
+        Should.Throw<InvalidOperationException>(() => EmitSubWorkflow(document, subWorkflowSourceNamespaces: null));
+    }
+
+    [TestMethod]
+    public void Emits_a_cross_document_goto_action_into_the_source_namespace()
+    {
+        const string document = """
+            {
+              "arazzo": "1.0.1",
+              "info": { "title": "t", "version": "1.0.0" },
+              "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" }, { "name": "child", "url": "./c.arazzo.json", "type": "arazzo" } ],
+              "workflows": [
+                {
+                  "workflowId": "adopt",
+                  "steps": [
+                    {
+                      "stepId": "getPet",
+                      "operationId": "getPet",
+                      "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                      "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                      "onSuccess": [ { "name": "toChild", "type": "goto", "workflowId": "$sourceDescriptions.child.recover" } ]
+                    }
+                  ],
+                  "outputs": {}
+                }
+              ]
+            }
+            """;
+
+        string source = Emit(document, subWorkflowSourceNamespaces: new Dictionary<string, string>(StringComparer.Ordinal) { ["child"] = "Acme.Child.Workflows" });
+        source.ShouldContain("Acme.Child.Workflows.RecoverWorkflow");
+    }
+
+    private static string EmitSubWorkflow(string document, IReadOnlyDictionary<string, string>? subWorkflowSourceNamespaces)
+    {
+        // A workflowId step needs no operation clients; the binder resolves it from the step alone.
+        var binder = new WorkflowOperationBinder([]);
+        using var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(document));
+        foreach (ArazzoDocument.WorkflowObject workflow in doc.RootElement.Workflows.EnumerateArray())
+        {
+            return WorkflowExecutorEmitter.Emit(
+                workflow, binder,
+                new WorkflowExecutorOptions(
+                    "Acme.Workflows", "ParentWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement",
+                    SubWorkflowSourceNamespaces: subWorkflowSourceNamespaces));
+        }
+
+        throw new InvalidOperationException("No workflow.");
+    }
+
+    private static string Emit(
+        string document = Document,
+        IReadOnlyDictionary<string, string>? inputAccessors = null,
+        IReadOnlyDictionary<string, string>? subWorkflowSourceNamespaces = null)
     {
         OperationDescriptor[] operations =
         [
@@ -211,7 +383,7 @@ public class WorkflowExecutorEmitterTests
             return WorkflowExecutorEmitter.Emit(
                 workflow,
                 binder,
-                new WorkflowExecutorOptions("Acme.Pets.Workflows", "AdoptWorkflow", "Acme.Pets.AdoptInputs", "Acme.Pets.AdoptOutputs", inputAccessors));
+                new WorkflowExecutorOptions("Acme.Pets.Workflows", "AdoptWorkflow", "Acme.Pets.AdoptInputs", "Acme.Pets.AdoptOutputs", inputAccessors, SubWorkflowSourceNamespaces: subWorkflowSourceNamespaces));
         }
 
         throw new InvalidOperationException("No workflow.");
