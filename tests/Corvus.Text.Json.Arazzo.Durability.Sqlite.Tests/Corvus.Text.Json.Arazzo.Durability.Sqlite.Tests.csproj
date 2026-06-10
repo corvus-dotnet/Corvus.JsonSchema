@@ -15,9 +15,7 @@
     <PackageReference Include="Shouldly" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
-    <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo\Corvus.Text.Json.Arazzo.csproj" />
-    <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability\Corvus.Text.Json.Arazzo.Durability.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability.Sqlite\Corvus.Text.Json.Arazzo.Durability.Sqlite.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Durability.Conformance\Corvus.Text.Json.Arazzo.Durability.Conformance.csproj" />
   </ItemGroup>
 </Project>
