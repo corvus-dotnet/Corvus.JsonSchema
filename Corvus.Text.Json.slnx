@@ -91,6 +91,7 @@
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Redis.Tests/Corvus.Text.Json.Arazzo.Durability.Redis.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Mongo.Tests/Corvus.Text.Json.Arazzo.Durability.Mongo.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.NatsJetStream.Tests/Corvus.Text.Json.Arazzo.Durability.NatsJetStream.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.AzureStorage.Tests/Corvus.Text.Json.Arazzo.Durability.AzureStorage.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Analyzers.Tests/Corvus.Text.Json.Analyzers.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Migration.Analyzers.Tests/Corvus.Text.Json.Migration.Analyzers.Tests.csproj" />
     <Project Path="tests/Corvus.JsonSchemaTestSuite.CodeGenerator/Corvus.JsonSchemaTestSuite.CodeGenerator.csproj" Id="fc46ebe0-6bd7-4a8a-abae-6271aff53420" />
@@ -145,6 +146,7 @@
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Redis/Corvus.Text.Json.Arazzo.Durability.Redis.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Mongo/Corvus.Text.Json.Arazzo.Durability.Mongo.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.NatsJetStream/Corvus.Text.Json.Arazzo.Durability.NatsJetStream.csproj" />
+    <Project Path="src/Corvus.Text.Json.Arazzo.Durability.AzureStorage/Corvus.Text.Json.Arazzo.Durability.AzureStorage.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.CodeGeneration/Corvus.Text.Json.Arazzo.CodeGeneration.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Testing/Corvus.Text.Json.Arazzo.Testing.csproj" />
   </Folder>
