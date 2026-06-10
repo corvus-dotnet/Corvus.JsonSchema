@@ -12,24 +12,11 @@ opaque checkpoint); the KV entry's **native revision is the optimistic-concurren
 single-owner lease is a second KV bucket guarded by the same compare-and-set on revision.
 
 ```csharp
-// Once, at deploy/migration time — with an account permitted to manage streams:
-await NatsJetStreamWorkflowStateStore.PrepareAsync("nats://admin:…@localhost:4222");
-
-// At runtime — with a least-privileged operational account (get/put/delete on the buckets); creates nothing:
-await using var store = await NatsJetStreamWorkflowStateStore.ConnectAsync("nats://app:…@localhost:4222");
+await using var store = await NatsJetStreamWorkflowStateStore.CreateAsync("nats://localhost:4222");
 // ... use as IWorkflowStateStore / IWorkflowWaitIndex.
 ```
-
-`PrepareAsync` creates the key/value buckets (a JetStream stream — needs stream-management rights);
-`ConnectAsync` binds to the existing buckets, so the running app needs only get/put/delete on their subjects.
-Both also have `INatsConnection` overloads, so you can hand in a connection the app owns — for example one
-authenticated with a creds file, nkey, or token.
 
 > Wait/visibility queries scan the bucket's keys and filter on the index header — appropriate for the
 > co-located-with-NATS use this backend targets. The in-memory store (in
 > `Corvus.Text.Json.Arazzo.Durability`) is the reference implementation; this backend runs the same
 > store-conformance suite.
-
-**Encryption at rest:** enable JetStream file-store encryption on the NATS server. For encryption the NATS
-operator cannot read, wrap this store in `ProtectedWorkflowStateStore` (see the
-`Corvus.Text.Json.Arazzo.Durability` README).
