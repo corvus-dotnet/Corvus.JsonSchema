@@ -17,20 +17,13 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 /// </summary>
 /// <remarks>
 /// The checkpoint blob is the authoritative version (its ETag is the etag callers see); the index table is
-/// updated after each successful checkpoint write. Provision the container and tables once with
-/// <see cref="PrepareAsync(string, CancellationToken)"/>, then open the store with
-/// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/>.
+/// updated after each successful checkpoint write. Create instances with <see cref="CreateAsync"/>.
 /// </remarks>
-public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter
+public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
-    private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
-    private const string RunningStatus = nameof(WorkflowRunStatus.Running);
     private const string IndexPartition = "run";
     private const string LeasePartition = "lease";
-    private const string RunsContainer = "arazzo-runs";
-    private const string IndexTable = "arazzoindex";
-    private const string LeasesTable = "arazzoleases";
 
     // The Blob SDK defaults to the newest REST API version, which the Azurite emulator (and older real
     // accounts) may not yet recognise. Pin to a broadly-supported version so requests are accepted everywhere;
@@ -50,89 +43,29 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         this.timeProvider = timeProvider;
     }
 
-    /// <summary>Provisions the store's blob container and tables over the given connection string.</summary>
-    /// <remarks>See <see cref="PrepareAsync(BlobServiceClient, TableServiceClient, CancellationToken)"/> for the privilege rationale.</remarks>
-    /// <param name="connectionString">An Azure Storage connection string for a credential permitted to create the container and tables.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>A task that completes once the container and tables exist (the operation is idempotent).</returns>
-    public static ValueTask PrepareAsync(string connectionString, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(connectionString);
-        return PrepareAsync(
-            new BlobServiceClient(connectionString, new BlobClientOptions(BlobApiVersion)),
-            new TableServiceClient(connectionString),
-            cancellationToken);
-    }
-
-    /// <summary>
-    /// Provisions the store's blob container and tables. Container/table creation is a broader right than the
-    /// per-blob / per-entity data access the store needs at runtime, so run this once at deploy/migration
-    /// time, separately from the least-privileged credential used to <see cref="ConnectAsync(BlobServiceClient, TableServiceClient, TimeProvider?, CancellationToken)"/>
-    /// the store for operation.
-    /// </summary>
-    /// <param name="blobService">A blob service client (for example one built with a managed identity / <c>TokenCredential</c>).</param>
-    /// <param name="tableService">A table service client for the same account.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>A task that completes once the container and tables exist (the operation is idempotent).</returns>
-    public static async ValueTask PrepareAsync(BlobServiceClient blobService, TableServiceClient tableService, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(blobService);
-        ArgumentNullException.ThrowIfNull(tableService);
-
-        await blobService.GetBlobContainerClient(RunsContainer).CreateIfNotExistsAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
-        await tableService.GetTableClient(IndexTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
-        await tableService.GetTableClient(LeasesTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>Opens the store for operation against an already-provisioned container and tables.</summary>
-    /// <remarks>
-    /// This creates no container or tables, so it is safe to use a least-privileged data-plane credential
-    /// (for example a managed identity granted only blob and table <em>data</em> roles). Call
-    /// <see cref="PrepareAsync(string, CancellationToken)"/> once beforehand to provision the resources.
-    /// </remarks>
+    /// <summary>Opens a store over the given storage connection string, creating its container and tables.</summary>
     /// <param name="connectionString">An Azure Storage connection string (or the Azurite emulator's).</param>
     /// <param name="timeProvider">The time source for lease expiry; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The opened store.</returns>
-    public static ValueTask<AzureStorageWorkflowStateStore> ConnectAsync(
+    /// <returns>The opened, initialised store.</returns>
+    public static async ValueTask<AzureStorageWorkflowStateStore> CreateAsync(
         string connectionString,
         TimeProvider? timeProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
-        return ConnectAsync(
-            new BlobServiceClient(connectionString, new BlobClientOptions(BlobApiVersion)),
-            new TableServiceClient(connectionString),
-            timeProvider,
-            cancellationToken);
-    }
 
-    /// <summary>Opens the store for operation over caller-supplied service clients.</summary>
-    /// <remarks>
-    /// Supply clients the caller configured — for example with a managed identity / <c>TokenCredential</c>
-    /// holding only data-plane roles — so the store runs under a least-privileged principal with no key in a
-    /// connection string. This creates no container or tables; call <see cref="PrepareAsync(BlobServiceClient, TableServiceClient, CancellationToken)"/>
-    /// once beforehand.
-    /// </remarks>
-    /// <param name="blobService">A blob service client.</param>
-    /// <param name="tableService">A table service client for the same account.</param>
-    /// <param name="timeProvider">The time source for lease expiry; defaults to <see cref="TimeProvider.System"/>.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The opened store.</returns>
-    public static ValueTask<AzureStorageWorkflowStateStore> ConnectAsync(
-        BlobServiceClient blobService,
-        TableServiceClient tableService,
-        TimeProvider? timeProvider = null,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(blobService);
-        ArgumentNullException.ThrowIfNull(tableService);
-        cancellationToken.ThrowIfCancellationRequested();
+        var blobService = new BlobServiceClient(connectionString, new BlobClientOptions(BlobApiVersion));
+        BlobContainerClient runs = blobService.GetBlobContainerClient("arazzo-runs");
+        await runs.CreateIfNotExistsAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
 
-        BlobContainerClient runs = blobService.GetBlobContainerClient(RunsContainer);
-        TableClient index = tableService.GetTableClient(IndexTable);
-        TableClient leases = tableService.GetTableClient(LeasesTable);
-        return new ValueTask<AzureStorageWorkflowStateStore>(new AzureStorageWorkflowStateStore(runs, index, leases, timeProvider ?? TimeProvider.System));
+        var tableService = new TableServiceClient(connectionString);
+        TableClient index = tableService.GetTableClient("arazzoindex");
+        TableClient leases = tableService.GetTableClient("arazzoleases");
+        await index.CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
+        await leases.CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
+
+        return new AzureStorageWorkflowStateStore(runs, index, leases, timeProvider ?? TimeProvider.System);
     }
 
     /// <inheritdoc/>
@@ -279,71 +212,6 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
     }
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
-        => this.QueryClaimableAsync(hostedWorkflowIds, null, now, cancellationToken);
-
-    /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
-
-        if (hostedWorkflowIds.Count == 0)
-        {
-            yield break;
-        }
-
-        var hosted = new HashSet<string>(hostedWorkflowIds);
-
-        // Azure Tables $filter cannot express an IN list cheaply, so the server-side filter narrows to the two
-        // claimable statuses and the small candidate set is filtered by hosted workflow id client-side. The §5.5
-        // environment predicate ("IS NULL OR eq") likewise cannot be expressed over a possibly-absent property in
-        // OData, so it too is applied in process — matching how the hosted-workflow and tag predicates filter.
-        string filter = TableClient.CreateQueryFilter($"PartitionKey eq {IndexPartition} and (Status eq {PendingStatus} or Status eq {RunningStatus})");
-        var candidates = new List<(string RowKey, string Status)>();
-        bool anyRunning = false;
-        await foreach (TableEntity entity in this.index.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
-        {
-            string? workflowId = entity.GetString("WorkflowId");
-            if (workflowId is null || !hosted.Contains(workflowId))
-            {
-                continue;
-            }
-
-            if (!MatchesEnvironment(entity.GetString("Environment"), runnerEnvironment))
-            {
-                continue;
-            }
-
-            string status = entity.GetString("Status") ?? string.Empty;
-            candidates.Add((entity.RowKey, status));
-            if (status == RunningStatus)
-            {
-                anyRunning = true;
-            }
-        }
-
-        // Only the Running candidates need a lease check, so the leases table is queried lazily.
-        HashSet<string>? held = null;
-        if (anyRunning)
-        {
-            held = new HashSet<string>();
-            string leaseFilter = TableClient.CreateQueryFilter($"PartitionKey eq {LeasePartition} and ExpiresAt gt {now.ToUnixTimeMilliseconds()}");
-            await foreach (TableEntity lease in this.leases.QueryAsync<TableEntity>(leaseFilter, cancellationToken: cancellationToken).ConfigureAwait(false))
-            {
-                held.Add(lease.RowKey);
-            }
-        }
-
-        foreach ((string rowKey, string status) in candidates)
-        {
-            if (status == PendingStatus || held?.Contains(rowKey) != true)
-            {
-                yield return new WorkflowRunId(rowKey);
-            }
-        }
-    }
-
-    /// <inheritdoc/>
     public async ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
     {
         string filter = TableClient.CreateQueryFilter($"PartitionKey eq {IndexPartition}");
@@ -357,80 +225,19 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             filter += TableClient.CreateQueryFilter($" and WorkflowId eq {workflowId}");
         }
 
-        if (query.CorrelationId is { } cid)
-        {
-            filter += TableClient.CreateQueryFilter($" and CorrelationId eq {cid}");
-        }
-
-        if (query.CreatedAfter is { } createdAfter)
-        {
-            filter += TableClient.CreateQueryFilter($" and CreatedAt ge {createdAfter.ToUnixTimeMilliseconds()}");
-        }
-
-        if (query.CreatedBefore is { } createdBefore)
-        {
-            filter += TableClient.CreateQueryFilter($" and CreatedAt lt {createdBefore.ToUnixTimeMilliseconds()}");
-        }
-
-        if (query.UpdatedAfter is { } updatedAfter)
-        {
-            filter += TableClient.CreateQueryFilter($" and UpdatedAt ge {updatedAfter.ToUnixTimeMilliseconds()}");
-        }
-
-        if (query.UpdatedBefore is { } updatedBefore)
-        {
-            filter += TableClient.CreateQueryFilter($" and UpdatedAt lt {updatedBefore.ToUnixTimeMilliseconds()}");
-        }
-
-        // Table storage returns entities ordered by PartitionKey then RowKey, and the run id is the RowKey
-        // within the single index partition — so results arrive in ascending run-id order and a RowKey keyset
-        // gives the continuation.
-        // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
-        string? after = null;
-        if (query.ContinuationToken.IsNotUndefined())
-        {
-            using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
-            after = WorkflowContinuationToken.Decode(tokenUtf8.Span);
-        }
-
-        if (after is { })
-        {
-            filter += TableClient.CreateQueryFilter($" and RowKey gt {after}");
-        }
-
-        // Table OData cannot match inside the serialized TagsJson, so a contains-ALL tag predicate is applied
-        // client-side. It must run before the keyset "take Limit (plus one to detect a further page)" cut so
-        // paging stays correct: filter the materialised stream, then take.
         var runs = new List<WorkflowRunListing>();
         await foreach (TableEntity entity in this.index.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
         {
-            WorkflowRunIndexEntry entry = ReadIndexEntity(entity);
-            if (!query.Tags.AllContainedIn(entry.Tags))
-            {
-                continue;
-            }
-
-            // Row-security reach (§14.2): Table OData cannot match inside the serialized security tags, so apply
-            // the reach filter in process over the persisted tags — the only correct option for this backend.
-            if (query.Security is { } security && !security.IsSatisfiedBy(entry.SecurityTags))
-            {
-                continue;
-            }
-
-            runs.Add(new WorkflowRunListing(new WorkflowRunId(entity.RowKey), entry));
-            if (runs.Count > query.Limit)
+            if (runs.Count >= query.Limit)
             {
                 break;
             }
+
+            runs.Add(new WorkflowRunListing(new WorkflowRunId(entity.RowKey), ReadIndexEntity(entity)));
         }
 
-        return WorkflowContinuationToken.Paginate(runs, query.Limit);
+        return new WorkflowRunPage(runs);
     }
-
-    // §5.5: an unscoped dispatcher (null runnerEnvironment) or an unpinned run (null run environment) matches
-    // anything; otherwise the run's pinned environment must equal the runner's.
-    private static bool MatchesEnvironment(string? runEnvironment, string? runnerEnvironment)
-        => runnerEnvironment is null || runEnvironment is null || string.Equals(runEnvironment, runnerEnvironment, StringComparison.Ordinal);
 
     private static TableEntity BuildIndexEntity(WorkflowRunId id, in WorkflowRunIndexEntry index)
     {
@@ -462,26 +269,6 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             entity["ErrorType"] = errorType;
         }
 
-        if (index.CorrelationId is { } cid)
-        {
-            entity["CorrelationId"] = cid;
-        }
-
-        if (index.Environment is { } environment)
-        {
-            entity["Environment"] = environment;
-        }
-
-        if (index.Tags.ToJsonStringOrNull() is { } tagsJson)
-        {
-            entity["TagsJson"] = tagsJson;
-        }
-
-        if (!index.SecurityTags.IsEmpty)
-        {
-            entity["SecurityTagsJson"] = index.SecurityTags.ToJsonStringOrNull();
-        }
-
         return entity;
     }
 
@@ -496,10 +283,6 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             due is { } d ? DateTimeOffset.FromUnixTimeMilliseconds(d) : null,
             entity.GetString("AwaitingChannel"),
             entity.GetString("AwaitingCorrelationId"),
-            entity.GetString("ErrorType"),
-            CorrelationId: entity.GetString("CorrelationId"),
-            Tags: TagSet.FromJsonStringOrEmpty(entity.GetString("TagsJson")),
-            SecurityTags: SecurityTagSet.FromJsonStringOrEmpty(entity.GetString("SecurityTagsJson")),
-            Environment: entity.GetString("Environment"));
+            entity.GetString("ErrorType"));
     }
 }

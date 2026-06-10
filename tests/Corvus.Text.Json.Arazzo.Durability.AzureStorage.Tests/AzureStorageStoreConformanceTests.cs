@@ -49,15 +49,8 @@ public sealed class AzureStorageStoreConformanceTests : WorkflowStateStoreConfor
     {
         string connectionString = container.GetConnectionString();
 
-        // Build the service clients the caller owns (here from the Azurite connection string; in production
-        // these would carry a managed identity / TokenCredential). The Blob version is pinned to one Azurite
-        // accepts. The store is then provisioned and opened over these caller-supplied clients.
+        // Match the store's pinned Blob REST API version so the reset path is accepted by Azurite too.
         var blobService = new BlobServiceClient(connectionString, new BlobClientOptions(BlobClientOptions.ServiceVersion.V2024_11_04));
-        var tableService = new TableServiceClient(connectionString);
-
-        // Provision the container and tables (the admin/DDL step), then reset data, then open for operation.
-        await AzureStorageWorkflowStateStore.PrepareAsync(blobService, tableService);
-
         BlobContainerClient runs = blobService.GetBlobContainerClient("arazzo-runs");
         if (await runs.ExistsAsync())
         {
@@ -67,6 +60,7 @@ public sealed class AzureStorageStoreConformanceTests : WorkflowStateStoreConfor
             }
         }
 
+        var tableService = new TableServiceClient(connectionString);
         foreach (string table in new[] { "arazzoindex", "arazzoleases" })
         {
             TableClient client = tableService.GetTableClient(table);
@@ -83,6 +77,6 @@ public sealed class AzureStorageStoreConformanceTests : WorkflowStateStoreConfor
             }
         }
 
-        return await AzureStorageWorkflowStateStore.ConnectAsync(blobService, tableService, timeProvider);
+        return await AzureStorageWorkflowStateStore.CreateAsync(connectionString, timeProvider);
     }
 }
