@@ -11,12 +11,16 @@ stored as an opaque blob alongside a handful of indexed projection columns; the 
 checkpoint.
 
 ```csharp
-await using var store = await SqliteWorkflowStateStore.CreateAsync("Data Source=workflows.db");
+await using var store = await SqliteWorkflowStateStore.ConnectAsync("Data Source=workflows.db");
 // ... use as IWorkflowStateStore / IWorkflowWaitIndex (e.g. to build a WorkflowRun or a WorkflowWorker).
 ```
 
-`CreateAsync` runs an idempotent `CREATE TABLE IF NOT EXISTS` schema — there is no migrations runtime.
-Optimistic concurrency maps to a version column; the single-owner lease maps to a small leases table.
+`ConnectAsync` runs an idempotent `CREATE TABLE IF NOT EXISTS` schema — there is no migrations runtime.
+SQLite is the deliberate exception to the prepare/connect split the other backends follow: it is an embedded
+engine with no server-side privilege boundary (and an in-memory database lives only for its connection), so
+`ConnectAsync` ensures the schema. A `PrepareAsync(connectionString)` is offered for symmetry to pre-create a
+file database. Optimistic concurrency maps to a version column; the single-owner lease maps to a small leases
+table.
 
 > For tests and the reference behaviour, see `Corvus.Text.Json.Arazzo.Durability`'s in-memory store. Both
 > run the same store-conformance suite.

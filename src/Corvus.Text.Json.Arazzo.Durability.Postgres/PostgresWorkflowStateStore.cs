@@ -17,39 +17,111 @@ namespace Corvus.Text.Json.Arazzo.Durability.Postgres;
 /// </summary>
 /// <remarks>
 /// Each operation opens a pooled connection, so the store is naturally concurrent. Create instances with
-/// <see cref="CreateAsync"/>, which runs the idempotent schema.
+/// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> after provisioning with <see cref="PrepareAsync(string, CancellationToken)"/>.
 /// </remarks>
-public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex
+public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IAsyncDisposable
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
 
-    private readonly string connectionString;
+    private readonly NpgsqlDataSource dataSource;
+    private readonly bool ownsDataSource;
     private readonly TimeProvider timeProvider;
 
-    private PostgresWorkflowStateStore(string connectionString, TimeProvider timeProvider)
+    private PostgresWorkflowStateStore(NpgsqlDataSource dataSource, bool ownsDataSource, TimeProvider timeProvider)
     {
-        this.connectionString = connectionString;
+        this.dataSource = dataSource;
+        this.ownsDataSource = ownsDataSource;
         this.timeProvider = timeProvider;
     }
 
-    /// <summary>Opens a store over the given connection string and ensures its schema exists.</summary>
+    /// <summary>
+    /// Provisions the store's schema (tables and indexes). This performs DDL, so it requires a credential
+    /// permitted to create tables; run it once at deploy/migration time, separately from the least-privileged
+    /// credential used to <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> the store for operation.
+    /// </summary>
+    /// <param name="connectionString">An Npgsql connection string for a role permitted to create tables.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes once the schema exists (the operation is idempotent).</returns>
+    public static async ValueTask PrepareAsync(string connectionString, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(connectionString);
+
+        await using var connection = new NpgsqlConnection(connectionString);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using NpgsqlCommand schema = connection.CreateCommand();
+        schema.CommandText = SchemaSql;
+        await schema.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Opens the store for operation against an already-provisioned schema.</summary>
+    /// <remarks>
+    /// This performs no DDL, so it is safe to use a least-privileged operational credential granted only data
+    /// access (select/insert/update/delete) on the tables. Call <see cref="PrepareAsync(string, CancellationToken)"/> once beforehand —
+    /// with an elevated credential — to create the schema.
+    /// </remarks>
     /// <param name="connectionString">An Npgsql connection string.</param>
     /// <param name="timeProvider">The time source for lease expiry; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The opened, schema-initialised store.</returns>
-    public static async ValueTask<PostgresWorkflowStateStore> CreateAsync(
+    /// <returns>The opened store.</returns>
+    public static ValueTask<PostgresWorkflowStateStore> ConnectAsync(
         string connectionString,
         TimeProvider? timeProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
+        cancellationToken.ThrowIfCancellationRequested();
+        return new ValueTask<PostgresWorkflowStateStore>(
+            new PostgresWorkflowStateStore(NpgsqlDataSource.Create(connectionString), ownsDataSource: true, timeProvider ?? TimeProvider.System));
+    }
 
-        var store = new PostgresWorkflowStateStore(connectionString, timeProvider ?? TimeProvider.System);
-        await using NpgsqlConnection connection = await store.OpenAsync(cancellationToken).ConfigureAwait(false);
+    /// <summary>Provisions the store's schema over a caller-supplied data source.</summary>
+    /// <remarks>
+    /// Supply a data source the caller configured — for example one whose periodic password provider supplies
+    /// Entra ID access tokens (managed identity) — so provisioning runs under a deliberate credential. The
+    /// caller retains ownership of the data source.
+    /// </remarks>
+    /// <param name="dataSource">An Npgsql data source whose credential is permitted to create tables.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes once the schema exists (the operation is idempotent).</returns>
+    public static async ValueTask PrepareAsync(NpgsqlDataSource dataSource, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(dataSource);
+        await using NpgsqlConnection connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlCommand schema = connection.CreateCommand();
         schema.CommandText = SchemaSql;
         await schema.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        return store;
+    }
+
+    /// <summary>Opens the store for operation over a caller-supplied data source (the caller retains ownership).</summary>
+    /// <remarks>
+    /// Supply a data source the caller configured — for example with a least-privileged operational role, or a
+    /// periodic password provider for managed-identity tokens — so the store runs under a least-privileged
+    /// principal. This performs no DDL; call <see cref="PrepareAsync(NpgsqlDataSource, CancellationToken)"/>
+    /// once beforehand.
+    /// </remarks>
+    /// <param name="dataSource">An Npgsql data source.</param>
+    /// <param name="timeProvider">The time source for lease expiry; defaults to <see cref="TimeProvider.System"/>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The opened store (it does not dispose the supplied data source).</returns>
+    public static ValueTask<PostgresWorkflowStateStore> ConnectAsync(
+        NpgsqlDataSource dataSource,
+        TimeProvider? timeProvider = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(dataSource);
+        cancellationToken.ThrowIfCancellationRequested();
+        return new ValueTask<PostgresWorkflowStateStore>(
+            new PostgresWorkflowStateStore(dataSource, ownsDataSource: false, timeProvider ?? TimeProvider.System));
+    }
+
+    /// <summary>Disposes the data source if this store created it (from a connection string).</summary>
+    /// <returns>A task that completes when disposal finishes.</returns>
+    public async ValueTask DisposeAsync()
+    {
+        if (this.ownsDataSource)
+        {
+            await this.dataSource.DisposeAsync().ConfigureAwait(false);
+        }
     }
 
     /// <inheritdoc/>
@@ -263,20 +335,8 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
     private static NpgsqlParameter NullableBigint(string name, long? value)
         => new(name, NpgsqlDbType.Bigint) { Value = (object?)value ?? DBNull.Value };
 
-    private async ValueTask<NpgsqlConnection> OpenAsync(CancellationToken cancellationToken)
-    {
-        var connection = new NpgsqlConnection(this.connectionString);
-        try
-        {
-            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-            return connection;
-        }
-        catch
-        {
-            await connection.DisposeAsync().ConfigureAwait(false);
-            throw;
-        }
-    }
+    private ValueTask<NpgsqlConnection> OpenAsync(CancellationToken cancellationToken)
+        => this.dataSource.OpenConnectionAsync(cancellationToken);
 
     private const string SchemaSql =
         """

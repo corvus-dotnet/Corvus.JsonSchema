@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.SqlServer;
 /// </summary>
 /// <remarks>
 /// Each operation opens a pooled connection, so the store is naturally concurrent. Create instances with
-/// <see cref="CreateAsync"/>, which runs the idempotent schema.
+/// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> after provisioning with <see cref="PrepareAsync(string, CancellationToken)"/>.
 /// </remarks>
 public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex
 {
@@ -34,24 +34,44 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
         this.timeProvider = timeProvider;
     }
 
-    /// <summary>Opens a store over the given connection string and ensures its schema exists.</summary>
+    /// <summary>
+    /// Provisions the store's schema (tables and indexes). This performs DDL, so it requires a login
+    /// permitted to create tables; run it once at deploy/migration time, separately from the least-privileged
+    /// login used to <see cref="ConnectAsync"/> the store for operation.
+    /// </summary>
+    /// <param name="connectionString">A Microsoft.Data.SqlClient connection string for a login permitted to create tables.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes once the schema exists (the operation is idempotent).</returns>
+    public static async ValueTask PrepareAsync(string connectionString, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(connectionString);
+
+        await using var connection = new SqlConnection(connectionString);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using SqlCommand schema = connection.CreateCommand();
+        schema.CommandText = SchemaSql;
+        await schema.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Opens the store for operation against an already-provisioned schema.</summary>
+    /// <remarks>
+    /// This performs no DDL, so it is safe to use a least-privileged operational login granted only data
+    /// access on the tables. Call <see cref="PrepareAsync"/> once beforehand — with an elevated login — to
+    /// create the schema. The connection string can carry an Entra/managed-identity credential
+    /// (<c>Authentication=Active Directory Managed Identity</c>) for password-free operation.
+    /// </remarks>
     /// <param name="connectionString">A Microsoft.Data.SqlClient connection string.</param>
     /// <param name="timeProvider">The time source for lease expiry; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The opened, schema-initialised store.</returns>
-    public static async ValueTask<SqlServerWorkflowStateStore> CreateAsync(
+    /// <returns>The opened store.</returns>
+    public static ValueTask<SqlServerWorkflowStateStore> ConnectAsync(
         string connectionString,
         TimeProvider? timeProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
-
-        var store = new SqlServerWorkflowStateStore(connectionString, timeProvider ?? TimeProvider.System);
-        await using SqlConnection connection = await store.OpenAsync(cancellationToken).ConfigureAwait(false);
-        await using SqlCommand schema = connection.CreateCommand();
-        schema.CommandText = SchemaSql;
-        await schema.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        return store;
+        cancellationToken.ThrowIfCancellationRequested();
+        return new ValueTask<SqlServerWorkflowStateStore>(new SqlServerWorkflowStateStore(connectionString, timeProvider ?? TimeProvider.System));
     }
 
     /// <inheritdoc/>

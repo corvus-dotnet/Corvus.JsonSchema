@@ -11,11 +11,18 @@ stored as an opaque `LONGBLOB` alongside a handful of indexed projection columns
 maps to a version column and the single-owner lease to a small leases table.
 
 ```csharp
-await using var store = await MySqlWorkflowStateStore.CreateAsync("Server=localhost;Database=workflows;User ID=root;Password=…");
+// Once, at deploy/migration time — with a user permitted to create tables:
+await MySqlWorkflowStateStore.PrepareAsync("Server=localhost;Database=workflows;User ID=ddl_admin;Password=…");
+
+// At runtime — with a least-privileged operational user; performs no DDL:
+await using var store = await MySqlWorkflowStateStore.ConnectAsync("Server=localhost;Database=workflows;User ID=app;Password=…");
 // ... use as IWorkflowStateStore / IWorkflowWaitIndex.
 ```
 
-`CreateAsync` runs an idempotent `CREATE TABLE IF NOT EXISTS` schema. Speaking the MySQL wire protocol
+`PrepareAsync` runs the idempotent `CREATE TABLE IF NOT EXISTS` schema (provisioning rights); `ConnectAsync`
+performs no DDL, so the running app can use a user granted only data access on the tables. Both also have
+`MySqlDataSource` overloads, so you can hand in a data source the app owns (it must set
+`UseAffectedRows=true`, which the connection-string overload does for you). Speaking the MySQL wire protocol
 directly, it also serves **MariaDB and Aurora MySQL**.
 
 > The in-memory store (in `Corvus.Text.Json.Arazzo.Durability`) is the reference implementation; this backend

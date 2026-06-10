@@ -17,13 +17,18 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 /// </summary>
 /// <remarks>
 /// The checkpoint blob is the authoritative version (its ETag is the etag callers see); the index table is
-/// updated after each successful checkpoint write. Create instances with <see cref="CreateAsync"/>.
+/// updated after each successful checkpoint write. Provision the container and tables once with
+/// <see cref="PrepareAsync(string, CancellationToken)"/>, then open the store with
+/// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/>.
 /// </remarks>
 public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
     private const string IndexPartition = "run";
     private const string LeasePartition = "lease";
+    private const string RunsContainer = "arazzo-runs";
+    private const string IndexTable = "arazzoindex";
+    private const string LeasesTable = "arazzoleases";
 
     // The Blob SDK defaults to the newest REST API version, which the Azurite emulator (and older real
     // accounts) may not yet recognise. Pin to a broadly-supported version so requests are accepted everywhere;
@@ -43,29 +48,89 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         this.timeProvider = timeProvider;
     }
 
-    /// <summary>Opens a store over the given storage connection string, creating its container and tables.</summary>
+    /// <summary>Provisions the store's blob container and tables over the given connection string.</summary>
+    /// <remarks>See <see cref="PrepareAsync(BlobServiceClient, TableServiceClient, CancellationToken)"/> for the privilege rationale.</remarks>
+    /// <param name="connectionString">An Azure Storage connection string for a credential permitted to create the container and tables.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes once the container and tables exist (the operation is idempotent).</returns>
+    public static ValueTask PrepareAsync(string connectionString, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(connectionString);
+        return PrepareAsync(
+            new BlobServiceClient(connectionString, new BlobClientOptions(BlobApiVersion)),
+            new TableServiceClient(connectionString),
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Provisions the store's blob container and tables. Container/table creation is a broader right than the
+    /// per-blob / per-entity data access the store needs at runtime, so run this once at deploy/migration
+    /// time, separately from the least-privileged credential used to <see cref="ConnectAsync(BlobServiceClient, TableServiceClient, TimeProvider?, CancellationToken)"/>
+    /// the store for operation.
+    /// </summary>
+    /// <param name="blobService">A blob service client (for example one built with a managed identity / <c>TokenCredential</c>).</param>
+    /// <param name="tableService">A table service client for the same account.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes once the container and tables exist (the operation is idempotent).</returns>
+    public static async ValueTask PrepareAsync(BlobServiceClient blobService, TableServiceClient tableService, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(blobService);
+        ArgumentNullException.ThrowIfNull(tableService);
+
+        await blobService.GetBlobContainerClient(RunsContainer).CreateIfNotExistsAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        await tableService.GetTableClient(IndexTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
+        await tableService.GetTableClient(LeasesTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Opens the store for operation against an already-provisioned container and tables.</summary>
+    /// <remarks>
+    /// This creates no container or tables, so it is safe to use a least-privileged data-plane credential
+    /// (for example a managed identity granted only blob and table <em>data</em> roles). Call
+    /// <see cref="PrepareAsync(string, CancellationToken)"/> once beforehand to provision the resources.
+    /// </remarks>
     /// <param name="connectionString">An Azure Storage connection string (or the Azurite emulator's).</param>
     /// <param name="timeProvider">The time source for lease expiry; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The opened, initialised store.</returns>
-    public static async ValueTask<AzureStorageWorkflowStateStore> CreateAsync(
+    /// <returns>The opened store.</returns>
+    public static ValueTask<AzureStorageWorkflowStateStore> ConnectAsync(
         string connectionString,
         TimeProvider? timeProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
+        return ConnectAsync(
+            new BlobServiceClient(connectionString, new BlobClientOptions(BlobApiVersion)),
+            new TableServiceClient(connectionString),
+            timeProvider,
+            cancellationToken);
+    }
 
-        var blobService = new BlobServiceClient(connectionString, new BlobClientOptions(BlobApiVersion));
-        BlobContainerClient runs = blobService.GetBlobContainerClient("arazzo-runs");
-        await runs.CreateIfNotExistsAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+    /// <summary>Opens the store for operation over caller-supplied service clients.</summary>
+    /// <remarks>
+    /// Supply clients the caller configured — for example with a managed identity / <c>TokenCredential</c>
+    /// holding only data-plane roles — so the store runs under a least-privileged principal with no key in a
+    /// connection string. This creates no container or tables; call <see cref="PrepareAsync(BlobServiceClient, TableServiceClient, CancellationToken)"/>
+    /// once beforehand.
+    /// </remarks>
+    /// <param name="blobService">A blob service client.</param>
+    /// <param name="tableService">A table service client for the same account.</param>
+    /// <param name="timeProvider">The time source for lease expiry; defaults to <see cref="TimeProvider.System"/>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The opened store.</returns>
+    public static ValueTask<AzureStorageWorkflowStateStore> ConnectAsync(
+        BlobServiceClient blobService,
+        TableServiceClient tableService,
+        TimeProvider? timeProvider = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(blobService);
+        ArgumentNullException.ThrowIfNull(tableService);
+        cancellationToken.ThrowIfCancellationRequested();
 
-        var tableService = new TableServiceClient(connectionString);
-        TableClient index = tableService.GetTableClient("arazzoindex");
-        TableClient leases = tableService.GetTableClient("arazzoleases");
-        await index.CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
-        await leases.CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
-
-        return new AzureStorageWorkflowStateStore(runs, index, leases, timeProvider ?? TimeProvider.System);
+        BlobContainerClient runs = blobService.GetBlobContainerClient(RunsContainer);
+        TableClient index = tableService.GetTableClient(IndexTable);
+        TableClient leases = tableService.GetTableClient(LeasesTable);
+        return new ValueTask<AzureStorageWorkflowStateStore>(new AzureStorageWorkflowStateStore(runs, index, leases, timeProvider ?? TimeProvider.System));
     }
 
     /// <inheritdoc/>

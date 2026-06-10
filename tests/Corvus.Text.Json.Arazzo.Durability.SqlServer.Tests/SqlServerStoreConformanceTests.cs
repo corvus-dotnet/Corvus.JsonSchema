@@ -49,6 +49,8 @@ public sealed class SqlServerStoreConformanceTests : WorkflowStateStoreConforman
             await reset.ExecuteNonQueryAsync();
         }
 
-        return await SqlServerWorkflowStateStore.CreateAsync(connectionString, timeProvider);
+        // Provision (DDL) with the test's admin credential, then open for operation with no DDL.
+        await SqlServerWorkflowStateStore.PrepareAsync(connectionString);
+        return await SqlServerWorkflowStateStore.ConnectAsync(connectionString, timeProvider);
     }
 }
