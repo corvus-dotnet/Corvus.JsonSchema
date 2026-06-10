@@ -88,7 +88,7 @@ public partial class WorkflowExecutorEndToEndTests
         // Reset. A retained child inputs/outputs document would grow the footprint with the run count.
         Assembly assembly = await GenerateAndCompileWorkflows(ParentAndChildDocument).ConfigureAwait(false);
         var execute = assembly.GetType("GeneratedWorkflows.Workflows.ParentWorkflow")!.GetMethod("ExecuteAsync")!
-            .CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>>>();
+            .CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>>>();
 
         var transport = new FixedResponseTransport(200, """{"name":"Fido"}""");
         using var workspace = JsonWorkspace.Create();
@@ -100,7 +100,7 @@ public partial class WorkflowExecutorEndToEndTests
             for (int i = 0; i < count; i++)
             {
                 workspace.Reset();
-                _ = await execute(transport, workspace, inputs, default).ConfigureAwait(false);
+                _ = await execute(transport, workspace, inputs, default, null).ConfigureAwait(false);
             }
         }
 
@@ -119,7 +119,7 @@ public partial class WorkflowExecutorEndToEndTests
     {
         Assembly assembly = CompileInMemory(source);
         var execute = assembly.GetType(typeName)!.GetMethod("ExecuteAsync")!
-            .CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>>>();
+            .CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>>>();
 
         var transport = new FixedResponseTransport(200, responseJson);
         using var workspace = JsonWorkspace.Create();
@@ -133,7 +133,7 @@ public partial class WorkflowExecutorEndToEndTests
             for (int i = 0; i < count; i++)
             {
                 workspace.Reset();
-                _ = await execute(transport, workspace, inputs, default).ConfigureAwait(false);
+                _ = await execute(transport, workspace, inputs, default, null).ConfigureAwait(false);
             }
         }
 
@@ -156,7 +156,7 @@ public partial class WorkflowExecutorEndToEndTests
         string source = EmitGetPetExecutor(Document, "AdoptDurableLeakWorkflow", durable: true);
         Assembly assembly = CompileInMemory(source);
         var execute = assembly.GetType("GeneratedWorkflows.AdoptDurableLeakWorkflow")!.GetMethod("ExecuteAsync")!
-            .CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, IWorkflowRun?, CancellationToken, ValueTask<WorkflowRunResult<JsonElement>>>>();
+            .CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, IWorkflowRun?, CancellationToken, TimeProvider?, ValueTask<WorkflowRunResult<JsonElement>>>>();
 
         var transport = new FixedResponseTransport(200, """{"name":"Fido"}""");
         var store = new Durability.InMemoryWorkflowStateStore();
@@ -171,7 +171,7 @@ public partial class WorkflowExecutorEndToEndTests
                 workspace.Reset();
                 await store.DeleteAsync("leak", default).ConfigureAwait(false);
                 using var run = Durability.WorkflowRun.CreateNew(store, "leak", "adopt", inputs);
-                _ = await execute(transport, workspace, inputs, run, default).ConfigureAwait(false);
+                _ = await execute(transport, workspace, inputs, run, default, null).ConfigureAwait(false);
             }
         }
 
@@ -189,7 +189,7 @@ public partial class WorkflowExecutorEndToEndTests
     {
         Assembly assembly = CompileInMemory(source);
         var execute = assembly.GetType(typeName)!.GetMethod("ExecuteAsync")!
-            .CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>>>();
+            .CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>>>();
 
         var transport = new FixedResponseTransport(200, responseJson);
         using var workspace = JsonWorkspace.Create();
@@ -201,7 +201,7 @@ public partial class WorkflowExecutorEndToEndTests
             for (int i = 0; i < count; i++)
             {
                 workspace.Reset();
-                _ = await execute(transport, workspace, inputs, default).ConfigureAwait(false);
+                _ = await execute(transport, workspace, inputs, default, null).ConfigureAwait(false);
             }
         }
 

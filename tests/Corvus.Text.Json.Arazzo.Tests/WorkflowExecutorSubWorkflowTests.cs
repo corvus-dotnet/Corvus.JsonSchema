@@ -124,7 +124,7 @@ public partial class WorkflowExecutorEndToEndTests
         using var workspace = JsonWorkspace.Create();
         using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
 
-        var pending = (ValueTask<JsonElement>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+        var pending = (ValueTask<JsonElement>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
         JsonElement outputs = await pending;
 
         // The parent passed petId to the child, which fetched the pet; the child's petName output flows
@@ -221,7 +221,7 @@ public partial class WorkflowExecutorEndToEndTests
         using var workspace = JsonWorkspace.Create();
         using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
 
-        var pending = (ValueTask<JsonElement>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+        var pending = (ValueTask<JsonElement>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
         JsonElement outputs = await pending;
 
         transport.Requests.Count.ShouldBe(2);
@@ -241,7 +241,7 @@ public partial class WorkflowExecutorEndToEndTests
         using var workspace = JsonWorkspace.Create();
         using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
 
-        var pending = (ValueTask<JsonElement>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+        var pending = (ValueTask<JsonElement>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
         JsonElement outputs = await pending;
 
         // step1 succeeds and transfers to 'other', whose outputs become the result — so the result has
