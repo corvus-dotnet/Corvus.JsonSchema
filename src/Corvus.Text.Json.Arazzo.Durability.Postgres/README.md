@@ -29,3 +29,7 @@ AlloyDB, Aurora PostgreSQL, Neon, and Citus**.
 
 > The in-memory store (in `Corvus.Text.Json.Arazzo.Durability`) is the reference implementation; this backend
 > runs the same store-conformance suite.
+
+**Encryption at rest:** managed PostgreSQL (Azure Database, Aurora, AlloyDB, …) encrypts at rest, optionally
+under a customer-managed key. For encryption independent of the server, wrap this store in
+`ProtectedWorkflowStateStore` (see the `Corvus.Text.Json.Arazzo.Durability` README).

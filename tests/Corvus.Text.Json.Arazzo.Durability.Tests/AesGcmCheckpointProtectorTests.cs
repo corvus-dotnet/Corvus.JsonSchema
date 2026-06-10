@@ -16,60 +16,60 @@ public sealed class AesGcmCheckpointProtectorTests
     private static readonly WorkflowRunId Run = new("run-1");
 
     [TestMethod]
-    public async Task Round_trips_a_checkpoint()
+    public void Round_trips_a_checkpoint()
     {
         using var protector = new AesGcmCheckpointProtector(Key(0));
         byte[] plaintext = Encoding.UTF8.GetBytes("""{"value":42}""");
 
-        ReadOnlyMemory<byte> ciphertext = await protector.ProtectAsync(plaintext, Run, default);
-        ReadOnlyMemory<byte> roundTripped = await protector.UnprotectAsync(ciphertext, Run, default);
+        ReadOnlyMemory<byte> ciphertext = protector.Protect(plaintext, Run);
+        ReadOnlyMemory<byte> roundTripped = protector.Unprotect(ciphertext.Span, Run);
 
         roundTripped.ToArray().ShouldBe(plaintext);
     }
 
     [TestMethod]
-    public async Task Ciphertext_is_not_the_plaintext_and_varies_per_call()
+    public void Ciphertext_is_not_the_plaintext_and_varies_per_call()
     {
         using var protector = new AesGcmCheckpointProtector(Key(0));
         byte[] plaintext = Encoding.UTF8.GetBytes("secret");
 
-        byte[] first = (await protector.ProtectAsync(plaintext, Run, default)).ToArray();
-        byte[] second = (await protector.ProtectAsync(plaintext, Run, default)).ToArray();
+        byte[] first = protector.Protect(plaintext, Run).ToArray();
+        byte[] second = protector.Protect(plaintext, Run).ToArray();
 
         first.ShouldNotBe(plaintext);
         first.ShouldNotBe(second); // fresh random nonce per call
     }
 
     [TestMethod]
-    public async Task Tampered_ciphertext_fails_closed()
+    public void Tampered_ciphertext_fails_closed()
     {
         using var protector = new AesGcmCheckpointProtector(Key(0));
-        byte[] ciphertext = (await protector.ProtectAsync(Encoding.UTF8.GetBytes("secret"), Run, default)).ToArray();
+        byte[] ciphertext = protector.Protect(Encoding.UTF8.GetBytes("secret"), Run).ToArray();
         ciphertext[^1] ^= 0xFF;
 
-        await Should.ThrowAsync<CryptographicException>(async () => await protector.UnprotectAsync(ciphertext, Run, default));
+        Should.Throw<CryptographicException>(() => protector.Unprotect(ciphertext, Run));
     }
 
     [TestMethod]
-    public async Task Decrypting_under_a_different_run_id_fails()
+    public void Decrypting_under_a_different_run_id_fails()
     {
         using var protector = new AesGcmCheckpointProtector(Key(0));
-        ReadOnlyMemory<byte> ciphertext = await protector.ProtectAsync(Encoding.UTF8.GetBytes("secret"), Run, default);
+        ReadOnlyMemory<byte> ciphertext = protector.Protect(Encoding.UTF8.GetBytes("secret"), Run);
 
-        await Should.ThrowAsync<CryptographicException>(async () => await protector.UnprotectAsync(ciphertext, new WorkflowRunId("other"), default));
+        Should.Throw<CryptographicException>(() => protector.Unprotect(ciphertext.Span, new WorkflowRunId("other")));
     }
 
     [TestMethod]
-    public async Task Decrypting_under_a_different_key_fails()
+    public void Decrypting_under_a_different_key_fails()
     {
         ReadOnlyMemory<byte> ciphertext;
         using (var encryptor = new AesGcmCheckpointProtector(Key(0)))
         {
-            ciphertext = await encryptor.ProtectAsync(Encoding.UTF8.GetBytes("secret"), Run, default);
+            ciphertext = encryptor.Protect(Encoding.UTF8.GetBytes("secret"), Run);
         }
 
         using var other = new AesGcmCheckpointProtector(Key(99));
-        await Should.ThrowAsync<CryptographicException>(async () => await other.UnprotectAsync(ciphertext, Run, default));
+        Should.Throw<CryptographicException>(() => other.Unprotect(ciphertext.Span, Run));
     }
 
     [TestMethod]
@@ -79,10 +79,10 @@ public sealed class AesGcmCheckpointProtectorTests
     }
 
     [TestMethod]
-    public async Task Rejects_ciphertext_that_is_too_short()
+    public void Rejects_ciphertext_that_is_too_short()
     {
         using var protector = new AesGcmCheckpointProtector(Key(0));
-        await Should.ThrowAsync<CryptographicException>(async () => await protector.UnprotectAsync(new byte[8], Run, default));
+        Should.Throw<CryptographicException>(() => protector.Unprotect(new byte[8], Run));
     }
 
     private static byte[] Key(int seed)

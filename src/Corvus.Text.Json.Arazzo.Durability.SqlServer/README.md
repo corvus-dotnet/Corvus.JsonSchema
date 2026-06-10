@@ -27,3 +27,7 @@ Azure SQL Managed Instance** — just a connection string.
 
 > The in-memory store (in `Corvus.Text.Json.Arazzo.Durability`) is the reference implementation; this backend
 > runs the same store-conformance suite.
+
+**Encryption at rest:** SQL Server / Azure SQL encrypt at rest via TDE (customer-managed key optional). For
+encryption independent of the server, wrap this store in `ProtectedWorkflowStateStore` (see the
+`Corvus.Text.Json.Arazzo.Durability` README).

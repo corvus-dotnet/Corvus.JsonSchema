@@ -20,11 +20,10 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// also implements <see cref="IWorkflowWaitIndex"/>, so does this wrapper (delegating); otherwise the wait-index
 /// members throw <see cref="NotSupportedException"/>.
 /// </remarks>
-public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, IAsyncDisposable
+public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IAsyncDisposable
 {
     private readonly IWorkflowStateStore inner;
     private readonly IWorkflowWaitIndex? innerIndex;
-    private readonly IWorkflowDispatchIndex? innerDispatch;
     private readonly ICheckpointProtector protector;
 
     /// <summary>Initializes a new instance of the <see cref="ProtectedWorkflowStateStore"/> class.</summary>
@@ -36,7 +35,6 @@ public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflow
         ArgumentNullException.ThrowIfNull(protector);
         this.inner = inner;
         this.innerIndex = inner as IWorkflowWaitIndex;
-        this.innerDispatch = inner as IWorkflowDispatchIndex;
         this.protector = protector;
     }
 
@@ -47,19 +45,9 @@ public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflow
         in WorkflowRunIndexEntry index,
         WorkflowEtag expected,
         CancellationToken cancellationToken)
-        => this.SaveCoreAsync(id, checkpointUtf8, index, expected, cancellationToken);
-
-    // The interface passes the index by `in`; an async method cannot take an `in` parameter, so SaveAsync
-    // copies it (a small struct) and this private core does the encrypt-then-write.
-    private async ValueTask<WorkflowEtag> SaveCoreAsync(
-        WorkflowRunId id,
-        ReadOnlyMemory<byte> checkpointUtf8,
-        WorkflowRunIndexEntry index,
-        WorkflowEtag expected,
-        CancellationToken cancellationToken)
     {
-        ReadOnlyMemory<byte> protectedCheckpoint = await this.protector.ProtectAsync(checkpointUtf8, id, cancellationToken).ConfigureAwait(false);
-        return await this.inner.SaveAsync(id, protectedCheckpoint, index, expected, cancellationToken).ConfigureAwait(false);
+        ReadOnlyMemory<byte> protectedCheckpoint = this.protector.Protect(checkpointUtf8.Span, id);
+        return this.inner.SaveAsync(id, protectedCheckpoint, index, expected, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -71,7 +59,7 @@ public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflow
             return null;
         }
 
-        ReadOnlyMemory<byte> plaintext = await this.protector.UnprotectAsync(checkpoint.Utf8, id, cancellationToken).ConfigureAwait(false);
+        ReadOnlyMemory<byte> plaintext = this.protector.Unprotect(checkpoint.Utf8.Span, id);
         return new WorkflowCheckpoint(plaintext, checkpoint.Etag);
     }
 
@@ -98,14 +86,6 @@ public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflow
     /// <inheritdoc/>
     public ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
         => this.RequireIndex().QueryAsync(query, cancellationToken);
-
-    /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
-        => (this.innerDispatch ?? throw new NotSupportedException("The wrapped store does not implement IWorkflowDispatchIndex.")).QueryClaimableAsync(hostedWorkflowIds, now, cancellationToken);
-
-    /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, CancellationToken cancellationToken)
-        => (this.innerDispatch ?? throw new NotSupportedException("The wrapped store does not implement IWorkflowDispatchIndex.")).QueryClaimableAsync(hostedWorkflowIds, runnerEnvironment, now, cancellationToken);
 
     /// <inheritdoc/>
     public async ValueTask DisposeAsync()
