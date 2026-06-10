@@ -502,10 +502,17 @@ criteria half of this phase.
       top-level absolute `$self` resolves under that identity as well as its registration URI, so an
       absolute `sourceDescriptions[].url` is matched by identity rather than by where the document was
       registered (`ArazzoVirtualizedDocumentTests`).
-    - **Still open:** cross-**document** `workflowId` (`$sourceDescriptions.<name>.<workflowId>` into a
-      separate Arazzo description) — sub-workflows resolve same-document only; this needs recursive
-      generation of `arazzo`-type sources into a per-source namespace plus cross-namespace sub-workflow
-      target resolution.
+    - **Cross-document `workflowId` (§5.5.2) — implemented.** A step may target a workflow in a separate
+      Arazzo description via `$sourceDescriptions.<name>.<workflowId>`, where `<name>` is an `arazzo`-type
+      source. The driver recursively generates each `arazzo` source into a per-source namespace
+      (`{root}.{SourceSegment}`) and the parent resolves the target to that namespace's executor. Recursion
+      is **generate-once**: each referenced document (keyed by its `$self` identity, else its resolved URI)
+      is generated a single time and shared by every referrer (a diamond reuses it), while a reference to an
+      ancestor on the recursion stack is rejected as a cycle. Pinned by `ArazzoCrossDocumentTests`
+      (cross-document invocation + shared-source dedup).
+    - **Residual:** a cross-document `goto`/`retry` *action* target (a `$sourceDescriptions.<name>.<workflowId>`
+      on an `onSuccess`/`onFailure` action, as opposed to a sub-workflow *step*) still resolves
+      same-document; extending it follows the same source-qualified pattern on `StepActionInfo`.
 
 ## 8. Recommended next step
 
