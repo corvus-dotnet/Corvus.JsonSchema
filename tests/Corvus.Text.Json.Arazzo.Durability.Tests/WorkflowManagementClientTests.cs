@@ -2,7 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics;
 using Corvus.Text.Json;
+using Corvus.Text.Json.Arazzo.Testing;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 
@@ -166,6 +168,186 @@ public sealed class WorkflowManagementClientTests
         (await client.GetAsync("old-cancelled", default)).ShouldBeNull();
         (await client.GetAsync("old-faulted", default)).ShouldNotBeNull();
         (await client.GetAsync("recent-done", default)).ShouldNotBeNull();
+    }
+
+    [TestMethod]
+    public async Task Resume_rewind_resets_the_cursor_and_re_runs()
+    {
+        var store = new InMemoryWorkflowStateStore();
+        await FaultRunAtAsync(store, "r1", cursor: 3, faultStep: "step3");
+
+        int seenCursor = -1;
+        var client = new WorkflowManagementClient(store, owner: "ops", resumer: (run, ct) =>
+        {
+            seenCursor = run.Cursor;
+            return CompleteAndReport(run, ct);
+        });
+
+        (await client.ResumeAsync("r1", ResumeOptions.Rewind(targetCursor: 1), default)).ShouldBeTrue();
+
+        seenCursor.ShouldBe(1);
+        (await client.GetAsync("r1", default))!.Value.Status.ShouldBe(WorkflowRunStatus.Completed);
+    }
+
+    [TestMethod]
+    public async Task Resume_rewind_without_a_target_cursor_throws()
+    {
+        var store = new InMemoryWorkflowStateStore();
+        await FaultRunAtAsync(store, "r1", cursor: 3, faultStep: "step3");
+        var client = new WorkflowManagementClient(store, owner: "ops", resumer: CompleteAndReport);
+
+        await Should.ThrowAsync<ArgumentException>(async () =>
+            await client.ResumeAsync("r1", new ResumeOptions(ResumeMode.Rewind), default));
+    }
+
+    [TestMethod]
+    public async Task Resume_skip_advances_past_the_faulted_step_and_records_outputs()
+    {
+        var store = new InMemoryWorkflowStateStore();
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(
+            """{ "skipOutputs": { "ok": true } }"""u8.ToArray());
+        await FaultRunAtAsync(store, "r1", cursor: 2, faultStep: "step2");
+
+        int seenCursor = -1;
+        bool sawSkippedOutputs = false;
+        var client = new WorkflowManagementClient(store, owner: "ops", resumer: (run, ct) =>
+        {
+            seenCursor = run.Cursor;
+            sawSkippedOutputs = run.TryGetStepOutputs("step2", out JsonElement o) && o.GetProperty("ok"u8).GetBoolean();
+            return CompleteAndReport(run, ct);
+        });
+
+        (await client.ResumeAsync("r1", ResumeOptions.Skip(doc.RootElement.GetProperty("skipOutputs"u8)), default)).ShouldBeTrue();
+
+        seenCursor.ShouldBe(3);
+        sawSkippedOutputs.ShouldBeTrue();
+    }
+
+    [TestMethod]
+    public async Task Resume_state_patch_fixes_an_input_then_retries_the_faulted_step()
+    {
+        var store = new InMemoryWorkflowStateStore();
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(
+            """{ "inputs": { "x": 1 }, "patch": [ { "op": "replace", "path": "/inputs/x", "value": 2 } ] }"""u8.ToArray());
+        await FaultRunAtAsync(store, "r1", cursor: 1, faultStep: "step1", inputs: doc.RootElement.GetProperty("inputs"u8));
+
+        int seenCursor = -1;
+        int seenX = -1;
+        var client = new WorkflowManagementClient(store, owner: "ops", resumer: (run, ct) =>
+        {
+            seenCursor = run.Cursor;
+            seenX = run.Inputs.GetProperty("x"u8).GetInt32();
+            return CompleteAndReport(run, ct);
+        });
+
+        (await client.ResumeAsync("r1", ResumeOptions.StatePatch(doc.RootElement.GetProperty("patch"u8)), default)).ShouldBeTrue();
+
+        seenCursor.ShouldBe(1); // retry the faulted step
+        seenX.ShouldBe(2);      // with the patched input
+    }
+
+    [TestMethod]
+    public async Task Resume_state_patch_with_a_failing_patch_returns_false_and_does_not_resume()
+    {
+        var store = new InMemoryWorkflowStateStore();
+        await FaultRunAsync(store, "r1");
+        using ParsedJsonDocument<JsonElement> patch = ParsedJsonDocument<JsonElement>.Parse(
+            """[ { "op": "test", "path": "/inputs/missing", "value": 1 } ]"""u8.ToArray());
+
+        bool invoked = false;
+        var client = new WorkflowManagementClient(store, owner: "ops", resumer: (_, _) =>
+        {
+            invoked = true;
+            return new ValueTask<WorkflowRunResultKind>(WorkflowRunResultKind.Completed);
+        });
+
+        (await client.ResumeAsync("r1", ResumeOptions.StatePatch(patch.RootElement), default)).ShouldBeFalse();
+        invoked.ShouldBeFalse();
+        (await client.GetAsync("r1", default))!.Value.Status.ShouldBe(WorkflowRunStatus.Faulted);
+    }
+
+    [TestMethod]
+    public async Task Delete_removes_a_single_run_of_any_status()
+    {
+        var store = new InMemoryWorkflowStateStore();
+        await CompleteRunAsync(store, "r1");
+        var client = new WorkflowManagementClient(store, owner: "ops");
+
+        (await client.DeleteAsync("r1", default)).ShouldBeTrue();
+        (await client.GetAsync("r1", default)).ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task Delete_returns_false_for_an_unknown_run()
+    {
+        var client = new WorkflowManagementClient(new InMemoryWorkflowStateStore(), owner: "ops");
+
+        (await client.DeleteAsync("nope", default)).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task Delete_returns_false_when_another_owner_holds_the_lease()
+    {
+        var store = new InMemoryWorkflowStateStore();
+        await FaultRunAsync(store, "r1");
+        await store.AcquireLeaseAsync("r1", "worker-7", TimeSpan.FromMinutes(5), default);
+        var client = new WorkflowManagementClient(store, owner: "ops");
+
+        (await client.DeleteAsync("r1", default)).ShouldBeFalse();
+        (await client.GetAsync("r1", default)).ShouldNotBeNull();
+    }
+
+    [TestMethod]
+    public async Task Resume_emits_an_audit_span_and_a_counter()
+    {
+        using var telemetry = new RecordedTelemetry();
+        var store = new InMemoryWorkflowStateStore();
+        await FaultRunAsync(store, "r1");
+        var client = new WorkflowManagementClient(store, owner: "ops", resumer: CompleteAndReport);
+
+        (await client.ResumeAsync("r1", ResumeOptions.RetryFaultedStep, default)).ShouldBeTrue();
+
+        telemetry.Sum("corvus.arazzo.workflows.resumed").ShouldBe(1);
+        Activity span = telemetry.ActivitiesNamed("workflow.resume").ShouldHaveSingleItem();
+        span.GetTagItem("corvus.arazzo.actor").ShouldBe("ops");
+        span.GetTagItem("corvus.arazzo.resume_mode").ShouldBe("RetryFaultedStep");
+        span.GetTagItem("corvus.arazzo.outcome").ShouldBe("resumed");
+    }
+
+    [TestMethod]
+    public async Task Cancel_and_delete_emit_their_counters()
+    {
+        using var telemetry = new RecordedTelemetry();
+        var store = new InMemoryWorkflowStateStore();
+        await FaultRunAsync(store, "r1");
+        await CompleteRunAsync(store, "r2");
+        var client = new WorkflowManagementClient(store, owner: "ops");
+
+        (await client.CancelAsync("r1", "abandoned", default)).ShouldBeTrue();
+        (await client.DeleteAsync("r2", default)).ShouldBeTrue();
+
+        telemetry.Sum("corvus.arazzo.workflows.cancelled").ShouldBe(1);
+        telemetry.Sum("corvus.arazzo.workflows.deleted").ShouldBe(1);
+        telemetry.ActivitiesNamed("workflow.cancel").ShouldHaveSingleItem();
+        telemetry.ActivitiesNamed("workflow.delete").ShouldHaveSingleItem();
+    }
+
+    private static async ValueTask<WorkflowRunResultKind> CompleteAndReport(WorkflowRun run, CancellationToken ct)
+    {
+        await run.CompleteAsync(default, ct);
+        return WorkflowRunResultKind.Completed;
+    }
+
+    private static async Task FaultRunAtAsync(InMemoryWorkflowStateStore store, string id, int cursor, string faultStep, JsonElement inputs = default, TimeProvider? clock = null)
+    {
+        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", inputs, clock);
+        if (cursor > 0)
+        {
+            // Advance the cursor to the faulting step before recording the fault (FaultAsync keeps the cursor).
+            await run.CheckpointAsync(cursor, default);
+        }
+
+        await run.FaultAsync(faultStep, attempt: 1, "boom", default);
     }
 
     private static async Task FaultRunAsync(InMemoryWorkflowStateStore store, string id, TimeProvider? clock = null)

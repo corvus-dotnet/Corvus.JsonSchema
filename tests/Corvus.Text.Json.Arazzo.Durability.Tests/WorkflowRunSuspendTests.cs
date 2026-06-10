@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text.Json.Arazzo.Testing;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 
@@ -16,6 +17,26 @@ namespace Corvus.Text.Json.Arazzo.Durability.Tests;
 public sealed class WorkflowRunSuspendTests
 {
     private static readonly DateTimeOffset Start = new(2026, 5, 1, 12, 0, 0, TimeSpan.Zero);
+
+    [TestMethod]
+    public async Task Suspending_and_checkpointing_emit_telemetry()
+    {
+        using var telemetry = new RecordedTelemetry();
+        var time = new TestTimeProvider(Start);
+        var store = new InMemoryWorkflowStateStore(time);
+
+        using (ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{ "v": 1 }"""u8.ToArray()))
+        using (var run = WorkflowRun.CreateNew(store, "tel-1", "wf", doc.RootElement, time))
+        {
+            await run.CheckpointAsync(cursor: 1, default);
+            await run.SuspendForTimerAsync(cursor: 2, TimeSpan.FromMinutes(5), default);
+        }
+
+        telemetry.Sum("corvus.arazzo.workflows.suspended").ShouldBe(1);
+        // A checkpoint span and a duration measurement per persist (the checkpoint + the suspend).
+        telemetry.ActivitiesNamed("workflow.checkpoint").Count.ShouldBe(2);
+        telemetry.Measurements.Count(m => m.InstrumentName == "corvus.arazzo.checkpoint.duration").ShouldBe(2);
+    }
 
     [TestMethod]
     public async Task Suspend_on_a_timer_round_trips_as_a_due_wait()
