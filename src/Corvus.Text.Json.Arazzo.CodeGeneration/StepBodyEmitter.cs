@@ -97,6 +97,14 @@ public static class StepBodyEmitter
         var body = new StringBuilder(request.Statements);
         var auxiliaryTypes = new StringBuilder();
 
+        // A $url criterion resolves against the request's relative URL: rebuild the request struct from the
+        // resolved Sources and feed its WriteResolvedPath/WriteQueryString output to the context. Emitted
+        // before the client call so the bound Sources (and any pooled buffers) are still live.
+        if (RequestUrlEmitter.ReferencesUrl(successCriteria))
+        {
+            body.Append(RequestUrlEmitter.Emit(operation, request.ParameterBindings, prefix, workspaceVariable, contextVariable));
+        }
+
         // Invoke through the generated client: it constructs and validates the request, sends it via
         // the transport, and validates the response — we never touch the request type or the raw
         // transport, so the protocol stays in the generated code.
