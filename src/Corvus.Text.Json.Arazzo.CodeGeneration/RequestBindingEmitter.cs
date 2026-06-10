@@ -59,6 +59,7 @@ public static class RequestBindingEmitter
         var statements = new StringBuilder();
         var cleanup = new StringBuilder();
         var namedArguments = new List<string>();
+        var parameterBindings = new List<RequestParameterBinding>();
 
         foreach (RequestParameterInfo parameter in operation.Operation.RequestParameters)
         {
@@ -77,6 +78,7 @@ public static class RequestBindingEmitter
                 fields, statements, cleanup, argument.Kind, argument.Value, contextVariable, stepOutputLocals, inputsVariable, inputAccessors,
                 $"{fieldPrefix}{parameter.PropertyName}", parameter.PropertyName, parameter.TypeName);
             namedArguments.Add($"{parameter.ParameterName}: {source}");
+            parameterBindings.Add(new RequestParameterBinding(parameter.Location, parameter.PropertyName, parameter.TypeName, source));
         }
 
         if (requestBody is { } body && operation.Operation.RequestBodyTypeName is { } bodyType)
@@ -90,7 +92,7 @@ public static class RequestBindingEmitter
             namedArguments.Add($"body: {source}");
         }
 
-        return new RequestBindingCode(fields.ToString(), statements.ToString(), namedArguments, cleanup.ToString());
+        return new RequestBindingCode(fields.ToString(), statements.ToString(), namedArguments, cleanup.ToString(), parameterBindings);
     }
 
     /// <summary>
@@ -339,4 +341,17 @@ public readonly record struct StepRequestContext(
 /// <param name="Statements">The in-method statements that resolve each argument, emitted before the client call.</param>
 /// <param name="NamedArguments">The <c>paramName: source</c> fragments to pass to the generated client method.</param>
 /// <param name="Cleanup">Statements to emit immediately after the client call — e.g. returning a pooled interpolation buffer whose span was passed as a <c>Source</c> (the client consumes it synchronously, so it is safe to return once the call has been made).</param>
-public readonly record struct RequestBindingCode(string Fields, string Statements, IReadOnlyList<string> NamedArguments, string Cleanup = "");
+/// <param name="ParameterBindings">The per-parameter bindings (location, generated property/type, and the resolved <c>Source</c> expression) — used to reconstruct the request struct for a <c>$url</c> criterion without re-resolving the arguments.</param>
+public readonly record struct RequestBindingCode(string Fields, string Statements, IReadOnlyList<string> NamedArguments, string Cleanup = "", IReadOnlyList<RequestParameterBinding>? ParameterBindings = null);
+
+/// <summary>
+/// One resolved request-parameter binding: where the parameter sits, the generated request property and
+/// its model type, and the C# expression (a local, field, or literal already emitted by the request
+/// binding) that yields the parameter's <c>Source</c>. The <c>$url</c> emitter reuses these to rebuild
+/// the request struct and write its resolved path/query without resolving the arguments a second time.
+/// </summary>
+/// <param name="Location">The parameter location (path, query, header, or cookie).</param>
+/// <param name="PropertyName">The generated request property name (e.g. <c>RunId</c>).</param>
+/// <param name="TypeName">The fully-qualified type of that property (e.g. <c>…Models.JsonString</c>).</param>
+/// <param name="Source">The C# expression that produces the parameter's <c>Source</c> value.</param>
+public readonly record struct RequestParameterBinding(ParameterLocation Location, string PropertyName, string TypeName, string Source);
