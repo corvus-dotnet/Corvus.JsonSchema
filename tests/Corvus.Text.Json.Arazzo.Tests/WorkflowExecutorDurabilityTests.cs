@@ -199,6 +199,54 @@ public partial class WorkflowExecutorEndToEndTests
     }
 
     [TestMethod]
+    public async Task Management_client_resumes_a_faulted_run_to_completion()
+    {
+        string source = EmitGetPetExecutor(DurableTwoStepDocument, "AdoptDurableMgmtWorkflow", durable: true);
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.AdoptDurableMgmtWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var store = new InMemoryWorkflowStateStore();
+        WorkflowRunId runId = "adopt-mgmt-1";
+
+        // ── Run 1: the second step fails (500) → the run faults. ──
+        using (var workspace = JsonWorkspace.Create())
+        using (ParsedJsonDocument<JsonElement> inputsDocument = ParsedJsonDocument<JsonElement>.Parse(
+            Encoding.UTF8.GetBytes("""{"firstId":"1","secondId":"2"}""")))
+        using (var run = WorkflowRun.CreateNew(store, runId, "adoptDurable", inputsDocument.RootElement))
+        {
+            var transport = new MockApiTransport();
+            transport.EnqueueResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Alpha"}""");
+            transport.EnqueueResponse(OperationMethod.Get, "/pets/{petId}", 500, "{}");
+
+            var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(
+                null,
+                [transport, workspace, inputsDocument.RootElement, run, default(CancellationToken)])!;
+            (await pending).IsFaulted.ShouldBeTrue();
+        }
+
+        // The operator's resumer re-enters the executor with a healthy dependency (200).
+        async ValueTask<WorkflowRunResultKind> Resume(WorkflowRun run, CancellationToken ct)
+        {
+            using var ws = JsonWorkspace.Create();
+            var healthy = new MockApiTransport();
+            healthy.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Alpha"}""");
+            var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(null, [healthy, ws, run.Inputs, run, ct])!;
+            return (await pending).Kind;
+        }
+
+        var client = new WorkflowManagementClient(store, "ops", Resume);
+
+        // Query: the faulted run is visible via get and the status filter.
+        (await client.GetAsync(runId, default))!.Value.Status.ShouldBe(WorkflowRunStatus.Faulted);
+        (await client.ListAsync(new WorkflowQuery(WorkflowRunStatus.Faulted), default))
+            .Runs.Select(r => r.Id.Value).ShouldContain(runId.Value);
+
+        // Resume: retry the faulted step → the run completes.
+        (await client.ResumeAsync(runId, ResumeOptions.RetryFaultedStep, default)).ShouldBeTrue();
+        (await client.GetAsync(runId, default))!.Value.Status.ShouldBe(WorkflowRunStatus.Completed);
+    }
+
+    [TestMethod]
     public async Task Durable_executor_suspends_on_a_timer_then_resumes_to_completion()
     {
         string source = EmitGetPetExecutor(DurableRetryDocument, "AdoptDurableRetryWorkflow", durable: true);

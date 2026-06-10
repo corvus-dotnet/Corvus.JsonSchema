@@ -74,6 +74,27 @@ AES-GCM and framing; the satellite packages supply the wrap/unwrap:
 
 Implement `EnvelopeCheckpointProtector` (or `ICheckpointProtector`) directly for any other KMS.
 
+## Control plane (run management)
+
+`WorkflowManagementClient` (`IWorkflowManagementClient`) is the operator surface over a store (plan §11) — the
+workflow-level analogue of dead-letter inspection and redelivery:
+
+```csharp
+var management = new WorkflowManagementClient(store, owner: "ops", resumer);
+
+await management.ListAsync(new WorkflowQuery(WorkflowRunStatus.Faulted), ct);   // visibility
+await management.GetAsync(runId, ct);                                           // status + fault detail
+await management.ResumeAsync(runId, ResumeOptions.RetryFaultedStep, ct);        // retry a faulted run
+await management.CancelAsync(runId, "operator abandoned", ct);                  // mark cancelled
+await management.PurgeAsync(new WorkflowPurgeQuery(cutoff), ct);                // reap old terminal runs
+```
+
+`ListAsync` uses the same `IWorkflowWaitIndex` Tier 2 uses for wakeups. Every control action takes a
+single-owner lease and writes under optimistic concurrency, so operators can't conflict with each other or with
+a worker. `ResumeAsync` re-enters the run through the host-supplied `WorkflowResumer` (the same adapter a
+`WorkflowWorker` uses) at its last checkpoint — the faulted step — and the generated executor clears the fault
+on its next checkpoint. (Rewind/skip/state-patch resume and a CLI surface are planned; see plan §11.)
+
 ## Related Packages
 
 - `Corvus.Text.Json.Arazzo` — workflow execution runtime (hosts the `IWorkflowRun` seam)
