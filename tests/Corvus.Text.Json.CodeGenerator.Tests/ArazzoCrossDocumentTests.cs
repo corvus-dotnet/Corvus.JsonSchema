@@ -271,4 +271,61 @@ public class ArazzoCrossDocumentTests : IDisposable
         string parentExecutor = await File.ReadAllTextAsync(Path.Combine(this.outputDir, "Workflows", "ParentWorkflow.cs"));
         StringAssert.Contains(parentExecutor, "Acme.Child.Workflows.LookupWorkflow");
     }
+
+    [TestMethod]
+    public async Task A_cyclic_arazzo_source_reference_is_rejected()
+    {
+        // parent → child → parent: a reference to an ancestor on the recursion stack is a true cycle.
+        Uri childUri = new("https://specs.example.test/child.arazzo.json");
+        Uri parentSelf = new("https://specs.example.test/parent.arazzo.json");
+
+        string parentJson = """
+            {
+              "arazzo": "1.0.1",
+              "$self": "https://specs.example.test/parent.arazzo.json",
+              "info": { "title": "Parent", "version": "1.0.0" },
+              "sourceDescriptions": [
+                { "name": "child", "url": "https://specs.example.test/child.arazzo.json", "type": "arazzo" }
+              ],
+              "workflows": [
+                { "workflowId": "parent", "steps": [ { "stepId": "run", "workflowId": "$sourceDescriptions.child.loop" } ], "outputs": {} }
+              ]
+            }
+            """;
+
+        string childJson = """
+            {
+              "arazzo": "1.0.1",
+              "info": { "title": "Child", "version": "1.0.0" },
+              "sourceDescriptions": [
+                { "name": "back", "url": "https://specs.example.test/parent.arazzo.json", "type": "arazzo" }
+              ],
+              "workflows": [
+                { "workflowId": "loop", "steps": [ { "stepId": "again", "workflowId": "$sourceDescriptions.back.parent" } ], "outputs": {} }
+              ]
+            }
+            """;
+
+        string parentPath = Path.Combine(Path.GetTempPath(), "corvus-xdoc", Guid.NewGuid().ToString("N"), "parent.arazzo.json");
+        var registered = new List<RegisteredDocument>
+        {
+            new(parentSelf, Encoding.UTF8.GetBytes(parentJson)),
+            new(new(Path.GetFullPath(parentPath)), Encoding.UTF8.GetBytes(parentJson)),
+            new(childUri, Encoding.UTF8.GetBytes(childJson)),
+        };
+
+        InvalidOperationException caught = null;
+        try
+        {
+            await ArazzoGenerationDriver.GenerateAsync(
+                parentPath, "Acme", this.outputDir, clientName: null, durable: false, CancellationToken.None, registered);
+        }
+        catch (InvalidOperationException ex)
+        {
+            caught = ex;
+        }
+
+        Assert.IsNotNull(caught, "A cyclic Arazzo source reference should be rejected.");
+        StringAssert.Contains(caught.Message, "cyclic");
+    }
 }
