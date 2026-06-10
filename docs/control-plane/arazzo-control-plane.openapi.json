@@ -18,7 +18,11 @@
       }
     }
   ],
-  "security": [{ "bearerAuth": [] }],
+  "security": [
+    { "oauth2": ["runs:read"] },
+    { "openIdConnect": ["runs:read"] },
+    { "mtls": [] }
+  ],
   "tags": [
     {
       "name": "runs",
@@ -30,6 +34,11 @@
     "/runs": {
       "get": {
         "operationId": "listRuns",
+        "security": [
+          { "oauth2": ["runs:read"] },
+          { "openIdConnect": ["runs:read"] },
+          { "mtls": [] }
+        ],
         "tags": ["runs"],
         "summary": "List runs",
         "description": "Returns a page of runs matching the visibility query. Backed by the store's wait/visibility index (the same index Tier 2 uses for wakeups), so the filters are answered server-side.",
@@ -54,6 +63,11 @@
       "additionalOperations": {
         "PURGE": {
           "operationId": "purgeRuns",
+          "security": [
+            { "oauth2": ["runs:purge"] },
+            { "openIdConnect": ["runs:purge"] },
+            { "mtls": [] }
+          ],
           "tags": ["runs"],
           "summary": "Purge terminal runs",
           "description": "Reaps completed and cancelled runs last updated strictly before `olderThan`, up to `limit`. Non-terminal runs (including faulted ones, which are terminal-but-recoverable) are never purged.",
@@ -79,6 +93,11 @@
       "parameters": [{ "$ref": "#/components/parameters/RunIdPath" }],
       "get": {
         "operationId": "getRun",
+        "security": [
+          { "oauth2": ["runs:read"] },
+          { "openIdConnect": ["runs:read"] },
+          { "mtls": [] }
+        ],
         "tags": ["runs"],
         "summary": "Get a run",
         "description": "Returns a run's management detail — status, cursor, wait/fault detail and etag — from its authoritative checkpoint.",
@@ -103,6 +122,11 @@
       "parameters": [{ "$ref": "#/components/parameters/RunIdPath" }],
       "post": {
         "operationId": "resumeRun",
+        "security": [
+          { "oauth2": ["runs:write"] },
+          { "openIdConnect": ["runs:write"] },
+          { "mtls": [] }
+        ],
         "tags": ["runs"],
         "summary": "Resume a faulted run",
         "description": "Resumes a faulted run, re-executing it from its last checkpoint (the faulted step). Only a run in the `Faulted` state can be resumed. Returns the run's new detail on success. An implementation MAY process the resume asynchronously and instead return `202 Accepted`.",
@@ -132,6 +156,11 @@
       "parameters": [{ "$ref": "#/components/parameters/RunIdPath" }],
       "post": {
         "operationId": "cancelRun",
+        "security": [
+          { "oauth2": ["runs:write"] },
+          { "openIdConnect": ["runs:write"] },
+          { "mtls": [] }
+        ],
         "tags": ["runs"],
         "summary": "Cancel a run",
         "description": "Cancels a non-terminal run, marking it `Cancelled` (any fault record is kept for post-mortem visibility). Returns the run's new detail on success.",
@@ -161,11 +190,38 @@
   },
   "components": {
     "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "JWT",
-        "description": "The control plane is privileged; protect it with a bearer token (e.g. an operator/management identity)."
+      "oauth2": {
+        "type": "oauth2",
+        "description": "OAuth2 bearer access tokens scoped to the control plane's capability tiers. Interactive operators use the authorization-code flow (with PKCE, or device-code at the IdP); services and the CLI use client-credentials. The authorization server is chosen by the deployment — the URLs below are placeholders.",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://login.example.com/oauth2/authorize",
+            "tokenUrl": "https://login.example.com/oauth2/token",
+            "refreshUrl": "https://login.example.com/oauth2/token",
+            "scopes": {
+              "runs:read": "List and read workflow runs (visibility).",
+              "runs:write": "Resume and cancel workflow runs (remediation).",
+              "runs:purge": "Permanently delete terminal runs (destructive)."
+            }
+          },
+          "clientCredentials": {
+            "tokenUrl": "https://login.example.com/oauth2/token",
+            "scopes": {
+              "runs:read": "List and read workflow runs (visibility).",
+              "runs:write": "Resume and cancel workflow runs (remediation).",
+              "runs:purge": "Permanently delete terminal runs (destructive)."
+            }
+          }
+        }
+      },
+      "openIdConnect": {
+        "type": "openIdConnect",
+        "description": "OpenID Connect discovery for the same access tokens and scopes (runs:read / runs:write / runs:purge); the discovery URL is deployment-specific (placeholder shown).",
+        "openIdConnectUrl": "https://login.example.com/.well-known/openid-configuration"
+      },
+      "mtls": {
+        "type": "mutualTLS",
+        "description": "Mutual-TLS client-certificate authentication, for zero-trust service/operator callers that prefer certificates over tokens. Mutual TLS carries no scopes, so the host maps the client certificate's identity to a capability tier (read/write/purge) out of band."
       }
     },
     "parameters": {
