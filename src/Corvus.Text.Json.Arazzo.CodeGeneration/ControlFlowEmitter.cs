@@ -180,6 +180,15 @@ internal static class ControlFlowEmitter
         c.AppendLine("{");
         c.Append("    // ── step: ").Append(step.StepId).AppendLine(" ──");
         WorkflowExecutorEmitter.AppendIndented(c, request.Statements, 4);
+
+        // A $url criterion (on the success gate or any onSuccess/onFailure action) resolves against the
+        // request's relative URL: rebuild the request struct from the resolved Sources and feed its
+        // WriteResolvedPath/WriteQueryString output to the context, before the client call disposes them.
+        if (StepReferencesUrl(step))
+        {
+            WorkflowExecutorEmitter.AppendIndented(c, RequestUrlEmitter.Emit(operation, request.ParameterBindings, prefix, "workspace", "context"), 4);
+        }
+
         c.Append("    var ").Append(clientVar).Append(" = new ").Append(operation.Operation.ClientTypeName).Append('(').AppendLine("transport);");
 
         string callToken = EmitTimeoutToken(step, camel, c);
@@ -382,6 +391,34 @@ internal static class ControlFlowEmitter
         c.Append("    using var ").Append(camel).AppendLine("Cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);");
         c.Append("    ").Append(camel).Append("Cts.CancelAfter(").Append(milliseconds.ToString(CultureInfo.InvariantCulture)).AppendLine(");");
         return $"{camel}Cts.Token";
+    }
+
+    // True when any of the step's criteria — its success gate or any onSuccess/onFailure action — reference
+    // the $url runtime expression.
+    private static bool StepReferencesUrl(in ControlFlowStep step)
+    {
+        if (RequestUrlEmitter.ReferencesUrl(step.SuccessCriteria))
+        {
+            return true;
+        }
+
+        foreach (StepActionInfo action in step.OnSuccess)
+        {
+            if (RequestUrlEmitter.ReferencesUrl(action.Criteria))
+            {
+                return true;
+            }
+        }
+
+        foreach (StepActionInfo action in step.OnFailure)
+        {
+            if (RequestUrlEmitter.ReferencesUrl(action.Criteria))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // Builds the body of an operation step's success-gate try (telemetry, response context, optional response
