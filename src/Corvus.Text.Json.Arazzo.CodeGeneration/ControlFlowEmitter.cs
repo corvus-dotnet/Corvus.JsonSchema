@@ -46,7 +46,23 @@ internal static class ControlFlowEmitter
             stepIndex[steps[i].StepId] = i;
             if (ProducesOutputs(steps[i]))
             {
-                stepOutputLocals[steps[i].StepId] = EmitText.StepOutputsElementLocal(steps[i].StepId);
+                string outputsLocal = EmitText.StepOutputsElementLocal(steps[i].StepId);
+                stepOutputLocals[steps[i].StepId] = outputsLocal;
+
+                // Also key a sub-workflow invocation's outputs by sub-workflow id, and each bound argument's
+                // value by sub-workflow id + parameter name, so $workflows.<id>.outputs.<name> /
+                // $workflows.<id>.inputs.<name> navigate them statically (no context). The inputs keys point at
+                // stable hoisted argument values (assigned in the step's case) rather than the transient
+                // inputs builder.
+                if (steps[i].SubWorkflowId is { } subWorkflowId)
+                {
+                    stepOutputLocals["$workflows:" + subWorkflowId] = outputsLocal;
+                    foreach (StepArgument argument in steps[i].Arguments)
+                    {
+                        stepOutputLocals["$workflows-input:" + subWorkflowId + ":" + argument.Name] =
+                            SubWorkflowInputVar(steps[i].StepId, argument.Name);
+                    }
+                }
             }
         }
 
@@ -70,6 +86,18 @@ internal static class ControlFlowEmitter
                 else
                 {
                     loop.Append("JsonElement ").Append(outputsLocal).AppendLine(" = default;");
+                }
+
+                // A sub-workflow invocation also exposes the inputs it was passed ($workflows.<id>.inputs.<name>);
+                // hoist each bound argument's value so later steps can navigate it. These are not restored on a
+                // durable resume (inputs are not persisted), so after resuming past this step they are default —
+                // matching the pre-existing behaviour where the inputs qualifier was unavailable.
+                if (step.SubWorkflowId is not null)
+                {
+                    foreach (StepArgument argument in step.Arguments)
+                    {
+                        loop.Append("JsonElement ").Append(SubWorkflowInputVar(step.StepId, argument.Name)).AppendLine(" = default;");
+                    }
                 }
             }
 
@@ -495,7 +523,7 @@ internal static class ControlFlowEmitter
         EmitDispatch(failureDispatch, step.OnFailure, isFailure: true, camel, prefix, string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options);
 
         var inputs = new StringBuilder();
-        string builderVariable = SubWorkflowStepEmitter.BuildInputs(fields, inputs, step.StepId, step.Arguments, stepOutputLocals, "inputs", options.InputAccessors);
+        string builderVariable = SubWorkflowStepEmitter.BuildInputs(fields, inputs, step.StepId, step.Arguments, stepOutputLocals, "inputs", options.InputAccessors, out IReadOnlyDictionary<string, string> inputValueLocals);
         string targetClass = SubWorkflowStepEmitter.TargetClass(
             WorkflowExecutorEmitter.ResolveSubWorkflowNamespace(options, step.SubWorkflowSource), subWorkflowId);
 
@@ -503,6 +531,15 @@ internal static class ControlFlowEmitter
         c.AppendLine("{");
         c.Append("    // ── step: ").Append(step.StepId).Append(" (workflow: ").Append(subWorkflowId).AppendLine(") ──");
         WorkflowExecutorEmitter.AppendIndented(c, inputs.ToString(), 4);
+
+        // Expose each passed input value for $workflows.<id>.inputs.<name> by copying the (stable) resolved
+        // argument value into its hoisted local, which survives across the loop. The builder's own RootElement
+        // is not captured: its backing document does not survive the sub-workflow call.
+        foreach (KeyValuePair<string, string> inputValueLocal in inputValueLocals)
+        {
+            c.Append("    ").Append(SubWorkflowInputVar(step.StepId, inputValueLocal.Key)).Append(" = ").Append(inputValueLocal.Value).AppendLine(";");
+        }
+
         c.Append("    int ").Append(camel).Append("Next = ").Append((index + 1).ToString(CultureInfo.InvariantCulture)).AppendLine(";");
         c.Append("    bool ").Append(camel).AppendLine("End = false;");
         c.Append("    bool ").Append(camel).AppendLine("Fail = false;");
@@ -863,6 +900,13 @@ internal static class ControlFlowEmitter
         => step.SubWorkflowId is not null
             || step.Outputs.Count > 0
             || (step.Channel is { } channel && channel.Channel.Action == OperationAction.Receive);
+
+    /// <summary>
+    /// The hoisted local that exposes a sub-workflow step's bound argument value for
+    /// <c>$workflows.&lt;id&gt;.inputs.&lt;name&gt;</c> across the control-flow loop.
+    /// </summary>
+    private static string SubWorkflowInputVar(string stepId, string parameterName)
+        => EmitText.ToCamelCase(EmitText.SanitizeIdentifier(stepId)) + "Input_" + EmitText.SanitizeIdentifier(parameterName) + "Value";
 
     private static void EmitDispatch(
         StringBuilder target,

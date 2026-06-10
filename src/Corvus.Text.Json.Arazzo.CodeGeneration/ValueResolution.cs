@@ -55,6 +55,32 @@ internal static class ValueResolution
             return;
         }
 
+        // Static: navigate a sub-workflow invocation's outputs object directly (its hoisted local), like
+        // $steps — $workflows.<id>.outputs.<name>. The outputs local is registered under "$workflows:<id>"
+        // as each sub-workflow step is emitted.
+        if (parsed.Source == ArazzoExpressionSource.Workflows
+            && parsed.Qualifier == "outputs"
+            && parsed.ContainerId is { } outputsWorkflowId
+            && parsed.Name is { } workflowOutputName
+            && stepOutputLocals.TryGetValue("$workflows:" + outputsWorkflowId, out string? workflowOutputsLocal))
+        {
+            EmitNavigation(statements, workflowOutputsLocal, workflowOutputName, parsed.JsonPointer, resultLocal);
+            return;
+        }
+
+        // Static: $workflows.<id>.inputs.<name> resolves to the bound argument value passed for <name> — its
+        // resolved local is a stable reference (the transient inputs builder does not survive the call). The
+        // locals are registered under "$workflows-input:<id>:<name>" as each sub-workflow step is emitted.
+        if (parsed.Source == ArazzoExpressionSource.Workflows
+            && parsed.Qualifier == "inputs"
+            && parsed.ContainerId is { } inputsWorkflowId
+            && parsed.Name is { } workflowInputName
+            && stepOutputLocals.TryGetValue("$workflows-input:" + inputsWorkflowId + ":" + workflowInputName, out string? workflowInputLocal))
+        {
+            EmitTypedAccessor(statements, workflowInputLocal, parsed.JsonPointer, resultLocal);
+            return;
+        }
+
         // Static: navigate the workflow inputs directly — the inputs document outlives every product
         // built from it, so the result is a reference, never a copy. When the inputs are a generated
         // model, use the strongly-typed accessor (inputs.PetId); otherwise fall back to a property

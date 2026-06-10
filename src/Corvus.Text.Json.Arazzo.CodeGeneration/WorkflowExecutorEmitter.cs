@@ -243,7 +243,19 @@ public static class WorkflowExecutorEmitter
                         step.StepId, subWorkflowId, step.Arguments, ResolveSubWorkflowNamespace(options, step.SubWorkflowSource), stepOutputLocals, "inputs", options.InputAccessors);
                     fields.Append(subStep.Fields);
                     AppendIndented(body, subStep.Statements, 12);
-                    stepOutputLocals[step.StepId] = EmitText.StepOutputsElementLocal(step.StepId);
+                    string subWorkflowOutputsLocal = EmitText.StepOutputsElementLocal(step.StepId);
+                    stepOutputLocals[step.StepId] = subWorkflowOutputsLocal;
+
+                    // Also key the outputs local by sub-workflow id, and each bound argument's value local by
+                    // sub-workflow id + parameter name, so $workflows.<id>.outputs.<name> /
+                    // $workflows.<id>.inputs.<name> resolve statically (no context). The inputs keys point at
+                    // the stable resolved argument values rather than the transient inputs builder.
+                    stepOutputLocals["$workflows:" + subWorkflowId] = subWorkflowOutputsLocal;
+                    foreach (KeyValuePair<string, string> inputValueLocal in subStep.InputValueLocals)
+                    {
+                        stepOutputLocals["$workflows-input:" + subWorkflowId + ":" + inputValueLocal.Key] = inputValueLocal.Value;
+                    }
+
                     body.AppendLine();
                     continue;
                 }

@@ -116,6 +116,25 @@ internal static class CriterionExpressionParsing
                 name = outputName;
                 break;
 
+            case ArazzoExpressionSource.Workflows when expression.Qualifier == "outputs"
+                && expression.ContainerId is { } outputsWorkflowId
+                && stepOutputLocals.TryGetValue("$workflows:" + outputsWorkflowId, out string? workflowOutputsLocal):
+                // A sub-workflow invocation's outputs ($workflows.<id>.outputs[.<name>]) — the outputs local
+                // is registered under "$workflows:<id>" as the sub-workflow step is emitted.
+                root = workflowOutputsLocal;
+                name = expression.Name;
+                break;
+
+            case ArazzoExpressionSource.Workflows when expression.Qualifier == "inputs"
+                && expression.ContainerId is { } inputsWorkflowId
+                && expression.Name is { } workflowInputName
+                && stepOutputLocals.TryGetValue("$workflows-input:" + inputsWorkflowId + ":" + workflowInputName, out string? workflowInputLocal):
+                // A sub-workflow invocation's passed input ($workflows.<id>.inputs.<name>) resolves to the
+                // bound argument value's stable local (registered under "$workflows-input:<id>:<name>"); the
+                // local IS the named input value, so no further property navigation.
+                root = workflowInputLocal;
+                break;
+
             default:
                 return false;
         }
