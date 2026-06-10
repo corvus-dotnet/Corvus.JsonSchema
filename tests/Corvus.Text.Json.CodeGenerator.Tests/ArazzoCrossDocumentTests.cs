@@ -193,4 +193,82 @@ public class ArazzoCrossDocumentTests : IDisposable
         StringAssert.Contains(parentExecutor, "Acme.X.Workflows.LookupWorkflow");
         Assert.IsFalse(Directory.Exists(Path.Combine(this.outputDir, "Y")), "The second reference must reuse the first copy, not generate a 'Y' tree.");
     }
+
+    [TestMethod]
+    public async Task Resolves_a_cross_document_goto_action_target_to_its_per_source_namespace()
+    {
+        // An onSuccess goto action transfers control to a workflow in a separate Arazzo description via
+        // $sourceDescriptions.<name>.<workflowId> — it must resolve to that source's generated namespace.
+        Uri childUri = new("https://specs.example.test/child.arazzo.json");
+        Uri petsUri = new("https://specs.example.test/pets.openapi.json");
+
+        string parentJson = """
+            {
+              "arazzo": "1.0.1",
+              "info": { "title": "Parent", "version": "1.0.0" },
+              "sourceDescriptions": [
+                { "name": "pets", "url": "https://specs.example.test/pets.openapi.json", "type": "openapi" },
+                { "name": "child", "url": "https://specs.example.test/child.arazzo.json", "type": "arazzo" }
+              ],
+              "workflows": [
+                {
+                  "workflowId": "parent",
+                  "inputs": { "type": "object", "properties": { "petId": { "type": "string" } }, "required": [ "petId" ] },
+                  "steps": [
+                    {
+                      "stepId": "getPet",
+                      "operationId": "getPet",
+                      "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                      "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                      "onSuccess": [ { "name": "toChild", "type": "goto", "workflowId": "$sourceDescriptions.child.lookup" } ]
+                    }
+                  ],
+                  "outputs": {}
+                }
+              ]
+            }
+            """;
+
+        string childJson = """
+            {
+              "arazzo": "1.0.1",
+              "info": { "title": "Child", "version": "1.0.0" },
+              "sourceDescriptions": [
+                { "name": "pets", "url": "./pets.openapi.json", "type": "openapi" }
+              ],
+              "workflows": [
+                {
+                  "workflowId": "lookup",
+                  "inputs": { "type": "object", "properties": { "petId": { "type": "string" } }, "required": [ "petId" ] },
+                  "steps": [
+                    {
+                      "stepId": "getPet",
+                      "operationId": "getPet",
+                      "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                      "successCriteria": [ { "condition": "$statusCode == 200" } ]
+                    }
+                  ],
+                  "outputs": {}
+                }
+              ]
+            }
+            """;
+
+        string parentPath = Path.Combine(Path.GetTempPath(), "corvus-xdoc", Guid.NewGuid().ToString("N"), "parent.arazzo.json");
+        Uri parentUri = new(Path.GetFullPath(parentPath));
+        byte[] petsBytes = await File.ReadAllBytesAsync(CodeGeneratorRunner.GetFixturePath("Arazzo", "pets.openapi.json"));
+
+        var registered = new List<RegisteredDocument>
+        {
+            new(parentUri, Encoding.UTF8.GetBytes(parentJson)),
+            new(childUri, Encoding.UTF8.GetBytes(childJson)),
+            new(petsUri, petsBytes),
+        };
+
+        await ArazzoGenerationDriver.GenerateAsync(
+            parentPath, "Acme", this.outputDir, clientName: null, durable: false, CancellationToken.None, registered);
+
+        string parentExecutor = await File.ReadAllTextAsync(Path.Combine(this.outputDir, "Workflows", "ParentWorkflow.cs"));
+        StringAssert.Contains(parentExecutor, "Acme.Child.Workflows.LookupWorkflow");
+    }
 }

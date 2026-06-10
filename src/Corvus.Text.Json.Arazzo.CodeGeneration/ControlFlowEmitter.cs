@@ -899,7 +899,7 @@ internal static class ControlFlowEmitter
                 action.Criteria, fields, target, auxiliaryTypes, actionPrefix, "context", responseVar, sources,
                 "inputs", stepOutputLocals, options.InputAccessors, responseHeaders, requestContext, options.Namespace);
 
-            resolved.Add((expression, BuildApply(action, camel, stepIndex, options.Namespace)));
+            resolved.Add((expression, BuildApply(action, camel, stepIndex, options)));
             if (action.Criteria.Count == 0)
             {
                 break;
@@ -955,7 +955,7 @@ internal static class ControlFlowEmitter
         // Success with no matching action falls through to the default next state (already set).
     }
 
-    private static string BuildApply(in StepActionInfo action, string camel, IReadOnlyDictionary<string, int> stepIndex, string workflowsNamespace)
+    private static string BuildApply(in StepActionInfo action, string camel, IReadOnlyDictionary<string, int> stepIndex, in WorkflowExecutorOptions options)
     {
         switch (action.Kind)
         {
@@ -967,8 +967,10 @@ internal static class ControlFlowEmitter
                 {
                     // goto a workflow = transfer control: run the target workflow and return its result
                     // as this workflow's result. The current inputs flow through (a JsonElement converts
-                    // to the target's inputs type via its implicit operator).
-                    return $"return await {SubWorkflowStepEmitter.TargetClass(workflowsNamespace, targetWorkflow)}.ExecuteAsync(transport, workspace, (JsonElement)inputs, cancellationToken).ConfigureAwait(false);\n";
+                    // to the target's inputs type via its implicit operator). A cross-document target
+                    // ($sourceDescriptions.<name>.<workflowId>) resolves to its per-source namespace.
+                    string targetNamespace = WorkflowExecutorEmitter.ResolveSubWorkflowNamespace(options, action.TargetWorkflowSource);
+                    return $"return await {SubWorkflowStepEmitter.TargetClass(targetNamespace, targetWorkflow)}.ExecuteAsync(transport, workspace, (JsonElement)inputs, cancellationToken).ConfigureAwait(false);\n";
                 }
 
                 if (action.TargetStepId is not { } targetStep || !stepIndex.TryGetValue(targetStep, out int target))

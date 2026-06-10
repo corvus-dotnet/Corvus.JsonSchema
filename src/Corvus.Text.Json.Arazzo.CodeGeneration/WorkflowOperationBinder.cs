@@ -176,7 +176,7 @@ public sealed class WorkflowOperationBinder
     /// <c>$sourceDescriptions.&lt;name&gt;.&lt;operationId&gt;</c> (optionally wrapped in the
     /// <c>{…}</c> embedding braces), splitting it into the source name and the bare operationId.
     /// </summary>
-    private static bool TryExtractSourceQualifiedId(
+    internal static bool TryExtractSourceQualifiedId(
         string operationId,
         [NotNullWhen(true)] out string? sourceName,
         [NotNullWhen(true)] out string? id)

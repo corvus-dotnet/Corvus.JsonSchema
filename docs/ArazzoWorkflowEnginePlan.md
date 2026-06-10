@@ -510,9 +510,10 @@ criteria half of this phase.
       is generated a single time and shared by every referrer (a diamond reuses it), while a reference to an
       ancestor on the recursion stack is rejected as a cycle. Pinned by `ArazzoCrossDocumentTests`
       (cross-document invocation + shared-source dedup).
-    - **Residual:** a cross-document `goto`/`retry` *action* target (a `$sourceDescriptions.<name>.<workflowId>`
-      on an `onSuccess`/`onFailure` action, as opposed to a sub-workflow *step*) still resolves
-      same-document; extending it follows the same source-qualified pattern on `StepActionInfo`.
+      A cross-document `goto`/`retry` *action* target (a `$sourceDescriptions.<name>.<workflowId>` on an
+      `onSuccess`/`onFailure` action, not just a sub-workflow *step*) resolves the same way — the source is
+      parsed onto `StepActionInfo` and the dispatch resolves it to the per-source namespace
+      (`ArazzoCrossDocumentTests`).
 
 ## 8. Recommended next step
 
