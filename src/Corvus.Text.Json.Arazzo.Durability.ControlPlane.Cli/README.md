@@ -15,7 +15,7 @@ arazzo-runs <command> [args] --server <url> [--token <bearer>]
 
 | Command | Description |
 |---------|-------------|
-| `list [--status <s>] [--workflow-id <id>] [--limit <n>] [--page-token <t>]` | List runs; follow `nextPageToken` to page. |
+| `list [--status <s>] [--workflow-id <id>] [--limit <n>] [--page-token <t>] [--output table\|json]` | List runs (default a table; `--output json` for piping). Follow `nextPageToken` to page. |
 | `get <runId>` | Show a run's management detail. |
 | `resume <runId> --mode <mode> …` | Resume a faulted run. `--mode` is `RetryFaultedStep` (default), `Rewind` (`--target-cursor`), `Skip` (`--target-cursor`, `--skip-outputs-file <path>`), or `StatePatch` (`--patch-file <path>`, validated against RFC 6902 before sending). JSON-valued inputs are read from files, not passed on the command line. |
 | `cancel <runId> --reason <text>` | Cancel a non-terminal run. |

@@ -36,9 +36,23 @@ public sealed class CliIntegrationTests
         (int exit, string stdout, _) = await RunAsync(host, "list", "--status", "Completed");
 
         exit.ShouldBe(0);
+        stdout.ShouldContain("Status");   // table header (table is the default output)
         stdout.ShouldContain("done-1");
         stdout.ShouldContain("done-2");
         stdout.ShouldNotContain("faulted-1");
+    }
+
+    [TestMethod]
+    public async Task List_emits_json_with_output_json()
+    {
+        await using Host host = await StartAsync();
+        await CompleteRunAsync(host.Store, "done-1", host.Clock);
+
+        (int exit, string stdout, _) = await RunAsync(host, "list", "--status", "Completed", "--output", "json");
+
+        exit.ShouldBe(0);
+        stdout.ShouldContain("\"runs\"");
+        stdout.ShouldContain("\"id\":\"done-1\"");
     }
 
     [TestMethod]

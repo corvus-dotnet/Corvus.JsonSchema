@@ -44,7 +44,7 @@ internal static class OAuthFlows
         }
 
         using var http = new HttpClient();
-        DiscoveryDocumentResponse discovery = await http.GetDiscoveryDocumentAsync(existing.Authority, cancellationToken).ConfigureAwait(false);
+        DiscoveryDocumentResponse discovery = await DiscoverAsync(http, existing.Authority, cancellationToken).ConfigureAwait(false);
         if (discovery.IsError)
         {
             return null;
@@ -94,7 +94,7 @@ internal static class OAuthFlows
     private static async Task<TokenSet> DeviceCodeAsync(OAuthConfig config, CancellationToken cancellationToken)
     {
         using var http = new HttpClient();
-        DiscoveryDocumentResponse discovery = await http.GetDiscoveryDocumentAsync(config.Authority, cancellationToken).ConfigureAwait(false);
+        DiscoveryDocumentResponse discovery = await DiscoverAsync(http, config.Authority, cancellationToken).ConfigureAwait(false);
         if (discovery.IsError)
         {
             throw new InvalidOperationException($"OIDC discovery failed: {discovery.Error}");
@@ -141,6 +141,19 @@ internal static class OAuthFlows
                     throw new InvalidOperationException($"Device sign-in failed: {token.Error}");
             }
         }
+    }
+
+    // OIDC discovery, requiring HTTPS except for a loopback authority (a local dev IdP over http).
+    private static Task<DiscoveryDocumentResponse> DiscoverAsync(HttpClient http, string authority, CancellationToken cancellationToken)
+    {
+        bool loopback = Uri.TryCreate(authority, UriKind.Absolute, out Uri? uri) && uri.IsLoopback;
+        return http.GetDiscoveryDocumentAsync(
+            new DiscoveryDocumentRequest
+            {
+                Address = authority,
+                Policy = new DiscoveryPolicy { RequireHttps = !loopback },
+            },
+            cancellationToken);
     }
 
     private static TokenSet ToTokenSet(TokenResponse token, OAuthConfig config, string? refreshToken)
@@ -249,10 +262,13 @@ internal sealed class LoopbackBrowser : IBrowser, IDisposable
 /// <summary>A small on-disk cache of the most recent <see cref="TokenSet"/>, under the user's app-data folder.</summary>
 internal static class TokenCache
 {
-    private static string CacheFilePath => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "arazzo-runs",
-        "token.json");
+    private static string CacheFilePath =>
+        Environment.GetEnvironmentVariable("ARAZZO_RUNS_TOKEN_FILE") is { Length: > 0 } overridePath
+            ? overridePath
+            : Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "arazzo-runs",
+                "token.json");
 
     public static TokenSet? Load()
     {
