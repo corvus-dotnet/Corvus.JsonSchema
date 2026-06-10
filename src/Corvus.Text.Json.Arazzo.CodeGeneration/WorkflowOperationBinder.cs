@@ -61,7 +61,16 @@ public sealed class WorkflowOperationBinder
 
         if (step.WorkflowId.IsNotUndefined())
         {
-            return new StepBinding(StepTargetKind.WorkflowId, null, step.WorkflowId.GetString());
+            string workflowId = step.WorkflowId.GetString()!;
+
+            // A cross-document sub-workflow uses the source-qualified runtime expression
+            // $sourceDescriptions.<name>.<workflowId> (§5.5.2); a plain id is same-document.
+            if (TryExtractSourceQualifiedId(workflowId, out string? workflowSource, out string? bareWorkflowId))
+            {
+                return new StepBinding(StepTargetKind.WorkflowId, null, bareWorkflowId, SubWorkflowSource: workflowSource);
+            }
+
+            return new StepBinding(StepTargetKind.WorkflowId, null, workflowId);
         }
 
         if (step.ChannelPath.IsNotUndefined())
@@ -235,8 +244,15 @@ public sealed class WorkflowOperationBinder
 /// <param name="Kind">The kind of target the step invokes.</param>
 /// <param name="Operation">The resolved operation, for an operation step; otherwise <see langword="null"/>.</param>
 /// <param name="SubWorkflowId">The sub-workflow id, for a workflow step; otherwise <see langword="null"/>.</param>
+/// <param name="Channel">The resolved AsyncAPI channel, for a channel step; otherwise <see langword="null"/>.</param>
+/// <param name="SubWorkflowSource">
+/// The <c>sourceDescriptions</c> name a cross-document sub-workflow lives in (from the
+/// <c>$sourceDescriptions.&lt;name&gt;.&lt;workflowId&gt;</c> form), or <see langword="null"/> for a
+/// same-document sub-workflow.
+/// </param>
 public readonly record struct StepBinding(
     StepTargetKind Kind,
     ResolvedOperation? Operation,
     string? SubWorkflowId,
-    ResolvedChannel? Channel = null);
+    ResolvedChannel? Channel = null,
+    string? SubWorkflowSource = null);

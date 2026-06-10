@@ -96,7 +96,7 @@ public static class ArazzoCodeGeneration
             string executorSource = WorkflowExecutorEmitter.Emit(
                 workflow,
                 binder,
-                new WorkflowExecutorOptions(workflowsNamespace, className, inputsTypeName, options.OutputsTypeName, inputAccessors, options.Durable),
+                new WorkflowExecutorOptions(workflowsNamespace, className, inputsTypeName, options.OutputsTypeName, inputAccessors, options.Durable, options.SubWorkflowSourceNamespaces),
                 components);
 
             files.Add(new GeneratedModelFile($"{DefaultWorkflowsNamespaceSuffix}/{className}.cs", executorSource));
@@ -207,7 +207,14 @@ public static class ArazzoCodeGeneration
 /// <param name="RootNamespace">The root .NET namespace (executors go under <c>&lt;RootNamespace&gt;.Workflows</c>, inputs models under <c>&lt;RootNamespace&gt;.Models.&lt;Workflow&gt;</c>).</param>
 /// <param name="OutputsTypeName">The fully-qualified type of the workflow outputs (defaults to <see cref="JsonElement"/>).</param>
 /// <param name="Durable">When <see langword="true"/>, emit durable executors (checkpoint &amp; resume capable, returning <c>WorkflowRunResult&lt;TOutputs&gt;</c>) instead of straight-line ones.</param>
+/// <param name="SubWorkflowSourceNamespaces">
+/// Map of <c>arazzo</c>-type <c>sourceDescriptions</c> name → the .NET namespace that source's workflow
+/// executors were generated into, used to resolve cross-document sub-workflow targets
+/// (<c>$sourceDescriptions.&lt;name&gt;.&lt;workflowId&gt;</c>). <see langword="null"/> when the document has
+/// no cross-document sub-workflow references.
+/// </param>
 public readonly record struct ArazzoGenerationOptions(
     string RootNamespace,
     string OutputsTypeName = "Corvus.Text.Json.JsonElement",
-    bool Durable = false);
+    bool Durable = false,
+    IReadOnlyDictionary<string, string>? SubWorkflowSourceNamespaces = null);

@@ -496,7 +496,8 @@ internal static class ControlFlowEmitter
 
         var inputs = new StringBuilder();
         string builderVariable = SubWorkflowStepEmitter.BuildInputs(fields, inputs, step.StepId, step.Arguments, stepOutputLocals, "inputs", options.InputAccessors);
-        string targetClass = SubWorkflowStepEmitter.TargetClass(options.Namespace, subWorkflowId);
+        string targetClass = SubWorkflowStepEmitter.TargetClass(
+            WorkflowExecutorEmitter.ResolveSubWorkflowNamespace(options, step.SubWorkflowSource), subWorkflowId);
 
         var c = new StringBuilder();
         c.AppendLine("{");
