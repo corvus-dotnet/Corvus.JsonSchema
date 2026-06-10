@@ -682,7 +682,7 @@ internal static class ControlFlowEmitter
         // parameters for a parameterised channel (emitted into the case body, indented).
         var addressStatements = new StringBuilder();
         string address = ChannelAddressEmitter.EmitReceiveAddress(
-            descriptor, step.Arguments, fields, addressStatements, $"{prefix}ch", stepOutputLocals, "inputs", options.InputAccessors);
+            descriptor, step.Arguments, fields, addressStatements, $"{prefix}ch", stepOutputLocals, "inputs", options.InputAccessors, out string channelText);
         WorkflowExecutorEmitter.AppendIndented(c, addressStatements.ToString(), 4);
 
         if (isResponder)
@@ -741,7 +741,9 @@ internal static class ControlFlowEmitter
         // either consumes a message a worker delivered (resume) or checkpoints a message wait and returns
         // Suspended (plan §9.4). A null run, a dynamic/parameterised address, or a responder keeps the
         // Tier-1 blocking receive.
-        bool supportsSuspend = options.Durable && !descriptor.IsDynamicAddress && descriptor.ChannelParameters.Count == 0;
+        // A parameterised address suspends durably on its resolved value (channelText); only a truly dynamic
+        // (empty-template) address, or a null run / responder, keeps the Tier-1 blocking receive.
+        bool supportsSuspend = options.Durable && !descriptor.IsDynamicAddress;
         if (!supportsSuspend)
         {
             EmitBlockingReceive(c);
@@ -750,7 +752,6 @@ internal static class ControlFlowEmitter
 
         string deliveredLocal = $"{camel}Delivered";
         string indexLiteral = index.ToString(CultureInfo.InvariantCulture);
-        string channelLiteral = EmitText.Quote(descriptor.ChannelAddress);
         string correlationIdExpression = correlationName is not null
             ? $"System.Text.Encoding.UTF8.GetString({expectedLocal})"
             : "null";
@@ -776,7 +777,7 @@ internal static class ControlFlowEmitter
             // registered); with no token the receive cannot match, so Success stays false → onFailure.
             c.Append("        else if (correlationTokens.TryGetValue(").Append(EmitText.Quote(correlationName)).Append(", out byte[]? ").Append(expectedLocal).AppendLine("))");
             c.AppendLine("        {");
-            c.Append("            WorkflowWait ").Append(camel).Append("Wait = await run.SuspendForMessageAsync(").Append(indexLiteral).Append(", ").Append(channelLiteral).Append(", ").Append(correlationIdExpression).AppendLine(", cancellationToken).ConfigureAwait(false);");
+            c.Append("            WorkflowWait ").Append(camel).Append("Wait = await run.SuspendForMessageAsync(").Append(indexLiteral).Append(", ").Append(channelText).Append(", ").Append(correlationIdExpression).AppendLine(", cancellationToken).ConfigureAwait(false);");
             c.Append("            return WorkflowRunResult<").Append(options.OutputsTypeName).Append(">.Suspended(").Append(camel).AppendLine("Wait);");
             c.AppendLine("        }");
         }
@@ -784,7 +785,7 @@ internal static class ControlFlowEmitter
         {
             c.AppendLine("        else");
             c.AppendLine("        {");
-            c.Append("            WorkflowWait ").Append(camel).Append("Wait = await run.SuspendForMessageAsync(").Append(indexLiteral).Append(", ").Append(channelLiteral).Append(", ").Append(correlationIdExpression).AppendLine(", cancellationToken).ConfigureAwait(false);");
+            c.Append("            WorkflowWait ").Append(camel).Append("Wait = await run.SuspendForMessageAsync(").Append(indexLiteral).Append(", ").Append(channelText).Append(", ").Append(correlationIdExpression).AppendLine(", cancellationToken).ConfigureAwait(false);");
             c.Append("            return WorkflowRunResult<").Append(options.OutputsTypeName).Append(">.Suspended(").Append(camel).AppendLine("Wait);");
             c.AppendLine("        }");
         }
