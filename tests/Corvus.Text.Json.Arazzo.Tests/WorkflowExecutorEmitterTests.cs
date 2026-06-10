@@ -252,11 +252,19 @@ public class WorkflowExecutorEmitterTests
         source.ShouldContain("new Acme.Pets.SearchPetsRequest {");
         source.ShouldContain(".WriteResolvedPath(");
         source.ShouldContain(".WriteQueryString(");
-        source.ShouldContain("\"?\"u8");
+        source.ShouldContain(".BeginRequestUrlQuery()");
 
-        // Static-path operation (no parameters): writes the path template, no request struct needed.
+        // Static-path operation (no path/query parameters): writes the path template from a default request.
+        source.ShouldContain("default(Acme.Pets.CreateThingRequest)");
         source.ShouldContain("Acme.Pets.CreateThingRequest.PathTemplateUtf8");
-        source.ShouldContain(".SetRequest(");
+
+        // The URL is written into a context-owned reused buffer and finalised by the runtime — the
+        // generated code allocates no per-step writer and no intermediate managed string.
+        source.ShouldContain(".BeginRequestUrl()");
+        source.ShouldContain(".EndRequestUrl(");
+        source.ShouldNotContain("PooledBufferWriter");
+        source.ShouldNotContain("new System.Buffers.ArrayBufferWriter");
+        source.ShouldNotContain("Encoding.UTF8.GetString");
     }
 
     [TestMethod]
