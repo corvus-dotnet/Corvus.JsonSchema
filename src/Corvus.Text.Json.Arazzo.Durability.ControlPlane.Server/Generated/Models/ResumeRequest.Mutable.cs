@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// How to resume a faulted run.
+/// How to resume a faulted run — a union on `mode`. Each form carries only the fields its mode needs; the `const` mode discriminates the variant.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -62,6 +62,78 @@ public readonly partial struct ResumeRequest
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Mutable(Mutable value)
+        {
+            return Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Mutable.From(value);
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Mutable(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Mutable(Mutable value)
+        {
+            return Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Mutable.From(value);
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Mutable(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Mutable(Mutable value)
+        {
+            return Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Mutable.From(value);
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Mutable(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Mutable(Mutable value)
+        {
+            return Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Mutable.From(value);
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Mutable(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Mutable value)
+        {
+            return From(value);
+        }
 
         /// <summary>
         /// Operator ==.
@@ -266,22 +338,6 @@ public readonly partial struct ResumeRequest
         }
 
         /// <summary>
-        /// Gets the (optional) <c>mode</c> property.
-        /// </summary>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeRequest.ModeEntity.Mutable Mode
-        {
-            get
-            {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ModeUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeRequest.ModeEntity.Mutable value))
-                {
-                    return value;
-                }
-
-                return Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeRequest.ModeEntity.Mutable.DefaultInstance;
-            }
-        }
-
-        /// <summary>
         /// Gets the number of properties in the object.
         /// </summary>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
@@ -321,48 +377,75 @@ public readonly partial struct ResumeRequest
         }
 
         /// <summary>
-        /// Set the <c>mode</c> property.
+        /// Apply a composed value.
         /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetMode(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeRequest.ModeEntity.Source value)
+        /// <remarks>
+        /// This will add or update any property values provided by the <paramref name="value"/>.
+        /// </remarks>
+        public void Apply(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume value)
         {
             CheckValidInstance();
 
-            if (value.IsUndefined)
+            foreach (var property in value.EnumerateObject())
             {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ModeUtf8);
-                _documentVersion = _parent.Version;
-                return;
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ModeUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Mode, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+                JsonElementHelpers.SetPropertyUnsafe(this, property);
             }
 
             _documentVersion = _parent.Version;
         }
 
         /// <summary>
-        /// Remove the <c>mode</c> property, if present.
+        /// Apply a composed value.
         /// </summary>
-        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-        public bool RemoveMode()
+        /// <remarks>
+        /// This will add or update any property values provided by the <paramref name="value"/>.
+        /// </remarks>
+        public void Apply(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume value)
         {
             CheckValidInstance();
-            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ModeUtf8);
+
+            foreach (var property in value.EnumerateObject())
+            {
+                JsonElementHelpers.SetPropertyUnsafe(this, property);
+            }
+
             _documentVersion = _parent.Version;
-            return result;
+        }
+
+        /// <summary>
+        /// Apply a composed value.
+        /// </summary>
+        /// <remarks>
+        /// This will add or update any property values provided by the <paramref name="value"/>.
+        /// </remarks>
+        public void Apply(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume value)
+        {
+            CheckValidInstance();
+
+            foreach (var property in value.EnumerateObject())
+            {
+                JsonElementHelpers.SetPropertyUnsafe(this, property);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Apply a composed value.
+        /// </summary>
+        /// <remarks>
+        /// This will add or update any property values provided by the <paramref name="value"/>.
+        /// </remarks>
+        public void Apply(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume value)
+        {
+            CheckValidInstance();
+
+            foreach (var property in value.EnumerateObject())
+            {
+                JsonElementHelpers.SetPropertyUnsafe(this, property);
+            }
+
+            _documentVersion = _parent.Version;
         }
 
         /// <inheritdoc/>
@@ -680,6 +763,160 @@ public readonly partial struct ResumeRequest
             CheckValidInstance();
             return _parent.FreezeElement<ResumeRequest>(_idx);
         }
+
+        /// <summary>
+        /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the immutable context to pass in to the match function.</typeparam>
+        /// <typeparam name="TResult">The result of calling the match function.</typeparam>
+        /// <param name="context">The context to pass to the match function.</param>
+        /// <param name="matchRetryFaultedStepResume">Match a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume"/>.</param>
+        /// <param name="matchRewindResume">Match a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume"/>.</param>
+        /// <param name="matchSkipResume">Match a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume"/>.</param>
+        /// <param name="matchStatePatchResume">Match a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume"/>.</param>
+        /// <param name="defaultMatch">Match any other value.</param>
+        /// <returns>An instance of the value returned by the match function.</returns>
+        public TResult Match<TContext, TResult>(
+            in TContext context,
+            Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume, TContext, TResult> matchRetryFaultedStepResume,
+            Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume, TContext, TResult> matchRewindResume,
+            Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume, TContext, TResult> matchSkipResume,
+            Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume, TContext, TResult> matchStatePatchResume,
+            Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeRequest.Mutable, TContext, TResult> defaultMatch)
+#if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+#endif
+        {
+            if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.JsonSchema.Evaluate(_parent, _idx))
+            {
+                return matchRetryFaultedStepResume(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Mutable.From(this), context);
+            }
+
+            if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.JsonSchema.Evaluate(_parent, _idx))
+            {
+                return matchRewindResume(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Mutable.From(this), context);
+            }
+
+            if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.JsonSchema.Evaluate(_parent, _idx))
+            {
+                return matchSkipResume(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Mutable.From(this), context);
+            }
+
+            if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.JsonSchema.Evaluate(_parent, _idx))
+            {
+                return matchStatePatchResume(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Mutable.From(this), context);
+            }
+
+            return defaultMatch(this, context);
+        }
+
+        /// <summary>
+        /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
+        /// </summary>
+        /// <typeparam name="TResult">The result of calling the match function.</typeparam>
+        /// <param name="matchRetryFaultedStepResume">Match a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume"/>.</param>
+        /// <param name="matchRewindResume">Match a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume"/>.</param>
+        /// <param name="matchSkipResume">Match a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume"/>.</param>
+        /// <param name="matchStatePatchResume">Match a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume"/>.</param>
+        /// <param name="defaultMatch">Match any other value.</param>
+        /// <returns>An instance of the value returned by the match function.</returns>
+        public TResult Match<TResult>(
+            Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume, TResult> matchRetryFaultedStepResume,
+            Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume, TResult> matchRewindResume,
+            Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume, TResult> matchSkipResume,
+            Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume, TResult> matchStatePatchResume,
+            Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeRequest.Mutable, TResult> defaultMatch)
+        {
+            if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.JsonSchema.Evaluate(_parent, _idx))
+            {
+                return matchRetryFaultedStepResume(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Mutable.From(this));
+            }
+
+            if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.JsonSchema.Evaluate(_parent, _idx))
+            {
+                return matchRewindResume(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Mutable.From(this));
+            }
+
+            if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.JsonSchema.Evaluate(_parent, _idx))
+            {
+                return matchSkipResume(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Mutable.From(this));
+            }
+
+            if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.JsonSchema.Evaluate(_parent, _idx))
+            {
+                return matchStatePatchResume(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Mutable.From(this));
+            }
+
+            return defaultMatch(this);
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Mutable" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsRetryFaultedStepResume(out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Mutable result)
+        {
+            if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.JsonSchema.Evaluate(_parent, _idx))
+            {
+                result = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Mutable.From(this);
+                return true;
+            }
+
+            result = default;
+            return false;
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Mutable" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsRewindResume(out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Mutable result)
+        {
+            if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.JsonSchema.Evaluate(_parent, _idx))
+            {
+                result = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Mutable.From(this);
+                return true;
+            }
+
+            result = default;
+            return false;
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Mutable" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsSkipResume(out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Mutable result)
+        {
+            if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.JsonSchema.Evaluate(_parent, _idx))
+            {
+                result = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Mutable.From(this);
+                return true;
+            }
+
+            result = default;
+            return false;
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Mutable" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsStatePatchResume(out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Mutable result)
+        {
+            if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.JsonSchema.Evaluate(_parent, _idx))
+            {
+                result = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Mutable.From(this);
+                return true;
+            }
+
+            result = default;
+            return false;
+        }
     }
 
     public ref struct Source
@@ -688,14 +925,26 @@ public readonly partial struct ResumeRequest
         {
             Unknown,
             JsonElement,
-            Create,
-            Builder,
+            RetryFaultedStepResumeBuilder,
+            RetryFaultedStepResumeSource,
+            RewindResumeBuilder,
+            RewindResumeSource,
+            SkipResumeBuilder,
+            SkipResumeSource,
+            StatePatchResumeBuilder,
+            StatePatchResumeSource,
         }
 
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
-        private readonly Builder.Build? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeRequest.ModeEntity.Source _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Builder.Build? _retryFaultedStepResumeBuilderInstance;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Source _retryFaultedStepResumeSourceInstance;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Builder.Build? _rewindResumeBuilderInstance;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Source _rewindResumeSourceInstance;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Builder.Build? _skipResumeBuilderInstance;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Source _skipResumeSourceInstance;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Builder.Build? _statePatchResumeBuilderInstance;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Source _statePatchResumeSourceInstance;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -708,15 +957,47 @@ public readonly partial struct ResumeRequest
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeRequest.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        public Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Builder.Build value) {_retryFaultedStepResumeBuilderInstance = value; _kind = Kind.RetryFaultedStepResumeBuilder; }
 
-        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeRequest.ModeEntity.Source arg1)
-        {
-            _createArg1 = arg1;
-            _kind = Kind.Create;
-        }
+        public Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Source value) { _retryFaultedStepResumeSourceInstance = value; _kind = Kind.RetryFaultedStepResumeSource; }
+
+        public Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Builder.Build value) {_rewindResumeBuilderInstance = value; _kind = Kind.RewindResumeBuilder; }
+
+        public Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Source value) { _rewindResumeSourceInstance = value; _kind = Kind.RewindResumeSource; }
+
+        public Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Builder.Build value) {_skipResumeBuilderInstance = value; _kind = Kind.SkipResumeBuilder; }
+
+        public Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Source value) { _skipResumeSourceInstance = value; _kind = Kind.SkipResumeSource; }
+
+        public Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Builder.Build value) {_statePatchResumeBuilderInstance = value; _kind = Kind.StatePatchResumeBuilder; }
+
+        public Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Source value) { _statePatchResumeSourceInstance = value; _kind = Kind.StatePatchResumeSource; }
 
         public static implicit operator Source(ResumeRequest instance) => new(JsonElement.From(instance));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume instance) => new(JsonElement.From(instance));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Source value) => new(value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume instance) => new(JsonElement.From(instance));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Source value) => new(value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume instance) => new(JsonElement.From(instance));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Source value) => new(value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume instance) => new(JsonElement.From(instance));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Source value) => new(value);
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -727,16 +1008,30 @@ public readonly partial struct ResumeRequest
                 case Kind.JsonElement:
                     valueBuilder.AddProperty(utf8Name, _jsonElement, escapeName, nameRequiresUnescaping);
                     break;
-                case Kind.Builder:
-                    valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                case Kind.RetryFaultedStepResumeBuilder:
+                    valueBuilder.AddProperty(utf8Name, _retryFaultedStepResumeBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
-                case Kind.Create:
-                    {
-                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_createArg1, ref valueBuilder);
-                        valueBuilder.EndProperty(handle);
-                        break;
-                    }
+                case Kind.RetryFaultedStepResumeSource:
+                    _retryFaultedStepResumeSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                    break;
+                case Kind.RewindResumeBuilder:
+                    valueBuilder.AddProperty(utf8Name, _rewindResumeBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                    break;
+                case Kind.RewindResumeSource:
+                    _rewindResumeSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                    break;
+                case Kind.SkipResumeBuilder:
+                    valueBuilder.AddProperty(utf8Name, _skipResumeBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                    break;
+                case Kind.SkipResumeSource:
+                    _skipResumeSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                    break;
+                case Kind.StatePatchResumeBuilder:
+                    valueBuilder.AddProperty(utf8Name, _statePatchResumeBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                    break;
+                case Kind.StatePatchResumeSource:
+                    _statePatchResumeSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                    break;
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -752,16 +1047,30 @@ public readonly partial struct ResumeRequest
                 case Kind.JsonElement:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
                     break;
-                case Kind.Builder:
-                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                case Kind.RetryFaultedStepResumeBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _retryFaultedStepResumeBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Builder.BuildValue(b, ref o));
                     break;
-                case Kind.Create:
-                    {
-                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_createArg1, ref valueBuilder);
-                        valueBuilder.EndProperty(handle);
-                        break;
-                    }
+                case Kind.RetryFaultedStepResumeSource:
+                    _retryFaultedStepResumeSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.RewindResumeBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _rewindResumeBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.RewindResumeSource:
+                    _rewindResumeSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.SkipResumeBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _skipResumeBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.SkipResumeSource:
+                    _skipResumeSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.StatePatchResumeBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _statePatchResumeBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.StatePatchResumeSource:
+                    _statePatchResumeSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -777,16 +1086,30 @@ public readonly partial struct ResumeRequest
                 case Kind.JsonElement:
                     valueBuilder.AddProperty(name, _jsonElement);
                     break;
-                case Kind.Builder:
-                    valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                case Kind.RetryFaultedStepResumeBuilder:
+                    valueBuilder.AddProperty(name, _retryFaultedStepResumeBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Builder.BuildValue(b, ref o));
                     break;
-                case Kind.Create:
-                    {
-                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, ref valueBuilder);
-                        valueBuilder.EndProperty(handle);
-                        break;
-                    }
+                case Kind.RetryFaultedStepResumeSource:
+                    _retryFaultedStepResumeSourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
+                case Kind.RewindResumeBuilder:
+                    valueBuilder.AddProperty(name, _rewindResumeBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.RewindResumeSource:
+                    _rewindResumeSourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
+                case Kind.SkipResumeBuilder:
+                    valueBuilder.AddProperty(name, _skipResumeBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.SkipResumeSource:
+                    _skipResumeSourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
+                case Kind.StatePatchResumeBuilder:
+                    valueBuilder.AddProperty(name, _statePatchResumeBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.StatePatchResumeSource:
+                    _statePatchResumeSourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -802,16 +1125,30 @@ public readonly partial struct ResumeRequest
                 case Kind.JsonElement:
                     valueBuilder.AddProperty(name, _jsonElement);
                     break;
-                case Kind.Builder:
-                    valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                case Kind.RetryFaultedStepResumeBuilder:
+                    valueBuilder.AddProperty(name, _retryFaultedStepResumeBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Builder.BuildValue(b, ref o));
                     break;
-                case Kind.Create:
-                    {
-                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, ref valueBuilder);
-                        valueBuilder.EndProperty(handle);
-                        break;
-                    }
+                case Kind.RetryFaultedStepResumeSource:
+                    _retryFaultedStepResumeSourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
+                case Kind.RewindResumeBuilder:
+                    valueBuilder.AddProperty(name, _rewindResumeBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.RewindResumeSource:
+                    _rewindResumeSourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
+                case Kind.SkipResumeBuilder:
+                    valueBuilder.AddProperty(name, _skipResumeBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.SkipResumeSource:
+                    _skipResumeSourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
+                case Kind.StatePatchResumeBuilder:
+                    valueBuilder.AddProperty(name, _statePatchResumeBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.StatePatchResumeSource:
+                    _statePatchResumeSourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -827,16 +1164,30 @@ public readonly partial struct ResumeRequest
                 case Kind.JsonElement:
                     valueBuilder.AddItem(_jsonElement);
                     break;
-                case Kind.Builder:
-                    valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                case Kind.RetryFaultedStepResumeBuilder:
+                    valueBuilder.AddItem(_retryFaultedStepResumeBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Builder.BuildValue(b, ref o));
                     break;
-                case Kind.Create:
-                    {
-                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_createArg1, ref valueBuilder);
-                        valueBuilder.EndItem(handle);
-                        break;
-                    }
+                case Kind.RetryFaultedStepResumeSource:
+                    _retryFaultedStepResumeSourceInstance.AddAsItem(ref valueBuilder);
+                    break;
+                case Kind.RewindResumeBuilder:
+                    valueBuilder.AddItem(_rewindResumeBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.RewindResumeSource:
+                    _rewindResumeSourceInstance.AddAsItem(ref valueBuilder);
+                    break;
+                case Kind.SkipResumeBuilder:
+                    valueBuilder.AddItem(_skipResumeBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.SkipResumeSource:
+                    _skipResumeSourceInstance.AddAsItem(ref valueBuilder);
+                    break;
+                case Kind.StatePatchResumeBuilder:
+                    valueBuilder.AddItem(_statePatchResumeBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.StatePatchResumeSource:
+                    _statePatchResumeSourceInstance.AddAsItem(ref valueBuilder);
+                    break;
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -853,13 +1204,19 @@ public readonly partial struct ResumeRequest
         {
             Unknown,
             Source,
-            Builder,
+            RetryFaultedStepResumeBuilder,
+            RewindResumeBuilder,
+            SkipResumeBuilder,
+            StatePatchResumeBuilder,
         }
 
         private readonly Kind _kind;
         TContext _context;
         Source _source;
-        private readonly Builder.Build<TContext>? _objectBuilder;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Builder.Build<TContext>? _retryFaultedStepResumeBuilderInstance;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Builder.Build<TContext>? _rewindResumeBuilderInstance;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Builder.Build<TContext>? _skipResumeBuilderInstance;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Builder.Build<TContext>? _statePatchResumeBuilderInstance;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -870,7 +1227,13 @@ public readonly partial struct ResumeRequest
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeRequest.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        public Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Builder.Build<TContext> value) {_context = context; _retryFaultedStepResumeBuilderInstance = value; _kind = Kind.RetryFaultedStepResumeBuilder; }
+
+        public Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Builder.Build<TContext> value) {_context = context; _rewindResumeBuilderInstance = value; _kind = Kind.RewindResumeBuilder; }
+
+        public Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Builder.Build<TContext> value) {_context = context; _skipResumeBuilderInstance = value; _kind = Kind.SkipResumeBuilder; }
+
+        public Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Builder.Build<TContext> value) {_context = context; _statePatchResumeBuilderInstance = value; _kind = Kind.StatePatchResumeBuilder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -881,8 +1244,17 @@ public readonly partial struct ResumeRequest
                 case Kind.Source:
                     _source.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                     break;
-                case Kind.Builder:
-                    valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                case Kind.RetryFaultedStepResumeBuilder:
+                    valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _retryFaultedStepResumeBuilderInstance!), static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                    break;
+                case Kind.RewindResumeBuilder:
+                    valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _rewindResumeBuilderInstance!), static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                    break;
+                case Kind.SkipResumeBuilder:
+                    valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _skipResumeBuilderInstance!), static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                    break;
+                case Kind.StatePatchResumeBuilder:
+                    valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _statePatchResumeBuilderInstance!), static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -899,8 +1271,17 @@ public readonly partial struct ResumeRequest
                 case Kind.Source:
                     _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                     break;
-                case Kind.Builder:
-                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                case Kind.RetryFaultedStepResumeBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _retryFaultedStepResumeBuilderInstance!), static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.RewindResumeBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _rewindResumeBuilderInstance!), static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.SkipResumeBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _skipResumeBuilderInstance!), static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.StatePatchResumeBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _statePatchResumeBuilderInstance!), static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -917,8 +1298,17 @@ public readonly partial struct ResumeRequest
                 case Kind.Source:
                     _source.AddAsProperty(name, ref valueBuilder);
                     break;
-                case Kind.Builder:
-                    valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                case Kind.RetryFaultedStepResumeBuilder:
+                    valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _retryFaultedStepResumeBuilderInstance!), static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.RewindResumeBuilder:
+                    valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _rewindResumeBuilderInstance!), static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.SkipResumeBuilder:
+                    valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _skipResumeBuilderInstance!), static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.StatePatchResumeBuilder:
+                    valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _statePatchResumeBuilderInstance!), static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -935,8 +1325,17 @@ public readonly partial struct ResumeRequest
                 case Kind.Source:
                     _source.AddAsProperty(name, ref valueBuilder);
                     break;
-                case Kind.Builder:
-                    valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                case Kind.RetryFaultedStepResumeBuilder:
+                    valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _retryFaultedStepResumeBuilderInstance!), static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.RewindResumeBuilder:
+                    valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _rewindResumeBuilderInstance!), static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.SkipResumeBuilder:
+                    valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _skipResumeBuilderInstance!), static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.StatePatchResumeBuilder:
+                    valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _statePatchResumeBuilderInstance!), static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -953,152 +1352,22 @@ public readonly partial struct ResumeRequest
                 case Kind.Source:
                     _source.AddAsItem(ref valueBuilder);
                     break;
-                case Kind.Builder:
-                    valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                case Kind.RetryFaultedStepResumeBuilder:
+                    valueBuilder.AddItem(BuildWithContext.Create(_context, _retryFaultedStepResumeBuilderInstance!), static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.RewindResumeBuilder:
+                    valueBuilder.AddItem(BuildWithContext.Create(_context, _rewindResumeBuilderInstance!), static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.SkipResumeBuilder:
+                    valueBuilder.AddItem(BuildWithContext.Create(_context, _skipResumeBuilderInstance!), static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.StatePatchResumeBuilder:
+                    valueBuilder.AddItem(BuildWithContext.Create(_context, _statePatchResumeBuilderInstance!), static (in b, ref o) => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
             }
-        }
-    }
-
-    public ref struct Builder
-    {
-        public delegate void Build(ref Builder builder);
-
-#if NET9_0_OR_GREATER
-        public delegate void Build<TContext>(in TContext context, ref Builder builder)
-            where TContext : allows ref struct;
-#else
-        public delegate void Build<TContext>(in TContext context, ref Builder builder);
-#endif
-
-        internal ComplexValueBuilder _builder;
-
-        internal Builder(ComplexValueBuilder builder)
-        {
-            _builder = builder;
-        }
-
-        /// <summary>
-        /// Creates an instance of a <see cref="ResumeRequest"/>.
-        /// </summary>
-        internal static void Create(ref ComplexValueBuilder builder, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeRequest.ModeEntity.Source mode = default)
-        {
-            mode.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Mode, ref builder);
-        }
-
-        /// <summary>
-        /// Creates an instance of a <see cref="ResumeRequest"/>.
-        /// </summary>
-        public void Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeRequest.ModeEntity.Source mode = default)
-        {
-            Create(ref _builder, mode);
-        }
-
-        /// <summary>
-        /// Add a property to the object.
-        /// </summary>
-        /// <param name="propertyName">The name of the property to add.</param>
-        /// <param name="value">The value of the property to add.</param>
-        public void AddProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
-        {
-            value.AddAsProperty(propertyName, ref _builder);
-        }
-
-        /// <summary>
-        /// Add a property to the object.
-        /// </summary>
-        /// <param name="propertyName">The name of the property to add.</param>
-        /// <param name="value">The value of the property to add.</param>
-        public void AddProperty<TContext>(ReadOnlySpan<byte> propertyName, in JsonElement.Source<TContext> value)
-#if NET9_0_OR_GREATER
-            where TContext : allows ref struct
-#endif
-        {
-            value.AddAsProperty(propertyName, ref _builder);
-        }
-
-        /// <summary>
-        /// Add a property to the object.
-        /// </summary>
-        /// <param name="propertyName">The name of the property to add.</param>
-        /// <param name="value">The value of the property to add.</param>
-        public void AddProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
-        {
-            value.AddAsProperty(propertyName, ref _builder);
-        }
-
-        /// <summary>
-        /// Add a property to the object.
-        /// </summary>
-        /// <param name="propertyName">The name of the property to add.</param>
-        /// <param name="value">The value of the property to add.</param>
-        public void AddProperty<TContext>(ReadOnlySpan<char> propertyName, in JsonElement.Source<TContext> value)
-#if NET9_0_OR_GREATER
-            where TContext : allows ref struct
-#endif
-        {
-            value.AddAsProperty(propertyName, ref _builder);
-        }
-
-        /// <summary>
-        /// Add a property to the object.
-        /// </summary>
-        /// <param name="propertyName">The name of the property to add.</param>
-        /// <param name="value">The value of the property to add.</param>
-        public void AddProperty(string propertyName, in JsonElement.Source value)
-        {
-            value.AddAsProperty(propertyName, ref _builder);
-        }
-
-        /// <summary>
-        /// Add a property to the object.
-        /// </summary>
-        /// <param name="propertyName">The name of the property to add.</param>
-        /// <param name="value">The value of the property to add.</param>
-        public void AddProperty<TContext>(string propertyName, in JsonElement.Source<TContext> value)
-#if NET9_0_OR_GREATER
-            where TContext : allows ref struct
-#endif
-        {
-            value.AddAsProperty(propertyName, ref _builder);
-        }
-
-        internal static void BuildValue(Build value, ref ComplexValueBuilder o)
-        {
-            o.StartObject();
-
-            Builder ovb = new(o);
-            value(ref ovb);
-            o = ovb._builder;
-            o.EndObject();
-        }
-
-        internal static void BuildValue<TContext>(in TContext context, Build<TContext> value, ref ComplexValueBuilder o)
-#if NET9_0_OR_GREATER
-            where TContext : allows ref struct
-#endif
-        {
-            o.StartObject();
-
-            Builder ovb = new(o);
-            value(context, ref ovb);
-            o = ovb._builder;
-            o.EndObject();
-        }
-
-        /// <summary>
-        /// Builds the object value directly from its captured property values into the given complex value builder.
-        /// </summary>
-        /// <param name="arg1">The value of the property.</param>
-        /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeRequest.ModeEntity.Source arg1, ref ComplexValueBuilder o)
-        {
-            o.StartObject();
-            Create(ref o, arg1);
-            o.EndObject();
         }
     }
 
@@ -1108,10 +1377,10 @@ public readonly partial struct ResumeRequest
     /// <param name="buildValue">The callback that builds the value.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(
-        scoped in Builder.Build buildValue, int initialCapacity = 1)
+    public static Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Source Build(
+        scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Builder.Build buildValue, int initialCapacity = 1)
     {
-        return new Source(buildValue);
+        return new Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Source(buildValue);
     }
 
     /// <summary>
@@ -1122,23 +1391,100 @@ public readonly partial struct ResumeRequest
     /// <param name="buildValue">The callback that builds the value.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(
-        scoped in TContext context, scoped in Builder.Build<TContext> buildValue, int initialCapacity = 1)
+    public static Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Source<TContext> Build<TContext>(
+        scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Builder.Build<TContext> buildValue, int initialCapacity = 1)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
     {
-        return new Source<TContext>(context, buildValue);
+        return new Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Source<TContext>(context, buildValue);
     }
 
     /// <summary>
-    /// Build an instance of the value directly from its property values.
+    /// Build an instance of the value.
     /// </summary>
-    /// <param name="mode">The value of the <c>"mode"</c> property.</param>
+    /// <param name="buildValue">The callback that builds the value.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeRequest.ModeEntity.Source mode = default)
+    public static Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Source Build(
+        scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Builder.Build buildValue, int initialCapacity = 1)
     {
-        return new Source(mode);
+        return new Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Source(buildValue);
+    }
+
+    /// <summary>
+    /// Build an instance of the value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="buildValue">The callback that builds the value.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Source<TContext> Build<TContext>(
+        scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Builder.Build<TContext> buildValue, int initialCapacity = 1)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        return new Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Source<TContext>(context, buildValue);
+    }
+
+    /// <summary>
+    /// Build an instance of the value.
+    /// </summary>
+    /// <param name="buildValue">The callback that builds the value.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Source Build(
+        scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Builder.Build buildValue, int initialCapacity = 1)
+    {
+        return new Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Source(buildValue);
+    }
+
+    /// <summary>
+    /// Build an instance of the value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="buildValue">The callback that builds the value.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Source<TContext> Build<TContext>(
+        scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Builder.Build<TContext> buildValue, int initialCapacity = 1)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        return new Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Source<TContext>(context, buildValue);
+    }
+
+    /// <summary>
+    /// Build an instance of the value.
+    /// </summary>
+    /// <param name="buildValue">The callback that builds the value.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Source Build(
+        scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Builder.Build buildValue, int initialCapacity = 1)
+    {
+        return new Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Source(buildValue);
+    }
+
+    /// <summary>
+    /// Build an instance of the value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="buildValue">The callback that builds the value.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Source<TContext> Build<TContext>(
+        scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Builder.Build<TContext> buildValue, int initialCapacity = 1)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        return new Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Source<TContext>(context, buildValue);
     }
 
     /// <summary>
@@ -1187,12 +1533,12 @@ public readonly partial struct ResumeRequest
     /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
     /// <returns>An instance of a mutable document initialized with the given value.</returns>
     public static JsonDocumentBuilder<Mutable> CreateBuilder(
-        JsonWorkspace workspace, scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        JsonWorkspace workspace, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
     {
         // Create the document builder without a MetadataDb
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
-        var source = new Source(value);
+        var source = new Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Source(value);
         source.AddAsItem(ref cvb);
         Debug.Assert(cvb.MemberCount == 1);
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1210,7 +1556,7 @@ public readonly partial struct ResumeRequest
     /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
     /// <returns>An instance of a mutable document initialized with the given value.</returns>
     public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-        JsonWorkspace workspace, scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1218,7 +1564,7 @@ public readonly partial struct ResumeRequest
         // Create the document builder without a MetadataDb
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
-        var source = new Source<TContext>(context, value);
+        var source = new Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Source<TContext>(context, value);
         source.AddAsItem(ref cvb);
         Debug.Assert(cvb.MemberCount == 1);
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1226,21 +1572,142 @@ public readonly partial struct ResumeRequest
     }
 
     /// <summary>
-    /// Creates and initializes a mutable document from the given property values.
+    /// Creates and initializes a mutable document from a value.
     /// </summary>
     /// <param name="workspace">The JSON workspace.</param>
-    /// <param name="mode">The value of the property.</param>
+    /// <param name="value">The value with which to initialize the builder.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
-    /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeRequest.ModeEntity.Source mode = default, int initialCapacity = 30)
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>An instance of a mutable document initialized with the given value.</returns>
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(
+        JsonWorkspace workspace, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
     {
-        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+        // Create the document builder without a MetadataDb
+        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
-        cvb.StartObject();
-        Builder ovb = new(cvb);
-        ovb.Create(mode);
-        cvb = ovb._builder;
-        cvb.EndObject();
+        var source = new Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Source(value);
+        source.AddAsItem(ref cvb);
+        Debug.Assert(cvb.MemberCount == 1);
+        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+        return documentBuilder;
+    }
+
+    /// <summary>
+    /// Creates and initializes a mutable document from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="workspace">The JSON workspace.</param>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the builder.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>An instance of a mutable document initialized with the given value.</returns>
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
+        JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        // Create the document builder without a MetadataDb
+        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
+        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+        var source = new Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Source<TContext>(context, value);
+        source.AddAsItem(ref cvb);
+        Debug.Assert(cvb.MemberCount == 1);
+        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+        return documentBuilder;
+    }
+
+    /// <summary>
+    /// Creates and initializes a mutable document from a value.
+    /// </summary>
+    /// <param name="workspace">The JSON workspace.</param>
+    /// <param name="value">The value with which to initialize the builder.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>An instance of a mutable document initialized with the given value.</returns>
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(
+        JsonWorkspace workspace, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        // Create the document builder without a MetadataDb
+        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
+        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+        var source = new Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Source(value);
+        source.AddAsItem(ref cvb);
+        Debug.Assert(cvb.MemberCount == 1);
+        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+        return documentBuilder;
+    }
+
+    /// <summary>
+    /// Creates and initializes a mutable document from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="workspace">The JSON workspace.</param>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the builder.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>An instance of a mutable document initialized with the given value.</returns>
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
+        JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        // Create the document builder without a MetadataDb
+        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
+        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+        var source = new Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Source<TContext>(context, value);
+        source.AddAsItem(ref cvb);
+        Debug.Assert(cvb.MemberCount == 1);
+        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+        return documentBuilder;
+    }
+
+    /// <summary>
+    /// Creates and initializes a mutable document from a value.
+    /// </summary>
+    /// <param name="workspace">The JSON workspace.</param>
+    /// <param name="value">The value with which to initialize the builder.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>An instance of a mutable document initialized with the given value.</returns>
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(
+        JsonWorkspace workspace, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        // Create the document builder without a MetadataDb
+        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
+        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+        var source = new Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Source(value);
+        source.AddAsItem(ref cvb);
+        Debug.Assert(cvb.MemberCount == 1);
+        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+        return documentBuilder;
+    }
+
+    /// <summary>
+    /// Creates and initializes a mutable document from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="workspace">The JSON workspace.</param>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the builder.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>An instance of a mutable document initialized with the given value.</returns>
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
+        JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        // Create the document builder without a MetadataDb
+        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
+        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+        var source = new Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Source<TContext>(context, value);
+        source.AddAsItem(ref cvb);
+        Debug.Assert(cvb.MemberCount == 1);
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         return documentBuilder;
     }

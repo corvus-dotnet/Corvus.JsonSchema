@@ -51,10 +51,26 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
     }
 
     /// <inheritdoc/>
+    public async ValueTask<DeleteRunResult> HandleDeleteRunAsync(DeleteRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string runId = (string)parameters.RunId;
+        WorkflowRunDetail? detail = await this.management.GetAsync(runId, cancellationToken).ConfigureAwait(false);
+        if (detail is null)
+        {
+            return DeleteRunResult.NotFound(NotFoundProblem(runId), workspace);
+        }
+
+        return await this.management.DeleteAsync(runId, cancellationToken).ConfigureAwait(false)
+            ? DeleteRunResult.NoContent()
+            : DeleteRunResult.Conflict(Problem("not-deletable", "Run is not deletable", 409, $"Run '{runId}' is held by another owner; retry."), workspace);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ResumeRunResult> HandleResumeRunAsync(ResumeRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string runId = (string)parameters.RunId;
-        if (await this.management.ResumeAsync(runId, ResumeOptions.RetryFaultedStep, cancellationToken).ConfigureAwait(false))
+        ResumeOptions options = ToResumeOptions(parameters.Body);
+        if (await this.management.ResumeAsync(runId, options, cancellationToken).ConfigureAwait(false))
         {
             WorkflowRunDetail? resumed = await this.management.GetAsync(runId, cancellationToken).ConfigureAwait(false);
             return resumed is { } d
@@ -96,6 +112,25 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         return PurgeRunsResult.Ok(
             new Models.PurgeResult.Source((ref Models.PurgeResult.Builder b) => b.Create(purgedCount: purged)),
             workspace);
+    }
+
+    // Map the generated ResumeRequest union onto the engine's ResumeOptions by matching the variant the
+    // `mode` const selected. An absent body (the request body is optional) means a plain retry.
+    private static ResumeOptions ToResumeOptions(in Models.ResumeRequest body)
+    {
+        if (body.ValueKind != JsonValueKind.Object)
+        {
+            return ResumeOptions.RetryFaultedStep;
+        }
+
+        return body.Match(
+            static (in Models.RetryFaultedStepResume _) => ResumeOptions.RetryFaultedStep,
+            static (in Models.RewindResume r) => ResumeOptions.Rewind(r.TargetCursor),
+            static (in Models.SkipResume r) => ResumeOptions.Skip(
+                r.SkipOutputs,
+                r.TargetCursor.IsNotUndefined() ? r.TargetCursor : (int?)null),
+            static (in Models.StatePatchResume r) => ResumeOptions.StatePatch(r.Patch),
+            static (in Models.ResumeRequest _) => ResumeOptions.RetryFaultedStep);
     }
 
     private static Models.WorkflowRunDetail.Source BuildDetail(WorkflowRunDetail d)
