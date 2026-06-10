@@ -1,0 +1,406 @@
+{
+  "openapi": "3.2.0",
+  "$self": "https://corvus-oss.org/arazzo/control-plane/openapi.json",
+  "info": {
+    "title": "Arazzo Workflow Control Plane API",
+    "summary": "Inspect and remediate durable Arazzo workflow runs.",
+    "description": "A REST surface over the Arazzo durability control plane (`IWorkflowManagementClient`, plan §11): list and inspect runs, resume a faulted run, cancel a run, and reap terminal ones. It is the workflow-level analogue of dead-letter inspection and redelivery. Every control action takes a single-owner lease and writes under optimistic concurrency, so concurrent operators — or an operator and a worker — cannot conflict. This document is the contract a CLI (`arazzo-runs`) and other clients are generated against; an implementation maps each operation onto the corresponding `IWorkflowManagementClient` method over a chosen durability store.",
+    "version": "0.1.0",
+    "license": { "name": "Apache-2.0", "identifier": "Apache-2.0" }
+  },
+  "servers": [
+    {
+      "url": "{scheme}://{host}/arazzo/v1",
+      "description": "The control-plane host (a service the operator deploys alongside its durability store).",
+      "variables": {
+        "scheme": { "enum": ["https", "http"], "default": "https" },
+        "host": { "default": "localhost:8080" }
+      }
+    }
+  ],
+  "security": [{ "bearerAuth": [] }],
+  "tags": [
+    {
+      "name": "runs",
+      "summary": "Workflow runs",
+      "description": "Visibility and remediation for durable workflow runs."
+    }
+  ],
+  "paths": {
+    "/runs": {
+      "get": {
+        "operationId": "listRuns",
+        "tags": ["runs"],
+        "summary": "List runs",
+        "description": "Returns a page of runs matching the visibility query. Backed by the store's wait/visibility index (the same index Tier 2 uses for wakeups), so the filters are answered server-side.",
+        "parameters": [
+          { "$ref": "#/components/parameters/StatusQuery" },
+          { "$ref": "#/components/parameters/WorkflowIdQuery" },
+          { "$ref": "#/components/parameters/LimitQuery" },
+          { "$ref": "#/components/parameters/PageTokenQuery" }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of matching runs.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WorkflowRunPage" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      },
+      "additionalOperations": {
+        "PURGE": {
+          "operationId": "purgeRuns",
+          "tags": ["runs"],
+          "summary": "Purge terminal runs",
+          "description": "Reaps completed and cancelled runs last updated strictly before `olderThan`, up to `limit`. Non-terminal runs (including faulted ones, which are terminal-but-recoverable) are never purged.",
+          "parameters": [
+            { "$ref": "#/components/parameters/OlderThanQuery" },
+            { "$ref": "#/components/parameters/LimitQuery" }
+          ],
+          "responses": {
+            "200": {
+              "description": "The number of runs deleted.",
+              "content": {
+                "application/json": {
+                  "schema": { "$ref": "#/components/schemas/PurgeResult" }
+                }
+              }
+            },
+            "400": { "$ref": "#/components/responses/BadRequest" }
+          }
+        }
+      }
+    },
+    "/runs/{runId}": {
+      "parameters": [{ "$ref": "#/components/parameters/RunIdPath" }],
+      "get": {
+        "operationId": "getRun",
+        "tags": ["runs"],
+        "summary": "Get a run",
+        "description": "Returns a run's management detail — status, cursor, wait/fault detail and etag — from its authoritative checkpoint.",
+        "responses": {
+          "200": {
+            "description": "The run detail.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WorkflowRunDetail" }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/runs/{runId}/resume": {
+      "parameters": [{ "$ref": "#/components/parameters/RunIdPath" }],
+      "post": {
+        "operationId": "resumeRun",
+        "tags": ["runs"],
+        "summary": "Resume a faulted run",
+        "description": "Resumes a faulted run, re-executing it from its last checkpoint (the faulted step). Only a run in the `Faulted` state can be resumed. Returns the run's new detail on success. An implementation MAY process the resume asynchronously and instead return `202 Accepted`.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ResumeRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The run was resumed; the body is its new detail.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WorkflowRunDetail" }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/runs/{runId}/cancel": {
+      "parameters": [{ "$ref": "#/components/parameters/RunIdPath" }],
+      "post": {
+        "operationId": "cancelRun",
+        "tags": ["runs"],
+        "summary": "Cancel a run",
+        "description": "Cancels a non-terminal run, marking it `Cancelled` (any fault record is kept for post-mortem visibility). Returns the run's new detail on success.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CancelRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The run was cancelled; the body is its new detail.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WorkflowRunDetail" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "The control plane is privileged; protect it with a bearer token (e.g. an operator/management identity)."
+      }
+    },
+    "parameters": {
+      "RunIdPath": {
+        "name": "runId",
+        "in": "path",
+        "required": true,
+        "description": "The run id.",
+        "schema": { "type": "string" }
+      },
+      "StatusQuery": {
+        "name": "status",
+        "in": "query",
+        "required": false,
+        "description": "Restrict to runs in this lifecycle status.",
+        "schema": { "$ref": "#/components/schemas/WorkflowRunStatus" }
+      },
+      "WorkflowIdQuery": {
+        "name": "workflowId",
+        "in": "query",
+        "required": false,
+        "description": "Restrict to runs of this workflow.",
+        "schema": { "type": "string" }
+      },
+      "LimitQuery": {
+        "name": "limit",
+        "in": "query",
+        "required": false,
+        "description": "The maximum number of runs to return (or delete, for purge).",
+        "schema": { "type": "integer", "minimum": 1, "maximum": 1000, "default": 100 }
+      },
+      "PageTokenQuery": {
+        "name": "pageToken",
+        "in": "query",
+        "required": false,
+        "description": "An opaque continuation token from a previous page's `nextPageToken`, for paging.",
+        "schema": { "type": "string" }
+      },
+      "OlderThanQuery": {
+        "name": "olderThan",
+        "in": "query",
+        "required": true,
+        "description": "Reap terminal runs last updated strictly before this instant (RFC 3339 date-time).",
+        "schema": { "type": "string", "format": "date-time" }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "The request was malformed.",
+        "content": {
+          "application/problem+json": {
+            "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "No run with that id exists.",
+        "content": {
+          "application/problem+json": {
+            "schema": { "$ref": "#/components/schemas/ProblemDetails" },
+            "examples": {
+              "notFound": {
+                "value": {
+                  "type": "https://corvus-oss.org/arazzo/control-plane/problems/run-not-found",
+                  "title": "Run not found",
+                  "status": 404,
+                  "detail": "No run with id 'adopt-42' exists."
+                }
+              }
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "The action does not apply in the run's current state, or the run is held by another owner (lease) or was changed concurrently.",
+        "content": {
+          "application/problem+json": {
+            "schema": { "$ref": "#/components/schemas/ProblemDetails" },
+            "examples": {
+              "notFaulted": {
+                "summary": "Resume requested for a run that is not faulted",
+                "value": {
+                  "type": "https://corvus-oss.org/arazzo/control-plane/problems/not-resumable",
+                  "title": "Run is not resumable",
+                  "status": 409,
+                  "detail": "Run 'adopt-42' is Completed; only a Faulted run can be resumed."
+                }
+              },
+              "leaseHeld": {
+                "summary": "Another owner holds the run's lease",
+                "value": {
+                  "type": "https://corvus-oss.org/arazzo/control-plane/problems/lease-held",
+                  "title": "Run is busy",
+                  "status": 409,
+                  "detail": "Run 'adopt-42' is currently held by another owner."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "WorkflowRunStatus": {
+        "type": "string",
+        "description": "A run's lifecycle status. `Faulted` is terminal-but-recoverable (awaiting remediation); `Completed` and `Cancelled` are terminal.",
+        "enum": ["Pending", "Running", "Suspended", "Completed", "Cancelled", "Faulted"]
+      },
+      "WorkflowWaitKind": {
+        "type": "string",
+        "description": "What a suspended run is waiting for.",
+        "enum": ["Timer", "Message"]
+      },
+      "WorkflowWait": {
+        "type": "object",
+        "description": "Why a run is suspended.",
+        "properties": {
+          "kind": { "$ref": "#/components/schemas/WorkflowWaitKind" },
+          "dueAt": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "When a timer wait becomes due (set for `Timer`)."
+          },
+          "channel": {
+            "type": ["string", "null"],
+            "description": "The channel a message wait listens on (set for `Message`)."
+          },
+          "correlationId": {
+            "type": ["string", "null"],
+            "description": "The correlation id a message wait matches, if any."
+          }
+        },
+        "required": ["kind"]
+      },
+      "WorkflowFault": {
+        "type": "object",
+        "description": "A run's fault record (terminal-but-recoverable failure).",
+        "properties": {
+          "stepId": { "type": "string", "description": "The step that faulted." },
+          "attempt": { "type": "integer", "description": "The attempt count at the fault." },
+          "error": { "type": "string", "description": "The error type/message." },
+          "at": { "type": "string", "format": "date-time", "description": "When the fault occurred." }
+        },
+        "required": ["stepId", "attempt", "error", "at"]
+      },
+      "WorkflowRunSummary": {
+        "type": "object",
+        "description": "A run as projected into the visibility index (one entry in a page).",
+        "properties": {
+          "id": { "type": "string" },
+          "workflowId": { "type": "string" },
+          "status": { "$ref": "#/components/schemas/WorkflowRunStatus" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "dueAt": { "type": ["string", "null"], "format": "date-time" },
+          "awaitingChannel": { "type": ["string", "null"] },
+          "awaitingCorrelationId": { "type": ["string", "null"] },
+          "errorType": { "type": ["string", "null"], "description": "The fault error, if the run is/was faulted." }
+        },
+        "required": ["id", "workflowId", "status", "createdAt", "updatedAt"]
+      },
+      "WorkflowRunPage": {
+        "type": "object",
+        "description": "A page of runs matching a visibility query.",
+        "properties": {
+          "runs": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/WorkflowRunSummary" }
+          },
+          "nextPageToken": {
+            "type": ["string", "null"],
+            "description": "An opaque token to fetch the next page, or null/absent if this is the last page."
+          }
+        },
+        "required": ["runs"]
+      },
+      "WorkflowRunDetail": {
+        "type": "object",
+        "description": "A run's management detail, read from its authoritative checkpoint.",
+        "properties": {
+          "id": { "type": "string" },
+          "workflowId": { "type": "string" },
+          "status": { "$ref": "#/components/schemas/WorkflowRunStatus" },
+          "cursor": { "type": "integer", "description": "The state-machine index of the next step to run." },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "wait": {
+            "description": "Why the run is suspended, if it is.",
+            "anyOf": [{ "$ref": "#/components/schemas/WorkflowWait" }, { "type": "null" }]
+          },
+          "fault": {
+            "description": "The fault record if the run is (or was) faulted.",
+            "anyOf": [{ "$ref": "#/components/schemas/WorkflowFault" }, { "type": "null" }]
+          },
+          "etag": { "type": "string", "description": "The optimistic-concurrency token the checkpoint was read at." }
+        },
+        "required": ["id", "workflowId", "status", "cursor", "createdAt", "etag"]
+      },
+      "ResumeMode": {
+        "type": "string",
+        "description": "How to resume a run. Only `RetryFaultedStep` is supported today; `Rewind`, `Skip`, and `StatePatch` are reserved.",
+        "enum": ["RetryFaultedStep"]
+      },
+      "ResumeRequest": {
+        "type": "object",
+        "description": "How to resume a faulted run.",
+        "properties": {
+          "mode": {
+            "allOf": [{ "$ref": "#/components/schemas/ResumeMode" }],
+            "default": "RetryFaultedStep"
+          }
+        }
+      },
+      "CancelRequest": {
+        "type": "object",
+        "description": "A request to cancel a run.",
+        "properties": {
+          "reason": { "type": "string", "description": "An operator-supplied reason for the cancellation (recorded for audit)." }
+        },
+        "required": ["reason"]
+      },
+      "PurgeResult": {
+        "type": "object",
+        "description": "The outcome of a purge.",
+        "properties": {
+          "purgedCount": { "type": "integer", "description": "The number of runs deleted." }
+        },
+        "required": ["purgedCount"]
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "description": "An RFC 9457 problem detail.",
+        "properties": {
+          "type": { "type": "string", "format": "uri" },
+          "title": { "type": "string" },
+          "status": { "type": "integer" },
+          "detail": { "type": "string" },
+          "instance": { "type": "string" }
+        }
+      }
+    }
+  }
+}
