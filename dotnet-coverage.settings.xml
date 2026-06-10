@@ -41,6 +41,12 @@
         <ModulePath>.*Corvus\.Text\.Json\.AsyncApi\.WebSocket\.dll$</ModulePath>
         <ModulePath>.*Corvus\.Text\.Json\.AsyncApi\.AzureServiceBus\.dll$</ModulePath>
         <ModulePath>.*Corvus\.Text\.Json\.AsyncApi\.Testing\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.Arazzo\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.Arazzo10\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.Arazzo11\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.Arazzo\.CodeGeneration\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.Arazzo\.Testing\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.Arazzo\.Durability\.dll$</ModulePath>
       </Include>
     </ModulePaths>
     <Sources>
