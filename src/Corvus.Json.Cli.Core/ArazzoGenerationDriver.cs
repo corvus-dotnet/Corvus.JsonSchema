@@ -54,23 +54,79 @@ internal static class ArazzoGenerationDriver
         byte[] arazzoBytes = documentLoader(arazzoRetrievalUri)
             ?? throw new FileNotFoundException($"The Arazzo document '{arazzoFilePath}' could not be loaded.", arazzoFilePath);
 
-        // Generate the client/models for each source description and collect its operations (OpenAPI)
-        // or channel operations (AsyncAPI).
+        Uri baseUri = ComputeBaseUri(arazzoBytes, arazzoRetrievalUri);
+        var written = new List<string>();
+
+        // Cross-document bookkeeping: `ancestors` is the current recursion stack (a document that
+        // references one of its own ancestors is a true cycle), while `generated` maps each already-
+        // generated Arazzo document's identity to the namespace its workflows landed in — so a document
+        // reachable by several paths (a diamond) is generated exactly once and every referrer reuses it.
+        var ancestors = new HashSet<string>(StringComparer.Ordinal);
+        var generated = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        await GenerateDocumentAsync(
+            arazzoBytes, baseUri, rootNamespace, outputPath, clientName, durable, documentLoader, ancestors, generated, written, cancellationToken)
+            .ConfigureAwait(false);
+
+        return written;
+    }
+
+    /// <summary>
+    /// Generates one Arazzo document (and the OpenAPI/AsyncAPI clients its sources reference), recursing
+    /// into <c>arazzo</c>-type sources so cross-document sub-workflows
+    /// (<c>$sourceDescriptions.&lt;name&gt;.&lt;workflowId&gt;</c>) have a generated executor to call. Written
+    /// file paths accumulate into <paramref name="written"/>. <paramref name="ancestors"/> (the recursion
+    /// stack) detects true cycles; <paramref name="generated"/> (identity → workflows namespace) ensures
+    /// each referenced document is generated only once and shared by every referrer.
+    /// </summary>
+    private static async Task GenerateDocumentAsync(
+        byte[] arazzoBytes,
+        Uri baseUri,
+        string rootNamespace,
+        string outputPath,
+        string? clientName,
+        bool durable,
+        Func<Uri, byte[]?> documentLoader,
+        HashSet<string> ancestors,
+        Dictionary<string, string> generated,
+        List<string> written,
+        CancellationToken cancellationToken)
+    {
+        ancestors.Add(baseUri.AbsoluteUri);
+        try
+        {
+            await GenerateDocumentCoreAsync(
+                arazzoBytes, baseUri, rootNamespace, outputPath, clientName, durable, documentLoader, ancestors, generated, written, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            ancestors.Remove(baseUri.AbsoluteUri);
+        }
+    }
+
+    private static async Task GenerateDocumentCoreAsync(
+        byte[] arazzoBytes,
+        Uri baseUri,
+        string rootNamespace,
+        string outputPath,
+        string? clientName,
+        bool durable,
+        Func<Uri, byte[]?> documentLoader,
+        HashSet<string> ancestors,
+        Dictionary<string, string> generated,
+        List<string> written,
+        CancellationToken cancellationToken)
+    {
+        // Generate the client/models for each source description and collect its operations (OpenAPI),
+        // channel operations (AsyncAPI), or recursively the workflows of an arazzo-type source.
         var clients = new List<SourceDescriptionClient>();
         var channelSources = new List<SourceDescriptionChannels>();
+        var subWorkflowNamespaces = new Dictionary<string, string>(StringComparer.Ordinal);
+
         using (ParsedJsonDocument<ArazzoDocument> document = ParsedJsonDocument<ArazzoDocument>.Parse(arazzoBytes))
         {
             ArazzoDocument arazzo = document.RootElement;
-
-            // Per Arazzo §5.6, relative source references resolve as URI references (RFC 3986) against the
-            // description's base URI: an absolute $self when present, otherwise the document's retrieval URI.
-            Uri baseUri = arazzoRetrievalUri;
-            if (arazzo.Self.IsNotUndefined()
-                && arazzo.Self.GetString() is { Length: > 0 } self
-                && Uri.TryCreate(self, UriKind.Absolute, out Uri? selfUri))
-            {
-                baseUri = selfUri;
-            }
 
             if (arazzo.SourceDescriptions.IsNotUndefined())
             {
@@ -81,13 +137,16 @@ internal static class ArazzoGenerationDriver
                         continue;
                     }
 
-                    // An unspecified type defaults to OpenAPI. OpenAPI sources produce operations;
-                    // AsyncAPI sources produce channel operations. Arazzo (sub-workflow) sources are
-                    // generated from the same document and need no per-source client.
+                    // An unspecified type defaults to OpenAPI. OpenAPI sources produce operations; AsyncAPI
+                    // sources produce channel operations; arazzo sources are generated recursively so their
+                    // workflows can be invoked cross-document.
                     string sourceType = source.Type.IsNotUndefined() ? source.Type.GetString()! : "openapi";
 
                     string name = source.Name.GetString()!;
                     string url = source.Url.GetString()!;
+
+                    // Per Arazzo §5.6, the source url resolves as a URI reference (RFC 3986) against this
+                    // description's base URI.
                     Uri specUri = new(baseUri, url);
                     string sourceSegment = ToIdentifier(name);
                     string sourceNamespace = $"{rootNamespace}.{sourceSegment}";
@@ -109,16 +168,51 @@ internal static class ArazzoGenerationDriver
 
                         channelSources.Add(new SourceDescriptionChannels(name, channels));
                     }
+                    else if (sourceType == "arazzo")
+                    {
+                        byte[] childBytes = documentLoader(specUri)
+                            ?? throw new FileNotFoundException($"The Arazzo source document '{specUri}' could not be loaded.");
+
+                        Uri childBaseUri = ComputeBaseUri(childBytes, specUri);
+                        string childIdentity = childBaseUri.AbsoluteUri;
+
+                        if (generated.TryGetValue(childIdentity, out string? existingNamespace))
+                        {
+                            // Already generated via another reference (a diamond): reuse it, don't regenerate.
+                            subWorkflowNamespaces[name] = existingNamespace;
+                        }
+                        else if (ancestors.Contains(childIdentity))
+                        {
+                            throw new InvalidOperationException(
+                                $"A cyclic Arazzo source-description reference was detected at '{childBaseUri}'.");
+                        }
+                        else
+                        {
+                            await GenerateDocumentAsync(
+                                childBytes, childBaseUri, sourceNamespace, sourceOutput, clientName, durable, documentLoader, ancestors, generated, written, cancellationToken)
+                                .ConfigureAwait(false);
+
+                            string childNamespace = $"{sourceNamespace}.{ArazzoCodeGeneration.DefaultWorkflowsNamespaceSuffix}";
+                            generated[childIdentity] = childNamespace;
+                            subWorkflowNamespaces[name] = childNamespace;
+                        }
+                    }
                 }
             }
         }
 
         var binder = new WorkflowOperationBinder(clients, channelSources);
         IReadOnlyList<GeneratedModelFile> files = await ArazzoCodeGeneration
-            .GenerateAsync(arazzoBytes, binder, new ArazzoGenerationOptions(rootNamespace, Durable: durable), cancellationToken)
+            .GenerateAsync(
+                arazzoBytes,
+                binder,
+                new ArazzoGenerationOptions(
+                    rootNamespace,
+                    Durable: durable,
+                    SubWorkflowSourceNamespaces: subWorkflowNamespaces.Count > 0 ? subWorkflowNamespaces : null),
+                cancellationToken)
             .ConfigureAwait(false);
 
-        var written = new List<string>(files.Count);
         foreach (GeneratedModelFile file in files)
         {
             string path = Path.Combine(outputPath, file.FileName.Replace('/', Path.DirectorySeparatorChar));
@@ -126,9 +220,16 @@ internal static class ArazzoGenerationDriver
             await File.WriteAllTextAsync(path, file.Content, cancellationToken).ConfigureAwait(false);
             written.Add(path);
         }
-
-        return written;
     }
+
+    /// <summary>
+    /// Computes an Arazzo document's base URI for relative reference resolution (§5.6): an absolute
+    /// <c>$self</c> when the document declares one, otherwise its retrieval URI.
+    /// </summary>
+    private static Uri ComputeBaseUri(byte[] arazzoBytes, Uri retrievalUri)
+        => TryReadSelfIdentity(arazzoBytes) is { } self && Uri.TryCreate(self, UriKind.Absolute, out Uri? selfUri)
+            ? selfUri
+            : retrievalUri;
 
     /// <summary>
     /// Builds the document loader the generation pipeline resolves every document through: registered

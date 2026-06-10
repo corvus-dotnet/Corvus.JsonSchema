@@ -90,7 +90,7 @@ public static class WorkflowExecutorEmitter
             {
                 ValidateSubWorkflowCriteria(stepId, criteria, onSuccess, onFailure);
                 usesControlFlow |= criteria.Count > 0 || onSuccess.Count > 0 || onFailure.Count > 0;
-                boundSteps.Add(new ControlFlowStep(stepId, null, MergeArguments(ReadArguments(step.Parameters, components), workflowParameters), criteria, stepOutputs, null, false, onSuccess, onFailure, subWorkflowId, dependsOn, TimeoutMs: timeout));
+                boundSteps.Add(new ControlFlowStep(stepId, null, MergeArguments(ReadArguments(step.Parameters, components), workflowParameters), criteria, stepOutputs, null, false, onSuccess, onFailure, subWorkflowId, dependsOn, TimeoutMs: timeout, SubWorkflowSource: binding.SubWorkflowSource));
                 continue;
             }
 
@@ -240,7 +240,7 @@ public static class WorkflowExecutorEmitter
                 if (step.SubWorkflowId is { } subWorkflowId)
                 {
                     SubWorkflowStepCode subStep = SubWorkflowStepEmitter.Emit(
-                        step.StepId, subWorkflowId, step.Arguments, options.Namespace, stepOutputLocals, "inputs", options.InputAccessors);
+                        step.StepId, subWorkflowId, step.Arguments, ResolveSubWorkflowNamespace(options, step.SubWorkflowSource), stepOutputLocals, "inputs", options.InputAccessors);
                     fields.Append(subStep.Fields);
                     AppendIndented(body, subStep.Statements, 12);
                     stepOutputLocals[step.StepId] = EmitText.StepOutputsElementLocal(step.StepId);
@@ -933,6 +933,27 @@ public static class WorkflowExecutorEmitter
         AppendIndented(body, statements.ToString(), 12);
     }
 
+    /// <summary>
+    /// Resolves the .NET namespace a sub-workflow's generated executor lives in: the caller's own
+    /// namespace for a same-document sub-workflow, or the per-source namespace a cross-document
+    /// (<c>$sourceDescriptions.&lt;name&gt;.&lt;workflowId&gt;</c>) sub-workflow was generated into.
+    /// </summary>
+    internal static string ResolveSubWorkflowNamespace(in WorkflowExecutorOptions options, string? subWorkflowSource)
+    {
+        if (subWorkflowSource is null)
+        {
+            return options.Namespace;
+        }
+
+        if (options.SubWorkflowSourceNamespaces is { } map && map.TryGetValue(subWorkflowSource, out string? sourceNamespace))
+        {
+            return sourceNamespace;
+        }
+
+        throw new InvalidOperationException(
+            $"A sub-workflow step references source description '{subWorkflowSource}', which is not a generated Arazzo (type: arazzo) source description.");
+    }
+
     internal static void AppendIndented(StringBuilder target, string text, int indent)
     {
         if (text.Length == 0)
@@ -1103,7 +1124,8 @@ public readonly record struct WorkflowExecutorOptions(
     string InputsTypeName,
     string OutputsTypeName,
     IReadOnlyDictionary<string, string>? InputAccessors = null,
-    bool Durable = false);
+    bool Durable = false,
+    IReadOnlyDictionary<string, string>? SubWorkflowSourceNamespaces = null);
 
 /// <summary>The control-flow effect of an Arazzo success/failure action.</summary>
 internal enum StepActionKind
@@ -1156,4 +1178,5 @@ internal readonly record struct ControlFlowStep(
     ResolvedChannel? Channel = null,
     int? TimeoutMs = null,
     string? CorrelationName = null,
-    string? CorrelationLocation = null);
+    string? CorrelationLocation = null,
+    string? SubWorkflowSource = null);
