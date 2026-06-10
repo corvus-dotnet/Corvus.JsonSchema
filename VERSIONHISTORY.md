@@ -1,5 +1,13 @@
 # Version History
 
+## V5.1.16
+
+V5.1.16 fixes schema reference resolution for `$ref`s expressed as `file://` URIs.
+
+### Bug fixes
+
+- **Schema references expressed as `file://` URIs now resolve correctly** — A `$ref` (or top-level schema reference) given as an absolute `file://` URI — for example `file:///C:/schemas/foo.json` or `file:///home/me/schemas/foo.json` — failed to resolve during code generation and runtime validation. `SchemaReferenceNormalization.TryNormalizeSchemaReference` passed the raw URI string to `Path.GetFullPath`, which treated the `file://` scheme as part of a relative path and produced a nonsensical location, so the document resolver could not find the schema. The normalizer now converts an absolute `file://` reference to its local filesystem path via `Uri.LocalPath` (handling percent-decoding such as `%20`, and the platform-specific path shape) before resolving it. Relative references and non-`file` URIs (for example `http(s)://`) are unaffected. This shared normalizer is used by the V4 and V5 code generators, the CLI, the source generators, and the dynamic `Validator`. Reported via [#724](https://github.com/corvus-dotnet/Corvus.JsonSchema/pull/724); see [#817](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/817).
+
 ## V5.1.15
 
 V5.1.15 fixes the analyzer diagnostic documentation links, which pointed at a non-existent domain.
