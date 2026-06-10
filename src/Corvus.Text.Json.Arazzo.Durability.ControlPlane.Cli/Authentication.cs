@@ -2,14 +2,11 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers.Text;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
-using System.Security.Cryptography;
 using System.Text;
 using Corvus.Text.Json;
-using Duende.IdentityModel;
 using Duende.IdentityModel.Client;
 using Duende.IdentityModel.OidcClient;
 using Duende.IdentityModel.OidcClient.Browser;
@@ -47,7 +44,7 @@ internal static class OAuthFlows
         }
 
         using var http = new HttpClient();
-        DiscoveryDocumentResponse discovery = await DiscoverAsync(http, existing.Authority, cancellationToken).ConfigureAwait(false);
+        DiscoveryDocumentResponse discovery = await http.GetDiscoveryDocumentAsync(existing.Authority, cancellationToken).ConfigureAwait(false);
         if (discovery.IsError)
         {
             return null;
@@ -97,27 +94,15 @@ internal static class OAuthFlows
     private static async Task<TokenSet> DeviceCodeAsync(OAuthConfig config, CancellationToken cancellationToken)
     {
         using var http = new HttpClient();
-        DiscoveryDocumentResponse discovery = await DiscoverAsync(http, config.Authority, cancellationToken).ConfigureAwait(false);
+        DiscoveryDocumentResponse discovery = await http.GetDiscoveryDocumentAsync(config.Authority, cancellationToken).ConfigureAwait(false);
         if (discovery.IsError)
         {
             throw new InvalidOperationException($"OIDC discovery failed: {discovery.Error}");
         }
 
-        // PKCE on the device flow (RFC 8628 §3.1 + RFC 9700): the client the deployment provisions enforces
-        // S256, so bind the device-code grant to a verifier the same way the loopback code flow does.
-        (string codeVerifier, string codeChallenge) = CreatePkcePair();
-
-        var authorizationRequest = new DeviceAuthorizationRequest
-        {
-            Address = discovery.DeviceAuthorizationEndpoint,
-            ClientId = config.ClientId,
-            Scope = config.Scope,
-        };
-        authorizationRequest.Parameters.AddRequired("code_challenge", codeChallenge);
-        authorizationRequest.Parameters.AddRequired("code_challenge_method", "S256");
-
         DeviceAuthorizationResponse authorization = await http.RequestDeviceAuthorizationAsync(
-            authorizationRequest, cancellationToken).ConfigureAwait(false);
+            new DeviceAuthorizationRequest { Address = discovery.DeviceAuthorizationEndpoint, ClientId = config.ClientId, Scope = config.Scope },
+            cancellationToken).ConfigureAwait(false);
         if (authorization.IsError)
         {
             throw new InvalidOperationException($"Device authorization failed: {authorization.Error}");
@@ -136,16 +121,9 @@ internal static class OAuthFlows
         {
             await Task.Delay(TimeSpan.FromSeconds(interval), cancellationToken).ConfigureAwait(false);
 
-            var tokenRequest = new DeviceTokenRequest
-            {
-                Address = discovery.TokenEndpoint,
-                ClientId = config.ClientId,
-                DeviceCode = authorization.DeviceCode!,
-            };
-            tokenRequest.Parameters.AddRequired("code_verifier", codeVerifier);
-
             TokenResponse token = await http.RequestDeviceTokenAsync(
-                tokenRequest, cancellationToken).ConfigureAwait(false);
+                new DeviceTokenRequest { Address = discovery.TokenEndpoint, ClientId = config.ClientId, DeviceCode = authorization.DeviceCode! },
+                cancellationToken).ConfigureAwait(false);
 
             if (!token.IsError)
             {
@@ -163,30 +141,6 @@ internal static class OAuthFlows
                     throw new InvalidOperationException($"Device sign-in failed: {token.Error}");
             }
         }
-    }
-
-    // A PKCE verifier/challenge pair (RFC 7636). The verifier comes from Duende.IdentityModel's hardened CSPRNG
-    // helper — the same primitive its OidcClient uses for the loopback flow — for a 256-bit, base64url-encoded
-    // value. The S256 challenge is the RFC 7636 §4.2 transform BASE64URL(SHA256(ASCII(verifier))); there is no
-    // library one-liner for the challenge itself.
-    private static (string CodeVerifier, string CodeChallenge) CreatePkcePair()
-    {
-        string codeVerifier = CryptoRandom.CreateUniqueId(32, CryptoRandom.OutputFormat.Base64Url);
-        string codeChallenge = Base64Url.EncodeToString(SHA256.HashData(Encoding.ASCII.GetBytes(codeVerifier)));
-        return (codeVerifier, codeChallenge);
-    }
-
-    // OIDC discovery, requiring HTTPS except for a loopback authority (a local dev IdP over http).
-    private static Task<DiscoveryDocumentResponse> DiscoverAsync(HttpClient http, string authority, CancellationToken cancellationToken)
-    {
-        bool loopback = Uri.TryCreate(authority, UriKind.Absolute, out Uri? uri) && uri.IsLoopback;
-        return http.GetDiscoveryDocumentAsync(
-            new DiscoveryDocumentRequest
-            {
-                Address = authority,
-                Policy = new DiscoveryPolicy { RequireHttps = !loopback },
-            },
-            cancellationToken);
     }
 
     private static TokenSet ToTokenSet(TokenResponse token, OAuthConfig config, string? refreshToken)
@@ -295,13 +249,10 @@ internal sealed class LoopbackBrowser : IBrowser, IDisposable
 /// <summary>A small on-disk cache of the most recent <see cref="TokenSet"/>, under the user's app-data folder.</summary>
 internal static class TokenCache
 {
-    private static string CacheFilePath =>
-        Environment.GetEnvironmentVariable("ARAZZO_RUNS_TOKEN_FILE") is { Length: > 0 } overridePath
-            ? overridePath
-            : Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "arazzo-runs",
-                "token.json");
+    private static string CacheFilePath => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "arazzo-runs",
+        "token.json");
 
     public static TokenSet? Load()
     {
@@ -318,7 +269,7 @@ internal static class TokenCache
             return new TokenSet(
                 root.GetProperty("accessToken"u8).GetString()!,
                 root.TryGetProperty("refreshToken"u8, out JsonElement r) ? r.GetString() : null,
-                root.GetProperty("expiresAtUtc"u8).GetDateTimeOffset(),
+                DateTimeOffset.Parse(root.GetProperty("expiresAtUtc"u8).GetString()!, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind),
                 root.GetProperty("authority"u8).GetString()!,
                 root.GetProperty("clientId"u8).GetString()!,
                 root.GetProperty("scope"u8).GetString()!);
@@ -345,7 +296,7 @@ internal static class TokenCache
                 writer.WriteString("refreshToken"u8, refreshToken);
             }
 
-            writer.WriteString("expiresAtUtc"u8, token.ExpiresAtUtc);
+            writer.WriteString("expiresAtUtc"u8, token.ExpiresAtUtc.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
             writer.WriteString("authority"u8, token.Authority);
             writer.WriteString("clientId"u8, token.ClientId);
             writer.WriteString("scope"u8, token.Scope);

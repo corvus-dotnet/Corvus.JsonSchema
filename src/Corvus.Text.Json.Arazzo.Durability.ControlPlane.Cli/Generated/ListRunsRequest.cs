@@ -32,39 +32,9 @@ public readonly struct ListRunsRequest : IApiRequest<ListRunsRequest>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString WorkflowId { get; init; }
 
     /// <summary>
-    /// Gets the createdAfter parameter.
-    /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime CreatedAfter { get; init; }
-
-    /// <summary>
-    /// Gets the createdBefore parameter.
-    /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime CreatedBefore { get; init; }
-
-    /// <summary>
-    /// Gets the updatedAfter parameter.
-    /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime UpdatedAfter { get; init; }
-
-    /// <summary>
-    /// Gets the updatedBefore parameter.
-    /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime UpdatedBefore { get; init; }
-
-    /// <summary>
-    /// Gets the tag parameter.
-    /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.TagList Tag { get; init; }
-
-    /// <summary>
-    /// Gets the correlationId parameter.
-    /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString CorrelationId { get; init; }
-
-    /// <summary>
     /// Gets the limit parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit Limit { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Schema Limit { get; init; }
 
     /// <summary>
     /// Gets the pageToken parameter.
@@ -143,130 +113,6 @@ public readonly struct ListRunsRequest : IApiRequest<ListRunsRequest>
             first = false;
         }
 
-        if (this.CreatedAfter.IsNotUndefined())
-        {
-            if (!first)
-            {
-                writer.Write("&"u8);
-                totalWritten++;
-            }
-
-            writer.Write("createdAfter="u8);
-            totalWritten += 13;
-            using UnescapedUtf8JsonString utf8CreatedAfter = ((JsonElement)this.CreatedAfter).GetUtf8String();
-            Span<byte> escCreatedAfter = stackalloc byte[utf8CreatedAfter.Span.Length * 3];
-            if (Utf8Uri.TryEscapeDataString(utf8CreatedAfter.Span, escCreatedAfter, out int ewCreatedAfter))
-            {
-                writer.Write(escCreatedAfter[..ewCreatedAfter]);
-                totalWritten += ewCreatedAfter;
-            }
-
-            first = false;
-        }
-
-        if (this.CreatedBefore.IsNotUndefined())
-        {
-            if (!first)
-            {
-                writer.Write("&"u8);
-                totalWritten++;
-            }
-
-            writer.Write("createdBefore="u8);
-            totalWritten += 14;
-            using UnescapedUtf8JsonString utf8CreatedBefore = ((JsonElement)this.CreatedBefore).GetUtf8String();
-            Span<byte> escCreatedBefore = stackalloc byte[utf8CreatedBefore.Span.Length * 3];
-            if (Utf8Uri.TryEscapeDataString(utf8CreatedBefore.Span, escCreatedBefore, out int ewCreatedBefore))
-            {
-                writer.Write(escCreatedBefore[..ewCreatedBefore]);
-                totalWritten += ewCreatedBefore;
-            }
-
-            first = false;
-        }
-
-        if (this.UpdatedAfter.IsNotUndefined())
-        {
-            if (!first)
-            {
-                writer.Write("&"u8);
-                totalWritten++;
-            }
-
-            writer.Write("updatedAfter="u8);
-            totalWritten += 13;
-            using UnescapedUtf8JsonString utf8UpdatedAfter = ((JsonElement)this.UpdatedAfter).GetUtf8String();
-            Span<byte> escUpdatedAfter = stackalloc byte[utf8UpdatedAfter.Span.Length * 3];
-            if (Utf8Uri.TryEscapeDataString(utf8UpdatedAfter.Span, escUpdatedAfter, out int ewUpdatedAfter))
-            {
-                writer.Write(escUpdatedAfter[..ewUpdatedAfter]);
-                totalWritten += ewUpdatedAfter;
-            }
-
-            first = false;
-        }
-
-        if (this.UpdatedBefore.IsNotUndefined())
-        {
-            if (!first)
-            {
-                writer.Write("&"u8);
-                totalWritten++;
-            }
-
-            writer.Write("updatedBefore="u8);
-            totalWritten += 14;
-            using UnescapedUtf8JsonString utf8UpdatedBefore = ((JsonElement)this.UpdatedBefore).GetUtf8String();
-            Span<byte> escUpdatedBefore = stackalloc byte[utf8UpdatedBefore.Span.Length * 3];
-            if (Utf8Uri.TryEscapeDataString(utf8UpdatedBefore.Span, escUpdatedBefore, out int ewUpdatedBefore))
-            {
-                writer.Write(escUpdatedBefore[..ewUpdatedBefore]);
-                totalWritten += ewUpdatedBefore;
-            }
-
-            first = false;
-        }
-
-        if (this.Tag.IsNotUndefined())
-        {
-            foreach (var itemTag in ((JsonElement)this.Tag).EnumerateArray())
-            {
-                if (!first)
-                {
-                    writer.Write("&"u8);
-                    totalWritten++;
-                }
-
-                writer.Write("tag="u8);
-                totalWritten += 4;
-                byte[] elBytesTag = System.Text.Encoding.UTF8.GetBytes(itemTag.ToString());
-                writer.Write(elBytesTag);
-                totalWritten += elBytesTag.Length;
-                first = false;
-            }
-        }
-
-        if (this.CorrelationId.IsNotUndefined())
-        {
-            if (!first)
-            {
-                writer.Write("&"u8);
-                totalWritten++;
-            }
-
-            writer.Write("correlationId="u8);
-            totalWritten += 14;
-            using UnescapedUtf8JsonString utf8CorrelationId = ((JsonElement)this.CorrelationId).GetUtf8String();
-            Span<byte> escCorrelationId = stackalloc byte[utf8CorrelationId.Span.Length * 3];
-            if (Utf8Uri.TryEscapeDataString(utf8CorrelationId.Span, escCorrelationId, out int ewCorrelationId))
-            {
-                writer.Write(escCorrelationId[..ewCorrelationId]);
-                totalWritten += ewCorrelationId;
-            }
-
-            first = false;
-        }
-
         if (this.Limit.IsNotUndefined())
         {
             if (!first)
@@ -277,10 +123,9 @@ public readonly struct ListRunsRequest : IApiRequest<ListRunsRequest>
 
             writer.Write("limit="u8);
             totalWritten += 6;
-            Span<byte> bufLimit = stackalloc byte[11];
-            this.Limit.TryFormat(bufLimit, out int bwLimit, default, default);
-            writer.Write(bufLimit[..bwLimit]);
-            totalWritten += bwLimit;
+            using RawUtf8JsonString rawLimit = JsonMarshal.GetRawUtf8Value(this.Limit);
+            writer.Write(rawLimit.Span);
+            totalWritten += rawLimit.Span.Length;
 
             first = false;
         }
@@ -350,60 +195,6 @@ public readonly struct ListRunsRequest : IApiRequest<ListRunsRequest>
                 }
             }
 
-            if (this.CreatedAfter.IsNotUndefined())
-            {
-                using JsonSchemaResultsCollector collectorCreatedAfter = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-                if (!this.CreatedAfter.EvaluateSchema(collectorCreatedAfter))
-                {
-                    ThrowHelper.ThrowRequestParameterValidationFailed("createdAfter", SchemaValidationDetail.FormatResults(collectorCreatedAfter));
-                }
-            }
-
-            if (this.CreatedBefore.IsNotUndefined())
-            {
-                using JsonSchemaResultsCollector collectorCreatedBefore = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-                if (!this.CreatedBefore.EvaluateSchema(collectorCreatedBefore))
-                {
-                    ThrowHelper.ThrowRequestParameterValidationFailed("createdBefore", SchemaValidationDetail.FormatResults(collectorCreatedBefore));
-                }
-            }
-
-            if (this.UpdatedAfter.IsNotUndefined())
-            {
-                using JsonSchemaResultsCollector collectorUpdatedAfter = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-                if (!this.UpdatedAfter.EvaluateSchema(collectorUpdatedAfter))
-                {
-                    ThrowHelper.ThrowRequestParameterValidationFailed("updatedAfter", SchemaValidationDetail.FormatResults(collectorUpdatedAfter));
-                }
-            }
-
-            if (this.UpdatedBefore.IsNotUndefined())
-            {
-                using JsonSchemaResultsCollector collectorUpdatedBefore = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-                if (!this.UpdatedBefore.EvaluateSchema(collectorUpdatedBefore))
-                {
-                    ThrowHelper.ThrowRequestParameterValidationFailed("updatedBefore", SchemaValidationDetail.FormatResults(collectorUpdatedBefore));
-                }
-            }
-
-            if (this.Tag.IsNotUndefined())
-            {
-                using JsonSchemaResultsCollector collectorTag = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-                if (!this.Tag.EvaluateSchema(collectorTag))
-                {
-                    ThrowHelper.ThrowRequestParameterValidationFailed("tag", SchemaValidationDetail.FormatResults(collectorTag));
-                }
-            }
-
-            if (this.CorrelationId.IsNotUndefined())
-            {
-                using JsonSchemaResultsCollector collectorCorrelationId = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-                if (!this.CorrelationId.EvaluateSchema(collectorCorrelationId))
-                {
-                    ThrowHelper.ThrowRequestParameterValidationFailed("correlationId", SchemaValidationDetail.FormatResults(collectorCorrelationId));
-                }
-            }
-
             if (this.Limit.IsNotUndefined())
             {
                 using JsonSchemaResultsCollector collectorLimit = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
@@ -433,36 +224,6 @@ public readonly struct ListRunsRequest : IApiRequest<ListRunsRequest>
             if (this.WorkflowId.IsNotUndefined() && !this.WorkflowId.EvaluateSchema())
             {
                 ThrowHelper.ThrowRequestParameterValidationFailed("workflowId");
-            }
-
-            if (this.CreatedAfter.IsNotUndefined() && !this.CreatedAfter.EvaluateSchema())
-            {
-                ThrowHelper.ThrowRequestParameterValidationFailed("createdAfter");
-            }
-
-            if (this.CreatedBefore.IsNotUndefined() && !this.CreatedBefore.EvaluateSchema())
-            {
-                ThrowHelper.ThrowRequestParameterValidationFailed("createdBefore");
-            }
-
-            if (this.UpdatedAfter.IsNotUndefined() && !this.UpdatedAfter.EvaluateSchema())
-            {
-                ThrowHelper.ThrowRequestParameterValidationFailed("updatedAfter");
-            }
-
-            if (this.UpdatedBefore.IsNotUndefined() && !this.UpdatedBefore.EvaluateSchema())
-            {
-                ThrowHelper.ThrowRequestParameterValidationFailed("updatedBefore");
-            }
-
-            if (this.Tag.IsNotUndefined() && !this.Tag.EvaluateSchema())
-            {
-                ThrowHelper.ThrowRequestParameterValidationFailed("tag");
-            }
-
-            if (this.CorrelationId.IsNotUndefined() && !this.CorrelationId.EvaluateSchema())
-            {
-                ThrowHelper.ThrowRequestParameterValidationFailed("correlationId");
             }
 
             if (this.Limit.IsNotUndefined() && !this.Limit.EvaluateSchema())

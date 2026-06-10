@@ -62,7 +62,7 @@ public interface IApiRunsClient : IAsyncDisposable
         /// <summary>
         /// Gets all available scopes for <c>oauth2</c>.
         /// </summary>
-        public static readonly string[] Oauth2AvailableScopes = ["administrators:read", "administrators:write", "availability:read", "availability:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "environments:read", "environments:write", "runs:purge", "runs:read", "runs:write", "security:read", "security:write", "sources:read", "sources:write"];
+        public static readonly string[] Oauth2AvailableScopes = ["runs:purge", "runs:read", "runs:write"];
 
 
         /// <summary>
@@ -176,16 +176,10 @@ public interface IApiRunsClient : IAsyncDisposable
     /// </remarks>
     /// <param name="status">The status parameter.</param>
     /// <param name="workflowId">The workflowId parameter.</param>
-    /// <param name="createdAfter">The createdAfter parameter.</param>
-    /// <param name="createdBefore">The createdBefore parameter.</param>
-    /// <param name="updatedAfter">The updatedAfter parameter.</param>
-    /// <param name="updatedBefore">The updatedBefore parameter.</param>
-    /// <param name="tag">The tag parameter.</param>
-    /// <param name="correlationId">The correlationId parameter.</param>
-    /// <param name="limit">The limit parameter.</param>
+    /// <param name="limit">The limit parameter. Default: 100.</param>
     /// <param name="pageToken">The pageToken parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<ListRunsResponse> ListRunsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source workflowId = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source createdAfter = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source createdBefore = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source updatedAfter = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source updatedBefore = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.TagList.Source tag = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source correlationId = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<ListRunsResponse> ListRunsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source workflowId = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Schema.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Purge terminal runs
@@ -194,9 +188,9 @@ public interface IApiRunsClient : IAsyncDisposable
     /// Reaps completed and cancelled runs last updated strictly before `olderThan`, up to `limit`. Non-terminal runs (including faulted ones, which are terminal-but-recoverable) are never purged.
     /// </remarks>
     /// <param name="olderThan">The olderThan parameter.</param>
-    /// <param name="limit">The limit parameter.</param>
+    /// <param name="limit">The limit parameter. Default: 100.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<PurgeRunsResponse> PurgeRunsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source olderThan, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<PurgeRunsResponse> PurgeRunsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source olderThan, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Schema.Source limit = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Get a run
@@ -222,7 +216,7 @@ public interface IApiRunsClient : IAsyncDisposable
     /// Resume a faulted run
     /// </summary>
     /// <remarks>
-    /// Resumes a faulted run, re-executing it from its last checkpoint (the faulted step). Only a run in the `Faulted` state can be resumed. Returns the run's new detail on success (200); a run that does not exist or is out of read reach is 404, a readable run outside write reach is 403, and a run that is not in the `Faulted` state conflicts (409).
+    /// Resumes a faulted run, re-executing it from its last checkpoint (the faulted step). Only a run in the `Faulted` state can be resumed. Returns the run's new detail on success. An implementation MAY process the resume asynchronously and instead return `202 Accepted`.
     /// </remarks>
     /// <param name="runId">The runId parameter.</param>
     /// <param name="body">The request body..</param>

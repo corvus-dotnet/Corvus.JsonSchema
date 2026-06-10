@@ -250,13 +250,7 @@ public struct ListRunsResponse : IApiResponse<ListRunsResponse>
                 PageToken = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.From(this.response.OkBody.NextPageToken),
                 Status = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunStatus.From(this.response.sourceRequest.Status),
                 WorkflowId = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.From(this.response.sourceRequest.WorkflowId),
-                CreatedAfter = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.From(this.response.sourceRequest.CreatedAfter),
-                CreatedBefore = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.From(this.response.sourceRequest.CreatedBefore),
-                UpdatedAfter = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.From(this.response.sourceRequest.UpdatedAfter),
-                UpdatedBefore = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.From(this.response.sourceRequest.UpdatedBefore),
-                Tag = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.TagList.From(this.response.sourceRequest.Tag),
-                CorrelationId = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.From(this.response.sourceRequest.CorrelationId),
-                Limit = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.From(this.response.sourceRequest.Limit),
+                Limit = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Schema.From(this.response.sourceRequest.Limit),
             };
 
             return this.response.transport!.SendAsync<ListRunsRequest, ListRunsResponse>(in request, cancellationToken);

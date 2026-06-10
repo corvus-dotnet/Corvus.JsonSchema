@@ -21,7 +21,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Tests;
 /// </summary>
 [TestClass]
 [DoNotParallelize]
-public sealed partial class CliIntegrationTests
+public sealed class CliIntegrationTests
 {
     private static readonly DateTimeOffset T0 = new(2026, 6, 10, 12, 0, 0, TimeSpan.Zero);
 
@@ -36,23 +36,9 @@ public sealed partial class CliIntegrationTests
         (int exit, string stdout, _) = await RunAsync(host, "list", "--status", "Completed");
 
         exit.ShouldBe(0);
-        stdout.ShouldContain("Status");   // table header (table is the default output)
         stdout.ShouldContain("done-1");
         stdout.ShouldContain("done-2");
         stdout.ShouldNotContain("faulted-1");
-    }
-
-    [TestMethod]
-    public async Task List_emits_json_with_output_json()
-    {
-        await using Host host = await StartAsync();
-        await CompleteRunAsync(host.Store, "done-1", host.Clock);
-
-        (int exit, string stdout, _) = await RunAsync(host, "list", "--status", "Completed", "--output", "json");
-
-        exit.ShouldBe(0);
-        stdout.ShouldContain("\"runs\"");
-        stdout.ShouldContain("\"id\":\"done-1\"");
     }
 
     [TestMethod]
@@ -219,14 +205,13 @@ public sealed partial class CliIntegrationTests
     {
         var clock = new MutableClock(T0);
         var store = new InMemoryWorkflowStateStore(clock);
-        var management = new SecuredWorkflowManagement(store, "ops", CompleteResumer, clock);
-        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(clock), store, "ops");
+        var management = new WorkflowManagementClient(store, "ops", CompleteResumer, clock);
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
         app.Urls.Add("http://127.0.0.1:0");
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Open);
+        app.MapArazzoControlPlane(management);
         await app.StartAsync();
 
         string url = app.Urls.First();

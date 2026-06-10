@@ -38,29 +38,17 @@ public sealed class ApiRunsClient : IApiRunsClient
     /// </remarks>
     /// <param name="status">The status parameter.</param>
     /// <param name="workflowId">The workflowId parameter.</param>
-    /// <param name="createdAfter">The createdAfter parameter.</param>
-    /// <param name="createdBefore">The createdBefore parameter.</param>
-    /// <param name="updatedAfter">The updatedAfter parameter.</param>
-    /// <param name="updatedBefore">The updatedBefore parameter.</param>
-    /// <param name="tag">The tag parameter.</param>
-    /// <param name="correlationId">The correlationId parameter.</param>
-    /// <param name="limit">The limit parameter.</param>
+    /// <param name="limit">The limit parameter. Default: 100.</param>
     /// <param name="pageToken">The pageToken parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<ListRunsResponse> ListRunsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source workflowId = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source createdAfter = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source createdBefore = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source updatedAfter = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source updatedBefore = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.TagList.Source tag = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source correlationId = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<ListRunsResponse> ListRunsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source workflowId = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Schema.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         ListRunsRequest request = new()
         {
             Status = status.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunStatus)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunStatus.CreateBuilder(workspace, status, 30).RootElement,
             WorkflowId = workflowId.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, workflowId, 30).RootElement,
-            CreatedAfter = createdAfter.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.CreateBuilder(workspace, createdAfter, 30).RootElement,
-            CreatedBefore = createdBefore.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.CreateBuilder(workspace, createdBefore, 30).RootElement,
-            UpdatedAfter = updatedAfter.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.CreateBuilder(workspace, updatedAfter, 30).RootElement,
-            UpdatedBefore = updatedBefore.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.CreateBuilder(workspace, updatedBefore, 30).RootElement,
-            Tag = tag.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.TagList)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.TagList.CreateBuilder(workspace, tag, 30).RootElement,
-            CorrelationId = correlationId.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, correlationId, 30).RootElement,
-            Limit = limit.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.CreateBuilder(workspace, limit, 30).RootElement,
+            Limit = limit.IsUndefined ? ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Schema>.NumberConstant([.."100"u8]) : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Schema)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Schema.CreateBuilder(workspace, limit, 30).RootElement,
             PageToken = pageToken.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, pageToken, 30).RootElement,
         }
         ;
@@ -85,15 +73,15 @@ public sealed class ApiRunsClient : IApiRunsClient
     /// Reaps completed and cancelled runs last updated strictly before `olderThan`, up to `limit`. Non-terminal runs (including faulted ones, which are terminal-but-recoverable) are never purged.
     /// </remarks>
     /// <param name="olderThan">The olderThan parameter.</param>
-    /// <param name="limit">The limit parameter.</param>
+    /// <param name="limit">The limit parameter. Default: 100.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<PurgeRunsResponse> PurgeRunsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source olderThan, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<PurgeRunsResponse> PurgeRunsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source olderThan, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Schema.Source limit = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime OlderThanValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.CreateBuilder(workspace, olderThan, 30).RootElement;
         PurgeRunsRequest request = new(OlderThanValue)
         {
-            Limit = limit.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.CreateBuilder(workspace, limit, 30).RootElement,
+            Limit = limit.IsUndefined ? ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Schema>.NumberConstant([.."100"u8]) : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Schema)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Schema.CreateBuilder(workspace, limit, 30).RootElement,
         }
         ;
 
@@ -144,7 +132,7 @@ public sealed class ApiRunsClient : IApiRunsClient
     /// Resume a faulted run
     /// </summary>
     /// <remarks>
-    /// Resumes a faulted run, re-executing it from its last checkpoint (the faulted step). Only a run in the `Faulted` state can be resumed. Returns the run's new detail on success (200); a run that does not exist or is out of read reach is 404, a readable run outside write reach is 403, and a run that is not in the `Faulted` state conflicts (409).
+    /// Resumes a faulted run, re-executing it from its last checkpoint (the faulted step). Only a run in the `Faulted` state can be resumed. Returns the run's new detail on success. An implementation MAY process the resume asynchronously and instead return `202 Accepted`.
     /// </remarks>
     /// <param name="runId">The runId parameter.</param>
     /// <param name="body">The request body..</param>
@@ -152,35 +140,26 @@ public sealed class ApiRunsClient : IApiRunsClient
     public ValueTask<ResumeRunResponse> ResumeRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        bool hasBodyValue = !body.IsUndefined;
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest.CreateBuilder(workspace, body, 30).RootElement : default;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest.CreateBuilder(workspace, body, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, runId, 30).RootElement;
         ResumeRunRequest request = new(RunIdValue);
 
         request.Validate(validationMode);
 
-        if (hasBodyValue)
+        if (validationMode == ValidationMode.Detailed)
         {
-            if (validationMode == ValidationMode.Detailed)
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
             {
-                using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-                if (!bodyValue.EvaluateSchema(bodyCollector))
-                {
-                    ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
-                }
-            }
-            else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
-            {
-                ThrowHelper.ThrowRequestBodyValidationFailed();
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
             }
         }
-
-        if (hasBodyValue)
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
         {
-            return SendWithBodyAsyncCore<ResumeRunRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest, ResumeRunResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+            ThrowHelper.ThrowRequestBodyValidationFailed();
         }
 
-        return SendAsyncCore<ResumeRunRequest, ResumeRunResponse>(workspace, request, responseValidationMode, cancellationToken);
+        return SendWithBodyAsyncCore<ResumeRunRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest, ResumeRunResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
     }
 
     /// <summary>

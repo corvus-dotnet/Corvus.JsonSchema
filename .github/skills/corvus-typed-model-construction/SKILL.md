@@ -39,16 +39,10 @@ Use the generated factories instead.
 | `T.Build(static (ref T.Builder b) => b.Create(…))` | `T.Source` (lazy) | No fields to set (e.g. a `const`-only union variant), or you need imperative logic. Lambda MUST be `static`. |
 | `T.CreateBuilder(ws, field: v, …)` then `.RootElement` | `T` (immutable, in `ws`) | Only when you actually need a *materialized* value (e.g. to read it back, or store it). Not needed just to pass to a consumer. |
 | `T.CreateBuilder<TContext>(ws, ctx, static (in TContext ctx, ref T.Builder b) => …)` then `.RootElement` | `T` | Materializing while threading runtime values into a builder loop/conditional. The form the JMESPath/Jsonata/OpenApi generators emit. |
-| `T.CreateBuilder<TContext>(ws, in T.Source<TContext> body)` then `.RootElement` | `T` | Materializing a body you already assembled closure-free as a `Source<TContext>`. Usually you don't call this directly — the generated `…Result.Ok<TContext>(T.Source<TContext> body, ws)` does, in a **single** pass. See `corvus-builder-context-threading`. |
 
 **Default to `T.Build(field: v, …)`** — it is lazy and the consumer materializes it directly
 into its own buffer (one pass, no interim document). You almost never need `CreateBuilder` +
 `.RootElement`; reach for it only when you genuinely need a materialized value in hand.
-
-**Reaching a server result factory closure-free:** build the body as a context-threaded `T.Source<TContext>`
-(`T.Build<TContext>(in ctx, …)`, the context a `RefTuple`) and hand it to the generic `…Result.Ok<TContext>(body, ws)`
-overload — one closure-free materialization. Do **not** `CreateBuilder<TContext>(…).RootElement` then pass the immutable
-to the non-generic `Ok` (that re-materializes). Full detail: `corvus-builder-context-threading`.
 
 ```csharp
 // ✅ lazy, no workspace, no materialization — pass the builder straight to the client
@@ -56,33 +50,6 @@ await client.ResumeRunAsync(runId, RewindResume.Build(targetCursor), ct);       
 await client.CancelRunAsync(runId, CancelRequest.Build(reason), ct);                       // string
 using var doc = ParsedJsonDocument<JsonElement>.Parse(File.ReadAllBytes(path));
 await client.ResumeRunAsync(runId, SkipResume.Build(skipOutputs: doc.RootElement), ct);    // JsonElement, passed directly
-```
-
-**Don't hand-roll the `Source` constructor when `Build` covers it.** A plain field set is
-`T.Build(field: v, …)`. Reach for the raw `new T.Source((ref T.Builder b) => b.Create(…))`
-constructor only for genuine imperative logic — not to set a couple of fields. (Older code in the
-tree uses the constructor form for simple bodies; prefer `Build`.)
-
-```csharp
-// ❌ hand-rolled constructor for a plain field set
-var body = new Models.MemberWrite.Source((ref Models.MemberWrite.Builder b) => b.Create(value: v, dimension: d));
-// ✅ the Build factory
-var body = Models.MemberWrite.Build(value: v, dimension: d);
-```
-
-**`Build` takes its fields by `in`, so consume its result in place — don't return it from a
-helper.** Because `Build(in field, …)` holds a ref to each argument, its `Source` cannot escape
-the method that built it: pass it **directly** to the consumer in the same expression (the common
-case). Wrapping `Build` in a method that *returns* the `Source` fails with CS8347 / CS8156 ("may
-expose variables … outside their declaration scope" / "cannot be … returned by reference"). If you
-want a named local, build and consume it in the same scope.
-
-```csharp
-// ✅ consumed in place
-await client.AddAdministratorAsync(baseId, Models.MemberWrite.Build(value: v, dimension: d), ct);
-
-// ❌ returning Build's result escapes the in-ref (CS8347/CS8156)
-static Models.MemberWrite.Source Member(string d, string v) => Models.MemberWrite.Build(value: v, dimension: d);
 ```
 
 ## The ref-safety trap (the one real gotcha)
@@ -151,8 +118,6 @@ call). All of `JsonWorkspace`, `JsonDocumentBuilder<T>`, `ParsedJsonDocument<T>`
 
 ## Cross-References
 
-- `corvus-builder-context-threading` — building from UTF-8 **spans** in a loop with no closure (the `Build<TContext>` / `CreateBuilder<TContext>` form and its ref-safety gotchas); reach for it when the values are spans, not native `string`/`int`.
-- `corvus-bytes-to-bytes` — when to thread spans at all (the record<->document string-seam anti-pattern + the genuine-leaf proof).
 - `corvus-mutable-documents` — `JsonWorkspace` / `JsonDocumentBuilder` and mutating arbitrary `JsonElement` documents.
 - `ref-struct-delegates` — why builder callbacks use named `Build` delegates (ref struct params) not `Func<>`/`Action<>`.
 - `corvus-buffer-and-pooling` — the pooling that backs the workspace arena.

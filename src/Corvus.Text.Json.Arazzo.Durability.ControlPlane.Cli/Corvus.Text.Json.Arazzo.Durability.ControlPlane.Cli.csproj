@@ -21,10 +21,6 @@
     <ProjectReference Include="..\Corvus.Text.Json.Patch\Corvus.Text.Json.Patch.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi\Corvus.Text.Json.OpenApi.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi.HttpTransport\Corvus.Text.Json.OpenApi.HttpTransport.csproj" />
-    <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Durability\Corvus.Text.Json.Arazzo.Durability.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <InternalsVisibleTo Include="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Tests" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Duende.IdentityModel.OidcClient" />

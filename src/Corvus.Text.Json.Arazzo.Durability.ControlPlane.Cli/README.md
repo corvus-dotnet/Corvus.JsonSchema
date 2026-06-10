@@ -15,7 +15,7 @@ arazzo-runs <command> [args] --server <url> [--token <bearer>]
 
 | Command | Description |
 |---------|-------------|
-| `list [--status <s>] [--workflow-id <id>] [--limit <n>] [--page-token <t>] [--output table\|json]` | List runs (default a table; `--output json` for piping). Follow `nextPageToken` to page. |
+| `list [--status <s>] [--workflow-id <id>] [--limit <n>] [--page-token <t>]` | List runs; follow `nextPageToken` to page. |
 | `get <runId>` | Show a run's management detail. |
 | `resume <runId> --mode <mode> …` | Resume a faulted run. `--mode` is `RetryFaultedStep` (default), `Rewind` (`--target-cursor`), `Skip` (`--target-cursor`, `--skip-outputs-file <path>`), or `StatePatch` (`--patch-file <path>`, validated against RFC 6902 before sending). JSON-valued inputs are read from files, not passed on the command line. |
 | `cancel <runId> --reason <text>` | Cancel a non-terminal run. |
@@ -24,27 +24,8 @@ arazzo-runs <command> [args] --server <url> [--token <bearer>]
 | `login [--use-device-code]` | Sign in interactively and cache an access token. |
 | `logout` | Remove the cached access token. |
 
-`--server` is the control plane's **base URL** — origin plus any base path the deployment mounts the API under,
-e.g. `https://host:8080` (API at the root) or `https://host/arazzo/v1`. The generated request paths are absolute
-(`/runs`); the CLI prepends the `--server` base path to them, so it adapts to wherever the API is served.
-`--server`/`--token` may also come from `ARAZZO_RUNS_SERVER` / `ARAZZO_RUNS_TOKEN`.
-
-The runs commands above sit at the top level; the other control-plane resources are grouped under noun branches
-(run `arazzo-runs <group> --help` for each):
-
-| Group | Purpose |
-|-------|---------|
-| `catalog` | Pack/verify workflow packages and manage catalogued versions (governance, status). |
-| `security` | Author the row-security policy: `rule` and claim→rule `binding` subcommands. |
-| `credentials` | Manage source credential bindings — **references and non-secret metadata only, never secret material**. `list` is a status-first table (`--status`/`--source`); `update` is a merge (re-point a `--ref` to rotate; unspecified fields are preserved). |
-| `administrators` | Manage a workflow's administrator set (`list`/`add`/`remove`/`transfer`); administrators are named by the deployment-mapped grant `{dimension, value}`. |
-| `access-requests` | Request elevated capability on a workflow, and — as a §15 administrator — decide requests (§16.5): `submit`/`list`/`get`/`approve`/`approve-as-eligible`/`deny`/`withdraw`/`revoke`. |
-
-```bash
-arazzo-runs credentials list --status expiring --server https://host:8080
-arazzo-runs credentials update petstore production --ref value=keyvault://petstore-key#4 --server https://host:8080
-arazzo-runs administrators add billing tenant acme --server https://host:8080
-```
+`--server` is the control plane's **base origin** (e.g. `https://host:8080`); the generated request paths are
+absolute (`/runs`). `--server`/`--token` may also come from `ARAZZO_RUNS_SERVER` / `ARAZZO_RUNS_TOKEN`.
 
 ### Examples
 

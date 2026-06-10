@@ -7,7 +7,6 @@ using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client;
 using Corvus.Text.Json.OpenApi.HttpTransport;
 using Corvus.Text.Json.Patch;
-using Spectre.Console;
 using Spectre.Console.Cli;
 using Models = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 
@@ -17,7 +16,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli;
 internal class RunsSettings : CommandSettings
 {
     [CommandOption("--server <URL>")]
-    [Description("Control-plane base URL — origin plus any base path (or env ARAZZO_RUNS_SERVER), e.g. https://host:8080 or https://host/arazzo/v1.")]
+    [Description("Control-plane base origin (or env ARAZZO_RUNS_SERVER), e.g. https://host:8080.")]
     public string? Server { get; init; }
 
     [CommandOption("--token <TOKEN>")]
@@ -37,156 +36,12 @@ internal class RunsSettings : CommandSettings
     public async Task<(HttpClient Http, HttpClientTransport Transport, ApiRunsClient Client)> CreateClientAsync(CancellationToken cancellationToken)
     {
         string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
-        HttpClient http = this.CreateHttpClient();
+        var http = new HttpClient { BaseAddress = new Uri(this.ResolveServer()!, UriKind.Absolute) };
         var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
         return (http, transport, new ApiRunsClient(transport));
     }
 
-    /// <summary>Builds the catalog API client (and the HTTP client / transport it owns) for this invocation, resolving
-    /// the access token from the <c>--token</c> flag, the environment, or the login cache (refreshing if stale).</summary>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The HTTP client, transport, and catalog API client. Dispose the HTTP client and transport.</returns>
-    public async Task<(HttpClient Http, HttpClientTransport Transport, ApiCatalogClient Client)> CreateCatalogClientAsync(CancellationToken cancellationToken)
-    {
-        string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
-        HttpClient http = this.CreateHttpClient();
-        var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
-        return (http, transport, new ApiCatalogClient(transport));
-    }
-
-    /// <summary>Builds the security API client (and the HTTP client / transport it owns) for this invocation.</summary>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The HTTP client, transport, and security API client. Dispose the HTTP client and transport.</returns>
-    public async Task<(HttpClient Http, HttpClientTransport Transport, ApiSecurityClient Client)> CreateSecurityClientAsync(CancellationToken cancellationToken)
-    {
-        string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
-        HttpClient http = this.CreateHttpClient();
-        var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
-        return (http, transport, new ApiSecurityClient(transport));
-    }
-
-    /// <summary>Builds the source-credential API client (and the HTTP client / transport it owns) for this invocation.
-    /// The credential surface manages <em>references</em> and non-secret metadata only — never secret material.</summary>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The HTTP client, transport, and credentials API client. Dispose the HTTP client and transport.</returns>
-    public async Task<(HttpClient Http, HttpClientTransport Transport, ApiCredentialsClient Client)> CreateCredentialsClientAsync(CancellationToken cancellationToken)
-    {
-        string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
-        HttpClient http = this.CreateHttpClient();
-        var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
-        return (http, transport, new ApiCredentialsClient(transport));
-    }
-
-    /// <summary>Builds the environments API client (and the HTTP client / transport it owns) for this invocation. The
-    /// environments surface governs reach-scoped deployment environments and their administrators (design §7.7).</summary>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The HTTP client, transport, and environments API client. Dispose the HTTP client and transport.</returns>
-    public async Task<(HttpClient Http, HttpClientTransport Transport, ApiEnvironmentsClient Client)> CreateEnvironmentsClientAsync(CancellationToken cancellationToken)
-    {
-        string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
-        HttpClient http = this.CreateHttpClient();
-        var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
-        return (http, transport, new ApiEnvironmentsClient(transport));
-    }
-
-    /// <summary>Builds the sources API client (and the HTTP client / transport it owns) for this invocation.</summary>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The HTTP client, transport, and sources API client. Dispose the HTTP client and transport.</returns>
-    public async Task<(HttpClient Http, HttpClientTransport Transport, ApiSourcesClient Client)> CreateSourcesClientAsync(CancellationToken cancellationToken)
-    {
-        string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
-        HttpClient http = this.CreateHttpClient();
-        var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
-        return (http, transport, new ApiSourcesClient(transport));
-    }
-
-    /// <summary>Builds the availability ("promotion") API client (and the HTTP client / transport it owns) for this invocation.</summary>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The HTTP client, transport, and availability API client. Dispose the HTTP client and transport.</returns>
-    public async Task<(HttpClient Http, HttpClientTransport Transport, ApiAvailabilityClient Client)> CreateAvailabilityClientAsync(CancellationToken cancellationToken)
-    {
-        string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
-        HttpClient http = this.CreateHttpClient();
-        var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
-        return (http, transport, new ApiAvailabilityClient(transport));
-    }
-
-    /// <summary>Builds the workflow-administration API client (and the HTTP client / transport it owns) for this invocation.</summary>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The HTTP client, transport, and administrators API client. Dispose the HTTP client and transport.</returns>
-    public async Task<(HttpClient Http, HttpClientTransport Transport, ApiAdministratorsClient Client)> CreateAdministratorsClientAsync(CancellationToken cancellationToken)
-    {
-        string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
-        HttpClient http = this.CreateHttpClient();
-        var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
-        return (http, transport, new ApiAdministratorsClient(transport));
-    }
-
-    /// <summary>Builds the access-request API client (and the HTTP client / transport it owns) for this invocation.</summary>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The HTTP client, transport, and access-request API client. Dispose the HTTP client and transport.</returns>
-    public async Task<(HttpClient Http, HttpClientTransport Transport, ApiAccessRequestsClient Client)> CreateAccessRequestsClientAsync(CancellationToken cancellationToken)
-    {
-        string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
-        HttpClient http = this.CreateHttpClient();
-        var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
-        return (http, transport, new ApiAccessRequestsClient(transport));
-    }
-
-    /// <summary>Builds the availability-request API client (and the HTTP client / transport it owns) for this invocation.</summary>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The HTTP client, transport, and availability-request API client. Dispose the HTTP client and transport.</returns>
-    public async Task<(HttpClient Http, HttpClientTransport Transport, ApiAvailabilityRequestsClient Client)> CreateAvailabilityRequestsClientAsync(CancellationToken cancellationToken)
-    {
-        string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
-        HttpClient http = this.CreateHttpClient();
-        var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
-        return (http, transport, new ApiAvailabilityRequestsClient(transport));
-    }
-
     private string? ResolveServer() => this.Server ?? Environment.GetEnvironmentVariable("ARAZZO_RUNS_SERVER");
-
-    /// <summary>
-    /// Builds the HTTP client for this invocation, adapting to the control plane's base path. The generated
-    /// client builds <em>absolute</em> operation paths (e.g. <c>/catalog</c>); when <c>--server</c> carries a
-    /// base path (e.g. <c>https://host/arazzo/v1</c>) a <see cref="BasePathHandler"/> prepends it, so the CLI
-    /// works wherever a deployment mounts the API (at the root, or under any prefix the server's base URL gives).
-    /// </summary>
-    /// <returns>The HTTP client (whose handler chain it owns and disposes).</returns>
-    private HttpClient CreateHttpClient()
-    {
-        var server = new Uri(this.ResolveServer()!, UriKind.Absolute);
-        string basePath = server.AbsolutePath.TrimEnd('/');
-        HttpMessageHandler handler = new HttpClientHandler();
-        if (basePath.Length > 0)
-        {
-            handler = new BasePathHandler(basePath) { InnerHandler = handler };
-        }
-
-        return new HttpClient(handler) { BaseAddress = new Uri(server.GetLeftPart(UriPartial.Authority)) };
-    }
-}
-
-/// <summary>
-/// Mounts each request under the control plane's base path. The generated client produces absolute operation
-/// paths (<c>/runs</c>, <c>/catalog</c>, …) resolved against the origin; this prepends the base path that the
-/// <c>--server</c> URL carries (e.g. <c>/arazzo/v1</c>), preserving the query — so the CLI adapts to wherever the
-/// deployment serves the API rather than assuming it sits at the origin root.
-/// </summary>
-internal sealed class BasePathHandler(string basePath) : DelegatingHandler
-{
-    /// <inheritdoc/>
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(request);
-
-        if (request.RequestUri is { IsAbsoluteUri: true } uri)
-        {
-            request.RequestUri = new UriBuilder(uri) { Path = basePath + uri.AbsolutePath }.Uri;
-        }
-
-        return base.SendAsync(request, cancellationToken);
-    }
 }
 
 /// <summary>Settings for a command that targets a single run by id.</summary>
@@ -207,30 +62,6 @@ internal sealed class ListSettings : RunsSettings
     [Description("Restrict to runs of this workflow.")]
     public string? WorkflowId { get; init; }
 
-    [CommandOption("--created-after <RFC3339>")]
-    [Description("Restrict to runs created at or after this instant (inclusive).")]
-    public string? CreatedAfter { get; init; }
-
-    [CommandOption("--created-before <RFC3339>")]
-    [Description("Restrict to runs created strictly before this instant (exclusive).")]
-    public string? CreatedBefore { get; init; }
-
-    [CommandOption("--updated-after <RFC3339>")]
-    [Description("Restrict to runs last updated at or after this instant (inclusive).")]
-    public string? UpdatedAfter { get; init; }
-
-    [CommandOption("--updated-before <RFC3339>")]
-    [Description("Restrict to runs last updated strictly before this instant (exclusive).")]
-    public string? UpdatedBefore { get; init; }
-
-    [CommandOption("--tag <TAG>")]
-    [Description("Restrict to runs carrying this tag (repeat to require several, AND-matched).")]
-    public string[] Tags { get; init; } = [];
-
-    [CommandOption("--correlation-id <ID>")]
-    [Description("Restrict to runs with this telemetry correlation id (exact match).")]
-    public string? CorrelationId { get; init; }
-
     [CommandOption("--limit <N>")]
     [Description("Maximum runs per page.")]
     public int? Limit { get; init; }
@@ -238,11 +69,6 @@ internal sealed class ListSettings : RunsSettings
     [CommandOption("--page-token <TOKEN>")]
     [Description("Continuation token from a previous page's nextPageToken.")]
     public string? PageToken { get; init; }
-
-    [CommandOption("--output <FORMAT>")]
-    [Description("Output format: table (default) or json.")]
-    [DefaultValue("table")]
-    public string Output { get; init; } = "table";
 }
 
 internal sealed class ResumeSettings : RunIdSettings
@@ -315,50 +141,7 @@ internal sealed class ListCommand : AsyncCommand<ListSettings>
                 workflowId = w;
             }
 
-            Models.JsonDateTime.Source createdAfter = default;
-            if (settings.CreatedAfter is { } ca)
-            {
-                createdAfter = ca;
-            }
-
-            Models.JsonDateTime.Source createdBefore = default;
-            if (settings.CreatedBefore is { } cb)
-            {
-                createdBefore = cb;
-            }
-
-            Models.JsonDateTime.Source updatedAfter = default;
-            if (settings.UpdatedAfter is { } ua)
-            {
-                updatedAfter = ua;
-            }
-
-            Models.JsonDateTime.Source updatedBefore = default;
-            if (settings.UpdatedBefore is { } ub)
-            {
-                updatedBefore = ub;
-            }
-
-            Models.TagList.Source tag = default;
-            if (settings.Tags.Length > 0)
-            {
-                string[] tagValues = settings.Tags;
-                tag = new Models.TagList.Source((ref Models.TagList.Builder arrayBuilder) =>
-                {
-                    foreach (string t in tagValues)
-                    {
-                        arrayBuilder.AddItem(t);
-                    }
-                });
-            }
-
-            Models.JsonString.Source correlationId = default;
-            if (settings.CorrelationId is { } cid)
-            {
-                correlationId = cid;
-            }
-
-            Models.PageLimit.Source limit = default;
+            Models.Schema.Source limit = default;
             if (settings.Limit is { } l)
             {
                 limit = l;
@@ -370,64 +153,12 @@ internal sealed class ListCommand : AsyncCommand<ListSettings>
                 pageToken = p;
             }
 
-            await using ListRunsResponse response = await client.ListRunsAsync(status, workflowId, createdAfter, createdBefore, updatedAfter, updatedBefore, tag, correlationId, limit, pageToken, cancellationToken);
-            bool asJson = settings.Output.Equals("json", StringComparison.OrdinalIgnoreCase);
+            await using ListRunsResponse response = await client.ListRunsAsync(status, workflowId, limit, pageToken, cancellationToken);
             return response.MatchResult(
-                page => asJson ? Output.Print(page.ToString()) : RenderTable(page),
+                page => Output.Print(page.ToString()),
                 Output.Problem,
                 Output.Unexpected);
         }
-    }
-
-    // Render a human-readable table to the current Console.Out (bound explicitly so output stays
-    // correct under redirection / capture). Run ids etc. are escaped against Spectre markup.
-    private static int RenderTable(Models.WorkflowRunPage page)
-    {
-        IAnsiConsole console = AnsiConsole.Create(new AnsiConsoleSettings { Out = new AnsiConsoleOutput(Console.Out) });
-
-        var table = new Table().Border(TableBorder.Rounded);
-        table.AddColumn("Id");
-        table.AddColumn("Status");
-        table.AddColumn("Workflow");
-        table.AddColumn("Updated");
-        table.AddColumn("Correlation");
-        table.AddColumn("Tags");
-
-        foreach (Models.WorkflowRunSummary summary in page.Runs.EnumerateArray())
-        {
-            string correlationId = summary.CorrelationId.IsNotUndefined() ? (string)summary.CorrelationId : "—";
-            string tags = "—";
-            if (summary.Tags.IsNotUndefined())
-            {
-                var labels = new List<string>();
-                foreach (Models.JsonString tag in summary.Tags.EnumerateArray())
-                {
-                    labels.Add((string)tag);
-                }
-
-                if (labels.Count > 0)
-                {
-                    tags = string.Join(", ", labels);
-                }
-            }
-
-            table.AddRow(
-                Markup.Escape((string)summary.Id),
-                Markup.Escape((string)summary.Status),
-                Markup.Escape((string)summary.WorkflowId),
-                Markup.Escape((string)summary.UpdatedAt),
-                Markup.Escape(correlationId),
-                Markup.Escape(tags));
-        }
-
-        console.Write(table);
-
-        if (page.NextPageToken.IsNotUndefined())
-        {
-            console.MarkupLine($"[dim]next page token:[/] {Markup.Escape((string)page.NextPageToken)}");
-        }
-
-        return 0;
     }
 }
 
@@ -563,7 +294,6 @@ internal sealed class ResumeCommand : AsyncCommand<ResumeSettings>
         detail => Output.Print(detail.ToString()),
         Output.Problem,
         Output.Problem,
-        Output.Problem,
         Output.Unexpected);
 }
 
@@ -581,7 +311,6 @@ internal sealed class CancelCommand : AsyncCommand<CancelSettings>
                 cancellationToken);
             return response.MatchResult(
                 detail => Output.Print(detail.ToString()),
-                Output.Problem,
                 Output.Problem,
                 Output.Problem,
                 Output.Problem,
@@ -608,7 +337,6 @@ internal sealed class DeleteCommand : AsyncCommand<RunIdSettings>
             return response.MatchResult(
                 Output.Problem,
                 Output.Problem,
-                Output.Problem,
                 Output.Unexpected);
         }
     }
@@ -623,7 +351,7 @@ internal sealed class PurgeCommand : AsyncCommand<PurgeSettings>
         await using (transport)
         {
             Models.JsonDateTime.Source olderThan = settings.OlderThan!;
-            Models.PageLimit.Source limit = default;
+            Models.Schema.Source limit = default;
             if (settings.Limit is { } l)
             {
                 limit = l;
