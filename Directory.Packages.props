@@ -3,6 +3,8 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
+    <!-- OAuth2/OIDC client for the control-plane CLI's interactive login -->
+    <PackageVersion Include="Duende.IdentityModel.OidcClient" Version="7.1.0" />
     <!-- Build & analysis tooling -->
     <PackageVersion Include="Endjin.RecommendedPractices.GitHub" Version="2.1.18" />
     <PackageVersion Include="Microsoft.CodeAnalysis.ResxSourceGenerator" Version="5.0.0-1.25277.114" />

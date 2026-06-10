@@ -1806,6 +1806,13 @@ skills:
     blocks:
       - {index: 0, language: powershell, lines: [18, 20]}
       - {index: 1, language: powershell, lines: [44, 53]}
+  - path: ".github/skills/corvus-typed-model-construction/SKILL.md"
+    blocks:
+      - {index: 0, language: csharp, lines: [26, 30], category: compilable, verified: false}
+      - {index: 1, language: csharp, lines: [47, 53], category: compilable, verified: false}
+      - {index: 2, language: csharp, lines: [63, 70], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [75, 80], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [90, 94], category: compilable, verified: false}
   - path: ".github/skills/corvus-v4-migration/SKILL.md"
     blocks:
       - {index: 0, language: xml, lines: [29, 31]}
