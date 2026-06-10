@@ -7,6 +7,7 @@ using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client;
 using Corvus.Text.Json.OpenApi.HttpTransport;
 using Corvus.Text.Json.Patch;
+using Spectre.Console;
 using Spectre.Console.Cli;
 using Models = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 
@@ -69,6 +70,11 @@ internal sealed class ListSettings : RunsSettings
     [CommandOption("--page-token <TOKEN>")]
     [Description("Continuation token from a previous page's nextPageToken.")]
     public string? PageToken { get; init; }
+
+    [CommandOption("--output <FORMAT>")]
+    [Description("Output format: table (default) or json.")]
+    [DefaultValue("table")]
+    public string Output { get; init; } = "table";
 }
 
 internal sealed class ResumeSettings : RunIdSettings
@@ -154,11 +160,43 @@ internal sealed class ListCommand : AsyncCommand<ListSettings>
             }
 
             await using ListRunsResponse response = await client.ListRunsAsync(status, workflowId, limit, pageToken, cancellationToken);
+            bool asJson = settings.Output.Equals("json", StringComparison.OrdinalIgnoreCase);
             return response.MatchResult(
-                page => Output.Print(page.ToString()),
+                page => asJson ? Output.Print(page.ToString()) : RenderTable(page),
                 Output.Problem,
                 Output.Unexpected);
         }
+    }
+
+    // Render a human-readable table to the current Console.Out (bound explicitly so output stays
+    // correct under redirection / capture). Run ids etc. are escaped against Spectre markup.
+    private static int RenderTable(Models.WorkflowRunPage page)
+    {
+        IAnsiConsole console = AnsiConsole.Create(new AnsiConsoleSettings { Out = new AnsiConsoleOutput(Console.Out) });
+
+        var table = new Table().Border(TableBorder.Rounded);
+        table.AddColumn("Id");
+        table.AddColumn("Status");
+        table.AddColumn("Workflow");
+        table.AddColumn("Updated");
+
+        foreach (Models.WorkflowRunSummary summary in page.Runs.EnumerateArray())
+        {
+            table.AddRow(
+                Markup.Escape((string)summary.Id),
+                Markup.Escape((string)summary.Status),
+                Markup.Escape((string)summary.WorkflowId),
+                Markup.Escape((string)summary.UpdatedAt));
+        }
+
+        console.Write(table);
+
+        if (page.NextPageToken.IsNotUndefined())
+        {
+            console.MarkupLine($"[dim]next page token:[/] {Markup.Escape((string)page.NextPageToken)}");
+        }
+
+        return 0;
     }
 }
 

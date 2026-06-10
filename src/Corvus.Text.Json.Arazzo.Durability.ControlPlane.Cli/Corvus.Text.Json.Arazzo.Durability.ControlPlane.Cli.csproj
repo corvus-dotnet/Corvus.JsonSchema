@@ -23,6 +23,9 @@
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi.HttpTransport\Corvus.Text.Json.OpenApi.HttpTransport.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Duende.IdentityModel.OidcClient" />
     <PackageReference Include="Spectre.Console.Cli" />
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
