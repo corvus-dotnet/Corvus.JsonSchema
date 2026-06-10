@@ -17,9 +17,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
 /// </summary>
 /// <remarks>
 /// The run id is both the document id and the partition key, so every checkpoint operation is a single-partition
-/// point operation. Create instances with <see cref="CreateAsync(string, string, TimeProvider?, CancellationToken)"/>;
-/// the overload taking a <see cref="CosmosClient"/> exists for callers (such as the emulator-based tests) that
-/// must configure the client themselves.
+/// point operation. Provision the database and containers once with
+/// <see cref="PrepareAsync(string, string, CancellationToken)"/>, then open the store with
+/// <see cref="ConnectAsync(string, string, TimeProvider?, CancellationToken)"/>; the overloads taking a
+/// <see cref="CosmosClient"/> let callers configure the client (for example a least-privileged data-plane
+/// managed identity) themselves.
 /// </remarks>
 public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IAsyncDisposable
 {
@@ -42,37 +44,86 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         this.ownsClient = ownsClient;
     }
 
-    /// <summary>Opens a store over the given Cosmos connection string, creating its database and containers.</summary>
+    /// <summary>Provisions the store's database and containers over the given connection string.</summary>
+    /// <remarks>See <see cref="PrepareAsync(CosmosClient, string, CancellationToken)"/> for the privilege rationale.</remarks>
+    /// <param name="connectionString">An Azure Cosmos DB connection string (typically the account key, which has management-plane rights).</param>
+    /// <param name="databaseName">The database to use; defaults to <c>arazzo</c>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes once the database and containers exist (the operation is idempotent).</returns>
+    public static async ValueTask PrepareAsync(
+        string connectionString,
+        string databaseName = "arazzo",
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(connectionString);
+        using var client = new CosmosClient(connectionString, CreateClientOptions());
+        await ProvisionAsync(client, databaseName, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Provisions the store's database and containers over a caller-supplied <see cref="CosmosClient"/>.</summary>
+    /// <remarks>
+    /// Creating a database/container is a Cosmos <em>management-plane</em> operation — the data-plane RBAC
+    /// roles (for example <c>Cosmos DB Built-in Data Contributor</c>) cannot do it. So provisioning needs the
+    /// account key or a control-plane role and must be separated from the least-privileged data-plane
+    /// credential used to <see cref="ConnectAsync(CosmosClient, string, TimeProvider?, CancellationToken)"/>
+    /// the store for operation. Run this once at deploy/migration time.
+    /// </remarks>
+    /// <param name="client">A configured Cosmos client (the caller retains ownership and must dispose it).</param>
+    /// <param name="databaseName">The database to use; defaults to <c>arazzo</c>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes once the database and containers exist (the operation is idempotent).</returns>
+    public static ValueTask PrepareAsync(
+        CosmosClient client,
+        string databaseName = "arazzo",
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        return ProvisionAsync(client, databaseName, cancellationToken);
+    }
+
+    /// <summary>Opens the store for operation against an already-provisioned database and containers.</summary>
+    /// <remarks>
+    /// This creates no database or container, so it is safe to use a least-privileged data-plane credential.
+    /// Call <see cref="PrepareAsync(string, string, CancellationToken)"/> once beforehand to provision.
+    /// </remarks>
     /// <param name="connectionString">An Azure Cosmos DB connection string.</param>
     /// <param name="databaseName">The database to use; defaults to <c>arazzo</c>.</param>
     /// <param name="timeProvider">The time source for lease expiry; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The opened, initialised store (it owns and disposes the client).</returns>
-    public static ValueTask<CosmosWorkflowStateStore> CreateAsync(
+    /// <returns>The opened store (it owns and disposes the client).</returns>
+    public static ValueTask<CosmosWorkflowStateStore> ConnectAsync(
         string connectionString,
         string databaseName = "arazzo",
         TimeProvider? timeProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
+        cancellationToken.ThrowIfCancellationRequested();
         var client = new CosmosClient(connectionString, CreateClientOptions());
-        return InitialiseAsync(client, databaseName, timeProvider, ownsClient: true, cancellationToken);
+        return new ValueTask<CosmosWorkflowStateStore>(Connect(client, databaseName, timeProvider, ownsClient: true));
     }
 
-    /// <summary>Opens a store over a caller-supplied <see cref="CosmosClient"/>, creating its database and containers.</summary>
+    /// <summary>Opens the store for operation over a caller-supplied <see cref="CosmosClient"/>.</summary>
+    /// <remarks>
+    /// Supply a client the caller configured — for example with a managed identity / <c>TokenCredential</c>
+    /// holding only a data-plane role — so the store runs under a least-privileged principal with no account
+    /// key. This creates no database or container; call <see cref="PrepareAsync(CosmosClient, string, CancellationToken)"/>
+    /// once beforehand.
+    /// </remarks>
     /// <param name="client">A configured Cosmos client; the caller retains ownership and must dispose it.</param>
     /// <param name="databaseName">The database to use; defaults to <c>arazzo</c>.</param>
     /// <param name="timeProvider">The time source for lease expiry; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The opened, initialised store (it does not dispose the supplied client).</returns>
-    public static ValueTask<CosmosWorkflowStateStore> CreateAsync(
+    /// <returns>The opened store (it does not dispose the supplied client).</returns>
+    public static ValueTask<CosmosWorkflowStateStore> ConnectAsync(
         CosmosClient client,
         string databaseName = "arazzo",
         TimeProvider? timeProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(client);
-        return InitialiseAsync(client, databaseName, timeProvider, ownsClient: false, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        return new ValueTask<CosmosWorkflowStateStore>(Connect(client, databaseName, timeProvider, ownsClient: false));
     }
 
     /// <summary>The serializer options the store relies on (camelCase property names, null properties omitted).</summary>
@@ -293,11 +344,20 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
-    private static async ValueTask<CosmosWorkflowStateStore> InitialiseAsync(CosmosClient client, string databaseName, TimeProvider? timeProvider, bool ownsClient, CancellationToken cancellationToken)
+    private static async ValueTask ProvisionAsync(CosmosClient client, string databaseName, CancellationToken cancellationToken)
     {
         Database database = await client.CreateDatabaseIfNotExistsAsync(databaseName, cancellationToken: cancellationToken).ConfigureAwait(false);
-        Container runs = await database.CreateContainerIfNotExistsAsync(new ContainerProperties(RunsContainerId, "/id"), cancellationToken: cancellationToken).ConfigureAwait(false);
-        Container leases = await database.CreateContainerIfNotExistsAsync(new ContainerProperties(LeasesContainerId, "/id"), cancellationToken: cancellationToken).ConfigureAwait(false);
+        await database.CreateContainerIfNotExistsAsync(new ContainerProperties(RunsContainerId, "/id"), cancellationToken: cancellationToken).ConfigureAwait(false);
+        await database.CreateContainerIfNotExistsAsync(new ContainerProperties(LeasesContainerId, "/id"), cancellationToken: cancellationToken).ConfigureAwait(false);
+    }
+
+    private static CosmosWorkflowStateStore Connect(CosmosClient client, string databaseName, TimeProvider? timeProvider, bool ownsClient)
+    {
+        // GetDatabase/GetContainer return proxies without network I/O (no creation), so this is a pure
+        // data-plane open against the already-provisioned resources.
+        Database database = client.GetDatabase(databaseName);
+        Container runs = database.GetContainer(RunsContainerId);
+        Container leases = database.GetContainer(LeasesContainerId);
         return new CosmosWorkflowStateStore(client, runs, leases, timeProvider ?? TimeProvider.System, ownsClient);
     }
 

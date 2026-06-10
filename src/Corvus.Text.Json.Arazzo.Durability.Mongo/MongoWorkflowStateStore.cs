@@ -16,7 +16,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Mongo;
 /// </summary>
 /// <remarks>
 /// The driver pools connections internally, so the store is naturally concurrent. Create instances with
-/// <see cref="CreateAsync"/>, which ensures the indexes.
+/// <see cref="ConnectAsync(string, string, TimeProvider?, CancellationToken)"/> after provisioning with <see cref="PrepareAsync(string, string, CancellationToken)"/>.
 /// </remarks>
 public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IAsyncDisposable
 {
@@ -38,23 +38,89 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         this.leases = database.GetCollection<BsonDocument>("workflow_leases");
     }
 
-    /// <summary>Opens a store over the given MongoDB connection string.</summary>
+    /// <summary>
+    /// Provisions the store's indexes. Creating indexes requires the <c>createIndex</c> privilege, so run this
+    /// once at deploy/migration time, separately from the least-privileged user used to
+    /// <see cref="ConnectAsync(string, string, TimeProvider?, CancellationToken)"/> the store for operation. (Collections themselves are created lazily on first
+    /// write, so the operational user needs only <c>readWrite</c>.)
+    /// </summary>
+    /// <param name="connectionString">A MongoDB connection string for a user permitted to create indexes.</param>
+    /// <param name="databaseName">The database to use; defaults to <c>arazzo</c>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes once the indexes exist (the operation is idempotent).</returns>
+    public static async ValueTask PrepareAsync(
+        string connectionString,
+        string databaseName = "arazzo",
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(connectionString);
+        var client = new MongoClient(connectionString);
+        await using var store = new MongoWorkflowStateStore(client, databaseName, TimeProvider.System, ownsClient: true);
+        await store.EnsureIndexesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Opens the store for operation against an already-provisioned database.</summary>
+    /// <remarks>
+    /// This creates no indexes, so it is safe to use a least-privileged operational user granted only
+    /// <c>readWrite</c> on the database. Call <see cref="PrepareAsync(string, string, CancellationToken)"/> once beforehand to create the indexes.
+    /// </remarks>
     /// <param name="connectionString">A MongoDB connection string (e.g. <c>mongodb://localhost:27017</c>).</param>
     /// <param name="databaseName">The database to use; defaults to <c>arazzo</c>.</param>
     /// <param name="timeProvider">The time source for lease expiry; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The opened store (it owns and disposes the client).</returns>
-    public static async ValueTask<MongoWorkflowStateStore> CreateAsync(
+    public static ValueTask<MongoWorkflowStateStore> ConnectAsync(
         string connectionString,
         string databaseName = "arazzo",
         TimeProvider? timeProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
+        cancellationToken.ThrowIfCancellationRequested();
         var client = new MongoClient(connectionString);
-        var store = new MongoWorkflowStateStore(client, databaseName, timeProvider ?? TimeProvider.System, ownsClient: true);
+        return new ValueTask<MongoWorkflowStateStore>(new MongoWorkflowStateStore(client, databaseName, timeProvider ?? TimeProvider.System, ownsClient: true));
+    }
+
+    /// <summary>Provisions the store's indexes over a caller-supplied client.</summary>
+    /// <remarks>
+    /// Supply a client the caller configured — for example one whose <c>MongoClientSettings</c> use an
+    /// OIDC/managed-identity or AWS-IAM credential — so provisioning runs under a deliberate credential rather
+    /// than one embedded in a connection string. The caller retains ownership of the client.
+    /// </remarks>
+    /// <param name="client">A configured MongoDB client permitted to create indexes.</param>
+    /// <param name="databaseName">The database to use; defaults to <c>arazzo</c>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes once the indexes exist (the operation is idempotent).</returns>
+    public static async ValueTask PrepareAsync(
+        IMongoClient client,
+        string databaseName = "arazzo",
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        await using var store = new MongoWorkflowStateStore(client, databaseName, TimeProvider.System, ownsClient: false);
         await store.EnsureIndexesAsync(cancellationToken).ConfigureAwait(false);
-        return store;
+    }
+
+    /// <summary>Opens the store for operation over a caller-supplied client (the caller retains ownership).</summary>
+    /// <remarks>
+    /// Supply a client the caller configured — for example with a least-privileged (<c>readWrite</c>)
+    /// OIDC/managed-identity credential — so the store runs under a least-privileged principal. This creates
+    /// no indexes; call <see cref="PrepareAsync(IMongoClient, string, CancellationToken)"/> once beforehand.
+    /// </remarks>
+    /// <param name="client">A configured MongoDB client.</param>
+    /// <param name="databaseName">The database to use; defaults to <c>arazzo</c>.</param>
+    /// <param name="timeProvider">The time source for lease expiry; defaults to <see cref="TimeProvider.System"/>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The opened store (it does not dispose the supplied client).</returns>
+    public static ValueTask<MongoWorkflowStateStore> ConnectAsync(
+        IMongoClient client,
+        string databaseName = "arazzo",
+        TimeProvider? timeProvider = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        cancellationToken.ThrowIfCancellationRequested();
+        return new ValueTask<MongoWorkflowStateStore>(new MongoWorkflowStateStore(client, databaseName, timeProvider ?? TimeProvider.System, ownsClient: false));
     }
 
     /// <inheritdoc/>

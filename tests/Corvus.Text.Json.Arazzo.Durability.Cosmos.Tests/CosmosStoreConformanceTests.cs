@@ -65,6 +65,8 @@ public sealed class CosmosStoreConformanceTests : WorkflowStateStoreConformance
             // Nothing to reset on the first run.
         }
 
-        return await CosmosWorkflowStateStore.CreateAsync(client, DatabaseName, timeProvider);
+        // Provision (management plane) then open for operation (data plane) over the same client.
+        await CosmosWorkflowStateStore.PrepareAsync(client, DatabaseName);
+        return await CosmosWorkflowStateStore.ConnectAsync(client, DatabaseName, timeProvider);
     }
 }

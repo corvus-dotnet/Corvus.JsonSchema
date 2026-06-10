@@ -16,47 +16,129 @@ namespace Corvus.Text.Json.Arazzo.Durability.MySql;
 /// </summary>
 /// <remarks>
 /// Each operation opens a pooled connection, so the store is naturally concurrent. Create instances with
-/// <see cref="CreateAsync"/>, which runs the idempotent schema.
+/// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> after provisioning with <see cref="PrepareAsync(string, CancellationToken)"/>.
 /// </remarks>
-public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex
+public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IAsyncDisposable
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
 
-    private readonly string connectionString;
+    private readonly MySqlDataSource dataSource;
+    private readonly bool ownsDataSource;
     private readonly TimeProvider timeProvider;
 
-    private MySqlWorkflowStateStore(string connectionString, TimeProvider timeProvider)
+    private MySqlWorkflowStateStore(MySqlDataSource dataSource, bool ownsDataSource, TimeProvider timeProvider)
     {
-        this.connectionString = connectionString;
+        this.dataSource = dataSource;
+        this.ownsDataSource = ownsDataSource;
         this.timeProvider = timeProvider;
     }
 
-    /// <summary>Opens a store over the given connection string and ensures its schema exists.</summary>
-    /// <param name="connectionString">A MySqlConnector connection string.</param>
-    /// <param name="timeProvider">The time source for lease expiry; defaults to <see cref="TimeProvider.System"/>.</param>
+    /// <summary>
+    /// Provisions the store's schema (tables and indexes). This performs DDL, so it requires a user
+    /// permitted to create tables; run it once at deploy/migration time, separately from the least-privileged
+    /// user used to <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> the store for operation.
+    /// </summary>
+    /// <param name="connectionString">A MySqlConnector connection string for a user permitted to create tables.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The opened, schema-initialised store.</returns>
-    public static async ValueTask<MySqlWorkflowStateStore> CreateAsync(
-        string connectionString,
-        TimeProvider? timeProvider = null,
-        CancellationToken cancellationToken = default)
+    /// <returns>A task that completes once the schema exists (the operation is idempotent).</returns>
+    public static async ValueTask PrepareAsync(string connectionString, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
 
-        // Optimistic-concurrency and lease grants are detected from rows-affected, so the store needs the
-        // server's "changed rows" semantics (not the default "found rows"): an ON DUPLICATE KEY UPDATE that
-        // changes nothing must report 0 affected.
-        var builder = new MySqlConnectionStringBuilder(connectionString) { UseAffectedRows = true };
-        var store = new MySqlWorkflowStateStore(builder.ConnectionString, timeProvider ?? TimeProvider.System);
-        await using MySqlConnection connection = await store.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using var connection = new MySqlConnection(connectionString);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
         foreach (string statement in SchemaStatements)
         {
             await using MySqlCommand schema = connection.CreateCommand();
             schema.CommandText = statement;
             await schema.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
+    }
 
-        return store;
+    /// <summary>Opens the store for operation against an already-provisioned schema.</summary>
+    /// <remarks>
+    /// This performs no DDL, so it is safe to use a least-privileged operational user granted only data
+    /// access on the tables. Call <see cref="PrepareAsync(string, CancellationToken)"/> once beforehand — with an elevated user — to
+    /// create the schema.
+    /// </remarks>
+    /// <param name="connectionString">A MySqlConnector connection string.</param>
+    /// <param name="timeProvider">The time source for lease expiry; defaults to <see cref="TimeProvider.System"/>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The opened store.</returns>
+    public static ValueTask<MySqlWorkflowStateStore> ConnectAsync(
+        string connectionString,
+        TimeProvider? timeProvider = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(connectionString);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        // Optimistic-concurrency and lease grants are detected from rows-affected, so the store needs the
+        // server's "changed rows" semantics (not the default "found rows"): an ON DUPLICATE KEY UPDATE that
+        // changes nothing must report 0 affected.
+        var builder = new MySqlConnectionStringBuilder(connectionString) { UseAffectedRows = true };
+        return new ValueTask<MySqlWorkflowStateStore>(
+            new MySqlWorkflowStateStore(new MySqlDataSource(builder.ConnectionString), ownsDataSource: true, timeProvider ?? TimeProvider.System));
+    }
+
+    /// <summary>Provisions the store's schema over a caller-supplied data source.</summary>
+    /// <remarks>
+    /// Supply a data source the caller configured — for example one whose credential provider supplies Entra
+    /// ID/IAM tokens — so provisioning runs under a deliberate credential. The caller retains ownership.
+    /// </remarks>
+    /// <param name="dataSource">A MySqlConnector data source whose user is permitted to create tables.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes once the schema exists (the operation is idempotent).</returns>
+    public static async ValueTask PrepareAsync(MySqlDataSource dataSource, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(dataSource);
+        await using MySqlConnection connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        foreach (string statement in SchemaStatements)
+        {
+            await using MySqlCommand schema = connection.CreateCommand();
+            schema.CommandText = statement;
+            await schema.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>Opens the store for operation over a caller-supplied data source (the caller retains ownership).</summary>
+    /// <remarks>
+    /// Supply a data source the caller configured — for example with a least-privileged operational user — so
+    /// the store runs under a least-privileged principal. The data source <strong>must</strong> have
+    /// <c>UseAffectedRows=true</c> (required for correct optimistic-concurrency and lease semantics); this is
+    /// validated. Performs no DDL — call <see cref="PrepareAsync(MySqlDataSource, CancellationToken)"/> first.
+    /// </remarks>
+    /// <param name="dataSource">A MySqlConnector data source configured with <c>UseAffectedRows=true</c>.</param>
+    /// <param name="timeProvider">The time source for lease expiry; defaults to <see cref="TimeProvider.System"/>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The opened store (it does not dispose the supplied data source).</returns>
+    public static ValueTask<MySqlWorkflowStateStore> ConnectAsync(
+        MySqlDataSource dataSource,
+        TimeProvider? timeProvider = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(dataSource);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (!new MySqlConnectionStringBuilder(dataSource.ConnectionString).UseAffectedRows)
+        {
+            throw new ArgumentException(
+                "The MySqlDataSource must be configured with UseAffectedRows=true for correct optimistic-concurrency and lease semantics.",
+                nameof(dataSource));
+        }
+
+        return new ValueTask<MySqlWorkflowStateStore>(
+            new MySqlWorkflowStateStore(dataSource, ownsDataSource: false, timeProvider ?? TimeProvider.System));
+    }
+
+    /// <summary>Disposes the data source if this store created it (from a connection string).</summary>
+    /// <returns>A task that completes when disposal finishes.</returns>
+    public async ValueTask DisposeAsync()
+    {
+        if (this.ownsDataSource)
+        {
+            await this.dataSource.DisposeAsync().ConfigureAwait(false);
+        }
     }
 
     /// <inheritdoc/>
@@ -271,20 +353,8 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         command.Parameters.AddWithValue("@error_type", (object?)index.ErrorType ?? DBNull.Value);
     }
 
-    private async ValueTask<MySqlConnection> OpenAsync(CancellationToken cancellationToken)
-    {
-        var connection = new MySqlConnection(this.connectionString);
-        try
-        {
-            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-            return connection;
-        }
-        catch
-        {
-            await connection.DisposeAsync().ConfigureAwait(false);
-            throw;
-        }
-    }
+    private ValueTask<MySqlConnection> OpenAsync(CancellationToken cancellationToken)
+        => this.dataSource.OpenConnectionAsync(cancellationToken);
 
     private static readonly string[] SchemaStatements =
     [

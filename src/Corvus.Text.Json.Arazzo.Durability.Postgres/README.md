@@ -11,11 +11,18 @@ opaque `bytea` blob alongside a handful of indexed projection columns; optimisti
 version column and the single-owner lease to a small leases table.
 
 ```csharp
-await using var store = await PostgresWorkflowStateStore.CreateAsync("Host=localhost;Database=workflows;Username=postgres;Password=…");
+// Once, at deploy/migration time — with a credential permitted to create tables:
+await PostgresWorkflowStateStore.PrepareAsync("Host=localhost;Database=workflows;Username=ddl_admin;Password=…");
+
+// At runtime — with a least-privileged operational credential; performs no DDL:
+await using var store = await PostgresWorkflowStateStore.ConnectAsync("Host=localhost;Database=workflows;Username=app;Password=…");
 // ... use as IWorkflowStateStore / IWorkflowWaitIndex (e.g. to build a WorkflowRun or a WorkflowWorker).
 ```
 
-`CreateAsync` runs an idempotent `CREATE TABLE IF NOT EXISTS` schema.
+`PrepareAsync` runs the idempotent `CREATE TABLE IF NOT EXISTS` schema (DDL — provisioning rights);
+`ConnectAsync` performs no DDL, so the running app can use a role granted only `select/insert/update/delete`
+on the tables. Both also have `NpgsqlDataSource` overloads, so you can hand in a data source the app owns —
+for example one whose periodic password provider issues Entra ID tokens (managed identity).
 
 Because the adapter speaks the PostgreSQL wire protocol directly, it also serves **CockroachDB, YugabyteDB,
 AlloyDB, Aurora PostgreSQL, Neon, and Citus**.
