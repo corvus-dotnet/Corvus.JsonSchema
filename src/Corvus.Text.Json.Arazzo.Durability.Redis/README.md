@@ -12,18 +12,10 @@ scripts, and due timers are a **sorted set scored by due-time** so the worker ca
 efficiently.
 
 ```csharp
-await using var store = await RedisWorkflowStateStore.ConnectAsync("localhost:6379");
+await using var store = await RedisWorkflowStateStore.CreateAsync("localhost:6379");
 // ... use as IWorkflowStateStore / IWorkflowWaitIndex.
 ```
-
-Redis has no schema, so there is nothing to provision — `PrepareAsync` only checks connectivity. Least
-privilege is configured server-side with a Redis ACL user scoped to the commands and key patterns the store
-uses; pass that user in the configuration string, or hand a pre-authenticated connection to `Connect(...)`.
 
 > Targets a single Redis instance (or a primary); the index-maintenance Lua touches multiple keys. The
 > in-memory store (in `Corvus.Text.Json.Arazzo.Durability`) is the reference implementation; this backend runs
 > the same store-conformance suite.
-
-**Encryption at rest:** Azure Cache for Redis / Redis Enterprise encrypt persisted data at rest. For
-encryption the Redis operator cannot read, wrap this store in `ProtectedWorkflowStateStore` (see the
-`Corvus.Text.Json.Arazzo.Durability` README).

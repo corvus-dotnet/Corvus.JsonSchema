@@ -14,21 +14,18 @@ namespace Corvus.Text.Json.Arazzo.Durability.Redis;
 /// </summary>
 /// <remarks>
 /// Targets a single Redis instance (or a primary): the index-maintenance Lua touches several keys derived
-/// from the run, which is not Redis-Cluster slot-safe. Create instances with <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> (or <see cref="Connect(StackExchange.Redis.IConnectionMultiplexer, TimeProvider?)"/>).
+/// from the run, which is not Redis-Cluster slot-safe. Create instances with <see cref="CreateAsync"/>.
 /// </remarks>
-public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter, IAsyncDisposable
+public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IAsyncDisposable
 {
     private const string Prefix = "arazzo:";
     private const string AllKey = Prefix + "runs";
     private const string DueKey = Prefix + "due";
-    private const string RunKeyPrefix = Prefix + "run:";
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
-    private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
-    private const string RunningStatus = nameof(WorkflowRunStatus.Running);
 
     // Create-or-update under optimistic concurrency, maintaining the all/due/awaiting indexes. Returns the new
     // version, or -1 on an etag conflict. KEYS: run hash, all-set, due-zset. ARGV: id, expected ("" = create),
-    // checkpoint, status, workflowId, createdAt, updatedAt, dueAt|"", awaitingChannel|"", awaitingCorrelationId|"", errorType|"", correlationId|"", tagsJson|"", securityTagsJson|"", environment|"".
+    // checkpoint, status, workflowId, createdAt, updatedAt, dueAt|"", awaitingChannel|"", awaitingCorrelationId|"", errorType|"".
     private const string SaveScript =
         """
         local cur = redis.call('HGET', KEYS[1], 'version')
@@ -46,10 +43,6 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         if ARGV[9] ~= '' then redis.call('HSET', KEYS[1], 'awaiting_channel', ARGV[9]) else redis.call('HDEL', KEYS[1], 'awaiting_channel') end
         if ARGV[10] ~= '' then redis.call('HSET', KEYS[1], 'awaiting_correlation_id', ARGV[10]) else redis.call('HDEL', KEYS[1], 'awaiting_correlation_id') end
         if ARGV[11] ~= '' then redis.call('HSET', KEYS[1], 'error_type', ARGV[11]) else redis.call('HDEL', KEYS[1], 'error_type') end
-        if ARGV[12] ~= '' then redis.call('HSET', KEYS[1], 'correlation_id', ARGV[12]) else redis.call('HDEL', KEYS[1], 'correlation_id') end
-        if ARGV[13] ~= '' then redis.call('HSET', KEYS[1], 'tags_json', ARGV[13]) else redis.call('HDEL', KEYS[1], 'tags_json') end
-        if ARGV[14] ~= '' then redis.call('HSET', KEYS[1], 'security_tags_json', ARGV[14]) else redis.call('HDEL', KEYS[1], 'security_tags_json') end
-        if ARGV[15] ~= '' then redis.call('HSET', KEYS[1], 'environment', ARGV[15]) else redis.call('HDEL', KEYS[1], 'environment') end
         redis.call('SADD', KEYS[2], ARGV[1])
         if ARGV[4] == 'Suspended' and ARGV[8] ~= '' then redis.call('ZADD', KEYS[3], ARGV[8], ARGV[1]) else redis.call('ZREM', KEYS[3], ARGV[1]) end
         if oldChannel then redis.call('SREM', 'arazzo:awaiting:' .. oldChannel, ARGV[1]) end
@@ -89,48 +82,26 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         this.ownsConnection = ownsConnection;
     }
 
-    /// <summary>Verifies the store can be reached; Redis needs no schema provisioning.</summary>
-    /// <remarks>
-    /// Redis has no schema — keys appear on first write — so there is nothing to provision. This method is
-    /// offered for symmetry with the other backends and to fail fast at deploy time if the server is
-    /// unreachable; it opens and closes a connection. The provisioning concern for Redis is configuring ACLs
-    /// (the operational principal needs only the commands and key patterns the store uses), done on the server.
-    /// </remarks>
-    /// <param name="configuration">A StackExchange.Redis configuration string.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>A task that completes once connectivity is confirmed.</returns>
-    public static async ValueTask PrepareAsync(string configuration, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(configuration);
-        cancellationToken.ThrowIfCancellationRequested();
-        await using IConnectionMultiplexer connection = await ConnectionMultiplexer.ConnectAsync(configuration).ConfigureAwait(false);
-    }
-
     /// <summary>Opens a store over the given Redis configuration.</summary>
     /// <param name="configuration">A StackExchange.Redis configuration string (e.g. <c>localhost:6379</c>).</param>
     /// <param name="timeProvider">The time source for lease expiry; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The opened store (it owns and disposes the connection).</returns>
-    public static async ValueTask<RedisWorkflowStateStore> ConnectAsync(
+    public static async ValueTask<RedisWorkflowStateStore> CreateAsync(
         string configuration,
         TimeProvider? timeProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(configuration);
-        cancellationToken.ThrowIfCancellationRequested();
         IConnectionMultiplexer connection = await ConnectionMultiplexer.ConnectAsync(configuration).ConfigureAwait(false);
         return new RedisWorkflowStateStore(connection, timeProvider ?? TimeProvider.System, ownsConnection: true);
     }
 
     /// <summary>Creates a store over an existing connection (the caller keeps ownership).</summary>
-    /// <remarks>
-    /// Supply a connection the caller configured — for example one authenticated with an operational-only
-    /// Redis ACL user — so the store runs under a least-privileged principal.
-    /// </remarks>
     /// <param name="connection">The Redis connection.</param>
     /// <param name="timeProvider">The time source for lease expiry; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <returns>The store.</returns>
-    public static RedisWorkflowStateStore Connect(IConnectionMultiplexer connection, TimeProvider? timeProvider = null)
+    public static RedisWorkflowStateStore Create(IConnectionMultiplexer connection, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(connection);
         return new RedisWorkflowStateStore(connection, timeProvider ?? TimeProvider.System, ownsConnection: false);
@@ -143,14 +114,11 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         in WorkflowRunIndexEntry index,
         WorkflowEtag expected,
         CancellationToken cancellationToken)
-        => this.SaveCoreAsync(id, checkpointUtf8, index, expected, cancellationToken);
+        => this.SaveCoreAsync(id, checkpointUtf8.ToArray(), index, expected, cancellationToken);
 
-    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunId id, ReadOnlyMemory<byte> checkpoint, WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunId id, byte[] checkpoint, WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-
-        // The opaque checkpoint binds straight to a RedisValue from its ReadOnlyMemory (RedisValue carries the exact
-        // length) — no per-save GC array on the run-state hot path. It is written into the run hash's 'checkpoint' field.
         RedisValue[] argv =
         [
             id.Value,
@@ -164,10 +132,6 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             index.AwaitingChannel ?? string.Empty,
             index.AwaitingCorrelationId ?? string.Empty,
             index.ErrorType ?? string.Empty,
-            index.CorrelationId ?? string.Empty,
-            index.Tags.ToJsonStringOrNull() ?? string.Empty,
-            index.SecurityTags.ToJsonStringOrNull() ?? string.Empty,
-            index.Environment ?? string.Empty,
         ];
 
         RedisResult result = await this.database.ScriptEvaluateAsync(SaveScript, [RunKey(id.Value), AllKey, DueKey], argv).ConfigureAwait(false);
@@ -268,86 +232,19 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     }
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
-        => this.QueryClaimableAsync(hostedWorkflowIds, null, now, cancellationToken);
-
-    /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
-        if (hostedWorkflowIds.Count == 0)
-        {
-            yield break;
-        }
-
-        var hosted = new HashSet<string>(hostedWorkflowIds, StringComparer.Ordinal);
-        long nowMs = now.ToUnixTimeMilliseconds();
-
-        // Redis has no server-side status query, so SCAN the run hashes and filter client-side.
-        IServer server = this.connection.GetServer(this.connection.GetEndPoints()[0]);
-        await foreach (RedisKey key in server.KeysAsync(pattern: RunKeyPrefix + "*").WithCancellation(cancellationToken).ConfigureAwait(false))
-        {
-            string id = ((string)key!)[RunKeyPrefix.Length..];
-
-            RedisValue[] fields = await this.database.HashGetAsync(RunKey(id), ["status", "workflow_id", "environment"]).ConfigureAwait(false);
-            RedisValue status = fields[0];
-            RedisValue workflowId = fields[1];
-            if (workflowId.IsNull || !hosted.Contains((string)workflowId!))
-            {
-                continue;
-            }
-
-            // §5.5 environment-scoped dispatch: a run pinned to an environment is claimable only by a runner serving it;
-            // an unpinned run or an unscoped dispatcher (runnerEnvironment is null) matches anything.
-            string? environment = fields[2].IsNull ? null : (string)fields[2]!;
-            if (!MatchesEnvironment(environment, runnerEnvironment))
-            {
-                continue;
-            }
-
-            if (status == PendingStatus)
-            {
-                yield return new WorkflowRunId(id);
-                continue;
-            }
-
-            if (status == RunningStatus)
-            {
-                RedisValue exp = await this.database.HashGetAsync(LeaseKey(id), "expires_at").ConfigureAwait(false);
-                bool leaseLive = !exp.IsNull && (long)exp > nowMs;
-                if (!leaseLive)
-                {
-                    yield return new WorkflowRunId(id);
-                }
-            }
-        }
-    }
-
-    /// <inheritdoc/>
     public async ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
     {
-        // Redis has no server-side ordering over the run set, so sort the ids and keyset-page client-side.
-        // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
-        string? after = null;
-        if (query.ContinuationToken.IsNotUndefined())
-        {
-            using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
-            after = WorkflowContinuationToken.Decode(tokenUtf8.Span);
-        }
-
-        RedisValue[] members = await this.database.SetMembersAsync(AllKey).ConfigureAwait(false);
-        string[] ids = [.. members.Select(v => (string)v!).OrderBy(static s => s, StringComparer.Ordinal)];
-
+        RedisValue[] ids = await this.database.SetMembersAsync(AllKey).ConfigureAwait(false);
         var runs = new List<WorkflowRunListing>();
-        foreach (string id in ids)
+        foreach (RedisValue id in ids)
         {
-            if (after is not null && string.CompareOrdinal(id, after) <= 0)
+            if (runs.Count >= query.Limit)
             {
-                continue;
+                break;
             }
 
             cancellationToken.ThrowIfCancellationRequested();
-            HashEntry[] entries = await this.database.HashGetAllAsync(RunKey(id)).ConfigureAwait(false);
+            HashEntry[] entries = await this.database.HashGetAllAsync(RunKey(id!)).ConfigureAwait(false);
             if (entries.Length == 0)
             {
                 continue;
@@ -366,70 +263,19 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
                 continue;
             }
 
-            long createdAt = (long)fields["created_at"];
-            if (query.CreatedAfter is { } createdAfter && createdAt < createdAfter.ToUnixTimeMilliseconds())
-            {
-                continue;
-            }
-
-            if (query.CreatedBefore is { } createdBefore && createdAt >= createdBefore.ToUnixTimeMilliseconds())
-            {
-                continue;
-            }
-
-            long updatedAt = (long)fields["updated_at"];
-            if (query.UpdatedAfter is { } updatedAfter && updatedAt < updatedAfter.ToUnixTimeMilliseconds())
-            {
-                continue;
-            }
-
-            if (query.UpdatedBefore is { } updatedBefore && updatedAt >= updatedBefore.ToUnixTimeMilliseconds())
-            {
-                continue;
-            }
-
-            string? correlationId = fields.TryGetValue("correlation_id", out RedisValue cidV) && !cidV.IsNull ? (string)cidV! : null;
-            if (query.CorrelationId is { } wantCid && correlationId != wantCid)
-            {
-                continue;
-            }
-
-            TagSet tags = fields.TryGetValue("tags_json", out RedisValue tagsV) && !tagsV.IsNull ? TagSet.FromJsonStringOrEmpty((string?)tagsV) : default;
-            if (!query.Tags.AllContainedIn(tags))
-            {
-                continue;
-            }
-
-            SecurityTagSet securityTags = fields.TryGetValue("security_tags_json", out RedisValue secV) && !secV.IsNull ? SecurityTagSet.FromJsonStringOrEmpty((string)secV!) : default;
-
-            // Row-security reach (§14.2): Redis has no server-side filtering over the run set, so apply the reach
-            // filter in process over the persisted security tags — the only correct option for a key/value backend.
-            if (query.Security is { } security && !security.IsSatisfiedBy(securityTags))
-            {
-                continue;
-            }
-
             var entry = new WorkflowRunIndexEntry(
                 workflowId,
                 status,
-                DateTimeOffset.FromUnixTimeMilliseconds(createdAt),
-                DateTimeOffset.FromUnixTimeMilliseconds(updatedAt),
+                DateTimeOffset.FromUnixTimeMilliseconds((long)fields["created_at"]),
+                DateTimeOffset.FromUnixTimeMilliseconds((long)fields["updated_at"]),
                 fields.TryGetValue("due_at", out RedisValue dueAt) ? DateTimeOffset.FromUnixTimeMilliseconds((long)dueAt) : null,
                 fields.TryGetValue("awaiting_channel", out RedisValue ch) ? (string)ch! : null,
                 fields.TryGetValue("awaiting_correlation_id", out RedisValue corr) ? (string)corr! : null,
-                fields.TryGetValue("error_type", out RedisValue err) ? (string)err! : null,
-                CorrelationId: correlationId,
-                Tags: tags,
-                SecurityTags: securityTags,
-                Environment: fields.TryGetValue("environment", out RedisValue env) && !env.IsNull ? (string)env! : null);
-            runs.Add(new WorkflowRunListing(new WorkflowRunId(id), entry));
-            if (runs.Count > query.Limit)
-            {
-                break;
-            }
+                fields.TryGetValue("error_type", out RedisValue err) ? (string)err! : null);
+            runs.Add(new WorkflowRunListing(new WorkflowRunId(id!), entry));
         }
 
-        return WorkflowContinuationToken.Paginate(runs, query.Limit);
+        return new WorkflowRunPage(runs);
     }
 
     /// <inheritdoc/>
@@ -441,13 +287,9 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         }
     }
 
-    private static RedisKey RunKey(string id) => RunKeyPrefix + id;
+    private static RedisKey RunKey(string id) => Prefix + "run:" + id;
 
     private static RedisKey LeaseKey(string id) => Prefix + "lease:" + id;
 
     private static RedisKey AwaitingKey(string channel) => Prefix + "awaiting:" + channel;
-
-    // §5.5 null-matches-anything: an unpinned run or an unscoped dispatcher matches any environment.
-    private static bool MatchesEnvironment(string? entryEnvironment, string? runnerEnvironment)
-        => runnerEnvironment is null || entryEnvironment is null || string.Equals(entryEnvironment, runnerEnvironment, StringComparison.Ordinal);
 }

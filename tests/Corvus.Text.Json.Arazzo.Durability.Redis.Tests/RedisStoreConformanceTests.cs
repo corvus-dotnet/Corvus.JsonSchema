@@ -46,7 +46,6 @@ public sealed class RedisStoreConformanceTests : WorkflowStateStoreConformance
             await admin.GetServer(admin.GetEndPoints()[0]).FlushDatabaseAsync();
         }
 
-        await RedisWorkflowStateStore.PrepareAsync(configuration);
-        return await RedisWorkflowStateStore.ConnectAsync(configuration, timeProvider);
+        return await RedisWorkflowStateStore.CreateAsync(configuration, timeProvider);
     }
 }
