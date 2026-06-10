@@ -251,6 +251,90 @@ public partial class WorkflowExecutorEndToEndTests
         tag.GetString().ShouldBe("Fido");
     }
 
+    private const string WorkflowsCriterionDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "parent",
+              "steps": [
+                {
+                  "stepId": "callChild",
+                  "workflowId": "child",
+                  "parameters": [ { "name": "petId", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$workflows.child.outputs.petName == 'Fido'" } ],
+                  "onSuccess": [ { "name": "done", "type": "end" } ]
+                }
+              ],
+              "outputs": { "name": "$steps.callChild.outputs.petName" }
+            },
+            {
+              "workflowId": "child",
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "outputs": { "petName": "$response.body#/name" }
+                }
+              ],
+              "outputs": { "petName": "$steps.getPet.outputs.petName" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_parent_evaluates_a_workflows_outputs_criterion_against_a_sub_workflow()
+    {
+        OperationDescriptor[] operations =
+        [
+            new(
+                "/pets/{petId}",
+                OperationMethod.Get,
+                "getPet",
+                "GetPet",
+                typeof(PetByIdRequest).FullName!,
+                typeof(PetByIdResponse).FullName!,
+                [new RequestParameterInfo("petId", ParameterLocation.Path, "PetId", "Corvus.Text.Json.JsonElement", true, "petId")],
+                false,
+                [new ResponseDescriptor("200", "Corvus.Text.Json.JsonElement", "OkBody")],
+                typeof(PetByIdClient).FullName!,
+                "GetPetAsync",
+                null,
+                null),
+        ];
+
+        var binder = new WorkflowOperationBinder([new SourceDescriptionClient("petstore", OperationResolver.Create("petstore", operations))]);
+        IReadOnlyList<GeneratedModelFile> files = await ArazzoCodeGeneration.GenerateAsync(
+            Encoding.UTF8.GetBytes(WorkflowsCriterionDocument), binder, new ArazzoGenerationOptions("GeneratedWorkflows"));
+
+        string[] executors = [.. files.Where(f => f.FileName.StartsWith("Workflows/", StringComparison.Ordinal)).Select(f => f.Content)];
+
+        // The parent exposes the sub-workflow's outputs so its $workflows.child.outputs criterion resolves.
+        executors.Any(s => s.Contains("context.SetWorkflowOutputs(\"child\"", StringComparison.Ordinal)).ShouldBeTrue();
+
+        Assembly assembly = CompileInMemory(executors);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.Workflows.ParentWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var transport = new MockApiTransport();
+        transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
+
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+
+        // The step succeeds only if $workflows.child.outputs.petName resolves to "Fido"; on failure the
+        // (action-less) failure path would throw, so a clean completion proves the expression resolved.
+        var pending = (ValueTask<JsonElement>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
+        JsonElement outputs = await pending;
+
+        outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
+        name.GetString().ShouldBe("Fido");
+    }
+
     private static async Task<Assembly> GenerateAndCompileWorkflows(string document)
     {
         OperationDescriptor[] operations =

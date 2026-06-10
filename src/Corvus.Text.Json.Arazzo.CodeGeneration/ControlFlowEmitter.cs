@@ -479,6 +479,10 @@ internal static class ControlFlowEmitter
         c.AppendLine("        ArazzoTelemetry.StepsExecuted.Add(1);");
         c.Append("        ").Append(outputsLocal).Append(" = await ").Append(targetClass)
             .Append(".ExecuteAsync(transport, workspace, ").Append(builderVariable).Append(".RootElement, ").Append(subToken).AppendLine(").ConfigureAwait(false);");
+
+        // Expose the sub-workflow's outputs for $workflows.<id>.outputs runtime expressions (plan §11) — so a
+        // later step's criteria/parameters or the workflow outputs can reference this invocation's results.
+        c.Append("        context.SetWorkflowOutputs(").Append(EmitText.Quote(subWorkflowId)).Append(", ").Append(outputsLocal).AppendLine(");");
         c.Append("        ").Append(completedLocal).AppendLine(" = true;");
         c.AppendLine("    }");
         c.AppendLine("    catch (WorkflowStepFailedException)");
