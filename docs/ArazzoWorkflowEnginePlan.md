@@ -476,6 +476,26 @@ criteria half of this phase.
 12. **Attribute cardinality / PII** — telemetry attributes drawn from params and
     bodies risk high cardinality and leaking sensitive data; provide redaction
     hooks and bounded cardinality by default.
+13. **Document referencing conformance (backlog — review against v1.1.0)** — audit
+    how we resolve references against the Arazzo 1.1.0 spec, specifically
+    [§5.5.2 Identity-Based Referencing](https://spec.openapis.org/arazzo/v1.1.0.html#identity-based-referencing)
+    and [§5.6 Relative References in Arazzo Description URIs](https://spec.openapis.org/arazzo/v1.1.0.html#relative-references-in-arazzo-description-uris).
+    Two concrete areas to check:
+    - **Relative reference resolution base (§5.6).** `ArazzoGenerationDriver`
+      resolves a `sourceDescriptions[].url` with `Path.GetFullPath(Path.Combine(arazzoDirectory, url))`
+      — i.e. *filesystem*-relative to the Arazzo file's directory. The spec resolves
+      relative references as **URI references against the Arazzo description's
+      base/retrieval URI** (RFC 3986), which differs for absolute URLs, `file:`/
+      `http(s):` schemes, fragments, and `.`/`..` segments. Confirm our behaviour
+      matches (and decide how non-file URLs are fetched), or document the
+      filesystem-only limitation.
+    - **Identity-based referencing (§5.5.2).** Verify the identity forms the binder/
+      generator resolve — `$sourceDescriptions.<name>`, `$components.<section>.<name>`,
+      `operationId`, `operationPath`, `workflowId` (incl. cross-document
+      `<sourceName>.<id>` forms) — line up with the 1.1.0 identity-vs-URI rules and
+      precedence, including the `{$sourceDescriptions...}` runtime-expression form in
+      `operationPath`/`workflowId` and ambiguity when an id is duplicated across
+      sources (see open question 2). Pin the conclusions with conformance tests.
 
 ## 8. Recommended next step
 
