@@ -23,11 +23,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// How to resume a run. Only `RetryFaultedStep` is supported today; `Rewind`, `Skip`, and `StatePatch` are reserved.
+/// The cursor to rewind to.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct ResumeMode
+public readonly partial struct JsonInt32
 {
     public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -64,7 +64,22 @@ public readonly partial struct ResumeMode
         private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator string(Mutable value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
+        public static implicit operator int(Mutable value) => value._parent.TryGetValue(value._idx, out int result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator long(Mutable value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator double(Mutable value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator Corvus.Numerics.BigNumber(Mutable value) => value._parent.TryGetValue(value._idx, out Corvus.Numerics.BigNumber result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator System.Numerics.BigInteger(Mutable value) => value._parent.TryGetValue(value._idx, out System.Numerics.BigInteger result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator decimal(Mutable value) => value._parent.TryGetValue(value._idx, out decimal result) ? result : throw new FormatException();
 
         /// <summary>
         /// Operator ==.
@@ -135,7 +150,7 @@ public readonly partial struct ResumeMode
         /// <param name="value">The instance of this type.</param>
         /// <returns>A mutable instance.</returns>
         /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-        public static explicit operator Mutable(ResumeMode instance)
+        public static explicit operator Mutable(JsonInt32 instance)
         {
             if (instance._parent is not IMutableJsonDocument doc)
             {
@@ -150,9 +165,9 @@ public readonly partial struct ResumeMode
         /// Converts to an immutable instance of the <see cref="Mutable"/> type.
         /// </summary>
         /// <param name="value">The <see cref="Mutable"/> instance.</param>
-        /// <returns>An immutable instance of a <see cref="ResumeMode"/>, initialized from the <see cref="Mutable"/> value.</returns>
+        /// <returns>An immutable instance of a <see cref="JsonInt32"/>, initialized from the <see cref="Mutable"/> value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator ResumeMode(Mutable instance)
+        public static implicit operator JsonInt32(Mutable instance)
         {
             return new(instance._parent, instance._idx);
         }
@@ -170,22 +185,13 @@ public readonly partial struct ResumeMode
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetValue(out string? value) { CheckValidInstance(); return _parent.TryGetString(_idx, JsonTokenType.String, out value); }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UnescapedUtf8JsonString GetUtf8String() { CheckValidInstance(); return _parent.GetUtf8JsonString(_idx, JsonTokenType.String); }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UnescapedUtf16JsonString GetUtf16String() { CheckValidInstance(); return _parent.GetUtf16JsonString(_idx, JsonTokenType.String); }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public string? GetString() { CheckValidInstance(); return _parent.GetString(_idx, JsonTokenType.String); }
+        public bool TryGetValue(out int value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
 
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonElement value && Equals(new ResumeMode(value.ParentDocument, value.ParentDocumentIndex))) ||
+                (obj is IJsonElement value && Equals(new JsonInt32(value.ParentDocument, value.ParentDocumentIndex))) ||
                 (obj is null && this.IsNull());
         }
 
@@ -201,54 +207,33 @@ public readonly partial struct ResumeMode
         }
 
         /// <summary>
-        /// Compare with a UTF-8 string.
+        /// Compare with a normalized JSON number.
         /// </summary>
-        /// <param ref="utf8Text">The UTF-8 text to compare with.</param>
+        /// <param ref="number">The normalized JSON number to compare with.</param>
         /// <returns><see langword="true"/> if the values are equal.</returns>
-        public bool ValueEquals(ReadOnlySpan<byte> utf8Text)
+        public bool ValueEquals(in NormalizedJsonNumber number)
         {
-            CheckValidInstance();
-
-            if (TokenType != JsonTokenType.String)
+            if (TokenType != JsonTokenType.Number)
             {
                 return false;
             }
 
-            return _parent.TextEquals(_idx, utf8Text, isPropertyName: false, shouldUnescape: true);
-        }
+            JsonElementHelpers.ParseNumber(
+                _parent.GetRawSimpleValueUnsafe(_idx).Span,
+                out bool leftIsNegative,
+                out ReadOnlySpan<byte> leftIntegral,
+                out ReadOnlySpan<byte> leftFractional,
+                out int leftExponent);
 
-        /// <summary>
-        /// Compare with a string.
-        /// </summary>
-        /// <param ref="utf8Text">The text to compare with.</param>
-        /// <returns><see langword="true"/> if the values are equal.</returns>
-        public bool ValueEquals(ReadOnlySpan<char> text)
-        {
-            CheckValidInstance();
-
-            if (TokenType != JsonTokenType.String)
-            {
-                return false;
-            }
-
-            return _parent.TextEquals(_idx, text, isPropertyName: false);
-        }
-
-        /// <summary>
-        /// Compare with a string.
-        /// </summary>
-        /// <param ref="utf8Text">The text to compare with.</param>
-        /// <returns><see langword="true"/> if the values are equal.</returns>
-        public bool ValueEquals(string text)
-        {
-            CheckValidInstance();
-
-            if (TokenType != JsonTokenType.String)
-            {
-                return false;
-            }
-
-            return _parent.TextEquals(_idx, text, isPropertyName: false);
+            return JsonElementHelpers.AreEqualNormalizedJsonNumbers(
+                leftIsNegative,
+                leftIntegral,
+                leftFractional,
+                leftExponent,
+                number.IsNegative,
+                number.Integral,
+                number.Fractional,
+                number.Exponent);
         }
 
         /// <inheritdoc/>
@@ -335,7 +320,7 @@ public readonly partial struct ResumeMode
 #endif
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebuggerDisplay => $"ResumeMode.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+        private string DebuggerDisplay => $"JsonInt32.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -350,11 +335,11 @@ public readonly partial struct ResumeMode
         JsonValueKind IJsonElement.ValueKind => ValueKind;
 
         /// <summary>
-        /// Gets a <see cref="ResumeMode"/> which can be safely stored beyond the lifetime of the
+        /// Gets a <see cref="JsonInt32"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </summary>
         /// <returns>
-        /// A <see cref="ResumeMode"/> which can be safely stored beyond the lifetime of the
+        /// A <see cref="JsonInt32"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </returns>
         /// <remarks>
@@ -363,10 +348,10 @@ public readonly partial struct ResumeMode
         /// document. The result is independent of the workspace.
         /// </para>
         /// </remarks>
-        public readonly ResumeMode Clone()
+        public readonly JsonInt32 Clone()
         {
             CheckValidInstance();
-            return _parent.CloneElement<ResumeMode>(_idx);
+            return _parent.CloneElement<JsonInt32>(_idx);
         }
 
         /// <summary>
@@ -374,7 +359,7 @@ public readonly partial struct ResumeMode
         /// document builder registered in the same workspace.
         /// </summary>
         /// <returns>
-        /// An immutable <see cref="ResumeMode"/> that lives for the lifetime of its
+        /// An immutable <see cref="JsonInt32"/> that lives for the lifetime of its
         /// workspace and its associated documents.
         /// </returns>
         /// <remarks>
@@ -385,10 +370,10 @@ public readonly partial struct ResumeMode
         /// immutable but is only valid for the lifetime of the workspace.
         /// </para>
         /// </remarks>
-        public readonly ResumeMode Freeze()
+        public readonly JsonInt32 Freeze()
         {
             CheckValidInstance();
-            return _parent.FreezeElement<ResumeMode>(_idx);
+            return _parent.FreezeElement<JsonInt32>(_idx);
         }
     }
 
@@ -398,16 +383,14 @@ public readonly partial struct ResumeMode
         {
             Unknown,
             JsonElement,
-            RawUtf8StringRequiresUnescaping,
-            RawUtf8StringNotRequiresUnescaping,
-            Utf8String,
-            Utf16String,
+            NumericSimpleType,
+            FormattedNumber,
         }
 
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly ReadOnlySpan<byte> _utf8Backing;
-        private readonly ReadOnlySpan<char> _utf16Backing;
+        private readonly SimpleTypesBacking _simpleTypeBacking;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -420,37 +403,22 @@ public readonly partial struct ResumeMode
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        private Source(ReadOnlySpan<byte> value)
+        private Source(ReadOnlySpan<byte> value, Kind kind)
         {
+            Debug.Assert(kind is Kind.FormattedNumber);
             _utf8Backing = value;
-            _kind = Kind.Utf8String;
+            _kind = kind;
         }
 
-        private Source(ReadOnlySpan<char> value)
-        {
-            _utf16Backing = value;
-            _kind = Kind.Utf16String;
-        }
+        private Source(int value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (v, buffer, out written) => Utf8Formatter.TryFormat(v, buffer, out written)); _kind = Kind.NumericSimpleType; }
 
-        private Source(ReadOnlySpan<byte> value, bool requiresUnescaping)
-        {
-            _utf8Backing = value;
-            _kind = requiresUnescaping ? Kind.RawUtf8StringRequiresUnescaping : Kind.RawUtf8StringNotRequiresUnescaping;
-        }
-
-        public static implicit operator Source(ResumeMode instance) => new(JsonElement.From(instance));
+        public static implicit operator Source(JsonInt32 instance) => new(JsonElement.From(instance));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Source(ReadOnlySpan<byte> value) => new (value);
+        public static implicit operator Source(int value) => new (value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Source(ReadOnlySpan<char> value) => new (value);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Source(string value) => new (value.AsSpan());
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);
+        public static Source FormattedNumber(ReadOnlySpan<byte> value) => new(value, Kind.FormattedNumber);
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -461,17 +429,11 @@ public readonly partial struct ResumeMode
                 case Kind.JsonElement:
                     valueBuilder.AddProperty(utf8Name, _jsonElement, escapeName, nameRequiresUnescaping);
                     break;
-                case Kind.RawUtf8StringRequiresUnescaping:
-                    valueBuilder.AddPropertyRawString(utf8Name, _utf8Backing, escapeName, nameRequiresUnescaping, valueRequiresUnescaping: true);
+                case Kind.NumericSimpleType:
+                    valueBuilder.AddPropertyFormattedNumber(utf8Name, _simpleTypeBacking.Span(), escapeName, nameRequiresUnescaping);
                     break;
-                case Kind.RawUtf8StringNotRequiresUnescaping:
-                    valueBuilder.AddPropertyRawString(utf8Name, _utf8Backing, escapeName, nameRequiresUnescaping, valueRequiresUnescaping: false);
-                    break;
-                case Kind.Utf8String:
-                    valueBuilder.AddProperty(utf8Name, _utf8Backing, escapeName, escapeValue: true, nameRequiresUnescaping, valueRequiresUnescaping: false);
-                    break;
-                case Kind.Utf16String:
-                    valueBuilder.AddProperty(utf8Name, _utf16Backing, escapeName, nameRequiresUnescaping);
+                case Kind.FormattedNumber:
+                    valueBuilder.AddPropertyFormattedNumber(utf8Name, _utf8Backing, escapeName, nameRequiresUnescaping);
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -488,17 +450,11 @@ public readonly partial struct ResumeMode
                 case Kind.JsonElement:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
                     break;
-                case Kind.RawUtf8StringRequiresUnescaping:
-                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: true);
+                case Kind.NumericSimpleType:
+                    valueBuilder.AddPrebakedPropertyFormattedNumber(prebakedPropertyName, _simpleTypeBacking.Span());
                     break;
-                case Kind.RawUtf8StringNotRequiresUnescaping:
-                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: false);
-                    break;
-                case Kind.Utf8String:
-                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: true, valueRequiresUnescaping: false);
-                    break;
-                case Kind.Utf16String:
-                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf16Backing);
+                case Kind.FormattedNumber:
+                    valueBuilder.AddPrebakedPropertyFormattedNumber(prebakedPropertyName, _utf8Backing);
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -515,17 +471,11 @@ public readonly partial struct ResumeMode
                 case Kind.JsonElement:
                     valueBuilder.AddProperty(name, _jsonElement);
                     break;
-                case Kind.RawUtf8StringRequiresUnescaping:
-                    valueBuilder.AddPropertyRawString(name, _utf8Backing, valueRequiresUnescaping: true);
+                case Kind.NumericSimpleType:
+                    valueBuilder.AddPropertyFormattedNumber(name, _simpleTypeBacking.Span());
                     break;
-                case Kind.RawUtf8StringNotRequiresUnescaping:
-                    valueBuilder.AddPropertyRawString(name, _utf8Backing, valueRequiresUnescaping: false);
-                    break;
-                case Kind.Utf8String:
-                    valueBuilder.AddProperty(name, _utf8Backing, escapeValue: true, valueRequiresUnescaping: false);
-                    break;
-                case Kind.Utf16String:
-                    valueBuilder.AddProperty(name, _utf16Backing);
+                case Kind.FormattedNumber:
+                    valueBuilder.AddPropertyFormattedNumber(name, _utf8Backing);
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -542,17 +492,11 @@ public readonly partial struct ResumeMode
                 case Kind.JsonElement:
                     valueBuilder.AddProperty(name, _jsonElement);
                     break;
-                case Kind.RawUtf8StringRequiresUnescaping:
-                    valueBuilder.AddPropertyRawString(name, _utf8Backing, valueRequiresUnescaping: true);
+                case Kind.NumericSimpleType:
+                    valueBuilder.AddPropertyFormattedNumber(name, _simpleTypeBacking.Span());
                     break;
-                case Kind.RawUtf8StringNotRequiresUnescaping:
-                    valueBuilder.AddPropertyRawString(name, _utf8Backing, valueRequiresUnescaping: false);
-                    break;
-                case Kind.Utf8String:
-                    valueBuilder.AddProperty(name, _utf8Backing, escapeValue: true, valueRequiresUnescaping: false);
-                    break;
-                case Kind.Utf16String:
-                    valueBuilder.AddProperty(name, _utf16Backing);
+                case Kind.FormattedNumber:
+                    valueBuilder.AddPropertyFormattedNumber(name, _utf8Backing);
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -569,17 +513,11 @@ public readonly partial struct ResumeMode
                 case Kind.JsonElement:
                     valueBuilder.AddItem(_jsonElement);
                     break;
-                case Kind.RawUtf8StringRequiresUnescaping:
-                    valueBuilder.AddItem(_utf8Backing, escapeValue: false, requiresUnescaping: true);
+                case Kind.NumericSimpleType:
+                    valueBuilder.AddItemFormattedNumber(_simpleTypeBacking.Span());
                     break;
-                case Kind.RawUtf8StringNotRequiresUnescaping:
-                    valueBuilder.AddItem(_utf8Backing, escapeValue: false, requiresUnescaping: false);
-                    break;
-                case Kind.Utf8String:
-                    valueBuilder.AddItem(_utf8Backing, escapeValue: true, requiresUnescaping: false);
-                    break;
-                case Kind.Utf16String:
-                    valueBuilder.AddItem(_utf16Backing);
+                case Kind.FormattedNumber:
+                    valueBuilder.AddItemFormattedNumber(_utf8Backing);
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -614,6 +552,6 @@ public readonly partial struct ResumeMode
     /// <returns>An instance of a mutable document initialized with this instance.</returns>
     public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
     {
-        return workspace.CreateBuilder<ResumeMode, Mutable>(this);
+        return workspace.CreateBuilder<JsonInt32, Mutable>(this);
     }
 }

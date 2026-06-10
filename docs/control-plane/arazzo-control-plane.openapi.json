@@ -114,10 +114,27 @@
             },
             "links": {
               "resume": { "$ref": "#/components/links/ResumeRun" },
-              "cancel": { "$ref": "#/components/links/CancelRun" }
+              "cancel": { "$ref": "#/components/links/CancelRun" },
+              "delete": { "$ref": "#/components/links/DeleteRun" }
             }
           },
           "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteRun",
+        "security": [
+          { "oauth2": ["runs:purge"] },
+          { "openIdConnect": ["runs:purge"] },
+          { "mtls": [] }
+        ],
+        "tags": ["runs"],
+        "summary": "Delete a run",
+        "description": "Permanently deletes a single run by id, regardless of status. Unlike `PURGE /runs` (which reaps only old terminal runs in bulk), this removes exactly the named run — the operator's explicit \"remove this\" action. Destructive: requires the `runs:purge` scope.",
+        "responses": {
+          "204": { "description": "The run was deleted." },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
         }
       }
     },
@@ -347,6 +364,11 @@
         "operationId": "cancelRun",
         "description": "Cancel this run.",
         "parameters": { "runId": "$response.body#/id" }
+      },
+      "DeleteRun": {
+        "operationId": "deleteRun",
+        "description": "Permanently delete this run.",
+        "parameters": { "runId": "$response.body#/id" }
       }
     },
     "schemas": {
@@ -444,20 +466,54 @@
         },
         "required": ["id", "workflowId", "status", "cursor", "createdAt", "etag"]
       },
-      "ResumeMode": {
-        "type": "string",
-        "description": "How to resume a run. Only `RetryFaultedStep` is supported today; `Rewind`, `Skip`, and `StatePatch` are reserved.",
-        "enum": ["RetryFaultedStep"]
-      },
       "ResumeRequest": {
+        "description": "How to resume a faulted run — a union on `mode`. Each form carries only the fields its mode needs; the `const` mode discriminates the variant.",
+        "oneOf": [
+          { "$ref": "#/components/schemas/RetryFaultedStepResume" },
+          { "$ref": "#/components/schemas/RewindResume" },
+          { "$ref": "#/components/schemas/SkipResume" },
+          { "$ref": "#/components/schemas/StatePatchResume" }
+        ]
+      },
+      "RetryFaultedStepResume": {
         "type": "object",
-        "description": "How to resume a faulted run.",
+        "description": "Re-execute from the last checkpoint — the faulted step. The common case.",
         "properties": {
-          "mode": {
-            "allOf": [{ "$ref": "#/components/schemas/ResumeMode" }],
-            "default": "RetryFaultedStep"
+          "mode": { "type": "string", "const": "RetryFaultedStep" }
+        },
+        "required": ["mode"]
+      },
+      "RewindResume": {
+        "type": "object",
+        "description": "Reset the cursor to an earlier step and re-run forward from there.",
+        "properties": {
+          "mode": { "type": "string", "const": "Rewind" },
+          "targetCursor": { "type": "integer", "format": "int32", "description": "The cursor to rewind to." }
+        },
+        "required": ["mode", "targetCursor"]
+      },
+      "SkipResume": {
+        "type": "object",
+        "description": "Advance the cursor past the faulted step, optionally recording operator-supplied outputs for it.",
+        "properties": {
+          "mode": { "type": "string", "const": "Skip" },
+          "targetCursor": { "type": "integer", "format": "int32", "description": "The cursor to resume at (defaults to the faulted cursor + 1)." },
+          "skipOutputs": { "description": "The operator-supplied outputs to record for the skipped step so downstream references resolve. Any JSON value." }
+        },
+        "required": ["mode"]
+      },
+      "StatePatchResume": {
+        "type": "object",
+        "description": "Apply an RFC 6902 JSON Patch to the run's context object { \"inputs\": …, \"stepOutputs\": { … } }, then retry the faulted step.",
+        "properties": {
+          "mode": { "type": "string", "const": "StatePatch" },
+          "patch": {
+            "type": "array",
+            "description": "The RFC 6902 JSON Patch array.",
+            "items": { "type": "object" }
           }
-        }
+        },
+        "required": ["mode", "patch"]
       },
       "CancelRequest": {
         "type": "object",

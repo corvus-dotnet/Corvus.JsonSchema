@@ -24,24 +24,14 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// How to resume a faulted run.
+/// Apply an RFC 6902 JSON Patch to the run&#39;s context object { &quot;inputs&quot;: …, &quot;stepOutputs&quot;: { … } }, then retry the faulted step.
 /// </para>
 /// </remarks>
-public readonly partial struct ResumeRequest
+public readonly partial struct StatePatchResume
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Examples:
-    /// <example>
-    /// <code>
-    /// &quot;RetryFaultedStep&quot;
-    /// </code>
-    /// </example>
-    /// </para>
-    /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public readonly partial struct ModeEntity
     {
@@ -73,39 +63,11 @@ public readonly partial struct ResumeRequest
                 _documentVersion = _parent?.Version ?? 0;
             }
 
-            /// <summary>
-            /// Gets a read-only default instance of the mutable type, surfacing the schema default value.
-            /// </summary>
-            /// <remarks>
-            /// The instance is a zero-copy facade over the immutable default, so it can be read but not
-            /// mutated; attempting to mutate it throws an <see cref="InvalidOperationException"/> directing
-            /// the caller to set the value on its parent first.
-            /// </remarks>
-            public static Mutable DefaultInstance { get; } = JsonElementHelpers.CreateDefaultValueElement<ModeEntity, Mutable>(ModeEntity.DefaultInstance);
-
             /// <inheritdoc/>
             public JsonValueKind ValueKind => TokenType.ToValueKind();
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
             private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
-
-            /// <summary>
-            /// Conversion to <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeMode"/>.
-            /// </summary>
-            /// <param name="value">The value from which to convert.</param>
-            public static implicit operator Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeMode.Mutable(Mutable value)
-            {
-                return Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeMode.Mutable.From(value);
-            }
-
-            /// <summary>
-            /// Conversion from <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeMode"/>.
-            /// </summary>
-            /// <param name="value">The value from which to convert.</param>
-            public static explicit operator Mutable(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeMode.Mutable value)
-            {
-                return From(value);
-            }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static explicit operator string(Mutable value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
@@ -433,23 +395,6 @@ public readonly partial struct ResumeRequest
             {
                 CheckValidInstance();
                 return _parent.FreezeElement<ModeEntity>(_idx);
-            }
-
-            /// <summary>
-            /// Gets the value as a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeMode.Mutable" />.
-            /// </summary>
-            /// <param name="result">The result of the conversions.</param>
-            /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsResumeMode(out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeMode.Mutable result)
-            {
-                if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeMode.JsonSchema.Evaluate(_parent, _idx))
-                {
-                    result = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeMode.Mutable.From(this);
-                    return true;
-                }
-
-                result = default;
-                return false;
             }
         }
 

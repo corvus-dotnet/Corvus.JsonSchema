@@ -125,7 +125,7 @@ public sealed class ControlPlaneServerTests
         {
             await FaultRunAsync(host.Store, "r1", host.Clock);
 
-            HttpResponseMessage response = await host.Client.PostAsync("/runs/r1/resume", Json("{}"));
+            HttpResponseMessage response = await host.Client.PostAsync("/runs/r1/resume", Json("""{"mode":"RetryFaultedStep"}"""));
 
             response.StatusCode.ShouldBe(HttpStatusCode.OK);
             using Stj.JsonDocument doc = await ReadJsonAsync(response);
@@ -141,11 +141,101 @@ public sealed class ControlPlaneServerTests
         {
             await CompleteRunAsync(host.Store, "done-1", host.Clock);
 
-            HttpResponseMessage response = await host.Client.PostAsync("/runs/done-1/resume", Json("{}"));
+            HttpResponseMessage response = await host.Client.PostAsync("/runs/done-1/resume", Json("""{"mode":"RetryFaultedStep"}"""));
 
             response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
             using Stj.JsonDocument doc = await ReadJsonAsync(response);
             doc.RootElement.GetProperty("status").GetInt32().ShouldBe(409);
+        }
+    }
+
+    [TestMethod]
+    public async Task Resume_rewind_resets_the_cursor_via_rest()
+    {
+        Host host = await StartAsync();
+        await using (host.App)
+        {
+            await FaultRunAtAsync(host.Store, "r1", cursor: 3, faultStep: "step3", host.Clock);
+
+            HttpResponseMessage response = await host.Client.PostAsync("/runs/r1/resume", Json("""{"mode":"Rewind","targetCursor":1}"""));
+
+            response.StatusCode.ShouldBe(HttpStatusCode.OK);
+            using Stj.JsonDocument doc = await ReadJsonAsync(response);
+            doc.RootElement.GetProperty("status").GetString().ShouldBe("Completed");
+            doc.RootElement.GetProperty("cursor").GetInt32().ShouldBe(1);
+        }
+    }
+
+    [TestMethod]
+    public async Task Resume_skip_advances_the_cursor_via_rest()
+    {
+        Host host = await StartAsync();
+        await using (host.App)
+        {
+            await FaultRunAtAsync(host.Store, "r1", cursor: 2, faultStep: "step2", host.Clock);
+
+            HttpResponseMessage response = await host.Client.PostAsync("/runs/r1/resume", Json("""{"mode":"Skip"}"""));
+
+            response.StatusCode.ShouldBe(HttpStatusCode.OK);
+            using Stj.JsonDocument doc = await ReadJsonAsync(response);
+            doc.RootElement.GetProperty("cursor").GetInt32().ShouldBe(3);
+        }
+    }
+
+    [TestMethod]
+    public async Task Resume_state_patch_fixes_an_input_via_rest()
+    {
+        int seenX = -1;
+        Host host = await StartAsync(async (run, ct) =>
+        {
+            seenX = run.Inputs.GetProperty("x"u8).GetInt32();
+            await run.CompleteAsync(default, ct);
+            return WorkflowRunResultKind.Completed;
+        });
+        await using (host.App)
+        {
+            using (ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("""{ "x": 1 }"""u8.ToArray()))
+            using (WorkflowRun run = WorkflowRun.CreateNew(host.Store, "r1", "wf", inputs.RootElement, host.Clock))
+            {
+                await run.CheckpointAsync(cursor: 1, default);
+                await run.FaultAsync("step1", attempt: 1, "bad input", default);
+            }
+
+            HttpResponseMessage response = await host.Client.PostAsync(
+                "/runs/r1/resume",
+                Json("""{"mode":"StatePatch","patch":[{"op":"replace","path":"/inputs/x","value":2}]}"""));
+
+            response.StatusCode.ShouldBe(HttpStatusCode.OK);
+            seenX.ShouldBe(2);
+        }
+    }
+
+    [TestMethod]
+    public async Task Delete_removes_a_run()
+    {
+        Host host = await StartAsync();
+        await using (host.App)
+        {
+            await FaultRunAsync(host.Store, "r1", host.Clock);
+
+            HttpResponseMessage response = await host.Client.DeleteAsync("/runs/r1");
+
+            response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+            (await host.Client.GetAsync("/runs/r1")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        }
+    }
+
+    [TestMethod]
+    public async Task Delete_unknown_run_returns_404_problem()
+    {
+        Host host = await StartAsync();
+        await using (host.App)
+        {
+            HttpResponseMessage response = await host.Client.DeleteAsync("/runs/nope");
+
+            response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+            using Stj.JsonDocument doc = await ReadJsonAsync(response);
+            doc.RootElement.GetProperty("status").GetInt32().ShouldBe(404);
         }
     }
 
@@ -215,13 +305,13 @@ public sealed class ControlPlaneServerTests
         await run.CompleteAsync(default, default);
     }
 
-    private static async Task<Host> StartAsync()
+    private static async Task<Host> StartAsync(WorkflowResumer? resumer = null)
     {
         var clock = new MutableClock(T0);
         var store = new InMemoryWorkflowStateStore(clock);
 
         // The resumer stands in for re-entering a generated executor: it drives a resumed faulted run to completion.
-        var management = new WorkflowManagementClient(store, "ops", CompleteResumer, clock);
+        var management = new WorkflowManagementClient(store, "ops", resumer ?? CompleteResumer, clock);
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -231,12 +321,23 @@ public sealed class ControlPlaneServerTests
         await app.StartAsync();
 
         return new Host(app, app.GetTestClient(), store, clock);
+    }
 
-        static async ValueTask<WorkflowRunResultKind> CompleteResumer(WorkflowRun run, CancellationToken ct)
+    private static async ValueTask<WorkflowRunResultKind> CompleteResumer(WorkflowRun run, CancellationToken ct)
+    {
+        await run.CompleteAsync(default, ct);
+        return WorkflowRunResultKind.Completed;
+    }
+
+    private static async Task FaultRunAtAsync(InMemoryWorkflowStateStore store, string id, int cursor, string faultStep, TimeProvider clock)
+    {
+        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock);
+        if (cursor > 0)
         {
-            await run.CompleteAsync(default, ct);
-            return WorkflowRunResultKind.Completed;
+            await run.CheckpointAsync(cursor, default);
         }
+
+        await run.FaultAsync(faultStep, attempt: 1, "boom", default);
     }
 
     private sealed record Host(WebApplication App, HttpClient Client, InMemoryWorkflowStateStore Store, TimeProvider Clock);

@@ -24,45 +24,49 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// How to resume a faulted run.
+/// Apply an RFC 6902 JSON Patch to the run&#39;s context object { &quot;inputs&quot;: …, &quot;stepOutputs&quot;: { … } }, then retry the faulted step.
 /// </para>
 /// </remarks>
-public readonly partial struct ResumeRequest
+public readonly partial struct StatePatchResume
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Examples:
-    /// <example>
-    /// <code>
-    /// &quot;RetryFaultedStep&quot;
-    /// </code>
-    /// </example>
-    /// </para>
-    /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public readonly partial struct ModeEntity
         : IJsonElement<ModeEntity>
     {
+        /// <summary>
+        /// Provides accesors for enumerated values
+        /// </summary>
+        private static class Constants
+        {
+            /// <summary>
+            /// A constant for the <c>const</c> keyword.
+            /// </summary>
+            public static readonly byte[] Const = "StatePatch"u8.ToArray();
+            /// <summary>
+            /// A constant for the <c>const</c> keyword.
+            /// </summary>
+            public static readonly ModeEntity ConstJson = ParsedJsonDocument<ModeEntity>.StringConstant([.."\"StatePatch\""u8]);
+        }
+
         public static partial class JsonSchema
         {
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/ResumeRequest/properties/mode"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/StatePatchResume/properties/mode"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "/components/schemas/ResumeRequest/properties/mode";
+            public const string SchemaLocation = "/components/schemas/StatePatchResume/properties/mode";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/ResumeRequest/properties/mode"u8;
-            private static readonly JsonSchemaPathProvider AllOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/allOf/0/$ref"u8, buffer, out written);
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/StatePatchResume/properties/mode"u8;
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -75,21 +79,36 @@ public readonly partial struct ResumeRequest
                 int parentIndex,
                 ref JsonSchemaContext context)
             {
+                JsonTokenType tokenType = parentDocument.GetJsonTokenType(parentIndex);
+
                 // You're not allowed to ask about non-value-like entities
                 Debug.Assert(parentDocument.GetJsonTokenType(parentIndex) is not
                     (JsonTokenType.None or
                     JsonTokenType.EndObject or
                     JsonTokenType.EndArray));
 
-                bool allOfComposedIsMatch = true;
+                if (!JsonSchemaEvaluation.MatchTypeString(tokenType,"type"u8, ref context))
+                {
+                    if (!context.HasCollector)
+                    {
+                        return;
+                    }
+                }
 
-                JsonSchemaContext allOfContext0 =
-                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeMode.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: AllOf0SchemaEvaluationPath);
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeMode.JsonSchema.Evaluate(parentDocument, parentIndex, ref allOfContext0);
-                allOfComposedIsMatch = allOfComposedIsMatch && allOfContext0.IsMatch;
-                context.ApplyEvaluated(ref allOfContext0);
-                context.CommitChildContext(allOfContext0.IsMatch, ref allOfContext0);
-                context.EvaluatedKeyword(allOfComposedIsMatch, allOfComposedIsMatch  ? JsonSchemaEvaluation.MatchedAllSchema : JsonSchemaEvaluation.DidNotMatchAllSchema, "allOf"u8);
+                if (!context.HasCollector && !context.IsMatch)
+                {
+                    return;
+                }
+
+                if (tokenType == JsonTokenType.String)
+                {
+                    using UnescapedUtf8JsonString unescapedUtf8JsonString = parentDocument.GetUtf8JsonString(parentIndex, JsonTokenType.String);
+                    JsonSchemaEvaluation.MatchStringConstantValue(unescapedUtf8JsonString.Span, "StatePatch"u8, "StatePatch", "const"u8, ref context);
+                }
+                else
+                {
+                    context.EvaluatedKeyword(false, "StatePatch", messageProvider: JsonSchemaEvaluation.ExpectedStringEquals, "const"u8);
+                }
             }
 
             internal static bool Evaluate(
