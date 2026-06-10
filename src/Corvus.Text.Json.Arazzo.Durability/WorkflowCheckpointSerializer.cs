@@ -67,7 +67,7 @@ public static class WorkflowCheckpointSerializer
             writer.WriteStartObject();
             writer.WriteString("runId"u8, runId.Value);
             writer.WriteString("workflowId"u8, workflowId);
-            writer.WriteString("status"u8, status.ToString());
+            writer.WriteString("status"u8, StatusName(status));
             writer.WriteNumber("cursor"u8, cursor);
             writer.WriteString("createdAt"u8, createdAt);
 
@@ -108,7 +108,7 @@ public static class WorkflowCheckpointSerializer
             if (wait is { } w)
             {
                 writer.WriteStartObject("wait"u8);
-                writer.WriteString("kind"u8, w.Kind.ToString());
+                writer.WriteString("kind"u8, WaitKindName(w.Kind));
                 if (w.Kind == WorkflowWaitKind.Timer)
                 {
                     writer.WriteString("dueAt"u8, w.DueAt);
@@ -222,6 +222,26 @@ public static class WorkflowCheckpointSerializer
             throw;
         }
     }
+
+    // Map the enums to their names via constant strings, so serialising a checkpoint does not allocate a
+    // string per call the way Enum.ToString() does. Names match the enum members so Enum.Parse round-trips.
+    private static string StatusName(WorkflowRunStatus status) => status switch
+    {
+        WorkflowRunStatus.Pending => nameof(WorkflowRunStatus.Pending),
+        WorkflowRunStatus.Running => nameof(WorkflowRunStatus.Running),
+        WorkflowRunStatus.Suspended => nameof(WorkflowRunStatus.Suspended),
+        WorkflowRunStatus.Completed => nameof(WorkflowRunStatus.Completed),
+        WorkflowRunStatus.Cancelled => nameof(WorkflowRunStatus.Cancelled),
+        WorkflowRunStatus.Faulted => nameof(WorkflowRunStatus.Faulted),
+        _ => status.ToString(),
+    };
+
+    private static string WaitKindName(WorkflowWaitKind kind) => kind switch
+    {
+        WorkflowWaitKind.Timer => nameof(WorkflowWaitKind.Timer),
+        WorkflowWaitKind.Message => nameof(WorkflowWaitKind.Message),
+        _ => kind.ToString(),
+    };
 
     private static void WriteValueOrNull(Utf8JsonWriter writer, in JsonElement value)
     {
