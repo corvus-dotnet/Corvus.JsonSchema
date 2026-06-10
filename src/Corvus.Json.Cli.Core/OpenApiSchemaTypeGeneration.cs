@@ -34,6 +34,17 @@ internal static class OpenApiSchemaTypeGeneration
     /// <param name="parameterNames">The parameter-name hints for the naming heuristic.</param>
     /// <param name="useYaml">Whether referenced documents may be YAML.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="entryUri">
+    /// The absolute URI the entry spec was retrieved from, when it is virtualized (not a plain file path).
+    /// When supplied it keys the entry document for reference resolution; when <see langword="null"/> the
+    /// entry is keyed by its full file-system path (the standalone <c>openapi generate</c> behaviour).
+    /// </param>
+    /// <param name="documentLoader">
+    /// An optional callback that loads a referenced document's raw UTF-8 JSON bytes by absolute URI (or
+    /// <see langword="null"/> when it cannot). When supplied, virtualized documents (the entry doc and any
+    /// external <c>$ref</c>s) resolve through it ahead of the file-system/HTTP fallback — so the schema
+    /// models generate from documents registered in memory.
+    /// </param>
     /// <returns>The schema type map and the generated model file names.</returns>
     public static async Task<(Dictionary<string, string> SchemaTypeMap, IReadOnlyList<string> GeneratedFileNames)> GenerateSchemaTypesAsync(
         string specFile,
@@ -43,21 +54,47 @@ internal static class OpenApiSchemaTypeGeneration
         SchemaReference[] schemaRefs,
         Dictionary<string, string> parameterNames,
         bool useYaml,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Uri? entryUri = null,
+        Func<Uri, byte[]?>? documentLoader = null)
     {
-        string specFilePath = Path.GetFullPath(specFile);
+        // The entry document key: its virtualized URI when supplied, otherwise its full file-system path.
+        string specFilePath = entryUri is not null ? entryUri.AbsoluteUri : Path.GetFullPath(specFile);
 
-        // Set up the document resolver — with YAML support if the spec is YAML
+        // Set up the document resolver — virtualized documents (via the loader) first, then the file
+        // system and HTTP, with YAML support when the spec is YAML.
         CompoundDocumentResolver documentResolver;
 
+        IDocumentResolver fileResolver;
+        IDocumentResolver httpResolver;
         if (useYaml)
         {
             YamlPreProcessor preProcessor = new();
-            documentResolver = new(new FileSystemDocumentResolver(preProcessor), new HttpClientDocumentResolver(new HttpClient(), preProcessor));
+            fileResolver = new FileSystemDocumentResolver(preProcessor);
+            httpResolver = new HttpClientDocumentResolver(new HttpClient(), preProcessor);
         }
         else
         {
-            documentResolver = new(new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient()));
+            fileResolver = new FileSystemDocumentResolver();
+            httpResolver = new HttpClientDocumentResolver(new HttpClient());
+        }
+
+        if (documentLoader is { } loader)
+        {
+            // Bridge the byte loader into the V4 resolver world: the callback hands back a parsed
+            // System.Text.Json document for any URI the loader can satisfy (the entry doc and any
+            // registered external refs), so the schema-model pipeline never touches disk for them.
+            documentResolver = new(
+                new CallbackDocumentResolver(uriString =>
+                    Uri.TryCreate(uriString, UriKind.Absolute, out Uri? uri) && loader(uri) is { } bytes
+                        ? System.Text.Json.JsonDocument.Parse(bytes)
+                        : null),
+                fileResolver,
+                httpResolver);
+        }
+        else
+        {
+            documentResolver = new(fileResolver, httpResolver);
         }
 
         documentResolver.AddMetaschema();
