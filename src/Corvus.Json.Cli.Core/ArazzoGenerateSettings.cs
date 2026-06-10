@@ -25,6 +25,10 @@ internal sealed class ArazzoGenerateSettings : ArazzoSettings
     [Description("The client name prefix for the generated OpenAPI clients.")]
     [CommandOption("--clientName")]
     public string? ClientName { get; init; }
+
+    [Description("Generate durable executors (checkpoint & resume capable) that return WorkflowRunResult<TOutputs>.")]
+    [CommandOption("--durable")]
+    public bool Durable { get; init; }
 }
 
 #endif
