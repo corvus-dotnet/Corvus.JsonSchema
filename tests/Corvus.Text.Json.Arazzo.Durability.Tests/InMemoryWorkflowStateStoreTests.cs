@@ -146,6 +146,15 @@ public sealed class InMemoryWorkflowStateStoreTests
     }
 
     [TestMethod]
+    public async Task Releasing_a_lease_for_an_unleased_run_is_a_no_op()
+    {
+        var store = new InMemoryWorkflowStateStore();
+
+        await Should.NotThrowAsync(async () =>
+            await store.ReleaseLeaseAsync(new WorkflowLease("never-leased", "owner", "token", default), default));
+    }
+
+    [TestMethod]
     public async Task The_same_owner_can_renew_its_lease()
     {
         var store = new InMemoryWorkflowStateStore();

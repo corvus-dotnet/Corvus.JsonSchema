@@ -1098,6 +1098,7 @@ public partial class WorkflowExecutorEndToEndTests
         _ = typeof(Corvus.Text.Json.Patch.JsonPatchExtensions).Assembly;
         _ = typeof(System.Numerics.BigInteger).Assembly;
         _ = typeof(Corvus.Text.Json.Arazzo.Durability.IWorkflowStateStore).Assembly;
+        _ = typeof(Corvus.Text.Json.AsyncApi.IMessageTransport).Assembly;
 
         var references = AppDomain.CurrentDomain.GetAssemblies()
             .Where(a => !a.IsDynamic && !string.IsNullOrEmpty(a.Location))

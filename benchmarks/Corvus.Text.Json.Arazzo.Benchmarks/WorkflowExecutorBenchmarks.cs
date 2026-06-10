@@ -7,6 +7,7 @@ using System.Text;
 using BenchmarkDotNet.Attributes;
 using Corvus.Text.Json.Arazzo.Benchmarks.Fakes;
 using Corvus.Text.Json.Arazzo.CodeGeneration;
+using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo11;
 using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.CodeGeneration;
@@ -327,6 +328,8 @@ public class WorkflowExecutorBenchmarks
     private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeChannelRequestReply = null!;
     private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeResponder = null!;
     private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeCompositeReply = null!;
+    private Func<IApiTransport, JsonWorkspace, JsonElement, IWorkflowRun?, CancellationToken, ValueTask<WorkflowRunResult<JsonElement>>> executeDurable = null!;
+    private InMemoryWorkflowStateStore durableStore = null!;
     private BenchTransport transport = null!;
     private BenchMessageTransport messageTransport = null!;
     private JsonWorkspace workspace = null!;
@@ -353,6 +356,12 @@ public class WorkflowExecutorBenchmarks
         this.executeChannelRequestReply = CompileChannel(ChannelRequestReplyDocument, "AskWorkflow", RequestReplySendDescriptor());
         this.executeResponder = CompileChannel(ResponderDocument, "ServeWorkflow", ResponderDescriptor());
         this.executeCompositeReply = CompileChannel(CompositeReplyDocument, "ServeWorkflow", ResponderDescriptor());
+
+        Assembly durableAssembly = CompileInMemory(EmitExecutor(Document, "DurableAdoptWorkflow", durable: true));
+        this.executeDurable = durableAssembly.GetType("GeneratedWorkflows.DurableAdoptWorkflow")!
+            .GetMethod("ExecuteAsync")!
+            .CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, IWorkflowRun?, CancellationToken, ValueTask<WorkflowRunResult<JsonElement>>>>();
+        this.durableStore = new InMemoryWorkflowStateStore();
 
         this.transport = new BenchTransport();
         this.messageTransport = new BenchMessageTransport();
@@ -386,6 +395,37 @@ public class WorkflowExecutorBenchmarks
         ValueTask<JsonElement> pending = this.execute(this.transport, this.workspace, this.inputs, default);
         JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
         return result.TryGetProperty("name"u8, out _);
+    }
+
+    /// <summary>
+    /// Runs the durable executor with a <see langword="null"/> run — the Tier-2 shape with no checkpointing.
+    /// Allocation should match the non-durable <see cref="RunWorkflow"/>, proving the durable codegen adds
+    /// nothing when no run is supplied.
+    /// </summary>
+    /// <returns>Whether the run completed (a sink for the probe).</returns>
+    [Benchmark]
+    public bool RunDurableWorkflowNullRun()
+    {
+        this.workspace.Reset();
+        ValueTask<WorkflowRunResult<JsonElement>> pending = this.executeDurable(this.transport, this.workspace, this.inputs, null, default);
+        WorkflowRunResult<JsonElement> result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
+        return result.IsCompleted;
+    }
+
+    /// <summary>
+    /// Runs the durable executor with a real run + in-memory store — the full Tier-2 cost (checkpoint
+    /// serialization + store write per step). The store is reset each iteration so it does not grow.
+    /// </summary>
+    /// <returns>Whether the run completed (a sink for the probe).</returns>
+    [Benchmark]
+    public bool RunDurableWorkflow()
+    {
+        this.workspace.Reset();
+        this.durableStore.DeleteAsync("bench", default).GetAwaiter().GetResult();
+        using var run = WorkflowRun.CreateNew(this.durableStore, "bench", "adopt", this.inputs);
+        ValueTask<WorkflowRunResult<JsonElement>> pending = this.executeDurable(this.transport, this.workspace, this.inputs, run, default);
+        WorkflowRunResult<JsonElement> result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
+        return result.IsCompleted;
     }
 
     /// <summary>Runs a status-only workflow (no $response.body reference, so no body clone).</summary>
@@ -635,9 +675,9 @@ public class WorkflowExecutorBenchmarks
         return method.CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>>>();
     }
 
-    private static string EmitExecutor(string document, string className) => EmitWorkflowAt(document, 0, className);
+    private static string EmitExecutor(string document, string className, bool durable = false) => EmitWorkflowAt(document, 0, className, durable);
 
-    private static string EmitWorkflowAt(string document, int workflowIndex, string className)
+    private static string EmitWorkflowAt(string document, int workflowIndex, string className, bool durable = false)
     {
         OperationDescriptor[] operations =
         [
@@ -674,7 +714,9 @@ public class WorkflowExecutorBenchmarks
                     "GeneratedWorkflows",
                     className,
                     "Corvus.Text.Json.JsonElement",
-                    "Corvus.Text.Json.JsonElement"));
+                    "Corvus.Text.Json.JsonElement",
+                    null,
+                    durable));
         }
 
         throw new InvalidOperationException("No workflow.");
