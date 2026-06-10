@@ -1,0 +1,273 @@
+// <copyright file="MongoWorkflowStateStore.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+using System.Globalization;
+using MongoDB.Bson;
+using MongoDB.Driver;
+
+namespace Corvus.Text.Json.Arazzo.Durability.Mongo;
+
+/// <summary>
+/// A MongoDB-backed <see cref="IWorkflowStateStore"/> and <see cref="IWorkflowWaitIndex"/>. Each run is a
+/// document holding the opaque checkpoint (binary) plus the projected index fields; optimistic concurrency
+/// maps to a version field (a conditional replace) and the single-owner lease to a small leases collection (a
+/// conditional upsert that collides on a held lease).
+/// </summary>
+/// <remarks>
+/// The driver pools connections internally, so the store is naturally concurrent. Create instances with
+/// <see cref="CreateAsync"/>, which ensures the indexes.
+/// </remarks>
+public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IAsyncDisposable
+{
+    private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
+
+    private readonly IMongoClient client;
+    private readonly TimeProvider timeProvider;
+    private readonly bool ownsClient;
+    private readonly IMongoCollection<BsonDocument> runs;
+    private readonly IMongoCollection<BsonDocument> leases;
+
+    private MongoWorkflowStateStore(IMongoClient client, string databaseName, TimeProvider timeProvider, bool ownsClient)
+    {
+        this.client = client;
+        this.timeProvider = timeProvider;
+        this.ownsClient = ownsClient;
+        IMongoDatabase database = client.GetDatabase(databaseName);
+        this.runs = database.GetCollection<BsonDocument>("workflow_runs");
+        this.leases = database.GetCollection<BsonDocument>("workflow_leases");
+    }
+
+    /// <summary>Opens a store over the given MongoDB connection string.</summary>
+    /// <param name="connectionString">A MongoDB connection string (e.g. <c>mongodb://localhost:27017</c>).</param>
+    /// <param name="databaseName">The database to use; defaults to <c>arazzo</c>.</param>
+    /// <param name="timeProvider">The time source for lease expiry; defaults to <see cref="TimeProvider.System"/>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The opened store (it owns and disposes the client).</returns>
+    public static async ValueTask<MongoWorkflowStateStore> CreateAsync(
+        string connectionString,
+        string databaseName = "arazzo",
+        TimeProvider? timeProvider = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(connectionString);
+        var client = new MongoClient(connectionString);
+        var store = new MongoWorkflowStateStore(client, databaseName, timeProvider ?? TimeProvider.System, ownsClient: true);
+        await store.EnsureIndexesAsync(cancellationToken).ConfigureAwait(false);
+        return store;
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<WorkflowEtag> SaveAsync(
+        WorkflowRunId id,
+        ReadOnlyMemory<byte> checkpointUtf8,
+        in WorkflowRunIndexEntry index,
+        WorkflowEtag expected,
+        CancellationToken cancellationToken)
+        => this.SaveCoreAsync(id, checkpointUtf8.ToArray(), index, expected, cancellationToken);
+
+    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunId id, byte[] checkpoint, WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+    {
+        if (expected.IsNone)
+        {
+            BsonDocument document = BuildDocument(id, checkpoint, index, version: 1);
+            try
+            {
+                await this.runs.InsertOneAsync(document, options: null, cancellationToken).ConfigureAwait(false);
+            }
+            catch (MongoWriteException ex) when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
+            {
+                throw new WorkflowConflictException(id, expected);
+            }
+
+            return new WorkflowEtag("1");
+        }
+
+        long expectedVersion = long.Parse(expected.Value!, CultureInfo.InvariantCulture);
+        BsonDocument replacement = BuildDocument(id, checkpoint, index, expectedVersion + 1);
+        FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.And(
+            Builders<BsonDocument>.Filter.Eq("_id", id.Value),
+            Builders<BsonDocument>.Filter.Eq("version", expectedVersion));
+        ReplaceOneResult result = await this.runs.ReplaceOneAsync(filter, replacement, options: (ReplaceOptions?)null, cancellationToken).ConfigureAwait(false);
+        if (result.MatchedCount == 0)
+        {
+            throw new WorkflowConflictException(id, expected);
+        }
+
+        return new WorkflowEtag((expectedVersion + 1).ToString(CultureInfo.InvariantCulture));
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunId id, CancellationToken cancellationToken)
+    {
+        FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Eq("_id", id.Value);
+        BsonDocument? document = await this.runs.Find(filter).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+        if (document is null)
+        {
+            return null;
+        }
+
+        byte[] checkpoint = document["checkpoint"].AsBsonBinaryData.Bytes;
+        var etag = new WorkflowEtag(document["version"].AsInt64.ToString(CultureInfo.InvariantCulture));
+        return new WorkflowCheckpoint(checkpoint, etag);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunId id, string owner, TimeSpan ttl, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(owner);
+
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        DateTimeOffset expiresAt = now + ttl;
+        string token = Guid.NewGuid().ToString("N");
+
+        FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.And(
+            Builders<BsonDocument>.Filter.Eq("_id", id.Value),
+            Builders<BsonDocument>.Filter.Or(
+                Builders<BsonDocument>.Filter.Lte("expiresAt", now.ToUnixTimeMilliseconds()),
+                Builders<BsonDocument>.Filter.Eq("owner", owner)));
+        UpdateDefinition<BsonDocument> update = Builders<BsonDocument>.Update
+            .Set("owner", owner)
+            .Set("token", token)
+            .Set("expiresAt", expiresAt.ToUnixTimeMilliseconds());
+        try
+        {
+            await this.leases.UpdateOneAsync(filter, update, new UpdateOptions { IsUpsert = true }, cancellationToken).ConfigureAwait(false);
+            return new WorkflowLease(id, owner, token, expiresAt);
+        }
+        catch (MongoWriteException ex) when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
+        {
+            // A lease already exists and is held by another owner (the conditional upsert collided on _id).
+            return null;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken cancellationToken)
+    {
+        FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.And(
+            Builders<BsonDocument>.Filter.Eq("_id", lease.RunId.Value),
+            Builders<BsonDocument>.Filter.Eq("token", lease.Token));
+        await this.leases.DeleteOneAsync(filter, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask DeleteAsync(WorkflowRunId id, CancellationToken cancellationToken)
+    {
+        FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Eq("_id", id.Value);
+        await this.runs.DeleteOneAsync(filter, cancellationToken).ConfigureAwait(false);
+        await this.leases.DeleteOneAsync(filter, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.And(
+            Builders<BsonDocument>.Filter.Eq("status", SuspendedStatus),
+            Builders<BsonDocument>.Filter.Ne<BsonValue>("dueAt", BsonNull.Value),
+            Builders<BsonDocument>.Filter.Lte("dueAt", before.ToUnixTimeMilliseconds()));
+        using IAsyncCursor<BsonDocument> cursor = await this.runs.Find(filter).Project(IdOnly).ToCursorAsync(cancellationToken).ConfigureAwait(false);
+        while (await cursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
+        {
+            foreach (BsonDocument document in cursor.Current)
+            {
+                yield return new WorkflowRunId(document["_id"].AsString);
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(channel);
+
+        FilterDefinitionBuilder<BsonDocument> b = Builders<BsonDocument>.Filter;
+        FilterDefinition<BsonDocument> filter = b.And(
+            b.Eq("status", SuspendedStatus),
+            b.Eq("awaitingChannel", channel));
+        if (correlationId is not null)
+        {
+            filter = b.And(filter, b.Or(
+                b.Eq<BsonValue>("awaitingCorrelationId", BsonNull.Value),
+                b.Eq("awaitingCorrelationId", correlationId)));
+        }
+
+        using IAsyncCursor<BsonDocument> cursor = await this.runs.Find(filter).Project(IdOnly).ToCursorAsync(cancellationToken).ConfigureAwait(false);
+        while (await cursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
+        {
+            foreach (BsonDocument document in cursor.Current)
+            {
+                yield return new WorkflowRunId(document["_id"].AsString);
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
+    {
+        FilterDefinitionBuilder<BsonDocument> b = Builders<BsonDocument>.Filter;
+        FilterDefinition<BsonDocument> filter = b.Empty;
+        if (query.Status is { } status)
+        {
+            filter = b.And(filter, b.Eq("status", status.ToString()));
+        }
+
+        if (query.WorkflowId is { } workflowId)
+        {
+            filter = b.And(filter, b.Eq("workflowId", workflowId));
+        }
+
+        List<BsonDocument> documents = await this.runs.Find(filter).Limit(query.Limit).ToListAsync(cancellationToken).ConfigureAwait(false);
+        var listings = new List<WorkflowRunListing>(documents.Count);
+        foreach (BsonDocument document in documents)
+        {
+            var entry = new WorkflowRunIndexEntry(
+                document["workflowId"].AsString,
+                Enum.Parse<WorkflowRunStatus>(document["status"].AsString),
+                DateTimeOffset.FromUnixTimeMilliseconds(document["createdAt"].AsInt64),
+                DateTimeOffset.FromUnixTimeMilliseconds(document["updatedAt"].AsInt64),
+                document["dueAt"].IsBsonNull ? null : DateTimeOffset.FromUnixTimeMilliseconds(document["dueAt"].AsInt64),
+                document["awaitingChannel"].IsBsonNull ? null : document["awaitingChannel"].AsString,
+                document["awaitingCorrelationId"].IsBsonNull ? null : document["awaitingCorrelationId"].AsString,
+                document["errorType"].IsBsonNull ? null : document["errorType"].AsString);
+            listings.Add(new WorkflowRunListing(new WorkflowRunId(document["_id"].AsString), entry));
+        }
+
+        return new WorkflowRunPage(listings);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask DisposeAsync()
+    {
+        if (this.ownsClient && this.client is IDisposable disposable)
+        {
+            disposable.Dispose();
+        }
+
+        return default;
+    }
+
+    private static readonly ProjectionDefinition<BsonDocument> IdOnly = Builders<BsonDocument>.Projection.Include("_id");
+
+    private static BsonDocument BuildDocument(WorkflowRunId id, byte[] checkpoint, in WorkflowRunIndexEntry index, long version) => new()
+    {
+        ["_id"] = id.Value,
+        ["checkpoint"] = new BsonBinaryData(checkpoint),
+        ["version"] = version,
+        ["status"] = index.Status.ToString(),
+        ["workflowId"] = index.WorkflowId,
+        ["createdAt"] = index.CreatedAt.ToUnixTimeMilliseconds(),
+        ["updatedAt"] = index.UpdatedAt.ToUnixTimeMilliseconds(),
+        ["dueAt"] = index.DueAt is { } due ? due.ToUnixTimeMilliseconds() : BsonNull.Value,
+        ["awaitingChannel"] = (BsonValue?)index.AwaitingChannel ?? BsonNull.Value,
+        ["awaitingCorrelationId"] = (BsonValue?)index.AwaitingCorrelationId ?? BsonNull.Value,
+        ["errorType"] = (BsonValue?)index.ErrorType ?? BsonNull.Value,
+    };
+
+    private async ValueTask EnsureIndexesAsync(CancellationToken cancellationToken)
+    {
+        var due = new CreateIndexModel<BsonDocument>(Builders<BsonDocument>.IndexKeys.Ascending("status").Ascending("dueAt"));
+        var awaiting = new CreateIndexModel<BsonDocument>(Builders<BsonDocument>.IndexKeys.Ascending("status").Ascending("awaitingChannel").Ascending("awaitingCorrelationId"));
+        await this.runs.Indexes.CreateManyAsync([due, awaiting], cancellationToken).ConfigureAwait(false);
+    }
+}
