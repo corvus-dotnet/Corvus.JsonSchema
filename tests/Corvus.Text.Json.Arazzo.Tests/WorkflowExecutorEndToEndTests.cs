@@ -83,6 +83,97 @@ public partial class WorkflowExecutorEndToEndTests
         recorded.Sum("corvus.arazzo.workflows.faulted").ShouldBe(0);
     }
 
+    private const string UrlCriterionDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "adoptUrl",
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [
+                    { "condition": "$statusCode == 200" },
+                    { "condition": "$url == '/pets/42'" }
+                  ],
+                  "outputs": { "petName": "$response.body#/name" }
+                }
+              ],
+              "outputs": { "name": "$steps.getPet.outputs.petName" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_executor_resolves_a_url_criterion_against_the_relative_request_url()
+    {
+        string source = EmitGetPetExecutor(UrlCriterionDocument, "AdoptUrlWorkflow");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.AdoptUrlWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var transport = new MockApiTransport();
+        transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
+
+        using var recorded = new RecordedTelemetry();
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
+        JsonElement outputs = await pending;
+
+        // The $url criterion compared the resolved relative URL (path "/pets/42") and matched, so the
+        // step succeeded and produced its output.
+        outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
+        name.GetString().ShouldBe("Fido");
+        transport.Requests[0].Path.ShouldBe("/pets/42");
+        recorded.Sum("corvus.arazzo.workflows.completed").ShouldBe(1);
+        recorded.Sum("corvus.arazzo.workflows.faulted").ShouldBe(0);
+    }
+
+    [TestMethod]
+    public async Task Generated_executor_fails_a_url_criterion_that_does_not_match()
+    {
+        // petId 99 → "/pets/99", which the criterion (expecting "/pets/42") must reject — proving the
+        // $url operand is actually resolved and compared, not assumed true.
+        string source = EmitGetPetExecutor(UrlCriterionDocument, "AdoptUrlWorkflow");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.AdoptUrlWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var transport = new MockApiTransport();
+        transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
+
+        using var recorded = new RecordedTelemetry();
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"99"}"""));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
+
+        WorkflowStepFailedException? caught = null;
+        try
+        {
+            _ = await pending;
+        }
+        catch (WorkflowStepFailedException ex)
+        {
+            caught = ex;
+        }
+
+        caught.ShouldNotBeNull();
+        transport.Requests[0].Path.ShouldBe("/pets/99");
+        recorded.Sum("corvus.arazzo.workflows.faulted").ShouldBe(1);
+    }
+
     private const string CreatePetDocument = """
         {
           "arazzo": "1.0.1",

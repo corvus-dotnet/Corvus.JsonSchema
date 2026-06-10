@@ -12,9 +12,15 @@ namespace Corvus.Text.Json.Arazzo.Tests.Fakes;
 /// A minimal generated-style request (<c>GET /pets/{petId}</c>) for the end-to-end executor test,
 /// shaped like the OpenAPI generator's output but using <see cref="JsonElement"/> for the parameter.
 /// </summary>
-public readonly struct PetByIdRequest(JsonElement petId) : IApiRequest<PetByIdRequest>
+public readonly struct PetByIdRequest : IApiRequest<PetByIdRequest>
 {
-    private readonly JsonElement petId = petId;
+    public PetByIdRequest(JsonElement petId)
+    {
+        this.PetId = petId;
+    }
+
+    /// <summary>Gets the petId path parameter (mirrors the generator's init-settable request property).</summary>
+    public JsonElement PetId { get; init; }
 
     public static ReadOnlySpan<byte> PathTemplateUtf8 => "/pets/{petId}"u8;
 
@@ -31,7 +37,7 @@ public readonly struct PetByIdRequest(JsonElement petId) : IApiRequest<PetByIdRe
     public void WriteResolvedPath(IBufferWriter<byte> writer)
     {
         writer.Write("/pets/"u8);
-        string id = this.petId.ValueKind == JsonValueKind.String ? this.petId.GetString()! : this.petId.GetRawText();
+        string id = this.PetId.ValueKind == JsonValueKind.String ? this.PetId.GetString()! : this.PetId.GetRawText();
         int count = Encoding.UTF8.GetByteCount(id);
         Span<byte> destination = writer.GetSpan(count);
         writer.Advance(Encoding.UTF8.GetBytes(id, destination));
