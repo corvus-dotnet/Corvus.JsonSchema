@@ -20,7 +20,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.NatsJetStream;
 /// </summary>
 /// <remarks>
 /// Wait/visibility queries scan the bucket's keys and filter on the index header. Create instances with
-/// <see cref="CreateAsync"/>.
+/// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> after provisioning with <see cref="PrepareAsync(string, CancellationToken)"/>.
 /// </remarks>
 public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IAsyncDisposable
 {
@@ -41,12 +41,35 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         this.timeProvider = timeProvider;
     }
 
-    /// <summary>Opens a store over the given NATS URL, creating its key/value buckets.</summary>
+    /// <summary>
+    /// Provisions the store's key/value buckets. Creating a KV bucket creates a JetStream stream, which
+    /// requires stream-management permissions, so run this once at deploy/migration time, separately from the
+    /// least-privileged account used to <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> the store for operation (which needs only
+    /// get/put/delete on the buckets' subjects).
+    /// </summary>
+    /// <param name="url">A NATS server URL for an account permitted to manage streams.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes once the buckets exist (the operation is idempotent).</returns>
+    public static async ValueTask PrepareAsync(string url, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(url);
+        await using var connection = new NatsConnection(NatsOpts.Default with { Url = url });
+        var kv = new NatsKVContext(new NatsJSContext(connection));
+        await kv.CreateStoreAsync(new NatsKVConfig(RunsBucket), cancellationToken).ConfigureAwait(false);
+        await kv.CreateStoreAsync(new NatsKVConfig(LeasesBucket), cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Opens the store for operation, binding to its already-provisioned key/value buckets.</summary>
+    /// <remarks>
+    /// This creates no streams/buckets, so it is safe to use a least-privileged account granted only
+    /// get/put/delete on the buckets' subjects. Call <see cref="PrepareAsync(string, CancellationToken)"/> once beforehand — with a
+    /// stream-management account — to create the buckets.
+    /// </remarks>
     /// <param name="url">A NATS server URL (e.g. <c>nats://localhost:4222</c>).</param>
     /// <param name="timeProvider">The time source for lease expiry; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The opened store (it owns and disposes the connection).</returns>
-    public static async ValueTask<NatsJetStreamWorkflowStateStore> CreateAsync(
+    public static async ValueTask<NatsJetStreamWorkflowStateStore> ConnectAsync(
         string url,
         TimeProvider? timeProvider = null,
         CancellationToken cancellationToken = default)
@@ -56,8 +79,8 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         try
         {
             var kv = new NatsKVContext(new NatsJSContext(connection));
-            INatsKVStore runs = await kv.CreateStoreAsync(new NatsKVConfig(RunsBucket), cancellationToken).ConfigureAwait(false);
-            INatsKVStore leases = await kv.CreateStoreAsync(new NatsKVConfig(LeasesBucket), cancellationToken).ConfigureAwait(false);
+            INatsKVStore runs = await kv.GetStoreAsync(RunsBucket, cancellationToken).ConfigureAwait(false);
+            INatsKVStore leases = await kv.GetStoreAsync(LeasesBucket, cancellationToken).ConfigureAwait(false);
             return new NatsJetStreamWorkflowStateStore(connection, runs, leases, timeProvider ?? TimeProvider.System);
         }
         catch
@@ -65,6 +88,44 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
             await connection.DisposeAsync().ConfigureAwait(false);
             throw;
         }
+    }
+
+    /// <summary>Provisions the store's key/value buckets over a caller-supplied connection.</summary>
+    /// <remarks>
+    /// Supply a connection the caller configured (for example with a creds file, nkey, or token) so
+    /// provisioning runs under a deliberate, stream-management-capable account. The caller retains ownership.
+    /// </remarks>
+    /// <param name="connection">A NATS connection for an account permitted to manage streams.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes once the buckets exist (the operation is idempotent).</returns>
+    public static async ValueTask PrepareAsync(INatsConnection connection, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+        var kv = new NatsKVContext(new NatsJSContext(connection));
+        await kv.CreateStoreAsync(new NatsKVConfig(RunsBucket), cancellationToken).ConfigureAwait(false);
+        await kv.CreateStoreAsync(new NatsKVConfig(LeasesBucket), cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Opens the store over a caller-supplied connection (the caller retains ownership).</summary>
+    /// <remarks>
+    /// Supply a connection the caller configured — for example with a least-privileged operational account
+    /// (get/put/delete on the buckets' subjects) — so the store runs under a least-privileged principal. This
+    /// creates no buckets; call <see cref="PrepareAsync(INatsConnection, CancellationToken)"/> once beforehand.
+    /// </remarks>
+    /// <param name="connection">A NATS connection.</param>
+    /// <param name="timeProvider">The time source for lease expiry; defaults to <see cref="TimeProvider.System"/>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The opened store (it does not dispose the supplied connection).</returns>
+    public static async ValueTask<NatsJetStreamWorkflowStateStore> ConnectAsync(
+        INatsConnection connection,
+        TimeProvider? timeProvider = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+        var kv = new NatsKVContext(new NatsJSContext(connection));
+        INatsKVStore runs = await kv.GetStoreAsync(RunsBucket, cancellationToken).ConfigureAwait(false);
+        INatsKVStore leases = await kv.GetStoreAsync(LeasesBucket, cancellationToken).ConfigureAwait(false);
+        return new NatsJetStreamWorkflowStateStore(ownedConnection: null, runs, leases, timeProvider ?? TimeProvider.System);
     }
 
     /// <inheritdoc/>

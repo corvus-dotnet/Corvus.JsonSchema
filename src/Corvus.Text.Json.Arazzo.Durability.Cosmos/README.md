@@ -14,12 +14,19 @@ wakeups and the operator visibility query) from `Corvus.Text.Json.Arazzo.Durabil
 - the single-owner lease is a document in a `workflow_leases` container, guarded by the same ETag mechanism.
 
 ```csharp
-await using var store = await CosmosWorkflowStateStore.CreateAsync("<cosmos connection string>");
+// Once, at deploy/migration time — with the account key (a management-plane credential):
+await CosmosWorkflowStateStore.PrepareAsync("<cosmos account connection string>");
+
+// At runtime — with a least-privileged data-plane managed identity; creates nothing:
+var client = new CosmosClient("https://acct.documents.azure.com", new DefaultAzureCredential(), CosmosWorkflowStateStore.CreateClientOptions());
+await using var store = await CosmosWorkflowStateStore.ConnectAsync(client);
 // ... use as IWorkflowStateStore / IWorkflowWaitIndex.
 ```
 
-`CreateAsync` creates the database and containers if they do not exist. There is also an overload taking a
-caller-configured `CosmosClient` (the caller retains ownership), which is what the emulator-based tests use.
+Creating a database/container is a Cosmos **management-plane** operation — the data-plane RBAC roles (e.g.
+*Cosmos DB Built-in Data Contributor*) cannot do it — so `PrepareAsync` needs the account key or a
+control-plane role, while `ConnectAsync` runs entirely on the data plane. Both have connection-string and
+`CosmosClient` overloads (the latter for managed identity and for the emulator-based tests).
 
 > The in-memory store (in `Corvus.Text.Json.Arazzo.Durability`) is the reference implementation; this backend
 > runs the same store-conformance suite.

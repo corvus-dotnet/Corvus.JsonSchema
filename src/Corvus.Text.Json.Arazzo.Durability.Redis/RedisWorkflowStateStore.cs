@@ -14,7 +14,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Redis;
 /// </summary>
 /// <remarks>
 /// Targets a single Redis instance (or a primary): the index-maintenance Lua touches several keys derived
-/// from the run, which is not Redis-Cluster slot-safe. Create instances with <see cref="CreateAsync"/>.
+/// from the run, which is not Redis-Cluster slot-safe. Create instances with <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> (or <see cref="Connect(StackExchange.Redis.IConnectionMultiplexer, TimeProvider?)"/>).
 /// </remarks>
 public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IAsyncDisposable
 {
@@ -82,26 +82,48 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         this.ownsConnection = ownsConnection;
     }
 
+    /// <summary>Verifies the store can be reached; Redis needs no schema provisioning.</summary>
+    /// <remarks>
+    /// Redis has no schema — keys appear on first write — so there is nothing to provision. This method is
+    /// offered for symmetry with the other backends and to fail fast at deploy time if the server is
+    /// unreachable; it opens and closes a connection. The provisioning concern for Redis is configuring ACLs
+    /// (the operational principal needs only the commands and key patterns the store uses), done on the server.
+    /// </remarks>
+    /// <param name="configuration">A StackExchange.Redis configuration string.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes once connectivity is confirmed.</returns>
+    public static async ValueTask PrepareAsync(string configuration, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+        cancellationToken.ThrowIfCancellationRequested();
+        await using IConnectionMultiplexer connection = await ConnectionMultiplexer.ConnectAsync(configuration).ConfigureAwait(false);
+    }
+
     /// <summary>Opens a store over the given Redis configuration.</summary>
     /// <param name="configuration">A StackExchange.Redis configuration string (e.g. <c>localhost:6379</c>).</param>
     /// <param name="timeProvider">The time source for lease expiry; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The opened store (it owns and disposes the connection).</returns>
-    public static async ValueTask<RedisWorkflowStateStore> CreateAsync(
+    public static async ValueTask<RedisWorkflowStateStore> ConnectAsync(
         string configuration,
         TimeProvider? timeProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(configuration);
+        cancellationToken.ThrowIfCancellationRequested();
         IConnectionMultiplexer connection = await ConnectionMultiplexer.ConnectAsync(configuration).ConfigureAwait(false);
         return new RedisWorkflowStateStore(connection, timeProvider ?? TimeProvider.System, ownsConnection: true);
     }
 
     /// <summary>Creates a store over an existing connection (the caller keeps ownership).</summary>
+    /// <remarks>
+    /// Supply a connection the caller configured — for example one authenticated with an operational-only
+    /// Redis ACL user — so the store runs under a least-privileged principal.
+    /// </remarks>
     /// <param name="connection">The Redis connection.</param>
     /// <param name="timeProvider">The time source for lease expiry; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <returns>The store.</returns>
-    public static RedisWorkflowStateStore Create(IConnectionMultiplexer connection, TimeProvider? timeProvider = null)
+    public static RedisWorkflowStateStore Connect(IConnectionMultiplexer connection, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(connection);
         return new RedisWorkflowStateStore(connection, timeProvider ?? TimeProvider.System, ownsConnection: false);

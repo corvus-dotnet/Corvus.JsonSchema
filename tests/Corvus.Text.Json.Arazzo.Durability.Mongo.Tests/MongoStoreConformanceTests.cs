@@ -12,7 +12,8 @@ namespace Corvus.Text.Json.Arazzo.Durability.Mongo.Tests;
 
 /// <summary>
 /// Runs the shared store-conformance suite against <see cref="MongoWorkflowStateStore"/> over a real MongoDB
-/// server in a container. Each test gets an empty store (the database is dropped).
+/// server in a container, exercising the client (caller-owned) overloads. Each test gets an empty store (the
+/// database is dropped).
 /// </summary>
 [TestClass]
 [TestCategory("integration")]
@@ -21,12 +22,14 @@ public sealed class MongoStoreConformanceTests : WorkflowStateStoreConformance
 {
     private const string DatabaseName = "arazzo";
     private static MongoDbContainer container = null!;
+    private static IMongoClient client = null!;
 
     [ClassInitialize]
     public static async Task ClassInitAsync(TestContext context)
     {
         container = new MongoDbBuilder().WithImage("mongo:7").Build();
         await container.StartAsync();
+        client = new MongoClient(container.GetConnectionString());
     }
 
     [ClassCleanup]
@@ -40,10 +43,10 @@ public sealed class MongoStoreConformanceTests : WorkflowStateStoreConformance
 
     protected override async ValueTask<IWorkflowStateStore> CreateStoreAsync(TimeProvider timeProvider)
     {
-        string connectionString = container.GetConnectionString();
-        var client = new MongoClient(connectionString);
         await client.DropDatabaseAsync(DatabaseName);
 
-        return await MongoWorkflowStateStore.CreateAsync(connectionString, DatabaseName, timeProvider);
+        // Provision the indexes then open for operation over the caller-owned client.
+        await MongoWorkflowStateStore.PrepareAsync(client, DatabaseName);
+        return await MongoWorkflowStateStore.ConnectAsync(client, DatabaseName, timeProvider);
     }
 }

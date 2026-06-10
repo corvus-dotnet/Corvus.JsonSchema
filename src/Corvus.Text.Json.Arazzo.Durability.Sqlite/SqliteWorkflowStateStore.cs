@@ -16,7 +16,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Sqlite;
 /// <remarks>
 /// One connection is held open for the store's lifetime (so an in-memory database survives between
 /// operations) and all operations are serialised through it — adequate for the local/embedded use this
-/// adapter targets. Create instances with <see cref="CreateAsync"/>, which runs the idempotent schema.
+/// adapter targets. Create instances with <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/>, which runs the idempotent schema.
 /// </remarks>
 public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IAsyncDisposable
 {
@@ -32,12 +32,38 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         this.timeProvider = timeProvider;
     }
 
-    /// <summary>Opens a store over the given connection string and ensures its schema exists.</summary>
+    /// <summary>Provisions the store's schema (tables and indexes) against a file database.</summary>
+    /// <remarks>
+    /// SQLite is the deliberate exception to the prepare/connect split: it is an embedded, single-process
+    /// engine with no server-side privilege boundary (access is governed by file-system permissions), and an
+    /// in-memory database exists only for the lifetime of its connection — so <see cref="ConnectAsync"/> also
+    /// ensures the schema. This method is offered for symmetry, to pre-create a file database's schema.
+    /// </remarks>
+    /// <param name="connectionString">A Microsoft.Data.Sqlite connection string.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes once the schema exists (the operation is idempotent).</returns>
+    public static async ValueTask PrepareAsync(string connectionString, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(connectionString);
+
+        await using var connection = new SqliteConnection(connectionString);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+        using SqliteCommand schema = connection.CreateCommand();
+        schema.CommandText = SchemaSql;
+        await schema.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Opens a store over the given connection string, ensuring its schema exists.</summary>
+    /// <remarks>
+    /// Unlike the out-of-process backends, this ensures the schema on open (see <see cref="PrepareAsync"/> for
+    /// why): SQLite has no privilege boundary to separate, and an in-memory database must be provisioned on
+    /// the held connection.
+    /// </remarks>
     /// <param name="connectionString">A Microsoft.Data.Sqlite connection string (e.g. <c>Data Source=workflows.db</c>).</param>
     /// <param name="timeProvider">The time source for lease expiry; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The opened, schema-initialised store.</returns>
-    public static async ValueTask<SqliteWorkflowStateStore> CreateAsync(
+    public static async ValueTask<SqliteWorkflowStateStore> ConnectAsync(
         string connectionString,
         TimeProvider? timeProvider = null,
         CancellationToken cancellationToken = default)
