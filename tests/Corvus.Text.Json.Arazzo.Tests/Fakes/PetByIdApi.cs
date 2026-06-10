@@ -220,3 +220,100 @@ public sealed class PetByIdClient(IApiTransport transport)
         }
     }
 }
+/// <summary>
+/// A generated-style request (<c>GET /pets/{petId}?status=</c>) with both a path and a query parameter,
+/// for exercising the <c>$url</c> path's query handling.
+/// </summary>
+public readonly struct SearchPetsRequest : IApiRequest<SearchPetsRequest>
+{
+    /// <summary>Gets the petId path parameter.</summary>
+    public JsonElement PetId { get; init; }
+
+    /// <summary>Gets the status query parameter.</summary>
+    public JsonElement Status { get; init; }
+
+    public static ReadOnlySpan<byte> PathTemplateUtf8 => "/pets/{petId}"u8;
+
+    public static OperationMethod Method => OperationMethod.Get;
+
+    public static bool HasPathParameters => true;
+
+    public static bool HasQueryParameters => true;
+
+    public static bool HasHeaderParameters => false;
+
+    public static bool HasCookieParameters => false;
+
+    public void WriteResolvedPath(IBufferWriter<byte> writer)
+    {
+        writer.Write("/pets/"u8);
+        WriteUtf8(writer, this.PetId.ValueKind == JsonValueKind.String ? this.PetId.GetString()! : this.PetId.GetRawText());
+    }
+
+    public int WriteQueryString(IBufferWriter<byte> writer)
+    {
+        if (this.Status.ValueKind != JsonValueKind.String)
+        {
+            return 0;
+        }
+
+        writer.Write("status="u8);
+        string status = this.Status.GetString()!;
+        WriteUtf8(writer, status);
+        return 7 + Encoding.UTF8.GetByteCount(status);
+    }
+
+    public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state)
+    {
+    }
+
+    public int WriteCookies(IBufferWriter<byte> writer) => 0;
+
+    public void Validate(ValidationMode mode = ValidationMode.Basic)
+    {
+    }
+
+    private static void WriteUtf8(IBufferWriter<byte> writer, string value)
+    {
+        int count = Encoding.UTF8.GetByteCount(value);
+        Span<byte> destination = writer.GetSpan(count);
+        writer.Advance(Encoding.UTF8.GetBytes(value, destination));
+    }
+}
+
+/// <summary>
+/// A generated-style client for <see cref="SearchPetsRequest"/> (<c>GET /pets/{petId}?status=</c>).
+/// </summary>
+public sealed class SearchPetsClient(IApiTransport transport)
+{
+    private readonly IApiTransport transport = transport ?? throw new ArgumentNullException(nameof(transport));
+
+    public ValueTask<PetByIdResponse> SearchPetsAsync(
+        JsonElement.Source petId,
+        JsonElement.Source status,
+        CancellationToken cancellationToken = default,
+        ValidationMode validationMode = ValidationMode.Basic,
+        ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        var request = new SearchPetsRequest
+        {
+            PetId = JsonElement.CreateBuilder(workspace, petId).RootElement,
+            Status = JsonElement.CreateBuilder(workspace, status).RootElement,
+        };
+        request.Validate(validationMode);
+        return SendCore(this.transport, workspace, request, cancellationToken);
+    }
+
+    private static async ValueTask<PetByIdResponse> SendCore(IApiTransport transport, JsonWorkspace workspace, SearchPetsRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await transport.SendAsync<SearchPetsRequest, PetByIdResponse>(in request, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            workspace.Dispose();
+        }
+    }
+}
