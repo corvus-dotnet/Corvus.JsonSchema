@@ -22,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo\Corvus.Text.Json.Arazzo.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Patch\Corvus.Text.Json.Patch.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />

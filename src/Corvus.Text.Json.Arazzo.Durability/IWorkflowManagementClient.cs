@@ -2,13 +2,15 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text.Json;
+
 namespace Corvus.Text.Json.Arazzo.Durability;
 
 /// <summary>
 /// The control plane over a durability store (plan §11): see and act on runs — list/inspect them, resume a
-/// faulted run, cancel a run, and reap terminal ones. It is the workflow-level analogue of dead-letter queue
-/// inspection and redelivery; all mutations take a single-owner lease and use the store's optimistic
-/// concurrency so concurrent operators (or an operator and a worker) cannot conflict.
+/// faulted run, cancel a run, delete a single run, and reap terminal ones. It is the workflow-level analogue
+/// of dead-letter queue inspection and redelivery; all mutations take a single-owner lease and use the store's
+/// optimistic concurrency so concurrent operators (or an operator and a worker) cannot conflict.
 /// </summary>
 public interface IWorkflowManagementClient
 {
@@ -24,11 +26,11 @@ public interface IWorkflowManagementClient
     /// <returns>The run detail, or <see langword="null"/> if no run with that id exists.</returns>
     ValueTask<WorkflowRunDetail?> GetAsync(WorkflowRunId id, CancellationToken cancellationToken);
 
-    /// <summary>Resumes a faulted run, re-executing it from its last checkpoint (the faulted step).</summary>
+    /// <summary>Resumes a faulted run, re-executing it from its last checkpoint per the chosen <see cref="ResumeMode"/>.</summary>
     /// <param name="id">The run id.</param>
-    /// <param name="options">How to resume (currently <see cref="ResumeMode.RetryFaultedStep"/>).</param>
+    /// <param name="options">How to resume — retry the faulted step, rewind to an earlier cursor, skip the faulted step, or apply a state patch first.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns><see langword="true"/> if the run was resumed; <see langword="false"/> if it was not faulted, was held by another owner, or no longer exists.</returns>
+    /// <returns><see langword="true"/> if the run was resumed; <see langword="false"/> if it was not faulted, was held by another owner, was changed concurrently, or no longer exists.</returns>
     ValueTask<bool> ResumeAsync(WorkflowRunId id, ResumeOptions options, CancellationToken cancellationToken);
 
     /// <summary>Cancels a non-terminal run, marking it <see cref="WorkflowRunStatus.Cancelled"/>.</summary>
@@ -43,6 +45,13 @@ public interface IWorkflowManagementClient
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The number of runs deleted.</returns>
     ValueTask<int> PurgeAsync(WorkflowPurgeQuery query, CancellationToken cancellationToken);
+
+    /// <summary>Deletes a single run, regardless of status. Unlike <see cref="PurgeAsync"/> (which reaps only old
+    /// terminal runs), this removes exactly one run by id — the operator's explicit "remove this" action.</summary>
+    /// <param name="id">The run id.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns><see langword="true"/> if a run was deleted; <see langword="false"/> if no run with that id existed or it was held by another owner.</returns>
+    ValueTask<bool> DeleteAsync(WorkflowRunId id, CancellationToken cancellationToken);
 }
 
 /// <summary>A run's management-relevant detail, read from its authoritative checkpoint.</summary>
@@ -64,20 +73,62 @@ public readonly record struct WorkflowRunDetail(
     WorkflowFault? Fault,
     WorkflowEtag Etag);
 
-/// <summary>How to resume a run (plan §11). Only <see cref="RetryFaultedStep"/> is implemented today; rewind,
-/// skip, and state-patch are reserved for a later iteration.</summary>
+/// <summary>How to resume a faulted run (plan §11). Each mode loads the checkpoint, mutates status/cursor/state
+/// under optimistic concurrency, then re-enters the executor.</summary>
 public enum ResumeMode
 {
     /// <summary>Re-execute from the last checkpoint — the faulted step. The common case.</summary>
     RetryFaultedStep,
+
+    /// <summary>Rewind the cursor to an earlier step (<see cref="ResumeOptions.TargetCursor"/>) and re-run forward
+    /// from there, overwriting the outputs of the re-executed steps. (cf. Temporal <em>reset</em> / Durable
+    /// Functions <em>rewind</em>.)</summary>
+    Rewind,
+
+    /// <summary>Skip the faulted step — advance the cursor past it (to <see cref="ResumeOptions.TargetCursor"/>, or the
+    /// next index by default), optionally recording operator-supplied outputs (<see cref="ResumeOptions.SkipOutputs"/>)
+    /// for the skipped step so downstream references resolve. Only safe when downstream does not need its real
+    /// outputs.</summary>
+    Skip,
+
+    /// <summary>Apply an RFC 6902 JSON Patch (<see cref="ResumeOptions.Patch"/>) to the run's persisted context —
+    /// an object <c>{ "inputs": …, "stepOutputs": { … } }</c> — to fix a bad input or output, then retry the
+    /// faulted step.</summary>
+    StatePatch,
 }
 
 /// <summary>Options controlling how a run is resumed.</summary>
 /// <param name="Mode">The resume strategy.</param>
-public readonly record struct ResumeOptions(ResumeMode Mode = ResumeMode.RetryFaultedStep)
+/// <param name="TargetCursor">For <see cref="ResumeMode.Rewind"/>, the cursor to rewind to (required). For
+/// <see cref="ResumeMode.Skip"/>, the cursor to resume at (defaults to the faulted cursor + 1). Ignored otherwise.</param>
+/// <param name="SkipOutputs">For <see cref="ResumeMode.Skip"/>, the operator-supplied outputs to record for the
+/// skipped step (an undefined element records nothing). Ignored otherwise.</param>
+/// <param name="Patch">For <see cref="ResumeMode.StatePatch"/>, the RFC 6902 JSON Patch array to apply to the run's
+/// persisted context. Ignored otherwise.</param>
+public readonly record struct ResumeOptions(
+    ResumeMode Mode = ResumeMode.RetryFaultedStep,
+    int? TargetCursor = null,
+    JsonElement SkipOutputs = default,
+    JsonElement Patch = default)
 {
     /// <summary>Gets options that retry the faulted step (re-execute from the last checkpoint).</summary>
     public static ResumeOptions RetryFaultedStep => new(ResumeMode.RetryFaultedStep);
+
+    /// <summary>Creates options that rewind the cursor to an earlier step and re-run forward from there.</summary>
+    /// <param name="targetCursor">The cursor to rewind to.</param>
+    /// <returns>The resume options.</returns>
+    public static ResumeOptions Rewind(int targetCursor) => new(ResumeMode.Rewind, TargetCursor: targetCursor);
+
+    /// <summary>Creates options that skip the faulted step, advancing past it.</summary>
+    /// <param name="outputs">The operator-supplied outputs to record for the skipped step (optional).</param>
+    /// <param name="targetCursor">The cursor to resume at (defaults to the faulted cursor + 1).</param>
+    /// <returns>The resume options.</returns>
+    public static ResumeOptions Skip(JsonElement outputs = default, int? targetCursor = null) => new(ResumeMode.Skip, TargetCursor: targetCursor, SkipOutputs: outputs);
+
+    /// <summary>Creates options that apply a JSON Patch to the persisted context, then retry the faulted step.</summary>
+    /// <param name="patch">The RFC 6902 JSON Patch array.</param>
+    /// <returns>The resume options.</returns>
+    public static ResumeOptions StatePatch(JsonElement patch) => new(ResumeMode.StatePatch, Patch: patch);
 }
 
 /// <summary>Selects terminal runs to reap.</summary>
