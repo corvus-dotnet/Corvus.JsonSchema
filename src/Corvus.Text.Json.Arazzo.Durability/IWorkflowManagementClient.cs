@@ -1,0 +1,86 @@
+// <copyright file="IWorkflowManagementClient.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+namespace Corvus.Text.Json.Arazzo.Durability;
+
+/// <summary>
+/// The control plane over a durability store (plan §11): see and act on runs — list/inspect them, resume a
+/// faulted run, cancel a run, and reap terminal ones. It is the workflow-level analogue of dead-letter queue
+/// inspection and redelivery; all mutations take a single-owner lease and use the store's optimistic
+/// concurrency so concurrent operators (or an operator and a worker) cannot conflict.
+/// </summary>
+public interface IWorkflowManagementClient
+{
+    /// <summary>Lists runs matching a visibility query (filter by status / workflow id, paged).</summary>
+    /// <param name="query">The visibility query.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A page of matching runs.</returns>
+    ValueTask<WorkflowRunPage> ListAsync(WorkflowQuery query, CancellationToken cancellationToken);
+
+    /// <summary>Gets a run's current detail (status, cursor, wait/fault, etag) from its authoritative checkpoint.</summary>
+    /// <param name="id">The run id.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The run detail, or <see langword="null"/> if no run with that id exists.</returns>
+    ValueTask<WorkflowRunDetail?> GetAsync(WorkflowRunId id, CancellationToken cancellationToken);
+
+    /// <summary>Resumes a faulted run, re-executing it from its last checkpoint (the faulted step).</summary>
+    /// <param name="id">The run id.</param>
+    /// <param name="options">How to resume (currently <see cref="ResumeMode.RetryFaultedStep"/>).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns><see langword="true"/> if the run was resumed; <see langword="false"/> if it was not faulted, was held by another owner, or no longer exists.</returns>
+    ValueTask<bool> ResumeAsync(WorkflowRunId id, ResumeOptions options, CancellationToken cancellationToken);
+
+    /// <summary>Cancels a non-terminal run, marking it <see cref="WorkflowRunStatus.Cancelled"/>.</summary>
+    /// <param name="id">The run id.</param>
+    /// <param name="reason">An operator-supplied reason for the cancellation.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns><see langword="true"/> if the run was cancelled; <see langword="false"/> if it was already terminal, was held by another owner, or no longer exists.</returns>
+    ValueTask<bool> CancelAsync(WorkflowRunId id, string reason, CancellationToken cancellationToken);
+
+    /// <summary>Reaps terminal runs (completed or cancelled) older than a cutoff.</summary>
+    /// <param name="query">Which terminal runs to reap.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The number of runs deleted.</returns>
+    ValueTask<int> PurgeAsync(WorkflowPurgeQuery query, CancellationToken cancellationToken);
+}
+
+/// <summary>A run's management-relevant detail, read from its authoritative checkpoint.</summary>
+/// <param name="Id">The run id.</param>
+/// <param name="WorkflowId">The id of the workflow the run executes.</param>
+/// <param name="Status">The run's lifecycle status.</param>
+/// <param name="Cursor">The cursor (state-machine index of the next step to run).</param>
+/// <param name="CreatedAt">When the run was first created.</param>
+/// <param name="Wait">Why the run is suspended, if it is.</param>
+/// <param name="Fault">The fault record if the run is (or was) faulted.</param>
+/// <param name="Etag">The etag the checkpoint was read at.</param>
+public readonly record struct WorkflowRunDetail(
+    WorkflowRunId Id,
+    string WorkflowId,
+    WorkflowRunStatus Status,
+    int Cursor,
+    DateTimeOffset CreatedAt,
+    WorkflowWait? Wait,
+    WorkflowFault? Fault,
+    WorkflowEtag Etag);
+
+/// <summary>How to resume a run (plan §11). Only <see cref="RetryFaultedStep"/> is implemented today; rewind,
+/// skip, and state-patch are reserved for a later iteration.</summary>
+public enum ResumeMode
+{
+    /// <summary>Re-execute from the last checkpoint — the faulted step. The common case.</summary>
+    RetryFaultedStep,
+}
+
+/// <summary>Options controlling how a run is resumed.</summary>
+/// <param name="Mode">The resume strategy.</param>
+public readonly record struct ResumeOptions(ResumeMode Mode = ResumeMode.RetryFaultedStep)
+{
+    /// <summary>Gets options that retry the faulted step (re-execute from the last checkpoint).</summary>
+    public static ResumeOptions RetryFaultedStep => new(ResumeMode.RetryFaultedStep);
+}
+
+/// <summary>Selects terminal runs to reap.</summary>
+/// <param name="OlderThan">Reap completed/cancelled runs last updated strictly before this instant.</param>
+/// <param name="Limit">The maximum number of runs to delete in one call.</param>
+public readonly record struct WorkflowPurgeQuery(DateTimeOffset OlderThan, int Limit = 1000);
