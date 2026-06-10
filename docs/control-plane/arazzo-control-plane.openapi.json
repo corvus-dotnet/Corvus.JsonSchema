@@ -89,6 +89,10 @@
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/WorkflowRunDetail" }
               }
+            },
+            "links": {
+              "resume": { "$ref": "#/components/links/ResumeRun" },
+              "cancel": { "$ref": "#/components/links/CancelRun" }
             }
           },
           "404": { "$ref": "#/components/responses/NotFound" }
@@ -262,6 +266,18 @@
             }
           }
         }
+      }
+    },
+    "links": {
+      "ResumeRun": {
+        "operationId": "resumeRun",
+        "description": "Resume this run from its last checkpoint (only applies if it is faulted).",
+        "parameters": { "runId": "$response.body#/id" }
+      },
+      "CancelRun": {
+        "operationId": "cancelRun",
+        "description": "Cancel this run.",
+        "parameters": { "runId": "$response.body#/id" }
       }
     },
     "schemas": {
