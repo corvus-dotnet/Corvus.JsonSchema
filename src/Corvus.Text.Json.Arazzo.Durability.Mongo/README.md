@@ -26,3 +26,7 @@ have `IMongoClient` overloads, so you can hand in a client the app owns — for 
 
 > The in-memory store (in `Corvus.Text.Json.Arazzo.Durability`) is the reference implementation; this backend
 > runs the same store-conformance suite.
+
+**Encryption at rest:** MongoDB Atlas / Enterprise encrypt at rest (customer-managed key / KMIP optional). For
+encryption independent of the server, wrap this store in `ProtectedWorkflowStateStore` (see the
+`Corvus.Text.Json.Arazzo.Durability` README).

@@ -24,3 +24,7 @@ table.
 
 > For tests and the reference behaviour, see `Corvus.Text.Json.Arazzo.Durability`'s in-memory store. Both
 > run the same store-conformance suite.
+
+**Encryption at rest:** protect the database file with OS/disk encryption (or a SQLCipher build). For
+encryption independent of the file, wrap this store in `ProtectedWorkflowStateStore` (see the
+`Corvus.Text.Json.Arazzo.Durability` README).

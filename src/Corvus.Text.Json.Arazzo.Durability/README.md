@@ -23,6 +23,50 @@ Out-of-process backends (Postgres, SQL Server, Azure Storage, Cosmos, Redis, NAT
 ship as separate `Corvus.Text.Json.Arazzo.Durability.*` packages that implement `IWorkflowStateStore`
 against this same conformance contract.
 
+## Provisioning vs operation (least privilege)
+
+Each backend separates the **privileged, one-time provisioning** of its schema from the
+**least-privileged operational** open:
+
+- `PrepareAsync(...)` performs the DDL (create tables/indexes/containers/buckets). Run it once at
+  deploy/migration time with an elevated credential.
+- `ConnectAsync(...)` opens the store for operation and performs **no** DDL, so the running app can
+  use a credential granted only data access. Most backends also offer a `ConnectAsync`/`PrepareAsync`
+  overload taking the SDK's credential-bearing client (e.g. a managed-identity `BlobServiceClient`,
+  `CosmosClient`, `NpgsqlDataSource`) so no secret need live in a connection string.
+
+(SQLite is the exception — an embedded file with no privilege boundary — so its `ConnectAsync` still
+ensures the schema.)
+
+## Encryption at rest
+
+**Layer 1 — storage-native (the baseline).** Every backing service encrypts at rest in its managed
+form — Azure Storage and Cosmos always; Azure SQL / PostgreSQL / MySQL via TDE; MongoDB Atlas, Redis
+Enterprise/Azure Cache, etc. — optionally under a customer-managed key (CMK) in a Key Vault/KMS. This
+needs no code: it is a deployment/configuration choice and is the right answer for most workloads.
+
+**Layer 2 — application-level (zero-trust of the store / regulatory / defence-in-depth).** When the
+checkpoint must be unreadable even to the backend operator, wrap any store in
+`ProtectedWorkflowStateStore`, which encrypts the checkpoint **before** it reaches the backend and
+decrypts it on read via an `ICheckpointProtector`. Because every backend stores the checkpoint as an
+opaque blob, one decorator works for all of them — the store-conformance suite passes through it
+unchanged.
+
+```csharp
+// key from a KMS / Key Vault; 16/24/32 bytes
+var protector = new AesGcmCheckpointProtector(key);
+await using var store = new ProtectedWorkflowStateStore(
+    await CosmosWorkflowStateStore.ConnectAsync(client), protector);
+```
+
+`AesGcmCheckpointProtector` uses AES-GCM (authenticated) and binds the ciphertext to the run id, so a
+checkpoint cannot be tampered with or moved between runs (decrypt fails closed). Only the checkpoint
+**payload** is encrypted; the projected index fields (status, workflow id, due time, awaiting
+channel/correlation, error type) stay in the clear so the backend can still serve the wait/visibility
+queries — if a correlation id is itself sensitive, index a deterministic hash of it. For managed key
+custody and rotation, source the key from Key Vault/KMS, or implement `ICheckpointProtector` over an
+envelope scheme (a per-checkpoint data key wrapped by a Key Vault key).
+
 ## Related Packages
 
 - `Corvus.Text.Json.Arazzo` — workflow execution runtime (hosts the `IWorkflowRun` seam)

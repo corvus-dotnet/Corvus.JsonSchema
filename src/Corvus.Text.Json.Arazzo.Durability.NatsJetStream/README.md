@@ -29,3 +29,7 @@ authenticated with a creds file, nkey, or token.
 > co-located-with-NATS use this backend targets. The in-memory store (in
 > `Corvus.Text.Json.Arazzo.Durability`) is the reference implementation; this backend runs the same
 > store-conformance suite.
+
+**Encryption at rest:** enable JetStream file-store encryption on the NATS server. For encryption the NATS
+operator cannot read, wrap this store in `ProtectedWorkflowStateStore` (see the
+`Corvus.Text.Json.Arazzo.Durability` README).

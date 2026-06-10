@@ -30,3 +30,7 @@ control-plane role, while `ConnectAsync` runs entirely on the data plane. Both h
 
 > The in-memory store (in `Corvus.Text.Json.Arazzo.Durability`) is the reference implementation; this backend
 > runs the same store-conformance suite.
+
+**Encryption at rest:** Cosmos DB always encrypts at rest (customer-managed key optional). For encryption
+the Cosmos operator cannot read, wrap this store in `ProtectedWorkflowStateStore` (see the
+`Corvus.Text.Json.Arazzo.Durability` README).
