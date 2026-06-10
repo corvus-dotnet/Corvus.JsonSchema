@@ -32,7 +32,7 @@ internal sealed class ArazzoGenerateCommand : AsyncCommand<ArazzoGenerateSetting
         AnsiConsole.MarkupLine($"[green]Generating workflows from:[/] {settings.ArazzoFile}");
 
         IReadOnlyList<string> written = await ArazzoGenerationDriver
-            .GenerateAsync(settings.ArazzoFile, rootNamespace, outputPath, settings.ClientName, cancellationToken)
+            .GenerateAsync(settings.ArazzoFile, rootNamespace, outputPath, settings.ClientName, settings.Durable, cancellationToken)
             .ConfigureAwait(false);
 
         foreach (string path in written)
