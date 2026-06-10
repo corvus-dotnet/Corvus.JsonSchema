@@ -40,11 +40,13 @@ public sealed class AesGcmCheckpointProtector : ICheckpointProtector, IDisposabl
     }
 
     /// <inheritdoc/>
-    public ReadOnlyMemory<byte> Protect(ReadOnlySpan<byte> plaintext, WorkflowRunId id)
+    public ValueTask<ReadOnlyMemory<byte>> ProtectAsync(ReadOnlyMemory<byte> plaintext, WorkflowRunId id, CancellationToken cancellationToken)
     {
         ObjectDisposedException.ThrowIf(this.disposed, this);
+        cancellationToken.ThrowIfCancellationRequested();
 
-        byte[] output = new byte[NonceSize + TagSize + plaintext.Length];
+        ReadOnlySpan<byte> source = plaintext.Span;
+        byte[] output = new byte[NonceSize + TagSize + source.Length];
         Span<byte> nonce = output.AsSpan(0, NonceSize);
         Span<byte> tag = output.AsSpan(NonceSize, TagSize);
         Span<byte> ciphertext = output.AsSpan(NonceSize + TagSize);
@@ -52,23 +54,25 @@ public sealed class AesGcmCheckpointProtector : ICheckpointProtector, IDisposabl
         RandomNumberGenerator.Fill(nonce);
         byte[] associatedData = Encoding.UTF8.GetBytes(id.Value);
         using var aes = new AesGcm(this.key, TagSize);
-        aes.Encrypt(nonce, plaintext, ciphertext, tag, associatedData);
-        return output;
+        aes.Encrypt(nonce, source, ciphertext, tag, associatedData);
+        return new ValueTask<ReadOnlyMemory<byte>>(output);
     }
 
     /// <inheritdoc/>
-    public ReadOnlyMemory<byte> Unprotect(ReadOnlySpan<byte> ciphertext, WorkflowRunId id)
+    public ValueTask<ReadOnlyMemory<byte>> UnprotectAsync(ReadOnlyMemory<byte> ciphertext, WorkflowRunId id, CancellationToken cancellationToken)
     {
         ObjectDisposedException.ThrowIf(this.disposed, this);
+        cancellationToken.ThrowIfCancellationRequested();
 
-        if (ciphertext.Length < NonceSize + TagSize)
+        ReadOnlySpan<byte> source = ciphertext.Span;
+        if (source.Length < NonceSize + TagSize)
         {
             throw new CryptographicException("The protected checkpoint is too short to be valid.");
         }
 
-        ReadOnlySpan<byte> nonce = ciphertext[..NonceSize];
-        ReadOnlySpan<byte> tag = ciphertext.Slice(NonceSize, TagSize);
-        ReadOnlySpan<byte> data = ciphertext[(NonceSize + TagSize)..];
+        ReadOnlySpan<byte> nonce = source[..NonceSize];
+        ReadOnlySpan<byte> tag = source.Slice(NonceSize, TagSize);
+        ReadOnlySpan<byte> data = source[(NonceSize + TagSize)..];
 
         byte[] plaintext = new byte[data.Length];
         byte[] associatedData = Encoding.UTF8.GetBytes(id.Value);
@@ -77,7 +81,7 @@ public sealed class AesGcmCheckpointProtector : ICheckpointProtector, IDisposabl
         // AesGcm.Decrypt throws AuthenticationTagMismatchException (a CryptographicException) on any
         // tamper / wrong-key / wrong-run failure — i.e. it fails closed.
         aes.Decrypt(nonce, data, tag, plaintext, associatedData);
-        return plaintext;
+        return new ValueTask<ReadOnlyMemory<byte>>((ReadOnlyMemory<byte>)plaintext);
     }
 
     /// <summary>Clears the in-memory copy of the key.</summary>
