@@ -476,6 +476,34 @@
         }
       }
     },
+    "/catalog/{baseWorkflowId}/versions/{versionNumber}/validate": {
+      "post": {
+        "operationId": "validateCatalogValue",
+        "security": [
+          { "oauth2": ["catalog:read"] },
+          { "openIdConnect": ["catalog:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["catalog"],
+        "summary": "Validate a value against a schema in a version",
+        "description": "Validates a JSON value against the true JSON Schema of a target within this version's package — a workflow's `inputs`, a step's request or response body, or a step's `outputs` object — using a full JSON Schema validator (not the lossy precomputed metadata). Returns a structured result (valid plus any errors with their instance locations); a malformed value still yields `200` with `valid: false`. Returns `404` when the version or the requested target schema cannot be resolved.",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ValidationRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "The validation result.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ValidationResult" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
     "/catalog/{baseWorkflowId}/versions/{versionNumber}/sources/{sourceName}": {
       "get": {
         "operationId": "getCatalogSource",
@@ -978,6 +1006,54 @@
           "purgedCount": { "type": "integer", "description": "The number of runs or versions deleted." }
         },
         "required": ["purgedCount"]
+      },
+      "ValidationTarget": {
+        "type": "object",
+        "description": "Identifies the schema within a version's package to validate a value against.",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["inputs", "requestBody", "responseBody", "stepOutputs"],
+            "description": "Which schema: a workflow's inputs, a step's request body, a step's response body, or a step's outputs object."
+          },
+          "workflowId": { "type": "string", "description": "The (versioned) workflow id; defaults to the version's workflow when omitted." },
+          "stepId": { "type": "string", "description": "The step id. Required for requestBody, responseBody and stepOutputs." },
+          "status": { "type": "string", "description": "The response status code for a responseBody target; defaults to the success (lowest 2xx, else default) response." }
+        },
+        "required": ["kind"]
+      },
+      "ValidationRequest": {
+        "type": "object",
+        "description": "A request to validate a JSON value against a target schema in a version's package.",
+        "properties": {
+          "target": { "$ref": "#/components/schemas/ValidationTarget" },
+          "value": { "description": "The JSON value to validate (any JSON type)." }
+        },
+        "required": ["target", "value"]
+      },
+      "ValidationError": {
+        "type": "object",
+        "description": "A single validation failure.",
+        "properties": {
+          "instancePath": { "type": "string", "description": "A JSON Pointer to the failing location within the posted value." },
+          "message": { "type": "string", "description": "A human-readable description of the failure." },
+          "keyword": { "type": "string", "description": "The JSON Schema keyword that failed, when known." },
+          "schemaLocation": { "type": "string", "description": "The evaluation location within the schema that produced the failure, when known." }
+        },
+        "required": ["message"]
+      },
+      "ValidationResult": {
+        "type": "object",
+        "description": "The outcome of validating a value against a schema.",
+        "properties": {
+          "valid": { "type": "boolean", "description": "Whether the value conformed to the schema." },
+          "errors": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ValidationError" },
+            "description": "The validation failures (empty when valid)."
+          }
+        },
+        "required": ["valid", "errors"]
       },
       "PageLimit": {
         "type": "integer",
