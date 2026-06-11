@@ -326,7 +326,11 @@ function validateNode(d, value, path, errors) {
   const add = (message) => errors.push({ instancePath: path || '/', message });
 
   if (Array.isArray(d.variants)) {
-    if (!d.variants.some((variant) => validateCount(variant, value) === 0)) add('does not match any allowed type');
+    // Validate against the variant the value claims to be (via the discriminator), or the closest match,
+    // so the operator sees that variant's actual field errors rather than a blanket "no match".
+    const variant = pickVariant(d, value);
+    if (variant) validateNode(variant, value, path, errors);
+    else if (d.variants.length) add('does not match any allowed type');
     return;
   }
   if (value === undefined || value === null) return; // presence handled by the parent's `required`
@@ -397,11 +401,32 @@ function checkNumber(d, value, add) {
   if (d.multipleOf != null && d.multipleOf > 0 && Math.abs(value % d.multipleOf) > 1e-9) add(`must be a multiple of ${d.multipleOf}`);
 }
 
-/** The number of validation errors a node would produce for a value (used to test union variants). */
+/** The number of validation errors a node would produce for a value (used to rank union variants). */
 function validateCount(d, value) {
   const errors = [];
   validateNode(d, value, '', errors);
   return errors.length;
+}
+
+/**
+ * Choose the union variant to validate `value` against: the one named by the discriminator when it matches,
+ * else the closest fit (fewest errors). Returns null only when there are no variants.
+ */
+function pickVariant(d, value) {
+  const variants = d.variants || [];
+  if (d.discriminator && value && typeof value === 'object') {
+    const tag = value[d.discriminator];
+    const byTag = variants.find((v) => v?.properties?.[d.discriminator]?.const === tag);
+    if (byTag) return byTag;
+  }
+  let best = null;
+  let bestCount = Infinity;
+  for (const v of variants) {
+    const count = validateCount(v, value);
+    if (count === 0) return v;
+    if (count < bestCount) { best = v; bestCount = count; }
+  }
+  return best;
 }
 
 function workflowDoc(workflowId, title, description) {
