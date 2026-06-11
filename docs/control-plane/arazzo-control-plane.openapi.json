@@ -45,6 +45,12 @@
         "parameters": [
           { "$ref": "#/components/parameters/StatusQuery" },
           { "$ref": "#/components/parameters/WorkflowIdQuery" },
+          { "$ref": "#/components/parameters/CreatedAfterQuery" },
+          { "$ref": "#/components/parameters/CreatedBeforeQuery" },
+          { "$ref": "#/components/parameters/UpdatedAfterQuery" },
+          { "$ref": "#/components/parameters/UpdatedBeforeQuery" },
+          { "$ref": "#/components/parameters/TagQuery" },
+          { "$ref": "#/components/parameters/CorrelationIdQuery" },
           { "$ref": "#/components/parameters/LimitQuery" },
           { "$ref": "#/components/parameters/PageTokenQuery" }
         ],
@@ -280,6 +286,50 @@
         "description": "An opaque continuation token from a previous page's `nextPageToken`, for paging.",
         "schema": { "type": "string" }
       },
+      "CreatedAfterQuery": {
+        "name": "createdAfter",
+        "in": "query",
+        "required": false,
+        "description": "Restrict to runs created at or after this instant (RFC 3339 date-time).",
+        "schema": { "type": "string", "format": "date-time" }
+      },
+      "CreatedBeforeQuery": {
+        "name": "createdBefore",
+        "in": "query",
+        "required": false,
+        "description": "Restrict to runs created strictly before this instant (RFC 3339 date-time).",
+        "schema": { "type": "string", "format": "date-time" }
+      },
+      "UpdatedAfterQuery": {
+        "name": "updatedAfter",
+        "in": "query",
+        "required": false,
+        "description": "Restrict to runs last updated at or after this instant (RFC 3339 date-time).",
+        "schema": { "type": "string", "format": "date-time" }
+      },
+      "UpdatedBeforeQuery": {
+        "name": "updatedBefore",
+        "in": "query",
+        "required": false,
+        "description": "Restrict to runs last updated strictly before this instant (RFC 3339 date-time).",
+        "schema": { "type": "string", "format": "date-time" }
+      },
+      "TagQuery": {
+        "name": "tag",
+        "in": "query",
+        "required": false,
+        "description": "Restrict to runs carrying every supplied tag (repeat the parameter to require multiple, e.g. `?tag=tenant-42&tag=priority`).",
+        "style": "form",
+        "explode": true,
+        "schema": { "type": "array", "items": { "type": "string" } }
+      },
+      "CorrelationIdQuery": {
+        "name": "correlationId",
+        "in": "query",
+        "required": false,
+        "description": "Restrict to runs with this telemetry correlation id (exact match), to pivot from a trace to its run.",
+        "schema": { "type": "string" }
+      },
       "OlderThanQuery": {
         "name": "olderThan",
         "in": "query",
@@ -352,6 +402,12 @@
           "pageToken": "$response.body#/nextPageToken",
           "status": "$request.query.status",
           "workflowId": "$request.query.workflowId",
+          "createdAfter": "$request.query.createdAfter",
+          "createdBefore": "$request.query.createdBefore",
+          "updatedAfter": "$request.query.updatedAfter",
+          "updatedBefore": "$request.query.updatedBefore",
+          "tag": "$request.query.tag",
+          "correlationId": "$request.query.correlationId",
           "limit": "$request.query.limit"
         }
       },
@@ -426,7 +482,9 @@
           "dueAt": { "type": ["string", "null"], "format": "date-time" },
           "awaitingChannel": { "type": ["string", "null"] },
           "awaitingCorrelationId": { "type": ["string", "null"] },
-          "errorType": { "type": ["string", "null"], "description": "The fault error, if the run is/was faulted." }
+          "errorType": { "type": ["string", "null"], "description": "The fault error, if the run is/was faulted." },
+          "correlationId": { "type": ["string", "null"], "description": "The run-wide telemetry correlation id set at creation (the value stamped on the run's `corvus.arazzo.correlation_id` spans), if any." },
+          "tags": { "type": "array", "items": { "type": "string" }, "description": "The free-form tags applied to the run at creation." }
         },
         "required": ["id", "workflowId", "status", "createdAt", "updatedAt"]
       },
@@ -462,7 +520,9 @@
             "description": "The fault record if the run is (or was) faulted.",
             "anyOf": [{ "$ref": "#/components/schemas/WorkflowFault" }, { "type": "null" }]
           },
-          "etag": { "type": "string", "description": "The optimistic-concurrency token the checkpoint was read at." }
+          "etag": { "type": "string", "description": "The optimistic-concurrency token the checkpoint was read at." },
+          "correlationId": { "type": ["string", "null"], "description": "The run-wide telemetry correlation id set at creation (the value stamped on the run's `corvus.arazzo.correlation_id` spans), if any." },
+          "tags": { "type": "array", "items": { "type": "string" }, "description": "The free-form tags applied to the run at creation." }
         },
         "required": ["id", "workflowId", "status", "cursor", "createdAt", "etag"]
       },

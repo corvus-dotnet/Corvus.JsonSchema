@@ -63,6 +63,30 @@ internal sealed class ListSettings : RunsSettings
     [Description("Restrict to runs of this workflow.")]
     public string? WorkflowId { get; init; }
 
+    [CommandOption("--created-after <RFC3339>")]
+    [Description("Restrict to runs created at or after this instant (inclusive).")]
+    public string? CreatedAfter { get; init; }
+
+    [CommandOption("--created-before <RFC3339>")]
+    [Description("Restrict to runs created strictly before this instant (exclusive).")]
+    public string? CreatedBefore { get; init; }
+
+    [CommandOption("--updated-after <RFC3339>")]
+    [Description("Restrict to runs last updated at or after this instant (inclusive).")]
+    public string? UpdatedAfter { get; init; }
+
+    [CommandOption("--updated-before <RFC3339>")]
+    [Description("Restrict to runs last updated strictly before this instant (exclusive).")]
+    public string? UpdatedBefore { get; init; }
+
+    [CommandOption("--tag <TAG>")]
+    [Description("Restrict to runs carrying this tag (repeat to require several, AND-matched).")]
+    public string[] Tags { get; init; } = [];
+
+    [CommandOption("--correlation-id <ID>")]
+    [Description("Restrict to runs with this telemetry correlation id (exact match).")]
+    public string? CorrelationId { get; init; }
+
     [CommandOption("--limit <N>")]
     [Description("Maximum runs per page.")]
     public int? Limit { get; init; }
@@ -147,7 +171,50 @@ internal sealed class ListCommand : AsyncCommand<ListSettings>
                 workflowId = w;
             }
 
-            Models.Schema.Source limit = default;
+            Models.JsonDateTime.Source createdAfter = default;
+            if (settings.CreatedAfter is { } ca)
+            {
+                createdAfter = ca;
+            }
+
+            Models.JsonDateTime.Source createdBefore = default;
+            if (settings.CreatedBefore is { } cb)
+            {
+                createdBefore = cb;
+            }
+
+            Models.JsonDateTime.Source updatedAfter = default;
+            if (settings.UpdatedAfter is { } ua)
+            {
+                updatedAfter = ua;
+            }
+
+            Models.JsonDateTime.Source updatedBefore = default;
+            if (settings.UpdatedBefore is { } ub)
+            {
+                updatedBefore = ub;
+            }
+
+            Models.Schema.Source tag = default;
+            if (settings.Tags.Length > 0)
+            {
+                string[] tagValues = settings.Tags;
+                tag = new Models.Schema.Source((ref Models.Schema.Builder arrayBuilder) =>
+                {
+                    foreach (string t in tagValues)
+                    {
+                        arrayBuilder.AddItem(t);
+                    }
+                });
+            }
+
+            Models.JsonString.Source correlationId = default;
+            if (settings.CorrelationId is { } cid)
+            {
+                correlationId = cid;
+            }
+
+            Models.Schema1.Source limit = default;
             if (settings.Limit is { } l)
             {
                 limit = l;
@@ -159,7 +226,7 @@ internal sealed class ListCommand : AsyncCommand<ListSettings>
                 pageToken = p;
             }
 
-            await using ListRunsResponse response = await client.ListRunsAsync(status, workflowId, limit, pageToken, cancellationToken);
+            await using ListRunsResponse response = await client.ListRunsAsync(status, workflowId, createdAfter, createdBefore, updatedAfter, updatedBefore, tag, correlationId, limit, pageToken, cancellationToken);
             bool asJson = settings.Output.Equals("json", StringComparison.OrdinalIgnoreCase);
             return response.MatchResult(
                 page => asJson ? Output.Print(page.ToString()) : RenderTable(page),
@@ -179,14 +246,34 @@ internal sealed class ListCommand : AsyncCommand<ListSettings>
         table.AddColumn("Status");
         table.AddColumn("Workflow");
         table.AddColumn("Updated");
+        table.AddColumn("Correlation");
+        table.AddColumn("Tags");
 
         foreach (Models.WorkflowRunSummary summary in page.Runs.EnumerateArray())
         {
+            string correlationId = summary.CorrelationId.IsNotUndefined() ? (string)summary.CorrelationId : "—";
+            string tags = "—";
+            if (summary.Tags.IsNotUndefined())
+            {
+                var labels = new List<string>();
+                foreach (Models.JsonString tag in summary.Tags.EnumerateArray())
+                {
+                    labels.Add((string)tag);
+                }
+
+                if (labels.Count > 0)
+                {
+                    tags = string.Join(", ", labels);
+                }
+            }
+
             table.AddRow(
                 Markup.Escape((string)summary.Id),
                 Markup.Escape((string)summary.Status),
                 Markup.Escape((string)summary.WorkflowId),
-                Markup.Escape((string)summary.UpdatedAt));
+                Markup.Escape((string)summary.UpdatedAt),
+                Markup.Escape(correlationId),
+                Markup.Escape(tags));
         }
 
         console.Write(table);
@@ -389,7 +476,7 @@ internal sealed class PurgeCommand : AsyncCommand<PurgeSettings>
         await using (transport)
         {
             Models.JsonDateTime.Source olderThan = settings.OlderThan!;
-            Models.Schema.Source limit = default;
+            Models.Schema1.Source limit = default;
             if (settings.Limit is { } l)
             {
                 limit = l;

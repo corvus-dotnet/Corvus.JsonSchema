@@ -63,6 +63,8 @@ public interface IWorkflowManagementClient
 /// <param name="Wait">Why the run is suspended, if it is.</param>
 /// <param name="Fault">The fault record if the run is (or was) faulted.</param>
 /// <param name="Etag">The etag the checkpoint was read at.</param>
+/// <param name="CorrelationId">The run-wide telemetry correlation id (the W3C trace id) set at creation, if any.</param>
+/// <param name="Tags">The free-form tags applied to the run at creation, if any.</param>
 public readonly record struct WorkflowRunDetail(
     WorkflowRunId Id,
     string WorkflowId,
@@ -71,7 +73,9 @@ public readonly record struct WorkflowRunDetail(
     DateTimeOffset CreatedAt,
     WorkflowWait? Wait,
     WorkflowFault? Fault,
-    WorkflowEtag Etag);
+    WorkflowEtag Etag,
+    string? CorrelationId = null,
+    IReadOnlyList<string>? Tags = null);
 
 /// <summary>How to resume a faulted run (plan §11). Each mode loads the checkpoint, mutates status/cursor/state
 /// under optimistic concurrency, then re-enters the executor.</summary>

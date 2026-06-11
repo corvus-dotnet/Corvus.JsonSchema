@@ -283,6 +283,36 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             filter = b.And(filter, b.Eq("workflowId", workflowId));
         }
 
+        if (query.CreatedAfter is { } createdAfter)
+        {
+            filter = b.And(filter, b.Gte("createdAt", createdAfter.ToUnixTimeMilliseconds()));
+        }
+
+        if (query.CreatedBefore is { } createdBefore)
+        {
+            filter = b.And(filter, b.Lt("createdAt", createdBefore.ToUnixTimeMilliseconds()));
+        }
+
+        if (query.UpdatedAfter is { } updatedAfter)
+        {
+            filter = b.And(filter, b.Gte("updatedAt", updatedAfter.ToUnixTimeMilliseconds()));
+        }
+
+        if (query.UpdatedBefore is { } updatedBefore)
+        {
+            filter = b.And(filter, b.Lt("updatedAt", updatedBefore.ToUnixTimeMilliseconds()));
+        }
+
+        if (query.CorrelationId is { } cid)
+        {
+            filter = b.And(filter, b.Eq("correlationId", cid));
+        }
+
+        if (query.Tags is { Count: > 0 } qtags)
+        {
+            filter = b.And(filter, b.All("tags", qtags)); // $all = contains every queried tag
+        }
+
         if (WorkflowContinuationToken.Decode(query.ContinuationToken) is { } after)
         {
             filter = b.And(filter, b.Gt("_id", after));
@@ -295,6 +325,8 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         var listings = new List<WorkflowRunListing>(documents.Count);
         foreach (BsonDocument document in documents)
         {
+            string? correlationId = document["correlationId"].IsBsonNull ? null : document["correlationId"].AsString;
+            IReadOnlyList<string>? tags = document.TryGetValue("tags", out var tagsVal) && !tagsVal.IsBsonNull ? tagsVal.AsBsonArray.Select(t => t.AsString).ToList() : null;
             var entry = new WorkflowRunIndexEntry(
                 document["workflowId"].AsString,
                 Enum.Parse<WorkflowRunStatus>(document["status"].AsString),
@@ -303,7 +335,9 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
                 document["dueAt"].IsBsonNull ? null : DateTimeOffset.FromUnixTimeMilliseconds(document["dueAt"].AsInt64),
                 document["awaitingChannel"].IsBsonNull ? null : document["awaitingChannel"].AsString,
                 document["awaitingCorrelationId"].IsBsonNull ? null : document["awaitingCorrelationId"].AsString,
-                document["errorType"].IsBsonNull ? null : document["errorType"].AsString);
+                document["errorType"].IsBsonNull ? null : document["errorType"].AsString,
+                CorrelationId: correlationId,
+                Tags: tags);
             listings.Add(new WorkflowRunListing(new WorkflowRunId(document["_id"].AsString), entry));
         }
 
@@ -336,6 +370,8 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         ["awaitingChannel"] = (BsonValue?)index.AwaitingChannel ?? BsonNull.Value,
         ["awaitingCorrelationId"] = (BsonValue?)index.AwaitingCorrelationId ?? BsonNull.Value,
         ["errorType"] = (BsonValue?)index.ErrorType ?? BsonNull.Value,
+        ["correlationId"] = (BsonValue?)index.CorrelationId ?? BsonNull.Value,
+        ["tags"] = index.Tags is { Count: > 0 } t ? new BsonArray(t) : BsonNull.Value,
     };
 
     private async ValueTask EnsureIndexesAsync(CancellationToken cancellationToken)

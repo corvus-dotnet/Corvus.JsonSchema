@@ -159,6 +159,27 @@ public readonly partial struct WorkflowRunDetail
     }
 
     /// <summary>
+    /// Gets the (optional) <c>correlationId</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The run-wide telemetry correlation id set at creation (the value stamped on the run&#39;s `corvus.arazzo.correlation_id` spans), if any.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunDetail.CorrelationIdEntity CorrelationId
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CorrelationIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunDetail.CorrelationIdEntity value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the <c>createdAt</c> property.
     /// </summary>
     /// <remarks>
@@ -285,6 +306,27 @@ public readonly partial struct WorkflowRunDetail
         get
         {
             if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunStatus value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>tags</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The free-form tags applied to the run at creation.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunDetail.JsonStringArray Tags
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunDetail.JsonStringArray value))
             {
                 return value;
             }
@@ -779,6 +821,11 @@ public readonly partial struct WorkflowRunDetail
     public static class JsonPropertyNames
     {
         /// <summary>
+        /// Gets the JSON property name for <see cref="CorrelationId"/>.
+        /// </summary>
+        public const string CorrelationId = "correlationId";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="CreatedAt"/>.
         /// </summary>
         public const string CreatedAt = "createdAt";
@@ -809,6 +856,11 @@ public readonly partial struct WorkflowRunDetail
         public const string Status = "status";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="Tags"/>.
+        /// </summary>
+        public const string Tags = "tags";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Wait"/>.
         /// </summary>
         public const string Wait = "wait";
@@ -817,6 +869,11 @@ public readonly partial struct WorkflowRunDetail
         /// Gets the JSON property name for <see cref="WorkflowId"/>.
         /// </summary>
         public const string WorkflowId = "workflowId";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="CorrelationId"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> CorrelationIdUtf8 => "correlationId"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="CreatedAt"/>.
@@ -849,6 +906,11 @@ public readonly partial struct WorkflowRunDetail
         public static ReadOnlySpan<byte> StatusUtf8 => "status"u8;
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="Tags"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> TagsUtf8 => "tags"u8;
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Wait"/>.
         /// </summary>
         public static ReadOnlySpan<byte> WaitUtf8 => "wait"u8;
@@ -864,6 +926,11 @@ public readonly partial struct WorkflowRunDetail
     /// </summary>
     private static class JsonPropertyNamesEscaped
     {
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="CorrelationId"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> CorrelationId => "correlationId"u8;
+
         /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="CreatedAt"/>.
         /// </summary>
@@ -895,6 +962,11 @@ public readonly partial struct WorkflowRunDetail
         public static ReadOnlySpan<byte> Status => "status"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Tags"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Tags => "tags"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Wait"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Wait => "wait"u8;
@@ -911,6 +983,11 @@ public readonly partial struct WorkflowRunDetail
     /// </summary>
     private static class JsonPropertyNamesPrebaked
     {
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="CorrelationId"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> CorrelationId => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x72, 0x72, 0x65, 0x6C, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x49, 0x64, 0x22];
+
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="CreatedAt"/>.
         /// </summary>
@@ -940,6 +1017,11 @@ public readonly partial struct WorkflowRunDetail
         /// Gets the pre-baked property name blob for <see cref="Status"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Status => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Tags"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Tags => [0x65, 0x00, 0x00, 0x00, 0x22, 0x74, 0x61, 0x67, 0x73, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Wait"/>.

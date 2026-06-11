@@ -27,6 +27,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     private readonly Dictionary<string, int> retryCounts;
     private readonly Dictionary<string, JsonElement> stepOutputs;
     private readonly DateTimeOffset createdAt;
+    private readonly string? correlationId;
+    private readonly IReadOnlyList<string>? tags;
     private readonly WorkflowCheckpointState? resumedState;
     private readonly JsonElement inputs;
     private WorkflowEtag etag;
@@ -48,6 +50,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         Dictionary<string, JsonElement> stepOutputs,
         WorkflowEtag etag,
         DateTimeOffset createdAt,
+        string? correlationId,
+        IReadOnlyList<string>? tags,
         WorkflowWait? wait,
         WorkflowFault? fault,
         WorkflowCheckpointState? resumedState)
@@ -64,6 +68,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         this.stepOutputs = stepOutputs;
         this.etag = etag;
         this.createdAt = createdAt;
+        this.correlationId = correlationId;
+        this.tags = tags;
         this.wait = wait;
         this.fault = fault;
         this.resumedState = resumedState;
@@ -96,19 +102,30 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     /// <inheritdoc/>
     public Dictionary<string, byte[]> CorrelationTokens { get; }
 
+    /// <summary>Gets the run-wide telemetry correlation id (the W3C trace id captured at creation), if any.</summary>
+    public string? CorrelationId => this.correlationId;
+
+    /// <summary>Gets the free-form tags applied to the run at creation, if any.</summary>
+    public IReadOnlyList<string>? Tags => this.tags;
+
     /// <summary>Creates a fresh run that starts at cursor <c>0</c> with empty state.</summary>
     /// <param name="store">The state store to persist checkpoints to.</param>
     /// <param name="id">The run id.</param>
     /// <param name="workflowId">The id of the workflow the run executes.</param>
     /// <param name="inputs">The workflow inputs.</param>
     /// <param name="timeProvider">The time source for checkpoint timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
+    /// <param name="correlationId">The run-wide telemetry correlation id; defaults to the ambient
+    /// <see cref="Activity.Current"/> trace id, so the run correlates to the trace that created it.</param>
+    /// <param name="tags">Free-form tags to apply to the run (for visibility/filtering); set once at creation.</param>
     /// <returns>The new run.</returns>
     public static WorkflowRun CreateNew(
         IWorkflowStateStore store,
         WorkflowRunId id,
         string workflowId,
         JsonElement inputs,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        string? correlationId = null,
+        IReadOnlyList<string>? tags = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(workflowId);
@@ -127,6 +144,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             stepOutputs: [],
             etag: WorkflowEtag.None,
             createdAt: time.GetUtcNow(),
+            correlationId: correlationId ?? Activity.Current?.TraceId.ToString(),
+            tags: tags is { Count: > 0 } ? tags : null,
             wait: null,
             fault: null,
             resumedState: null);
@@ -160,6 +179,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             state.StepOutputs,
             etag,
             createdAt: state.CreatedAt,
+            correlationId: state.CorrelationId,
+            tags: state.Tags,
             wait: state.Wait,
             fault: state.Fault,
             resumedState: state);
@@ -305,6 +326,10 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             activity.SetTag(ArazzoTelemetry.WorkflowIdTag, this.WorkflowId);
             activity.SetTag(ArazzoTelemetry.StatusTag, this.Status.ToString());
             activity.SetTag("corvus.arazzo.cursor", this.Cursor);
+            if (this.correlationId is { } cid)
+            {
+                activity.SetTag(ArazzoTelemetry.CorrelationIdTag, cid);
+            }
         }
 
         byte[] checkpoint = WorkflowCheckpointSerializer.Serialize(
@@ -319,7 +344,9 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             this.stepOutputs,
             outputs,
             this.wait,
-            this.fault);
+            this.fault,
+            this.correlationId,
+            this.tags);
 
         var index = new WorkflowRunIndexEntry(
             this.WorkflowId,
@@ -329,7 +356,9 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             DueAt: this.wait is { Kind: WorkflowWaitKind.Timer } timer ? timer.DueAt : null,
             AwaitingChannel: this.wait is { Kind: WorkflowWaitKind.Message } message ? message.Channel : null,
             AwaitingCorrelationId: this.wait is { Kind: WorkflowWaitKind.Message } messageCorrelation ? messageCorrelation.CorrelationId : null,
-            ErrorType: this.fault?.Error);
+            ErrorType: this.fault?.Error,
+            CorrelationId: this.correlationId,
+            Tags: this.tags);
 
         long startedAt = Stopwatch.GetTimestamp();
         this.etag = await this.store.SaveAsync(this.Id, checkpoint, index, this.etag, cancellationToken).ConfigureAwait(false);

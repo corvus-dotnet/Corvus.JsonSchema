@@ -59,11 +59,54 @@ public static class ApiEndpointRegistration
                     string WorkflowIdRaw = WorkflowIdQueryVal[0]!;
                     WorkflowIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(WorkflowIdRaw, workspace);
                 }
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Schema LimitValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime CreatedAfterValue = default;
+                if (context.Request.Query.TryGetValue("createdAfter", out var CreatedAfterQueryVal) && CreatedAfterQueryVal.Count > 0)
+                {
+                    string CreatedAfterRaw = CreatedAfterQueryVal[0]!;
+                    CreatedAfterValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime>(CreatedAfterRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime CreatedBeforeValue = default;
+                if (context.Request.Query.TryGetValue("createdBefore", out var CreatedBeforeQueryVal) && CreatedBeforeQueryVal.Count > 0)
+                {
+                    string CreatedBeforeRaw = CreatedBeforeQueryVal[0]!;
+                    CreatedBeforeValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime>(CreatedBeforeRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime UpdatedAfterValue = default;
+                if (context.Request.Query.TryGetValue("updatedAfter", out var UpdatedAfterQueryVal) && UpdatedAfterQueryVal.Count > 0)
+                {
+                    string UpdatedAfterRaw = UpdatedAfterQueryVal[0]!;
+                    UpdatedAfterValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime>(UpdatedAfterRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime UpdatedBeforeValue = default;
+                if (context.Request.Query.TryGetValue("updatedBefore", out var UpdatedBeforeQueryVal) && UpdatedBeforeQueryVal.Count > 0)
+                {
+                    string UpdatedBeforeRaw = UpdatedBeforeQueryVal[0]!;
+                    UpdatedBeforeValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime>(UpdatedBeforeRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Schema TagValue = default;
+                if (context.Request.Query.TryGetValue("tag", out var TagQueryValues) && TagQueryValues.Count > 0)
+                {
+                    TagValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Schema.CreateBuilder<Microsoft.Extensions.Primitives.StringValues>(workspace, TagQueryValues, static (in Microsoft.Extensions.Primitives.StringValues ctx, ref Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Schema.Builder arrayBuilder) =>
+                    {
+                        for (int i = 0; i < ctx.Count; i++)
+                        {
+                            string? item = ctx[i];
+                            if (item is null) continue;
+                            arrayBuilder.AddItem(item.AsSpan());
+                        }
+                    }).RootElement;
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString CorrelationIdValue = default;
+                if (context.Request.Query.TryGetValue("correlationId", out var CorrelationIdQueryVal) && CorrelationIdQueryVal.Count > 0)
+                {
+                    string CorrelationIdRaw = CorrelationIdQueryVal[0]!;
+                    CorrelationIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(CorrelationIdRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Schema1 LimitValue = default;
                 if (context.Request.Query.TryGetValue("limit", out var LimitQueryVal) && LimitQueryVal.Count > 0)
                 {
                     string LimitRaw = LimitQueryVal[0]!;
-                    LimitValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Schema>(LimitRaw, workspace);
+                    LimitValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Schema1>(LimitRaw, workspace);
                 }
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString PageTokenValue = default;
                 if (context.Request.Query.TryGetValue("pageToken", out var PageTokenQueryVal) && PageTokenQueryVal.Count > 0)
@@ -88,6 +131,54 @@ public static class ApiEndpointRegistration
                     return;
                 }
 
+                if (!CreatedAfterValue.IsUndefined() && !CreatedAfterValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'createdAfter' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!CreatedBeforeValue.IsUndefined() && !CreatedBeforeValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'createdBefore' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!UpdatedAfterValue.IsUndefined() && !UpdatedAfterValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'updatedAfter' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!UpdatedBeforeValue.IsUndefined() && !UpdatedBeforeValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'updatedBefore' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!TagValue.IsUndefined() && !TagValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'tag' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!CorrelationIdValue.IsUndefined() && !CorrelationIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'correlationId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
                 if (!LimitValue.IsUndefined() && !LimitValue.EvaluateSchema())
                 {
                     context.Response.StatusCode = 400;
@@ -109,6 +200,12 @@ public static class ApiEndpointRegistration
                 {
                     Status = StatusValue,
                     WorkflowId = WorkflowIdValue,
+                    CreatedAfter = CreatedAfterValue,
+                    CreatedBefore = CreatedBeforeValue,
+                    UpdatedAfter = UpdatedAfterValue,
+                    UpdatedBefore = UpdatedBeforeValue,
+                    Tag = TagValue,
+                    CorrelationId = CorrelationIdValue,
                     Limit = LimitValue,
                     PageToken = PageTokenValue,
                 }
@@ -170,11 +267,11 @@ public static class ApiEndpointRegistration
                     string OlderThanRaw = OlderThanQueryVal[0]!;
                     OlderThanValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime>(OlderThanRaw, workspace);
                 }
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Schema LimitValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Schema1 LimitValue = default;
                 if (context.Request.Query.TryGetValue("limit", out var LimitQueryVal) && LimitQueryVal.Count > 0)
                 {
                     string LimitRaw = LimitQueryVal[0]!;
-                    LimitValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Schema>(LimitRaw, workspace);
+                    LimitValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Schema1>(LimitRaw, workspace);
                 }
 
                 if (OlderThanValue.IsUndefined())

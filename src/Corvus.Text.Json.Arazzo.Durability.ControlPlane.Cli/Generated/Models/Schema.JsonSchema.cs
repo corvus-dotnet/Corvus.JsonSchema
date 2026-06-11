@@ -21,36 +21,28 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
-/// <remarks>
-/// <para>
-/// Examples:
-/// <example>
-/// <code>
-/// 100
-/// </code>
-/// </example>
-/// </para>
-/// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
 public readonly partial struct Schema
     : IJsonElement<Schema>
 {
     public static partial class JsonSchema
     {
+        private static readonly JsonSchemaPathProvider ItemsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/items"u8, buffer, out written);
+
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/parameters/LimitQuery/schema"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/parameters/TagQuery/schema"u8, buffer, out written);
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public const string SchemaLocation = "/components/parameters/LimitQuery/schema";
+        public const string SchemaLocation = "/components/parameters/TagQuery/schema";
 
         /// <summary>
         /// Gets the schema location from which this type was generated as a UTF-8 string.
         /// </summary>
-        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/parameters/LimitQuery/schema"u8;
+        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/parameters/TagQuery/schema"u8;
 
         /// <summary>
         /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -71,28 +63,48 @@ public readonly partial struct Schema
                 JsonTokenType.EndObject or
                 JsonTokenType.EndArray));
 
-            ReadOnlyMemory<byte> rawSimpleValue = tokenType is JsonTokenType.Number or JsonTokenType.String ? parentDocument.GetRawSimpleValue(parentIndex) : default;
-
-            JsonElementHelpers.TryParseNumber(rawSimpleValue.Span, out bool isNegative,out ReadOnlySpan<byte> integral, out ReadOnlySpan<byte> fractional, out int exponent);
-            if (!JsonSchemaEvaluation.MatchTypeInteger(tokenType,"type"u8, exponent, ref context))
+            if (!JsonSchemaEvaluation.MatchTypeArray(tokenType,"type"u8, ref context))
             {
                 if (!context.HasCollector)
                 {
                     return;
                 }
-                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeInteger, "maximum"u8);
-                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeInteger, "minimum"u8);
+                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeArray, "items"u8);
             }
             else
             {
-                JsonSchemaEvaluation.MatchLessThanOrEquals(isNegative, integral, fractional, exponent, false, "1"u8, ""u8, 3, "1000", "maximum"u8, ref context);
+                int arrayValidation_itemCount = 0;
 
-                if (!context.HasCollector && !context.IsMatch)
+                var arrayValidation_enumerator = new ArrayEnumerator(parentDocument, parentIndex);
+                while (arrayValidation_enumerator.MoveNext())
                 {
-                    return;
-                }
+                    int arrayValidation_currentIndex = arrayValidation_enumerator.CurrentIndex;
 
-                JsonSchemaEvaluation.MatchGreaterThanOrEquals(isNegative, integral, fractional, exponent, false, "1"u8, ""u8, 0, "1", "minimum"u8, ref context);
+                    JsonSchemaContext childContext = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.PushChildContext(
+                        parentDocument,
+                        arrayValidation_currentIndex,
+                        ref context,
+                        itemIndex: arrayValidation_itemCount,
+                        evaluationPath: ItemsSchemaEvaluationPath);
+
+                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext);
+                    if (!childContext.IsMatch)
+                    {
+                        context.CommitChildContext(false, ref childContext);
+
+                        if (!context.HasCollector)
+                        {
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        context.CommitChildContext(true, ref childContext);
+                        context.AddLocalEvaluatedItem(arrayValidation_itemCount);
+                    }
+
+                    arrayValidation_itemCount++;
+                }
             }
         }
 

@@ -32,9 +32,39 @@ public readonly struct ListRunsParams
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString WorkflowId { get; init; }
 
     /// <summary>
+    /// Gets the 'createdAfter' query parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime CreatedAfter { get; init; }
+
+    /// <summary>
+    /// Gets the 'createdBefore' query parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime CreatedBefore { get; init; }
+
+    /// <summary>
+    /// Gets the 'updatedAfter' query parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime UpdatedAfter { get; init; }
+
+    /// <summary>
+    /// Gets the 'updatedBefore' query parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime UpdatedBefore { get; init; }
+
+    /// <summary>
+    /// Gets the 'tag' query parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Schema Tag { get; init; }
+
+    /// <summary>
+    /// Gets the 'correlationId' query parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString CorrelationId { get; init; }
+
+    /// <summary>
     /// Gets the 'limit' query parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Schema Limit { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Schema1 Limit { get; init; }
 
     /// <summary>
     /// Gets the 'pageToken' query parameter.
