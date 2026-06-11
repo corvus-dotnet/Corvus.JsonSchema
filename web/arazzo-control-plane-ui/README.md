@@ -26,7 +26,9 @@ package `exports` — `@corvus-dotnet/arazzo-control-plane-ui`, `.../client`, `.
 - **Layer 1 — standalone components** ([`src/components/`](./src/components)): `<arazzo-runs-table>`,
   `<arazzo-run-detail>`, `<arazzo-resume-dialog>`, `<arazzo-cancel-button>`, `<arazzo-purge-dialog>`,
   `<arazzo-status-badge>`, `<arazzo-workflow-id-input>` (workflowId filter with catalog autocomplete),
-  `<arazzo-workflow-step-picker>` (choose a resume target step by name) for runs; `<arazzo-catalog-table>`,
+  `<arazzo-workflow-step-picker>` (choose a resume target step by name), `<arazzo-patch-builder>` (a
+  strongly-typed form built from a step's precomputed schema metadata, for Skip's `skipOutputs`) for runs;
+  `<arazzo-catalog-table>`,
   `<arazzo-catalog-detail>`, `<arazzo-catalog-add-dialog>` for the workflow catalog. Each works alone. The
   add dialog can build the package archive in-browser from a workflow + its sources (`./workflow-package` ·
   [`src/workflow-package.js`](./src/workflow-package.js)) or upload a pre-built one; the catalog assigns the

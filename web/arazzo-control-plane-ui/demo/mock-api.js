@@ -108,6 +108,43 @@ const STEP_SETS = {
   'onboard-customer': ['createAccount', 'verifyIdentity', 'provisionResources', 'sendWelcome'],
 };
 
+// Typed outputs per step (a TypeDescriptor each) — the precomputed metadata the typed patch builder reads.
+const STEP_OUTPUTS = {
+  'adopt-pet': {
+    findPet: { petId: { type: 'integer', format: 'int64' }, available: { type: 'boolean' } },
+    reservePayment: {
+      paymentId: { type: 'string', format: 'uuid' },
+      amount: { type: 'number', minimum: 0 },
+      status: { type: 'string', enum: ['pending', 'settled', 'failed'] },
+    },
+    submitAdoption: { adoptionId: { type: 'string' }, confirmedAt: { type: 'string', format: 'date-time' } },
+  },
+  'nightly-reconcile': {
+    fetchTransactions: { count: { type: 'integer' }, cursor: { type: 'string' } },
+    matchEntries: { matched: { type: 'integer' }, unmatched: { type: 'integer' } },
+    flagDiscrepancies: { discrepancies: { type: 'array', items: { type: 'object', properties: { account: { type: 'string' }, delta: { type: 'number' } } } } },
+  },
+  'onboard-customer': {
+    verifyIdentity: { verified: { type: 'boolean' }, score: { type: 'number', minimum: 0, maximum: 1 } },
+    provisionResources: { accountUrl: { type: 'string', format: 'uri' } },
+  },
+};
+
+function schemasFor(v) {
+  const base = v.baseWorkflowId;
+  const stepIds = STEP_SETS[base] || [];
+  const stepOutputs = STEP_OUTPUTS[base] || {};
+  return {
+    formatVersion: 1,
+    workflows: {
+      [v.workflowId]: {
+        inputs: (v._workflow?.workflows?.[0]?.inputs) || { type: 'object', properties: {} },
+        steps: Object.fromEntries(stepIds.map((stepId) => [stepId, { outputs: stepOutputs[stepId] || {} }])),
+      },
+    },
+  };
+}
+
 function workflowDoc(workflowId, title, description) {
   const base = workflowId.replace(/-v\d+$/, '');
   const stepIds = STEP_SETS[base] || ['start', 'process', 'finish'];
@@ -324,7 +361,7 @@ export function createMockControlPlane(options = {}) {
       return problem(405, 'Method not allowed');
     }
 
-    const versionMatch = path.match(/^\/catalog\/([^/]+)\/versions\/([^/]+)(?:\/(package|workflow|sources\/[^/]+))?$/);
+    const versionMatch = path.match(/^\/catalog\/([^/]+)\/versions\/([^/]+)(?:\/(package|workflow|schemas|sources\/[^/]+))?$/);
     if (versionMatch) {
       const base = decodeURIComponent(versionMatch[1]);
       const n = Number(versionMatch[2]);
@@ -336,6 +373,7 @@ export function createMockControlPlane(options = {}) {
       if (!sub && method === 'DELETE') return deleteVersion(v);
       if (sub === 'package' && method === 'GET') return packageResponse(v);
       if (sub === 'workflow' && method === 'GET') return json(v._workflow);
+      if (sub === 'schemas' && method === 'GET') return json(schemasFor(v));
       if (sub && sub.startsWith('sources/') && method === 'GET') {
         const name = decodeURIComponent(sub.slice('sources/'.length));
         const doc = v._sources?.[name];
