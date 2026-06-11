@@ -58,6 +58,8 @@ class ArazzoResumeDialog extends ArazzoElement {
     const builder = this.$('.skip-builder');
     if (!builder) return;
     builder.descriptor = null; // raw-JSON fallback until/unless a typed schema resolves
+    this._skipParsed = null;
+    this._skipStepId = null;
     const parsed = parseVersionedWorkflowId(run?.workflowId);
     const cursor = run?.cursor;
     if (!this.client || !parsed || cursor == null) return;
@@ -69,6 +71,11 @@ class ArazzoResumeDialog extends ArazzoElement {
       const wf = (workflow.workflows || []).find((w) => w.workflowId === run.workflowId) || (workflow.workflows || [])[0];
       const stepId = wf?.steps?.[cursor]?.stepId;
       const outputs = schemas?.workflows?.[run.workflowId]?.steps?.[stepId]?.outputs;
+      if (stepId) {
+        // Remember the resolved target so submit() can validate the recorded outputs server-side.
+        this._skipParsed = parsed;
+        this._skipStepId = stepId;
+      }
       if (stepId && outputs && Object.keys(outputs).length) {
         builder.descriptor = { type: 'object', properties: outputs };
       }
@@ -230,6 +237,25 @@ class ArazzoResumeDialog extends ArazzoElement {
     const confirmBtn = this.$('.confirm');
     confirmBtn.disabled = true;
     try {
+      // Before recording skip outputs, validate them server-side against the step's true output schema.
+      if (request.mode === 'Skip' && request.skipOutputs !== undefined
+        && this._skipParsed && this._skipStepId && this.client.validateCatalogValue) {
+        try {
+          const result = await this.client.validateCatalogValue(
+            this._skipParsed.base, this._skipParsed.version,
+            { kind: 'stepOutputs', workflowId: this._run.workflowId, stepId: this._skipStepId },
+            request.skipOutputs);
+          if (result && result.valid === false) {
+            banner.textContent = 'Recorded outputs are invalid — '
+              + (result.errors || []).map((e) => `${e.instancePath || '/'}: ${e.message}`).join('; ');
+            banner.hidden = false;
+            return;
+          }
+        } catch {
+          // Validation unavailable (no endpoint / no catalog:read) → don't block the resume.
+        }
+      }
+
       const run = await this.client.resumeRun(this._run.id, request);
       this.close();
       this.emit('resume-submitted', { run, mode: request.mode });
