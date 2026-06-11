@@ -26,12 +26,14 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
 
     private readonly SqliteConnection connection;
     private readonly TimeProvider timeProvider;
+    private readonly IWorkflowMetadataProvider? metadataProvider;
     private readonly SemaphoreSlim gate = new(1, 1);
 
-    private SqliteWorkflowCatalogStore(SqliteConnection connection, TimeProvider timeProvider)
+    private SqliteWorkflowCatalogStore(SqliteConnection connection, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider)
     {
         this.connection = connection;
         this.timeProvider = timeProvider;
+        this.metadataProvider = metadataProvider;
     }
 
     /// <summary>Provisions the catalog schema (table and indexes) against a file database.</summary>
@@ -57,6 +59,7 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
     public static async ValueTask<SqliteWorkflowCatalogStore> ConnectAsync(
         string connectionString,
         TimeProvider? timeProvider = null,
+        IWorkflowMetadataProvider? metadataProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
@@ -68,7 +71,7 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
             using SqliteCommand schema = connection.CreateCommand();
             schema.CommandText = SchemaSql;
             await schema.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            return new SqliteWorkflowCatalogStore(connection, timeProvider ?? TimeProvider.System);
+            return new SqliteWorkflowCatalogStore(connection, timeProvider ?? TimeProvider.System, metadataProvider);
         }
         catch
         {
@@ -340,7 +343,7 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
                 versionNumber = (int)(long)(await max.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))! + 1;
             }
 
-            CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber);
+            CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider);
             IReadOnlyList<string> tags = metadata.Tags is { Count: > 0 } t ? [.. t] : [];
             var version = new CatalogVersion(
                 BaseWorkflowId: baseWorkflowId,

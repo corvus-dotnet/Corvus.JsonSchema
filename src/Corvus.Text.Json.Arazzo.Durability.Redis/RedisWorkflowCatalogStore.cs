@@ -43,14 +43,16 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
     private readonly IConnectionMultiplexer connection;
     private readonly IDatabase database;
     private readonly TimeProvider timeProvider;
+    private readonly IWorkflowMetadataProvider? metadataProvider;
     private readonly bool ownsConnection;
 
-    private RedisWorkflowCatalogStore(IConnectionMultiplexer connection, TimeProvider timeProvider, bool ownsConnection)
+    private RedisWorkflowCatalogStore(IConnectionMultiplexer connection, TimeProvider timeProvider, bool ownsConnection, IWorkflowMetadataProvider? metadataProvider)
     {
         this.connection = connection;
         this.database = connection.GetDatabase();
         this.timeProvider = timeProvider;
         this.ownsConnection = ownsConnection;
+        this.metadataProvider = metadataProvider;
     }
 
     /// <summary>Verifies the store can be reached; Redis needs no schema provisioning.</summary>
@@ -72,22 +74,26 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
     public static async ValueTask<RedisWorkflowCatalogStore> ConnectAsync(
         string configuration,
         TimeProvider? timeProvider = null,
+        IWorkflowMetadataProvider? metadataProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(configuration);
         cancellationToken.ThrowIfCancellationRequested();
         IConnectionMultiplexer connection = await ConnectionMultiplexer.ConnectAsync(configuration).ConfigureAwait(false);
-        return new RedisWorkflowCatalogStore(connection, timeProvider ?? TimeProvider.System, ownsConnection: true);
+        return new RedisWorkflowCatalogStore(connection, timeProvider ?? TimeProvider.System, ownsConnection: true, metadataProvider);
     }
 
     /// <summary>Creates a catalog store over an existing connection (the caller keeps ownership).</summary>
     /// <param name="connection">The Redis connection.</param>
     /// <param name="timeProvider">The time source for audit timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
+    /// <param name="metadataProvider">An optional provider used to bake schema metadata into the package at add time.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The store.</returns>
-    public static RedisWorkflowCatalogStore Connect(IConnectionMultiplexer connection, TimeProvider? timeProvider = null)
+    public static RedisWorkflowCatalogStore Connect(IConnectionMultiplexer connection, TimeProvider? timeProvider = null, IWorkflowMetadataProvider? metadataProvider = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connection);
-        return new RedisWorkflowCatalogStore(connection, timeProvider ?? TimeProvider.System, ownsConnection: false);
+        cancellationToken.ThrowIfCancellationRequested();
+        return new RedisWorkflowCatalogStore(connection, timeProvider ?? TimeProvider.System, ownsConnection: false, metadataProvider);
     }
 
     /// <inheritdoc/>
@@ -444,7 +450,7 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
         RedisResult reserved = await this.database.ScriptEvaluateAsync(ReserveVersionScript, [CounterKey(baseWorkflowId)]).ConfigureAwait(false);
         int versionNumber = (int)(long)reserved;
 
-        CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber);
+        CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider);
         IReadOnlyList<string> tags = metadata.Tags is { Count: > 0 } t ? [.. t] : [];
         var version = new CatalogVersion(
             BaseWorkflowId: baseWorkflowId,
