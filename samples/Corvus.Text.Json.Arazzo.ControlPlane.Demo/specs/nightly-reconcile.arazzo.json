@@ -1,0 +1,32 @@
+{
+  "arazzo": "1.1.0",
+  "info": { "title": "Nightly Reconcile", "version": "1.0.0", "description": "Reconcile the ledger against the bank and report discrepancies." },
+  "sourceDescriptions": [ { "name": "ledger", "url": "./ledger.openapi.json", "type": "openapi" } ],
+  "workflows": [
+    {
+      "workflowId": "nightly-reconcile",
+      "inputs": {
+        "type": "object",
+        "properties": { "date": { "type": "string", "format": "date" } },
+        "required": [ "date" ]
+      },
+      "steps": [
+        { "stepId": "loadLedger", "operationId": "loadLedger", "outputs": { "entries": "$response.body#/entries" } },
+        { "stepId": "fetchTransactions", "operationId": "fetchTransactions", "outputs": { "count": "$response.body#/count" } },
+        { "stepId": "matchEntries", "operationId": "matchEntries", "outputs": { "matched": "$response.body#/matched" } },
+        {
+          "stepId": "flagDiscrepancies",
+          "operationId": "flagDiscrepancies",
+          "outputs": {
+            "discrepancies": "$response.body#/discrepancies",
+            "range": "$response.body#/range",
+            "totalDelta": "$response.body#/totalDelta",
+            "reportUrl": "$response.body#/reportUrl"
+          }
+        },
+        { "stepId": "postCorrections", "operationId": "postCorrections", "outputs": { "posted": "$response.body#/posted" } },
+        { "stepId": "publishReport", "operationId": "publishReport", "outputs": { "reportUrl": "$response.body#/reportUrl" } }
+      ]
+    }
+  ]
+}
