@@ -1,0 +1,43 @@
+{
+  "arazzo": "1.1.0",
+  "info": { "title": "Onboard Customer", "version": "1.0.0", "description": "Create an account, verify identity, provision resources, and welcome the customer." },
+  "sourceDescriptions": [ { "name": "onboarding", "url": "./onboarding.openapi.json", "type": "openapi" } ],
+  "workflows": [
+    {
+      "workflowId": "onboard-customer",
+      "inputs": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string", "format": "idn-email", "description": "The applicant's email." },
+          "plan": { "type": "string", "enum": [ "free", "pro", "enterprise" ] }
+        },
+        "required": [ "email" ]
+      },
+      "steps": [
+        { "stepId": "createAccount", "operationId": "createAccount", "outputs": { "accountId": "$response.body#/accountId" } },
+        {
+          "stepId": "verifyIdentity",
+          "operationId": "verifyIdentity",
+          "outputs": {
+            "score": "$response.body#/score",
+            "method": "$response.body#/method",
+            "applicant": "$response.body#/applicant",
+            "evidence": "$response.body#/evidence",
+            "flags": "$response.body#/flags"
+          }
+        },
+        {
+          "stepId": "provisionResources",
+          "operationId": "provisionResources",
+          "outputs": {
+            "accountUrl": "$response.body#/accountUrl",
+            "quotaGb": "$response.body#/quotaGb",
+            "resources": "$response.body#/resources",
+            "tags": "$response.body#/tags"
+          }
+        },
+        { "stepId": "sendWelcome", "operationId": "sendWelcome", "outputs": {} }
+      ]
+    }
+  ]
+}
