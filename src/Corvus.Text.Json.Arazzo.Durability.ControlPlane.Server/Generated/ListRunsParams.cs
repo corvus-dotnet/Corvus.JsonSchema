@@ -54,7 +54,7 @@ public readonly struct ListRunsParams
     /// <summary>
     /// Gets the 'tag' query parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Schema Tag { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.TagList Tag { get; init; }
 
     /// <summary>
     /// Gets the 'correlationId' query parameter.
@@ -64,7 +64,7 @@ public readonly struct ListRunsParams
     /// <summary>
     /// Gets the 'limit' query parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Schema1 Limit { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PageLimit Limit { get; init; }
 
     /// <summary>
     /// Gets the 'pageToken' query parameter.

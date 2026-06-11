@@ -2919,4 +2919,260 @@ public class OpenApi32CodeGeneratorTests
             }
         }
     }
+
+    [TestMethod]
+    public void GenerateServer_MultipartBinaryPart_EmitsBinaryParamAndCallback()
+    {
+        // A multipart/form-data request with a format:binary part should expose the part's bytes
+        // on the *Params struct and pass a binaryPartCallback in the endpoint registration.
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Multipart Binary", "version": "1.0" },
+              "paths": {
+                "/upload": {
+                  "post": {
+                    "operationId": "uploadPackage",
+                    "requestBody": {
+                      "required": true,
+                      "content": {
+                        "multipart/form-data": {
+                          "schema": {
+                            "type": "object",
+                            "properties": {
+                              "name": { "type": "string" },
+                              "package": { "type": "string", "format": "binary" }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "responses": {
+                      "200": {
+                        "description": "OK",
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "object", "properties": { "ok": { "type": "boolean" } } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int i = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"MpBin.Type{i}";
+            i++;
+        }
+
+        OpenApi32CodeGenerator gen = new("MpBin", map);
+        IReadOnlyList<GeneratedFile> files = gen.GenerateServer(spec);
+
+        GeneratedFile paramsFile = files.First(f => f.FileName == "UploadPackageParams.cs");
+        Assert.IsTrue(
+            paramsFile.Content.Contains("public ReadOnlyMemory<byte> Package { get; init; }"),
+            "Expected ReadOnlyMemory<byte> Package property on Params for the binary multipart part");
+
+        GeneratedFile registration = files.First(f => f.FileName == "ApiEndpointRegistration.cs");
+        Assert.IsTrue(
+            registration.Content.Contains("binaryPartCallback: part =>"),
+            "Expected a binaryPartCallback passed to MultipartFormDataSerializer.DeserializeAsync");
+        Assert.IsTrue(
+            registration.Content.Contains("part.Name.SequenceEqual(\"package\"u8)"),
+            "Expected the callback to match the 'package' part by name");
+        Assert.IsTrue(
+            registration.Content.Contains("Package = __binary_package ?? ReadOnlyMemory<byte>.Empty,"),
+            "Expected the captured binary part to be bound onto the Params object");
+    }
+
+    [TestMethod]
+    public void GenerateServer_OctetStreamResponse_EmitsBinaryFactoryAndWrite()
+    {
+        // A 2xx application/octet-stream success response should produce BOTH a buffered
+        // Ok(ReadOnlyMemory<byte>) factory and a streaming Ok(Func<Stream, CancellationToken, ValueTask>)
+        // factory, plus a WriteBinaryBodyAsync method, and an endpoint that streams the body directly
+        // to the response stream.
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Octet Response", "version": "1.0" },
+              "paths": {
+                "/download": {
+                  "get": {
+                    "operationId": "downloadBlob",
+                    "responses": {
+                      "200": {
+                        "description": "OK",
+                        "content": {
+                          "application/octet-stream": {
+                            "schema": { "type": "string", "format": "binary" }
+                          }
+                        }
+                      },
+                      "404": {
+                        "description": "Not Found",
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "object", "properties": { "message": { "type": "string" } } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int i = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"OctRsp.Type{i}";
+            i++;
+        }
+
+        OpenApi32CodeGenerator gen = new("OctRsp", map);
+        IReadOnlyList<GeneratedFile> files = gen.GenerateServer(spec);
+
+        GeneratedFile resultFile = files.First(f => f.FileName == "DownloadBlobResult.cs");
+        Assert.IsTrue(
+            resultFile.Content.Contains("public bool HasBinaryBody { get; }"),
+            "Expected HasBinaryBody property on the Result struct");
+        Assert.IsFalse(
+            resultFile.Content.Contains("public ReadOnlyMemory<byte> BinaryBody { get; }"),
+            "Did not expect a BinaryBody property on the Result struct after revision");
+        Assert.IsTrue(
+            resultFile.Content.Contains("public static DownloadBlobResult Ok(ReadOnlyMemory<byte> body, string? contentType = \"application/octet-stream\")"),
+            "Expected a buffered Ok(ReadOnlyMemory<byte>) factory for the octet-stream success response");
+        Assert.IsTrue(
+            resultFile.Content.Contains("public static DownloadBlobResult Ok(Func<Stream, CancellationToken, ValueTask> writeBody, string? contentType = \"application/octet-stream\")"),
+            "Expected a streaming Ok(Func<Stream, CancellationToken, ValueTask>) factory for the octet-stream success response");
+        Assert.IsTrue(
+            resultFile.Content.Contains("public ValueTask WriteBinaryBodyAsync(Stream stream, CancellationToken cancellationToken)"),
+            "Expected a WriteBinaryBodyAsync method on the Result struct");
+
+        GeneratedFile registration = files.First(f => f.FileName == "ApiEndpointRegistration.cs");
+        Assert.IsTrue(
+            registration.Content.Contains("if (result.HasBinaryBody)"),
+            "Expected a HasBinaryBody branch in the endpoint response-writing block");
+        Assert.IsTrue(
+            registration.Content.Contains("await result.WriteBinaryBodyAsync(context.Response.Body, context.RequestAborted)"),
+            "Expected the endpoint to stream the body directly to the response stream");
+    }
+
+    private const string ParamRefSpecJson = """
+        {
+          "openapi": "3.2.0",
+          "info": { "title": "ParamRef", "version": "1.0.0" },
+          "paths": {
+            "/items/{id}": {
+              "get": {
+                "operationId": "getItem",
+                "parameters": [
+                  { "name": "id", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/VersionNumber" } },
+                  { "name": "limit", "in": "query", "schema": { "$ref": "#/components/schemas/PageLimit" } },
+                  { "name": "tag", "in": "query", "style": "form", "explode": true, "schema": { "$ref": "#/components/schemas/TagList" } },
+                  { "name": "filter", "in": "query", "style": "deepObject", "explode": true, "schema": { "$ref": "#/components/schemas/FilterObject" } }
+                ],
+                "responses": { "200": { "description": "ok" } }
+              }
+            }
+          },
+          "components": {
+            "schemas": {
+              "VersionNumber": { "type": "integer", "format": "int32" },
+              "PageLimit": { "type": "integer", "format": "int32" },
+              "TagList": { "type": "array", "items": { "type": "string" } },
+              "FilterObject": {
+                "type": "object",
+                "properties": { "name": { "type": "string" }, "active": { "type": "boolean" } }
+              }
+            }
+          }
+        }
+        """;
+
+    private static Dictionary<string, string> ParamRefSchemaTypeMap() => new(StringComparer.Ordinal)
+    {
+        ["#/paths/~1items~1{id}/get/parameters/0/schema"] = "ParamRef.Client.JsonInt32",
+        ["#/paths/~1items~1{id}/get/parameters/1/schema"] = "ParamRef.Client.JsonInt32",
+        ["#/paths/~1items~1{id}/get/parameters/2/schema"] = "ParamRef.Client.TagList",
+        ["#/paths/~1items~1{id}/get/parameters/3/schema"] = "ParamRef.Client.FilterObject",
+    };
+
+    [TestMethod]
+    public void Generate_ParamRefIntegerSchemasUseFormattingNotGetUtf8String()
+    {
+        JsonElement root = ParseSpec(ParamRefSpecJson);
+        OpenApi32CodeGenerator generator = new("ParamRef.Client", ParamRefSchemaTypeMap());
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        GeneratedFile requestFile = GetFile(files, "GetItemRequest.cs");
+
+        // A $ref to an integer schema must classify as a formattable number, so the
+        // generated request must NOT serialize the parameter via GetUtf8String(), which
+        // throws at runtime for a JSON number.
+        Assert.IsFalse(
+            requestFile.Content.Contains("GetUtf8String"),
+            "Expected no GetUtf8String() calls for $ref'd integer parameters");
+
+        // The int32 path param is rendered via TryFormat (the non-String scalar path).
+        Assert.IsTrue(
+            requestFile.Content.Contains("this.Id.TryFormat("),
+            "Expected the int32 path param to be rendered with TryFormat");
+
+        // The int32 query param is rendered via TryFormat.
+        Assert.IsTrue(
+            requestFile.Content.Contains("this.Limit.TryFormat("),
+            "Expected the int32 query param to be rendered with TryFormat");
+    }
+
+    [TestMethod]
+    public void Generate_ParamRefArrayFormExplodeEmitsRepeatedQueryEntries()
+    {
+        JsonElement root = ParseSpec(ParamRefSpecJson);
+        OpenApi32CodeGenerator generator = new("ParamRef.Client", ParamRefSchemaTypeMap());
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        GeneratedFile requestFile = GetFile(files, "GetItemRequest.cs");
+
+        // A $ref to an array-of-string schema with style:form, explode:true must take the
+        // emitter's Form && Explode && Array branch: enumerate the array and emit a repeated
+        // "tag=" entry per element.
+        Assert.IsTrue(
+            requestFile.Content.Contains("((JsonElement)this.Tag).EnumerateArray()"),
+            "Expected the array param to be enumerated for form/explode serialization");
+        Assert.IsTrue(
+            requestFile.Content.Contains("\"tag=\"u8"),
+            "Expected repeated 'tag=' query entries for the form/explode array param");
+    }
+
+    [TestMethod]
+    public void Generate_ParamRefObjectDeepObjectExplodeEmitsBracketedKeys()
+    {
+        JsonElement root = ParseSpec(ParamRefSpecJson);
+        OpenApi32CodeGenerator generator = new("ParamRef.Client", ParamRefSchemaTypeMap());
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        GeneratedFile requestFile = GetFile(files, "GetItemRequest.cs");
+
+        // A $ref to an object schema with style:deepObject, explode:true must take the
+        // emitter's deepObject branch: enumerate the object and emit "filter[key]=value"
+        // (the '[' and ']' are percent-encoded as %5B / %5D).
+        Assert.IsTrue(
+            requestFile.Content.Contains("((JsonElement)this.Filter).EnumerateObject()"),
+            "Expected the object param to be enumerated for deepObject serialization");
+        Assert.IsTrue(
+            requestFile.Content.Contains("\"filter%5B\"u8"),
+            "Expected deepObject bracketed keys (filter[...]) for the object param");
+    }
 }

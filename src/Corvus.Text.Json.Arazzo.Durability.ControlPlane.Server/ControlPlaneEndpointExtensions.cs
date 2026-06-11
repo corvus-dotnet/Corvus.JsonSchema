@@ -17,19 +17,21 @@ public static class ControlPlaneEndpointExtensions
     /// <paramref name="endpoints"/>, backed by the given management client.
     /// </summary>
     /// <param name="endpoints">The endpoint route builder.</param>
-    /// <param name="management">The control-plane client the endpoints delegate to.</param>
+    /// <param name="management">The run control-plane client the run endpoints delegate to.</param>
+    /// <param name="catalog">The catalog client the catalog endpoints delegate to.</param>
     /// <returns>The same endpoint route builder, for chaining.</returns>
     /// <remarks>
     /// Authentication/authorization are the host's concern: the generated
     /// <see cref="ApiEndpointRegistration.SecuritySchemes"/>/<see cref="ApiEndpointRegistration.SecurityRequirements"/>
-    /// describe the scopes the OpenAPI document declares (runs:read / runs:write / runs:purge), and the
+    /// describe the scopes the OpenAPI document declares (runs:* and catalog:*), and the
     /// generated <c>EndpointSecurityConventions.RequireDeclaredAuthorization</c> can apply them when the host
     /// has registered the matching authentication and authorization policies.
     /// </remarks>
-    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, IWorkflowManagementClient management)
+    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, IWorkflowManagementClient management, IWorkflowCatalogClient catalog)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
-        return endpoints.MapApiEndpoints(new ArazzoControlPlaneHandler(management));
+        ArgumentNullException.ThrowIfNull(catalog);
+        return endpoints.MapApiEndpoints(new ArazzoControlPlaneHandler(management), new ArazzoControlPlaneCatalogHandler(catalog));
     }
 }

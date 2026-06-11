@@ -1911,11 +1911,11 @@ public sealed class OpenApi32CodeGenerator
         string methodName = GetMethodName(operationId, opRef.Method, pathTemplate, opRef.CustomMethodName);
 
         ParameterInfo[] parameters = PrepareParameters(
-            opRef.Operation, opRef.PathItem, pathNameUtf8, opRef.Method, referenceResolver, opRef.CustomMethodName);
+            opRef.Operation, opRef.PathItem, pathNameUtf8, opRef.Method, referenceResolver, specRoot, opRef.CustomMethodName);
         RequestBodyInfo? requestBody = PrepareRequestBody(
             opRef.Operation, pathNameUtf8, opRef.Method, referenceResolver, opRef.CustomMethodName, this.ignoreEmptyFormUrlEncodedBody);
         ResponseInfo[] responses = PrepareResponses(
-            opRef.Operation, pathNameUtf8, opRef.Method, referenceResolver, opRef.CustomMethodName);
+            opRef.Operation, pathNameUtf8, opRef.Method, referenceResolver, specRoot, opRef.CustomMethodName);
 
         ServerInfo? effectiveServer = ResolveEffectiveServer(
             opRef.Operation, opRef.PathItem, rootServer);
@@ -1947,6 +1947,7 @@ public sealed class OpenApi32CodeGenerator
         ReadOnlySpan<byte> pathNameUtf8,
         OperationMethod method,
         IOpenApiReferenceResolver referenceResolver,
+        JsonElement specRoot,
         string? customMethodName = null)
     {
         var merged = MergeParameters(operation, pathItem, referenceResolver);
@@ -1982,19 +1983,19 @@ public sealed class OpenApi32CodeGenerator
             bool hasSchema = param.SchemaValue.IsNotUndefined();
             JsonElement schemaElement = hasSchema ? JsonElement.From(param.SchemaValue) : default;
             ParameterSerializationKind serializationKind = hasSchema
-                ? SchemaClassifier.Classify(schemaElement)
+                ? SchemaClassifier.Classify(schemaElement, specRoot)
                 : ParameterSerializationKind.String;
 
             ParameterSerializationKind elementKind = serializationKind switch
             {
-                ParameterSerializationKind.Array => SchemaClassifier.ClassifyArrayElement(schemaElement),
-                ParameterSerializationKind.Object => SchemaClassifier.ClassifyObjectValue(schemaElement),
+                ParameterSerializationKind.Array => SchemaClassifier.ClassifyArrayElement(schemaElement, specRoot),
+                ParameterSerializationKind.Object => SchemaClassifier.ClassifyObjectValue(schemaElement, specRoot),
                 _ => ParameterSerializationKind.String,
             };
 
             bool deepNesting = hasSchema
                 && serializationKind is ParameterSerializationKind.Object or ParameterSerializationKind.Array
-                && SchemaClassifier.HasDeepNesting(schemaElement);
+                && SchemaClassifier.HasDeepNesting(schemaElement, specRoot);
 
             string? schemaPointerRegular = hasSchema
                 ? (customMethodName is not null
@@ -2191,6 +2192,7 @@ public sealed class OpenApi32CodeGenerator
         ReadOnlySpan<byte> pathNameUtf8,
         OperationMethod method,
         IOpenApiReferenceResolver referenceResolver,
+        JsonElement specRoot,
         string? customMethodName = null)
     {
         if (operation.ResponsesValue.IsUndefined())
@@ -2230,7 +2232,7 @@ public sealed class OpenApi32CodeGenerator
                     response.ContentValue, pathNameUtf8, method, statusCodeUtf8.Span, customMethodName);
 
                 HeaderInfo[] headers = PrepareResponseHeaders(
-                    response.Headers, pathNameUtf8, method, statusCodeUtf8.Span, referenceResolver, customMethodName);
+                    response.Headers, pathNameUtf8, method, statusCodeUtf8.Span, referenceResolver, specRoot, customMethodName);
 
                 LinkInfo[] links = PrepareLinks(response.Links, referenceResolver, statusCode);
 
@@ -2370,6 +2372,7 @@ public sealed class OpenApi32CodeGenerator
         OperationMethod method,
         ReadOnlySpan<byte> statusCodeUtf8,
         IOpenApiReferenceResolver referenceResolver,
+        JsonElement specRoot,
         string? customMethodName = null)
     {
         if (headersMap.IsUndefined())
@@ -2418,19 +2421,19 @@ public sealed class OpenApi32CodeGenerator
 
                 JsonElement schemaEl = hasSchema ? JsonElement.From(header.SchemaValue) : default;
                 ParameterSerializationKind serializationKind = hasSchema
-                    ? SchemaClassifier.Classify(schemaEl)
+                    ? SchemaClassifier.Classify(schemaEl, specRoot)
                     : ParameterSerializationKind.String;
 
                 ParameterSerializationKind elementKind = serializationKind switch
                 {
-                    ParameterSerializationKind.Array => SchemaClassifier.ClassifyArrayElement(schemaEl),
-                    ParameterSerializationKind.Object => SchemaClassifier.ClassifyObjectValue(schemaEl),
+                    ParameterSerializationKind.Array => SchemaClassifier.ClassifyArrayElement(schemaEl, specRoot),
+                    ParameterSerializationKind.Object => SchemaClassifier.ClassifyObjectValue(schemaEl, specRoot),
                     _ => ParameterSerializationKind.String,
                 };
 
                 bool deepNesting = hasSchema
                     && serializationKind is ParameterSerializationKind.Object or ParameterSerializationKind.Array
-                    && SchemaClassifier.HasDeepNesting(schemaEl);
+                    && SchemaClassifier.HasDeepNesting(schemaEl, specRoot);
 
                 // Extract header name at the emit boundary
                 string name = headerProp.Name;
@@ -3383,6 +3386,33 @@ public sealed class OpenApi32CodeGenerator
             .Select(c => CodeEmitHelpers.ClassifyMediaType(c.MediaType))
             .Distinct()
             .ToArray();
+    }
+
+    /// <summary>
+    /// Determines whether a response is classified as a raw <c>application/octet-stream</c> body
+    /// (the same classification the client uses to expose a response <see cref="System.IO.Stream"/>).
+    /// </summary>
+    private static bool IsOctetStreamResponse(ResponseInfo resp)
+    {
+        return Array.IndexOf(GetDistinctContentCategories(resp), ContentCategory.OctetStream) >= 0;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if any 2xx success response of the operation is classified as a
+    /// raw <c>application/octet-stream</c> body, in which case the server result/endpoint emit a binary
+    /// response path mirroring the client's <see cref="System.IO.Stream"/> accessor.
+    /// </summary>
+    private static bool HasOctetStreamSuccessResponse(OperationInfo op)
+    {
+        foreach (ResponseInfo resp in op.Responses)
+        {
+            if (resp.StatusCode.Length > 0 && resp.StatusCode[0] == '2' && IsOctetStreamResponse(resp))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // ── Request struct emission ─────────────────────────────────────────
@@ -6979,6 +7009,21 @@ public sealed class OpenApi32CodeGenerator
             w.WriteLine($"/// {CodeEmitHelpers.EscapeXml(bodyDesc)}");
             w.WriteLine("/// </summary>");
             w.WriteLine($"public {bodyTypeName} Body {{ get; init; }}");
+
+            // For multipart/form-data bodies with format:binary parts, expose each binary part's
+            // raw bytes (mirrors the client sending BinaryPartData for the same parts).
+            if (IsMultipartRequestBody(rb) && !IsMultipartMixedRequestBody(rb))
+            {
+                foreach (BinaryPropertyInfo binaryProp in rb.BinaryProperties)
+                {
+                    string propName = CodeEmitHelpers.ToPascalCase(binaryProp.PropertyName);
+                    w.WriteLine();
+                    w.WriteLine("/// <summary>");
+                    w.WriteLine($"/// Gets the binary content of the '{binaryProp.PropertyName}' part.");
+                    w.WriteLine("/// </summary>");
+                    w.WriteLine($"public ReadOnlyMemory<byte> {propName} {{ get; init; }}");
+                }
+            }
         }
 
         w.CloseBrace();
@@ -7020,6 +7065,7 @@ public sealed class OpenApi32CodeGenerator
 
         bool hasHeaders = allHeaders.Count > 0;
         bool hasStreamingResponses = op.Responses.Any(r => GetStreamingContent(r).Count > 0);
+        bool hasBinaryResponse = HasOctetStreamSuccessResponse(op);
         string streamTypeName = $"{op.MethodName}Stream";
         string streamWriterDelegateName = $"{op.MethodName}StreamWriter";
         string streamWriterInvokerName = $"{op.MethodName}StreamWriterInvoker";
@@ -7044,6 +7090,11 @@ public sealed class OpenApi32CodeGenerator
                 w.Write($", {typeName} {fieldName} = default");
             }
 
+            if (hasBinaryResponse)
+            {
+                w.Write(", bool hasBinaryBody = false, Func<Stream, CancellationToken, ValueTask>? binaryWriter = null");
+            }
+
             w.WriteLine(")");
             w.OpenBrace();
             w.WriteLine("this.StatusCode = statusCode;");
@@ -7060,6 +7111,12 @@ public sealed class OpenApi32CodeGenerator
                 w.WriteLine($"this.{propertyName} = {fieldName};");
             }
 
+            if (hasBinaryResponse)
+            {
+                w.WriteLine("this.HasBinaryBody = hasBinaryBody;");
+                w.WriteLine("this.binaryWriter = binaryWriter;");
+            }
+
             w.CloseBrace();
         }
         else
@@ -7068,6 +7125,11 @@ public sealed class OpenApi32CodeGenerator
             if (hasStreamingResponses)
             {
                 w.Write($", {streamWriterInvokerName}? streamWriter = null, object? streamWriterContext = null");
+            }
+
+            if (hasBinaryResponse)
+            {
+                w.Write(", bool hasBinaryBody = false, Func<Stream, CancellationToken, ValueTask>? binaryWriter = null");
             }
 
             w.WriteLine(")");
@@ -7081,6 +7143,12 @@ public sealed class OpenApi32CodeGenerator
                 w.WriteLine("this.streamWriterContext = streamWriterContext;");
             }
 
+            if (hasBinaryResponse)
+            {
+                w.WriteLine("this.HasBinaryBody = hasBinaryBody;");
+                w.WriteLine("this.binaryWriter = binaryWriter;");
+            }
+
             w.CloseBrace();
         }
 
@@ -7092,6 +7160,12 @@ public sealed class OpenApi32CodeGenerator
             w.WriteLine();
         }
 
+        if (hasBinaryResponse)
+        {
+            w.WriteLine("private readonly Func<Stream, CancellationToken, ValueTask>? binaryWriter;");
+            w.WriteLine();
+        }
+
         w.WriteLine("/// <summary>Gets the HTTP status code.</summary>");
         w.WriteLine("public int StatusCode { get; }");
         w.WriteLine();
@@ -7100,6 +7174,13 @@ public sealed class OpenApi32CodeGenerator
         w.WriteLine();
         w.WriteLine("/// <summary>Gets the content type for the response body.</summary>");
         w.WriteLine("public string? ContentType { get; }");
+
+        if (hasBinaryResponse)
+        {
+            w.WriteLine();
+            w.WriteLine("/// <summary>Gets a value indicating whether this result has a raw binary (octet-stream) response body.</summary>");
+            w.WriteLine("public bool HasBinaryBody { get; }");
+        }
 
         if (hasStreamingResponses)
         {
@@ -7239,6 +7320,18 @@ public sealed class OpenApi32CodeGenerator
             }
 
             w.CloseBrace();
+        }
+
+        if (hasBinaryResponse)
+        {
+            w.WriteLine();
+            w.WriteLine("/// <summary>");
+            w.WriteLine("/// Writes the raw binary (octet-stream) response body to the specified stream.");
+            w.WriteLine("/// </summary>");
+            w.WriteLine("/// <param name=\"stream\">The response stream.</param>");
+            w.WriteLine("/// <param name=\"cancellationToken\">The cancellation token.</param>");
+            w.WriteLine("/// <returns>A value task that completes when the body has been written.</returns>");
+            w.WriteLine("public ValueTask WriteBinaryBodyAsync(Stream stream, CancellationToken cancellationToken) => this.binaryWriter is { } writer ? writer(stream, cancellationToken) : ValueTask.CompletedTask;");
         }
 
         if (hasStreamingResponses)
@@ -7408,6 +7501,20 @@ public sealed class OpenApi32CodeGenerator
             return;
         }
 
+        // For a 2xx success response classified as application/octet-stream, emit a factory that takes
+        // raw bytes (mirrors the client exposing a response Stream for the same response).
+        if (!isDefault && statusCode.Length > 0 && statusCode[0] == '2' && IsOctetStreamResponse(response))
+        {
+            this.EmitServerBinaryResultFactory(
+                w,
+                structName,
+                factoryName,
+                respHeaders,
+                statusCode,
+                structHasHeaders);
+            return;
+        }
+
         // Parameters
         StringBuilder paramList = new();
         if (isDefault)
@@ -7491,6 +7598,89 @@ public sealed class OpenApi32CodeGenerator
         {
             w.WriteLine($"public static {structName} {factoryName}({paramList}) => new({statusExpr}, {bodyExpr}, {contentTypeExpr});");
         }
+    }
+
+    /// <summary>
+    /// Emits the factories for a 2xx <c>application/octet-stream</c> response. Two overloads are
+    /// generated: one buffered (taking a <c>ReadOnlyMemory&lt;byte&gt;</c>) and one streaming
+    /// (taking a <c>Func&lt;Stream, CancellationToken, ValueTask&gt;</c> that writes the body
+    /// directly to the response stream). Both store a writer that the endpoint invokes via
+    /// <c>WriteBinaryBodyAsync</c>.
+    /// </summary>
+    private void EmitServerBinaryResultFactory(
+        IndentedWriter w,
+        string structName,
+        string factoryName,
+        List<(HeaderInfo Header, string TypeName, string FieldName, string PropertyName)> respHeaders,
+        string statusCode,
+        bool structHasHeaders)
+    {
+        bool hasRespHeaders = respHeaders.Count > 0;
+
+        // Build the trailing constructor arguments (headers + binary flags) shared by both overloads.
+        // The writer expression varies between overloads, so it is appended by each call.
+        string HeaderCtorArgs()
+        {
+            StringBuilder sb = new();
+            if (structHasHeaders)
+            {
+                foreach (var (_, typeName, fieldName, _) in respHeaders)
+                {
+                    sb.Append($", {fieldName}: {fieldName}.IsUndefined ? default : {typeName}.CreateBuilder(workspace, {fieldName}, 30).RootElement");
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        string TrailingParams()
+        {
+            StringBuilder sb = new();
+            if (hasRespHeaders)
+            {
+                sb.Append(", JsonWorkspace workspace");
+            }
+
+            foreach (var (_, typeName, fieldName, _) in respHeaders)
+            {
+                sb.Append($", {typeName}.Source {fieldName} = default");
+            }
+
+            return sb.ToString();
+        }
+
+        void EmitHeaderDocs()
+        {
+            if (hasRespHeaders)
+            {
+                w.WriteLine("/// <param name=\"workspace\">The workspace for building header values.</param>");
+            }
+
+            foreach (var (header, _, fieldName, _) in respHeaders)
+            {
+                w.WriteLine($"/// <param name=\"{fieldName}\">The value for the <c>{header.HeaderName}</c> response header.</param>");
+            }
+        }
+
+        string headerCtorArgs = HeaderCtorArgs();
+        string trailingParams = TrailingParams();
+
+        // Buffered overload — copies the supplied bytes to the response stream when invoked.
+        w.WriteLine("/// <param name=\"body\">The raw binary response body.</param>");
+        w.WriteLine("/// <param name=\"contentType\">The content type for the response body.</param>");
+        EmitHeaderDocs();
+        w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with status {statusCode}.</returns>");
+        w.WriteLine($"public static {structName} {factoryName}(ReadOnlyMemory<byte> body, string? contentType = \"application/octet-stream\"{trailingParams}) => new({statusCode}, default, contentType{headerCtorArgs}, hasBinaryBody: true, binaryWriter: (stream, cancellationToken) => stream.WriteAsync(body, cancellationToken));");
+
+        w.WriteLine();
+
+        // Streaming overload — invokes the supplied callback to write the body directly.
+        w.WriteLine($"/// <summary>Creates a {statusCode} {factoryName} result whose body is streamed directly to the response.</summary>");
+        w.WriteLine("/// <param name=\"writeBody\">A callback that writes the response body to the supplied stream.</param>");
+        w.WriteLine("/// <param name=\"contentType\">The content type for the response body.</param>");
+        EmitHeaderDocs();
+        w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with status {statusCode}.</returns>");
+        w.WriteLine($"public static {structName} {factoryName}(Func<Stream, CancellationToken, ValueTask> writeBody, string? contentType = \"application/octet-stream\"{trailingParams}) => new({statusCode}, default, contentType{headerCtorArgs}, hasBinaryBody: true, binaryWriter: writeBody);");
     }
 
     private void EmitServerStreamingResultFactories(
@@ -7895,9 +8085,41 @@ public sealed class OpenApi32CodeGenerator
                     }
                     else if (IsMultipartRequestBody(op.RequestBody!.Value))
                     {
+                        BinaryPropertyInfo[] multipartBinaryParts = op.RequestBody!.Value.BinaryProperties;
+                        bool hasBinaryParts = multipartBinaryParts.Length > 0;
+
+                        if (hasBinaryParts)
+                        {
+                            // Capture each format:binary part's bytes via the deserializer callback
+                            // (mirrors the client sending BinaryPartData for the same parts).
+                            foreach (BinaryPropertyInfo binaryPart in multipartBinaryParts)
+                            {
+                                w.WriteLine($"byte[]? __binary_{binaryPart.PropertyName} = null;");
+                            }
+                        }
+
                         w.WriteLine("try");
                         w.OpenBrace();
-                        w.WriteLine($"bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);");
+                        if (hasBinaryParts)
+                        {
+                            w.WriteLine($"bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.Request.ContentType, binaryPartCallback: part =>");
+                            w.OpenBrace();
+                            bool firstPart = true;
+                            foreach (BinaryPropertyInfo binaryPart in multipartBinaryParts)
+                            {
+                                string keyword = firstPart ? "if" : "else if";
+                                firstPart = false;
+                                w.WriteLine($"{keyword} (part.Name.SequenceEqual(\"{binaryPart.PropertyName}\"u8)) {{ __binary_{binaryPart.PropertyName} = part.Data.ToArray(); }}");
+                            }
+
+                            w.CloseBraceNoNewline().Write(", cancellationToken: context.RequestAborted).ConfigureAwait(false);");
+                            w.WriteLine();
+                        }
+                        else
+                        {
+                            w.WriteLine($"bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);");
+                        }
+
                         w.CloseBrace();
                         w.WriteLine("catch");
                         w.OpenBrace();
@@ -7963,6 +8185,16 @@ public sealed class OpenApi32CodeGenerator
                         {
                             w.WriteLine("Body = bodyDoc!.RootElement,");
                         }
+
+                        // Bind captured binary parts for multipart/form-data bodies.
+                        if (IsMultipartRequestBody(op.RequestBody!.Value) && !IsMultipartMixedRequestBody(op.RequestBody!.Value))
+                        {
+                            foreach (BinaryPropertyInfo binaryPart in op.RequestBody!.Value.BinaryProperties)
+                            {
+                                string propName = CodeEmitHelpers.ToPascalCase(binaryPart.PropertyName);
+                                w.WriteLine($"{propName} = __binary_{binaryPart.PropertyName} ?? ReadOnlyMemory<byte>.Empty,");
+                            }
+                        }
                     }
 
                     w.CloseBrace().Write(";");
@@ -8003,6 +8235,7 @@ public sealed class OpenApi32CodeGenerator
                     w.WriteLine();
                 }
 
+                bool opHasBinaryResponse = HasOctetStreamSuccessResponse(op);
                 if (opHasStreamingResponses)
                 {
                     w.WriteLine("if (result.HasStreamingBody)");
@@ -8027,6 +8260,21 @@ public sealed class OpenApi32CodeGenerator
                     w.WriteLine();
                     w.WriteLine("await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);");
                     w.CloseBrace();
+                    if (opHasBinaryResponse)
+                    {
+                        w.WriteLine("else if (result.HasBinaryBody)");
+                        EmitBinaryResponseWriteBlock(w);
+                        w.WriteLine("else if (!result.Body.IsUndefined())");
+                    }
+                    else
+                    {
+                        w.WriteLine("else if (!result.Body.IsUndefined())");
+                    }
+                }
+                else if (opHasBinaryResponse)
+                {
+                    w.WriteLine("if (result.HasBinaryBody)");
+                    EmitBinaryResponseWriteBlock(w);
                     w.WriteLine("else if (!result.Body.IsUndefined())");
                 }
                 else
@@ -8709,6 +8957,18 @@ public sealed class OpenApi32CodeGenerator
     /// <summary>
     /// Emits an RFC 9457 Problem Details JSON response with the given status, title, and detail.
     /// </summary>
+    /// <summary>
+    /// Emits the response-writing block for a raw binary (octet-stream) result body, writing the
+    /// bytes directly to the response stream (mirrors the client reading a response stream).
+    /// </summary>
+    private static void EmitBinaryResponseWriteBlock(IndentedWriter w)
+    {
+        w.OpenBrace();
+        w.WriteLine("context.Response.ContentType = result.ContentType ?? \"application/octet-stream\";");
+        w.WriteLine("await result.WriteBinaryBodyAsync(context.Response.Body, context.RequestAborted).ConfigureAwait(false);");
+        w.CloseBrace();
+    }
+
     private static void EmitProblemDetailsResponse(IndentedWriter w, int statusCode, string title, string detail)
     {
         w.WriteLine($"context.Response.StatusCode = {statusCode};");

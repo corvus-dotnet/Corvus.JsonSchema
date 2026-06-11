@@ -166,11 +166,11 @@ public readonly partial struct WorkflowRunDetail
     /// The run-wide telemetry correlation id set at creation (the value stamped on the run&#39;s `corvus.arazzo.correlation_id` spans), if any.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunDetail.CorrelationIdEntity CorrelationId
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString CorrelationId
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CorrelationIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunDetail.CorrelationIdEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CorrelationIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
             {
                 return value;
             }
@@ -255,12 +255,15 @@ public readonly partial struct WorkflowRunDetail
     /// <para>
     /// The fault record if the run is (or was) faulted.
     /// </para>
+    /// <para>
+    /// A run&#39;s fault record (terminal-but-recoverable failure).
+    /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunDetail.TheFaultRecordIfTheRunIsOrWasFaulted Fault
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowFault Fault
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FaultUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunDetail.TheFaultRecordIfTheRunIsOrWasFaulted value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FaultUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowFault value))
             {
                 return value;
             }
@@ -342,12 +345,15 @@ public readonly partial struct WorkflowRunDetail
     /// <para>
     /// Why the run is suspended, if it is.
     /// </para>
+    /// <para>
+    /// Why a run is suspended.
+    /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunDetail.WhyTheRunIsSuspendedIfItIs Wait
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowWait Wait
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WaitUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunDetail.WhyTheRunIsSuspendedIfItIs value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WaitUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowWait value))
             {
                 return value;
             }

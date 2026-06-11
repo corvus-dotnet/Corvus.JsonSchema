@@ -53,7 +53,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
             ? DateTimeOffset.Parse((string)value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)
             : null;
 
-    private static IReadOnlyList<string>? ParseTags(Models.Schema tag)
+    private static IReadOnlyList<string>? ParseTags(Models.TagList tag)
     {
         if (tag.IsUndefined())
         {
@@ -165,19 +165,19 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
     private static Models.WorkflowRunDetail.Source BuildDetail(WorkflowRunDetail d)
         => new((ref Models.WorkflowRunDetail.Builder b) =>
         {
-            Models.WorkflowRunDetail.TheFaultRecordIfTheRunIsOrWasFaulted.Source fault = default;
+            Models.WorkflowFault.Source fault = default;
             if (d.Fault is { } f)
             {
                 fault = BuildFault(f);
             }
 
-            Models.WorkflowRunDetail.WhyTheRunIsSuspendedIfItIs.Source wait = default;
+            Models.WorkflowWait.Source wait = default;
             if (d.Wait is { } w)
             {
                 wait = BuildWait(w);
             }
 
-            Models.WorkflowRunDetail.CorrelationIdEntity.Source correlationId = default;
+            Models.JsonString.Source correlationId = default;
             if (d.CorrelationId is { } cid)
             {
                 correlationId = cid;
@@ -212,7 +212,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
     private static Models.WorkflowRunPage.Source BuildPage(WorkflowRunPage page)
         => new((ref Models.WorkflowRunPage.Builder b) =>
         {
-            Models.WorkflowRunPage.NextPageTokenEntity.Source nextPageToken = default;
+            Models.JsonString.Source nextPageToken = default;
             if (page.ContinuationToken is { } token)
             {
                 nextPageToken = token;
@@ -235,31 +235,31 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         {
             WorkflowRunIndexEntry e = listing.Index;
 
-            Models.WorkflowRunSummary.AwaitingChannelEntity.Source awaitingChannel = default;
+            Models.JsonString.Source awaitingChannel = default;
             if (e.AwaitingChannel is { } ac)
             {
                 awaitingChannel = ac;
             }
 
-            Models.WorkflowRunSummary.AwaitingCorrelationIdEntity.Source awaitingCorrelationId = default;
+            Models.JsonString.Source awaitingCorrelationId = default;
             if (e.AwaitingCorrelationId is { } acid)
             {
                 awaitingCorrelationId = acid;
             }
 
-            Models.WorkflowRunSummary.DueAtEntity.Source dueAt = default;
+            Models.JsonDateTime.Source dueAt = default;
             if (e.DueAt is { } due)
             {
                 dueAt = due;
             }
 
-            Models.WorkflowRunSummary.TheFaultErrorIfTheRunIsWasFaulted.Source errorType = default;
+            Models.JsonString.Source errorType = default;
             if (e.ErrorType is { } et)
             {
                 errorType = et;
             }
 
-            Models.WorkflowRunSummary.CorrelationIdEntity.Source correlationId = default;
+            Models.JsonString.Source correlationId = default;
             if (e.CorrelationId is { } cid)
             {
                 correlationId = cid;
@@ -298,19 +298,19 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
     private static Models.WorkflowWait.Source BuildWait(WorkflowWait w)
         => new((ref Models.WorkflowWait.Builder b) =>
         {
-            Models.WorkflowWait.TheChannelAMessageWaitListensOnSetForMessage.Source channel = default;
+            Models.JsonString.Source channel = default;
             if (w.Channel is { } ch)
             {
                 channel = ch;
             }
 
-            Models.WorkflowWait.TheCorrelationIdAMessageWaitMatchesIfAny.Source correlationId = default;
+            Models.JsonString.Source correlationId = default;
             if (w.CorrelationId is { } corr)
             {
                 correlationId = corr;
             }
 
-            Models.WorkflowWait.WhenATimerWaitBecomesDueSetForTimer.Source dueAt = default;
+            Models.JsonDateTime.Source dueAt = default;
             if (w.DueAt is { } due)
             {
                 dueAt = due;

@@ -212,6 +212,269 @@
           "409": { "$ref": "#/components/responses/Conflict" }
         }
       }
+    },
+    "/catalog": {
+      "post": {
+        "operationId": "addCatalogVersion",
+        "security": [
+          { "oauth2": ["catalog:write"] },
+          { "openIdConnect": ["catalog:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["catalog"],
+        "summary": "Add a workflow version",
+        "description": "Uploads a new immutable workflow document package (the Arazzo workflow plus its referenced OpenAPI/AsyncAPI sources) as `multipart/form-data` — a `package` file part (shaped as the `CatalogPackage` schema) plus `owner` and `tags` parts. The store assigns the next version number, rewrites the workflow id to the versioned form (`{baseWorkflowId}-v{n}`), and records the content hash. The submitted workflow id must not already carry a `-vN` suffix.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "package": { "type": "string", "format": "binary", "description": "The workflow document package envelope (its shape is the `CatalogPackage` schema), uploaded as a file." },
+                  "owner": { "$ref": "#/components/schemas/CatalogOwner" },
+                  "tags": { "type": "array", "items": { "type": "string" }, "description": "Free-form tags for display and filtering." }
+                },
+                "required": ["package", "owner"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The version was added; the body is its metadata (the assigned version, versioned id and hash). The documents are fetched via the links.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CatalogVersionSummary" } } },
+            "links": {
+              "package": { "$ref": "#/components/links/CatalogPackage" },
+              "workflow": { "$ref": "#/components/links/CatalogWorkflow" }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      },
+      "get": {
+        "operationId": "searchCatalog",
+        "security": [
+          { "oauth2": ["catalog:read"] },
+          { "openIdConnect": ["catalog:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["catalog"],
+        "summary": "Search the catalog",
+        "description": "Returns a page of catalog version summaries matching the query — free-text over title/description, base workflow id, tags (AND-matched), status, and owner. Keyset paginated.",
+        "parameters": [
+          { "$ref": "#/components/parameters/CatalogSearchQuery" },
+          { "$ref": "#/components/parameters/CatalogBaseWorkflowIdQuery" },
+          { "$ref": "#/components/parameters/CatalogTagQuery" },
+          { "$ref": "#/components/parameters/CatalogStatusQuery" },
+          { "$ref": "#/components/parameters/CatalogOwnerQuery" },
+          { "$ref": "#/components/parameters/LimitQuery" },
+          { "$ref": "#/components/parameters/PageTokenQuery" }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of matching catalog versions.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CatalogPage" } } },
+            "links": { "NextCatalogPage": { "$ref": "#/components/links/NextCatalogPage" } }
+          }
+        }
+      },
+      "additionalOperations": {
+        "PURGE": {
+          "operationId": "purgeCatalog",
+          "security": [
+            { "oauth2": ["catalog:purge"] },
+            { "openIdConnect": ["catalog:purge"] },
+            { "mtls": [] }
+          ],
+          "tags": ["catalog"],
+          "summary": "Purge obsolete versions",
+          "description": "Bulk-deletes obsolete catalog versions that have no referencing workflow runs.",
+          "responses": {
+            "200": {
+              "description": "The number of versions purged.",
+              "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PurgeResult" } } }
+            }
+          }
+        }
+      }
+    },
+    "/catalog/{baseWorkflowId}": {
+      "get": {
+        "operationId": "listCatalogVersions",
+        "security": [
+          { "oauth2": ["catalog:read"] },
+          { "openIdConnect": ["catalog:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["catalog"],
+        "summary": "List the versions of a workflow",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/LimitQuery" },
+          { "$ref": "#/components/parameters/PageTokenQuery" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The versions stored under this base workflow id.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CatalogPage" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/catalog/{baseWorkflowId}/versions/{versionNumber}": {
+      "get": {
+        "operationId": "getCatalogVersion",
+        "security": [
+          { "oauth2": ["catalog:read"] },
+          { "openIdConnect": ["catalog:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["catalog"],
+        "summary": "Get a workflow version",
+        "description": "Returns the version's metadata — content hash, governance metadata, audit fields and the list of documents in the package. The package and its individual documents are fetched via the links.",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The version metadata.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CatalogVersionSummary" } } },
+            "links": {
+              "package": { "$ref": "#/components/links/CatalogPackage" },
+              "workflow": { "$ref": "#/components/links/CatalogWorkflow" }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "patch": {
+        "operationId": "updateCatalogVersion",
+        "security": [
+          { "oauth2": ["catalog:write"] },
+          { "openIdConnect": ["catalog:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["catalog"],
+        "summary": "Update a version's governance metadata",
+        "description": "Updates the mutable governance metadata (owner, tags, status). The immutable package, hash, title and description are unchanged. Records `lastUpdatedBy`; setting `status` to `Obsolete` also records `obsoletedBy`.",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CatalogMetadataPatch" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated version metadata.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CatalogVersionSummary" } } },
+            "links": {
+              "package": { "$ref": "#/components/links/CatalogPackage" },
+              "workflow": { "$ref": "#/components/links/CatalogWorkflow" }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteCatalogVersion",
+        "security": [
+          { "oauth2": ["catalog:purge"] },
+          { "openIdConnect": ["catalog:purge"] },
+          { "mtls": [] }
+        ],
+        "tags": ["catalog"],
+        "summary": "Delete a workflow version",
+        "description": "Permanently deletes a single version. Refused with `409` while any workflow run references its versioned workflow id.",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" }
+        ],
+        "responses": {
+          "204": { "description": "The version was deleted." },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/catalog/{baseWorkflowId}/versions/{versionNumber}/package": {
+      "get": {
+        "operationId": "getCatalogPackage",
+        "security": [
+          { "oauth2": ["catalog:read"] },
+          { "openIdConnect": ["catalog:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["catalog"],
+        "summary": "Download a version's document package",
+        "description": "Streams the version's immutable, canonical document package envelope (the Arazzo workflow plus its referenced sources, shaped as the `CatalogPackage` schema) as a single binary download — the self-contained, hash-verifiable artifact that can be handed to the code-generation service.",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The package envelope, streamed.",
+            "content": { "application/octet-stream": { "schema": { "type": "string", "format": "binary" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/catalog/{baseWorkflowId}/versions/{versionNumber}/workflow": {
+      "get": {
+        "operationId": "getCatalogWorkflow",
+        "security": [
+          { "oauth2": ["catalog:read"] },
+          { "openIdConnect": ["catalog:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["catalog"],
+        "summary": "Get a version's Arazzo workflow document",
+        "description": "Returns just the Arazzo workflow document for this version (with the versioned workflow id), without the OpenAPI/AsyncAPI sources. Convenient for the UI when only the workflow definition is needed.",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The Arazzo workflow document.",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/catalog/{baseWorkflowId}/versions/{versionNumber}/sources/{sourceName}": {
+      "get": {
+        "operationId": "getCatalogSource",
+        "security": [
+          { "oauth2": ["catalog:read"] },
+          { "openIdConnect": ["catalog:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["catalog"],
+        "summary": "Get a single source document from a version",
+        "description": "Returns one named source document (an OpenAPI or AsyncAPI document) referenced by this version's workflow. The available source names are listed in the version metadata's `sources` array.",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" },
+          { "$ref": "#/components/parameters/SourceNamePath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The named source document.",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
     }
   },
   "components": {
@@ -227,7 +490,10 @@
             "scopes": {
               "runs:read": "List and read workflow runs (visibility).",
               "runs:write": "Resume and cancel workflow runs (remediation).",
-              "runs:purge": "Permanently delete terminal runs (destructive)."
+              "runs:purge": "Permanently delete terminal runs (destructive).",
+              "catalog:read": "Search and read catalog workflow versions.",
+              "catalog:write": "Add catalog versions and edit their governance metadata.",
+              "catalog:purge": "Delete and purge catalog versions (destructive)."
             }
           },
           "clientCredentials": {
@@ -235,7 +501,10 @@
             "scopes": {
               "runs:read": "List and read workflow runs (visibility).",
               "runs:write": "Resume and cancel workflow runs (remediation).",
-              "runs:purge": "Permanently delete terminal runs (destructive)."
+              "runs:purge": "Permanently delete terminal runs (destructive).",
+              "catalog:read": "Search and read catalog workflow versions.",
+              "catalog:write": "Add catalog versions and edit their governance metadata.",
+              "catalog:purge": "Delete and purge catalog versions (destructive)."
             }
           }
         }
@@ -277,7 +546,7 @@
         "in": "query",
         "required": false,
         "description": "The maximum number of runs to return (or delete, for purge).",
-        "schema": { "type": "integer", "minimum": 1, "maximum": 1000, "default": 100 }
+        "schema": { "$ref": "#/components/schemas/PageLimit" }
       },
       "PageTokenQuery": {
         "name": "pageToken",
@@ -321,7 +590,7 @@
         "description": "Restrict to runs carrying every supplied tag (repeat the parameter to require multiple, e.g. `?tag=tenant-42&tag=priority`).",
         "style": "form",
         "explode": true,
-        "schema": { "type": "array", "items": { "type": "string" } }
+        "schema": { "$ref": "#/components/schemas/TagList" }
       },
       "CorrelationIdQuery": {
         "name": "correlationId",
@@ -336,6 +605,64 @@
         "required": true,
         "description": "Reap terminal runs last updated strictly before this instant (RFC 3339 date-time).",
         "schema": { "type": "string", "format": "date-time" }
+      },
+      "BaseWorkflowIdPath": {
+        "name": "baseWorkflowId",
+        "in": "path",
+        "required": true,
+        "description": "The base workflow id (without any version suffix).",
+        "schema": { "type": "string" }
+      },
+      "VersionNumberPath": {
+        "name": "versionNumber",
+        "in": "path",
+        "required": true,
+        "description": "The 1-based version number under the base workflow id.",
+        "schema": { "$ref": "#/components/schemas/VersionNumber" }
+      },
+      "SourceNamePath": {
+        "name": "sourceName",
+        "in": "path",
+        "required": true,
+        "description": "The name of a source document within the version's package (as listed in the version metadata's `sources` array).",
+        "schema": { "type": "string" }
+      },
+      "CatalogSearchQuery": {
+        "name": "q",
+        "in": "query",
+        "required": false,
+        "description": "Free-text filter matched against each version's title and description (case-insensitive contains).",
+        "schema": { "type": "string" }
+      },
+      "CatalogBaseWorkflowIdQuery": {
+        "name": "baseWorkflowId",
+        "in": "query",
+        "required": false,
+        "description": "Restrict to versions of this base workflow id.",
+        "schema": { "type": "string" }
+      },
+      "CatalogTagQuery": {
+        "name": "tag",
+        "in": "query",
+        "required": false,
+        "description": "Restrict to versions carrying every supplied tag (repeat to require multiple).",
+        "style": "form",
+        "explode": true,
+        "schema": { "$ref": "#/components/schemas/TagList" }
+      },
+      "CatalogStatusQuery": {
+        "name": "status",
+        "in": "query",
+        "required": false,
+        "description": "Restrict to versions in this lifecycle status.",
+        "schema": { "$ref": "#/components/schemas/CatalogStatus" }
+      },
+      "CatalogOwnerQuery": {
+        "name": "owner",
+        "in": "query",
+        "required": false,
+        "description": "Restrict to versions whose owner name or email matches (case-insensitive contains).",
+        "schema": { "type": "string" }
       }
     },
     "responses": {
@@ -395,6 +722,35 @@
       }
     },
     "links": {
+      "NextCatalogPage": {
+        "operationId": "searchCatalog",
+        "description": "Fetch the next page of catalog versions; absent in effect when nextPageToken is null.",
+        "parameters": {
+          "pageToken": "$response.body#/nextPageToken",
+          "q": "$request.query.q",
+          "baseWorkflowId": "$request.query.baseWorkflowId",
+          "tag": "$request.query.tag",
+          "status": "$request.query.status",
+          "owner": "$request.query.owner",
+          "limit": "$request.query.limit"
+        }
+      },
+      "CatalogPackage": {
+        "operationId": "getCatalogPackage",
+        "description": "Download this version's full document package as a binary stream.",
+        "parameters": {
+          "baseWorkflowId": "$response.body#/baseWorkflowId",
+          "versionNumber": "$response.body#/versionNumber"
+        }
+      },
+      "CatalogWorkflow": {
+        "operationId": "getCatalogWorkflow",
+        "description": "Fetch just this version's Arazzo workflow document.",
+        "parameters": {
+          "baseWorkflowId": "$response.body#/baseWorkflowId",
+          "versionNumber": "$response.body#/versionNumber"
+        }
+      },
       "NextPage": {
         "operationId": "listRuns",
         "description": "Fetch the next page of runs; absent in effect when nextPageToken is null (the last page).",
@@ -444,16 +800,16 @@
         "properties": {
           "kind": { "$ref": "#/components/schemas/WorkflowWaitKind" },
           "dueAt": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "date-time",
             "description": "When a timer wait becomes due (set for `Timer`)."
           },
           "channel": {
-            "type": ["string", "null"],
+            "type": "string",
             "description": "The channel a message wait listens on (set for `Message`)."
           },
           "correlationId": {
-            "type": ["string", "null"],
+            "type": "string",
             "description": "The correlation id a message wait matches, if any."
           }
         },
@@ -479,11 +835,11 @@
           "status": { "$ref": "#/components/schemas/WorkflowRunStatus" },
           "createdAt": { "type": "string", "format": "date-time" },
           "updatedAt": { "type": "string", "format": "date-time" },
-          "dueAt": { "type": ["string", "null"], "format": "date-time" },
-          "awaitingChannel": { "type": ["string", "null"] },
-          "awaitingCorrelationId": { "type": ["string", "null"] },
-          "errorType": { "type": ["string", "null"], "description": "The fault error, if the run is/was faulted." },
-          "correlationId": { "type": ["string", "null"], "description": "The run-wide telemetry correlation id set at creation (the value stamped on the run's `corvus.arazzo.correlation_id` spans), if any." },
+          "dueAt": { "type": "string", "format": "date-time" },
+          "awaitingChannel": { "type": "string" },
+          "awaitingCorrelationId": { "type": "string" },
+          "errorType": { "type": "string", "description": "The fault error, if the run is/was faulted." },
+          "correlationId": { "type": "string", "description": "The run-wide telemetry correlation id set at creation (the value stamped on the run's `corvus.arazzo.correlation_id` spans), if any." },
           "tags": { "type": "array", "items": { "type": "string" }, "description": "The free-form tags applied to the run at creation." }
         },
         "required": ["id", "workflowId", "status", "createdAt", "updatedAt"]
@@ -497,7 +853,7 @@
             "items": { "$ref": "#/components/schemas/WorkflowRunSummary" }
           },
           "nextPageToken": {
-            "type": ["string", "null"],
+            "type": "string",
             "description": "An opaque token to fetch the next page, or null/absent if this is the last page."
           }
         },
@@ -514,14 +870,14 @@
           "createdAt": { "type": "string", "format": "date-time" },
           "wait": {
             "description": "Why the run is suspended, if it is.",
-            "anyOf": [{ "$ref": "#/components/schemas/WorkflowWait" }, { "type": "null" }]
+            "$ref": "#/components/schemas/WorkflowWait"
           },
           "fault": {
             "description": "The fault record if the run is (or was) faulted.",
-            "anyOf": [{ "$ref": "#/components/schemas/WorkflowFault" }, { "type": "null" }]
+            "$ref": "#/components/schemas/WorkflowFault"
           },
           "etag": { "type": "string", "description": "The optimistic-concurrency token the checkpoint was read at." },
-          "correlationId": { "type": ["string", "null"], "description": "The run-wide telemetry correlation id set at creation (the value stamped on the run's `corvus.arazzo.correlation_id` spans), if any." },
+          "correlationId": { "type": "string", "description": "The run-wide telemetry correlation id set at creation (the value stamped on the run's `corvus.arazzo.correlation_id` spans), if any." },
           "tags": { "type": "array", "items": { "type": "string" }, "description": "The free-form tags applied to the run at creation." }
         },
         "required": ["id", "workflowId", "status", "cursor", "createdAt", "etag"]
@@ -587,9 +943,147 @@
         "type": "object",
         "description": "The outcome of a purge.",
         "properties": {
-          "purgedCount": { "type": "integer", "description": "The number of runs deleted." }
+          "purgedCount": { "type": "integer", "description": "The number of runs or versions deleted." }
         },
         "required": ["purgedCount"]
+      },
+      "PageLimit": {
+        "type": "integer",
+        "format": "int32",
+        "minimum": 1,
+        "maximum": 1000,
+        "default": 100,
+        "description": "A page size: the maximum number of items to return (or delete, for purge)."
+      },
+      "TagList": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "A set of free-form tags (AND-matched when used as a filter)."
+      },
+      "VersionNumber": {
+        "type": "integer",
+        "format": "int32",
+        "minimum": 1,
+        "description": "A 1-based catalog version number."
+      },
+      "CatalogStatus": {
+        "type": "string",
+        "enum": ["Active", "Obsolete"],
+        "description": "A catalog version's lifecycle status."
+      },
+      "CatalogOwner": {
+        "type": "object",
+        "description": "The accountable governance owner of a workflow, for integration with governance tooling.",
+        "properties": {
+          "name": { "type": "string", "description": "The owning person or team's display name." },
+          "email": { "type": "string", "format": "idn-email", "description": "A contact email." },
+          "team": { "type": "string", "description": "An optional owning team/group." },
+          "url": { "type": "string", "format": "iri", "description": "An optional link (e.g. a runbook or owning-team page)." }
+        },
+        "required": ["name", "email"]
+      },
+      "CatalogPackage": {
+        "type": "object",
+        "description": "The logical content of a workflow document package: the Arazzo workflow plus its referenced source documents. The package is transferred and stored as an opaque ZIP archive (manifest.json + workflow.json + sources/<name>.json); this schema documents that archive's logical content. Only the catalog-relevant fields of the contained documents are typed; additional properties are permitted, so any Arazzo/OpenAPI/AsyncAPI version validates and the package stays a version-agnostic input to code generation.",
+        "properties": {
+          "workflow": { "$ref": "#/components/schemas/CatalogPackageWorkflow" },
+          "sources": {
+            "type": "object",
+            "additionalProperties": { "type": "object" },
+            "description": "The referenced source documents (OpenAPI/AsyncAPI), keyed by the workflow's sourceDescriptions name."
+          }
+        },
+        "required": ["workflow"]
+      },
+      "CatalogPackageWorkflow": {
+        "type": "object",
+        "description": "An Arazzo workflow document. The catalog-relevant fields are typed; additional properties are permitted.",
+        "properties": {
+          "info": {
+            "type": "object",
+            "description": "The document info; the catalog projects title and description (falling back to summary).",
+            "properties": {
+              "title": { "type": "string" },
+              "summary": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          },
+          "sourceDescriptions": {
+            "type": "array",
+            "description": "The source documents the workflow references.",
+            "items": { "$ref": "#/components/schemas/CatalogPackageSourceDescription" }
+          },
+          "workflows": {
+            "type": "array",
+            "description": "The workflows in the document; the catalog uses the first workflow's id as the base id.",
+            "items": { "$ref": "#/components/schemas/CatalogPackageWorkflowEntry" }
+          }
+        }
+      },
+      "CatalogPackageSourceDescription": {
+        "type": "object",
+        "description": "A named source description; the catalog surfaces the name and type.",
+        "properties": {
+          "name": { "type": "string" },
+          "type": { "type": "string" }
+        }
+      },
+      "CatalogPackageWorkflowEntry": {
+        "type": "object",
+        "description": "A workflow within the Arazzo document; the catalog reads its id.",
+        "properties": {
+          "workflowId": { "type": "string" }
+        }
+      },
+      "CatalogSourceRef": {
+        "type": "object",
+        "description": "A reference to one source document within a version's package, as projected into the metadata.",
+        "properties": {
+          "name": { "type": "string", "description": "The source name (the workflow's sourceDescriptions name), used to address the document." },
+          "type": { "type": "string", "description": "The source document kind (e.g. `openapi`, `asyncapi`), if declared by the workflow." }
+        },
+        "required": ["name"]
+      },
+      "CatalogMetadataPatch": {
+        "type": "object",
+        "description": "A partial update of a version's mutable governance metadata; omitted fields are left unchanged.",
+        "properties": {
+          "owner": { "$ref": "#/components/schemas/CatalogOwner" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "status": { "$ref": "#/components/schemas/CatalogStatus" }
+        }
+      },
+      "CatalogVersionSummary": {
+        "type": "object",
+        "description": "A catalog version as projected into the searchable index (one entry in a page).",
+        "properties": {
+          "baseWorkflowId": { "type": "string" },
+          "versionNumber": { "type": "integer" },
+          "workflowId": { "type": "string", "description": "The versioned workflow id runs execute under." },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "status": { "$ref": "#/components/schemas/CatalogStatus" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "owner": { "$ref": "#/components/schemas/CatalogOwner" },
+          "sources": { "type": "array", "items": { "$ref": "#/components/schemas/CatalogSourceRef" }, "description": "The source documents in this version's package, addressable individually via the source endpoint." },
+          "hash": { "type": "string", "description": "The SHA-256 of the canonical package, hex-encoded." },
+          "createdBy": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "lastUpdatedBy": { "type": "string" },
+          "lastUpdatedAt": { "type": "string", "format": "date-time" },
+          "obsoletedBy": { "type": "string" },
+          "obsoletedAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["baseWorkflowId", "versionNumber", "workflowId", "title", "status", "tags", "owner", "sources", "hash", "createdBy", "createdAt"]
+      },
+      "CatalogPage": {
+        "type": "object",
+        "description": "A page of catalog versions matching a search.",
+        "properties": {
+          "versions": { "type": "array", "items": { "$ref": "#/components/schemas/CatalogVersionSummary" } },
+          "nextPageToken": { "type": "string", "description": "An opaque token to fetch the next page; absent on the last page." }
+        },
+        "required": ["versions"]
       },
       "ProblemDetails": {
         "type": "object",
