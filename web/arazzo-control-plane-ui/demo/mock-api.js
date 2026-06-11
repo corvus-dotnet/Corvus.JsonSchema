@@ -25,11 +25,43 @@ function seedRuns() {
   const day = 24 * hr;
   return [
     {
-      id: 'run-7f3a9c21', workflowId: 'adopt-pet-v1', status: 'Faulted', cursor: 2,
+      id: 'run-7f3a9c21', workflowId: 'adopt-pet-v1', status: 'Faulted', cursor: 1,
       createdAt: iso(-3 * hr), updatedAt: iso(-2 * min), etag: nextEtag(),
       fault: { stepId: 'reservePayment', attempt: 3, error: 'HttpRequestException: 502 from payments (upstream)', at: iso(-2 * min) },
       _errorType: 'HttpRequestException',
       correlationId: '7f3a9c21d4e54a1b9c0d1e2f3a4b5c6d', tags: ['tenant-42', 'priority'],
+    },
+    {
+      // Faulted at submitAdoption — skip/state-patch outputs include nested 'fee' & 'adopter' objects and a 'documents' array.
+      id: 'run-b2c3d4e5', workflowId: 'adopt-pet-v1', status: 'Faulted', cursor: 2,
+      createdAt: iso(-5 * hr), updatedAt: iso(-7 * min), etag: nextEtag(),
+      fault: { stepId: 'submitAdoption', attempt: 2, error: 'ValidationException: adopter.email missing from shelter record', at: iso(-7 * min) },
+      _errorType: 'ValidationException',
+      correlationId: 'b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7', tags: ['tenant-42'],
+    },
+    {
+      // Faulted at flagDiscrepancies — outputs are an array of typed objects (account/delta/currency/severity/contact).
+      id: 'run-c9d8e7f6', workflowId: 'nightly-reconcile-v3', status: 'Faulted', cursor: 3,
+      createdAt: iso(-6 * hr), updatedAt: iso(-12 * min), etag: nextEtag(),
+      fault: { stepId: 'flagDiscrepancies', attempt: 1, error: 'TimeoutException: ledger service did not respond within 30s', at: iso(-12 * min) },
+      _errorType: 'TimeoutException',
+      correlationId: 'c9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4', tags: ['prod', 'billing'],
+    },
+    {
+      // Faulted at verifyIdentity — outputs include a nested 'applicant' object, an enum 'method', and a 'flags' enum array.
+      id: 'run-aa11bb22', workflowId: 'onboard-customer-v1', status: 'Faulted', cursor: 1,
+      createdAt: iso(-100 * min), updatedAt: iso(-15 * min), etag: nextEtag(),
+      fault: { stepId: 'verifyIdentity', attempt: 4, error: 'KycProviderException: document image unreadable', at: iso(-15 * min) },
+      _errorType: 'KycProviderException',
+      correlationId: 'aa11bb22cc33dd44ee55ff6677889900', tags: ['tenant-7', 'kyc'],
+    },
+    {
+      // Faulted at provisionResources — outputs are an array of resource objects (kind/region/endpoint enums + uri).
+      id: 'run-dd44ee55', workflowId: 'onboard-customer-v1', status: 'Faulted', cursor: 2,
+      createdAt: iso(-70 * min), updatedAt: iso(-3 * min), etag: nextEtag(),
+      fault: { stepId: 'provisionResources', attempt: 2, error: 'QuotaExceededException: region eu-west-1 database quota reached', at: iso(-3 * min) },
+      _errorType: 'QuotaExceededException',
+      correlationId: 'dd44ee55ff66aa77bb88cc99dd00ee11', tags: ['tenant-7'],
     },
     {
       id: 'run-1b88de40', workflowId: 'adopt-pet-v1', status: 'Suspended', cursor: 4,
@@ -109,6 +141,8 @@ const STEP_SETS = {
 };
 
 // Typed outputs per step (a TypeDescriptor each) — the precomputed metadata the typed patch builder reads.
+// Several steps carry deliberately rich shapes (nested objects, arrays of objects, enums, and a spread of
+// string/number formats + constraints) so the typed patch builder can be exercised across all its controls.
 const STEP_OUTPUTS = {
   'adopt-pet': {
     findPet: { petId: { type: 'integer', format: 'int64' }, available: { type: 'boolean' } },
@@ -117,16 +151,93 @@ const STEP_OUTPUTS = {
       amount: { type: 'number', minimum: 0 },
       status: { type: 'string', enum: ['pending', 'settled', 'failed'] },
     },
-    submitAdoption: { adoptionId: { type: 'string' }, confirmedAt: { type: 'string', format: 'date-time' } },
+    submitAdoption: {
+      adoptionId: { type: 'string', format: 'uuid' },
+      confirmedAt: { type: 'string', format: 'date-time' },
+      fee: {
+        type: 'object', description: 'The adoption fee charged.',
+        properties: {
+          amount: { type: 'number', minimum: 0, multipleOf: 0.01 },
+          currency: { type: 'string', enum: ['GBP', 'USD', 'EUR'] },
+        },
+        required: ['amount', 'currency'],
+      },
+      adopter: {
+        type: 'object', description: 'The adopting party.',
+        properties: {
+          name: { type: 'string', maxLength: 80 },
+          email: { type: 'string', format: 'email' },
+          phone: { type: 'string', pattern: '^[+0-9 ()-]{7,}$', description: 'Digits, spaces and + ( ) - only.' },
+        },
+        required: ['name', 'email'],
+      },
+      documents: { type: 'array', description: 'Signed paperwork.', items: { type: 'string', format: 'uri' } },
+    },
   },
   'nightly-reconcile': {
     fetchTransactions: { count: { type: 'integer' }, cursor: { type: 'string' } },
     matchEntries: { matched: { type: 'integer' }, unmatched: { type: 'integer' } },
-    flagDiscrepancies: { discrepancies: { type: 'array', items: { type: 'object', properties: { account: { type: 'string' }, delta: { type: 'number' } } } } },
+    flagDiscrepancies: {
+      discrepancies: {
+        type: 'array', description: 'Accounts whose ledger and bank balances disagree.',
+        items: {
+          type: 'object',
+          properties: {
+            account: { type: 'string', pattern: '^[0-9]{8}$', description: 'Eight-digit account number.' },
+            delta: { type: 'number', description: 'Signed difference (bank − ledger).' },
+            currency: { type: 'string', enum: ['GBP', 'USD', 'EUR'] },
+            severity: { type: 'string', enum: ['info', 'warning', 'critical'] },
+            firstSeen: { type: 'string', format: 'date' },
+            contact: {
+              type: 'object',
+              properties: {
+                email: { type: 'string', format: 'email' },
+                runbook: { type: 'string', format: 'uri' },
+              },
+            },
+          },
+          required: ['account', 'delta'],
+        },
+      },
+      totalDelta: { type: 'number' },
+      reportUrl: { type: 'string', format: 'uri' },
+    },
   },
   'onboard-customer': {
-    verifyIdentity: { verified: { type: 'boolean' }, score: { type: 'number', minimum: 0, maximum: 1 } },
-    provisionResources: { accountUrl: { type: 'string', format: 'uri' } },
+    verifyIdentity: {
+      verified: { type: 'boolean' },
+      score: { type: 'number', minimum: 0, maximum: 1, description: 'Match confidence (0–1).' },
+      method: { type: 'string', enum: ['document', 'biometric', 'knowledge-based'] },
+      reviewedAt: { type: 'string', format: 'date-time' },
+      applicant: {
+        type: 'object', description: 'The resolved identity.',
+        properties: {
+          fullName: { type: 'string', maxLength: 120 },
+          dateOfBirth: { type: 'string', format: 'date' },
+          email: { type: 'string', format: 'idn-email' },
+          country: { type: 'string', pattern: '^[A-Z]{2}$', description: 'ISO 3166-1 alpha-2.' },
+        },
+        required: ['fullName'],
+      },
+      flags: { type: 'array', description: 'Screening hits, if any.', items: { type: 'string', enum: ['pep', 'sanctions', 'adverse-media'] } },
+    },
+    provisionResources: {
+      accountUrl: { type: 'string', format: 'uri' },
+      quotaGb: { type: 'integer', minimum: 1, maximum: 1024 },
+      resources: {
+        type: 'array', description: 'The provisioned resources.',
+        items: {
+          type: 'object',
+          properties: {
+            kind: { type: 'string', enum: ['database', 'bucket', 'queue'] },
+            name: { type: 'string' },
+            region: { type: 'string', enum: ['eu-west-1', 'us-east-1', 'ap-southeast-2'] },
+            endpoint: { type: 'string', format: 'uri' },
+          },
+          required: ['kind', 'name'],
+        },
+      },
+    },
   },
 };
 

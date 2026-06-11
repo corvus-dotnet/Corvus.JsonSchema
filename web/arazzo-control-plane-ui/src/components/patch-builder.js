@@ -50,8 +50,9 @@ class ArazzoPatchBuilder extends ArazzoElement {
         input[type="text"], input[type="number"], input[type="date"], input[type="datetime-local"], input[type="time"],
         input[type="email"], input[type="url"], select, textarea {
           width: 100%; font: inherit; padding: 7px 8px; border: 1px solid var(--_border);
-          border-radius: var(--_radius); background: var(--_bg); color: var(--_text);
+          border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text);
         }
+        select { padding-right: 30px; }
         textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; resize: vertical; }
         fieldset { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 10px; margin: 0; display: grid; gap: 10px; }
         legend { font-size: 12px; font-weight: 600; color: var(--_muted); padding: 0 4px; }

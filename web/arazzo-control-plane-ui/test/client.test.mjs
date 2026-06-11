@@ -24,28 +24,28 @@ function makeClient() {
 
 test('listRuns returns all seeded runs', async () => {
   const { runs, nextPageToken } = await makeClient().listRuns({ limit: 100 });
-  assert.equal(runs.length, 8);
+  assert.equal(runs.length, 12);
   assert.equal(nextPageToken, null);
 });
 
 test('listRuns filters by status and workflowId', async () => {
   const c = makeClient();
-  assert.equal((await c.listRuns({ status: 'Faulted' })).runs.length, 1);
-  assert.equal((await c.listRuns({ workflowId: 'onboard' })).runs.length, 3);
+  assert.equal((await c.listRuns({ status: 'Faulted' })).runs.length, 5);
+  assert.equal((await c.listRuns({ workflowId: 'onboard' })).runs.length, 5);
 });
 
 test('listRunsPaged walks every page via the keyset token', async () => {
   let total = 0; let pages = 0;
   for await (const page of makeClient().listRunsPaged({ limit: 3 })) { total += page.runs.length; pages++; }
-  assert.equal(total, 8);
-  assert.equal(pages, 3);
+  assert.equal(total, 12);
+  assert.equal(pages, 4);
 });
 
 test('getRun returns full detail and 404s for an unknown id', async () => {
   const c = makeClient();
   const run = await c.getRun('run-7f3a9c21');
   assert.equal(run.fault.stepId, 'reservePayment');
-  assert.equal(run.cursor, 2);
+  assert.equal(run.cursor, 1);
   assert.ok(run.etag);
   await assert.rejects(() => c.getRun('nope'), (e) => e instanceof ProblemError && e.status === 404);
 });
