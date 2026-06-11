@@ -157,6 +157,21 @@ export function confirmDialog(host, options = {}) {
   });
 }
 
+/**
+ * Copy text to the clipboard, returning whether it succeeded. Tolerates an absent/blocked Clipboard API
+ * (older browsers, insecure contexts, test environments) by returning `false` rather than throwing.
+ * @param {string} text
+ * @returns {Promise<boolean>}
+ */
+export async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard?.writeText(String(text ?? ''));
+    return navigator.clipboard != null;
+  } catch {
+    return false;
+  }
+}
+
 function humanizeDelta(ms) {
   const s = Math.round(Math.abs(ms) / 1000);
   if (s < 60) return `${s}s`;
