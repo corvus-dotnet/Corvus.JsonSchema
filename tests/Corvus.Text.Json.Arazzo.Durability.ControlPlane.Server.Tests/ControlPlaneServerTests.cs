@@ -77,6 +77,70 @@ public sealed class ControlPlaneServerTests
     }
 
     [TestMethod]
+    public async Task List_filters_by_a_created_time_window()
+    {
+        Host host = await StartAsync();
+        await using (host.App)
+        {
+            var clock = (MutableClock)host.Clock;
+            await CompleteRunAsync(host.Store, "early", clock);   // created at T0
+            clock.Advance(TimeSpan.FromHours(2));
+            await CompleteRunAsync(host.Store, "late", clock);    // created at T0 + 2h
+
+            // createdAfter (inclusive) at T0 + 1h keeps only 'late'.
+            string after = Uri.EscapeDataString((T0 + TimeSpan.FromHours(1)).ToString("O"));
+            using Stj.JsonDocument afterDoc = await ReadJsonAsync(await host.Client.GetAsync($"/runs?createdAfter={after}"));
+            Stj.JsonElement afterRuns = afterDoc.RootElement.GetProperty("runs");
+            afterRuns.GetArrayLength().ShouldBe(1);
+            afterRuns[0].GetProperty("id").GetString().ShouldBe("late");
+
+            // createdBefore (exclusive) at T0 + 1h keeps only 'early'.
+            string before = Uri.EscapeDataString((T0 + TimeSpan.FromHours(1)).ToString("O"));
+            using Stj.JsonDocument beforeDoc = await ReadJsonAsync(await host.Client.GetAsync($"/runs?createdBefore={before}"));
+            Stj.JsonElement beforeRuns = beforeDoc.RootElement.GetProperty("runs");
+            beforeRuns.GetArrayLength().ShouldBe(1);
+            beforeRuns[0].GetProperty("id").GetString().ShouldBe("early");
+        }
+    }
+
+    [TestMethod]
+    public async Task List_filters_by_tag_and_correlation_id_and_surfaces_them()
+    {
+        Host host = await StartAsync();
+        await using (host.App)
+        {
+            await TaggedRunAsync(host.Store, "r-a", host.Clock, "trace-aaa", ["tenant-1", "priority"]);
+            await TaggedRunAsync(host.Store, "r-b", host.Clock, "trace-bbb", ["tenant-1"]);
+            await TaggedRunAsync(host.Store, "r-c", host.Clock, "trace-ccc", []);
+
+            // Tags are AND-matched.
+            using (Stj.JsonDocument both = await ReadJsonAsync(await host.Client.GetAsync("/runs?tag=tenant-1&tag=priority")))
+            {
+                Stj.JsonElement runs = both.RootElement.GetProperty("runs");
+                runs.GetArrayLength().ShouldBe(1);
+                runs[0].GetProperty("id").GetString().ShouldBe("r-a");
+                // The summary surfaces tags + correlationId so an operator can pivot to telemetry.
+                runs[0].GetProperty("correlationId").GetString().ShouldBe("trace-aaa");
+                runs[0].GetProperty("tags").EnumerateArray().Select(t => t.GetString()).ShouldBe(["tenant-1", "priority"], ignoreOrder: true);
+            }
+
+            // A single tag matches every run carrying it.
+            using (Stj.JsonDocument one = await ReadJsonAsync(await host.Client.GetAsync("/runs?tag=tenant-1")))
+            {
+                one.RootElement.GetProperty("runs").GetArrayLength().ShouldBe(2);
+            }
+
+            // Correlation id is an exact match (the trace->run pivot).
+            using (Stj.JsonDocument corr = await ReadJsonAsync(await host.Client.GetAsync("/runs?correlationId=trace-bbb")))
+            {
+                Stj.JsonElement runs = corr.RootElement.GetProperty("runs");
+                runs.GetArrayLength().ShouldBe(1);
+                runs[0].GetProperty("id").GetString().ShouldBe("r-b");
+            }
+        }
+    }
+
+    [TestMethod]
     public async Task List_pages_with_a_continuation_token()
     {
         Host host = await StartAsync();
@@ -302,6 +366,12 @@ public sealed class ControlPlaneServerTests
     private static async Task CompleteRunAsync(InMemoryWorkflowStateStore store, string id, TimeProvider clock)
     {
         WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock);
+        await run.CompleteAsync(default, default);
+    }
+
+    private static async Task TaggedRunAsync(InMemoryWorkflowStateStore store, string id, TimeProvider clock, string correlationId, string[] tags)
+    {
+        WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock, correlationId: correlationId, tags: tags);
         await run.CompleteAsync(default, default);
     }
 

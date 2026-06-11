@@ -112,8 +112,8 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
                 using SqliteCommand insert = this.connection.CreateCommand();
                 insert.CommandText =
                     """
-                    INSERT INTO WorkflowRuns (RunId, Checkpoint, Version, Status, WorkflowId, CreatedAt, UpdatedAt, DueAt, AwaitingChannel, AwaitingCorrelationId, ErrorType)
-                    VALUES (@id, @checkpoint, 1, @status, @workflowId, @createdAt, @updatedAt, @dueAt, @awaitingChannel, @awaitingCorrelationId, @errorType)
+                    INSERT INTO WorkflowRuns (RunId, Checkpoint, Version, Status, WorkflowId, CreatedAt, UpdatedAt, DueAt, AwaitingChannel, AwaitingCorrelationId, ErrorType, CorrelationId, Tags)
+                    VALUES (@id, @checkpoint, 1, @status, @workflowId, @createdAt, @updatedAt, @dueAt, @awaitingChannel, @awaitingCorrelationId, @errorType, @correlationId, @tags)
                     ON CONFLICT(RunId) DO NOTHING;
                     """;
                 BindRun(insert, id, checkpoint, indexCopy);
@@ -133,7 +133,8 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
                 UPDATE WorkflowRuns
                 SET Checkpoint = @checkpoint, Version = Version + 1, Status = @status, WorkflowId = @workflowId,
                     CreatedAt = @createdAt, UpdatedAt = @updatedAt, DueAt = @dueAt,
-                    AwaitingChannel = @awaitingChannel, AwaitingCorrelationId = @awaitingCorrelationId, ErrorType = @errorType
+                    AwaitingChannel = @awaitingChannel, AwaitingCorrelationId = @awaitingCorrelationId, ErrorType = @errorType,
+                    CorrelationId = @correlationId, Tags = @tags
                 WHERE RunId = @id AND Version = @expectedVersion;
                 """;
             BindRun(update, id, checkpoint, indexCopy);
@@ -301,17 +302,45 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             using SqliteCommand select = this.connection.CreateCommand();
             select.CommandText =
                 """
-                SELECT RunId, Status, WorkflowId, CreatedAt, UpdatedAt, DueAt, AwaitingChannel, AwaitingCorrelationId, ErrorType
+                SELECT RunId, Status, WorkflowId, CreatedAt, UpdatedAt, DueAt, AwaitingChannel, AwaitingCorrelationId, ErrorType, CorrelationId, Tags
                 FROM WorkflowRuns
                 WHERE (@status IS NULL OR Status = @status) AND (@workflowId IS NULL OR WorkflowId = @workflowId)
+                  AND (@createdAfter IS NULL OR CreatedAt >= @createdAfter)
+                  AND (@createdBefore IS NULL OR CreatedAt < @createdBefore)
+                  AND (@updatedAfter IS NULL OR UpdatedAt >= @updatedAfter)
+                  AND (@updatedBefore IS NULL OR UpdatedAt < @updatedBefore)
+                  AND (@correlationId IS NULL OR CorrelationId = @correlationId)
+                  {{tagPredicates}}
                   AND (@after IS NULL OR RunId > @after)
                 ORDER BY RunId
                 LIMIT @limit;
                 """;
             select.Parameters.AddWithValue("@status", (object?)query.Status?.ToString() ?? DBNull.Value);
             select.Parameters.AddWithValue("@workflowId", (object?)query.WorkflowId ?? DBNull.Value);
+            select.Parameters.AddWithValue("@createdAfter", (object?)query.CreatedAfter?.ToUnixTimeMilliseconds() ?? DBNull.Value);
+            select.Parameters.AddWithValue("@createdBefore", (object?)query.CreatedBefore?.ToUnixTimeMilliseconds() ?? DBNull.Value);
+            select.Parameters.AddWithValue("@updatedAfter", (object?)query.UpdatedAfter?.ToUnixTimeMilliseconds() ?? DBNull.Value);
+            select.Parameters.AddWithValue("@updatedBefore", (object?)query.UpdatedBefore?.ToUnixTimeMilliseconds() ?? DBNull.Value);
+            select.Parameters.AddWithValue("@correlationId", (object?)query.CorrelationId ?? DBNull.Value);
             select.Parameters.AddWithValue("@after", (object?)after ?? DBNull.Value);
             select.Parameters.AddWithValue("@limit", query.Limit + 1);
+
+            if (query.Tags is { Count: > 0 } tags)
+            {
+                var predicates = new System.Text.StringBuilder();
+                for (int i = 0; i < tags.Count; i++)
+                {
+                    string name = "@tag" + i.ToString(CultureInfo.InvariantCulture);
+                    predicates.Append("AND Tags LIKE ").Append(name).Append(" ESCAPE '\\'\n                  ");
+                    select.Parameters.AddWithValue(name, "%" + EscapeLike(tags[i]) + "%");
+                }
+
+                select.CommandText = select.CommandText.Replace("{{tagPredicates}}", predicates.ToString().TrimEnd());
+            }
+            else
+            {
+                select.CommandText = select.CommandText.Replace("{{tagPredicates}}", string.Empty);
+            }
 
             var runs = new List<WorkflowRunListing>();
             using SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
@@ -325,7 +354,9 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
                     reader.IsDBNull(5) ? null : FromUnixMilliseconds(reader.GetInt64(5)),
                     reader.IsDBNull(6) ? null : reader.GetString(6),
                     reader.IsDBNull(7) ? null : reader.GetString(7),
-                    reader.IsDBNull(8) ? null : reader.GetString(8));
+                    reader.IsDBNull(8) ? null : reader.GetString(8),
+                    CorrelationId: reader.IsDBNull(9) ? null : reader.GetString(9),
+                    Tags: DecodeTags(reader.IsDBNull(10) ? null : reader.GetString(10)));
                 runs.Add(new WorkflowRunListing(new WorkflowRunId(reader.GetString(0)), entry));
             }
 
@@ -356,7 +387,26 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         command.Parameters.AddWithValue("@awaitingChannel", (object?)index.AwaitingChannel ?? DBNull.Value);
         command.Parameters.AddWithValue("@awaitingCorrelationId", (object?)index.AwaitingCorrelationId ?? DBNull.Value);
         command.Parameters.AddWithValue("@errorType", (object?)index.ErrorType ?? DBNull.Value);
+        command.Parameters.AddWithValue("@correlationId", (object?)index.CorrelationId ?? DBNull.Value);
+        command.Parameters.AddWithValue("@tags", (object?)EncodeTags(index.Tags) ?? DBNull.Value);
     }
+
+    private static string? EncodeTags(IReadOnlyList<string>? tags)
+        => tags is { Count: > 0 } ? "\u001F" + string.Join('\u001F', tags) + "\u001F" : null;
+
+    private static IReadOnlyList<string>? DecodeTags(string? encoded)
+    {
+        if (string.IsNullOrEmpty(encoded))
+        {
+            return null;
+        }
+
+        string[] parts = encoded.Trim('\u001F').Split('\u001F', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length == 0 ? null : parts;
+    }
+
+    private static string EscapeLike(string value)
+        => value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
 
     private static DateTimeOffset FromUnixMilliseconds(long milliseconds) => DateTimeOffset.FromUnixTimeMilliseconds(milliseconds);
 
@@ -397,7 +447,9 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             DueAt INTEGER NULL,
             AwaitingChannel TEXT NULL,
             AwaitingCorrelationId TEXT NULL,
-            ErrorType TEXT NULL
+            ErrorType TEXT NULL,
+            CorrelationId TEXT NULL,
+            Tags TEXT NULL
         );
         CREATE INDEX IF NOT EXISTS IX_WorkflowRuns_Due ON WorkflowRuns (Status, DueAt);
         CREATE INDEX IF NOT EXISTS IX_WorkflowRuns_Awaiting ON WorkflowRuns (Status, AwaitingChannel, AwaitingCorrelationId);

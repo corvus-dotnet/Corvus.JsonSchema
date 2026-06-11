@@ -17,11 +17,23 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// <see langword="null"/> for the first page. Stores page by ascending run id (keyset), so the token encodes the
 /// last run id of the previous page.
 /// </param>
+/// <param name="CreatedAfter">Restrict to runs created at or after this instant (inclusive), if set.</param>
+/// <param name="CreatedBefore">Restrict to runs created strictly before this instant (exclusive), if set.</param>
+/// <param name="UpdatedAfter">Restrict to runs last updated at or after this instant (inclusive), if set.</param>
+/// <param name="UpdatedBefore">Restrict to runs last updated strictly before this instant (exclusive), if set.</param>
+/// <param name="CorrelationId">Restrict to runs with this telemetry correlation id (exact match), if set.</param>
+/// <param name="Tags">Restrict to runs carrying every one of these tags (AND), if set.</param>
 public readonly record struct WorkflowQuery(
     WorkflowRunStatus? Status = null,
     string? WorkflowId = null,
     int Limit = 100,
-    string? ContinuationToken = null);
+    string? ContinuationToken = null,
+    DateTimeOffset? CreatedAfter = null,
+    DateTimeOffset? CreatedBefore = null,
+    DateTimeOffset? UpdatedAfter = null,
+    DateTimeOffset? UpdatedBefore = null,
+    string? CorrelationId = null,
+    IReadOnlyList<string>? Tags = null);
 
 /// <summary>One run in a <see cref="WorkflowRunPage"/>: its id and the indexed projection.</summary>
 /// <param name="Id">The run id.</param>

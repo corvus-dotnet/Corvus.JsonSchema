@@ -53,7 +53,9 @@ public static class WorkflowCheckpointSerializer
         IReadOnlyDictionary<string, JsonElement> stepOutputs,
         in JsonElement outputs,
         WorkflowWait? wait = null,
-        WorkflowFault? fault = null)
+        WorkflowFault? fault = null,
+        string? correlationId = null,
+        IReadOnlyList<string>? tags = null)
     {
         ArgumentNullException.ThrowIfNull(workflowId);
         ArgumentNullException.ThrowIfNull(retryCounters);
@@ -69,6 +71,23 @@ public static class WorkflowCheckpointSerializer
             writer.WriteString("status"u8, StatusName(status));
             writer.WriteNumber("cursor"u8, cursor);
             writer.WriteString("createdAt"u8, createdAt);
+
+            // Run-creation metadata (immutable): the telemetry correlation id and free-form tags.
+            if (correlationId is { } cid)
+            {
+                writer.WriteString("correlationId"u8, cid);
+            }
+
+            if (tags is { Count: > 0 })
+            {
+                writer.WriteStartArray("tags"u8);
+                foreach (string tag in tags)
+                {
+                    writer.WriteStringValue(tag);
+                }
+
+                writer.WriteEndArray();
+            }
 
             writer.WriteStartObject("retryCounters"u8);
             foreach (KeyValuePair<string, int> counter in retryCounters)
@@ -124,9 +143,9 @@ public static class WorkflowCheckpointSerializer
                 else
                 {
                     writer.WriteString("channel"u8, w.Channel);
-                    if (w.CorrelationId is { } correlationId)
+                    if (w.CorrelationId is { } waitCorrelationId)
                     {
-                        writer.WriteString("correlationId"u8, correlationId);
+                        writer.WriteString("correlationId"u8, waitCorrelationId);
                     }
                 }
 
@@ -169,6 +188,21 @@ public static class WorkflowCheckpointSerializer
             DateTimeOffset createdAt = root.TryGetProperty("createdAt"u8, out JsonElement createdAtElement)
                 ? createdAtElement.GetDateTimeOffset()
                 : default;
+
+            string? correlationId = root.TryGetProperty("correlationId"u8, out JsonElement correlationIdMeta) ? correlationIdMeta.GetString() : null;
+
+            List<string>? tags = null;
+            if (root.TryGetProperty("tags"u8, out JsonElement tagsElement) && tagsElement.ValueKind == JsonValueKind.Array)
+            {
+                tags = [];
+                foreach (JsonElement tag in tagsElement.EnumerateArray())
+                {
+                    if (tag.GetString() is { } t)
+                    {
+                        tags.Add(t);
+                    }
+                }
+            }
 
             Dictionary<string, int> retryCounters = [];
             if (root.TryGetProperty("retryCounters"u8, out JsonElement retryCountersElement))
@@ -222,7 +256,7 @@ public static class WorkflowCheckpointSerializer
                     faultElement.GetProperty("at"u8).GetDateTimeOffset());
             }
 
-            return new WorkflowCheckpointState(document, runId, workflowId, status, cursor, createdAt, retryCounters, correlationTokens, inputs, stepOutputs, outputs, wait, fault);
+            return new WorkflowCheckpointState(document, runId, workflowId, status, cursor, createdAt, retryCounters, correlationTokens, inputs, stepOutputs, outputs, wait, fault, correlationId, tags);
         }
         catch
         {

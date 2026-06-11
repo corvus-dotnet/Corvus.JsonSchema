@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Arazzo Control Plane — UI kit demo</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="../src/arazzo-kit.css">
+  <style>
+    body { font-family: var(--arazzo-font); color: var(--arazzo-text); background: var(--arazzo-bg); margin: 0; }
+    .page { max-width: 1100px; margin: 0 auto; padding: 24px 20px 48px; }
+    header.top { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+    h1 { font-size: 20px; margin: 0; }
+    .sub { color: var(--arazzo-muted); font-size: 13px; }
+    .controls { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin: 16px 0 20px; padding: 12px 14px; border: 1px solid var(--arazzo-border); border-radius: var(--arazzo-radius); background: var(--arazzo-surface); }
+    .controls label { font-size: 13px; display: inline-flex; gap: 6px; align-items: center; }
+    .controls select { font: inherit; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--arazzo-border); background: var(--arazzo-bg); color: var(--arazzo-text); }
+    .note { font-size: 12px; color: var(--arazzo-muted); margin-top: 24px; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="top">
+      <h1>Arazzo Control Plane</h1>
+      <span class="sub">UI kit demo — running against an in-memory mock API (no server)</span>
+    </header>
+
+    <div class="controls">
+      <label>Theme
+        <select id="theme">
+          <option value="auto" selected>auto</option>
+          <option value="light">light</option>
+          <option value="dark">dark</option>
+        </select>
+      </label>
+      <label>Scopes
+        <select id="scopes">
+          <option value="runs:read runs:write runs:purge" selected>read + write + purge (full)</option>
+          <option value="runs:read runs:write">read + write</option>
+          <option value="runs:read">read only</option>
+        </select>
+      </label>
+      <span class="sub">Try the faulted run’s <strong>Resume…</strong>, cancel a running one, or <strong>Purge…</strong> old completed runs.</span>
+    </div>
+
+    <arazzo-control-plane base-url="https://mock/arazzo/v1" scopes="runs:read runs:write runs:purge" theme="auto" poll="4000"></arazzo-control-plane>
+
+    <p class="note">
+      The kit talks to the mock through the client’s <code>fetch</code> hook — in a real app you’d set
+      <code>panel.authProvider = () =&gt; 'Bearer …'</code> instead and point <code>base-url</code> at your
+      control-plane host. See <code>../README.md</code>.
+    </p>
+  </div>
+
+  <script type="module">
+    import { createMockControlPlane } from './mock-api.js';
+    import '../src/arazzo-control-plane.js';
+
+    const mock = createMockControlPlane();
+    const panel = document.querySelector('arazzo-control-plane');
+    panel.fetch = mock.fetch; // inject the mock; a real host sets panel.authProvider instead
+
+    // Theme drives both the panel (its `theme` attribute) and the surrounding page (arazzo-kit.css honours
+    // data-theme on <html>); 'auto' falls back to the OS preference for both.
+    const applyTheme = (v) => {
+      panel.setAttribute('theme', v);
+      if (v === 'auto') document.documentElement.removeAttribute('data-theme');
+      else document.documentElement.setAttribute('data-theme', v);
+    };
+    const themeSel = document.getElementById('theme');
+    themeSel.addEventListener('change', (e) => applyTheme(e.target.value));
+    applyTheme(themeSel.value);
+
+    document.getElementById('scopes').addEventListener('change', (e) => panel.setAttribute('scopes', e.target.value));
+
+    // Surface kit events in the console so you can see the composition contract at work.
+    for (const type of ['run-selected', 'run-changed', 'run-deleted', 'purge-completed', 'error']) {
+      panel.addEventListener(type, (e) => console.log(`[arazzo] ${type}`, e.detail));
+    }
+  </script>
+</body>
+</html>

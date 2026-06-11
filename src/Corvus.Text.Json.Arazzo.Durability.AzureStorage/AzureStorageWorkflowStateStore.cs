@@ -290,6 +290,31 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             filter += TableClient.CreateQueryFilter($" and WorkflowId eq {workflowId}");
         }
 
+        if (query.CorrelationId is { } cid)
+        {
+            filter += TableClient.CreateQueryFilter($" and CorrelationId eq {cid}");
+        }
+
+        if (query.CreatedAfter is { } createdAfter)
+        {
+            filter += TableClient.CreateQueryFilter($" and CreatedAt ge {createdAfter.ToUnixTimeMilliseconds()}");
+        }
+
+        if (query.CreatedBefore is { } createdBefore)
+        {
+            filter += TableClient.CreateQueryFilter($" and CreatedAt lt {createdBefore.ToUnixTimeMilliseconds()}");
+        }
+
+        if (query.UpdatedAfter is { } updatedAfter)
+        {
+            filter += TableClient.CreateQueryFilter($" and UpdatedAt ge {updatedAfter.ToUnixTimeMilliseconds()}");
+        }
+
+        if (query.UpdatedBefore is { } updatedBefore)
+        {
+            filter += TableClient.CreateQueryFilter($" and UpdatedAt lt {updatedBefore.ToUnixTimeMilliseconds()}");
+        }
+
         // Table storage returns entities ordered by PartitionKey then RowKey, and the run id is the RowKey
         // within the single index partition — so results arrive in ascending run-id order and a RowKey keyset
         // gives the continuation.
@@ -298,10 +323,21 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             filter += TableClient.CreateQueryFilter($" and RowKey gt {after}");
         }
 
+        // Table OData cannot match inside the serialized TagsJson, so a contains-ALL tag predicate is applied
+        // client-side. It must run before the keyset "take Limit (plus one to detect a further page)" cut so
+        // paging stays correct: filter the materialised stream, then take.
+        IReadOnlyList<string>? qtags = query.Tags is { Count: > 0 } t ? t : null;
+
         var runs = new List<WorkflowRunListing>();
         await foreach (TableEntity entity in this.index.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
         {
-            runs.Add(new WorkflowRunListing(new WorkflowRunId(entity.RowKey), ReadIndexEntity(entity)));
+            WorkflowRunIndexEntry entry = ReadIndexEntity(entity);
+            if (qtags is not null && !(entry.Tags is { } rt && qtags.All(rt.Contains)))
+            {
+                continue;
+            }
+
+            runs.Add(new WorkflowRunListing(new WorkflowRunId(entity.RowKey), entry));
             if (runs.Count > query.Limit)
             {
                 break;
@@ -341,6 +377,16 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             entity["ErrorType"] = errorType;
         }
 
+        if (index.CorrelationId is { } cid)
+        {
+            entity["CorrelationId"] = cid;
+        }
+
+        if (index.Tags is { Count: > 0 } t)
+        {
+            entity["TagsJson"] = System.Text.Json.JsonSerializer.Serialize(t);
+        }
+
         return entity;
     }
 
@@ -355,6 +401,8 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             due is { } d ? DateTimeOffset.FromUnixTimeMilliseconds(d) : null,
             entity.GetString("AwaitingChannel"),
             entity.GetString("AwaitingCorrelationId"),
-            entity.GetString("ErrorType"));
+            entity.GetString("ErrorType"),
+            CorrelationId: entity.GetString("CorrelationId"),
+            Tags: entity.GetString("TagsJson") is { } tagsJson ? System.Text.Json.JsonSerializer.Deserialize<List<string>>(tagsJson) : null);
     }
 }

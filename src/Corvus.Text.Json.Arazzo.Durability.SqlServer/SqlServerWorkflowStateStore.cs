@@ -91,8 +91,8 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
             await using SqlCommand insert = connection.CreateCommand();
             insert.CommandText =
                 """
-                INSERT INTO workflow_runs (run_id, [checkpoint], version, status, workflow_id, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type)
-                VALUES (@id, @checkpoint, 1, @status, @workflow_id, @created_at, @updated_at, @due_at, @awaiting_channel, @awaiting_correlation_id, @error_type);
+                INSERT INTO workflow_runs (run_id, [checkpoint], version, status, workflow_id, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type, correlation_id, tags)
+                VALUES (@id, @checkpoint, 1, @status, @workflow_id, @created_at, @updated_at, @due_at, @awaiting_channel, @awaiting_correlation_id, @error_type, @correlation_id, @tags);
                 """;
             BindRun(insert, id, checkpoint, index);
             try
@@ -114,7 +114,8 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
             UPDATE workflow_runs
             SET [checkpoint] = @checkpoint, version = version + 1, status = @status, workflow_id = @workflow_id,
                 created_at = @created_at, updated_at = @updated_at, due_at = @due_at,
-                awaiting_channel = @awaiting_channel, awaiting_correlation_id = @awaiting_correlation_id, error_type = @error_type
+                awaiting_channel = @awaiting_channel, awaiting_correlation_id = @awaiting_correlation_id, error_type = @error_type,
+                correlation_id = @correlation_id, tags = @tags
             WHERE run_id = @id AND version = @expected_version;
             """;
         BindRun(update, id, checkpoint, index);
@@ -242,16 +243,44 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
         await using SqlCommand select = connection.CreateCommand();
         select.CommandText =
             """
-            SELECT TOP (@limit) run_id, status, workflow_id, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type
+            SELECT TOP (@limit) run_id, status, workflow_id, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type, correlation_id, tags
             FROM workflow_runs
             WHERE (@status IS NULL OR status = @status) AND (@workflow_id IS NULL OR workflow_id = @workflow_id)
+              AND (@created_after IS NULL OR created_at >= @created_after)
+              AND (@created_before IS NULL OR created_at < @created_before)
+              AND (@updated_after IS NULL OR updated_at >= @updated_after)
+              AND (@updated_before IS NULL OR updated_at < @updated_before)
+              AND (@correlation_id IS NULL OR correlation_id = @correlation_id)
+              {{tagPredicates}}
               AND (@after IS NULL OR run_id > @after)
             ORDER BY run_id;
             """;
         select.Parameters.Add(NullableText("@status", query.Status?.ToString()));
         select.Parameters.Add(NullableText("@workflow_id", query.WorkflowId));
+        select.Parameters.Add(NullableBigint("@created_after", query.CreatedAfter?.ToUnixTimeMilliseconds()));
+        select.Parameters.Add(NullableBigint("@created_before", query.CreatedBefore?.ToUnixTimeMilliseconds()));
+        select.Parameters.Add(NullableBigint("@updated_after", query.UpdatedAfter?.ToUnixTimeMilliseconds()));
+        select.Parameters.Add(NullableBigint("@updated_before", query.UpdatedBefore?.ToUnixTimeMilliseconds()));
+        select.Parameters.Add(NullableText("@correlation_id", query.CorrelationId));
         select.Parameters.Add(NullableText("@after", after));
         select.Parameters.AddWithValue("@limit", query.Limit + 1);
+
+        if (query.Tags is { Count: > 0 } tags)
+        {
+            var predicates = new System.Text.StringBuilder();
+            for (int i = 0; i < tags.Count; i++)
+            {
+                string name = "@tag" + i.ToString(CultureInfo.InvariantCulture);
+                predicates.Append("AND tags LIKE ").Append(name).Append(" ESCAPE '\\'\n              ");
+                select.Parameters.Add(NullableText(name, "%" + EscapeLike(tags[i]) + "%"));
+            }
+
+            select.CommandText = select.CommandText.Replace("{{tagPredicates}}", predicates.ToString().TrimEnd());
+        }
+        else
+        {
+            select.CommandText = select.CommandText.Replace("{{tagPredicates}}", string.Empty);
+        }
 
         var runs = new List<WorkflowRunListing>();
         await using SqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
@@ -265,7 +294,9 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
                 reader.IsDBNull(5) ? null : DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(5)),
                 reader.IsDBNull(6) ? null : reader.GetString(6),
                 reader.IsDBNull(7) ? null : reader.GetString(7),
-                reader.IsDBNull(8) ? null : reader.GetString(8));
+                reader.IsDBNull(8) ? null : reader.GetString(8),
+                CorrelationId: reader.IsDBNull(9) ? null : reader.GetString(9),
+                Tags: DecodeTags(reader.IsDBNull(10) ? null : reader.GetString(10)));
             runs.Add(new WorkflowRunListing(new WorkflowRunId(reader.GetString(0)), entry));
         }
 
@@ -284,7 +315,26 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
         command.Parameters.Add(NullableText("@awaiting_channel", index.AwaitingChannel));
         command.Parameters.Add(NullableText("@awaiting_correlation_id", index.AwaitingCorrelationId));
         command.Parameters.Add(NullableText("@error_type", index.ErrorType));
+        command.Parameters.Add(NullableText("@correlation_id", index.CorrelationId));
+        command.Parameters.Add(NullableText("@tags", EncodeTags(index.Tags)));
     }
+
+    private static string? EncodeTags(IReadOnlyList<string>? tags)
+        => tags is { Count: > 0 } ? "\u001F" + string.Join('\u001F', tags) + "\u001F" : null;
+
+    private static IReadOnlyList<string>? DecodeTags(string? encoded)
+    {
+        if (string.IsNullOrEmpty(encoded))
+        {
+            return null;
+        }
+
+        string[] parts = encoded.Trim('\u001F').Split('\u001F', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length == 0 ? null : parts;
+    }
+
+    private static string EscapeLike(string value)
+        => value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
 
     private static SqlParameter NullableText(string name, string? value)
         => new(name, SqlDbType.NVarChar) { Value = (object?)value ?? DBNull.Value };
@@ -322,7 +372,9 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
                 due_at BIGINT NULL,
                 awaiting_channel NVARCHAR(255) NULL,
                 awaiting_correlation_id NVARCHAR(255) NULL,
-                error_type NVARCHAR(1024) NULL
+                error_type NVARCHAR(1024) NULL,
+                correlation_id NVARCHAR(MAX) NULL,
+                tags NVARCHAR(MAX) NULL
             );
             CREATE INDEX ix_workflow_runs_due ON workflow_runs (status, due_at);
             CREATE INDEX ix_workflow_runs_awaiting ON workflow_runs (status, awaiting_channel, awaiting_correlation_id);

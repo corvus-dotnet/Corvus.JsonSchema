@@ -21,16 +21,6 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
-/// <remarks>
-/// <para>
-/// Examples:
-/// <example>
-/// <code>
-/// 100
-/// </code>
-/// </example>
-/// </para>
-/// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
 public readonly partial struct Schema
 {
@@ -62,36 +52,11 @@ public readonly partial struct Schema
             _documentVersion = _parent?.Version ?? 0;
         }
 
-        /// <summary>
-        /// Gets a read-only default instance of the mutable type, surfacing the schema default value.
-        /// </summary>
-        /// <remarks>
-        /// The instance is a zero-copy facade over the immutable default, so it can be read but not
-        /// mutated; attempting to mutate it throws an <see cref="InvalidOperationException"/> directing
-        /// the caller to set the value on its parent first.
-        /// </remarks>
-        public static Mutable DefaultInstance { get; } = JsonElementHelpers.CreateDefaultValueElement<Schema, Mutable>(Schema.DefaultInstance);
-
         /// <inheritdoc/>
         public JsonValueKind ValueKind => TokenType.ToValueKind();
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator long(Mutable value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator double(Mutable value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator Corvus.Numerics.BigNumber(Mutable value) => value._parent.TryGetValue(value._idx, out Corvus.Numerics.BigNumber result) ? result : throw new FormatException();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator System.Numerics.BigInteger(Mutable value) => value._parent.TryGetValue(value._idx, out System.Numerics.BigInteger result) ? result : throw new FormatException();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator decimal(Mutable value) => value._parent.TryGetValue(value._idx, out decimal result) ? result : throw new FormatException();
 
         /// <summary>
         /// Operator ==.
@@ -196,59 +161,41 @@ public readonly partial struct Schema
             return new(instance.ParentDocument, instance.ParentDocumentIndex);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetValue(out long value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
+        /// <summary>
+        /// Gets the item at the given index.
+        /// </summary>
+        /// <param name="index">The index at which to retrieve the item.</param>
+        /// <returns>The item at the given index.</returns>
+        /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
+        /// <exception cref="InvalidOperationException">The value is not an array.</exception>
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable this[int index]
+        {
+            get
+            {
+                CheckValidInstance();
+                return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable>(_idx, index);
+            }
+        }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetValue(out int value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
+        /// <summary>
+        /// Gets the array length.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">The value is not an array.</exception>
+        public int GetArrayLength()
+        {
+            CheckValidInstance();
+            return _parent.GetArrayLength(_idx);
+        }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetValue(out short value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetValue(out sbyte value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetValue(out ulong value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetValue(out uint value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetValue(out ushort value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetValue(out byte value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
-
-#if NET
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetValue(out Int128 value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
-#endif
-
-#if NET
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetValue(out UInt128 value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
-#endif
-
-#if NET
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetValue(out Half value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
-#endif
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetValue(out double value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetValue(out float value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetValue(out Corvus.Numerics.BigNumber value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetValue(out System.Numerics.BigInteger value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetValue(out decimal value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
+        /// <summary>
+        /// Enumerates the array.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">The value is not an array.</exception>
+        public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable> EnumerateArray()
+        {
+            CheckValidInstance();
+            return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable>(_parent, _idx);
+        }
 
         /// <inheritdoc/>
         public override bool Equals(object? obj)
@@ -267,36 +214,6 @@ public readonly partial struct Schema
             where T : struct, IJsonElement
         {
             return JsonElementHelpers.DeepEquals(this, other);
-        }
-
-        /// <summary>
-        /// Compare with a normalized JSON number.
-        /// </summary>
-        /// <param ref="number">The normalized JSON number to compare with.</param>
-        /// <returns><see langword="true"/> if the values are equal.</returns>
-        public bool ValueEquals(in NormalizedJsonNumber number)
-        {
-            if (TokenType != JsonTokenType.Number)
-            {
-                return false;
-            }
-
-            JsonElementHelpers.ParseNumber(
-                _parent.GetRawSimpleValueUnsafe(_idx).Span,
-                out bool leftIsNegative,
-                out ReadOnlySpan<byte> leftIntegral,
-                out ReadOnlySpan<byte> leftFractional,
-                out int leftExponent);
-
-            return JsonElementHelpers.AreEqualNormalizedJsonNumbers(
-                leftIsNegative,
-                leftIntegral,
-                leftFractional,
-                leftExponent,
-                number.IsNegative,
-                number.Integral,
-                number.Fractional,
-                number.Exponent);
         }
 
         /// <inheritdoc/>
@@ -384,6 +301,358 @@ public readonly partial struct Schema
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebuggerDisplay => $"Schema.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+        /// <summary>
+        ///   Sets the value of an array element at the specified index.
+        /// </summary>
+        /// <param name="itemIndex">The zero-based index of the array element to set.</param>
+        /// <param name="value">The item value to set.</param>
+        /// <exception cref="InvalidOperationException">
+        ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+        ///   or the element reference is stale due to document mutations.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        ///   The parent <see cref="JsonDocument"/> has been disposed.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///   <paramref name="itemIndex"/> is negative or greater than the array length.
+        /// </exception>
+        /// <remarks>
+        ///   <para>
+        ///     This method allows replacing existing array elements or appending new elements
+        ///     when <paramref name="itemIndex"/> equals the current array length.
+        ///   </para>
+        /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                RemoveAt(itemIndex);
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 30);
+            value.AddAsItem(ref cvb);
+            int arrayLength = GetArrayLength();
+            if (itemIndex == arrayLength)
+            {
+                _parent.InsertAndDispose(_idx, _idx + _parent.GetDbSize(_idx, false), ref cvb);
+            }
+            else
+            {
+                _parent.GetArrayIndexElement(_idx, itemIndex, out IMutableJsonDocument elementParent, out int elementIdx);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+        /// <summary>
+        ///   Inserts an item into the array at the specified index.
+        /// </summary>
+        /// <param name="itemIndex">The zero-based index of the array element at which to insert.</param>
+        /// <param name="value">The item value to insert.</param>
+        /// <exception cref="InvalidOperationException">
+        ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+        ///   or the element reference is stale due to document mutations.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        ///   The parent <see cref="JsonDocument"/> has been disposed.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///   <paramref name="itemIndex"/> is negative or greater than the array length.
+        /// </exception>
+        /// <remarks>
+        ///   <para>
+        ///     This method allows inserting array elements or appending new elements
+        ///     when <paramref name="itemIndex"/> equals the current array length.
+        ///   </para>
+        /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void InsertItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 30);
+            value.AddAsItem(ref cvb);
+            _parent.InsertAndDispose(_idx, _parent.GetArrayInsertionIndex(_idx, itemIndex), ref cvb);
+            _documentVersion = _parent.Version;
+        }
+        /// <summary>
+        ///   Adds an item to the end of the array.
+        /// </summary>
+        /// <param name="value">The item value to add.</param>
+        /// <exception cref="InvalidOperationException">
+        ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+        ///   or the element reference is stale due to document mutations.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        ///   The parent <see cref="JsonDocument"/> has been disposed.
+        /// </exception>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
+        {
+            InsertItem(GetArrayLength(), in value);
+        }
+        /// <summary>
+        ///   Inserts multiple items into the array at the specified index,
+        ///   using an <see cref="JsonElement.ArrayBuilder"/> delegate to build the items.
+        /// </summary>
+        /// <param name="itemIndex">The zero-based index at which to insert the items.</param>
+        /// <param name="rangeBuilder">A delegate that adds items to an <see cref="JsonElement.ArrayBuilder"/>.</param>
+        /// <param name="estimatedMemberCount">The estimated total number of elements for capacity optimization.</param>
+        /// <exception cref="InvalidOperationException">
+        ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+        ///   or the element reference is stale due to document mutations.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        ///   The parent <see cref="JsonDocument"/> has been disposed.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///   <paramref name="itemIndex"/> is negative or greater than the array length.
+        /// </exception>
+        /// <remarks>
+        ///   <para>
+        ///     Only the items built by the delegate are inserted — no array wrapper is added.
+        ///   </para>
+        /// </remarks>
+        public void InsertRange(int itemIndex, JsonElement.ArrayBuilder.Build rangeBuilder, int estimatedMemberCount = 30)
+        {
+            CheckValidInstance();
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, estimatedMemberCount);
+            JsonElement.ArrayBuilder.BuildItems(rangeBuilder, ref cvb);
+            _parent.InsertAndDispose(_idx, _parent.GetArrayInsertionIndex(_idx, itemIndex), ref cvb);
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        ///   Inserts multiple items into the array at the specified index,
+        ///   using an <see cref="JsonElement.ArrayBuilder"/> delegate with a context parameter.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="itemIndex">The zero-based index at which to insert the items.</param>
+        /// <param name="context">The context to pass to the builder delegate.</param>
+        /// <param name="rangeBuilder">A delegate that adds items to an <see cref="JsonElement.ArrayBuilder"/>.</param>
+        /// <param name="estimatedMemberCount">The estimated total number of elements for capacity optimization.</param>
+        /// <exception cref="InvalidOperationException">
+        ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+        ///   or the element reference is stale due to document mutations.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        ///   The parent <see cref="JsonDocument"/> has been disposed.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///   <paramref name="itemIndex"/> is negative or greater than the array length.
+        /// </exception>
+        /// <remarks>
+        ///   <para>
+        ///     Only the items built by the delegate are inserted — no array wrapper is added.
+        ///   </para>
+        /// </remarks>
+        public void InsertRange<TContext>(int itemIndex, in TContext context, JsonElement.ArrayBuilder.Build<TContext> rangeBuilder, int estimatedMemberCount = 30)
+        #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+        #endif
+        {
+            CheckValidInstance();
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, estimatedMemberCount);
+            JsonElement.ArrayBuilder.BuildItems(context, rangeBuilder, ref cvb);
+            _parent.InsertAndDispose(_idx, _parent.GetArrayInsertionIndex(_idx, itemIndex), ref cvb);
+            _documentVersion = _parent.Version;
+        }
+        /// <summary>
+        ///   Appends multiple items to the end of the array,
+        ///   using an <see cref="JsonElement.ArrayBuilder"/> delegate to build the items.
+        /// </summary>
+        /// <param name="rangeBuilder">A delegate that adds items to an <see cref="JsonElement.ArrayBuilder"/>.</param>
+        /// <param name="estimatedMemberCount">The estimated total number of elements for capacity optimization.</param>
+        /// <exception cref="InvalidOperationException">
+        ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+        ///   or the element reference is stale due to document mutations.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        ///   The parent <see cref="JsonDocument"/> has been disposed.
+        /// </exception>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddRange(JsonElement.ArrayBuilder.Build rangeBuilder, int estimatedMemberCount = 30)
+        {
+            InsertRange(GetArrayLength(), rangeBuilder, estimatedMemberCount);
+        }
+
+        /// <summary>
+        ///   Appends multiple items to the end of the array,
+        ///   using an <see cref="JsonElement.ArrayBuilder"/> delegate with a context parameter.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder delegate.</param>
+        /// <param name="rangeBuilder">A delegate that adds items to an <see cref="JsonElement.ArrayBuilder"/>.</param>
+        /// <param name="estimatedMemberCount">The estimated total number of elements for capacity optimization.</param>
+        /// <exception cref="InvalidOperationException">
+        ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+        ///   or the element reference is stale due to document mutations.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        ///   The parent <see cref="JsonDocument"/> has been disposed.
+        /// </exception>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddRange<TContext>(in TContext context, JsonElement.ArrayBuilder.Build<TContext> rangeBuilder, int estimatedMemberCount = 30)
+        #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+        #endif
+        {
+            InsertRange(GetArrayLength(), context, rangeBuilder, estimatedMemberCount);
+        }
+
+        /// <summary>
+        ///   Removes a range of items from the array starting at the specified index.
+        /// </summary>
+        /// <param name="startIndex">The zero-based index at which to begin removing items.</param>
+        /// <param name="count">The number of items to remove.</param>
+        /// <exception cref="InvalidOperationException">
+        ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+        ///   or the element reference is stale due to document mutations.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        ///   The parent <see cref="JsonDocument"/> has been disposed.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///   <paramref name="startIndex"/> is negative or greater than the current array length.
+        /// </exception>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RemoveRange(int startIndex, int count)
+        {
+            CheckValidInstance();
+            JsonElementHelpers.RemoveRangeUnsafe(this, startIndex, count);
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        ///   Removes a single item from the array at the specified index.
+        /// </summary>
+        /// <param name="index">The zero-based index of the item to remove.</param>
+        /// <exception cref="InvalidOperationException">
+        ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+        ///   or the element reference is stale due to document mutations.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        ///   The parent <see cref="JsonDocument"/> has been disposed.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///   <paramref name="index"/> is negative or greater than or equal to the current array length.
+        /// </exception>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RemoveAt(int index)
+        {
+            CheckValidInstance();
+            JsonElementHelpers.RemoveRangeUnsafe(this, index, 1);
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        ///   Removes the first array element that equals the specified item.
+        /// </summary>
+        /// <param name="item">The item to find and remove.</param>
+        /// <returns><see langword="true"/> if an element was found and removed; otherwise, <see langword="false"/>.</returns>
+        /// <exception cref="InvalidOperationException">
+        ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+        ///   or the element reference is stale due to document mutations.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        ///   The parent <see cref="JsonDocument"/> has been disposed.
+        /// </exception>
+        public bool Remove(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString item)
+        {
+            CheckValidInstance();
+            if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString>(this, in item))
+            {
+                return false;
+            }
+
+            _documentVersion = _parent.Version;
+            return true;
+        }
+
+        /// <summary>
+        ///   Removes all array elements that match the specified predicate.
+        /// </summary>
+        /// <param name="predicate">The predicate function that determines which elements to remove.</param>
+        /// <exception cref="InvalidOperationException">
+        ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+        ///   or the element reference is stale due to document mutations.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        ///   The parent <see cref="JsonDocument"/> has been disposed.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        ///   <paramref name="predicate"/> is <see langword="null"/>.
+        /// </exception>
+        /// <remarks>
+        ///   <para>
+        ///     This method efficiently removes elements in a single pass by iterating backwards
+        ///     through the array and removing consecutive blocks of matching elements.
+        ///   </para>
+        ///   <para>
+        ///     The predicate function is called for each element in the array. If the predicate
+        ///     returns <see langword="true"/>, the element will be removed from the array.
+        ///   </para>
+        /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RemoveWhere(JsonPredicate<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString> predicate)
+        {
+            CheckValidInstance();
+            JsonElementHelpers.RemoveWhereUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString>(this, predicate);
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        ///   Replaces the first array element that equals the specified item with a new value.
+        /// </summary>
+        /// <param name="oldItem">The item to find.</param>
+        /// <param name="newItem">The value to replace it with.</param>
+        /// <returns><see langword="true"/> if an element was found and replaced; otherwise, <see langword="false"/>.</returns>
+        /// <exception cref="InvalidOperationException">
+        ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+        ///   or the element reference is stale due to document mutations.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        ///   The parent <see cref="JsonDocument"/> has been disposed.
+        /// </exception>
+        public bool Replace(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString oldItem, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source newItem)
+        {
+            CheckValidInstance();
+
+            if (newItem.IsUndefined)
+            {
+                return Remove(in oldItem);
+            }
+
+            var enumerator = EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString>(_parent, _idx);
+
+            while (enumerator.MoveNext())
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString current = enumerator.Current;
+                if (JsonElementHelpers.DeepEquals(in current, in oldItem))
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 30);
+                    newItem.AddAsItem(ref cvb);
+
+                    int elementStart = ((IJsonElement)current).ParentDocumentIndex;
+                    int elementEnd = elementStart + ((IJsonElement)current).ParentDocument.GetDbSize(elementStart, true);
+                    _parent.OverwriteAndDispose(_idx, elementStart, elementEnd, 1, ref cvb);
+
+                    _documentVersion = _parent.Version;
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -446,14 +715,12 @@ public readonly partial struct Schema
         {
             Unknown,
             JsonElement,
-            NumericSimpleType,
-            FormattedNumber,
+            Builder,
         }
 
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
-        private readonly ReadOnlySpan<byte> _utf8Backing;
-        private readonly SimpleTypesBacking _simpleTypeBacking;
+        private readonly Builder.Build? _arrayBuilder;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -466,32 +733,9 @@ public readonly partial struct Schema
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        private Source(ReadOnlySpan<byte> value, Kind kind)
-        {
-            Debug.Assert(kind is Kind.FormattedNumber);
-            _utf8Backing = value;
-            _kind = kind;
-        }
-
-        private Source(double value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }
-
-        private Source(int value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }
-
-        private Source(long value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }
+        internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Schema.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(Schema instance) => new(JsonElement.From(instance));
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Source(double value) => new (value);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Source(int value) => new (value);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Source(long value) => new (value);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Source FormattedNumber(ReadOnlySpan<byte> value) => new(value, Kind.FormattedNumber);
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -502,11 +746,8 @@ public readonly partial struct Schema
                 case Kind.JsonElement:
                     valueBuilder.AddProperty(utf8Name, _jsonElement, escapeName, nameRequiresUnescaping);
                     break;
-                case Kind.NumericSimpleType:
-                    valueBuilder.AddPropertyFormattedNumber(utf8Name, _simpleTypeBacking.Span(), escapeName, nameRequiresUnescaping);
-                    break;
-                case Kind.FormattedNumber:
-                    valueBuilder.AddPropertyFormattedNumber(utf8Name, _utf8Backing, escapeName, nameRequiresUnescaping);
+                case Kind.Builder:
+                    valueBuilder.AddProperty(utf8Name, _arrayBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -523,11 +764,8 @@ public readonly partial struct Schema
                 case Kind.JsonElement:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
                     break;
-                case Kind.NumericSimpleType:
-                    valueBuilder.AddPrebakedPropertyFormattedNumber(prebakedPropertyName, _simpleTypeBacking.Span());
-                    break;
-                case Kind.FormattedNumber:
-                    valueBuilder.AddPrebakedPropertyFormattedNumber(prebakedPropertyName, _utf8Backing);
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _arrayBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -544,11 +782,8 @@ public readonly partial struct Schema
                 case Kind.JsonElement:
                     valueBuilder.AddProperty(name, _jsonElement);
                     break;
-                case Kind.NumericSimpleType:
-                    valueBuilder.AddPropertyFormattedNumber(name, _simpleTypeBacking.Span());
-                    break;
-                case Kind.FormattedNumber:
-                    valueBuilder.AddPropertyFormattedNumber(name, _utf8Backing);
+                case Kind.Builder:
+                    valueBuilder.AddProperty(name, _arrayBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -565,11 +800,8 @@ public readonly partial struct Schema
                 case Kind.JsonElement:
                     valueBuilder.AddProperty(name, _jsonElement);
                     break;
-                case Kind.NumericSimpleType:
-                    valueBuilder.AddPropertyFormattedNumber(name, _simpleTypeBacking.Span());
-                    break;
-                case Kind.FormattedNumber:
-                    valueBuilder.AddPropertyFormattedNumber(name, _utf8Backing);
+                case Kind.Builder:
+                    valueBuilder.AddProperty(name, _arrayBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -586,17 +818,212 @@ public readonly partial struct Schema
                 case Kind.JsonElement:
                     valueBuilder.AddItem(_jsonElement);
                     break;
-                case Kind.NumericSimpleType:
-                    valueBuilder.AddItemFormattedNumber(_simpleTypeBacking.Span());
-                    break;
-                case Kind.FormattedNumber:
-                    valueBuilder.AddItemFormattedNumber(_utf8Backing);
+                case Kind.Builder:
+                    valueBuilder.AddItem(_arrayBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
             }
         }
+    }
+
+    public ref struct Source<TContext>
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        private enum Kind
+        {
+            Unknown,
+            Source,
+            Builder,
+        }
+
+        private readonly Kind _kind;
+        TContext _context;
+        Source _source;
+        private readonly Builder.Build<TContext>? _arrayBuilder;
+
+        /// <summary>
+        /// Gets a value indicating whether this Source is undefined (uninitialized).
+        /// </summary>
+        public bool IsUndefined => _kind == Kind.Unknown;
+
+        private Source(Source source) { _kind = Kind.Source; _context = default!; _source = source; }
+
+        public static implicit operator Source<TContext>(Source source) => new (source);
+
+        internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Schema.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
+
+        internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
+        internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsProperty(name, ref valueBuilder);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
+        internal void AddAsProperty(string name, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsProperty(name, ref valueBuilder);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
+        internal void AddAsItem(ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsItem(ref valueBuilder);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddItem(BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+    }
+
+    public ref struct Builder
+    {
+        public delegate void Build(ref Builder builder);
+
+#if NET9_0_OR_GREATER
+        public delegate void Build<TContext>(in TContext context, ref Builder builder)
+            where TContext : allows ref struct;
+#else
+        public delegate void Build<TContext>(in TContext context, ref Builder builder);
+#endif
+
+        internal ComplexValueBuilder _builder;
+
+        internal Builder(ComplexValueBuilder builder)
+        {
+            _builder = builder;
+        }
+
+        /// <summary>
+        /// Add an item to the array.
+        /// </summary>
+        public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
+        {
+            value.AddAsItem(ref _builder);
+        }
+
+        internal static void BuildValue(Build value, ref ComplexValueBuilder o)
+        {
+            o.StartArray();
+
+            Builder ovb = new(o);
+            value(ref ovb);
+            o = ovb._builder;
+            o.EndArray();
+        }
+
+        internal static void BuildValue<TContext>(in TContext context, Build<TContext> value, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+        {
+            o.StartArray();
+
+            Builder ovb = new(o);
+            value(context, ref ovb);
+            o = ovb._builder;
+            o.EndArray();
+        }
+    }
+
+    /// <summary>
+    /// Build an instance of the value.
+    /// </summary>
+    /// <param name="buildValue">The callback that builds the value.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source Build(
+        scoped in Builder.Build buildValue, int initialCapacity = 1)
+    {
+        return new Source(buildValue);
+    }
+
+    /// <summary>
+    /// Build an instance of the value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="buildValue">The callback that builds the value.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source<TContext> Build<TContext>(
+        scoped in TContext context, scoped in Builder.Build<TContext> buildValue, int initialCapacity = 1)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        return new Source<TContext>(context, buildValue);
     }
 
     /// <summary>
@@ -607,12 +1034,77 @@ public readonly partial struct Schema
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given value.</returns>
     public static JsonDocumentBuilder<Mutable> CreateBuilder(
-        JsonWorkspace workspace, scoped in Source value, int initialCapacity = 1)
+        JsonWorkspace workspace, scoped in Source value, int initialCapacity = 30)
     {
         // Create the document builder without a MetadataDb
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         value.AddAsItem(ref cvb);
+        Debug.Assert(cvb.MemberCount == 1);
+        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+        return documentBuilder;
+    }
+
+    /// <summary>
+    /// Creates an empty mutable document builder.
+    /// </summary>
+    /// <param name="workspace">The JSON workspace.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>An empty mutable document builder.</returns>
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(
+        JsonWorkspace workspace, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
+        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+        cvb.StartArray();
+        cvb.EndArray();
+        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+        return documentBuilder;
+    }
+
+    /// <summary>
+    /// Creates and initializes a mutable document from a value.
+    /// </summary>
+    /// <param name="workspace">The JSON workspace.</param>
+    /// <param name="value">The value with which to initialize the builder.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>An instance of a mutable document initialized with the given value.</returns>
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(
+        JsonWorkspace workspace, scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        // Create the document builder without a MetadataDb
+        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
+        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+        var source = new Source(value);
+        source.AddAsItem(ref cvb);
+        Debug.Assert(cvb.MemberCount == 1);
+        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+        return documentBuilder;
+    }
+
+    /// <summary>
+    /// Creates and initializes a mutable document from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="workspace">The JSON workspace.</param>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the builder.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>An instance of a mutable document initialized with the given value.</returns>
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
+        JsonWorkspace workspace, scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        // Create the document builder without a MetadataDb
+        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
+        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+        var source = new Source<TContext>(context, value);
+        source.AddAsItem(ref cvb);
         Debug.Assert(cvb.MemberCount == 1);
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         return documentBuilder;

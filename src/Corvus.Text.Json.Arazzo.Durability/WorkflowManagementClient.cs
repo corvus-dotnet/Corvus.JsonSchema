@@ -63,7 +63,7 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
         }
 
         using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(cp.Utf8);
-        return new WorkflowRunDetail(state.RunId, state.WorkflowId, state.Status, state.Cursor, state.CreatedAt, state.Wait, state.Fault, cp.Etag);
+        return new WorkflowRunDetail(state.RunId, state.WorkflowId, state.Status, state.Cursor, state.CreatedAt, state.Wait, state.Fault, cp.Etag, state.CorrelationId, state.Tags);
     }
 
     /// <inheritdoc/>
@@ -116,6 +116,10 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
             {
                 activity.SetTag(ArazzoTelemetry.WorkflowIdTag, run.WorkflowId);
                 activity.SetTag(ArazzoTelemetry.OutcomeTag, "resumed");
+                if (run.CorrelationId is { } cid)
+                {
+                    activity.SetTag(ArazzoTelemetry.CorrelationIdTag, cid);
+                }
             }
 
             ArazzoTelemetry.WorkflowsResumed.Add(
@@ -174,6 +178,7 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
                 workflowId = state.WorkflowId;
 
                 // Mark cancelled, clear any wait, but keep the fault record (if any) for post-mortem visibility.
+                // The run-creation metadata (correlation id + tags) is immutable, so carry it through unchanged.
                 updated = WorkflowCheckpointSerializer.Serialize(
                     state.RunId,
                     state.WorkflowId,
@@ -186,14 +191,23 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
                     state.StepOutputs,
                     state.Outputs,
                     wait: null,
-                    fault: state.Fault);
+                    fault: state.Fault,
+                    correlationId: state.CorrelationId,
+                    tags: state.Tags);
 
                 indexEntry = new WorkflowRunIndexEntry(
                     state.WorkflowId,
                     WorkflowRunStatus.Cancelled,
                     state.CreatedAt,
                     this.timeProvider.GetUtcNow(),
-                    ErrorType: state.Fault?.Error);
+                    ErrorType: state.Fault?.Error,
+                    CorrelationId: state.CorrelationId,
+                    Tags: state.Tags);
+
+                if (activity is { IsAllDataRequested: true } && state.CorrelationId is { } cid)
+                {
+                    activity.SetTag(ArazzoTelemetry.CorrelationIdTag, cid);
+                }
             }
 
             await this.store.SaveAsync(id, updated, indexEntry, cp.Etag, cancellationToken).ConfigureAwait(false);
@@ -373,6 +387,7 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
                         throw new ArgumentOutOfRangeException(nameof(options), options.Mode, "Unknown resume mode.");
                 }
 
+                // Carry the immutable run-creation metadata (correlation id + tags) through the mutation.
                 mutated = WorkflowCheckpointSerializer.Serialize(
                     state.RunId,
                     state.WorkflowId,
@@ -385,14 +400,18 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
                     stepOutputs,
                     default,
                     wait: null,
-                    fault: state.Fault);
+                    fault: state.Fault,
+                    correlationId: state.CorrelationId,
+                    tags: state.Tags);
 
                 indexEntry = new WorkflowRunIndexEntry(
                     state.WorkflowId,
                     WorkflowRunStatus.Faulted,
                     state.CreatedAt,
                     this.timeProvider.GetUtcNow(),
-                    ErrorType: state.Fault?.Error);
+                    ErrorType: state.Fault?.Error,
+                    CorrelationId: state.CorrelationId,
+                    Tags: state.Tags);
             }
         }
         finally

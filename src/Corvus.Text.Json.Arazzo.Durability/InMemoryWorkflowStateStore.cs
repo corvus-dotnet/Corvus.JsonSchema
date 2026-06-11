@@ -162,6 +162,12 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
                 .Where(kvp =>
                     (query.Status is not { } status || kvp.Value.Index.Status == status)
                     && (query.WorkflowId is not { } workflowId || kvp.Value.Index.WorkflowId == workflowId)
+                    && (query.CreatedAfter is not { } createdAfter || kvp.Value.Index.CreatedAt >= createdAfter)
+                    && (query.CreatedBefore is not { } createdBefore || kvp.Value.Index.CreatedAt < createdBefore)
+                    && (query.UpdatedAfter is not { } updatedAfter || kvp.Value.Index.UpdatedAt >= updatedAfter)
+                    && (query.UpdatedBefore is not { } updatedBefore || kvp.Value.Index.UpdatedAt < updatedBefore)
+                    && (query.CorrelationId is not { } correlationId || kvp.Value.Index.CorrelationId == correlationId)
+                    && (query.Tags is not { Count: > 0 } queryTags || (kvp.Value.Index.Tags is { } runTags && queryTags.All(runTags.Contains)))
                     && (after is null || string.CompareOrdinal(kvp.Key, after) > 0))
                 .OrderBy(kvp => kvp.Key, StringComparer.Ordinal)
                 .Take(query.Limit + 1)

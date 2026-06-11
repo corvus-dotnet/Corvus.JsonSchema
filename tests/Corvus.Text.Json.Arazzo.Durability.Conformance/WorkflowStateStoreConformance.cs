@@ -240,6 +240,76 @@ public abstract class WorkflowStateStoreConformance
     }
 
     [TestMethod]
+    public async Task Query_filters_by_a_created_and_updated_time_window()
+    {
+        IWorkflowStateStore store = await this.NewStoreAsync();
+
+        // Three runs created an hour apart; each updated one minute after it was created.
+        await store.SaveAsync("c0", Bytes("x"), At(T0, T0 + TimeSpan.FromMinutes(1)), WorkflowEtag.None, default);
+        await store.SaveAsync("c1", Bytes("x"), At(T0 + TimeSpan.FromHours(1), T0 + TimeSpan.FromHours(1) + TimeSpan.FromMinutes(1)), WorkflowEtag.None, default);
+        await store.SaveAsync("c2", Bytes("x"), At(T0 + TimeSpan.FromHours(2), T0 + TimeSpan.FromHours(2) + TimeSpan.FromMinutes(1)), WorkflowEtag.None, default);
+
+        var index = (IWorkflowWaitIndex)store;
+
+        // CreatedAfter is inclusive: T0+1h keeps c1 and c2.
+        WorkflowRunPage createdAfter = await index.QueryAsync(new WorkflowQuery(CreatedAfter: T0 + TimeSpan.FromHours(1)), default);
+        createdAfter.Runs.Select(r => r.Id.Value).ShouldBe(["c1", "c2"]);
+
+        // CreatedBefore is exclusive: T0+1h keeps only c0.
+        WorkflowRunPage createdBefore = await index.QueryAsync(new WorkflowQuery(CreatedBefore: T0 + TimeSpan.FromHours(1)), default);
+        createdBefore.Runs.ShouldHaveSingleItem().Id.Value.ShouldBe("c0");
+
+        // A half-open window [T0+1h, T0+2h) keeps only c1.
+        WorkflowRunPage window = await index.QueryAsync(
+            new WorkflowQuery(CreatedAfter: T0 + TimeSpan.FromHours(1), CreatedBefore: T0 + TimeSpan.FromHours(2)),
+            default);
+        window.Runs.ShouldHaveSingleItem().Id.Value.ShouldBe("c1");
+
+        // The updated-window filters read the updated timestamp (c2 was updated last).
+        WorkflowRunPage updatedAfter = await index.QueryAsync(new WorkflowQuery(UpdatedAfter: T0 + TimeSpan.FromHours(2)), default);
+        updatedAfter.Runs.ShouldHaveSingleItem().Id.Value.ShouldBe("c2");
+    }
+
+    [TestMethod]
+    public async Task Query_filters_by_tags_and_correlation_id()
+    {
+        IWorkflowStateStore store = await this.NewStoreAsync();
+        await store.SaveAsync("r-a", Bytes("x"), Tagged("trace-1", "tenant-42", "priority"), WorkflowEtag.None, default);
+        await store.SaveAsync("r-b", Bytes("x"), Tagged("trace-2", "tenant-42"), WorkflowEtag.None, default);
+        await store.SaveAsync("r-c", Bytes("x"), Tagged(null), WorkflowEtag.None, default);
+
+        // A LIKE-metacharacter tag must match literally, not as a wildcard (guards the SQL stores' escaping).
+        await store.SaveAsync("r-d", Bytes("x"), Tagged(null, "a_b"), WorkflowEtag.None, default);
+        await store.SaveAsync("r-e", Bytes("x"), Tagged(null, "axb"), WorkflowEtag.None, default);
+
+        var index = (IWorkflowWaitIndex)store;
+
+        // A single tag matches every run carrying it (ascending id order).
+        WorkflowRunPage byTag = await index.QueryAsync(new WorkflowQuery(Tags: ["tenant-42"]), default);
+        byTag.Runs.Select(r => r.Id.Value).ShouldBe(["r-a", "r-b"]);
+
+        // Multiple tags are AND-matched (contains all).
+        WorkflowRunPage byBoth = await index.QueryAsync(new WorkflowQuery(Tags: ["tenant-42", "priority"]), default);
+        byBoth.Runs.ShouldHaveSingleItem().Id.Value.ShouldBe("r-a");
+
+        // The underscore is a literal, not a single-char wildcard: "a_b" must not match "axb".
+        WorkflowRunPage literalUnderscore = await index.QueryAsync(new WorkflowQuery(Tags: ["a_b"]), default);
+        literalUnderscore.Runs.ShouldHaveSingleItem().Id.Value.ShouldBe("r-d");
+
+        // Correlation id is an exact match.
+        WorkflowRunPage byCorrelation = await index.QueryAsync(new WorkflowQuery(CorrelationId: "trace-2"), default);
+        byCorrelation.Runs.ShouldHaveSingleItem().Id.Value.ShouldBe("r-b");
+
+        // The projected entry round-trips both fields back out of the store. (A positional ctor arg is used
+        // so the Limit default applies — `new WorkflowQuery()` is the struct's parameterless ctor, Limit 0.)
+        WorkflowRunPage all = await index.QueryAsync(new WorkflowQuery(Limit: 100), default);
+        WorkflowRunListing a = all.Runs.Single(r => r.Id.Value == "r-a");
+        a.Index.CorrelationId.ShouldBe("trace-1");
+        a.Index.Tags.ShouldNotBeNull();
+        a.Index.Tags!.ShouldBe(["tenant-42", "priority"], ignoreOrder: true);
+    }
+
+    [TestMethod]
     public async Task Query_pages_through_results_with_a_continuation_token()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
@@ -273,6 +343,12 @@ public abstract class WorkflowStateStoreConformance
 
     private static WorkflowRunIndexEntry Index(WorkflowRunStatus status = WorkflowRunStatus.Running)
         => new("wf", status, T0, T0);
+
+    private static WorkflowRunIndexEntry At(DateTimeOffset createdAt, DateTimeOffset updatedAt)
+        => new("wf", WorkflowRunStatus.Running, createdAt, updatedAt);
+
+    private static WorkflowRunIndexEntry Tagged(string? correlationId, params string[] tags)
+        => new("wf", WorkflowRunStatus.Running, T0, T0, CorrelationId: correlationId, Tags: tags.Length > 0 ? tags : null);
 
     private static WorkflowRunIndexEntry Suspended(DateTimeOffset? dueAt = null, string? channel = null, string? correlationId = null)
         => new("wf", WorkflowRunStatus.Suspended, T0, T0, dueAt, channel, correlationId);

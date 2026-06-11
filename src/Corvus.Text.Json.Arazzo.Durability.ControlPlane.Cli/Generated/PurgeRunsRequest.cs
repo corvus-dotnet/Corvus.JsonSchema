@@ -29,7 +29,7 @@ public readonly struct PurgeRunsRequest : IApiRequest<PurgeRunsRequest>
     /// <summary>
     /// Gets the limit parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Schema Limit { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Schema1 Limit { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PurgeRunsRequest"/> struct.

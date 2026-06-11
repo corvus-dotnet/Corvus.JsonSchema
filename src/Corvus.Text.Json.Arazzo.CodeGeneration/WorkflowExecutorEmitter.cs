@@ -1081,7 +1081,22 @@ public static class WorkflowExecutorEmitter
             writer.AppendLine("        context.SetInputs(inputs);");
         }
 
-        writer.Append("        using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity(\"workflow.").Append(workflowId).AppendLine("\");");
+        if (options.Durable)
+        {
+            // The run's correlation id IS its W3C trace id (captured at creation). Re-establish it as the
+            // root span's trace context so a resumed run — and the OpenAPI/AsyncAPI calls its steps make —
+            // continues the original trace; when absent, fall back to the ambient Activity.Current.
+            writer.Append("        using Activity? activity = run?.CorrelationId is { Length: 32 } correlationTraceId")
+                .Append(" ? ArazzoTelemetry.ActivitySource.StartActivity(\"workflow.").Append(workflowId)
+                .AppendLine("\", ActivityKind.Internal, new ActivityContext(ActivityTraceId.CreateFromString(correlationTraceId), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded))");
+            writer.Append("            : ArazzoTelemetry.ActivitySource.StartActivity(\"workflow.").Append(workflowId).AppendLine("\");");
+            writer.AppendLine("        if (activity is not null && run?.CorrelationId is { } correlationId) { activity.SetTag(ArazzoTelemetry.CorrelationIdTag, correlationId); }");
+        }
+        else
+        {
+            writer.Append("        using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity(\"workflow.").Append(workflowId).AppendLine("\");");
+        }
+
         writer.AppendLine("        ArazzoTelemetry.WorkflowsStarted.Add(1);");
         writer.AppendLine("        try");
         writer.AppendLine("        {");

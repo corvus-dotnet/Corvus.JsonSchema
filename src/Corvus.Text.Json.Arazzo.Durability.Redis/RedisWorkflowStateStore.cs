@@ -25,7 +25,7 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
 
     // Create-or-update under optimistic concurrency, maintaining the all/due/awaiting indexes. Returns the new
     // version, or -1 on an etag conflict. KEYS: run hash, all-set, due-zset. ARGV: id, expected ("" = create),
-    // checkpoint, status, workflowId, createdAt, updatedAt, dueAt|"", awaitingChannel|"", awaitingCorrelationId|"", errorType|"".
+    // checkpoint, status, workflowId, createdAt, updatedAt, dueAt|"", awaitingChannel|"", awaitingCorrelationId|"", errorType|"", correlationId|"", tagsJson|"".
     private const string SaveScript =
         """
         local cur = redis.call('HGET', KEYS[1], 'version')
@@ -43,6 +43,8 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         if ARGV[9] ~= '' then redis.call('HSET', KEYS[1], 'awaiting_channel', ARGV[9]) else redis.call('HDEL', KEYS[1], 'awaiting_channel') end
         if ARGV[10] ~= '' then redis.call('HSET', KEYS[1], 'awaiting_correlation_id', ARGV[10]) else redis.call('HDEL', KEYS[1], 'awaiting_correlation_id') end
         if ARGV[11] ~= '' then redis.call('HSET', KEYS[1], 'error_type', ARGV[11]) else redis.call('HDEL', KEYS[1], 'error_type') end
+        if ARGV[12] ~= '' then redis.call('HSET', KEYS[1], 'correlation_id', ARGV[12]) else redis.call('HDEL', KEYS[1], 'correlation_id') end
+        if ARGV[13] ~= '' then redis.call('HSET', KEYS[1], 'tags_json', ARGV[13]) else redis.call('HDEL', KEYS[1], 'tags_json') end
         redis.call('SADD', KEYS[2], ARGV[1])
         if ARGV[4] == 'Suspended' and ARGV[8] ~= '' then redis.call('ZADD', KEYS[3], ARGV[8], ARGV[1]) else redis.call('ZREM', KEYS[3], ARGV[1]) end
         if oldChannel then redis.call('SREM', 'arazzo:awaiting:' .. oldChannel, ARGV[1]) end
@@ -154,6 +156,8 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             index.AwaitingChannel ?? string.Empty,
             index.AwaitingCorrelationId ?? string.Empty,
             index.ErrorType ?? string.Empty,
+            index.CorrelationId ?? string.Empty,
+            index.Tags is { Count: > 0 } t ? System.Text.Json.JsonSerializer.Serialize(t) : string.Empty,
         ];
 
         RedisResult result = await this.database.ScriptEvaluateAsync(SaveScript, [RunKey(id.Value), AllKey, DueKey], argv).ConfigureAwait(false);
@@ -289,15 +293,51 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
                 continue;
             }
 
+            long createdAt = (long)fields["created_at"];
+            if (query.CreatedAfter is { } createdAfter && createdAt < createdAfter.ToUnixTimeMilliseconds())
+            {
+                continue;
+            }
+
+            if (query.CreatedBefore is { } createdBefore && createdAt >= createdBefore.ToUnixTimeMilliseconds())
+            {
+                continue;
+            }
+
+            long updatedAt = (long)fields["updated_at"];
+            if (query.UpdatedAfter is { } updatedAfter && updatedAt < updatedAfter.ToUnixTimeMilliseconds())
+            {
+                continue;
+            }
+
+            if (query.UpdatedBefore is { } updatedBefore && updatedAt >= updatedBefore.ToUnixTimeMilliseconds())
+            {
+                continue;
+            }
+
+            string? correlationId = fields.TryGetValue("correlation_id", out RedisValue cidV) && !cidV.IsNull ? (string)cidV! : null;
+            if (query.CorrelationId is { } wantCid && correlationId != wantCid)
+            {
+                continue;
+            }
+
+            IReadOnlyList<string>? tags = fields.TryGetValue("tags_json", out RedisValue tagsV) && !tagsV.IsNull && ((string)tagsV!).Length > 0 ? System.Text.Json.JsonSerializer.Deserialize<List<string>>((string)tagsV!) : null;
+            if (query.Tags is { Count: > 0 } wantTags && (tags is null || !wantTags.All(tags.Contains)))
+            {
+                continue;
+            }
+
             var entry = new WorkflowRunIndexEntry(
                 workflowId,
                 status,
-                DateTimeOffset.FromUnixTimeMilliseconds((long)fields["created_at"]),
-                DateTimeOffset.FromUnixTimeMilliseconds((long)fields["updated_at"]),
+                DateTimeOffset.FromUnixTimeMilliseconds(createdAt),
+                DateTimeOffset.FromUnixTimeMilliseconds(updatedAt),
                 fields.TryGetValue("due_at", out RedisValue dueAt) ? DateTimeOffset.FromUnixTimeMilliseconds((long)dueAt) : null,
                 fields.TryGetValue("awaiting_channel", out RedisValue ch) ? (string)ch! : null,
                 fields.TryGetValue("awaiting_correlation_id", out RedisValue corr) ? (string)corr! : null,
-                fields.TryGetValue("error_type", out RedisValue err) ? (string)err! : null);
+                fields.TryGetValue("error_type", out RedisValue err) ? (string)err! : null,
+                CorrelationId: correlationId,
+                Tags: tags);
             runs.Add(new WorkflowRunListing(new WorkflowRunId(id), entry));
             if (runs.Count > query.Limit)
             {

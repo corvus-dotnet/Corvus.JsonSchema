@@ -35,9 +35,38 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         string? workflowId = parameters.WorkflowId.IsNotUndefined() ? (string)parameters.WorkflowId : null;
         int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 100;
         string? pageToken = parameters.PageToken.IsNotUndefined() ? (string)parameters.PageToken : null;
+        DateTimeOffset? createdAfter = ParseInstant(parameters.CreatedAfter);
+        DateTimeOffset? createdBefore = ParseInstant(parameters.CreatedBefore);
+        DateTimeOffset? updatedAfter = ParseInstant(parameters.UpdatedAfter);
+        DateTimeOffset? updatedBefore = ParseInstant(parameters.UpdatedBefore);
+        string? correlationId = parameters.CorrelationId.IsNotUndefined() ? (string)parameters.CorrelationId : null;
+        IReadOnlyList<string>? tags = ParseTags(parameters.Tag);
 
-        WorkflowRunPage page = await this.management.ListAsync(new WorkflowQuery(status, workflowId, limit, pageToken), cancellationToken).ConfigureAwait(false);
+        WorkflowRunPage page = await this.management.ListAsync(
+            new WorkflowQuery(status, workflowId, limit, pageToken, createdAfter, createdBefore, updatedAfter, updatedBefore, correlationId, tags),
+            cancellationToken).ConfigureAwait(false);
         return ListRunsResult.Ok(BuildPage(page), workspace);
+    }
+
+    private static DateTimeOffset? ParseInstant(Models.JsonDateTime value)
+        => value.IsNotUndefined()
+            ? DateTimeOffset.Parse((string)value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)
+            : null;
+
+    private static IReadOnlyList<string>? ParseTags(Models.Schema tag)
+    {
+        if (tag.IsUndefined())
+        {
+            return null;
+        }
+
+        var tags = new List<string>();
+        foreach (Models.JsonString item in tag.EnumerateArray())
+        {
+            tags.Add((string)item);
+        }
+
+        return tags.Count > 0 ? tags : null;
     }
 
     /// <inheritdoc/>
@@ -148,6 +177,25 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
                 wait = BuildWait(w);
             }
 
+            Models.WorkflowRunDetail.CorrelationIdEntity.Source correlationId = default;
+            if (d.CorrelationId is { } cid)
+            {
+                correlationId = cid;
+            }
+
+            Models.WorkflowRunDetail.JsonStringArray.Source tags = default;
+            if (d.Tags is { Count: > 0 } runTags)
+            {
+                tags = new Models.WorkflowRunDetail.JsonStringArray.Source(
+                    (ref Models.WorkflowRunDetail.JsonStringArray.Builder ab) =>
+                    {
+                        foreach (string tag in runTags)
+                        {
+                            ab.AddItem(tag);
+                        }
+                    });
+            }
+
             b.Create(
                 createdAt: d.CreatedAt,
                 cursor: d.Cursor,
@@ -155,7 +203,9 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
                 id: d.Id.Value,
                 status: d.Status.ToString(),
                 workflowId: d.WorkflowId,
+                correlationId: correlationId,
                 fault: fault,
+                tags: tags,
                 wait: wait);
         });
 
@@ -209,6 +259,25 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
                 errorType = et;
             }
 
+            Models.WorkflowRunSummary.CorrelationIdEntity.Source correlationId = default;
+            if (e.CorrelationId is { } cid)
+            {
+                correlationId = cid;
+            }
+
+            Models.WorkflowRunSummary.JsonStringArray.Source tags = default;
+            if (e.Tags is { Count: > 0 } runTags)
+            {
+                tags = new Models.WorkflowRunSummary.JsonStringArray.Source(
+                    (ref Models.WorkflowRunSummary.JsonStringArray.Builder ab) =>
+                    {
+                        foreach (string tag in runTags)
+                        {
+                            ab.AddItem(tag);
+                        }
+                    });
+            }
+
             b.Create(
                 createdAt: e.CreatedAt,
                 id: listing.Id.Value,
@@ -217,8 +286,10 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
                 workflowId: e.WorkflowId,
                 awaitingChannel: awaitingChannel,
                 awaitingCorrelationId: awaitingCorrelationId,
+                correlationId: correlationId,
                 dueAt: dueAt,
-                errorType: errorType);
+                errorType: errorType,
+                tags: tags);
         });
 
     private static Models.WorkflowFault.Source BuildFault(WorkflowFault f)
