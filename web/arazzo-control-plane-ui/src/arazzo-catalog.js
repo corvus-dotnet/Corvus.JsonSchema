@@ -16,6 +16,7 @@ import { ArazzoControlPlaneClient, CATALOG_STATUSES } from './arazzo-client.js';
 import { ArazzoElement, SHARED_CSS, escapeHtml, confirmDialog, define } from './components/base.js';
 import './components/catalog-table.js';
 import './components/catalog-detail.js';
+import './components/catalog-add-dialog.js';
 
 const LIGHT = `
   --arazzo-bg:#fff; --arazzo-surface:#f7f8fa; --arazzo-border:#e3e6ea; --arazzo-text:#1c2024;
@@ -90,6 +91,8 @@ class ArazzoCatalog extends ArazzoElement {
     if (detail) detail.setAttribute('scopes', this.getAttribute('scopes') || '');
     const purgeBtn = this.$('.purge-btn');
     if (purgeBtn) purgeBtn.hidden = !this.hasScope('catalog:purge');
+    const addBtn = this.$('.add-btn');
+    if (addBtn) addBtn.hidden = !this.hasScope('catalog:write');
   }
 
   themeTokens() {
@@ -125,12 +128,14 @@ class ArazzoCatalog extends ArazzoElement {
         <div class="search"><input class="owner-search" type="search" placeholder="Owner…" aria-label="Filter by owner"></div>
         <div class="search"><input class="tag-search" type="search" placeholder="Tags (space-separated, AND)…" aria-label="Filter by tags"></div>
         <button class="refresh ghost" type="button" title="Refresh">↻</button>
+        <button class="add-btn primary" type="button" ${this.hasScope('catalog:write') ? '' : 'hidden'}>Add version…</button>
         <button class="purge-btn danger" type="button" ${this.hasScope('catalog:purge') ? '' : 'hidden'}>Purge obsolete…</button>
       </div>
       <div class="layout" part="layout">
         <arazzo-catalog-table selectable part="table"></arazzo-catalog-table>
         <div class="detail-pane"></div>
       </div>
+      <arazzo-catalog-add-dialog></arazzo-catalog-add-dialog>
     `;
     void scopes;
   }
@@ -163,6 +168,15 @@ class ArazzoCatalog extends ArazzoElement {
 
     this.$('.refresh').addEventListener('click', () => table.reload());
     this.$('.purge-btn').addEventListener('click', () => this.confirmPurge());
+
+    const addDialog = this.$('arazzo-catalog-add-dialog');
+    this.$('.add-btn').addEventListener('click', () => { addDialog.client = this.buildClient(); addDialog.open(); });
+    addDialog.addEventListener('version-added', (e) => {
+      table.reload();
+      this.showDetail(e.detail.version);
+      this.emit('version-added', e.detail);
+    });
+    addDialog.addEventListener('error', (e) => this.emit('error', e.detail));
 
     pane.addEventListener('version-changed', (e) => { table.refresh(); this.emit('version-changed', e.detail); });
     pane.addEventListener('version-deleted', (e) => { table.refresh(); this.clearDetail(); this.emit('version-deleted', e.detail); });

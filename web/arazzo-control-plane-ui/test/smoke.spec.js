@@ -72,3 +72,44 @@ test('the Catalog tab lists versions and opens a version detail with downloads',
 
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });
+
+test('the Catalog Add version flow builds a package in-browser and the catalog versions it', async ({ page }) => {
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/index.html');
+  await page.getByRole('tab', { name: 'Catalog' }).click();
+
+  // nightly-reconcile starts with three versions collapsed into one row.
+  const ncRow = page.locator('arazzo-catalog-table tbody tr[data-key="nightly-reconcile"]');
+  await expect(ncRow).toContainText('3 versions');
+
+  await page.locator('arazzo-catalog .add-btn').click();
+  const dialog = page.locator('arazzo-catalog-add-dialog dialog');
+  await expect(dialog).toBeVisible();
+
+  // Build mode: attach a workflow document for the SAME base id, plus its source.
+  const workflow = JSON.stringify({
+    arazzo: '1.1.0', info: { title: 'Nightly Reconcile' },
+    sourceDescriptions: [{ name: 'petstore', type: 'openapi' }],
+    workflows: [{ workflowId: 'nightly-reconcile', steps: [] }],
+  });
+  await page.locator('arazzo-catalog-add-dialog #workflowFile').setInputFiles({
+    name: 'workflow.json', mimeType: 'application/json', buffer: Buffer.from(workflow),
+  });
+  // The dialog auto-suggests a "petstore" source row from sourceDescriptions; attach its file.
+  await page.locator('arazzo-catalog-add-dialog .source-row .src-file').first().setInputFiles({
+    name: 'petstore.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ openapi: '3.1.0' })),
+  });
+  await page.locator('arazzo-catalog-add-dialog #ownerName').fill('Reconciliation Team');
+  await page.locator('arazzo-catalog-add-dialog #ownerEmail').fill('team@example.com');
+  await page.locator('arazzo-catalog-add-dialog .confirm').click();
+
+  // The catalog assigned v4; the detail opens on it.
+  const detail = page.locator('arazzo-catalog-detail');
+  await expect(detail).toContainText('nightly-reconcile · v4');
+  await expect(ncRow).toContainText('4 versions');
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});
