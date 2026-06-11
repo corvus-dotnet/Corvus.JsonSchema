@@ -166,6 +166,23 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     }
 
     /// <inheritdoc/>
+    public async ValueTask<GetCatalogWorkflowSchemasResult> HandleGetCatalogWorkflowSchemasAsync(GetCatalogWorkflowSchemasParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string baseWorkflowId = (string)parameters.BaseWorkflowId;
+        int versionNumber = (int)parameters.VersionNumber;
+        ReadOnlyMemory<byte>? document = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.SchemasDocumentName, cancellationToken).ConfigureAwait(false);
+        if (document is not { } bytes)
+        {
+            return GetCatalogWorkflowSchemasResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
+        }
+
+        // Hand the parsed document to the response workspace so it lives until the response is written.
+        ParsedJsonDocument<Models.JsonObject> parsed = ParsedJsonDocument<Models.JsonObject>.Parse(bytes);
+        workspace.TakeOwnership(parsed);
+        return GetCatalogWorkflowSchemasResult.Ok(parsed.RootElement, workspace);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<GetCatalogSourceResult> HandleGetCatalogSourceAsync(GetCatalogSourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
