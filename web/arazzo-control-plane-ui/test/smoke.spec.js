@@ -30,6 +30,12 @@ test('demo loads cleanly, lists runs, and opens the resume dialog for a faulted 
   await expect(page.locator('arazzo-resume-dialog dialog')).toBeVisible();
   await expect(page.getByText('Retry faulted step')).toBeVisible();
 
+  // Switch to Rewind: the step picker lists the workflow's steps (by name) pulled from the catalog.
+  await page.locator('arazzo-resume-dialog input[name="mode"][value="Rewind"]').check();
+  const stepSelect = page.locator('arazzo-resume-dialog .rewind-picker select');
+  await expect(stepSelect).toBeVisible();
+  await expect(stepSelect.locator('option', { hasText: 'reservePayment' })).toHaveCount(1);
+
   // No console or page errors during the whole flow.
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });

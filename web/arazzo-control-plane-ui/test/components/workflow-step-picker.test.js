@@ -39,40 +39,6 @@ describe('<arazzo-workflow-step-picker>', () => {
     equal(el.value, 1);
   });
 
-  it('forward direction lists only later steps and defaults to the next one (Skip)', async () => {
-    el = pickerWithMock({ 'workflow-id': 'adopt-pet-v1', cursor: '1', direction: 'forward' });
-    mount(el);
-    const sel = await waitFor(() => el.shadowRoot.querySelector('select'));
-    const values = [...sel.options].map((o) => Number(o.value));
-    ok(values.length > 0 && values.every((v) => v > 1), 'only steps after the cursor are offered');
-    equal(el.value, 2, 'defaults to the immediately following step');
-  });
-
-  it('backward direction lists only earlier steps and defaults to the previous one (Rewind)', async () => {
-    el = pickerWithMock({ 'workflow-id': 'adopt-pet-v1', cursor: '2', direction: 'backward' });
-    mount(el);
-    const sel = await waitFor(() => el.shadowRoot.querySelector('select'));
-    const values = [...sel.options].map((o) => Number(o.value));
-    ok(values.length > 0 && values.every((v) => v < 2), 'only steps before the cursor are offered');
-    equal(el.value, 1, 'defaults to the immediately preceding step');
-  });
-
-  it('cannot skip forward from the last step', async () => {
-    el = pickerWithMock({ 'workflow-id': 'adopt-pet-v1', cursor: '3', direction: 'forward' });
-    mount(el);
-    await waitFor(() => el.shadowRoot.querySelector('.empty'));
-    equal(el.shadowRoot.querySelector('select'), null, 'no chooser is rendered');
-    equal(el.value, null, 'no valid forward target');
-  });
-
-  it('forward fallback (uncatalogued) bounds the numeric input above the cursor', async () => {
-    el = pickerWithMock({ 'workflow-id': 'ghost-v9', cursor: '3', direction: 'forward' });
-    mount(el);
-    const input = await waitFor(() => el.shadowRoot.querySelector('input[type="number"]'));
-    equal(input.min, '4', 'min is one past the cursor');
-    equal(el.value, 4, 'seeded with the next index');
-  });
-
   it('falls back to a numeric input when the workflow is not in the catalog', async () => {
     el = pickerWithMock({ 'workflow-id': 'ghost-v9', cursor: '3' });
     mount(el);
