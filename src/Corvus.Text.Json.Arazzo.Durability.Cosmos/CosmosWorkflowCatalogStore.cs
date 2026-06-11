@@ -33,14 +33,16 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
     private readonly CosmosClient client;
     private readonly Container catalog;
     private readonly TimeProvider timeProvider;
+    private readonly IWorkflowMetadataProvider? metadataProvider;
     private readonly bool ownsClient;
 
-    private CosmosWorkflowCatalogStore(CosmosClient client, Container catalog, TimeProvider timeProvider, bool ownsClient)
+    private CosmosWorkflowCatalogStore(CosmosClient client, Container catalog, TimeProvider timeProvider, bool ownsClient, IWorkflowMetadataProvider? metadataProvider)
     {
         this.client = client;
         this.catalog = catalog;
         this.timeProvider = timeProvider;
         this.ownsClient = ownsClient;
+        this.metadataProvider = metadataProvider;
     }
 
     /// <summary>Provisions the catalog's database and container over the given connection string.</summary>
@@ -94,12 +96,13 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
         string connectionString,
         string databaseName = "arazzo",
         TimeProvider? timeProvider = null,
+        IWorkflowMetadataProvider? metadataProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
         cancellationToken.ThrowIfCancellationRequested();
         var client = new CosmosClient(connectionString, CreateClientOptions());
-        return new ValueTask<CosmosWorkflowCatalogStore>(Connect(client, databaseName, timeProvider, ownsClient: true));
+        return new ValueTask<CosmosWorkflowCatalogStore>(Connect(client, databaseName, timeProvider, ownsClient: true, metadataProvider));
     }
 
     /// <summary>Opens the catalog store for operation over a caller-supplied <see cref="CosmosClient"/>.</summary>
@@ -118,11 +121,12 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
         CosmosClient client,
         string databaseName = "arazzo",
         TimeProvider? timeProvider = null,
+        IWorkflowMetadataProvider? metadataProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(client);
         cancellationToken.ThrowIfCancellationRequested();
-        return new ValueTask<CosmosWorkflowCatalogStore>(Connect(client, databaseName, timeProvider, ownsClient: false));
+        return new ValueTask<CosmosWorkflowCatalogStore>(Connect(client, databaseName, timeProvider, ownsClient: false, metadataProvider));
     }
 
     /// <summary>The serializer options the store relies on (camelCase property names, null properties omitted).</summary>
@@ -392,13 +396,13 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
         await database.CreateContainerIfNotExistsAsync(new ContainerProperties(CatalogContainerId, "/baseWorkflowId"), cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
-    private static CosmosWorkflowCatalogStore Connect(CosmosClient client, string databaseName, TimeProvider? timeProvider, bool ownsClient)
+    private static CosmosWorkflowCatalogStore Connect(CosmosClient client, string databaseName, TimeProvider? timeProvider, bool ownsClient, IWorkflowMetadataProvider? metadataProvider)
     {
         // GetDatabase/GetContainer return proxies without network I/O (no creation), so this is a pure
         // data-plane open against the already-provisioned resources.
         Database database = client.GetDatabase(databaseName);
         Container catalog = database.GetContainer(CatalogContainerId);
-        return new CosmosWorkflowCatalogStore(client, catalog, timeProvider ?? TimeProvider.System, ownsClient);
+        return new CosmosWorkflowCatalogStore(client, catalog, timeProvider ?? TimeProvider.System, ownsClient, metadataProvider);
     }
 
     private static string DocumentId(string baseWorkflowId, int versionNumber)
@@ -417,7 +421,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
         {
             cancellationToken.ThrowIfCancellationRequested();
             int versionNumber = await this.MaxVersionAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false) + 1;
-            CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber);
+            CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider);
             var version = new CatalogVersion(
                 BaseWorkflowId: baseWorkflowId,
                 VersionNumber: versionNumber,

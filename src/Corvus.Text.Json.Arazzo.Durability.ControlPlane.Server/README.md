@@ -15,13 +15,41 @@ using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 WebApplication app = WebApplication.CreateBuilder(args).Build();
 
 // management: an IWorkflowManagementClient over your chosen durability store (with a resumer for ResumeAsync).
-app.MapArazzoControlPlane(management);
+// catalog:    an IWorkflowCatalogClient wrapping a catalog store + the run store (for referential integrity).
+app.MapArazzoControlPlane(management, catalog);
 
 app.Run();
 ```
 
-This maps `GET /runs`, `GET /runs/{runId}`, `POST /runs/{runId}/resume`, `POST /runs/{runId}/cancel`, and
-`PURGE /runs` onto the management client.
+This maps the run operations (`GET /runs`, `GET /runs/{runId}`, `POST /runs/{runId}/resume`,
+`POST /runs/{runId}/cancel`, `PURGE /runs`) onto the management client, and the catalog operations
+(`/catalog…`, including `GET /catalog/{baseWorkflowId}/versions/{versionNumber}/schemas`) onto the catalog client.
+
+## Catalog schema metadata
+
+`GET …/versions/{n}/schemas` serves the precomputed typed-shape metadata (each workflow's inputs and each
+step's resolved output types) that UIs use to render strongly-typed forms (the typed patch/output builder, and
+in future a workflow editor) without re-parsing the OpenAPI/AsyncAPI sources. That metadata is **baked into the
+package at add time** by an `IWorkflowMetadataProvider`. To enable it, construct the catalog store with the
+code-generation-backed provider — every backend's `ConnectAsync` accepts one (after the time provider):
+
+```csharp
+using Corvus.Text.Json.Arazzo;                  // IWorkflowMetadataProvider
+using Corvus.Text.Json.Arazzo.CodeGeneration;   // WorkflowSchemaMetadataProvider
+
+IWorkflowMetadataProvider metadata = new WorkflowSchemaMetadataProvider();
+
+// e.g. Postgres — any backend's ConnectAsync takes the provider after the time provider:
+var catalogStore = await PostgresWorkflowCatalogStore.ConnectAsync(
+    connectionString, timeProvider: null, metadataProvider: metadata);
+
+var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
+app.MapArazzoControlPlane(management, catalog);
+```
+
+Omit the provider and versions are stored without baked metadata — the `schemas` endpoint then returns `404`
+and clients fall back to untyped editing. The provider pulls in `Corvus.Text.Json.Arazzo.CodeGeneration` (the
+OpenAPI/AsyncAPI classifier), which runs only at add time.
 
 ## Security
 
