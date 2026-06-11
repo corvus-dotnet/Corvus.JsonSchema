@@ -95,6 +95,74 @@ describe('<arazzo-patch-builder>', () => {
     equal(el.value.tags[0], 'prod');
   });
 
+  it('renders a polymorphic union as a type chooser that reveals the chosen variant', async () => {
+    el = document.createElement('arazzo-patch-builder');
+    el.descriptor = {
+      type: 'object',
+      properties: {
+        payment: {
+          type: 'union',
+          discriminator: 'kind',
+          variants: [
+            { type: 'object', title: 'Card', properties: { kind: { type: 'string', const: 'card' }, pan: { type: 'string' } } },
+            { type: 'object', title: 'Bank', properties: { kind: { type: 'string', const: 'bank' }, iban: { type: 'string' } } },
+          ],
+        },
+      },
+    };
+    mount(el);
+    const select = await waitFor(() => el.shadowRoot.querySelector('.union select'));
+    const labels = [...select.options].map((o) => o.textContent);
+    ok(labels.includes('Card') && labels.includes('Bank'), 'variant labels come from titles');
+    ok(el.value === undefined, 'no variant chosen yields no value');
+
+    select.value = '0'; // Card
+    select.dispatchEvent(new Event('change'));
+    const slotInput = await waitFor(() => el.shadowRoot.querySelector('.union-slot input[type="text"]:not([readonly])'));
+    slotInput.value = '4111';
+    const v = el.value;
+    equal(v.payment.pan, '4111', 'reads the chosen variant');
+    equal(v.payment.kind, 'card', 'the const discriminator is auto-filled');
+    ok(!('iban' in v.payment), 'only the chosen variant contributes');
+  });
+
+  it('renders a tuple as fixed positional slots', async () => {
+    el = document.createElement('arazzo-patch-builder');
+    el.descriptor = {
+      type: 'object',
+      properties: {
+        point: { type: 'array', prefixItems: [{ type: 'number' }, { type: 'number' }] },
+      },
+    };
+    mount(el);
+    await waitFor(() => el.shadowRoot.querySelector('.tuple'));
+    const nums = el.shadowRoot.querySelectorAll('.tuple input[type="number"]');
+    equal(nums.length, 2, 'one slot per prefix item');
+    nums[0].value = '3';
+    nums[1].value = '4';
+    const v = el.value;
+    equal(v.point[0], 3);
+    equal(v.point[1], 4);
+  });
+
+  it('renders a free-form map (additionalProperties) as key/value rows', async () => {
+    el = document.createElement('arazzo-patch-builder');
+    el.descriptor = {
+      type: 'object',
+      properties: {
+        labels: { type: 'object', additionalProperties: { type: 'string' } },
+      },
+    };
+    mount(el);
+    const addBtn = await waitFor(() => [...el.shadowRoot.querySelectorAll('button')].find((b) => b.textContent.includes('Add entry')));
+    addBtn.click();
+    const row = el.shadowRoot.querySelector('.map-row');
+    ok(row, 'a key/value row is added');
+    row.querySelector('.map-key').value = 'env';
+    row.querySelector('input:not(.map-key)').value = 'prod';
+    equal(el.value.labels.env, 'prod', 'assembles the typed map');
+  });
+
   it('falls back to a raw JSON editor when there is no typed schema', async () => {
     el = document.createElement('arazzo-patch-builder');
     el.descriptor = { type: 'object', properties: {} };

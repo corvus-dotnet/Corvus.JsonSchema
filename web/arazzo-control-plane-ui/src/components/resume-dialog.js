@@ -38,6 +38,9 @@ class ArazzoResumeDialog extends ArazzoElement {
       if (run?.cursor != null) picker.setAttribute('cursor', String(run.cursor)); else picker.removeAttribute('cursor');
     }
     this.loadSkipDescriptor(run);
+    // Outputs are only recorded when explicitly opted into; reset the toggle + hide the builder each open.
+    this.$('.record-outputs').checked = false;
+    this.$('.skip-outputs').hidden = true;
     this.$('#patch').value = '[\n  { "op": "replace", "path": "/inputs/example", "value": 1 }\n]';
     this.setMode('RetryFaultedStep');
     this.$('.subhead').textContent = run?.fault
@@ -116,6 +119,8 @@ class ArazzoResumeDialog extends ArazzoElement {
           border-radius: var(--_radius); background: var(--_bg); color: var(--_text);
         }
         textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; resize: vertical; }
+        label.check { display: flex; gap: 8px; align-items: center; color: var(--_text); font-size: 13px; cursor: pointer; margin: 0; }
+        label.check input { width: auto; }
         .foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
       </style>
       <dialog part="dialog">
@@ -141,7 +146,8 @@ class ArazzoResumeDialog extends ArazzoElement {
             <div class="mode-fields" data-mode="Skip" hidden>
               <div class="fields">
                 <div><label>Target step (a later step to advance to)</label><arazzo-workflow-step-picker class="skip-picker" direction="forward"></arazzo-workflow-step-picker></div>
-                <div><label>Skip outputs (the values to record for the skipped step)</label><arazzo-patch-builder class="skip-builder"></arazzo-patch-builder></div>
+                <label class="check"><input type="checkbox" class="record-outputs"> Record outputs for skipped step</label>
+                <div class="skip-outputs" hidden><arazzo-patch-builder class="skip-builder"></arazzo-patch-builder></div>
               </div>
             </div>
 
@@ -162,6 +168,7 @@ class ArazzoResumeDialog extends ArazzoElement {
     `;
 
     this.$$('input[name="mode"]').forEach((r) => r.addEventListener('change', () => this.setMode(r.value)));
+    this.$('.record-outputs').addEventListener('change', (e) => { this.$('.skip-outputs').hidden = !e.target.checked; });
     this.$('form').addEventListener('submit', (e) => {
       if (e.submitter?.value === 'confirm') {
         e.preventDefault();
@@ -192,9 +199,12 @@ class ArazzoResumeDialog extends ArazzoElement {
       const req = { mode };
       const targetCursor = this.$('.skip-picker').value;
       if (targetCursor != null) req.targetCursor = targetCursor;
-      const outputs = this.$('.skip-builder').value; // may throw on invalid input — surfaced as the banner
-      if (outputs !== undefined) {
-        req.skipOutputs = outputs;
+      // Only record outputs for the skipped step when the operator has opted in.
+      if (this.$('.record-outputs').checked) {
+        const outputs = this.$('.skip-builder').value; // may throw on invalid input — surfaced as the banner
+        if (outputs !== undefined) {
+          req.skipOutputs = outputs;
+        }
       }
       return req;
     }

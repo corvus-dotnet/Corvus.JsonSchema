@@ -66,6 +66,11 @@ class ArazzoPatchBuilder extends ArazzoElement {
         .item-summary.placeholder { color: var(--_muted); font-style: italic; }
         .item-head button { padding: 3px 9px; font-size: 12px; }
         .item-body { padding: 10px; border-top: 1px solid var(--_border); display: grid; gap: 10px; }
+        .map-row { display: grid; grid-template-columns: minmax(72px, 1fr) 2fr auto; gap: 6px; align-items: start; }
+        .map-row .rm, .array-row .rm { padding: 4px 8px; }
+        .union { display: grid; gap: 8px; }
+        .union-slot:empty { display: none; }
+        .union-slot { display: grid; gap: 10px; padding-left: 10px; border-left: 2px solid var(--_border); }
         .empty { color: var(--_muted); font-size: 12px; }
       </style>
       <div class="root"></div>
@@ -109,13 +114,21 @@ class ArazzoPatchBuilder extends ArazzoElement {
 function buildField(d, ctx) {
   const type = d?.type;
 
+  if (d && d.const !== undefined) {
+    return constField(d, ctx);
+  }
+
+  if (type === 'union' || Array.isArray(d?.variants)) {
+    return unionField(d, ctx);
+  }
+
   if (Array.isArray(d?.enum) && d.enum.length) {
     return enumField(d, ctx);
   }
 
   switch (type) {
     case 'object': return objectField(d, ctx);
-    case 'array': return arrayField(d, ctx);
+    case 'array': return Array.isArray(d?.prefixItems) ? tupleField(d, ctx) : arrayField(d, ctx);
     case 'boolean': return booleanField(d, ctx);
     case 'integer':
     case 'number': return numberField(d, ctx);
@@ -144,7 +157,8 @@ function objectField(d, ctx) {
   wrap.classList.add('fields');
 
   const names = Object.keys(props);
-  if (names.length === 0) {
+  const mapValue = (d.additionalProperties && typeof d.additionalProperties === 'object') ? d.additionalProperties : null;
+  if (names.length === 0 && !mapValue) {
     const empty = document.createElement('div');
     empty.className = 'empty';
     empty.textContent = 'No fields.';
@@ -158,7 +172,7 @@ function objectField(d, ctx) {
     const field = document.createElement('div');
     field.className = 'field';
     const built = buildField(props[name], childCtx);
-    // Scalars/enums get a label here; nested objects/arrays render their own legend.
+    // Scalars/enums get a label here; nested objects (incl. maps) render their own legend.
     if (props[name]?.type !== 'object') {
       const label = document.createElement('label');
       label.innerHTML = labelText(props[name], childCtx);
@@ -170,6 +184,14 @@ function objectField(d, ctx) {
     readers.push([name, built.read, childCtx.required]);
   }
 
+  // A free-form map (additionalProperties): arbitrary user-named keys whose values follow one schema.
+  let readMap = () => ({});
+  if (mapValue) {
+    const map = mapField(mapValue);
+    wrap.appendChild(map.node);
+    readMap = map.read;
+  }
+
   const read = () => {
     const out = {};
     for (const [name, r, req] of readers) {
@@ -177,9 +199,160 @@ function objectField(d, ctx) {
       if (v !== undefined) out[name] = v;
       else if (req) throw new Error(`"${name}" is required.`);
     }
+    const entries = readMap();
+    for (const k of Object.keys(entries)) out[k] = entries[k];
     return Object.keys(out).length || ctx.name != null ? out : undefined;
   };
   return { node: wrap, read };
+}
+
+/** A map editor for an object's `additionalProperties`: rows of a user-typed key plus a typed value control. */
+function mapField(valueDesc) {
+  const wrap = document.createElement('div');
+  wrap.className = 'map';
+  const head = document.createElement('div');
+  head.className = 'desc';
+  head.textContent = 'Additional entries (key → value)';
+  const items = document.createElement('div');
+  items.className = 'array-items';
+  const add = document.createElement('button');
+  add.type = 'button';
+  add.className = 'ghost';
+  add.textContent = '+ Add entry';
+  const rows = [];
+
+  const addRow = () => {
+    const row = document.createElement('div');
+    row.className = 'map-row';
+    const key = document.createElement('input');
+    key.type = 'text';
+    key.placeholder = 'key';
+    key.className = 'map-key';
+    const built = buildField(valueDesc, { name: null, required: false });
+    const rm = removeButton();
+    const entry = { key, read: built.read, row };
+    rm.addEventListener('click', () => { row.remove(); const i = rows.indexOf(entry); if (i >= 0) rows.splice(i, 1); });
+    row.append(key, built.node, rm);
+    items.appendChild(row);
+    rows.push(entry);
+  };
+
+  add.addEventListener('click', addRow);
+  wrap.append(head, items, add);
+  return {
+    node: wrap,
+    read: () => {
+      const out = {};
+      for (const e of rows) {
+        const k = e.key.value.trim();
+        if (!k) continue;
+        const v = e.read();
+        if (v !== undefined) out[k] = v;
+      }
+      return out;
+    },
+  };
+}
+
+/** A polymorphic union: a type chooser whose selection reveals the chosen variant's form. */
+function unionField(d, ctx) {
+  const variants = Array.isArray(d.variants) ? d.variants : [];
+  const wrap = document.createElement('div');
+  wrap.className = 'union';
+  const select = document.createElement('select');
+  select.innerHTML = `<option value="">${ctx.required ? '— choose type —' : '— none —'}</option>`
+    + variants.map((v, i) => `<option value="${i}">${escapeHtml(variantLabel(v, i, d.discriminator))}</option>`).join('');
+  const slot = document.createElement('div');
+  slot.className = 'union-slot';
+  let current = null;
+
+  const rebuild = () => {
+    slot.replaceChildren();
+    current = null;
+    if (select.value === '') return;
+    const variant = variants[Number(select.value)];
+    current = buildField(variant, { name: null, required: true });
+    slot.appendChild(current.node);
+  };
+  select.addEventListener('change', rebuild);
+  wrap.append(select, slot);
+  return {
+    node: wrap,
+    read: () => {
+      if (!current) {
+        if (ctx.required) throw new Error(`"${ctx.name ?? 'value'}" requires a choice.`);
+        return undefined;
+      }
+      return current.read();
+    },
+  };
+}
+
+/** A label for a union variant: its title, else the discriminator's const value, else its type. */
+function variantLabel(v, i, discriminator) {
+  if (v?.title) return v.title;
+  const disc = discriminator && v?.properties?.[discriminator];
+  if (disc && disc.const != null) return String(disc.const);
+  if (Array.isArray(disc?.enum) && disc.enum.length === 1) return String(disc.enum[0]);
+  if (v?.type && v.type !== 'unknown') return v.type;
+  return `Option ${i + 1}`;
+}
+
+/** A tuple: a fixed positional slot per `prefixItems` entry, plus optional trailing items when `items` is set. */
+function tupleField(d, ctx) {
+  const prefix = Array.isArray(d.prefixItems) ? d.prefixItems : [];
+  const wrap = document.createElement('div');
+  wrap.className = 'tuple fields';
+  const slotReaders = [];
+
+  prefix.forEach((pd, i) => {
+    const field = document.createElement('div');
+    field.className = 'field';
+    const childCtx = { name: pd?.title || `#${i + 1}`, required: false };
+    const built = buildField(pd, childCtx);
+    if (pd?.type !== 'object') {
+      const label = document.createElement('label');
+      label.textContent = pd?.title || `Item ${i + 1}`;
+      field.appendChild(label);
+    }
+    field.appendChild(built.node);
+    field.insertAdjacentHTML('beforeend', descHtml(pd));
+    wrap.appendChild(field);
+    slotReaders.push(built.read);
+  });
+
+  let readExtra = () => undefined;
+  if (d.items && typeof d.items === 'object') {
+    const extra = arrayField({ type: 'array', items: d.items }, { name: null, required: false });
+    const label = document.createElement('div');
+    label.className = 'desc';
+    label.textContent = 'Additional items';
+    wrap.append(label, extra.node);
+    readExtra = extra.read;
+  }
+
+  return {
+    node: wrap,
+    read: () => {
+      const head = slotReaders.map((r) => r()); // propagates per-slot validation errors
+      const tail = readExtra() || [];
+      const anyHead = head.some((v) => v !== undefined);
+      if (!anyHead && tail.length === 0) return ctx.required ? [] : undefined;
+      // Preserve tuple positions: blank fixed slots become null rather than shifting later items.
+      return [...head.map((v) => (v === undefined ? null : v)), ...tail];
+    },
+  };
+}
+
+/** A fixed `const` value: shown read-only and always contributed (e.g. a oneOf variant's discriminator). */
+function constField(d, ctx) {
+  void ctx;
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = (d.const !== null && typeof d.const === 'object') ? JSON.stringify(d.const) : String(d.const);
+  input.readOnly = true;
+  input.setAttribute('aria-readonly', 'true');
+  return { node: input, read: () => d.const };
 }
 
 function enumField(d, ctx) {

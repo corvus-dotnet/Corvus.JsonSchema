@@ -214,6 +214,69 @@ public class WorkflowSchemaMetadataGeneratorTests
         Prop(Prop(outputs, "echoedId"), "type").GetString().ShouldBe("integer");
     }
 
+    [TestMethod]
+    public void Normalises_unions_tuples_and_maps()
+    {
+        const string Shapes = """
+            {
+              "arazzo": "1.1.0",
+              "info": { "title": "t", "version": "1.0.0" },
+              "sourceDescriptions": [],
+              "workflows": [
+                {
+                  "workflowId": "shapes-v1",
+                  "inputs": {
+                    "type": "object",
+                    "properties": {
+                      "payment": {
+                        "discriminator": { "propertyName": "kind" },
+                        "oneOf": [
+                          { "type": "object", "title": "Card", "properties": { "kind": { "const": "card" }, "pan": { "type": "string" } } },
+                          { "type": "object", "title": "Bank", "properties": { "kind": { "const": "bank" }, "iban": { "type": "string" } } }
+                        ]
+                      },
+                      "maybeName": { "oneOf": [ { "type": "string", "maxLength": 5 }, { "type": "null" } ] },
+                      "point": { "type": "array", "prefixItems": [ { "type": "number" }, { "type": "number" } ], "items": { "type": "string" } },
+                      "labels": { "type": "object", "additionalProperties": { "type": "string" } }
+                    }
+                  },
+                  "steps": []
+                }
+              ]
+            }
+            """;
+
+        byte[] metadata = WorkflowSchemaMetadataGenerator.Generate(Encoding.UTF8.GetBytes(Shapes), []);
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(metadata);
+        JsonElement props = Prop(Prop(Prop(Prop(doc.RootElement, "workflows"), "shapes-v1"), "inputs"), "properties");
+
+        // oneOf with a discriminator becomes a typed variant picker, variants carry their titles + const props.
+        JsonElement payment = Prop(props, "payment");
+        Prop(payment, "type").GetString().ShouldBe("union");
+        Prop(payment, "discriminator").GetString().ShouldBe("kind");
+        Prop(payment, "variants").GetArrayLength().ShouldBe(2);
+        Prop(Prop(payment, "variants")[0], "title").GetString().ShouldBe("Card");
+        Prop(Prop(Prop(Prop(payment, "variants")[0], "properties"), "kind"), "const").GetString().ShouldBe("card");
+
+        // "X | null" collapses to a nullable X (the constraints of X survive).
+        JsonElement maybe = Prop(props, "maybeName");
+        Prop(maybe, "type").GetString().ShouldBe("string");
+        Prop(maybe, "nullable").GetBoolean().ShouldBeTrue();
+        Prop(maybe, "maxLength").GetInt32().ShouldBe(5);
+
+        // A tuple: positional prefixItems plus a trailing schema for additional items.
+        JsonElement point = Prop(props, "point");
+        Prop(point, "type").GetString().ShouldBe("array");
+        Prop(point, "prefixItems").GetArrayLength().ShouldBe(2);
+        Prop(Prop(point, "prefixItems")[0], "type").GetString().ShouldBe("number");
+        Prop(Prop(point, "items"), "type").GetString().ShouldBe("string");
+
+        // A free-form map: additionalProperties carries the value schema.
+        JsonElement labels = Prop(props, "labels");
+        Prop(labels, "type").GetString().ShouldBe("object");
+        Prop(Prop(labels, "additionalProperties"), "type").GetString().ShouldBe("string");
+    }
+
     private static JsonElement Prop(JsonElement element, string name)
     {
         element.TryGetProperty(name, out JsonElement value).ShouldBeTrue($"expected property '{name}'");
