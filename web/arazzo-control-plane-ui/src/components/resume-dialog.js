@@ -13,6 +13,7 @@
 // The StatePatch editor is a validated raw RFC 6902 JSON array (a visual builder can come later).
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import './workflow-step-picker.js';
 
 class ArazzoResumeDialog extends ArazzoElement {
   constructor() {
@@ -29,10 +30,12 @@ class ArazzoResumeDialog extends ArazzoElement {
     this._run = run;
     if (!this._built) this.render();
     this.$('.error-banner').hidden = true;
-    // Default the cursor inputs to the faulted cursor where it helps.
-    const cursor = run?.cursor ?? 0;
-    this.$('#rewindCursor').value = String(cursor);
-    this.$('#skipCursor').value = '';
+    // Point the step pickers at this run's workflow + current cursor (they resolve the step list from the catalog).
+    for (const picker of this.$$('arazzo-workflow-step-picker')) {
+      picker.client = this.client;
+      if (run?.workflowId) picker.setAttribute('workflow-id', run.workflowId); else picker.removeAttribute('workflow-id');
+      if (run?.cursor != null) picker.setAttribute('cursor', String(run.cursor)); else picker.removeAttribute('cursor');
+    }
     this.$('#skipOutputs').value = '';
     this.$('#patch').value = '[\n  { "op": "replace", "path": "/inputs/example", "value": 1 }\n]';
     this.setMode('RetryFaultedStep');
@@ -102,13 +105,13 @@ class ArazzoResumeDialog extends ArazzoElement {
 
             <div class="mode-fields" data-mode="Rewind" hidden>
               <div class="fields">
-                <div><label for="rewindCursor">Target cursor</label><input id="rewindCursor" type="number" min="0" step="1"></div>
+                <div><label>Target step</label><arazzo-workflow-step-picker class="rewind-picker"></arazzo-workflow-step-picker></div>
               </div>
             </div>
 
             <div class="mode-fields" data-mode="Skip" hidden>
               <div class="fields">
-                <div><label for="skipCursor">Target cursor (optional — defaults to faulted + 1)</label><input id="skipCursor" type="number" min="0" step="1"></div>
+                <div><label>Target step (defaults to the current step)</label><arazzo-workflow-step-picker class="skip-picker"></arazzo-workflow-step-picker></div>
                 <div><label for="skipOutputs">Skip outputs (optional JSON object)</label><textarea id="skipOutputs" rows="4" placeholder='{ "result": "manually-supplied" }'></textarea></div>
               </div>
             </div>
@@ -151,14 +154,15 @@ class ArazzoResumeDialog extends ArazzoElement {
     if (mode === 'RetryFaultedStep') return { mode };
 
     if (mode === 'Rewind') {
-      const targetCursor = parseIntField(this.$('#rewindCursor').value, 'Target cursor');
+      const targetCursor = this.$('.rewind-picker').value;
+      if (targetCursor == null) throw new Error('Choose a target step to rewind to.');
       return { mode, targetCursor };
     }
 
     if (mode === 'Skip') {
       const req = { mode };
-      const raw = this.$('#skipCursor').value.trim();
-      if (raw !== '') req.targetCursor = parseIntField(raw, 'Target cursor');
+      const targetCursor = this.$('.skip-picker').value;
+      if (targetCursor != null) req.targetCursor = targetCursor;
       const outputs = this.$('#skipOutputs').value.trim();
       if (outputs !== '') {
         req.skipOutputs = parseJsonField(outputs, 'Skip outputs', 'object');
@@ -199,14 +203,6 @@ class ArazzoResumeDialog extends ArazzoElement {
       confirmBtn.disabled = false;
     }
   }
-}
-
-function parseIntField(value, label) {
-  const n = Number(value);
-  if (value === '' || !Number.isInteger(n) || n < 0) {
-    throw new Error(`${label} must be a non-negative integer.`);
-  }
-  return n;
 }
 
 function parseJsonField(value, label, expect) {
