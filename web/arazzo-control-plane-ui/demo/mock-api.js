@@ -102,7 +102,15 @@ function toDetail(run) {
   };
 }
 
+const STEP_SETS = {
+  'adopt-pet': ['findPet', 'reservePayment', 'submitAdoption', 'confirmAdoption'],
+  'nightly-reconcile': ['loadLedger', 'fetchTransactions', 'matchEntries', 'flagDiscrepancies', 'postCorrections', 'publishReport'],
+  'onboard-customer': ['createAccount', 'verifyIdentity', 'provisionResources', 'sendWelcome'],
+};
+
 function workflowDoc(workflowId, title, description) {
+  const base = workflowId.replace(/-v\d+$/, '');
+  const stepIds = STEP_SETS[base] || ['start', 'process', 'finish'];
   return {
     arazzo: '1.1.0',
     info: { title, description },
@@ -110,7 +118,7 @@ function workflowDoc(workflowId, title, description) {
       { name: 'petstore', url: './petstore.json', type: 'openapi' },
       { name: 'events', url: './events.json', type: 'asyncapi' },
     ],
-    workflows: [{ workflowId, steps: [] }],
+    workflows: [{ workflowId, steps: stepIds.map((stepId) => ({ stepId, operationId: stepId })) }],
   };
 }
 

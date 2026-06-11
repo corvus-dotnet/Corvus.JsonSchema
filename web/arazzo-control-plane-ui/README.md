@@ -25,9 +25,10 @@ package `exports` — `@corvus-dotnet/arazzo-control-plane-ui`, `.../client`, `.
   client for the run **and** catalog operations. Useful on its own (Node, tests, CLIs, any UI).
 - **Layer 1 — standalone components** ([`src/components/`](./src/components)): `<arazzo-runs-table>`,
   `<arazzo-run-detail>`, `<arazzo-resume-dialog>`, `<arazzo-cancel-button>`, `<arazzo-purge-dialog>`,
-  `<arazzo-status-badge>` for runs; `<arazzo-catalog-table>`, `<arazzo-catalog-detail>`,
-  `<arazzo-catalog-add-dialog>` for the workflow catalog. Each works alone. The add dialog can build the
-  package archive in-browser from a workflow + its sources (`./workflow-package` ·
+  `<arazzo-status-badge>`, `<arazzo-workflow-id-input>` (workflowId filter with catalog autocomplete),
+  `<arazzo-workflow-step-picker>` (choose a resume target step by name) for runs; `<arazzo-catalog-table>`,
+  `<arazzo-catalog-detail>`, `<arazzo-catalog-add-dialog>` for the workflow catalog. Each works alone. The
+  add dialog can build the package archive in-browser from a workflow + its sources (`./workflow-package` ·
   [`src/workflow-package.js`](./src/workflow-package.js)) or upload a pre-built one; the catalog assigns the
   version number server-side.
 - **Layer 2 — `<arazzo-control-plane>`** ([`src/arazzo-control-plane.js`](./src/arazzo-control-plane.js)) and
