@@ -11,11 +11,9 @@ namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 
 /// <summary>
 /// Precomputes a compact, read-cheap "schema metadata" document for an Arazzo workflow package — for each
-/// workflow, the typed shape of its <c>inputs</c>, and for every step its resolved operation reference, its
-/// typed request (parameters + body) and responses (body + headers) for OpenAPI operations or its message
-/// (payload + headers) for AsyncAPI operations, and its resolved <c>outputs</c> — by resolving the workflow's
-/// expressions against its referenced OpenAPI/AsyncAPI source documents and normalising the resulting JSON
-/// Schema nodes into a small recursive type descriptor.
+/// workflow, the typed shape of its <c>inputs</c> and of every step's resolved <c>outputs</c> (requests and
+/// responses follow) — by resolving the workflow's expressions against its referenced OpenAPI/AsyncAPI source
+/// documents and normalising the resulting JSON Schema nodes into a small recursive type descriptor.
 /// </summary>
 /// <remarks>
 /// <para>The document shape (all type descriptors share one recursive shape):</para>
@@ -35,24 +33,13 @@ namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 /// <c>date-time</c>/<c>date</c>/<c>time</c>/<c>email</c>/<c>uri</c>/<c>uuid</c>/…), <c>enum</c>, <c>nullable</c>,
 /// the validation constraints (<c>minimum</c>/<c>maximum</c>/<c>multipleOf</c>/<c>minLength</c>/<c>maxLength</c>/
 /// <c>pattern</c>/…), <c>default</c>, <c>const</c>, <c>title</c>/<c>description</c>, and recursively
-/// <c>properties</c>+<c>required</c> (objects) / <c>items</c> (arrays). It also recognises a few composite shapes:
-/// a simple polymorphic union (<c>oneOf</c>/<c>anyOf</c>) becomes <c>{ "type": "union", "variants": [ … ],
-/// "discriminator"?: "&lt;prop&gt;" }</c> (a <c>X | null</c> union collapses to a nullable <c>X</c>); a tuple
-/// (<c>prefixItems</c> or the legacy array-form <c>items</c>) adds <c>"prefixItems": [ … ]</c> with an optional
-/// trailing <c>items</c> schema; and a free-form map (<c>additionalProperties</c>/<c>unevaluatedProperties</c>)
-/// adds <c>"additionalProperties": &lt;TypeDescriptor&gt;</c>. Anything that cannot be resolved degrades to
-/// <c>{ "type": "unknown" }</c> rather than failing, so the document is always producible.</para>
+/// <c>properties</c>+<c>required</c> (objects) / <c>items</c> (arrays). Anything that cannot be resolved degrades
+/// to <c>{ "type": "unknown" }</c> rather than failing, so the document is always producible.</para>
 /// </remarks>
 public static class WorkflowSchemaMetadataGenerator
 {
     /// <summary>The format version written into the metadata document.</summary>
     public const int FormatVersion = 1;
-
-    /// <summary>The <c>$defs</c> member a built validation schema places its target sub-schema under.</summary>
-    private const string ValidationTargetName = "__corvusTarget";
-
-    /// <summary>The same-document reference to the target sub-schema (a <c>$defs</c> member — a known schema location).</summary>
-    private const string ValidationTargetRef = "#/$defs/" + ValidationTargetName;
 
     private const int MaxDepth = 12;
 
@@ -121,357 +108,6 @@ public static class WorkflowSchemaMetadataGenerator
         }
     }
 
-    /// <summary>
-    /// Builds a standalone JSON Schema document for one schema within a workflow package — the schema a UI-built
-    /// value should be validated against — so a caller can feed it to a runtime JSON Schema validator. The target
-    /// sub-schema is placed under a wrapper whose root <c>$ref</c>s it, and the owning document's <c>components</c>/
-    /// <c>$defs</c>/<c>definitions</c> are carried alongside so the sub-schema's local <c>$ref</c>s still resolve.
-    /// </summary>
-    /// <param name="workflowUtf8">The Arazzo workflow document as UTF-8 JSON.</param>
-    /// <param name="sources">The referenced source documents (name → UTF-8 JSON bytes).</param>
-    /// <param name="target">Identifies the schema within the package to validate against.</param>
-    /// <param name="schemaDocument">The built schema document as UTF-8 JSON, when resolvable.</param>
-    /// <returns><see langword="true"/> when the target schema could be resolved and a document was built.</returns>
-    public static bool TryBuildValidationSchema(
-        ReadOnlyMemory<byte> workflowUtf8,
-        IReadOnlyList<KeyValuePair<string, byte[]>> sources,
-        WorkflowSchemaTarget target,
-        out byte[] schemaDocument)
-    {
-        ArgumentNullException.ThrowIfNull(sources);
-        schemaDocument = [];
-
-        using ParsedJsonDocument<JsonElement> workflowDoc = ParsedJsonDocument<JsonElement>.Parse(workflowUtf8);
-        JsonElement workflowRoot = workflowDoc.RootElement;
-
-        var sourceDocs = new List<ParsedJsonDocument<JsonElement>>();
-        var sourcesByName = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
-        try
-        {
-            foreach (KeyValuePair<string, byte[]> source in sources)
-            {
-                ParsedJsonDocument<JsonElement> parsed = ParsedJsonDocument<JsonElement>.Parse(source.Value);
-                sourceDocs.Add(parsed);
-                sourcesByName[source.Key] = parsed.RootElement;
-            }
-
-            if (!TryFindWorkflow(workflowRoot, target.WorkflowId, out JsonElement workflow))
-            {
-                return false;
-            }
-
-            var buffer = new ArrayBufferWriter<byte>();
-            var writer = new Utf8JsonWriter(buffer);
-
-            bool built = target.Kind switch
-            {
-                WorkflowSchemaTargetKind.Inputs => TryWriteInputsValidationSchema(writer, workflow, workflowRoot),
-                WorkflowSchemaTargetKind.RequestBody => TryWriteBodyValidationSchema(writer, workflow, sourcesByName, target.StepId, request: true, status: null),
-                WorkflowSchemaTargetKind.ResponseBody => TryWriteBodyValidationSchema(writer, workflow, sourcesByName, target.StepId, request: false, status: target.Status),
-                WorkflowSchemaTargetKind.StepOutputs => TryWriteOutputsValidationSchema(writer, workflow, workflowRoot, sourcesByName, target.StepId),
-                _ => false,
-            };
-
-            if (!built)
-            {
-                return false;
-            }
-
-            writer.Flush();
-            schemaDocument = buffer.WrittenSpan.ToArray();
-            return true;
-        }
-        finally
-        {
-            foreach (ParsedJsonDocument<JsonElement> doc in sourceDocs)
-            {
-                doc.Dispose();
-            }
-        }
-    }
-
-    private static bool TryWriteInputsValidationSchema(Utf8JsonWriter writer, JsonElement workflow, JsonElement workflowRoot)
-    {
-        if (!workflow.TryGetProperty("inputs", out JsonElement inputs) || inputs.ValueKind != JsonValueKind.Object)
-        {
-            return false;
-        }
-
-        WriteValidationWrapper(writer, inputs, [workflowRoot]);
-        return true;
-    }
-
-    private static bool TryWriteBodyValidationSchema(
-        Utf8JsonWriter writer,
-        JsonElement workflow,
-        IReadOnlyDictionary<string, JsonElement> sources,
-        string? stepId,
-        bool request,
-        string? status)
-    {
-        if (stepId is null
-            || !TryFindStep(workflow, stepId, out JsonElement step)
-            || !TryResolveStepOperation(step, sources, out StepOperation op)
-            || op.IsAsyncApi)
-        {
-            return false;
-        }
-
-        bool found = request
-            ? TryRequestBody(op, out JsonElement schema)
-            : TryResponseBodyForStatus(op, status, out schema);
-        if (!found)
-        {
-            return false;
-        }
-
-        WriteValidationWrapper(writer, schema, [op.Root]);
-        return true;
-    }
-
-    private static bool TryWriteOutputsValidationSchema(
-        Utf8JsonWriter writer,
-        JsonElement workflow,
-        JsonElement workflowRoot,
-        IReadOnlyDictionary<string, JsonElement> sources,
-        string? stepId)
-    {
-        if (stepId is null || !TryFindStep(workflow, stepId, out JsonElement step))
-        {
-            return false;
-        }
-
-        bool resolved = TryResolveStepOperation(step, sources, out StepOperation op);
-        JsonElement responseSchema = default, payloadSchema = default, requestBodySchema = default;
-        bool haveResponse = resolved && !op.IsAsyncApi && TrySuccessResponseBody(op, out responseSchema);
-        bool havePayload = resolved && op.IsAsyncApi && TryMessagePayload(op, out payloadSchema);
-        bool haveRequestBody = resolved && !op.IsAsyncApi && TryRequestBody(op, out requestBodySchema);
-        JsonElement opRoot = resolved ? op.Root : default;
-
-        // The target is an object whose properties are the step's declared outputs, each carrying its resolved schema.
-        // Carry both the operation source's and the workflow's reusable schema buckets so local $refs resolve.
-        JsonElement[] roots = resolved ? [opRoot, workflowRoot] : [workflowRoot];
-        writer.WriteStartObject();
-        writer.WriteString("$ref", ValidationTargetRef);
-        writer.WritePropertyName("$defs");
-        writer.WriteStartObject();
-        writer.WritePropertyName(ValidationTargetName);
-        writer.WriteStartObject();
-        writer.WriteString("type", "object");
-        writer.WritePropertyName("properties");
-        writer.WriteStartObject();
-        if (step.TryGetProperty("outputs", out JsonElement outputs) && outputs.ValueKind == JsonValueKind.Object)
-        {
-            foreach (var output in outputs.EnumerateObject())
-            {
-                writer.WritePropertyName(output.Name);
-                string expression = output.Value.ValueKind == JsonValueKind.String ? output.Value.GetString() ?? string.Empty : string.Empty;
-                WriteOutputValidationSchema(writer, expression, workflow, workflowRoot, opRoot, haveResponse, responseSchema, havePayload, payloadSchema, haveRequestBody, requestBodySchema);
-            }
-        }
-
-        writer.WriteEndObject(); // properties
-        writer.WriteEndObject(); // target object
-        WriteMergedDefsEntries(writer, roots);
-        writer.WriteEndObject(); // $defs
-        WriteCarriedObject(writer, roots, "components");
-        WriteCarriedObject(writer, roots, "definitions");
-        writer.WriteEndObject(); // wrapper
-        return true;
-    }
-
-    /// <summary>Writes the raw resolved schema for a single output expression (or an open schema when not typed).</summary>
-    private static void WriteOutputValidationSchema(
-        Utf8JsonWriter writer,
-        string expression,
-        JsonElement workflow,
-        JsonElement workflowRoot,
-        JsonElement opRoot,
-        bool haveResponse,
-        JsonElement responseSchema,
-        bool havePayload,
-        JsonElement payloadSchema,
-        bool haveRequestBody,
-        JsonElement requestBodySchema)
-    {
-        ArazzoExpr expr = ArazzoExpr.Parse(expression);
-        switch (expr.Source)
-        {
-            case ArazzoExprSource.StatusCode:
-                writer.WriteStartObject();
-                writer.WriteString("type", "integer");
-                writer.WriteEndObject();
-                return;
-
-            case ArazzoExprSource.Url:
-            case ArazzoExprSource.Method:
-            case ArazzoExprSource.RequestHeader:
-            case ArazzoExprSource.ResponseHeader:
-            case ArazzoExprSource.RequestPath:
-            case ArazzoExprSource.RequestQuery:
-            case ArazzoExprSource.MessageHeader:
-            case ArazzoExprSource.Literal:
-                writer.WriteStartObject();
-                writer.WriteString("type", "string");
-                writer.WriteEndObject();
-                return;
-
-            case ArazzoExprSource.Inputs when expr.Name is { } inputName:
-                if (workflow.TryGetProperty("inputs", out JsonElement inputs)
-                    && TryNavigateProperty(inputs, workflowRoot, inputName, out JsonElement inputSchema)
-                    && TryNavigatePointer(inputSchema, workflowRoot, expr.JsonPointer, out JsonElement resolvedInput))
-                {
-                    resolvedInput.WriteTo(writer);
-                    return;
-                }
-
-                break;
-
-            case ArazzoExprSource.ResponseBody when haveResponse:
-                if (TryNavigatePointer(responseSchema, opRoot, expr.JsonPointer, out JsonElement resolvedBody))
-                {
-                    resolvedBody.WriteTo(writer);
-                    return;
-                }
-
-                break;
-
-            case ArazzoExprSource.RequestBody when haveRequestBody:
-                if (TryNavigatePointer(requestBodySchema, opRoot, expr.JsonPointer, out JsonElement resolvedRequest))
-                {
-                    resolvedRequest.WriteTo(writer);
-                    return;
-                }
-
-                break;
-
-            case ArazzoExprSource.MessagePayload when havePayload:
-                if (TryNavigatePointer(payloadSchema, opRoot, expr.JsonPointer, out JsonElement resolvedPayload))
-                {
-                    resolvedPayload.WriteTo(writer);
-                    return;
-                }
-
-                break;
-        }
-
-        // Unresolvable / dynamic ($steps, $workflows) outputs are unconstrained — accept any value.
-        writer.WriteStartObject();
-        writer.WriteEndObject();
-    }
-
-    /// <summary>
-    /// Writes a wrapper schema whose root <c>$ref</c>s the target sub-schema (placed under <c>$defs</c>, a known
-    /// schema location), carrying the owning documents' reusable <c>$defs</c>/<c>definitions</c>/<c>components</c>
-    /// so the sub-schema's local <c>$ref</c>s still resolve.
-    /// </summary>
-    private static void WriteValidationWrapper(Utf8JsonWriter writer, JsonElement subSchema, JsonElement[] roots)
-    {
-        writer.WriteStartObject();
-        writer.WriteString("$ref", ValidationTargetRef);
-        writer.WritePropertyName("$defs");
-        writer.WriteStartObject();
-        writer.WritePropertyName(ValidationTargetName);
-        subSchema.WriteTo(writer);
-        WriteMergedDefsEntries(writer, roots);
-        writer.WriteEndObject(); // $defs
-        WriteCarriedObject(writer, roots, "components");
-        WriteCarriedObject(writer, roots, "definitions");
-        writer.WriteEndObject();
-    }
-
-    /// <summary>Merges the <c>$defs</c> members of every root into the wrapper's <c>$defs</c> (first writer wins on a name clash).</summary>
-    private static void WriteMergedDefsEntries(Utf8JsonWriter writer, JsonElement[] roots)
-    {
-        var written = new HashSet<string>(StringComparer.Ordinal) { ValidationTargetName };
-        foreach (JsonElement root in roots)
-        {
-            if (root.ValueKind == JsonValueKind.Object
-                && root.TryGetProperty("$defs", out JsonElement defs)
-                && defs.ValueKind == JsonValueKind.Object)
-            {
-                foreach (var entry in defs.EnumerateObject())
-                {
-                    if (written.Add(entry.Name))
-                    {
-                        writer.WritePropertyName(entry.Name);
-                        entry.Value.WriteTo(writer);
-                    }
-                }
-            }
-        }
-    }
-
-    /// <summary>Copies a reusable keyword object (e.g. <c>components</c>/<c>definitions</c>) from the first root that has it.</summary>
-    private static void WriteCarriedObject(Utf8JsonWriter writer, JsonElement[] roots, string keyword)
-    {
-        foreach (JsonElement root in roots)
-        {
-            if (root.ValueKind == JsonValueKind.Object
-                && root.TryGetProperty(keyword, out JsonElement value)
-                && value.ValueKind == JsonValueKind.Object)
-            {
-                writer.WritePropertyName(keyword);
-                value.WriteTo(writer);
-                return;
-            }
-        }
-    }
-
-    private static bool TryResponseBodyForStatus(StepOperation op, string? status, out JsonElement schema)
-    {
-        schema = default;
-        if (status is null)
-        {
-            return TrySuccessResponseBody(op, out schema);
-        }
-
-        return op.Operation.TryGetProperty("responses", out JsonElement responses)
-            && responses.ValueKind == JsonValueKind.Object
-            && responses.TryGetProperty(status, out JsonElement response)
-            && TryBodySchema(SchemaClassifier.ResolveRef(response, op.Root), op.Root, out schema);
-    }
-
-    private static bool TryFindWorkflow(JsonElement root, string? workflowId, out JsonElement workflow)
-    {
-        workflow = default;
-        if (!root.TryGetProperty("workflows", out JsonElement workflows) || workflows.ValueKind != JsonValueKind.Array)
-        {
-            return false;
-        }
-
-        foreach (JsonElement candidate in workflows.EnumerateArray())
-        {
-            if (workflowId is null || TryGetString(candidate, "workflowId") == workflowId)
-            {
-                workflow = candidate;
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static bool TryFindStep(JsonElement workflow, string stepId, out JsonElement step)
-    {
-        step = default;
-        if (!workflow.TryGetProperty("steps", out JsonElement steps) || steps.ValueKind != JsonValueKind.Array)
-        {
-            return false;
-        }
-
-        foreach (JsonElement candidate in steps.EnumerateArray())
-        {
-            if (TryGetString(candidate, "stepId") == stepId)
-            {
-                step = candidate;
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     private static void WriteWorkflow(Utf8JsonWriter writer, JsonElement workflow, JsonElement workflowRoot, IReadOnlyDictionary<string, JsonElement> sources)
     {
         string workflowId = TryGetString(workflow, "workflowId") ?? "$workflow";
@@ -512,41 +148,20 @@ public static class WorkflowSchemaMetadataGenerator
             return;
         }
 
-        bool resolved = TryResolveStepOperation(step, sources, out StepOperation op);
-
         writer.WritePropertyName(stepId);
         writer.WriteStartObject();
-
-        if (resolved)
-        {
-            WriteOperationRef(writer, step, op);
-            if (op.IsAsyncApi)
-            {
-                WriteMessage(writer, op);
-            }
-            else
-            {
-                WriteRequest(writer, op);
-                WriteResponses(writer, op);
-            }
-        }
-
-        // The schemas an output expression may resolve against (success response body / message payload / request body).
-        JsonElement responseSchema = default, payloadSchema = default, requestBodySchema = default;
-        bool haveResponse = resolved && !op.IsAsyncApi && TrySuccessResponseBody(op, out responseSchema);
-        bool havePayload = resolved && op.IsAsyncApi && TryMessagePayload(op, out payloadSchema);
-        bool haveRequestBody = resolved && !op.IsAsyncApi && TryRequestBody(op, out requestBodySchema);
-        JsonElement opRoot = resolved ? op.Root : default;
-
         writer.WritePropertyName("outputs");
         writer.WriteStartObject();
+
         if (step.TryGetProperty("outputs", out JsonElement outputs) && outputs.ValueKind == JsonValueKind.Object)
         {
+            bool haveResponse = TryResolveResponseBodySchema(step, sources, out JsonElement responseSchema, out JsonElement responseRoot);
+
             foreach (var output in outputs.EnumerateObject())
             {
                 writer.WritePropertyName(output.Name);
                 string expression = output.Value.ValueKind == JsonValueKind.String ? output.Value.GetString() ?? string.Empty : string.Empty;
-                WriteOutputDescriptor(writer, expression, workflow, workflowRoot, opRoot, haveResponse, responseSchema, havePayload, payloadSchema, haveRequestBody, requestBodySchema);
+                WriteOutputDescriptor(writer, expression, workflow, workflowRoot, haveResponse, responseSchema, responseRoot);
             }
         }
 
@@ -559,13 +174,9 @@ public static class WorkflowSchemaMetadataGenerator
         string expression,
         JsonElement workflow,
         JsonElement workflowRoot,
-        JsonElement opRoot,
         bool haveResponse,
         JsonElement responseSchema,
-        bool havePayload,
-        JsonElement payloadSchema,
-        bool haveRequestBody,
-        JsonElement requestBodySchema)
+        JsonElement responseRoot)
     {
         ArazzoExpr expr = ArazzoExpr.Parse(expression);
         switch (expr.Source)
@@ -580,7 +191,6 @@ public static class WorkflowSchemaMetadataGenerator
             case ArazzoExprSource.ResponseHeader:
             case ArazzoExprSource.RequestPath:
             case ArazzoExprSource.RequestQuery:
-            case ArazzoExprSource.MessageHeader:
                 WriteScalar(writer, "string");
                 return;
 
@@ -596,27 +206,9 @@ public static class WorkflowSchemaMetadataGenerator
                 break;
 
             case ArazzoExprSource.ResponseBody when haveResponse:
-                if (TryNavigatePointer(responseSchema, opRoot, expr.JsonPointer, out JsonElement resolvedBody))
+                if (TryNavigatePointer(responseSchema, responseRoot, expr.JsonPointer, out JsonElement resolvedBody))
                 {
-                    WriteTypeDescriptor(writer, resolvedBody, opRoot, 0);
-                    return;
-                }
-
-                break;
-
-            case ArazzoExprSource.RequestBody when haveRequestBody:
-                if (TryNavigatePointer(requestBodySchema, opRoot, expr.JsonPointer, out JsonElement resolvedRequest))
-                {
-                    WriteTypeDescriptor(writer, resolvedRequest, opRoot, 0);
-                    return;
-                }
-
-                break;
-
-            case ArazzoExprSource.MessagePayload when havePayload:
-                if (TryNavigatePointer(payloadSchema, opRoot, expr.JsonPointer, out JsonElement resolvedPayload))
-                {
-                    WriteTypeDescriptor(writer, resolvedPayload, opRoot, 0);
+                    WriteTypeDescriptor(writer, resolvedBody, responseRoot, 0);
                     return;
                 }
 
@@ -627,193 +219,26 @@ public static class WorkflowSchemaMetadataGenerator
                 return;
         }
 
-        // $steps.*.outputs.*, $workflows.*, or an unresolvable source/pointer — not statically typed.
+        // $steps.*.outputs.*, unresolved $response.body / $inputs, $message.payload, etc. — not yet resolved.
         WriteUnknown(writer);
     }
 
-    // ---- step surface sections (editor metadata) ------------------------------------------------
-
-    /// <summary>Writes the resolved operation reference — source, kind, id, and method/path (or action/channel).</summary>
-    private static void WriteOperationRef(Utf8JsonWriter writer, JsonElement step, StepOperation op)
-    {
-        writer.WritePropertyName("operation");
-        writer.WriteStartObject();
-        writer.WriteString("source", op.Source);
-        writer.WriteString("kind", op.IsAsyncApi ? "asyncapi" : "openapi");
-        if (TryGetString(step, "operationId") is { } operationId)
-        {
-            writer.WriteString("operationId", operationId);
-        }
-
-        if (op.IsAsyncApi)
-        {
-            if (op.Verb is not null)
-            {
-                writer.WriteString("action", op.Verb);
-            }
-
-            if (op.PathOrChannel is not null)
-            {
-                writer.WriteString("channel", op.PathOrChannel);
-            }
-        }
-        else
-        {
-            if (op.Verb is not null)
-            {
-                writer.WriteString("method", op.Verb);
-            }
-
-            if (op.PathOrChannel is not null)
-            {
-                writer.WriteString("path", op.PathOrChannel);
-            }
-        }
-
-        writer.WriteEndObject();
-    }
-
-    /// <summary>Writes the OpenAPI request surface — typed parameters (path/query/header/cookie) and the request body.</summary>
-    private static void WriteRequest(Utf8JsonWriter writer, StepOperation op)
-    {
-        writer.WritePropertyName("request");
-        writer.WriteStartObject();
-
-        writer.WritePropertyName("parameters");
-        writer.WriteStartObject();
-        if (op.Operation.TryGetProperty("parameters", out JsonElement parameters) && parameters.ValueKind == JsonValueKind.Array)
-        {
-            foreach (JsonElement raw in parameters.EnumerateArray())
-            {
-                JsonElement parameter = SchemaClassifier.ResolveRef(raw, op.Root);
-                if (TryGetString(parameter, "name") is not { } name)
-                {
-                    continue;
-                }
-
-                writer.WritePropertyName(name);
-                writer.WriteStartObject();
-                if (TryGetString(parameter, "in") is { } location)
-                {
-                    writer.WriteString("in", location);
-                }
-
-                if (parameter.TryGetProperty("required", out JsonElement required) && required.ValueKind == JsonValueKind.True)
-                {
-                    writer.WriteBoolean("required", true);
-                }
-
-                writer.WritePropertyName("schema");
-                if (parameter.TryGetProperty("schema", out JsonElement parameterSchema))
-                {
-                    WriteTypeDescriptor(writer, parameterSchema, op.Root, 0);
-                }
-                else
-                {
-                    WriteUnknown(writer);
-                }
-
-                writer.WriteEndObject();
-            }
-        }
-
-        writer.WriteEndObject(); // parameters
-
-        if (TryRequestBody(op, out JsonElement bodySchema))
-        {
-            writer.WritePropertyName("body");
-            WriteTypeDescriptor(writer, bodySchema, op.Root, 0);
-        }
-
-        writer.WriteEndObject(); // request
-    }
-
-    /// <summary>Writes the OpenAPI response surface — per status code, the typed body and headers.</summary>
-    private static void WriteResponses(Utf8JsonWriter writer, StepOperation op)
-    {
-        writer.WritePropertyName("responses");
-        writer.WriteStartObject();
-        if (op.Operation.TryGetProperty("responses", out JsonElement responses) && responses.ValueKind == JsonValueKind.Object)
-        {
-            foreach (var response in responses.EnumerateObject())
-            {
-                writer.WritePropertyName(response.Name);
-                writer.WriteStartObject();
-                JsonElement resolved = SchemaClassifier.ResolveRef(response.Value, op.Root);
-
-                if (TryBodySchema(resolved, op.Root, out JsonElement bodySchema))
-                {
-                    writer.WritePropertyName("body");
-                    WriteTypeDescriptor(writer, bodySchema, op.Root, 0);
-                }
-
-                if (resolved.TryGetProperty("headers", out JsonElement headers) && headers.ValueKind == JsonValueKind.Object)
-                {
-                    writer.WritePropertyName("headers");
-                    writer.WriteStartObject();
-                    foreach (var header in headers.EnumerateObject())
-                    {
-                        JsonElement headerObject = SchemaClassifier.ResolveRef(header.Value, op.Root);
-                        writer.WritePropertyName(header.Name);
-                        if (headerObject.TryGetProperty("schema", out JsonElement headerSchema))
-                        {
-                            WriteTypeDescriptor(writer, headerSchema, op.Root, 0);
-                        }
-                        else
-                        {
-                            WriteUnknown(writer);
-                        }
-                    }
-
-                    writer.WriteEndObject();
-                }
-
-                writer.WriteEndObject();
-            }
-        }
-
-        writer.WriteEndObject();
-    }
-
-    /// <summary>Writes the AsyncAPI message surface — the first message's typed payload and headers.</summary>
-    private static void WriteMessage(Utf8JsonWriter writer, StepOperation op)
-    {
-        writer.WritePropertyName("message");
-        writer.WriteStartObject();
-        if (TryResolveMessage(op, out JsonElement message))
-        {
-            if (message.TryGetProperty("payload", out JsonElement payload))
-            {
-                writer.WritePropertyName("payload");
-                WriteTypeDescriptor(writer, payload, op.Root, 0);
-            }
-
-            if (message.TryGetProperty("headers", out JsonElement headers))
-            {
-                writer.WritePropertyName("headers");
-                WriteTypeDescriptor(writer, headers, op.Root, 0);
-            }
-        }
-
-        writer.WriteEndObject();
-    }
-
-    private static bool TryRequestBody(StepOperation op, out JsonElement schema)
+    /// <summary>
+    /// Resolves a step's success response body schema (the operation's lowest 2xx, else <c>default</c>) from
+    /// the referenced OpenAPI source documents. Best-effort; returns <see langword="false"/> when the step has
+    /// no resolvable operation (AsyncAPI channel / sub-workflow / unresolved operation).
+    /// </summary>
+    private static bool TryResolveResponseBodySchema(JsonElement step, IReadOnlyDictionary<string, JsonElement> sources, out JsonElement schema, out JsonElement documentRoot)
     {
         schema = default;
-        if (!op.Operation.TryGetProperty("requestBody", out JsonElement requestBody))
+        documentRoot = default;
+
+        if (!TryResolveOperation(step, sources, out JsonElement operation, out documentRoot))
         {
             return false;
         }
 
-        return TryBodySchema(SchemaClassifier.ResolveRef(requestBody, op.Root), op.Root, out schema);
-    }
-
-    /// <summary>The success (lowest 2xx, else <c>default</c>) response body schema — what <c>$response.body</c> resolves against.</summary>
-    private static bool TrySuccessResponseBody(StepOperation op, out JsonElement schema)
-    {
-        schema = default;
-        if (!op.Operation.TryGetProperty("responses", out JsonElement responses) || responses.ValueKind != JsonValueKind.Object)
+        if (!operation.TryGetProperty("responses", out JsonElement responses) || responses.ValueKind != JsonValueKind.Object)
         {
             return false;
         }
@@ -836,44 +261,16 @@ public static class WorkflowSchemaMetadataGenerator
             found = true;
         }
 
-        return found && TryBodySchema(SchemaClassifier.ResolveRef(chosen, op.Root), op.Root, out schema);
-    }
-
-    private static bool TryMessagePayload(StepOperation op, out JsonElement schema)
-    {
-        schema = default;
-        return TryResolveMessage(op, out JsonElement message) && message.TryGetProperty("payload", out schema);
-    }
-
-    private static bool TryResolveMessage(StepOperation op, out JsonElement message)
-    {
-        message = default;
-        if (op.Operation.TryGetProperty("messages", out JsonElement messages) && messages.ValueKind == JsonValueKind.Array)
-        {
-            foreach (JsonElement candidate in messages.EnumerateArray())
-            {
-                message = SchemaClassifier.ResolveRef(candidate, op.Root);
-                return true; // the first message describes the step's payload
-            }
-        }
-
-        return false;
-    }
-
-    /// <summary>The first JSON media type's <c>schema</c> from a request-body/response <c>content</c> map.</summary>
-    private static bool TryBodySchema(JsonElement carrier, JsonElement documentRoot, out JsonElement schema)
-    {
-        schema = default;
-        _ = documentRoot;
-        if (!carrier.TryGetProperty("content", out JsonElement content) || content.ValueKind != JsonValueKind.Object)
+        if (!found || !chosen.TryGetProperty("content", out JsonElement content) || content.ValueKind != JsonValueKind.Object)
         {
             return false;
         }
 
         foreach (var mediaType in content.EnumerateObject())
         {
-            if (mediaType.Value.TryGetProperty("schema", out schema))
+            if (mediaType.Value.TryGetProperty("schema", out JsonElement bodySchema))
             {
+                schema = bodySchema;
                 return true;
             }
         }
@@ -881,33 +278,19 @@ public static class WorkflowSchemaMetadataGenerator
         return false;
     }
 
-    /// <summary>
-    /// Resolves a step's <c>operationId</c> (or <c>operationPath</c>) to the operation object in its source
-    /// document, distinguishing OpenAPI operations (found under <c>paths</c>) from AsyncAPI operations (found
-    /// under <c>operations</c>).
-    /// </summary>
-    private static bool TryResolveStepOperation(JsonElement step, IReadOnlyDictionary<string, JsonElement> sources, out StepOperation result)
+    /// <summary>Resolves a step's <c>operationId</c> (or <c>operationPath</c>) to the operation object + its source document.</summary>
+    private static bool TryResolveOperation(JsonElement step, IReadOnlyDictionary<string, JsonElement> sources, out JsonElement operation, out JsonElement documentRoot)
     {
-        result = default;
+        operation = default;
+        documentRoot = default;
 
         if (TryGetString(step, "operationId") is { } operationId)
         {
-            foreach (KeyValuePair<string, JsonElement> source in sources)
+            foreach (JsonElement source in sources.Values)
             {
-                JsonElement root = source.Value;
-                if (IsAsyncApi(root))
+                if (TryFindOperationById(source, operationId, out operation))
                 {
-                    if (root.TryGetProperty("operations", out JsonElement operations)
-                        && operations.ValueKind == JsonValueKind.Object
-                        && operations.TryGetProperty(operationId, out JsonElement asyncOperation))
-                    {
-                        result = new StepOperation(asyncOperation, root, true, source.Key, TryGetString(asyncOperation, "action"), ChannelRef(asyncOperation));
-                        return true;
-                    }
-                }
-                else if (TryFindOpenApiOperation(root, operationId, out JsonElement operation, out string? method, out string? path))
-                {
-                    result = new StepOperation(operation, root, false, source.Key, method, path);
+                    documentRoot = source;
                     return true;
                 }
             }
@@ -924,9 +307,9 @@ public static class WorkflowSchemaMetadataGenerator
                 foreach (KeyValuePair<string, JsonElement> source in sources)
                 {
                     if (prefix.Contains(source.Key, StringComparison.Ordinal)
-                        && source.Value.TryResolvePointer(pointer, out JsonElement operation))
+                        && source.Value.TryResolvePointer(pointer, out operation))
                     {
-                        result = new StepOperation(operation, source.Value, IsAsyncApi(source.Value), source.Key, null, null);
+                        documentRoot = source.Value;
                         return true;
                     }
                 }
@@ -936,31 +319,27 @@ public static class WorkflowSchemaMetadataGenerator
         return false;
     }
 
-    private static bool TryFindOpenApiOperation(JsonElement openApi, string operationId, out JsonElement operation, out string? method, out string? path)
+    private static bool TryFindOperationById(JsonElement openApi, string operationId, out JsonElement operation)
     {
         operation = default;
-        method = null;
-        path = null;
         if (!openApi.TryGetProperty("paths", out JsonElement paths) || paths.ValueKind != JsonValueKind.Object)
         {
             return false;
         }
 
-        foreach (var pathItem in paths.EnumerateObject())
+        foreach (var path in paths.EnumerateObject())
         {
-            if (pathItem.Value.ValueKind != JsonValueKind.Object)
+            if (path.Value.ValueKind != JsonValueKind.Object)
             {
                 continue;
             }
 
-            foreach (var verb in pathItem.Value.EnumerateObject())
+            foreach (var method in path.Value.EnumerateObject())
             {
-                if (verb.Value.ValueKind == JsonValueKind.Object
-                    && TryGetString(verb.Value, "operationId") == operationId)
+                if (method.Value.ValueKind == JsonValueKind.Object
+                    && TryGetString(method.Value, "operationId") == operationId)
                 {
-                    operation = verb.Value;
-                    method = verb.Name;
-                    path = pathItem.Name;
+                    operation = method.Value;
                     return true;
                 }
             }
@@ -969,75 +348,12 @@ public static class WorkflowSchemaMetadataGenerator
         return false;
     }
 
-    private static bool IsAsyncApi(JsonElement root)
-        => root.ValueKind == JsonValueKind.Object
-            && (root.TryGetProperty("asyncapi", out _)
-                || (root.TryGetProperty("operations", out _) && root.TryGetProperty("channels", out _) && !root.TryGetProperty("paths", out _)));
-
-    private static string? ChannelRef(JsonElement asyncOperation)
-        => asyncOperation.TryGetProperty("channel", out JsonElement channel)
-            && channel.TryGetProperty("$ref", out JsonElement reference)
-            && reference.ValueKind == JsonValueKind.String
-            ? reference.GetString()
-            : null;
-
-    /// <summary>A step's resolved operation: the operation node, its source document + name, whether it is AsyncAPI,
-    /// and the HTTP method/path (OpenAPI) or action/channel (AsyncAPI).</summary>
-    private readonly record struct StepOperation(JsonElement Operation, JsonElement Root, bool IsAsyncApi, string Source, string? Verb, string? PathOrChannel);
-
     // ---- type descriptor ------------------------------------------------------------------------
 
     /// <summary>Writes the normalised recursive type descriptor for a JSON Schema node.</summary>
-    private static void WriteTypeDescriptor(Utf8JsonWriter writer, JsonElement schema, JsonElement documentRoot, int depth, bool forceNullable = false)
+    private static void WriteTypeDescriptor(Utf8JsonWriter writer, JsonElement schema, JsonElement documentRoot, int depth)
     {
         schema = SchemaClassifier.ResolveRef(schema, documentRoot);
-
-        // Polymorphic union (oneOf/anyOf). "X | null" collapses to X with nullable; a single remaining branch
-        // unwraps to that branch; two or more become a "union" descriptor (a typed variant picker in the UI).
-        if (depth < MaxDepth && schema.ValueKind == JsonValueKind.Object
-            && TryReadUnionVariants(schema, out List<JsonElement> variants, out bool unionHasNull))
-        {
-            if (variants.Count == 1)
-            {
-                WriteTypeDescriptor(writer, variants[0], documentRoot, depth, forceNullable || unionHasNull);
-                return;
-            }
-
-            writer.WriteStartObject();
-            if (variants.Count == 0)
-            {
-                writer.WriteString("type", unionHasNull ? "null" : "unknown");
-                writer.WriteEndObject();
-                return;
-            }
-
-            writer.WriteString("type", "union");
-            if (unionHasNull || forceNullable)
-            {
-                writer.WriteBoolean("nullable", true);
-            }
-
-            if (schema.TryGetProperty("description", out JsonElement unionDescription) && unionDescription.ValueKind == JsonValueKind.String)
-            {
-                writer.WriteString("description", unionDescription.GetString());
-            }
-
-            if (TryDiscriminatorProperty(schema, out string discriminator))
-            {
-                writer.WriteString("discriminator", discriminator);
-            }
-
-            writer.WritePropertyName("variants");
-            writer.WriteStartArray();
-            foreach (JsonElement variant in variants)
-            {
-                WriteTypeDescriptor(writer, variant, documentRoot, depth + 1);
-            }
-
-            writer.WriteEndArray();
-            writer.WriteEndObject();
-            return;
-        }
 
         writer.WriteStartObject();
         if (depth >= MaxDepth || schema.ValueKind != JsonValueKind.Object)
@@ -1054,7 +370,7 @@ public static class WorkflowSchemaMetadataGenerator
             {
                 type = "object";
             }
-            else if (schema.TryGetProperty("items", out _) || schema.TryGetProperty("prefixItems", out _))
+            else if (schema.TryGetProperty("items", out _))
             {
                 type = "array";
             }
@@ -1065,7 +381,7 @@ public static class WorkflowSchemaMetadataGenerator
             writer.WriteString("type", type);
         }
 
-        if (nullable || forceNullable)
+        if (nullable)
         {
             writer.WriteBoolean("nullable", true);
         }
@@ -1116,43 +432,10 @@ public static class WorkflowSchemaMetadataGenerator
             }
         }
 
-        if (type == "object" && TryAdditionalSchema(schema, "additionalProperties", "unevaluatedProperties", out JsonElement valueSchema))
+        if (type == "array" && schema.TryGetProperty("items", out JsonElement items) && items.ValueKind == JsonValueKind.Object)
         {
-            // A free-form map (open object): arbitrary keys whose values follow this schema.
-            writer.WritePropertyName("additionalProperties");
-            WriteTypeDescriptor(writer, valueSchema, documentRoot, depth + 1);
-        }
-
-        if (type == "array")
-        {
-            // A tuple: positional `prefixItems` (2020-12) or the legacy array-form `items`.
-            JsonElement prefixItems = default;
-            bool isTuple = (schema.TryGetProperty("prefixItems", out prefixItems) && prefixItems.ValueKind == JsonValueKind.Array)
-                || (schema.TryGetProperty("items", out prefixItems) && prefixItems.ValueKind == JsonValueKind.Array);
-            if (isTuple)
-            {
-                writer.WritePropertyName("prefixItems");
-                writer.WriteStartArray();
-                foreach (JsonElement element in prefixItems.EnumerateArray())
-                {
-                    WriteTypeDescriptor(writer, element, documentRoot, depth + 1);
-                }
-
-                writer.WriteEndArray();
-
-                // The schema for any items beyond the fixed prefix (2020-12 `items`, or legacy `additionalItems`).
-                if (TryAdditionalSchema(schema, "additionalItems", "unevaluatedItems", out JsonElement extraItems)
-                    || (schema.TryGetProperty("items", out extraItems) && extraItems.ValueKind == JsonValueKind.Object))
-                {
-                    writer.WritePropertyName("items");
-                    WriteTypeDescriptor(writer, extraItems, documentRoot, depth + 1);
-                }
-            }
-            else if (schema.TryGetProperty("items", out JsonElement items) && items.ValueKind == JsonValueKind.Object)
-            {
-                writer.WritePropertyName("items");
-                WriteTypeDescriptor(writer, items, documentRoot, depth + 1);
-            }
+            writer.WritePropertyName("items");
+            WriteTypeDescriptor(writer, items, documentRoot, depth + 1);
         }
 
         writer.WriteEndObject();
@@ -1193,105 +476,6 @@ public static class WorkflowSchemaMetadataGenerator
         }
 
         return (null, schema.TryGetProperty("nullable", out JsonElement nb) && nb.ValueKind == JsonValueKind.True);
-    }
-
-    /// <summary>
-    /// Reads the branches of a simple polymorphic union (<c>oneOf</c>/<c>anyOf</c>), separating out a pure
-    /// <c>null</c> branch (so a <c>X | null</c> union collapses to a nullable <c>X</c>).
-    /// </summary>
-    private static bool TryReadUnionVariants(JsonElement schema, out List<JsonElement> variants, out bool hasNull)
-    {
-        variants = [];
-        hasNull = false;
-
-        JsonElement union;
-        if (!((schema.TryGetProperty("oneOf", out union) && union.ValueKind == JsonValueKind.Array)
-            || (schema.TryGetProperty("anyOf", out union) && union.ValueKind == JsonValueKind.Array)))
-        {
-            return false;
-        }
-
-        foreach (JsonElement branch in union.EnumerateArray())
-        {
-            if (IsPureNullSchema(branch))
-            {
-                hasNull = true;
-            }
-            else
-            {
-                variants.Add(branch);
-            }
-        }
-
-        return true;
-    }
-
-    /// <summary>Whether a schema is exactly the null type (<c>{ "type": "null" }</c> or <c>{ "type": ["null"] }</c>).</summary>
-    private static bool IsPureNullSchema(JsonElement schema)
-    {
-        if (schema.ValueKind != JsonValueKind.Object || !schema.TryGetProperty("type", out JsonElement type))
-        {
-            return false;
-        }
-
-        if (type.ValueKind == JsonValueKind.String)
-        {
-            return type.GetString() == "null";
-        }
-
-        if (type.ValueKind == JsonValueKind.Array)
-        {
-            bool any = false;
-            foreach (JsonElement member in type.EnumerateArray())
-            {
-                any = true;
-                if (member.ValueKind != JsonValueKind.String || member.GetString() != "null")
-                {
-                    return false;
-                }
-            }
-
-            return any;
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Reads the <c>discriminator.propertyName</c> — the property whose value selects the variant. This is an
-    /// <em>OpenAPI extension</em>, not a JSON Schema keyword (there is no <c>discriminator</c> in JSON Schema
-    /// 2020-12 or earlier), so it is read opportunistically when present on an OpenAPI source and simply absent
-    /// otherwise; the UI degrades to labelling variants by title/type when there is no discriminator.
-    /// </summary>
-    private static bool TryDiscriminatorProperty(JsonElement schema, out string propertyName)
-    {
-        propertyName = string.Empty;
-        if (schema.TryGetProperty("discriminator", out JsonElement discriminator)
-            && discriminator.ValueKind == JsonValueKind.Object
-            && discriminator.TryGetProperty("propertyName", out JsonElement name)
-            && name.ValueKind == JsonValueKind.String)
-        {
-            propertyName = name.GetString() ?? string.Empty;
-        }
-
-        return propertyName.Length > 0;
-    }
-
-    /// <summary>Reads an open-shape value schema from the first of two keywords whose value is an object schema.</summary>
-    private static bool TryAdditionalSchema(JsonElement schema, string primary, string fallback, out JsonElement valueSchema)
-    {
-        if (schema.TryGetProperty(primary, out valueSchema) && valueSchema.ValueKind == JsonValueKind.Object)
-        {
-            return true;
-        }
-
-        if (schema.TryGetProperty(fallback, out valueSchema) && valueSchema.ValueKind == JsonValueKind.Object)
-        {
-            return true;
-        }
-
-        valueSchema = default;
-        return false;
     }
 
     // ---- navigation helpers ---------------------------------------------------------------------
@@ -1370,34 +554,3 @@ public static class WorkflowSchemaMetadataGenerator
             ? value.GetString()
             : null;
 }
-
-/// <summary>The kind of schema within a workflow package to validate a value against.</summary>
-public enum WorkflowSchemaTargetKind
-{
-    /// <summary>A workflow's <c>inputs</c> schema.</summary>
-    Inputs,
-
-    /// <summary>A step operation's request body schema.</summary>
-    RequestBody,
-
-    /// <summary>A step operation's response body schema (for a status code, or the success response).</summary>
-    ResponseBody,
-
-    /// <summary>An object whose properties are a step's declared outputs and their resolved schemas.</summary>
-    StepOutputs,
-}
-
-/// <summary>
-/// Identifies a schema within a workflow package to validate a value against — a workflow's inputs, a step's
-/// request or response body, or a step's outputs object.
-/// </summary>
-/// <param name="Kind">The kind of schema.</param>
-/// <param name="WorkflowId">The workflow id; when <see langword="null"/> the first workflow is used.</param>
-/// <param name="StepId">The step id (required for request/response/outputs targets).</param>
-/// <param name="Status">The response status code for a <see cref="WorkflowSchemaTargetKind.ResponseBody"/> target;
-/// when <see langword="null"/> the success (lowest 2xx, else <c>default</c>) response is used.</param>
-public readonly record struct WorkflowSchemaTarget(
-    WorkflowSchemaTargetKind Kind,
-    string? WorkflowId = null,
-    string? StepId = null,
-    string? Status = null);
