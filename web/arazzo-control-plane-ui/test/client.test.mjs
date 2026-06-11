@@ -131,6 +131,14 @@ test('searchCatalog filters by status, tag, owner and free-text q', async () => 
   assert.equal((await c.searchCatalog({ q: 'adopt' })).versions.length, 1);
 });
 
+test('searchCatalog filters by workflowIdPrefix (case-insensitive, anchored)', async () => {
+  const c = makeClient();
+  assert.equal((await c.searchCatalog({ workflowIdPrefix: 'nightly' })).versions.length, 3, 'base-name prefix matches all versions');
+  assert.equal((await c.searchCatalog({ workflowIdPrefix: 'ADOPT-PET' })).versions.length, 1, 'case-insensitive');
+  assert.equal((await c.searchCatalog({ workflowIdPrefix: 'nightly-reconcile-v3' })).versions.length, 1, 'versioned-id prefix narrows to one');
+  assert.equal((await c.searchCatalog({ workflowIdPrefix: 'zzz' })).versions.length, 0, 'no match');
+});
+
 test('searchCatalog filters by baseWorkflowId', async () => {
   const { versions } = await makeClient().searchCatalog({ baseWorkflowId: 'nightly-reconcile' });
   assert.equal(versions.length, 3);

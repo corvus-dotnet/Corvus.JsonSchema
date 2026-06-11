@@ -313,6 +313,12 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore
             return false;
         }
 
+        if (query.WorkflowIdPrefix is { Length: > 0 } prefix
+            && !version.WorkflowId.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
         if (query.Status is { } status && version.Status != status)
         {
             return false;

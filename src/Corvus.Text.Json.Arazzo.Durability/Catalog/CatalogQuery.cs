@@ -10,6 +10,9 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// </summary>
 /// <param name="Text">Free-text matched (case-insensitive contains) against each version's title and description, if set.</param>
 /// <param name="BaseWorkflowId">Restrict to versions of this base workflow id (exact), if set.</param>
+/// <param name="WorkflowIdPrefix">Restrict to versions whose versioned workflow id starts with this prefix
+/// (case-insensitive), if set. An anchored, index-friendly prefix match for type-ahead — because the versioned
+/// id begins with the base id, a base-name prefix matches all of that workflow's versions.</param>
 /// <param name="Tags">Restrict to versions carrying every one of these tags (AND), if set.</param>
 /// <param name="Status">Restrict to versions in this status, if set.</param>
 /// <param name="Owner">Restrict to versions whose owner name or email contains this value (case-insensitive), if set.</param>
@@ -19,6 +22,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 public readonly record struct CatalogQuery(
     string? Text = null,
     string? BaseWorkflowId = null,
+    string? WorkflowIdPrefix = null,
     IReadOnlyList<string>? Tags = null,
     CatalogStatus? Status = null,
     string? Owner = null,

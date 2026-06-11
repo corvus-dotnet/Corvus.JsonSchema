@@ -348,6 +348,8 @@ export function createMockControlPlane(options = {}) {
   function matchesCatalog(v, params) {
     const base = params.get('baseWorkflowId');
     if (base && v.baseWorkflowId !== base) return false;
+    const prefix = (params.get('workflowIdPrefix') || '').toLowerCase();
+    if (prefix && !(v.workflowId || '').toLowerCase().startsWith(prefix)) return false;
     const status = params.get('status');
     if (status && v.status !== status) return false;
     const q = (params.get('q') || '').toLowerCase();

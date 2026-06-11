@@ -145,6 +145,26 @@ public abstract class WorkflowCatalogStoreConformance
     }
 
     [TestMethod]
+    public async Task Query_filters_by_workflow_id_prefix()
+    {
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+        await store.AddAsync("adopt-pet", Package("adopt-pet"), Meta(), default);                   // adopt-pet-v1
+        await store.AddAsync("adopt-pet", Package("adopt-pet"), Meta(), default);                   // adopt-pet-v2
+        await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default);   // nightly-reconcile-v1
+
+        // A base-name prefix matches every version of that workflow (the versioned id begins with the base id).
+        (await store.QueryAsync(new CatalogQuery(WorkflowIdPrefix: "adopt"), default)).Versions.Count.ShouldBe(2);
+        // Case-insensitive.
+        (await store.QueryAsync(new CatalogQuery(WorkflowIdPrefix: "ADOPT-PET"), default)).Versions.Count.ShouldBe(2);
+        // A versioned-id prefix narrows to the single version.
+        (await store.QueryAsync(new CatalogQuery(WorkflowIdPrefix: "adopt-pet-v2"), default)).Versions.Count.ShouldBe(1);
+        // A different workflow.
+        (await store.QueryAsync(new CatalogQuery(WorkflowIdPrefix: "nightly"), default)).Versions.Count.ShouldBe(1);
+        // No match.
+        (await store.QueryAsync(new CatalogQuery(WorkflowIdPrefix: "zzz"), default)).Versions.Count.ShouldBe(0);
+    }
+
+    [TestMethod]
     public async Task Query_pages_by_keyset()
     {
         IWorkflowCatalogStore store = await this.NewStoreAsync();

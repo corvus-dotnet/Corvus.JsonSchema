@@ -31,9 +31,8 @@ const DARK = `
   --arazzo-status-completed:#4cc472; --arazzo-status-cancelled:#8b929c; --arazzo-status-faulted:#ff6b5e;`;
 
 // The workflowId autocomplete shows at most this many matches at once (so a large catalog can't flood the
-// dropdown), filtered by what's typed. We pull ids for the cache up to MAX_SUGGESTION_SOURCE.
+// dropdown). Matches are fetched server-side by prefix as the user types, so this scales to any catalog size.
 const SUGGESTION_LIMIT = 10;
-const MAX_SUGGESTION_SOURCE = 1000;
 
 class ArazzoControlPlane extends ArazzoElement {
   static get observedAttributes() {
@@ -46,6 +45,8 @@ class ArazzoControlPlane extends ArazzoElement {
     /** @private */ this._fetch = undefined;
     /** @private */ this._search = '';
     /** @private */ this._searchTimer = null;
+    /** @private */ this._suggestTimer = null;
+    /** @private */ this._suggestSeq = 0;
   }
 
   connectedCallback() {
@@ -108,36 +109,31 @@ class ArazzoControlPlane extends ArazzoElement {
   }
 
   /**
-   * Best-effort: cache the catalog's workflow ids (both the base ids and the versioned ids the runs carry)
-   * for the workflowId filter's autocomplete, then render the first page of suggestions. Silently no-ops if
-   * the catalog isn't reachable (e.g. the principal lacks `catalog:read`) — the field stays a free-text filter.
+   * Best-effort: fetch the catalog workflow ids matching `prefix` (server-side, index-friendly) and fill the
+   * workflowId filter's autocomplete with up to {@link SUGGESTION_LIMIT} of them — so the dropdown stays small
+   * and the query scales to any catalog size. Surfaces both the base id and the versioned ids the runs carry.
+   * Silently no-ops if the catalog isn't reachable (e.g. the principal lacks `catalog:read`).
+   * @param {string} [prefix] The current text in the filter, matched as a prefix.
    */
-  async loadWorkflowSuggestions() {
+  async loadWorkflowSuggestions(prefix = '') {
     const client = this.buildClient();
-    if (!client || !this.$('#wf-id-options')) return;
+    const datalist = this.$('#wf-id-options');
+    if (!client || !datalist) return;
+    const seq = ++this._suggestSeq;
     try {
+      // Slightly over-fetch so a workflow's versions don't crowd out other workflows before we cap.
+      const { versions } = await client.searchCatalog({ workflowIdPrefix: prefix || undefined, limit: SUGGESTION_LIMIT * 2 });
+      if (seq !== this._suggestSeq) return; // a newer keystroke superseded this query
       const ids = new Set();
-      for await (const page of client.searchCatalogPaged({ limit: 200 })) {
-        for (const v of page.versions) {
-          if (v.baseWorkflowId) ids.add(v.baseWorkflowId);
-          if (v.workflowId) ids.add(v.workflowId);
-        }
-        if (ids.size >= MAX_SUGGESTION_SOURCE) break; // a huge catalog won't be pulled in full
+      for (const v of versions) {
+        if (v.baseWorkflowId) ids.add(v.baseWorkflowId);
+        if (v.workflowId) ids.add(v.workflowId);
+        if (ids.size >= SUGGESTION_LIMIT) break;
       }
-      this._workflowIds = [...ids].sort();
-      this.renderSuggestions(this.$('.wf-search')?.value.trim() || '');
+      datalist.innerHTML = [...ids].slice(0, SUGGESTION_LIMIT).map((id) => `<option value="${escapeHtml(id)}"></option>`).join('');
     } catch {
       // No catalog access → no suggestions; the workflowId filter remains free-text.
     }
-  }
-
-  /** Rebuild the datalist with up to {@link SUGGESTION_LIMIT} ids matching `typed` (so the dropdown stays small). */
-  renderSuggestions(typed = '') {
-    const datalist = this.$('#wf-id-options');
-    if (!datalist || !this._workflowIds) return;
-    const q = typed.toLowerCase();
-    const matches = (q ? this._workflowIds.filter((id) => id.toLowerCase().includes(q)) : this._workflowIds).slice(0, SUGGESTION_LIMIT);
-    datalist.innerHTML = matches.map((id) => `<option value="${escapeHtml(id)}"></option>`).join('');
   }
 
   applyScopes() {
@@ -247,8 +243,12 @@ class ArazzoControlPlane extends ArazzoElement {
       input._t = setTimeout(() => apply(value), 300);
     });
     debounced(this.$('.wf-search'), (v) => v ? table.setAttribute('workflow-id', v) : table.removeAttribute('workflow-id'));
-    // Narrow the autocomplete to what's typed (cheap, client-side) on every keystroke.
-    this.$('.wf-search').addEventListener('input', (e) => this.renderSuggestions(e.target.value.trim()));
+    // Refresh the autocomplete from the server (debounced) as the user types — prefix-matched, capped.
+    this.$('.wf-search').addEventListener('input', (e) => {
+      const value = e.target.value.trim();
+      clearTimeout(this._suggestTimer);
+      this._suggestTimer = setTimeout(() => this.loadWorkflowSuggestions(value), 200);
+    });
     debounced(this.$('.tag-search'), (v) => v ? table.setAttribute('tags', v) : table.removeAttribute('tags'));
     debounced(this.$('.corr-search'), (v) => v ? table.setAttribute('correlation-id', v) : table.removeAttribute('correlation-id'));
 

@@ -115,7 +115,11 @@ describe('<arazzo-control-plane>', () => {
     const input = el.shadowRoot.querySelector('.wf-search');
     input.value = 'wf-01';
     input.dispatchEvent(new Event('input', { bubbles: true }));
-    await waitFor(() => [...el.shadowRoot.querySelector('#wf-id-options').options].some((o) => o.value === 'wf-01-v1'));
+    // Wait for the debounced server query to narrow the dropdown to only matching ids.
+    await waitFor(() => {
+      const opts = [...el.shadowRoot.querySelector('#wf-id-options').options];
+      return opts.length > 0 && opts.every((o) => o.value.includes('wf-01')) ? opts : null;
+    });
     const opts = [...el.shadowRoot.querySelector('#wf-id-options').options].map((o) => o.value);
     ok(opts.length <= 10 && opts.every((v) => v.includes('wf-01')), 'narrowed to the typed text and still capped');
   });
