@@ -11,6 +11,10 @@ using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 using Corvus.Text.Json.Arazzo.Durability.Sqlite;
 using Microsoft.Extensions.FileProviders;
+using OnboardingApi = Corvus.Text.Json.Arazzo.ControlPlane.Demo.Onboarding.ApiEndpointRegistration;
+using OnboardingService = Corvus.Text.Json.Arazzo.ControlPlane.Demo.Onboarding.OnboardingService;
+using LedgerApi = Corvus.Text.Json.Arazzo.ControlPlane.Demo.Ledger.ApiEndpointRegistration;
+using LedgerService = Corvus.Text.Json.Arazzo.ControlPlane.Demo.Ledger.LedgerService;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -54,5 +58,9 @@ else
 
 // The real control-plane API, under a conventional base path the UI points at.
 app.MapGroup("/arazzo/v1").MapArazzoControlPlane(management, catalog);
+
+// The demo backend services the workflows call (generated from the same OpenAPI sources, returning sample data).
+OnboardingApi.MapApiEndpoints(app.MapGroup("/svc/onboarding"), new OnboardingService());
+LedgerApi.MapApiEndpoints(app.MapGroup("/svc/ledger"), new LedgerService());
 
 app.Run();
