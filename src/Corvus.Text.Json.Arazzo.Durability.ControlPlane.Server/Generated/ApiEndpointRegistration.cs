@@ -734,6 +734,12 @@ public static class ApiEndpointRegistration
                     string BaseWorkflowIdRaw = BaseWorkflowIdQueryVal[0]!;
                     BaseWorkflowIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(BaseWorkflowIdRaw, workspace);
                 }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString WorkflowIdPrefixValue = default;
+                if (context.Request.Query.TryGetValue("workflowIdPrefix", out var WorkflowIdPrefixQueryVal) && WorkflowIdPrefixQueryVal.Count > 0)
+                {
+                    string WorkflowIdPrefixRaw = WorkflowIdPrefixQueryVal[0]!;
+                    WorkflowIdPrefixValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(WorkflowIdPrefixRaw, workspace);
+                }
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.TagList TagValue = default;
                 if (context.Request.Query.TryGetValue("tag", out var TagQueryValues) && TagQueryValues.Count > 0)
                 {
@@ -788,6 +794,14 @@ public static class ApiEndpointRegistration
                     return;
                 }
 
+                if (!WorkflowIdPrefixValue.IsUndefined() && !WorkflowIdPrefixValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'workflowIdPrefix' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
                 if (!TagValue.IsUndefined() && !TagValue.EvaluateSchema())
                 {
                     context.Response.StatusCode = 400;
@@ -833,6 +847,7 @@ public static class ApiEndpointRegistration
                 {
                     Q = QValue,
                     BaseWorkflowId = BaseWorkflowIdValue,
+                    WorkflowIdPrefix = WorkflowIdPrefixValue,
                     Tag = TagValue,
                     Status = StatusValue,
                     Owner = OwnerValue,

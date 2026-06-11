@@ -172,6 +172,7 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, IAsync
               AND (@status IS NULL OR Status = @status)
               AND (@text IS NULL OR Title ILIKE @textLike ESCAPE '\' OR (Description IS NOT NULL AND Description ILIKE @textLike ESCAPE '\'))
               AND (@owner IS NULL OR OwnerName ILIKE @ownerLike ESCAPE '\' OR OwnerEmail ILIKE @ownerLike ESCAPE '\')
+              AND (@workflowIdPrefix IS NULL OR WorkflowId ILIKE @workflowIdPrefixLike ESCAPE '\')
               {{tagPredicates}}
               AND (@after IS NULL OR (BaseWorkflowId || lpad(VersionNumber::text, 10, '0')) > @after)
             ORDER BY BaseWorkflowId, VersionNumber
@@ -183,6 +184,8 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, IAsync
         select.Parameters.Add(NullableText("textLike", query.Text is { Length: > 0 } t ? "%" + EscapeLike(t) + "%" : null));
         select.Parameters.Add(NullableText("owner", query.Owner));
         select.Parameters.Add(NullableText("ownerLike", query.Owner is { Length: > 0 } o ? "%" + EscapeLike(o) + "%" : null));
+        select.Parameters.Add(NullableText("workflowIdPrefix", query.WorkflowIdPrefix));
+        select.Parameters.Add(NullableText("workflowIdPrefixLike", query.WorkflowIdPrefix is { Length: > 0 } p ? EscapeLike(p) + "%" : null));
         select.Parameters.Add(NullableText("after", after));
         select.Parameters.AddWithValue("limit", limit + 1);
 

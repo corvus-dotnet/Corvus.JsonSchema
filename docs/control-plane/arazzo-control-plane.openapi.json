@@ -266,6 +266,7 @@
         "parameters": [
           { "$ref": "#/components/parameters/CatalogSearchQuery" },
           { "$ref": "#/components/parameters/CatalogBaseWorkflowIdQuery" },
+          { "$ref": "#/components/parameters/CatalogWorkflowIdPrefixQuery" },
           { "$ref": "#/components/parameters/CatalogTagQuery" },
           { "$ref": "#/components/parameters/CatalogStatusQuery" },
           { "$ref": "#/components/parameters/CatalogOwnerQuery" },
@@ -639,6 +640,13 @@
         "in": "query",
         "required": false,
         "description": "Restrict to versions of this base workflow id.",
+        "schema": { "type": "string" }
+      },
+      "CatalogWorkflowIdPrefixQuery": {
+        "name": "workflowIdPrefix",
+        "in": "query",
+        "required": false,
+        "description": "Restrict to versions whose versioned workflow id starts with this prefix (case-insensitive). Designed for type-ahead: it is an anchored prefix match (index-friendly) over the versioned workflow id, which begins with the base workflow id — so typing a base name matches all of its versions.",
         "schema": { "type": "string" }
       },
       "CatalogTagQuery": {

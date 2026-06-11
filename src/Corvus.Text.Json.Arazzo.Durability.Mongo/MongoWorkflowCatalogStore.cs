@@ -187,6 +187,12 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
                 b.Regex("ownerEmail", new BsonRegularExpression(pattern, "i"))));
         }
 
+        if (query.WorkflowIdPrefix is { Length: > 0 } workflowIdPrefix)
+        {
+            // Anchored (^) prefix regex — index-usable; case-insensitive to match the other backends.
+            filter = b.And(filter, b.Regex("workflowId", new BsonRegularExpression("^" + EscapeRegex(workflowIdPrefix), "i")));
+        }
+
         if (query.Tags is { Count: > 0 } tags)
         {
             filter = b.And(filter, b.All("tags", tags)); // $all = contains every queried tag

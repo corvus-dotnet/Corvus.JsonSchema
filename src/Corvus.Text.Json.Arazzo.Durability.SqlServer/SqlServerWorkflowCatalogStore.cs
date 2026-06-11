@@ -120,6 +120,7 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore
               AND (@status IS NULL OR Status = @status)
               AND (@text IS NULL OR Title LIKE @textLike ESCAPE '\' OR (Description IS NOT NULL AND Description LIKE @textLike ESCAPE '\'))
               AND (@owner IS NULL OR OwnerName LIKE @ownerLike ESCAPE '\' OR OwnerEmail LIKE @ownerLike ESCAPE '\')
+              AND (@workflowIdPrefix IS NULL OR WorkflowId LIKE @workflowIdPrefixLike ESCAPE '\')
               {{tagPredicates}}
               AND (@after IS NULL OR (BaseWorkflowId + RIGHT('0000000000' + CAST(VersionNumber AS NVARCHAR(10)), 10)) > @after)
             ORDER BY BaseWorkflowId, VersionNumber;
@@ -130,6 +131,8 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore
         select.Parameters.Add(NullableText("@textLike", query.Text is { Length: > 0 } t ? "%" + EscapeLike(t) + "%" : null));
         select.Parameters.Add(NullableText("@owner", query.Owner));
         select.Parameters.Add(NullableText("@ownerLike", query.Owner is { Length: > 0 } o ? "%" + EscapeLike(o) + "%" : null));
+        select.Parameters.Add(NullableText("@workflowIdPrefix", query.WorkflowIdPrefix));
+        select.Parameters.Add(NullableText("@workflowIdPrefixLike", query.WorkflowIdPrefix is { Length: > 0 } p ? EscapeLike(p) + "%" : null));
         select.Parameters.Add(NullableText("@after", after));
         select.Parameters.AddWithValue("@limit", limit + 1);
 

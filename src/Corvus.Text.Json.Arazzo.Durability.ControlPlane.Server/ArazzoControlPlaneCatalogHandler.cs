@@ -57,6 +57,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     {
         string? text = parameters.Q.IsNotUndefined() ? (string)parameters.Q : null;
         string? baseWorkflowId = parameters.BaseWorkflowId.IsNotUndefined() ? (string)parameters.BaseWorkflowId : null;
+        string? workflowIdPrefix = parameters.WorkflowIdPrefix.IsNotUndefined() ? (string)parameters.WorkflowIdPrefix : null;
         IReadOnlyList<string>? tags = ToTags(parameters.Tag);
         CatalogStatus? status = parameters.Status.IsNotUndefined() ? Enum.Parse<CatalogStatus>((string)parameters.Status) : null;
         string? owner = parameters.Owner.IsNotUndefined() ? (string)parameters.Owner : null;
@@ -64,7 +65,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         string? pageToken = parameters.PageToken.IsNotUndefined() ? (string)parameters.PageToken : null;
 
         CatalogPage page = await this.catalog.SearchAsync(
-            new CatalogQuery(text, baseWorkflowId, tags, status, owner, limit, pageToken), cancellationToken).ConfigureAwait(false);
+            new CatalogQuery(text, baseWorkflowId, workflowIdPrefix, tags, status, owner, limit, pageToken), cancellationToken).ConfigureAwait(false);
         return SearchCatalogResult.Ok(BuildPage(page), workspace);
     }
 
