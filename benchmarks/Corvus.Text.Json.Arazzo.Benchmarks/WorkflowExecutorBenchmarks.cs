@@ -315,10 +315,11 @@ public class WorkflowExecutorBenchmarks
         }
         """;
 
-    // The step carries a $url success criterion: the executor builds the request, writes its resolved
-    // path, and hands the URL string to the context for the criterion to compare ('/pets/x' is what the
-    // benchmark request writes). This is the one criterion path that allocates per run (the URL string +
-    // the path buffer), so the benchmark documents its cost against the 0 B/op criterion paths.
+    // The step carries a $url success criterion: the executor rebuilds the request struct and writes its
+    // resolved path into an executor-owned [ThreadStatic] buffer, then compares the resulting UTF-8 bytes
+    // inline ('/pets/x' is what the benchmark request writes) — no WorkflowExecutionContext. The only
+    // per-run allocation on this path is the final URL byte[], so the benchmark documents that residual
+    // cost against the 0 B/op criterion paths.
     private const string UrlCriteriaDocument = """
         {
           "arazzo": "1.0.1",
@@ -427,10 +428,10 @@ public class WorkflowExecutorBenchmarks
     }
 
     /// <summary>
-    /// Runs a workflow whose step carries a <c>$url</c> success criterion: the executor builds the request
-    /// struct, writes its resolved path/query into a buffer, and feeds the resulting URL string to the
-    /// context for the criterion to compare. Unlike the inlined 0 B/op criterion paths, this allocates the
-    /// URL string (and the path buffer) per run — the benchmark documents that cost.
+    /// Runs a workflow whose step carries a <c>$url</c> success criterion: the executor rebuilds the request
+    /// struct, writes its resolved path/query into an executor-owned reused buffer, and compares the
+    /// resulting UTF-8 bytes inline (no <c>WorkflowExecutionContext</c>). Unlike the 0 B/op criterion paths,
+    /// this still allocates the final URL <c>byte[]</c> per run — the benchmark documents that residual cost.
     /// </summary>
     /// <returns>Whether the workflow produced the expected output (a sink for the probe).</returns>
     [Benchmark]
