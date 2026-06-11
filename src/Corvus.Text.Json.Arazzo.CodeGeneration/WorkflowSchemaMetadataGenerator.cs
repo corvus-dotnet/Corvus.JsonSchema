@@ -48,6 +48,12 @@ public static class WorkflowSchemaMetadataGenerator
     /// <summary>The format version written into the metadata document.</summary>
     public const int FormatVersion = 1;
 
+    /// <summary>The <c>$defs</c> member a built validation schema places its target sub-schema under.</summary>
+    private const string ValidationTargetName = "__corvusTarget";
+
+    /// <summary>The same-document reference to the target sub-schema (a <c>$defs</c> member — a known schema location).</summary>
+    private const string ValidationTargetRef = "#/$defs/" + ValidationTargetName;
+
     private const int MaxDepth = 12;
 
     // Validation/annotation keywords copied verbatim so the UI can render a suitable, constrained control.
@@ -113,6 +119,357 @@ public static class WorkflowSchemaMetadataGenerator
                 doc.Dispose();
             }
         }
+    }
+
+    /// <summary>
+    /// Builds a standalone JSON Schema document for one schema within a workflow package — the schema a UI-built
+    /// value should be validated against — so a caller can feed it to a runtime JSON Schema validator. The target
+    /// sub-schema is placed under a wrapper whose root <c>$ref</c>s it, and the owning document's <c>components</c>/
+    /// <c>$defs</c>/<c>definitions</c> are carried alongside so the sub-schema's local <c>$ref</c>s still resolve.
+    /// </summary>
+    /// <param name="workflowUtf8">The Arazzo workflow document as UTF-8 JSON.</param>
+    /// <param name="sources">The referenced source documents (name → UTF-8 JSON bytes).</param>
+    /// <param name="target">Identifies the schema within the package to validate against.</param>
+    /// <param name="schemaDocument">The built schema document as UTF-8 JSON, when resolvable.</param>
+    /// <returns><see langword="true"/> when the target schema could be resolved and a document was built.</returns>
+    public static bool TryBuildValidationSchema(
+        ReadOnlyMemory<byte> workflowUtf8,
+        IReadOnlyList<KeyValuePair<string, byte[]>> sources,
+        WorkflowSchemaTarget target,
+        out byte[] schemaDocument)
+    {
+        ArgumentNullException.ThrowIfNull(sources);
+        schemaDocument = [];
+
+        using ParsedJsonDocument<JsonElement> workflowDoc = ParsedJsonDocument<JsonElement>.Parse(workflowUtf8);
+        JsonElement workflowRoot = workflowDoc.RootElement;
+
+        var sourceDocs = new List<ParsedJsonDocument<JsonElement>>();
+        var sourcesByName = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
+        try
+        {
+            foreach (KeyValuePair<string, byte[]> source in sources)
+            {
+                ParsedJsonDocument<JsonElement> parsed = ParsedJsonDocument<JsonElement>.Parse(source.Value);
+                sourceDocs.Add(parsed);
+                sourcesByName[source.Key] = parsed.RootElement;
+            }
+
+            if (!TryFindWorkflow(workflowRoot, target.WorkflowId, out JsonElement workflow))
+            {
+                return false;
+            }
+
+            var buffer = new ArrayBufferWriter<byte>();
+            var writer = new Utf8JsonWriter(buffer);
+
+            bool built = target.Kind switch
+            {
+                WorkflowSchemaTargetKind.Inputs => TryWriteInputsValidationSchema(writer, workflow, workflowRoot),
+                WorkflowSchemaTargetKind.RequestBody => TryWriteBodyValidationSchema(writer, workflow, sourcesByName, target.StepId, request: true, status: null),
+                WorkflowSchemaTargetKind.ResponseBody => TryWriteBodyValidationSchema(writer, workflow, sourcesByName, target.StepId, request: false, status: target.Status),
+                WorkflowSchemaTargetKind.StepOutputs => TryWriteOutputsValidationSchema(writer, workflow, workflowRoot, sourcesByName, target.StepId),
+                _ => false,
+            };
+
+            if (!built)
+            {
+                return false;
+            }
+
+            writer.Flush();
+            schemaDocument = buffer.WrittenSpan.ToArray();
+            return true;
+        }
+        finally
+        {
+            foreach (ParsedJsonDocument<JsonElement> doc in sourceDocs)
+            {
+                doc.Dispose();
+            }
+        }
+    }
+
+    private static bool TryWriteInputsValidationSchema(Utf8JsonWriter writer, JsonElement workflow, JsonElement workflowRoot)
+    {
+        if (!workflow.TryGetProperty("inputs", out JsonElement inputs) || inputs.ValueKind != JsonValueKind.Object)
+        {
+            return false;
+        }
+
+        WriteValidationWrapper(writer, inputs, [workflowRoot]);
+        return true;
+    }
+
+    private static bool TryWriteBodyValidationSchema(
+        Utf8JsonWriter writer,
+        JsonElement workflow,
+        IReadOnlyDictionary<string, JsonElement> sources,
+        string? stepId,
+        bool request,
+        string? status)
+    {
+        if (stepId is null
+            || !TryFindStep(workflow, stepId, out JsonElement step)
+            || !TryResolveStepOperation(step, sources, out StepOperation op)
+            || op.IsAsyncApi)
+        {
+            return false;
+        }
+
+        bool found = request
+            ? TryRequestBody(op, out JsonElement schema)
+            : TryResponseBodyForStatus(op, status, out schema);
+        if (!found)
+        {
+            return false;
+        }
+
+        WriteValidationWrapper(writer, schema, [op.Root]);
+        return true;
+    }
+
+    private static bool TryWriteOutputsValidationSchema(
+        Utf8JsonWriter writer,
+        JsonElement workflow,
+        JsonElement workflowRoot,
+        IReadOnlyDictionary<string, JsonElement> sources,
+        string? stepId)
+    {
+        if (stepId is null || !TryFindStep(workflow, stepId, out JsonElement step))
+        {
+            return false;
+        }
+
+        bool resolved = TryResolveStepOperation(step, sources, out StepOperation op);
+        JsonElement responseSchema = default, payloadSchema = default, requestBodySchema = default;
+        bool haveResponse = resolved && !op.IsAsyncApi && TrySuccessResponseBody(op, out responseSchema);
+        bool havePayload = resolved && op.IsAsyncApi && TryMessagePayload(op, out payloadSchema);
+        bool haveRequestBody = resolved && !op.IsAsyncApi && TryRequestBody(op, out requestBodySchema);
+        JsonElement opRoot = resolved ? op.Root : default;
+
+        // The target is an object whose properties are the step's declared outputs, each carrying its resolved schema.
+        // Carry both the operation source's and the workflow's reusable schema buckets so local $refs resolve.
+        JsonElement[] roots = resolved ? [opRoot, workflowRoot] : [workflowRoot];
+        writer.WriteStartObject();
+        writer.WriteString("$ref", ValidationTargetRef);
+        writer.WritePropertyName("$defs");
+        writer.WriteStartObject();
+        writer.WritePropertyName(ValidationTargetName);
+        writer.WriteStartObject();
+        writer.WriteString("type", "object");
+        writer.WritePropertyName("properties");
+        writer.WriteStartObject();
+        if (step.TryGetProperty("outputs", out JsonElement outputs) && outputs.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var output in outputs.EnumerateObject())
+            {
+                writer.WritePropertyName(output.Name);
+                string expression = output.Value.ValueKind == JsonValueKind.String ? output.Value.GetString() ?? string.Empty : string.Empty;
+                WriteOutputValidationSchema(writer, expression, workflow, workflowRoot, opRoot, haveResponse, responseSchema, havePayload, payloadSchema, haveRequestBody, requestBodySchema);
+            }
+        }
+
+        writer.WriteEndObject(); // properties
+        writer.WriteEndObject(); // target object
+        WriteMergedDefsEntries(writer, roots);
+        writer.WriteEndObject(); // $defs
+        WriteCarriedObject(writer, roots, "components");
+        WriteCarriedObject(writer, roots, "definitions");
+        writer.WriteEndObject(); // wrapper
+        return true;
+    }
+
+    /// <summary>Writes the raw resolved schema for a single output expression (or an open schema when not typed).</summary>
+    private static void WriteOutputValidationSchema(
+        Utf8JsonWriter writer,
+        string expression,
+        JsonElement workflow,
+        JsonElement workflowRoot,
+        JsonElement opRoot,
+        bool haveResponse,
+        JsonElement responseSchema,
+        bool havePayload,
+        JsonElement payloadSchema,
+        bool haveRequestBody,
+        JsonElement requestBodySchema)
+    {
+        ArazzoExpr expr = ArazzoExpr.Parse(expression);
+        switch (expr.Source)
+        {
+            case ArazzoExprSource.StatusCode:
+                writer.WriteStartObject();
+                writer.WriteString("type", "integer");
+                writer.WriteEndObject();
+                return;
+
+            case ArazzoExprSource.Url:
+            case ArazzoExprSource.Method:
+            case ArazzoExprSource.RequestHeader:
+            case ArazzoExprSource.ResponseHeader:
+            case ArazzoExprSource.RequestPath:
+            case ArazzoExprSource.RequestQuery:
+            case ArazzoExprSource.MessageHeader:
+            case ArazzoExprSource.Literal:
+                writer.WriteStartObject();
+                writer.WriteString("type", "string");
+                writer.WriteEndObject();
+                return;
+
+            case ArazzoExprSource.Inputs when expr.Name is { } inputName:
+                if (workflow.TryGetProperty("inputs", out JsonElement inputs)
+                    && TryNavigateProperty(inputs, workflowRoot, inputName, out JsonElement inputSchema)
+                    && TryNavigatePointer(inputSchema, workflowRoot, expr.JsonPointer, out JsonElement resolvedInput))
+                {
+                    resolvedInput.WriteTo(writer);
+                    return;
+                }
+
+                break;
+
+            case ArazzoExprSource.ResponseBody when haveResponse:
+                if (TryNavigatePointer(responseSchema, opRoot, expr.JsonPointer, out JsonElement resolvedBody))
+                {
+                    resolvedBody.WriteTo(writer);
+                    return;
+                }
+
+                break;
+
+            case ArazzoExprSource.RequestBody when haveRequestBody:
+                if (TryNavigatePointer(requestBodySchema, opRoot, expr.JsonPointer, out JsonElement resolvedRequest))
+                {
+                    resolvedRequest.WriteTo(writer);
+                    return;
+                }
+
+                break;
+
+            case ArazzoExprSource.MessagePayload when havePayload:
+                if (TryNavigatePointer(payloadSchema, opRoot, expr.JsonPointer, out JsonElement resolvedPayload))
+                {
+                    resolvedPayload.WriteTo(writer);
+                    return;
+                }
+
+                break;
+        }
+
+        // Unresolvable / dynamic ($steps, $workflows) outputs are unconstrained — accept any value.
+        writer.WriteStartObject();
+        writer.WriteEndObject();
+    }
+
+    /// <summary>
+    /// Writes a wrapper schema whose root <c>$ref</c>s the target sub-schema (placed under <c>$defs</c>, a known
+    /// schema location), carrying the owning documents' reusable <c>$defs</c>/<c>definitions</c>/<c>components</c>
+    /// so the sub-schema's local <c>$ref</c>s still resolve.
+    /// </summary>
+    private static void WriteValidationWrapper(Utf8JsonWriter writer, JsonElement subSchema, JsonElement[] roots)
+    {
+        writer.WriteStartObject();
+        writer.WriteString("$ref", ValidationTargetRef);
+        writer.WritePropertyName("$defs");
+        writer.WriteStartObject();
+        writer.WritePropertyName(ValidationTargetName);
+        subSchema.WriteTo(writer);
+        WriteMergedDefsEntries(writer, roots);
+        writer.WriteEndObject(); // $defs
+        WriteCarriedObject(writer, roots, "components");
+        WriteCarriedObject(writer, roots, "definitions");
+        writer.WriteEndObject();
+    }
+
+    /// <summary>Merges the <c>$defs</c> members of every root into the wrapper's <c>$defs</c> (first writer wins on a name clash).</summary>
+    private static void WriteMergedDefsEntries(Utf8JsonWriter writer, JsonElement[] roots)
+    {
+        var written = new HashSet<string>(StringComparer.Ordinal) { ValidationTargetName };
+        foreach (JsonElement root in roots)
+        {
+            if (root.ValueKind == JsonValueKind.Object
+                && root.TryGetProperty("$defs", out JsonElement defs)
+                && defs.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var entry in defs.EnumerateObject())
+                {
+                    if (written.Add(entry.Name))
+                    {
+                        writer.WritePropertyName(entry.Name);
+                        entry.Value.WriteTo(writer);
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>Copies a reusable keyword object (e.g. <c>components</c>/<c>definitions</c>) from the first root that has it.</summary>
+    private static void WriteCarriedObject(Utf8JsonWriter writer, JsonElement[] roots, string keyword)
+    {
+        foreach (JsonElement root in roots)
+        {
+            if (root.ValueKind == JsonValueKind.Object
+                && root.TryGetProperty(keyword, out JsonElement value)
+                && value.ValueKind == JsonValueKind.Object)
+            {
+                writer.WritePropertyName(keyword);
+                value.WriteTo(writer);
+                return;
+            }
+        }
+    }
+
+    private static bool TryResponseBodyForStatus(StepOperation op, string? status, out JsonElement schema)
+    {
+        schema = default;
+        if (status is null)
+        {
+            return TrySuccessResponseBody(op, out schema);
+        }
+
+        return op.Operation.TryGetProperty("responses", out JsonElement responses)
+            && responses.ValueKind == JsonValueKind.Object
+            && responses.TryGetProperty(status, out JsonElement response)
+            && TryBodySchema(SchemaClassifier.ResolveRef(response, op.Root), op.Root, out schema);
+    }
+
+    private static bool TryFindWorkflow(JsonElement root, string? workflowId, out JsonElement workflow)
+    {
+        workflow = default;
+        if (!root.TryGetProperty("workflows", out JsonElement workflows) || workflows.ValueKind != JsonValueKind.Array)
+        {
+            return false;
+        }
+
+        foreach (JsonElement candidate in workflows.EnumerateArray())
+        {
+            if (workflowId is null || TryGetString(candidate, "workflowId") == workflowId)
+            {
+                workflow = candidate;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool TryFindStep(JsonElement workflow, string stepId, out JsonElement step)
+    {
+        step = default;
+        if (!workflow.TryGetProperty("steps", out JsonElement steps) || steps.ValueKind != JsonValueKind.Array)
+        {
+            return false;
+        }
+
+        foreach (JsonElement candidate in steps.EnumerateArray())
+        {
+            if (TryGetString(candidate, "stepId") == stepId)
+            {
+                step = candidate;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static void WriteWorkflow(Utf8JsonWriter writer, JsonElement workflow, JsonElement workflowRoot, IReadOnlyDictionary<string, JsonElement> sources)
@@ -1013,3 +1370,34 @@ public static class WorkflowSchemaMetadataGenerator
             ? value.GetString()
             : null;
 }
+
+/// <summary>The kind of schema within a workflow package to validate a value against.</summary>
+public enum WorkflowSchemaTargetKind
+{
+    /// <summary>A workflow's <c>inputs</c> schema.</summary>
+    Inputs,
+
+    /// <summary>A step operation's request body schema.</summary>
+    RequestBody,
+
+    /// <summary>A step operation's response body schema (for a status code, or the success response).</summary>
+    ResponseBody,
+
+    /// <summary>An object whose properties are a step's declared outputs and their resolved schemas.</summary>
+    StepOutputs,
+}
+
+/// <summary>
+/// Identifies a schema within a workflow package to validate a value against — a workflow's inputs, a step's
+/// request or response body, or a step's outputs object.
+/// </summary>
+/// <param name="Kind">The kind of schema.</param>
+/// <param name="WorkflowId">The workflow id; when <see langword="null"/> the first workflow is used.</param>
+/// <param name="StepId">The step id (required for request/response/outputs targets).</param>
+/// <param name="Status">The response status code for a <see cref="WorkflowSchemaTargetKind.ResponseBody"/> target;
+/// when <see langword="null"/> the success (lowest 2xx, else <c>default</c>) response is used.</param>
+public readonly record struct WorkflowSchemaTarget(
+    WorkflowSchemaTargetKind Kind,
+    string? WorkflowId = null,
+    string? StepId = null,
+    string? Status = null);

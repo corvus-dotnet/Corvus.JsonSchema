@@ -291,10 +291,21 @@ function groupVersions(versions) {
   const groups = [];
   for (const [baseWorkflowId, list] of map) {
     list.sort((a, b) => b.versionNumber - a.versionNumber);
-    groups.push({ baseWorkflowId, versions: list, latest: list[0] });
+    groups.push({ baseWorkflowId, versions: list, latest: representativeVersion(list) });
   }
   groups.sort((a, b) => a.baseWorkflowId.localeCompare(b.baseWorkflowId));
   return groups;
+}
+
+/**
+ * The version that represents a base workflow in the list: the newest Active version, else the newest
+ * Obsolete version, else the newest version whatever its status.
+ * @param {object[]} descending Versions for one base, sorted newest-first.
+ */
+function representativeVersion(descending) {
+  return descending.find((v) => v.status === 'Active')
+    || descending.find((v) => v.status === 'Obsolete')
+    || descending[0];
 }
 
 define('arazzo-catalog-table', ArazzoCatalogTable);
