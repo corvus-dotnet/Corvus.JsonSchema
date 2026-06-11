@@ -99,6 +99,30 @@ class ArazzoControlPlane extends ArazzoElement {
     if (table) table.client = client;
     if (detail) detail.client = client;
     if (purge) purge.client = client;
+    this.loadWorkflowSuggestions();
+  }
+
+  /**
+   * Best-effort: populate the workflowId filter's autocomplete with the catalog's workflow ids (both the
+   * base ids and the versioned ids the runs carry). Silently no-ops if the catalog isn't reachable (e.g. the
+   * principal lacks `catalog:read`) — the field stays a free-text filter.
+   */
+  async loadWorkflowSuggestions() {
+    const client = this.buildClient();
+    const datalist = this.$('#wf-id-options');
+    if (!client || !datalist) return;
+    try {
+      const ids = new Set();
+      for await (const page of client.searchCatalogPaged({ limit: 200 })) {
+        for (const v of page.versions) {
+          if (v.baseWorkflowId) ids.add(v.baseWorkflowId);
+          if (v.workflowId) ids.add(v.workflowId);
+        }
+      }
+      datalist.innerHTML = [...ids].sort().map((id) => `<option value="${escapeHtml(id)}"></option>`).join('');
+    } catch {
+      // No catalog access → no suggestions; the workflowId filter remains free-text.
+    }
   }
 
   applyScopes() {
@@ -154,7 +178,7 @@ class ArazzoControlPlane extends ArazzoElement {
           <button class="chip status-chip" type="button" data-status="" aria-pressed="true">All</button>
           ${RUN_STATUSES.map((s) => `<button class="chip status-chip" type="button" data-status="${s}" aria-pressed="false">${escapeHtml(s)}</button>`).join('')}
         </div>
-        <div class="search"><input class="wf-search" type="search" placeholder="Filter by workflowId…" aria-label="Filter by workflowId"></div>
+        <div class="search"><input class="wf-search" type="search" placeholder="Filter by workflowId…" aria-label="Filter by workflowId" list="wf-id-options"><datalist id="wf-id-options"></datalist></div>
         <div class="search"><input class="tag-search" type="search" placeholder="Tags (space-separated, AND)…" aria-label="Filter by tags"></div>
         <div class="search"><input class="corr-search" type="search" placeholder="Correlation id…" aria-label="Filter by correlation id"></div>
         <label class="toggle"><input type="checkbox" id="autorefresh"> auto-refresh</label>
