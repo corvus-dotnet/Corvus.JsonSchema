@@ -286,6 +286,18 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `getCatalogWorkflowSchemas` — the version's precomputed schema metadata (typed inputs + each step's
+   * resolved output types), for rendering strongly-typed forms without re-parsing the sources.
+   * @param {string} baseWorkflowId
+   * @param {number} versionNumber
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The schema-metadata document. Throws {@link ProblemError} `404` if absent.
+   */
+  getCatalogWorkflowSchemas(baseWorkflowId, versionNumber, opts = {}) {
+    return this._request('GET', `${this._versionPath(baseWorkflowId, versionNumber)}/schemas`, { signal: opts.signal });
+  }
+
+  /**
    * `getCatalogSource` — one named source document from a version's package.
    * @param {string} baseWorkflowId
    * @param {number} versionNumber
