@@ -97,12 +97,47 @@ public static class StepBodyEmitter
         var body = new StringBuilder(request.Statements);
         var auxiliaryTypes = new StringBuilder();
 
-        // A $url criterion resolves against the request's relative URL: rebuild the request struct from the
-        // resolved Sources and feed its WriteResolvedPath/WriteQueryString output to the context. Emitted
-        // before the client call so the bound Sources (and any pooled buffers) are still live.
-        if (RequestUrlEmitter.ReferencesUrl(successCriteria))
+        string responseBodyLocal = $"{camel}ResponseBody";
+        bool hasOutputs = outputs.Count > 0;
+        bool referencesUrl = RequestUrlEmitter.ReferencesUrl(successCriteria);
+        string urlLocal = RequestUrlEmitter.UrlLocal(prefix);
+
+        // Build the success gate and output extraction first, so we can detect whether anything still
+        // consumes the WorkflowExecutionContext (a non-inlined CompiledCriterion, or a context-fallback
+        // output) and whether the $url criterion was inlined. When nothing uses the context, the
+        // context-population calls (and the context object itself) are omitted entirely.
+        var gate = new StringBuilder();
+        var requestContext = new StepRequestContext(
+            operation.Operation.Method.ToString().ToUpperInvariant(), arguments, requestBody, referencesUrl ? urlLocal : null);
+        EmitSuccessGate(
+            fields, gate, auxiliaryTypes, successCriteria, prefix, contextVariable, responseVar,
+            new CriterionSources(bindResponseBody ? responseBodyLocal : null), inputsVariable, stepOutputLocals, inputAccessors, operation.Operation.ResponseHeaders, requestContext, namespaceName, stepId);
+
+        string outputStatements = string.Empty;
+        if (hasOutputs)
         {
-            body.Append(RequestUrlEmitter.Emit(operation, request.ParameterBindings, prefix, workspaceVariable, contextVariable));
+            OutputExtractionCode outputCode = OutputExtractionEmitter.Emit(
+                stepId, outputs, workspaceVariable, contextVariable, stepOutputLocals, inputsVariable, inputAccessors,
+                bindResponseBody ? responseBodyLocal : null);
+            fields.Append(outputCode.Fields);
+            outputStatements = outputCode.Statements;
+        }
+
+        bool usesContext = gate.ToString().Contains(contextVariable, StringComparison.Ordinal)
+            || outputStatements.Contains(contextVariable, StringComparison.Ordinal);
+        bool urlInlined = referencesUrl && gate.ToString().Contains(urlLocal, StringComparison.Ordinal);
+
+        // A $url criterion resolves against the request's relative URL, rebuilt from the resolved Sources
+        // before the client call (while the bound Sources / pooled buffers are still live). When the
+        // criterion was inlined it compares an executor-owned byte[] (no context); a non-inlined $url (one
+        // that fell back to a CompiledCriterion, which already forces the context) resolves via the context.
+        if (urlInlined)
+        {
+            body.Append(RequestUrlEmitter.Emit(operation, request.ParameterBindings, prefix, workspaceVariable, fields));
+        }
+        else if (referencesUrl)
+        {
+            body.Append(RequestUrlEmitter.EmitToContext(operation, request.ParameterBindings, prefix, workspaceVariable, contextVariable));
         }
 
         // Invoke through the generated client: it constructs and validates the request, sends it via
@@ -128,35 +163,10 @@ public static class StepBodyEmitter
         // built INSIDE the try while the response is still alive — so its $response.body values are
         // projected (and only those copied) without cloning the whole body. The response is then
         // disposed in the finally.
-        string responseBodyLocal = $"{camel}ResponseBody";
-        bool hasOutputs = outputs.Count > 0;
         if (hasOutputs)
         {
             body.Append("JsonElement ").Append(EmitText.StepOutputsElementLocal(stepId)).AppendLine(" = default;");
         }
-
-        // Build the success gate and output extraction first, so we can detect whether anything still
-        // consumes the WorkflowExecutionContext (a non-inlined CompiledCriterion, or a context-fallback
-        // output). When nothing does, the context-population calls are omitted entirely.
-        var gate = new StringBuilder();
-        var requestContext = new StepRequestContext(
-            operation.Operation.Method.ToString().ToUpperInvariant(), arguments, requestBody);
-        EmitSuccessGate(
-            fields, gate, auxiliaryTypes, successCriteria, prefix, contextVariable, responseVar,
-            new CriterionSources(bindResponseBody ? responseBodyLocal : null), inputsVariable, stepOutputLocals, inputAccessors, operation.Operation.ResponseHeaders, requestContext, namespaceName, stepId);
-
-        string outputStatements = string.Empty;
-        if (hasOutputs)
-        {
-            OutputExtractionCode outputCode = OutputExtractionEmitter.Emit(
-                stepId, outputs, workspaceVariable, contextVariable, stepOutputLocals, inputsVariable, inputAccessors,
-                bindResponseBody ? responseBodyLocal : null);
-            fields.Append(outputCode.Fields);
-            outputStatements = outputCode.Statements;
-        }
-
-        bool usesContext = gate.ToString().Contains(contextVariable, StringComparison.Ordinal)
-            || outputStatements.Contains(contextVariable, StringComparison.Ordinal);
 
         body.AppendLine("try");
         body.AppendLine("{");
