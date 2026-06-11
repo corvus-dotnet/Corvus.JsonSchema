@@ -158,6 +158,26 @@ test('validateCatalogValue reports conformance against the version schema', asyn
   assert.ok(bad.errors.length >= 1, 'reports the failing constraints');
 });
 
+test('validateCatalogValue handles unions, tuples and maps', async () => {
+  const c = makeClient();
+
+  // Union (oneOf with a discriminator): a document variant needs its document fields.
+  const evidence = (value) => c.validateCatalogValue('onboard-customer', 1, { kind: 'stepOutputs', workflowId: 'onboard-customer-v1', stepId: 'verifyIdentity' }, value);
+  assert.equal((await evidence({ evidence: { kind: 'document', documentType: 'passport', documentNumber: 'X1' } })).valid, true);
+  assert.equal((await evidence({ evidence: { kind: 'document' } })).valid, false); // missing required variant fields
+  assert.equal((await evidence({ score: 5 })).valid, false); // score exceeds maximum 1
+
+  // Tuple (prefixItems): each position is an integer >= 0.
+  const range = (value) => c.validateCatalogValue('nightly-reconcile', 3, { kind: 'stepOutputs', workflowId: 'nightly-reconcile-v3', stepId: 'flagDiscrepancies' }, value);
+  assert.equal((await range({ range: [0, 10] })).valid, true);
+  assert.equal((await range({ range: [-1, 10] })).valid, false);
+
+  // Map (additionalProperties): values must be strings.
+  const tags = (value) => c.validateCatalogValue('onboard-customer', 1, { kind: 'stepOutputs', workflowId: 'onboard-customer-v1', stepId: 'provisionResources' }, value);
+  assert.equal((await tags({ tags: { env: 'prod' } })).valid, true);
+  assert.equal((await tags({ tags: { env: 5 } })).valid, false);
+});
+
 test('searchCatalogPaged walks every page via the keyset token', async () => {
   let total = 0; let pages = 0;
   for await (const page of makeClient().searchCatalogPaged({ limit: 2 })) { total += page.versions.length; pages++; }
