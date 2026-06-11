@@ -42,6 +42,18 @@ internal class RunsSettings : CommandSettings
         return (http, transport, new ApiRunsClient(transport));
     }
 
+    /// <summary>Builds the catalog API client (and the HTTP client / transport it owns) for this invocation, resolving
+    /// the access token from the <c>--token</c> flag, the environment, or the login cache (refreshing if stale).</summary>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The HTTP client, transport, and catalog API client. Dispose the HTTP client and transport.</returns>
+    public async Task<(HttpClient Http, HttpClientTransport Transport, ApiCatalogClient Client)> CreateCatalogClientAsync(CancellationToken cancellationToken)
+    {
+        string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
+        var http = new HttpClient { BaseAddress = new Uri(this.ResolveServer()!, UriKind.Absolute) };
+        var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
+        return (http, transport, new ApiCatalogClient(transport));
+    }
+
     private string? ResolveServer() => this.Server ?? Environment.GetEnvironmentVariable("ARAZZO_RUNS_SERVER");
 }
 
@@ -195,11 +207,11 @@ internal sealed class ListCommand : AsyncCommand<ListSettings>
                 updatedBefore = ub;
             }
 
-            Models.Schema.Source tag = default;
+            Models.TagList.Source tag = default;
             if (settings.Tags.Length > 0)
             {
                 string[] tagValues = settings.Tags;
-                tag = new Models.Schema.Source((ref Models.Schema.Builder arrayBuilder) =>
+                tag = new Models.TagList.Source((ref Models.TagList.Builder arrayBuilder) =>
                 {
                     foreach (string t in tagValues)
                     {
@@ -214,7 +226,7 @@ internal sealed class ListCommand : AsyncCommand<ListSettings>
                 correlationId = cid;
             }
 
-            Models.Schema1.Source limit = default;
+            Models.PageLimit.Source limit = default;
             if (settings.Limit is { } l)
             {
                 limit = l;
@@ -476,7 +488,7 @@ internal sealed class PurgeCommand : AsyncCommand<PurgeSettings>
         await using (transport)
         {
             Models.JsonDateTime.Source olderThan = settings.OlderThan!;
-            Models.Schema1.Source limit = default;
+            Models.PageLimit.Source limit = default;
             if (settings.Limit is { } l)
             {
                 limit = l;

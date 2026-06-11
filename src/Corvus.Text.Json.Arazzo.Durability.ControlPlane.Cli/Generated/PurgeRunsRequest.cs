@@ -29,7 +29,7 @@ public readonly struct PurgeRunsRequest : IApiRequest<PurgeRunsRequest>
     /// <summary>
     /// Gets the limit parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Schema1 Limit { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit Limit { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PurgeRunsRequest"/> struct.
@@ -101,9 +101,10 @@ public readonly struct PurgeRunsRequest : IApiRequest<PurgeRunsRequest>
 
             writer.Write("limit="u8);
             totalWritten += 6;
-            using RawUtf8JsonString rawLimit = JsonMarshal.GetRawUtf8Value(this.Limit);
-            writer.Write(rawLimit.Span);
-            totalWritten += rawLimit.Span.Length;
+            Span<byte> bufLimit = stackalloc byte[11];
+            this.Limit.TryFormat(bufLimit, out int bwLimit, default, default);
+            writer.Write(bufLimit[..bwLimit]);
+            totalWritten += bwLimit;
 
             first = false;
         }

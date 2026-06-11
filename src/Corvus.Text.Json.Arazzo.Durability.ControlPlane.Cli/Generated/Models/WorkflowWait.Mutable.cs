@@ -273,11 +273,11 @@ public readonly partial struct WorkflowWait
         /// The channel a message wait listens on (set for `Message`).
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheChannelAMessageWaitListensOnSetForMessage.Mutable Channel
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable Channel
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ChannelUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheChannelAMessageWaitListensOnSetForMessage.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ChannelUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -294,11 +294,11 @@ public readonly partial struct WorkflowWait
         /// The correlation id a message wait matches, if any.
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheCorrelationIdAMessageWaitMatchesIfAny.Mutable CorrelationId
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable CorrelationId
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CorrelationIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheCorrelationIdAMessageWaitMatchesIfAny.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CorrelationIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -315,11 +315,11 @@ public readonly partial struct WorkflowWait
         /// When a timer wait becomes due (set for `Timer`).
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.WhenATimerWaitBecomesDueSetForTimer.Mutable DueAt
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Mutable DueAt
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DueAtUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.WhenATimerWaitBecomesDueSetForTimer.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DueAtUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Mutable value))
                 {
                     return value;
                 }
@@ -395,7 +395,7 @@ public readonly partial struct WorkflowWait
         /// Set the <c>channel</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetChannel(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheChannelAMessageWaitListensOnSetForMessage.Source value)
+        public void SetChannel(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -440,7 +440,7 @@ public readonly partial struct WorkflowWait
         /// Set the <c>correlationId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCorrelationId(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheCorrelationIdAMessageWaitMatchesIfAny.Source value)
+        public void SetCorrelationId(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -485,7 +485,7 @@ public readonly partial struct WorkflowWait
         /// Set the <c>dueAt</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDueAt(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.WhenATimerWaitBecomesDueSetForTimer.Source value)
+        public void SetDueAt(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source value)
         {
             CheckValidInstance();
 
@@ -888,9 +888,9 @@ public readonly partial struct WorkflowWait
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWaitKind.Source _createArg1;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheChannelAMessageWaitListensOnSetForMessage.Source _createArg2;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheCorrelationIdAMessageWaitMatchesIfAny.Source _createArg3;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.WhenATimerWaitBecomesDueSetForTimer.Source _createArg4;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source _createArg2;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source _createArg3;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source _createArg4;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -905,7 +905,7 @@ public readonly partial struct WorkflowWait
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWaitKind.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheChannelAMessageWaitListensOnSetForMessage.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheCorrelationIdAMessageWaitMatchesIfAny.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.WhenATimerWaitBecomesDueSetForTimer.Source arg4)
+        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWaitKind.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source arg4)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1185,9 +1185,9 @@ public readonly partial struct WorkflowWait
         internal static void Create(
             ref ComplexValueBuilder builder,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWaitKind.Source kind,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheChannelAMessageWaitListensOnSetForMessage.Source channel = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheCorrelationIdAMessageWaitMatchesIfAny.Source correlationId = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.WhenATimerWaitBecomesDueSetForTimer.Source dueAt = default)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source channel = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source correlationId = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source dueAt = default)
         {
             kind.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Kind, ref builder);
             channel.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Channel, ref builder);
@@ -1200,9 +1200,9 @@ public readonly partial struct WorkflowWait
         /// </summary>
         public void Create(
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWaitKind.Source kind,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheChannelAMessageWaitListensOnSetForMessage.Source channel = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheCorrelationIdAMessageWaitMatchesIfAny.Source correlationId = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.WhenATimerWaitBecomesDueSetForTimer.Source dueAt = default)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source channel = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source correlationId = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source dueAt = default)
         {
             Create(ref _builder, kind, channel, correlationId, dueAt);
         }
@@ -1307,7 +1307,7 @@ public readonly partial struct WorkflowWait
         /// <param name="arg3">The value of the property.</param>
         /// <param name="arg4">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWaitKind.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheChannelAMessageWaitListensOnSetForMessage.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheCorrelationIdAMessageWaitMatchesIfAny.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.WhenATimerWaitBecomesDueSetForTimer.Source arg4, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWaitKind.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source arg4, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4);
@@ -1352,7 +1352,7 @@ public readonly partial struct WorkflowWait
     /// <param name="correlationId">The value of the <c>"correlationId"</c> property.</param>
     /// <param name="dueAt">The value of the <c>"dueAt"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWaitKind.Source kind, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheChannelAMessageWaitListensOnSetForMessage.Source channel = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheCorrelationIdAMessageWaitMatchesIfAny.Source correlationId = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.WhenATimerWaitBecomesDueSetForTimer.Source dueAt = default)
+    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWaitKind.Source kind, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source channel = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source correlationId = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source dueAt = default)
     {
         return new Source(kind, channel, correlationId, dueAt);
     }
@@ -1433,7 +1433,7 @@ public readonly partial struct WorkflowWait
     /// <param name="dueAt">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWaitKind.Source kind, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheChannelAMessageWaitListensOnSetForMessage.Source channel = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheCorrelationIdAMessageWaitMatchesIfAny.Source correlationId = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.WhenATimerWaitBecomesDueSetForTimer.Source dueAt = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWaitKind.Source kind, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source channel = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source correlationId = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source dueAt = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

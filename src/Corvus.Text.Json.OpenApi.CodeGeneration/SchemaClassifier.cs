@@ -15,12 +15,27 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 /// extraction, using the schema element obtained through typed model access.
 /// </para>
 /// <para>
+/// When a schema is a local <c>$ref</c> (e.g. <c>{"$ref":"#/components/schemas/Foo"}</c>)
+/// it has no <c>type</c> keyword of its own. The classifier resolves such references
+/// against the supplied OpenAPI document root before inspecting <c>type</c>/<c>format</c>,
+/// so a parameter referencing a named integer/array/object schema is classified by the
+/// resolved schema rather than falling back to <see cref="ParameterSerializationKind.String"/>.
+/// Nested sub-schemas (<c>items</c>, <c>additionalProperties</c>, <c>properties</c> values)
+/// are resolved the same way.
+/// </para>
+/// <para>
 /// No strings are allocated. All comparisons use <c>ValueEquals</c> on
 /// UTF-8 byte sequences.
 /// </para>
 /// </remarks>
 public static class SchemaClassifier
 {
+    /// <summary>
+    /// The maximum number of transitive <c>$ref</c> hops to follow before giving up.
+    /// Guards against reference cycles and pathologically deep chains.
+    /// </summary>
+    private const int MaxRefDepth = 32;
+
     /// <summary>
     /// Classifies a schema element's <c>type</c> and <c>format</c> keywords
     /// into a <see cref="ParameterSerializationKind"/>.
@@ -30,9 +45,16 @@ public static class SchemaClassifier
     /// a <c>type</c> keyword, or the type is unrecognised, returns
     /// <see cref="ParameterSerializationKind.String"/>.
     /// </param>
+    /// <param name="documentRoot">
+    /// The root element of the OpenAPI document, used to resolve local <c>$ref</c>
+    /// schemas. When <see cref="JsonValueKind.Undefined"/> (the default), no
+    /// reference resolution is performed and the schema is classified as-is.
+    /// </param>
     /// <returns>The serialization kind for the parameter.</returns>
-    public static ParameterSerializationKind Classify(JsonElement schema)
+    public static ParameterSerializationKind Classify(JsonElement schema, JsonElement documentRoot = default)
     {
+        schema = ResolveRef(schema, documentRoot);
+
         if (!schema.TryGetProperty("type"u8, out JsonElement typeElement)
             || typeElement.ValueKind != JsonValueKind.String)
         {
@@ -130,6 +152,169 @@ public static class SchemaClassifier
             ParameterSerializationKind.Decimal;
     }
 
+    /// <summary>
+    /// Resolves a (possibly chained) local <c>$ref</c> schema against the OpenAPI
+    /// document root.
+    /// </summary>
+    /// <param name="schema">The schema element, which may be a <c>$ref</c> object.</param>
+    /// <param name="documentRoot">
+    /// The root element of the OpenAPI document. When
+    /// <see cref="JsonValueKind.Undefined"/>, the input is returned unchanged.
+    /// </param>
+    /// <returns>
+    /// The resolved schema element. If <paramref name="schema"/> is not a local
+    /// <c>$ref</c>, or the reference cannot be resolved, the input is returned
+    /// unchanged. Transitive references are followed up to <see cref="MaxRefDepth"/>
+    /// hops to guard against cycles.
+    /// </returns>
+    /// <remarks>
+    /// Only local JSON-pointer references of the form <c>"#/..."</c> are followed.
+    /// Pointer tokens are unescaped per RFC 6901 (<c>~1</c>→<c>/</c>, <c>~0</c>→<c>~</c>).
+    /// External references (anything not beginning with <c>#/</c>, or a bare <c>#</c>)
+    /// are left unresolved.
+    /// </remarks>
+    public static JsonElement ResolveRef(JsonElement schema, JsonElement documentRoot)
+    {
+        if (documentRoot.ValueKind == JsonValueKind.Undefined
+            || schema.ValueKind != JsonValueKind.Object)
+        {
+            return schema;
+        }
+
+        JsonElement current = schema;
+        for (int depth = 0; depth < MaxRefDepth; depth++)
+        {
+            if (!current.TryGetProperty("$ref"u8, out JsonElement refElement)
+                || refElement.ValueKind != JsonValueKind.String)
+            {
+                return current;
+            }
+
+            if (!TryResolvePointer(refElement, documentRoot, out JsonElement resolved))
+            {
+                // Unresolvable / external reference: return the $ref object unchanged.
+                return current;
+            }
+
+            current = resolved;
+        }
+
+        // Depth cap reached (likely a cycle): return whatever we have.
+        return current;
+    }
+
+    /// <summary>
+    /// Classifies the element type for an array schema by inspecting its
+    /// <c>items</c> sub-schema.
+    /// </summary>
+    /// <param name="schema">The array schema element.</param>
+    /// <param name="documentRoot">
+    /// The root element of the OpenAPI document, used to resolve local <c>$ref</c>
+    /// schemas on the array itself and on its <c>items</c> sub-schema.
+    /// </param>
+    /// <returns>
+    /// The serialization kind for the array element type.
+    /// Returns <see cref="ParameterSerializationKind.String"/> if no
+    /// <c>items</c> sub-schema is present.
+    /// </returns>
+    public static ParameterSerializationKind ClassifyArrayElement(JsonElement schema, JsonElement documentRoot = default)
+    {
+        schema = ResolveRef(schema, documentRoot);
+
+        if (schema.TryGetProperty("items"u8, out JsonElement items)
+            && items.ValueKind == JsonValueKind.Object)
+        {
+            return Classify(items, documentRoot);
+        }
+
+        return ParameterSerializationKind.String;
+    }
+
+    /// <summary>
+    /// Classifies the value type for an object schema by inspecting its
+    /// <c>additionalProperties</c> sub-schema.
+    /// </summary>
+    /// <param name="schema">The object schema element.</param>
+    /// <param name="documentRoot">
+    /// The root element of the OpenAPI document, used to resolve local <c>$ref</c>
+    /// schemas on the object itself and on its <c>additionalProperties</c> sub-schema.
+    /// </param>
+    /// <returns>
+    /// The serialization kind for the object value type.
+    /// Returns <see cref="ParameterSerializationKind.String"/> if no
+    /// <c>additionalProperties</c> sub-schema is present.
+    /// </returns>
+    public static ParameterSerializationKind ClassifyObjectValue(JsonElement schema, JsonElement documentRoot = default)
+    {
+        schema = ResolveRef(schema, documentRoot);
+
+        if (schema.TryGetProperty("additionalProperties"u8, out JsonElement addlProps)
+            && addlProps.ValueKind == JsonValueKind.Object)
+        {
+            return Classify(addlProps, documentRoot);
+        }
+
+        return ParameterSerializationKind.String;
+    }
+
+    /// <summary>
+    /// Checks whether a schema classified as <see cref="ParameterSerializationKind.Object"/>
+    /// or <see cref="ParameterSerializationKind.Array"/> contains nested composite types
+    /// (objects or arrays within its property values or array items).
+    /// </summary>
+    /// <param name="schema">The schema element.</param>
+    /// <param name="documentRoot">
+    /// The root element of the OpenAPI document, used to resolve local <c>$ref</c>
+    /// schemas on the schema itself and on its nested sub-schemas.
+    /// </param>
+    /// <returns>
+    /// <see langword="true"/> if the schema has nested composite types whose behaviour
+    /// is undefined under OpenAPI style serialization.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// The OpenAPI specification states that behaviour is undefined for deeply nested
+    /// objects and arrays in style serialization (query, path, header, cookie).
+    /// When this method returns <see langword="true"/>, the code generator should emit
+    /// a <c>#warning</c> directive to alert consumers.
+    /// </para>
+    /// </remarks>
+    public static bool HasDeepNesting(JsonElement schema, JsonElement documentRoot = default)
+    {
+        schema = ResolveRef(schema, documentRoot);
+
+        // For objects: check if any declared property has a composite schema.
+        if (schema.TryGetProperty("properties"u8, out JsonElement properties)
+            && properties.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var prop in properties.EnumerateObject())
+            {
+                if (IsCompositeType(prop.Value, documentRoot))
+                {
+                    return true;
+                }
+            }
+        }
+
+        // For objects: check additionalProperties if it is a schema (not bool).
+        if (schema.TryGetProperty("additionalProperties"u8, out JsonElement addlProps)
+            && addlProps.ValueKind == JsonValueKind.Object
+            && IsCompositeType(addlProps, documentRoot))
+        {
+            return true;
+        }
+
+        // For arrays: check if items schema is composite.
+        if (schema.TryGetProperty("items"u8, out JsonElement items)
+            && items.ValueKind == JsonValueKind.Object
+            && IsCompositeType(items, documentRoot))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     private static ParameterSerializationKind ClassifyIntegerFormat(JsonElement schema)
     {
         if (schema.TryGetProperty("format"u8, out JsonElement fmt)
@@ -218,104 +403,85 @@ public static class SchemaClassifier
         return ParameterSerializationKind.UnboundedNumber;
     }
 
-    /// <summary>
-    /// Classifies the element type for an array schema by inspecting its
-    /// <c>items</c> sub-schema.
-    /// </summary>
-    /// <param name="schema">The array schema element.</param>
-    /// <returns>
-    /// The serialization kind for the array element type.
-    /// Returns <see cref="ParameterSerializationKind.String"/> if no
-    /// <c>items</c> sub-schema is present.
-    /// </returns>
-    public static ParameterSerializationKind ClassifyArrayElement(JsonElement schema)
+    private static bool IsCompositeType(JsonElement schema, JsonElement documentRoot)
     {
-        if (schema.TryGetProperty("items"u8, out JsonElement items)
-            && items.ValueKind == JsonValueKind.Object)
-        {
-            return Classify(items);
-        }
+        schema = ResolveRef(schema, documentRoot);
 
-        return ParameterSerializationKind.String;
-    }
-
-    /// <summary>
-    /// Classifies the value type for an object schema by inspecting its
-    /// <c>additionalProperties</c> sub-schema.
-    /// </summary>
-    /// <param name="schema">The object schema element.</param>
-    /// <returns>
-    /// The serialization kind for the object value type.
-    /// Returns <see cref="ParameterSerializationKind.String"/> if no
-    /// <c>additionalProperties</c> sub-schema is present.
-    /// </returns>
-    public static ParameterSerializationKind ClassifyObjectValue(JsonElement schema)
-    {
-        if (schema.TryGetProperty("additionalProperties"u8, out JsonElement addlProps)
-            && addlProps.ValueKind == JsonValueKind.Object)
-        {
-            return Classify(addlProps);
-        }
-
-        return ParameterSerializationKind.String;
-    }
-
-    /// <summary>
-    /// Checks whether a schema classified as <see cref="ParameterSerializationKind.Object"/>
-    /// or <see cref="ParameterSerializationKind.Array"/> contains nested composite types
-    /// (objects or arrays within its property values or array items).
-    /// </summary>
-    /// <param name="schema">The schema element.</param>
-    /// <returns>
-    /// <see langword="true"/> if the schema has nested composite types whose behaviour
-    /// is undefined under OpenAPI style serialization.
-    /// </returns>
-    /// <remarks>
-    /// <para>
-    /// The OpenAPI specification states that behaviour is undefined for deeply nested
-    /// objects and arrays in style serialization (query, path, header, cookie).
-    /// When this method returns <see langword="true"/>, the code generator should emit
-    /// a <c>#warning</c> directive to alert consumers.
-    /// </para>
-    /// </remarks>
-    public static bool HasDeepNesting(JsonElement schema)
-    {
-        // For objects: check if any declared property has a composite schema.
-        if (schema.TryGetProperty("properties"u8, out JsonElement properties)
-            && properties.ValueKind == JsonValueKind.Object)
-        {
-            foreach (var prop in properties.EnumerateObject())
-            {
-                if (IsCompositeType(prop.Value))
-                {
-                    return true;
-                }
-            }
-        }
-
-        // For objects: check additionalProperties if it is a schema (not bool).
-        if (schema.TryGetProperty("additionalProperties"u8, out JsonElement addlProps)
-            && addlProps.ValueKind == JsonValueKind.Object
-            && IsCompositeType(addlProps))
-        {
-            return true;
-        }
-
-        // For arrays: check if items schema is composite.
-        if (schema.TryGetProperty("items"u8, out JsonElement items)
-            && items.ValueKind == JsonValueKind.Object
-            && IsCompositeType(items))
-        {
-            return true;
-        }
-
-        return false;
-    }
-
-    private static bool IsCompositeType(JsonElement schema)
-    {
         return schema.TryGetProperty("type"u8, out JsonElement typeElement)
             && typeElement.ValueKind == JsonValueKind.String
             && (typeElement.ValueEquals("object"u8) || typeElement.ValueEquals("array"u8));
+    }
+
+    /// <summary>
+    /// Resolves a single local JSON-pointer <c>$ref</c> (one hop) against the document root.
+    /// </summary>
+    /// <param name="refElement">The <c>$ref</c> string element.</param>
+    /// <param name="documentRoot">The OpenAPI document root.</param>
+    /// <param name="resolved">On success, the element the pointer addresses.</param>
+    /// <returns>
+    /// <see langword="true"/> if the reference is a local <c>#/...</c> pointer that
+    /// resolves to an existing element; otherwise <see langword="false"/>.
+    /// </returns>
+    private static bool TryResolvePointer(JsonElement refElement, JsonElement documentRoot, out JsonElement resolved)
+    {
+        resolved = default;
+
+        string reference = refElement.GetString() ?? string.Empty;
+
+        // Only local fragment pointers of the form "#/..." are followed.
+        if (reference.Length < 2 || reference[0] != '#' || reference[1] != '/')
+        {
+            return false;
+        }
+
+        JsonElement current = documentRoot;
+
+        // Skip the leading "#/" then walk each "/"-separated token.
+        int index = 2;
+        int length = reference.Length;
+        while (index <= length)
+        {
+            int slash = reference.IndexOf('/', index);
+            string rawToken = slash < 0
+                ? reference[index..]
+                : reference[index..slash];
+
+            string token = UnescapePointerToken(rawToken);
+
+            if (current.ValueKind != JsonValueKind.Object
+                || !current.TryGetProperty(token, out JsonElement next))
+            {
+                return false;
+            }
+
+            current = next;
+
+            if (slash < 0)
+            {
+                break;
+            }
+
+            index = slash + 1;
+        }
+
+        resolved = current;
+        return true;
+    }
+
+    /// <summary>
+    /// Unescapes a single JSON-pointer reference token per RFC 6901
+    /// (<c>~1</c>→<c>/</c>, <c>~0</c>→<c>~</c>).
+    /// </summary>
+    /// <param name="token">The raw (escaped) token.</param>
+    /// <returns>The unescaped token.</returns>
+    private static string UnescapePointerToken(string token)
+    {
+        if (token.IndexOf('~') < 0)
+        {
+            return token;
+        }
+
+        // Order matters: ~1 -> / must precede ~0 -> ~ to avoid double-unescaping.
+        return token.Replace("~1", "/").Replace("~0", "~");
     }
 }

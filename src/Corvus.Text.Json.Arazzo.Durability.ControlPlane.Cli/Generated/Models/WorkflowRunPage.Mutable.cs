@@ -273,11 +273,11 @@ public readonly partial struct WorkflowRunPage
         /// An opaque token to fetch the next page, or null/absent if this is the last page.
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.NextPageTokenEntity.Mutable NextPageToken
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable NextPageToken
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NextPageTokenUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.NextPageTokenEntity.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NextPageTokenUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -350,7 +350,7 @@ public readonly partial struct WorkflowRunPage
         /// Set the <c>nextPageToken</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetNextPageToken(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.NextPageTokenEntity.Source value)
+        public void SetNextPageToken(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -787,7 +787,7 @@ public readonly partial struct WorkflowRunPage
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.WorkflowRunSummaryArray.Source _createArg1;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.NextPageTokenEntity.Source _createArg2;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source _createArg2;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -802,7 +802,7 @@ public readonly partial struct WorkflowRunPage
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.WorkflowRunSummaryArray.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.NextPageTokenEntity.Source arg2)
+        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.WorkflowRunSummaryArray.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg2)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -955,7 +955,7 @@ public readonly partial struct WorkflowRunPage
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.WorkflowRunSummaryArray.Source<TContext> _createArg1;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.NextPageTokenEntity.Source _createArg2;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source _createArg2;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -968,7 +968,7 @@ public readonly partial struct WorkflowRunPage
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.WorkflowRunSummaryArray.Source<TContext> arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.NextPageTokenEntity.Source arg2)
+        internal Source(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.WorkflowRunSummaryArray.Source<TContext> arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg2)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1126,7 +1126,7 @@ public readonly partial struct WorkflowRunPage
         internal static void Create(
             ref ComplexValueBuilder builder,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.WorkflowRunSummaryArray.Source runs,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.NextPageTokenEntity.Source nextPageToken = default)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source nextPageToken = default)
         {
             runs.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Runs, ref builder);
             nextPageToken.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NextPageToken, ref builder);
@@ -1135,7 +1135,7 @@ public readonly partial struct WorkflowRunPage
         /// <summary>
         /// Creates an instance of a <see cref="WorkflowRunPage"/>.
         /// </summary>
-        public void Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.WorkflowRunSummaryArray.Source runs, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.NextPageTokenEntity.Source nextPageToken = default)
+        public void Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.WorkflowRunSummaryArray.Source runs, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source nextPageToken = default)
         {
             Create(ref _builder, runs, nextPageToken);
         }
@@ -1147,7 +1147,7 @@ public readonly partial struct WorkflowRunPage
             in TContext context,
             ref ComplexValueBuilder builder,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.WorkflowRunSummaryArray.Source<TContext> runs,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.NextPageTokenEntity.Source nextPageToken = default)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source nextPageToken = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1162,7 +1162,7 @@ public readonly partial struct WorkflowRunPage
         public void Create<TContext>(
             in TContext context,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.WorkflowRunSummaryArray.Source<TContext> runs,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.NextPageTokenEntity.Source nextPageToken = default)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source nextPageToken = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1268,7 +1268,7 @@ public readonly partial struct WorkflowRunPage
         /// <param name="arg1">The value of the property.</param>
         /// <param name="arg2">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.WorkflowRunSummaryArray.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.NextPageTokenEntity.Source arg2, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.WorkflowRunSummaryArray.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg2, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2);
@@ -1283,7 +1283,7 @@ public readonly partial struct WorkflowRunPage
         /// <param name="arg1">The value of the property.</param>
         /// <param name="arg2">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.WorkflowRunSummaryArray.Source<TContext> arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.NextPageTokenEntity.Source arg2, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.WorkflowRunSummaryArray.Source<TContext> arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg2, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1329,7 +1329,7 @@ public readonly partial struct WorkflowRunPage
     /// <param name="runs">The value of the <c>"runs"</c> property.</param>
     /// <param name="nextPageToken">The value of the <c>"nextPageToken"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.WorkflowRunSummaryArray.Source runs, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.NextPageTokenEntity.Source nextPageToken = default)
+    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.WorkflowRunSummaryArray.Source runs, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source nextPageToken = default)
     {
         return new Source(runs, nextPageToken);
     }
@@ -1342,7 +1342,7 @@ public readonly partial struct WorkflowRunPage
     /// <param name="runs">The value of the <c>"runs"</c> property.</param>
     /// <param name="nextPageToken">The value of the <c>"nextPageToken"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.WorkflowRunSummaryArray.Source<TContext> runs, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.NextPageTokenEntity.Source nextPageToken = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.WorkflowRunSummaryArray.Source<TContext> runs, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source nextPageToken = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1424,7 +1424,7 @@ public readonly partial struct WorkflowRunPage
     /// <param name="nextPageToken">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.WorkflowRunSummaryArray.Source runs, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.NextPageTokenEntity.Source nextPageToken = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.WorkflowRunSummaryArray.Source runs, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source nextPageToken = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1447,7 +1447,7 @@ public readonly partial struct WorkflowRunPage
     /// <param name="nextPageToken">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.WorkflowRunSummaryArray.Source<TContext> runs, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.NextPageTokenEntity.Source nextPageToken = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunPage.WorkflowRunSummaryArray.Source<TContext> runs, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source nextPageToken = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
