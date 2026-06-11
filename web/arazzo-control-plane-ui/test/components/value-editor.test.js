@@ -163,6 +163,30 @@ describe('<arazzo-value-editor>', () => {
     equal(el.value.labels.env, 'prod', 'assembles the typed map');
   });
 
+  it('shows live, inline per-field validation errors from the validator', async () => {
+    el = document.createElement('arazzo-value-editor');
+    el.descriptor = { type: 'object', properties: { score: { type: 'number' }, name: { type: 'string' } } };
+    el.validator = async (value) => (value.score > 1
+      ? { valid: false, errors: [{ instancePath: '/score', message: 'must be <= 1' }] }
+      : { valid: true, errors: [] });
+    mount(el);
+
+    const num = await waitFor(() => el.shadowRoot.querySelector('input[type="number"]'));
+    num.value = '5';
+    num.dispatchEvent(new Event('input', { bubbles: true }));
+
+    const err = await waitFor(() => {
+      const e = el.shadowRoot.querySelector('.field .err');
+      return e && !e.hidden ? e : null;
+    });
+    ok(err.textContent.includes('<= 1'), 'the error renders against the score field');
+
+    // Correcting the value clears the inline error.
+    num.value = '1';
+    num.dispatchEvent(new Event('input', { bubbles: true }));
+    await waitFor(() => el.shadowRoot.querySelector('.field .err')?.hidden === true);
+  });
+
   it('falls back to a raw JSON editor when there is no typed schema', async () => {
     el = document.createElement('arazzo-value-editor');
     el.descriptor = { type: 'object', properties: {} };
