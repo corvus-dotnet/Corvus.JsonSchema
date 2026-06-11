@@ -59,6 +59,12 @@ public static class ArazzoTelemetry
     /// <summary>The span tag carrying a run's telemetry correlation id (the W3C trace id captured at creation).</summary>
     public const string CorrelationIdTag = "corvus.arazzo.correlation_id";
 
+    /// <summary>The span/measurement tag carrying a catalog version's base workflow id.</summary>
+    public const string BaseWorkflowIdTag = "corvus.arazzo.base_workflow_id";
+
+    /// <summary>The span/measurement tag carrying a catalog version number.</summary>
+    public const string VersionNumberTag = "corvus.arazzo.version_number";
+
     private static readonly string Version =
         typeof(ArazzoTelemetry).Assembly.GetName().Version?.ToString() ?? "1.0.0";
 

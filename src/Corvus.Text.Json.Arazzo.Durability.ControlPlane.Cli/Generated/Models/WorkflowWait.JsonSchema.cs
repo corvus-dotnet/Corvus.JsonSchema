@@ -49,14 +49,14 @@ public readonly partial struct WorkflowWait
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheChannelAMessageWaitListensOnSetForMessage.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.ChannelUtf8,
                     evaluationPath: ChannelSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheChannelAMessageWaitListensOnSetForMessage.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
             context.CommitChildContext(childContext.IsMatch, ref childContext);
         }
 
@@ -64,14 +64,14 @@ public readonly partial struct WorkflowWait
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheCorrelationIdAMessageWaitMatchesIfAny.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.CorrelationIdUtf8,
                     evaluationPath: CorrelationIdSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheCorrelationIdAMessageWaitMatchesIfAny.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
             context.CommitChildContext(childContext1.IsMatch, ref childContext1);
         }
 
@@ -79,14 +79,14 @@ public readonly partial struct WorkflowWait
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext2 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.WhenATimerWaitBecomesDueSetForTimer.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.DueAtUtf8,
                     evaluationPath: DueAtSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.WhenATimerWaitBecomesDueSetForTimer.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
             context.CommitChildContext(childContext2.IsMatch, ref childContext2);
         }
 

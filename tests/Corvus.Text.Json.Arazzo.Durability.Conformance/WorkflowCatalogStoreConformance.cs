@@ -1,0 +1,280 @@
+// <copyright file="WorkflowCatalogStoreConformance.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+using System.Text;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Shouldly;
+
+namespace Corvus.Text.Json.Arazzo.Durability.Conformance;
+
+/// <summary>
+/// The shared contract every <see cref="IWorkflowCatalogStore"/> must satisfy, regardless of backend: version
+/// assignment + workflow-id rewrite, content hashing, title/description/source projection, individually
+/// addressable document retrieval, search (text/base-id/tag/status/owner) with keyset paging, the governance
+/// metadata lifecycle (update/obsolete/reactivate), and delete/list-obsolete/delete-many. A backend's test
+/// project derives a concrete <see cref="TestClassAttribute"/> from this and implements
+/// <see cref="CreateStoreAsync"/>; the in-memory store is the reference implementation and runs the same suite.
+/// </summary>
+public abstract class WorkflowCatalogStoreConformance
+{
+    private static readonly DateTimeOffset T0 = new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+
+    private readonly List<IAsyncDisposable> disposables = [];
+
+    /// <summary>Creates a fresh, empty catalog store backed by the implementation under test.</summary>
+    /// <param name="timeProvider">The time source the store must use for audit timestamps.</param>
+    /// <returns>The store.</returns>
+    protected abstract ValueTask<IWorkflowCatalogStore> CreateStoreAsync(TimeProvider timeProvider);
+
+    /// <summary>Disposes any stores created during the test.</summary>
+    /// <returns>A task that completes when cleanup is done.</returns>
+    [TestCleanup]
+    public async Task CleanupAsync()
+    {
+        foreach (IAsyncDisposable disposable in this.disposables)
+        {
+            await disposable.DisposeAsync();
+        }
+
+        this.disposables.Clear();
+    }
+
+    [TestMethod]
+    public async Task Add_assigns_v1_rewrites_id_and_projects_metadata()
+    {
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+        CatalogVersion version = await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default);
+
+        version.VersionNumber.ShouldBe(1);
+        version.BaseWorkflowId.ShouldBe("nightly-reconcile");
+        version.WorkflowId.ShouldBe("nightly-reconcile-v1");
+        version.Title.ShouldBe("Nightly Reconcile");
+        version.Description.ShouldBe("Reconciles state nightly.");
+        version.Status.ShouldBe(CatalogStatus.Active);
+        version.CreatedBy.ShouldBe("alice");
+        version.Hash.Length.ShouldBe(64);
+        version.Sources.Count.ShouldBe(1);
+        version.Sources[0].Name.ShouldBe("petstore");
+        version.Sources[0].Type.ShouldBe("openapi");
+    }
+
+    [TestMethod]
+    public async Task Add_second_version_assigns_v2()
+    {
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+        await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default);
+        CatalogVersion second = await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default);
+
+        second.VersionNumber.ShouldBe(2);
+        second.WorkflowId.ShouldBe("nightly-reconcile-v2");
+    }
+
+    [TestMethod]
+    public async Task Identical_packages_hash_identically()
+    {
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+        CatalogVersion a = await store.AddAsync("base-a", Package("base-a"), Meta(), default);
+        CatalogVersion b = await store.AddAsync("base-b", Package("base-b"), Meta(), default);
+
+        // The only content difference is the workflow id, which both rewrite to "-v1"; everything else is equal,
+        // so the canonical hashes differ only because the ids differ — different base ids => different hashes.
+        a.Hash.ShouldNotBe(b.Hash);
+
+        CatalogVersion a2 = await store.AddAsync("base-a", Package("base-a"), Meta(), default);
+        a2.WorkflowId.ShouldBe("base-a-v2");
+        a2.Hash.ShouldNotBe(a.Hash); // v1 vs v2 ids differ
+    }
+
+    [TestMethod]
+    public async Task Get_returns_metadata_and_unknown_returns_null()
+    {
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+        await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default);
+
+        (await store.GetAsync("nightly-reconcile", 1, default)).ShouldNotBeNull();
+        (await store.GetAsync("nightly-reconcile", 2, default)).ShouldBeNull();
+        (await store.GetAsync("missing", 1, default)).ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task GetPackage_returns_canonical_bytes_with_versioned_id()
+    {
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+        await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default);
+
+        ReadOnlyMemory<byte>? package = await store.GetPackageAsync("nightly-reconcile", 1, default);
+        package.ShouldNotBeNull();
+
+        // The package is an opaque archive; unpack it and confirm the workflow carries the versioned id.
+        (byte[] workflow, _) = CatalogPackage.Unpack(package.Value);
+        Encoding.UTF8.GetString(workflow).ShouldContain("nightly-reconcile-v1");
+        (await store.GetPackageAsync("nightly-reconcile", 9, default)).ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task GetDocument_returns_workflow_source_or_null()
+    {
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+        await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default);
+
+        ReadOnlyMemory<byte>? workflow = await store.GetDocumentAsync("nightly-reconcile", 1, CatalogPackage.WorkflowDocumentName, default);
+        workflow.ShouldNotBeNull();
+        Encoding.UTF8.GetString(workflow.Value.Span).ShouldContain("nightly-reconcile-v1");
+
+        ReadOnlyMemory<byte>? source = await store.GetDocumentAsync("nightly-reconcile", 1, "petstore", default);
+        source.ShouldNotBeNull();
+        Encoding.UTF8.GetString(source.Value.Span).ShouldContain("Petstore");
+
+        (await store.GetDocumentAsync("nightly-reconcile", 1, "absent", default)).ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task Query_filters_by_base_tag_status_text_and_owner()
+    {
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+        await store.AddAsync("alpha", Package("alpha", title: "Alpha Flow"), Meta(tags: ["prod", "billing"]), default);
+        await store.AddAsync("beta", Package("beta", title: "Beta Flow"), Meta(tags: ["prod"]), default);
+
+        (await store.QueryAsync(new CatalogQuery(BaseWorkflowId: "alpha"), default)).Versions.Count.ShouldBe(1);
+        (await store.QueryAsync(new CatalogQuery(Tags: ["prod"]), default)).Versions.Count.ShouldBe(2);
+        (await store.QueryAsync(new CatalogQuery(Tags: ["prod", "billing"]), default)).Versions.Count.ShouldBe(1);
+        (await store.QueryAsync(new CatalogQuery(Text: "alpha"), default)).Versions.Count.ShouldBe(1);
+        (await store.QueryAsync(new CatalogQuery(Owner: "team-a@example.com"), default)).Versions.Count.ShouldBe(2);
+        (await store.QueryAsync(new CatalogQuery(Status: CatalogStatus.Obsolete), default)).Versions.Count.ShouldBe(0);
+    }
+
+    [TestMethod]
+    public async Task Query_pages_by_keyset()
+    {
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+        await store.AddAsync("a", Package("a"), Meta(), default);
+        await store.AddAsync("b", Package("b"), Meta(), default);
+        await store.AddAsync("c", Package("c"), Meta(), default);
+
+        CatalogPage first = await store.QueryAsync(new CatalogQuery(Limit: 2), default);
+        first.Versions.Count.ShouldBe(2);
+        first.ContinuationToken.ShouldNotBeNull();
+
+        CatalogPage second = await store.QueryAsync(new CatalogQuery(Limit: 2, ContinuationToken: first.ContinuationToken), default);
+        second.Versions.Count.ShouldBe(1);
+        second.ContinuationToken.ShouldBeNull();
+
+        first.Versions.Select(v => v.BaseWorkflowId)
+            .Concat(second.Versions.Select(v => v.BaseWorkflowId))
+            .ShouldBe(["a", "b", "c"]);
+    }
+
+    [TestMethod]
+    public async Task Update_changes_governance_and_stamps_audit()
+    {
+        var clock = new TestClock(T0);
+        IWorkflowCatalogStore store = await this.NewStoreAsync(clock);
+        await store.AddAsync("svc", Package("svc"), Meta(), default);
+        clock.Advance(TimeSpan.FromHours(1));
+
+        CatalogVersion? updated = await store.UpdateMetadataAsync(
+            "svc", 1, new CatalogMetadataPatch("bob", Owner: new CatalogOwner("Team B", "team-b@example.com"), Tags: ["retired"], Status: CatalogStatus.Obsolete), default);
+
+        updated.ShouldNotBeNull();
+        updated.Owner.Name.ShouldBe("Team B");
+        updated.Tags.ShouldBe(["retired"]);
+        updated.Status.ShouldBe(CatalogStatus.Obsolete);
+        updated.LastUpdatedBy.ShouldBe("bob");
+        updated.LastUpdatedAt.ShouldBe(T0.AddHours(1));
+        updated.ObsoletedBy.ShouldBe("bob");
+        updated.ObsoletedAt.ShouldBe(T0.AddHours(1));
+    }
+
+    [TestMethod]
+    public async Task Update_partial_leaves_unset_fields_unchanged()
+    {
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+        await store.AddAsync("svc", Package("svc"), Meta(tags: ["keep"]), default);
+
+        CatalogVersion? updated = await store.UpdateMetadataAsync("svc", 1, new CatalogMetadataPatch("bob"), default);
+
+        updated.ShouldNotBeNull();
+        updated.Tags.ShouldBe(["keep"]);
+        updated.Owner.Email.ShouldBe("team-a@example.com");
+        updated.Status.ShouldBe(CatalogStatus.Active);
+    }
+
+    [TestMethod]
+    public async Task Update_reactivation_clears_obsoletion()
+    {
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+        await store.AddAsync("svc", Package("svc"), Meta(), default);
+        await store.UpdateMetadataAsync("svc", 1, new CatalogMetadataPatch("bob", Status: CatalogStatus.Obsolete), default);
+
+        CatalogVersion? reactivated = await store.UpdateMetadataAsync("svc", 1, new CatalogMetadataPatch("carol", Status: CatalogStatus.Active), default);
+
+        reactivated.ShouldNotBeNull();
+        reactivated.Status.ShouldBe(CatalogStatus.Active);
+        reactivated.ObsoletedBy.ShouldBeNull();
+        reactivated.ObsoletedAt.ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task Update_unknown_returns_null()
+    {
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+        (await store.UpdateMetadataAsync("missing", 1, new CatalogMetadataPatch("bob"), default)).ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task Delete_removes_and_unknown_returns_false()
+    {
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+        await store.AddAsync("svc", Package("svc"), Meta(), default);
+
+        (await store.DeleteAsync("svc", 1, default)).ShouldBeTrue();
+        (await store.GetAsync("svc", 1, default)).ShouldBeNull();
+        (await store.DeleteAsync("svc", 1, default)).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task ListObsolete_then_DeleteMany_reaps_them()
+    {
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+        await store.AddAsync("svc", Package("svc"), Meta(), default);
+        await store.AddAsync("svc", Package("svc"), Meta(), default);
+        await store.UpdateMetadataAsync("svc", 1, new CatalogMetadataPatch("bob", Status: CatalogStatus.Obsolete), default);
+
+        IReadOnlyList<CatalogVersionRef> obsolete = await store.ListObsoleteAsync(default);
+        obsolete.Count.ShouldBe(1);
+        obsolete[0].WorkflowId.ShouldBe("svc-v1");
+
+        await store.DeleteManyAsync(obsolete, default);
+        (await store.GetAsync("svc", 1, default)).ShouldBeNull();
+        (await store.GetAsync("svc", 2, default)).ShouldNotBeNull();
+    }
+
+    private static CatalogMetadata Meta(IReadOnlyList<string>? tags = null)
+        => new(new CatalogOwner("Team A", "team-a@example.com"), "alice", tags);
+
+    private static ReadOnlyMemory<byte> Package(string workflowId, string title = "Nightly Reconcile")
+    {
+        byte[] workflow = Encoding.UTF8.GetBytes($$"""
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "{{title}}", "description": "Reconciles state nightly." },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./petstore.json", "type": "openapi" } ],
+          "workflows": [ { "workflowId": "{{workflowId}}", "steps": [] } ]
+        }
+        """);
+        byte[] petstore = Encoding.UTF8.GetBytes("""{"openapi":"3.1.0","info":{"title":"Petstore","version":"1.0.0"}}""");
+        return CatalogPackage.Build(workflow, [new KeyValuePair<string, byte[]>("petstore", petstore)]);
+    }
+
+    private async ValueTask<IWorkflowCatalogStore> NewStoreAsync(TimeProvider? timeProvider = null)
+    {
+        IWorkflowCatalogStore store = await this.CreateStoreAsync(timeProvider ?? TimeProvider.System);
+        if (store is IAsyncDisposable disposable)
+        {
+            this.disposables.Add(disposable);
+        }
+
+        return store;
+    }
+}

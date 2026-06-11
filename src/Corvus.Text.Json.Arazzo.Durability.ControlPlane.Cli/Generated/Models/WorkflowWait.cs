@@ -166,11 +166,11 @@ public readonly partial struct WorkflowWait
     /// The channel a message wait listens on (set for `Message`).
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheChannelAMessageWaitListensOnSetForMessage Channel
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Channel
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ChannelUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheChannelAMessageWaitListensOnSetForMessage value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ChannelUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
             {
                 return value;
             }
@@ -187,11 +187,11 @@ public readonly partial struct WorkflowWait
     /// The correlation id a message wait matches, if any.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheCorrelationIdAMessageWaitMatchesIfAny CorrelationId
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString CorrelationId
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CorrelationIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.TheCorrelationIdAMessageWaitMatchesIfAny value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CorrelationIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
             {
                 return value;
             }
@@ -208,11 +208,11 @@ public readonly partial struct WorkflowWait
     /// When a timer wait becomes due (set for `Timer`).
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.WhenATimerWaitBecomesDueSetForTimer DueAt
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime DueAt
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DueAtUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.WhenATimerWaitBecomesDueSetForTimer value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DueAtUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime value))
             {
                 return value;
             }

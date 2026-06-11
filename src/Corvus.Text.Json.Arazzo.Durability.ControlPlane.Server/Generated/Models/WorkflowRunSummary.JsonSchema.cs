@@ -81,14 +81,14 @@ public readonly partial struct WorkflowRunSummary
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.AwaitingChannelEntity.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.AwaitingChannelUtf8,
                     evaluationPath: AwaitingChannelSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.AwaitingChannelEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
             context.CommitChildContext(childContext.IsMatch, ref childContext);
         }
 
@@ -96,14 +96,14 @@ public readonly partial struct WorkflowRunSummary
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.AwaitingCorrelationIdEntity.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.AwaitingCorrelationIdUtf8,
                     evaluationPath: AwaitingCorrelationIdSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.AwaitingCorrelationIdEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
             context.CommitChildContext(childContext1.IsMatch, ref childContext1);
         }
 
@@ -111,14 +111,14 @@ public readonly partial struct WorkflowRunSummary
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext2 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.CorrelationIdEntity.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.CorrelationIdUtf8,
                     evaluationPath: CorrelationIdSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.CorrelationIdEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
             context.CommitChildContext(childContext2.IsMatch, ref childContext2);
         }
 
@@ -148,14 +148,14 @@ public readonly partial struct WorkflowRunSummary
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext4 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.DueAtEntity.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.DueAtUtf8,
                     evaluationPath: DueAtSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.DueAtEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext4);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext4);
             context.CommitChildContext(childContext4.IsMatch, ref childContext4);
         }
 
@@ -163,14 +163,14 @@ public readonly partial struct WorkflowRunSummary
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext5 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.TheFaultErrorIfTheRunIsWasFaulted.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.ErrorTypeUtf8,
                     evaluationPath: ErrorTypeSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.TheFaultErrorIfTheRunIsWasFaulted.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext5);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext5);
             context.CommitChildContext(childContext5.IsMatch, ref childContext5);
         }
 

@@ -382,12 +382,13 @@ public sealed class ControlPlaneServerTests
 
         // The resumer stands in for re-entering a generated executor: it drives a resumed faulted run to completion.
         var management = new WorkflowManagementClient(store, "ops", resumer ?? CompleteResumer, clock);
+        var catalog = new WorkflowCatalogClient(new InMemoryWorkflowCatalogStore(clock), store, "ops");
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
-        app.MapArazzoControlPlane(management);
+        app.MapArazzoControlPlane(management, catalog);
         await app.StartAsync();
 
         return new Host(app, app.GetTestClient(), store, clock);
