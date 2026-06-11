@@ -17,6 +17,7 @@ import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './components/base
 import './components/runs-table.js';
 import './components/run-detail.js';
 import './components/purge-dialog.js';
+import './components/workflow-id-input.js';
 
 // Token values mirror arazzo-kit.css so the panel themes itself even without that stylesheet.
 const LIGHT = `
@@ -30,9 +31,6 @@ const DARK = `
   --arazzo-status-pending:#8b929c; --arazzo-status-running:#6f9bff; --arazzo-status-suspended:#e0a93f;
   --arazzo-status-completed:#4cc472; --arazzo-status-cancelled:#8b929c; --arazzo-status-faulted:#ff6b5e;`;
 
-// The workflowId autocomplete shows at most this many matches at once (so a large catalog can't flood the
-// dropdown). Matches are fetched server-side by prefix as the user types, so this scales to any catalog size.
-const SUGGESTION_LIMIT = 10;
 
 class ArazzoControlPlane extends ArazzoElement {
   static get observedAttributes() {
@@ -45,8 +43,6 @@ class ArazzoControlPlane extends ArazzoElement {
     /** @private */ this._fetch = undefined;
     /** @private */ this._search = '';
     /** @private */ this._searchTimer = null;
-    /** @private */ this._suggestTimer = null;
-    /** @private */ this._suggestSeq = 0;
   }
 
   connectedCallback() {
@@ -105,35 +101,8 @@ class ArazzoControlPlane extends ArazzoElement {
     if (table) table.client = client;
     if (detail) detail.client = client;
     if (purge) purge.client = client;
-    this.loadWorkflowSuggestions();
-  }
-
-  /**
-   * Best-effort: fetch the catalog workflow ids matching `prefix` (server-side, index-friendly) and fill the
-   * workflowId filter's autocomplete with up to {@link SUGGESTION_LIMIT} of them — so the dropdown stays small
-   * and the query scales to any catalog size. Surfaces both the base id and the versioned ids the runs carry.
-   * Silently no-ops if the catalog isn't reachable (e.g. the principal lacks `catalog:read`).
-   * @param {string} [prefix] The current text in the filter, matched as a prefix.
-   */
-  async loadWorkflowSuggestions(prefix = '') {
-    const client = this.buildClient();
-    const datalist = this.$('#wf-id-options');
-    if (!client || !datalist) return;
-    const seq = ++this._suggestSeq;
-    try {
-      // Slightly over-fetch so a workflow's versions don't crowd out other workflows before we cap.
-      const { versions } = await client.searchCatalog({ workflowIdPrefix: prefix || undefined, limit: SUGGESTION_LIMIT * 2 });
-      if (seq !== this._suggestSeq) return; // a newer keystroke superseded this query
-      const ids = new Set();
-      for (const v of versions) {
-        if (v.baseWorkflowId) ids.add(v.baseWorkflowId);
-        if (v.workflowId) ids.add(v.workflowId);
-        if (ids.size >= SUGGESTION_LIMIT) break;
-      }
-      datalist.innerHTML = [...ids].slice(0, SUGGESTION_LIMIT).map((id) => `<option value="${escapeHtml(id)}"></option>`).join('');
-    } catch {
-      // No catalog access → no suggestions; the workflowId filter remains free-text.
-    }
+    const wfInput = this.$('.wf-search');
+    if (wfInput) wfInput.client = client; // the <arazzo-workflow-id-input> owns its catalog autocomplete
   }
 
   applyScopes() {
@@ -189,7 +158,7 @@ class ArazzoControlPlane extends ArazzoElement {
           <button class="chip status-chip" type="button" data-status="" aria-pressed="true">All</button>
           ${RUN_STATUSES.map((s) => `<button class="chip status-chip" type="button" data-status="${s}" aria-pressed="false">${escapeHtml(s)}</button>`).join('')}
         </div>
-        <div class="search"><input class="wf-search" type="search" placeholder="Filter by workflowId…" aria-label="Filter by workflowId" list="wf-id-options"><datalist id="wf-id-options"></datalist></div>
+        <div class="search"><arazzo-workflow-id-input class="wf-search" placeholder="Filter by workflowId…"></arazzo-workflow-id-input></div>
         <div class="search"><input class="tag-search" type="search" placeholder="Tags (space-separated, AND)…" aria-label="Filter by tags"></div>
         <div class="search"><input class="corr-search" type="search" placeholder="Correlation id…" aria-label="Filter by correlation id"></div>
         <label class="toggle"><input type="checkbox" id="autorefresh"> auto-refresh</label>
@@ -242,13 +211,8 @@ class ArazzoControlPlane extends ArazzoElement {
       const value = e.target.value.trim();
       input._t = setTimeout(() => apply(value), 300);
     });
+    // <arazzo-workflow-id-input> owns its own catalog autocomplete; its input event bubbles out to us.
     debounced(this.$('.wf-search'), (v) => v ? table.setAttribute('workflow-id', v) : table.removeAttribute('workflow-id'));
-    // Refresh the autocomplete from the server (debounced) as the user types — prefix-matched, capped.
-    this.$('.wf-search').addEventListener('input', (e) => {
-      const value = e.target.value.trim();
-      clearTimeout(this._suggestTimer);
-      this._suggestTimer = setTimeout(() => this.loadWorkflowSuggestions(value), 200);
-    });
     debounced(this.$('.tag-search'), (v) => v ? table.setAttribute('tags', v) : table.removeAttribute('tags'));
     debounced(this.$('.corr-search'), (v) => v ? table.setAttribute('correlation-id', v) : table.removeAttribute('correlation-id'));
 

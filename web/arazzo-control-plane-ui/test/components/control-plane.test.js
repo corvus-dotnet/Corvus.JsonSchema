@@ -79,49 +79,19 @@ describe('<arazzo-control-plane>', () => {
     ok(true);
   });
 
-  it('populates the workflowId filter autocomplete from the catalog', async () => {
+  it('embeds the workflowId autocomplete and applies it to the table filter', async () => {
     el = panel('runs:read');
     mount(el);
-    const list = await waitFor(() => {
-      const dl = el.shadowRoot.querySelector('#wf-id-options');
-      return dl && dl.options.length ? dl : null;
-    });
-    const values = [...list.options].map((o) => o.value);
-    ok(el.shadowRoot.querySelector('.wf-search').getAttribute('list') === 'wf-id-options', 'input wired to the datalist');
-    ok(values.includes('adopt-pet'), 'offers base workflow ids');
-    ok(values.includes('nightly-reconcile-v3'), 'offers the versioned ids the runs carry');
-  });
-
-  it('caps the workflowId autocomplete at 10 and narrows it to what is typed', async () => {
-    // A catalog far larger than the dropdown should cap; one row per base, two ids each (base + v1).
-    const seed = Array.from({ length: 20 }, (_, i) => {
-      const base = `wf-${String(i).padStart(2, '0')}`;
-      return {
-        baseWorkflowId: base, versionNumber: 1, workflowId: `${base}-v1`, title: `Workflow ${i}`,
-        status: 'Active', tags: [], owner: { name: 'Team', email: 'team@example.com' }, sources: [],
-        createdBy: 'a', createdAt: new Date().toISOString(),
-      };
-    });
-    const mock = createMockControlPlane({ latencyMs: 0, catalogSeed: seed });
-    el = document.createElement('arazzo-control-plane');
-    el.setAttribute('base-url', 'https://mock/arazzo/v1');
-    el.setAttribute('scopes', 'runs:read');
-    el.fetch = mock.fetch;
-    mount(el);
-
-    const dl = await waitFor(() => { const d = el.shadowRoot.querySelector('#wf-id-options'); return d && d.options.length ? d : null; });
-    ok(dl.options.length <= 10, `empty filter capped at 10 (was ${dl.options.length})`);
-
-    const input = el.shadowRoot.querySelector('.wf-search');
-    input.value = 'wf-01';
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-    // Wait for the debounced server query to narrow the dropdown to only matching ids.
-    await waitFor(() => {
-      const opts = [...el.shadowRoot.querySelector('#wf-id-options').options];
-      return opts.length > 0 && opts.every((o) => o.value.includes('wf-01')) ? opts : null;
-    });
-    const opts = [...el.shadowRoot.querySelector('#wf-id-options').options].map((o) => o.value);
-    ok(opts.length <= 10 && opts.every((v) => v.includes('wf-01')), 'narrowed to the typed text and still capped');
+    const table = el.shadowRoot.querySelector('arazzo-runs-table');
+    await nextEvent(table, 'loaded');
+    const wfInput = el.shadowRoot.querySelector('arazzo-workflow-id-input.wf-search');
+    ok(wfInput, 'embeds the <arazzo-workflow-id-input> component');
+    // Type into the component's inner input; its input event bubbles out and the panel applies the filter.
+    const inner = wfInput.shadowRoot.querySelector('input');
+    inner.value = 'onboard';
+    inner.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+    await waitFor(() => table.getAttribute('workflow-id') === 'onboard');
+    ok(true);
   });
 
   it('re-selecting the already-selected run keeps the full detail (regression)', async () => {
