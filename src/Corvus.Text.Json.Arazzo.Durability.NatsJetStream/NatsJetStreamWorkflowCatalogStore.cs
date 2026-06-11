@@ -34,12 +34,14 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
     private readonly NatsConnection? ownedConnection;
     private readonly INatsKVStore catalog;
     private readonly TimeProvider timeProvider;
+    private readonly IWorkflowMetadataProvider? metadataProvider;
 
-    private NatsJetStreamWorkflowCatalogStore(NatsConnection? ownedConnection, INatsKVStore catalog, TimeProvider timeProvider)
+    private NatsJetStreamWorkflowCatalogStore(NatsConnection? ownedConnection, INatsKVStore catalog, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider)
     {
         this.ownedConnection = ownedConnection;
         this.catalog = catalog;
         this.timeProvider = timeProvider;
+        this.metadataProvider = metadataProvider;
     }
 
     /// <summary>
@@ -72,6 +74,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
     public static async ValueTask<NatsJetStreamWorkflowCatalogStore> ConnectAsync(
         string url,
         TimeProvider? timeProvider = null,
+        IWorkflowMetadataProvider? metadataProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(url);
@@ -80,7 +83,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         {
             var kv = new NatsKVContext(new NatsJSContext(connection));
             INatsKVStore catalog = await kv.GetStoreAsync(CatalogBucket, cancellationToken).ConfigureAwait(false);
-            return new NatsJetStreamWorkflowCatalogStore(connection, catalog, timeProvider ?? TimeProvider.System);
+            return new NatsJetStreamWorkflowCatalogStore(connection, catalog, timeProvider ?? TimeProvider.System, metadataProvider);
         }
         catch
         {
@@ -117,12 +120,13 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
     public static async ValueTask<NatsJetStreamWorkflowCatalogStore> ConnectAsync(
         INatsConnection connection,
         TimeProvider? timeProvider = null,
+        IWorkflowMetadataProvider? metadataProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connection);
         var kv = new NatsKVContext(new NatsJSContext(connection));
         INatsKVStore catalog = await kv.GetStoreAsync(CatalogBucket, cancellationToken).ConfigureAwait(false);
-        return new NatsJetStreamWorkflowCatalogStore(ownedConnection: null, catalog, timeProvider ?? TimeProvider.System);
+        return new NatsJetStreamWorkflowCatalogStore(ownedConnection: null, catalog, timeProvider ?? TimeProvider.System, metadataProvider);
     }
 
     /// <inheritdoc/>
@@ -338,7 +342,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         {
             cancellationToken.ThrowIfCancellationRequested();
             int versionNumber = await this.MaxVersionAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false) + 1;
-            CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber);
+            CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider);
             var version = new CatalogVersion(
                 BaseWorkflowId: baseWorkflowId,
                 VersionNumber: versionNumber,

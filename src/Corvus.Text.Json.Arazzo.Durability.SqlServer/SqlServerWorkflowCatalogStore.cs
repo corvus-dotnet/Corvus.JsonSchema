@@ -28,11 +28,13 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore
 
     private readonly string connectionString;
     private readonly TimeProvider timeProvider;
+    private readonly IWorkflowMetadataProvider? metadataProvider;
 
-    private SqlServerWorkflowCatalogStore(string connectionString, TimeProvider timeProvider)
+    private SqlServerWorkflowCatalogStore(string connectionString, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider)
     {
         this.connectionString = connectionString;
         this.timeProvider = timeProvider;
+        this.metadataProvider = metadataProvider;
     }
 
     /// <summary>
@@ -68,11 +70,12 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore
     public static ValueTask<SqlServerWorkflowCatalogStore> ConnectAsync(
         string connectionString,
         TimeProvider? timeProvider = null,
+        IWorkflowMetadataProvider? metadataProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
         cancellationToken.ThrowIfCancellationRequested();
-        return new ValueTask<SqlServerWorkflowCatalogStore>(new SqlServerWorkflowCatalogStore(connectionString, timeProvider ?? TimeProvider.System));
+        return new ValueTask<SqlServerWorkflowCatalogStore>(new SqlServerWorkflowCatalogStore(connectionString, timeProvider ?? TimeProvider.System, metadataProvider));
     }
 
     /// <inheritdoc/>
@@ -391,7 +394,7 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore
             versionNumber = (int)(await max.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))! + 1;
         }
 
-        CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber);
+        CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider);
         IReadOnlyList<string> tags = metadata.Tags is { Count: > 0 } t ? [.. t] : [];
         var version = new CatalogVersion(
             BaseWorkflowId: baseWorkflowId,
