@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Arazzo Control Plane — live demo</title>
+  <link rel="stylesheet" href="/ui/src/arazzo-kit.css">
+  <style>
+    body { font-family: var(--arazzo-font); color: var(--arazzo-text); background: var(--arazzo-bg); margin: 0; }
+    .page { max-width: 1100px; margin: 0 auto; padding: 24px 20px 48px; }
+    header.top { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+    h1 { font-size: 20px; margin: 0; }
+    .sub { color: var(--arazzo-muted); font-size: 13px; }
+    .controls { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin: 16px 0 20px; padding: 12px 14px; border: 1px solid var(--arazzo-border); border-radius: var(--arazzo-radius); background: var(--arazzo-surface); }
+    .controls label { font-size: 13px; display: inline-flex; gap: 6px; align-items: center; }
+    .controls select { font: inherit; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--arazzo-border); background: var(--arazzo-bg); color: var(--arazzo-text); }
+    .note { font-size: 12px; color: var(--arazzo-muted); margin-top: 24px; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--arazzo-border); }
+    .tabs button { font: inherit; font-size: 14px; cursor: pointer; border: none; background: none; color: var(--arazzo-muted); padding: 8px 14px; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+    .tabs button[aria-selected="true"] { color: var(--arazzo-text); border-bottom-color: var(--arazzo-accent); font-weight: 600; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="top">
+      <h1>Arazzo Control Plane</h1>
+      <span class="sub">Live demo — the real control-plane server over a fresh in-process SQLite store</span>
+    </header>
+
+    <div class="controls">
+      <label>Theme
+        <select id="theme">
+          <option value="auto" selected>auto</option>
+          <option value="light">light</option>
+          <option value="dark">dark</option>
+        </select>
+      </label>
+      <span class="sub">Open a faulted run’s <strong>Resume…</strong> → <strong>Skip</strong> → tick <strong>Record outputs</strong> to see the typed editor (unions, tuples, maps) validated by the server as you type.</span>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button id="tab-runs" role="tab" aria-selected="true" aria-controls="view-runs">Runs</button>
+      <button id="tab-catalog" role="tab" aria-selected="false" aria-controls="view-catalog">Catalog</button>
+    </div>
+
+    <div id="view-runs" role="tabpanel">
+      <arazzo-control-plane base-url="/arazzo/v1" scopes="runs:read runs:write runs:purge" theme="auto" poll="4000"></arazzo-control-plane>
+    </div>
+
+    <div id="view-catalog" role="tabpanel" hidden>
+      <arazzo-catalog base-url="/arazzo/v1" scopes="catalog:read catalog:write catalog:purge" theme="auto"></arazzo-catalog>
+    </div>
+
+    <p class="note">
+      This page talks to the genuine API under <code>/arazzo/v1</code> (no mock) — so the schema metadata and
+      the <code>/validate</code> round-trip are the real generator + validator. The SQLite store is recreated
+      and re-seeded every time the host starts.
+    </p>
+  </div>
+
+  <script type="module">
+    import '/ui/src/arazzo-control-plane.js';
+    import '/ui/src/arazzo-catalog.js';
+
+    const panel = document.querySelector('arazzo-control-plane');
+    const catalog = document.querySelector('arazzo-catalog');
+
+    // Theme drives the panels (their `theme` attribute) and the page (arazzo-kit.css honours data-theme on <html>).
+    const applyTheme = (v) => {
+      panel.setAttribute('theme', v);
+      catalog.setAttribute('theme', v);
+      if (v === 'auto') document.documentElement.removeAttribute('data-theme');
+      else document.documentElement.setAttribute('data-theme', v);
+    };
+    const themeSel = document.getElementById('theme');
+    themeSel.addEventListener('change', (e) => applyTheme(e.target.value));
+    applyTheme(themeSel.value);
+
+    // Tabs.
+    const tabs = { runs: document.getElementById('tab-runs'), catalog: document.getElementById('tab-catalog') };
+    const views = { runs: document.getElementById('view-runs'), catalog: document.getElementById('view-catalog') };
+    const selectTab = (name) => {
+      for (const key of Object.keys(tabs)) {
+        tabs[key].setAttribute('aria-selected', String(key === name));
+        views[key].hidden = key !== name;
+      }
+    };
+    tabs.runs.addEventListener('click', () => selectTab('runs'));
+    tabs.catalog.addEventListener('click', () => selectTab('catalog'));
+  </script>
+</body>
+</html>

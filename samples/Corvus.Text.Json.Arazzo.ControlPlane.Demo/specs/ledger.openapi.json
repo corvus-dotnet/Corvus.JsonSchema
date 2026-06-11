@@ -1,0 +1,41 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "Ledger API", "version": "1.0.0" },
+  "paths": {
+    "/ledger": { "get": { "operationId": "loadLedger", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object", "properties": { "entries": { "type": "integer" } } } } } } } } },
+    "/transactions": { "get": { "operationId": "fetchTransactions", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object", "properties": { "count": { "type": "integer" } } } } } } } } },
+    "/match": { "post": { "operationId": "matchEntries", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object", "properties": { "matched": { "type": "integer" }, "unmatched": { "type": "integer" } } } } } } } } },
+    "/discrepancies": { "post": { "operationId": "flagDiscrepancies", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DiscrepancyReport" } } } } } } },
+    "/corrections": { "post": { "operationId": "postCorrections", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object", "properties": { "posted": { "type": "integer" } } } } } } } } },
+    "/report": { "post": { "operationId": "publishReport", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object", "properties": { "reportUrl": { "type": "string", "format": "uri" } } } } } } } } }
+  },
+  "components": {
+    "schemas": {
+      "DiscrepancyReport": {
+        "type": "object",
+        "properties": {
+          "discrepancies": { "type": "array", "description": "Accounts whose ledger and bank balances disagree.", "items": { "$ref": "#/components/schemas/Discrepancy" } },
+          "range": {
+            "type": "array",
+            "description": "The [from, to] transaction sequence numbers scanned.",
+            "prefixItems": [ { "type": "integer", "minimum": 0, "title": "from" }, { "type": "integer", "minimum": 0, "title": "to" } ]
+          },
+          "totalDelta": { "type": "number" },
+          "reportUrl": { "type": "string", "format": "uri" }
+        }
+      },
+      "Discrepancy": {
+        "type": "object",
+        "properties": {
+          "account": { "type": "string", "pattern": "^[0-9]{8}$", "description": "Eight-digit account number." },
+          "delta": { "type": "number", "description": "Signed difference (bank − ledger)." },
+          "currency": { "type": "string", "enum": [ "GBP", "USD", "EUR" ] },
+          "severity": { "type": "string", "enum": [ "info", "warning", "critical" ] },
+          "firstSeen": { "type": "string", "format": "date" },
+          "contact": { "type": "object", "properties": { "email": { "type": "string", "format": "email" }, "runbook": { "type": "string", "format": "uri" } } }
+        },
+        "required": [ "account", "delta" ]
+      }
+    }
+  }
+}

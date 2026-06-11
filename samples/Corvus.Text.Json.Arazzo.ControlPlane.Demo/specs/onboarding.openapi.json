@@ -1,0 +1,128 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "Onboarding API", "version": "1.0.0" },
+  "paths": {
+    "/accounts": {
+      "post": {
+        "operationId": "createAccount",
+        "responses": { "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Account" } } } } }
+      }
+    },
+    "/accounts/{accountId}/identity": {
+      "post": {
+        "operationId": "verifyIdentity",
+        "parameters": [ { "name": "accountId", "in": "path", "required": true, "schema": { "type": "string" } } ],
+        "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/IdentityRequest" } } } },
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/IdentityResult" } } } } }
+      }
+    },
+    "/accounts/{accountId}/resources": {
+      "post": {
+        "operationId": "provisionResources",
+        "parameters": [ { "name": "accountId", "in": "path", "required": true, "schema": { "type": "string" } } ],
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Provisioning" } } } } }
+      }
+    },
+    "/accounts/{accountId}/welcome": {
+      "post": {
+        "operationId": "sendWelcome",
+        "parameters": [ { "name": "accountId", "in": "path", "required": true, "schema": { "type": "string" } } ],
+        "responses": { "202": { "description": "Accepted" } }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Account": { "type": "object", "properties": { "accountId": { "type": "string", "format": "uuid" } }, "required": [ "accountId" ] },
+      "IdentityRequest": {
+        "type": "object",
+        "properties": {
+          "fullName": { "type": "string", "maxLength": 120 },
+          "documentNumber": { "type": "string", "maxLength": 40 }
+        },
+        "required": [ "fullName" ]
+      },
+      "IdentityResult": {
+        "type": "object",
+        "properties": {
+          "verified": { "type": "boolean" },
+          "score": { "type": "number", "minimum": 0, "maximum": 1, "description": "Match confidence (0–1)." },
+          "method": { "type": "string", "enum": [ "document", "biometric", "knowledge-based" ] },
+          "reviewedAt": { "type": "string", "format": "date-time" },
+          "applicant": { "$ref": "#/components/schemas/Applicant" },
+          "flags": { "type": "array", "items": { "type": "string", "enum": [ "pep", "sanctions", "adverse-media" ] } },
+          "evidence": { "$ref": "#/components/schemas/Evidence" }
+        }
+      },
+      "Applicant": {
+        "type": "object",
+        "description": "The resolved identity.",
+        "properties": {
+          "fullName": { "type": "string", "maxLength": 120 },
+          "dateOfBirth": { "type": "string", "format": "date" },
+          "email": { "type": "string", "format": "idn-email" },
+          "country": { "type": "string", "pattern": "^[A-Z]{2}$", "description": "ISO 3166-1 alpha-2." }
+        },
+        "required": [ "fullName" ]
+      },
+      "Evidence": {
+        "description": "The evidence that established the identity.",
+        "discriminator": { "propertyName": "kind" },
+        "oneOf": [
+          { "$ref": "#/components/schemas/DocumentEvidence" },
+          { "$ref": "#/components/schemas/BiometricEvidence" },
+          { "$ref": "#/components/schemas/KnowledgeEvidence" }
+        ]
+      },
+      "DocumentEvidence": {
+        "type": "object",
+        "title": "Document",
+        "properties": {
+          "kind": { "type": "string", "const": "document" },
+          "documentType": { "type": "string", "enum": [ "passport", "driving-licence", "national-id" ] },
+          "documentNumber": { "type": "string", "maxLength": 40 },
+          "expiry": { "type": "string", "format": "date" }
+        },
+        "required": [ "kind", "documentType", "documentNumber" ]
+      },
+      "BiometricEvidence": {
+        "type": "object",
+        "title": "Biometric",
+        "properties": {
+          "kind": { "type": "string", "const": "biometric" },
+          "modality": { "type": "string", "enum": [ "face", "fingerprint", "voice" ] },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+        },
+        "required": [ "kind", "modality", "confidence" ]
+      },
+      "KnowledgeEvidence": {
+        "type": "object",
+        "title": "Knowledge-based",
+        "properties": {
+          "kind": { "type": "string", "const": "knowledge-based" },
+          "questionsPassed": { "type": "integer", "minimum": 0, "maximum": 5 }
+        },
+        "required": [ "kind", "questionsPassed" ]
+      },
+      "Provisioning": {
+        "type": "object",
+        "properties": {
+          "accountUrl": { "type": "string", "format": "uri" },
+          "quotaGb": { "type": "integer", "minimum": 1, "maximum": 1024 },
+          "resources": { "type": "array", "description": "The provisioned resources.", "items": { "$ref": "#/components/schemas/Resource" } },
+          "tags": { "type": "object", "description": "Arbitrary resource tags (key → value).", "additionalProperties": { "type": "string" } }
+        }
+      },
+      "Resource": {
+        "type": "object",
+        "properties": {
+          "kind": { "type": "string", "enum": [ "database", "bucket", "queue" ] },
+          "name": { "type": "string" },
+          "region": { "type": "string", "enum": [ "eu-west-1", "us-east-1", "ap-southeast-2" ] },
+          "endpoint": { "type": "string", "format": "uri" }
+        },
+        "required": [ "kind", "name" ]
+      }
+    }
+  }
+}
