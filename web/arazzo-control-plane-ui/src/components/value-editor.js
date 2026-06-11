@@ -1,20 +1,20 @@
-// <arazzo-patch-builder> — a strongly-typed form built from a precomputed TypeDescriptor.
+// <arazzo-value-editor> — a strongly-typed form that builds a JSON value from a precomputed TypeDescriptor.
 //
-//   const b = document.querySelector('arazzo-patch-builder');
+//   const b = document.querySelector('arazzo-value-editor');
 //   b.descriptor = { type: 'object', properties: { amount: { type:'number' }, status:{ type:'string', enum:[...] } } };
-//   const value = b.value;   // the assembled object (throws a friendly Error on invalid input)
+//   const value = b.value;   // the assembled value (throws a friendly Error on invalid input)
 //
 // Properties : .descriptor (a TypeDescriptor — usually an object whose `properties` are the fields), .value
 // Events     : (none; the host reads .value on submit)
 //
 // It renders a control suited to each field's recognised type/format/enum/constraints (date/datetime/email/uri
-// inputs, number inputs with min/max/step, enum dropdowns, checkboxes, nested objects, add/remove arrays), and
-// falls back to a raw-JSON textarea for anything it can't type. Used for Skip `skipOutputs` and Rewind output
-// overrides; a `patch` mode (RFC 6902) builds on the same form.
+// inputs, number inputs with min/max/step, enum dropdowns, checkboxes, nested objects, unions, tuples, maps,
+// add/remove arrays), and falls back to a raw-JSON textarea for anything it can't type. Used as the output
+// editor for Skip's `skipOutputs`; a future state-patch builder can reuse it to edit each operation's value.
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 
-class ArazzoPatchBuilder extends ArazzoElement {
+class ArazzoValueEditor extends ArazzoElement {
   constructor() {
     super();
     /** @private */ this._descriptor = null;
@@ -45,6 +45,8 @@ class ArazzoPatchBuilder extends ArazzoElement {
         :host { display: block; }
         .fields { display: grid; gap: 10px; }
         .field > label { font-size: 12px; color: var(--_muted); display: block; margin-bottom: 3px; }
+        .field > label.check { display: flex; gap: 8px; align-items: center; margin-bottom: 0; cursor: pointer; }
+        .field > label.check input { width: auto; }
         .field .req { color: var(--_danger); }
         .field .desc { font-size: 11px; color: var(--_muted); margin-top: 2px; }
         input[type="text"], input[type="number"], input[type="date"], input[type="datetime-local"], input[type="time"],
@@ -172,13 +174,23 @@ function objectField(d, ctx) {
     const field = document.createElement('div');
     field.className = 'field';
     const built = buildField(props[name], childCtx);
-    // Scalars/enums get a label here; nested objects (incl. maps) render their own legend.
-    if (props[name]?.type !== 'object') {
+    if (props[name]?.type === 'boolean') {
+      // A checkbox reads best inline with its label, not stacked beneath it.
       const label = document.createElement('label');
-      label.innerHTML = labelText(props[name], childCtx);
+      label.className = 'check';
+      const text = document.createElement('span');
+      text.innerHTML = labelText(props[name], childCtx);
+      label.append(built.node, text);
       field.appendChild(label);
+    } else {
+      // Scalars/enums get a label here; nested objects (incl. maps) render their own legend.
+      if (props[name]?.type !== 'object') {
+        const label = document.createElement('label');
+        label.innerHTML = labelText(props[name], childCtx);
+        field.appendChild(label);
+      }
+      field.appendChild(built.node);
     }
-    field.appendChild(built.node);
     field.insertAdjacentHTML('beforeend', descHtml(props[name]));
     wrap.appendChild(field);
     readers.push([name, built.read, childCtx.required]);
@@ -548,5 +560,5 @@ function unknownField(d, ctx) {
   };
 }
 
-define('arazzo-patch-builder', ArazzoPatchBuilder);
-export { ArazzoPatchBuilder };
+define('arazzo-value-editor', ArazzoValueEditor);
+export { ArazzoValueEditor };

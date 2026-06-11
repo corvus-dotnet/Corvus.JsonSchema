@@ -38,7 +38,7 @@ test('demo loads cleanly, lists runs, and opens the resume dialog for a faulted 
 
   // Switch to Skip: the skip-outputs builder renders a strongly-typed form from the catalog metadata.
   await page.locator('arazzo-resume-dialog input[name="mode"][value="Skip"]').check();
-  const skipBuilder = page.locator('arazzo-resume-dialog arazzo-patch-builder.skip-builder');
+  const skipBuilder = page.locator('arazzo-resume-dialog arazzo-value-editor.skip-builder');
   await expect(skipBuilder.locator('input, select, textarea').first()).toBeVisible();
 
   // No console or page errors during the whole flow.

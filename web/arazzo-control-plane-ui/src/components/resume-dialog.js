@@ -14,7 +14,7 @@
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import './workflow-step-picker.js';
-import './patch-builder.js';
+import './value-editor.js';
 
 class ArazzoResumeDialog extends ArazzoElement {
   constructor() {
@@ -154,7 +154,7 @@ class ArazzoResumeDialog extends ArazzoElement {
               <div class="fields">
                 <div><label>Target step (a later step to advance to)</label><arazzo-workflow-step-picker class="skip-picker" direction="forward"></arazzo-workflow-step-picker></div>
                 <label class="check"><input type="checkbox" class="record-outputs"> Record outputs for skipped step</label>
-                <div class="skip-outputs" hidden><arazzo-patch-builder class="skip-builder"></arazzo-patch-builder></div>
+                <div class="skip-outputs" hidden><arazzo-value-editor class="skip-builder"></arazzo-value-editor></div>
               </div>
             </div>
 
