@@ -32,6 +32,11 @@ public readonly struct SearchCatalogParams
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString BaseWorkflowId { get; init; }
 
     /// <summary>
+    /// Gets the 'workflowIdPrefix' query parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString WorkflowIdPrefix { get; init; }
+
+    /// <summary>
     /// Gets the 'tag' query parameter.
     /// </summary>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.TagList Tag { get; init; }

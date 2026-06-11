@@ -190,6 +190,11 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
             conditions.Add("(CONTAINS(LOWER(c.owner.name), @owner) OR CONTAINS(LOWER(c.owner.email), @owner))");
         }
 
+        if (query.WorkflowIdPrefix is { Length: > 0 })
+        {
+            conditions.Add("STARTSWITH(c.workflowId, @workflowIdPrefix, true)");
+        }
+
         var tagParameters = new List<(string Name, string Value)>();
         if (query.Tags is { Count: > 0 } queryTags)
         {
@@ -226,6 +231,11 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
         if (query.Owner is { Length: > 0 } owner)
         {
             definition = definition.WithParameter("@owner", owner.ToLowerInvariant());
+        }
+
+        if (query.WorkflowIdPrefix is { Length: > 0 } workflowIdPrefix)
+        {
+            definition = definition.WithParameter("@workflowIdPrefix", workflowIdPrefix);
         }
 
         foreach ((string name, string value) in tagParameters)

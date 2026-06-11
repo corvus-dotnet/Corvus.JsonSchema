@@ -131,6 +131,7 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
                   AND (@status IS NULL OR Status = @status)
                   AND (@text IS NULL OR Title LIKE @textLike ESCAPE '\' OR (Description IS NOT NULL AND Description LIKE @textLike ESCAPE '\'))
                   AND (@owner IS NULL OR OwnerName LIKE @ownerLike ESCAPE '\' OR OwnerEmail LIKE @ownerLike ESCAPE '\')
+                  AND (@workflowIdPrefix IS NULL OR WorkflowId LIKE @workflowIdPrefixLike ESCAPE '\')
                   {{tagPredicates}}
                   AND (@after IS NULL OR (BaseWorkflowId || printf('%010d', VersionNumber)) > @after)
                 ORDER BY BaseWorkflowId, VersionNumber
@@ -142,6 +143,8 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
             select.Parameters.AddWithValue("@textLike", query.Text is { Length: > 0 } t ? "%" + EscapeLike(t) + "%" : (object)DBNull.Value);
             select.Parameters.AddWithValue("@owner", (object?)query.Owner ?? DBNull.Value);
             select.Parameters.AddWithValue("@ownerLike", query.Owner is { Length: > 0 } o ? "%" + EscapeLike(o) + "%" : (object)DBNull.Value);
+            select.Parameters.AddWithValue("@workflowIdPrefix", (object?)query.WorkflowIdPrefix ?? DBNull.Value);
+            select.Parameters.AddWithValue("@workflowIdPrefixLike", query.WorkflowIdPrefix is { Length: > 0 } p ? EscapeLike(p) + "%" : (object)DBNull.Value);
             select.Parameters.AddWithValue("@after", (object?)after ?? DBNull.Value);
             select.Parameters.AddWithValue("@limit", limit + 1);
 
