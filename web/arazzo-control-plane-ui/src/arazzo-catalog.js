@@ -141,7 +141,7 @@ class ArazzoCatalog extends ArazzoElement {
     const layout = this.$('.layout');
 
     table.addEventListener('version-selected', (e) => {
-      this.showDetail(e.detail.version);
+      this.showDetail(e.detail.version, e.detail.versions);
       this.emit('version-selected', e.detail);
     });
     table.addEventListener('error', (e) => this.emit('error', e.detail));
@@ -191,7 +191,7 @@ class ArazzoCatalog extends ArazzoElement {
     }
   }
 
-  showDetail(version) {
+  showDetail(version, versions) {
     if (!version) return this.clearDetail();
     let detail = this._pane.querySelector('arazzo-catalog-detail');
     if (!detail) {
@@ -201,6 +201,7 @@ class ArazzoCatalog extends ArazzoElement {
       detail.client = this.buildClient();
       this._pane.replaceChildren(detail);
     }
+    if (versions) detail.versions = versions;
     detail.version = version;
     this._layout.classList.add('has-selection');
   }
