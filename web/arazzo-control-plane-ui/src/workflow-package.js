@@ -1,104 +1,140 @@
 // Arazzo Control Plane — in-browser workflow-package builder (no DOM, no deps).
 //
-// Produces the same "workflow document package" the .NET `WorkflowPackage.Pack` writes — a small length-prefixed
-// (TLV) binary container (NOT a ZIP) bundling:
+// Produces the same "workflow document package" archive the .NET `WorkflowPackage.Pack` writes — a plain ZIP
+// (store method, no compression) bundling:
+//   manifest.json        { "formatVersion": 1, "workflow": "workflow.json", "sources": [ { "name", "path" } ] }
 //   workflow.json        the Arazzo workflow document
 //   sources/<name>.json  each referenced source document
-// readable by `WorkflowPackage.Open` server-side. The catalog re-hashes the logical content on add, so the
-// container need not be byte-identical to the .NET packer — only structurally compatible.
-//
-// Container layout (all multi-byte integers little-endian):
-//   header : "AWP" (3 bytes) + formatVersion (1 byte) + entryCount (uint32)
-//   entry  : nameLen (uint16) + name (UTF-8) + encoding (1 byte; 0 = stored) + dataLen (uint32) + data
-// entries are written sorted by name.
+// readable by `System.IO.Compression.ZipArchive` server-side. The catalog re-hashes the logical content on add,
+// so the archive need not be byte-identical to the .NET packer — only structurally compatible.
 //
 //   import { packWorkflowPackage } from './workflow-package.js';
 //   const blob = packWorkflowPackage(workflowJsonText, [{ name: 'petstore', content: petstoreJsonText }]);
 //   await client.addCatalogVersion({ package: blob, owner, tags });
 
-/** The package format version (the 4th byte of the container magic; mirrors WorkflowPackage.FormatVersion). */
+/** The package format version written into the manifest (mirrors WorkflowPackage.FormatVersion). */
 export const PACKAGE_FORMAT_VERSION = 1;
 
-/** The stored (uncompressed) per-entry encoding (mirrors WorkflowPackage's stored encoding byte). */
-const ENCODING_STORED = 0;
-
 /**
- * Build a workflow-package from a workflow document and its referenced source documents.
+ * Build a workflow-package archive from a workflow document and its referenced source documents.
  * @param {string|Uint8Array} workflow The Arazzo workflow document (UTF-8 JSON text or bytes).
  * @param {Array<{ name: string, content: (string|Uint8Array) }>} [sources] The source documents, keyed by their
  *   `sourceDescriptions` name (the name used in `sources/<name>.json`).
- * @returns {Blob} The package as an `application/octet-stream` Blob.
+ * @returns {Blob} The package archive as an `application/zip` Blob.
  */
 export function packWorkflowPackage(workflow, sources = []) {
   const enc = new TextEncoder();
   const toBytes = (v) => (typeof v === 'string' ? enc.encode(v) : v);
 
+  const ordered = [...sources]
+    .map((s) => ({ name: String(s.name), data: toBytes(s.content) }))
+    .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+
+  const manifest = JSON.stringify({
+    formatVersion: PACKAGE_FORMAT_VERSION,
+    workflow: 'workflow.json',
+    sources: ordered.map((s) => ({ name: s.name, path: `sources/${s.name}.json` })),
+  });
+
   const entries = [
+    { name: 'manifest.json', data: enc.encode(manifest) },
     { name: 'workflow.json', data: toBytes(workflow) },
-    ...[...sources].map((s) => ({ name: `sources/${String(s.name)}.json`, data: toBytes(s.content) })),
-  ].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+    ...ordered.map((s) => ({ name: `sources/${s.name}.json`, data: s.data })),
+  ];
 
-  return new Blob([buildPackage(entries)], { type: 'application/octet-stream' });
+  return new Blob([buildZip(entries)], { type: 'application/zip' });
 }
 
-/**
- * Unpack a workflow-package container — the inverse of {@link packWorkflowPackage} — into a map of entry name →
- * UTF-8 text (e.g. `workflow.json`, `sources/<name>.json`). Throws if the bytes are not a valid `AWP` container.
- * @param {ArrayBuffer|Uint8Array} container The package bytes.
- * @returns {Map<string, string>} Each entry's name → its decoded UTF-8 text.
- */
-export function unpackWorkflowPackage(container) {
-  const bytes = container instanceof Uint8Array ? container : new Uint8Array(container);
-  if (bytes.length < 8 || bytes[0] !== 0x41 || bytes[1] !== 0x57 || bytes[2] !== 0x50) {
-    throw new Error('Not a workflow-package container (bad AWP magic).');
-  }
-  if (bytes[3] !== PACKAGE_FORMAT_VERSION) {
-    throw new Error(`Unsupported workflow-package format version ${bytes[3]}.`);
-  }
-
-  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  const dec = new TextDecoder();
-  const entryCount = dv.getUint32(4, true);
-  const entries = new Map();
-  let pos = 8;
-  for (let i = 0; i < entryCount; i++) {
-    const nameLen = dv.getUint16(pos, true); pos += 2;
-    const name = dec.decode(bytes.subarray(pos, pos + nameLen)); pos += nameLen;
-    pos += 1; // per-entry encoding byte (0 = stored; the only encoding the packer writes)
-    const dataLen = dv.getUint32(pos, true); pos += 4;
-    entries.set(name, dec.decode(bytes.subarray(pos, pos + dataLen))); pos += dataLen;
-  }
-  return entries;
-}
-
-/** Build the length-prefixed container bytes from `[{ name, data: Uint8Array }]` (entries already sorted by name). */
-function buildPackage(entries) {
+/** Build a store-method (uncompressed) ZIP from `[{ name, data: Uint8Array }]`. */
+function buildZip(entries) {
   const enc = new TextEncoder();
-  const nameBytes = entries.map((e) => enc.encode(e.name));
+  const locals = [];
+  const central = [];
+  let offset = 0;
 
-  let total = 8; // header: magic (4) + entry count (4)
-  for (let i = 0; i < entries.length; i++) {
-    total += 2 + nameBytes[i].length + 1 + 4 + entries[i].data.length;
+  for (const e of entries) {
+    const nameBytes = enc.encode(e.name);
+    const crc = crc32(e.data);
+    const size = e.data.length;
+
+    const local = new Uint8Array(30 + nameBytes.length);
+    const lv = new DataView(local.buffer);
+    lv.setUint32(0, 0x04034b50, true); // local file header signature
+    lv.setUint16(4, 20, true);         // version needed to extract (2.0)
+    lv.setUint16(6, 0, true);          // general purpose flags
+    lv.setUint16(8, 0, true);          // compression method: 0 = store
+    lv.setUint16(10, 0, true);         // last mod file time
+    lv.setUint16(12, 0x0021, true);    // last mod file date: 1980-01-01
+    lv.setUint32(14, crc, true);
+    lv.setUint32(18, size, true);      // compressed size (= size, stored)
+    lv.setUint32(22, size, true);      // uncompressed size
+    lv.setUint16(26, nameBytes.length, true);
+    lv.setUint16(28, 0, true);         // extra field length
+    local.set(nameBytes, 30);
+    locals.push(local, e.data);
+
+    const cd = new Uint8Array(46 + nameBytes.length);
+    const cv = new DataView(cd.buffer);
+    cv.setUint32(0, 0x02014b50, true); // central directory header signature
+    cv.setUint16(4, 20, true);         // version made by
+    cv.setUint16(6, 20, true);         // version needed
+    cv.setUint16(8, 0, true);
+    cv.setUint16(10, 0, true);
+    cv.setUint16(12, 0, true);
+    cv.setUint16(14, 0x0021, true);
+    cv.setUint32(16, crc, true);
+    cv.setUint32(20, size, true);
+    cv.setUint32(24, size, true);
+    cv.setUint16(28, nameBytes.length, true);
+    cv.setUint16(30, 0, true);         // extra length
+    cv.setUint16(32, 0, true);         // comment length
+    cv.setUint16(34, 0, true);         // disk number start
+    cv.setUint16(36, 0, true);         // internal attributes
+    cv.setUint32(38, 0, true);         // external attributes
+    cv.setUint32(42, offset, true);    // local header offset
+    cd.set(nameBytes, 46);
+    central.push(cd);
+
+    offset += local.length + e.data.length;
   }
 
+  const cdSize = central.reduce((n, c) => n + c.length, 0);
+  const cdOffset = offset;
+
+  const eocd = new Uint8Array(22);
+  const ev = new DataView(eocd.buffer);
+  ev.setUint32(0, 0x06054b50, true);   // end of central directory signature
+  ev.setUint16(4, 0, true);            // disk number
+  ev.setUint16(6, 0, true);            // disk with central directory
+  ev.setUint16(8, entries.length, true);
+  ev.setUint16(10, entries.length, true);
+  ev.setUint32(12, cdSize, true);
+  ev.setUint32(16, cdOffset, true);
+  ev.setUint16(20, 0, true);           // comment length
+
+  return concat([...locals, ...central, eocd]);
+}
+
+let CRC_TABLE;
+
+function crc32(bytes) {
+  if (!CRC_TABLE) {
+    CRC_TABLE = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) {
+      let c = n;
+      for (let k = 0; k < 8; k++) c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+      CRC_TABLE[n] = c >>> 0;
+    }
+  }
+  let crc = 0xffffffff;
+  for (let i = 0; i < bytes.length; i++) crc = CRC_TABLE[(crc ^ bytes[i]) & 0xff] ^ (crc >>> 8);
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+function concat(chunks) {
+  const total = chunks.reduce((n, c) => n + c.length, 0);
   const out = new Uint8Array(total);
-  const dv = new DataView(out.buffer);
-  out[0] = 0x41; // 'A'
-  out[1] = 0x57; // 'W'
-  out[2] = 0x50; // 'P'
-  out[3] = PACKAGE_FORMAT_VERSION;
-  dv.setUint32(4, entries.length, true);
-
-  let pos = 8;
-  for (let i = 0; i < entries.length; i++) {
-    const nb = nameBytes[i];
-    const data = entries[i].data;
-    dv.setUint16(pos, nb.length, true); pos += 2;
-    out.set(nb, pos); pos += nb.length;
-    out[pos++] = ENCODING_STORED;
-    dv.setUint32(pos, data.length, true); pos += 4;
-    out.set(data, pos); pos += data.length;
-  }
-
+  let pos = 0;
+  for (const c of chunks) { out.set(c, pos); pos += c.length; }
   return out;
 }
