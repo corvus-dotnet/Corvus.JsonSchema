@@ -369,6 +369,39 @@ public sealed class ControlPlaneServerTests
         await run.CompleteAsync(default, default);
     }
 
+    [TestMethod]
+    public async Task GetCatalogWorkflowSchemas_returns_the_baked_metadata_and_404_when_absent()
+    {
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var catalogStore = new InMemoryWorkflowCatalogStore(clock, new FakeSchemaProvider());
+        var management = new WorkflowManagementClient(runStore, "ops", CompleteResumer, clock);
+        var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
+
+        // Add a version (bare workflow id "flow" → flow-v1); the store bakes the metadata via the provider.
+        await catalog.AddAsync(SchemaWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), null, default);
+
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        app.MapArazzoControlPlane(management, catalog);
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+
+        HttpResponseMessage ok = await client.GetAsync("/catalog/flow/versions/1/schemas");
+        ok.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await ok.Content.ReadAsStringAsync()).ShouldContain("\"baked\":true");
+
+        HttpResponseMessage missing = await client.GetAsync("/catalog/flow/versions/99/schemas");
+        missing.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        await app.StopAsync();
+    }
+
+    private static byte[] SchemaWorkflowPackage(string id)
+        => WorkflowPackage.Pack(Encoding.UTF8.GetBytes($$"""{"arazzo":"1.1.0","info":{"title":"t","version":"1"},"workflows":[{"workflowId":"{{id}}","steps":[]}]}"""), []);
+
     private static async Task TaggedRunAsync(InMemoryWorkflowStateStore store, string id, TimeProvider clock, string correlationId, string[] tags)
     {
         WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock, correlationId: correlationId, tags: tags);
@@ -412,6 +445,12 @@ public sealed class ControlPlaneServerTests
     }
 
     private sealed record Host(WebApplication App, HttpClient Client, InMemoryWorkflowStateStore Store, TimeProvider Clock);
+
+    private sealed class FakeSchemaProvider : IWorkflowMetadataProvider
+    {
+        public ReadOnlyMemory<byte>? BuildSchemas(ReadOnlyMemory<byte> workflowUtf8, IReadOnlyList<KeyValuePair<string, byte[]>> sources)
+            => Encoding.UTF8.GetBytes("""{"formatVersion":1,"baked":true}""");
+    }
 
     private sealed class MutableClock(DateTimeOffset now) : TimeProvider
     {

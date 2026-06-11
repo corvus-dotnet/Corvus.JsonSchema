@@ -102,6 +102,15 @@ public interface IApiCatalogHandler
     ValueTask<GetCatalogWorkflowResult> HandleGetCatalogWorkflowAsync(GetCatalogWorkflowParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Handles GET /catalog/{baseWorkflowId}/versions/{versionNumber}/schemas — Get a version's precomputed schema metadata
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<GetCatalogWorkflowSchemasResult> HandleGetCatalogWorkflowSchemasAsync(GetCatalogWorkflowSchemasParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Handles GET /catalog/{baseWorkflowId}/versions/{versionNumber}/sources/{sourceName} — Get a single source document from a version
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>

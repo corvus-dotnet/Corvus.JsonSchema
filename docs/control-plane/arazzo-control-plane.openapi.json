@@ -452,6 +452,30 @@
         }
       }
     },
+    "/catalog/{baseWorkflowId}/versions/{versionNumber}/schemas": {
+      "get": {
+        "operationId": "getCatalogWorkflowSchemas",
+        "security": [
+          { "oauth2": ["catalog:read"] },
+          { "openIdConnect": ["catalog:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["catalog"],
+        "summary": "Get a version's precomputed schema metadata",
+        "description": "Returns the precomputed schema-metadata document baked into the package — the typed shape of each workflow's inputs and each step's resolved outputs (and, progressively, requests and responses) — so UIs can render strongly-typed forms (a typed patch/output builder, a workflow editor) without re-parsing the OpenAPI/AsyncAPI sources. 404 if the version carries no baked metadata.",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The schema-metadata document.",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
     "/catalog/{baseWorkflowId}/versions/{versionNumber}/sources/{sourceName}": {
       "get": {
         "operationId": "getCatalogSource",
