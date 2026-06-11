@@ -58,6 +58,7 @@ class ArazzoResumeDialog extends ArazzoElement {
     const builder = this.$('.skip-builder');
     if (!builder) return;
     builder.descriptor = null; // raw-JSON fallback until/unless a typed schema resolves
+    builder.validator = null;
     this._skipParsed = null;
     this._skipStepId = null;
     const parsed = parseVersionedWorkflowId(run?.workflowId);
@@ -75,6 +76,11 @@ class ArazzoResumeDialog extends ArazzoElement {
         // Remember the resolved target so submit() can validate the recorded outputs server-side.
         this._skipParsed = parsed;
         this._skipStepId = stepId;
+        // Live, inline validation as the operator edits (mirrors the submit-time gate).
+        if (this.client.validateCatalogValue) {
+          builder.validator = (value) => this.client.validateCatalogValue(
+            parsed.base, parsed.version, { kind: 'stepOutputs', workflowId: run.workflowId, stepId }, value);
+        }
       }
       if (stepId && outputs && Object.keys(outputs).length) {
         builder.descriptor = { type: 'object', properties: outputs };
