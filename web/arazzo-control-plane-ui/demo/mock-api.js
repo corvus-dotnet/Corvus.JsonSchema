@@ -256,6 +256,92 @@ function schemasFor(v) {
   };
 }
 
+// A small stand-in for the server's true JSON Schema validation. The real server resolves the actual schema
+// from the package and runs Corvus.Text.Json.Validator; the mock validates against the precomputed descriptor
+// metadata (inputs + step outputs) so the demo behaves end to end without a server.
+function validateValue(v, body) {
+  const target = body?.target || {};
+  const value = body?.value;
+  const wfId = target.workflowId || v.workflowId;
+  const meta = schemasFor(v).workflows[wfId];
+  let descriptor = null;
+  if (target.kind === 'inputs') {
+    descriptor = meta?.inputs;
+  } else if (target.kind === 'stepOutputs' && target.stepId) {
+    const outputs = meta?.steps?.[target.stepId]?.outputs;
+    if (outputs) descriptor = { type: 'object', properties: outputs };
+  }
+  // requestBody/responseBody aren't in the mock's precomputed metadata — treat as unconstrained.
+  if (!descriptor) return { valid: true, errors: [] };
+  const errors = [];
+  validateNode(descriptor, value, '', errors);
+  return { valid: errors.length === 0, errors };
+}
+
+function validateNode(d, value, path, errors) {
+  if (!d || typeof d !== 'object') return;
+  const add = (message) => errors.push({ instancePath: path || '/', message });
+
+  if (Array.isArray(d.variants)) {
+    if (!d.variants.some((variant) => validateCount(variant, value) === 0)) add('does not match any allowed type');
+    return;
+  }
+  if (value === undefined || value === null) return; // presence handled by the parent's `required`
+  if (Array.isArray(d.enum)) {
+    if (!d.enum.some((e) => e === value)) add(`must be one of: ${d.enum.join(', ')}`);
+    return;
+  }
+  switch (d.type) {
+    case 'object': {
+      if (typeof value !== 'object' || Array.isArray(value)) { add('must be an object'); return; }
+      for (const name of (Array.isArray(d.required) ? d.required : [])) {
+        if (value[name] === undefined) errors.push({ instancePath: `${path}/${name}`, message: `"${name}" is required` });
+      }
+      for (const [name, child] of Object.entries(d.properties || {})) {
+        if (value[name] !== undefined) validateNode(child, value[name], `${path}/${name}`, errors);
+      }
+      break;
+    }
+    case 'array': {
+      if (!Array.isArray(value)) { add('must be an array'); return; }
+      if (d.items) value.forEach((item, i) => validateNode(d.items, item, `${path}/${i}`, errors));
+      break;
+    }
+    case 'integer':
+      if (typeof value !== 'number' || !Number.isInteger(value)) { add('must be an integer'); return; }
+      checkNumber(d, value, add);
+      break;
+    case 'number':
+      if (typeof value !== 'number') { add('must be a number'); return; }
+      checkNumber(d, value, add);
+      break;
+    case 'boolean':
+      if (typeof value !== 'boolean') add('must be a boolean');
+      break;
+    case 'string':
+      if (typeof value !== 'string') { add('must be a string'); return; }
+      if (d.minLength != null && value.length < d.minLength) add(`must be at least ${d.minLength} characters`);
+      if (d.maxLength != null && value.length > d.maxLength) add(`must be at most ${d.maxLength} characters`);
+      if (d.pattern && !new RegExp(d.pattern).test(value)) add(`must match ${d.pattern}`);
+      break;
+    default:
+      break;
+  }
+}
+
+function checkNumber(d, value, add) {
+  if (d.minimum != null && value < d.minimum) add(`must be >= ${d.minimum}`);
+  if (d.maximum != null && value > d.maximum) add(`must be <= ${d.maximum}`);
+  if (d.multipleOf != null && d.multipleOf > 0 && Math.abs(value % d.multipleOf) > 1e-9) add(`must be a multiple of ${d.multipleOf}`);
+}
+
+/** The number of validation errors a node would produce for a value (used to test union variants). */
+function validateCount(d, value) {
+  const errors = [];
+  validateNode(d, value, '', errors);
+  return errors.length;
+}
+
 function workflowDoc(workflowId, title, description) {
   const base = workflowId.replace(/-v\d+$/, '');
   const stepIds = STEP_SETS[base] || ['start', 'process', 'finish'];
@@ -472,7 +558,7 @@ export function createMockControlPlane(options = {}) {
       return problem(405, 'Method not allowed');
     }
 
-    const versionMatch = path.match(/^\/catalog\/([^/]+)\/versions\/([^/]+)(?:\/(package|workflow|schemas|sources\/[^/]+))?$/);
+    const versionMatch = path.match(/^\/catalog\/([^/]+)\/versions\/([^/]+)(?:\/(package|workflow|schemas|validate|sources\/[^/]+))?$/);
     if (versionMatch) {
       const base = decodeURIComponent(versionMatch[1]);
       const n = Number(versionMatch[2]);
@@ -485,6 +571,7 @@ export function createMockControlPlane(options = {}) {
       if (sub === 'package' && method === 'GET') return packageResponse(v);
       if (sub === 'workflow' && method === 'GET') return json(v._workflow);
       if (sub === 'schemas' && method === 'GET') return json(schemasFor(v));
+      if (sub === 'validate' && method === 'POST') return json(validateValue(v, body));
       if (sub && sub.startsWith('sources/') && method === 'GET') {
         const name = decodeURIComponent(sub.slice('sources/'.length));
         const doc = v._sources?.[name];

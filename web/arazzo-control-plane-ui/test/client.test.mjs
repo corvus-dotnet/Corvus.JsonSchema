@@ -145,6 +145,19 @@ test('searchCatalog filters by baseWorkflowId', async () => {
   assert.ok(versions.every((v) => v.baseWorkflowId === 'nightly-reconcile'));
 });
 
+test('validateCatalogValue reports conformance against the version schema', async () => {
+  const c = makeClient();
+  const target = { kind: 'stepOutputs', workflowId: 'adopt-pet-v1', stepId: 'reservePayment' };
+
+  const ok = await c.validateCatalogValue('adopt-pet', 1, target, { amount: 5, status: 'settled' });
+  assert.equal(ok.valid, true);
+  assert.equal(ok.errors.length, 0);
+
+  const bad = await c.validateCatalogValue('adopt-pet', 1, target, { amount: -5, status: 'nope' });
+  assert.equal(bad.valid, false);
+  assert.ok(bad.errors.length >= 1, 'reports the failing constraints');
+});
+
 test('searchCatalogPaged walks every page via the keyset token', async () => {
   let total = 0; let pages = 0;
   for await (const page of makeClient().searchCatalogPaged({ limit: 2 })) { total += page.versions.length; pages++; }

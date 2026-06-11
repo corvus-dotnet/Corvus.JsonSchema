@@ -309,6 +309,20 @@ export class ArazzoControlPlaneClient {
     return this._request('GET', `${this._versionPath(baseWorkflowId, versionNumber)}/sources/${encodeURIComponent(sourceName)}`, { signal: opts.signal });
   }
 
+  /**
+   * `validateCatalogValue` — validate a JSON value against the true JSON Schema of a target within a version
+   * (a workflow's inputs, a step's request/response body, or a step's outputs object).
+   * @param {string} baseWorkflowId
+   * @param {number} versionNumber
+   * @param {{ kind: ('inputs'|'requestBody'|'responseBody'|'stepOutputs'), workflowId?: string, stepId?: string, status?: string }} target
+   * @param {*} value The value to validate.
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<{ valid: boolean, errors: Array<{ instancePath?: string, message: string, keyword?: string, schemaLocation?: string }> }>}
+   */
+  validateCatalogValue(baseWorkflowId, versionNumber, target, value, opts = {}) {
+    return this._request('POST', `${this._versionPath(baseWorkflowId, versionNumber)}/validate`, { body: { target, value }, signal: opts.signal });
+  }
+
   // ---- catalog:write ----------------------------------------------------------------------------
 
   /**
