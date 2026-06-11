@@ -59,6 +59,13 @@ class ArazzoPatchBuilder extends ArazzoElement {
         .array-items { display: grid; gap: 6px; }
         .array-row { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: start; }
         .array-row .rm { padding: 4px 8px; }
+        /* Collapsible item: a one-line summary (compressed) that expands into the edit form. */
+        .item { border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; }
+        .item-head { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center; padding: 6px 8px; background-color: var(--_surface); }
+        .item-summary { font-size: 13px; color: var(--_text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+        .item-summary.placeholder { color: var(--_muted); font-style: italic; }
+        .item-head button { padding: 3px 9px; font-size: 12px; }
+        .item-body { padding: 10px; border-top: 1px solid var(--_border); display: grid; gap: 10px; }
         .empty { color: var(--_muted); font-size: 12px; }
       </style>
       <div class="root"></div>
@@ -236,6 +243,10 @@ function stringField(d, ctx) {
 }
 
 function arrayField(d, ctx) {
+  const itemDesc = d.items || { type: 'unknown' };
+  // Object/array items are bulky, so each gets a collapsed summary row that expands to edit; scalar
+  // items stay as a single compact inline control with a remove button.
+  const collapsible = itemDesc.type === 'object' || itemDesc.type === 'array';
   const wrap = document.createElement('div');
   const items = document.createElement('div');
   items.className = 'array-items';
@@ -244,23 +255,56 @@ function arrayField(d, ctx) {
   add.className = 'ghost';
   add.textContent = '+ Add item';
   const rowReaders = [];
+  const removeEntry = (entry) => { const i = rowReaders.indexOf(entry); if (i >= 0) rowReaders.splice(i, 1); };
 
-  const addRow = () => {
+  const addInlineRow = () => {
     const row = document.createElement('div');
     row.className = 'array-row';
-    const built = buildField(d.items || { type: 'unknown' }, { name: null, required: false });
-    const rm = document.createElement('button');
-    rm.type = 'button';
-    rm.className = 'rm ghost danger';
-    rm.textContent = '✕';
+    const built = buildField(itemDesc, { name: null, required: false });
+    const rm = removeButton();
     const entry = { read: built.read, row };
-    rm.addEventListener('click', () => { row.remove(); const i = rowReaders.indexOf(entry); if (i >= 0) rowReaders.splice(i, 1); });
+    rm.addEventListener('click', () => { row.remove(); removeEntry(entry); });
     row.append(built.node, rm);
     items.appendChild(row);
     rowReaders.push(entry);
   };
 
-  add.addEventListener('click', addRow);
+  const addCollapsibleRow = (startEditing) => {
+    const row = document.createElement('div');
+    row.className = 'item';
+    const head = document.createElement('div');
+    head.className = 'item-head';
+    const summary = document.createElement('span');
+    summary.className = 'item-summary';
+    const edit = document.createElement('button');
+    edit.type = 'button';
+    edit.className = 'ghost edit';
+    const rm = removeButton();
+    const body = document.createElement('div');
+    body.className = 'item-body';
+    const built = buildField(itemDesc, { name: null, required: false });
+    body.appendChild(built.node);
+    head.append(summary, edit, rm);
+    row.append(head, body);
+
+    const entry = { read: built.read, row };
+    let editing = false;
+    const setEditing = (v) => {
+      editing = v;
+      body.hidden = !v;
+      edit.textContent = v ? 'Done' : 'Edit';
+      edit.setAttribute('aria-expanded', String(v));
+      if (!v) applySummary(summary, built.read);
+    };
+    edit.addEventListener('click', () => setEditing(!editing));
+    rm.addEventListener('click', () => { row.remove(); removeEntry(entry); });
+    items.appendChild(row);
+    rowReaders.push(entry);
+    setEditing(startEditing);
+  };
+
+  const addRow = collapsible ? addCollapsibleRow : addInlineRow;
+  add.addEventListener('click', () => addRow(true));
   wrap.append(items, add);
   return {
     node: wrap,
@@ -269,6 +313,47 @@ function arrayField(d, ctx) {
       return arr.length ? arr : (ctx.required ? [] : undefined);
     },
   };
+}
+
+function removeButton() {
+  const rm = document.createElement('button');
+  rm.type = 'button';
+  rm.className = 'rm ghost danger';
+  rm.textContent = '✕';
+  rm.setAttribute('aria-label', 'Remove item');
+  return rm;
+}
+
+/** Set a collapsed item's one-line summary from its current (soft-read) value. */
+function applySummary(node, read) {
+  let value;
+  let ok = true;
+  try { value = read(); } catch { ok = false; }
+  const text = !ok ? 'Incomplete — click Edit' : summarize(value);
+  node.textContent = text;
+  node.classList.toggle('placeholder', !ok || value === undefined);
+}
+
+/** A compact human summary of an assembled item value for the collapsed row. */
+function summarize(value) {
+  if (value === undefined || value === null) return 'Empty item';
+  if (Array.isArray(value)) return `${value.length} item${value.length === 1 ? '' : 's'}`;
+  if (typeof value === 'object') {
+    const entries = Object.entries(value);
+    if (entries.length === 0) return 'Empty item';
+    const shown = entries.slice(0, 3).map(([k, v]) => `${k}: ${scalarStr(v)}`);
+    const extra = entries.length - shown.length;
+    return shown.join(', ') + (extra > 0 ? `, +${extra} more` : '');
+  }
+  return scalarStr(value);
+}
+
+function scalarStr(v) {
+  if (v === undefined || v === null) return '∅';
+  if (Array.isArray(v)) return `[${v.length}]`;
+  if (typeof v === 'object') return '{…}';
+  const s = String(v);
+  return s.length > 32 ? `${s.slice(0, 31)}…` : s;
 }
 
 function unknownField(d, ctx) {
