@@ -48,6 +48,12 @@ public static class WorkflowPackage
     /// <summary>The reserved document name addressing the package's Arazzo workflow document.</summary>
     public const string WorkflowDocumentName = "$workflow";
 
+    /// <summary>The reserved document name addressing the package's precomputed schema-metadata document.</summary>
+    public const string SchemasDocumentName = "$schemas";
+
+    /// <summary>The archive entry name of the precomputed schema-metadata document.</summary>
+    public const string SchemasEntryName = "metadata/schemas.json";
+
     // The ZIP epoch (1980-01-01) — the earliest timestamp the format can represent — used for every entry so
     // archives are byte-reproducible.
     private static readonly DateTimeOffset DeterministicTimestamp = new(1980, 1, 1, 0, 0, 0, TimeSpan.Zero);
@@ -55,8 +61,10 @@ public static class WorkflowPackage
     /// <summary>Packs an Arazzo workflow document and its referenced source documents into a deterministic package archive.</summary>
     /// <param name="workflowUtf8">The Arazzo workflow document as UTF-8 JSON.</param>
     /// <param name="sources">The referenced source documents, keyed by their <c>sourceDescriptions</c> name.</param>
+    /// <param name="schemas">An optional precomputed schema-metadata document written to
+    /// <see cref="SchemasEntryName"/>; omitted when empty.</param>
     /// <returns>The package archive bytes (a ZIP).</returns>
-    public static byte[] Pack(ReadOnlyMemory<byte> workflowUtf8, IReadOnlyList<KeyValuePair<string, byte[]>> sources)
+    public static byte[] Pack(ReadOnlyMemory<byte> workflowUtf8, IReadOnlyList<KeyValuePair<string, byte[]>> sources, ReadOnlyMemory<byte> schemas = default)
     {
         ArgumentNullException.ThrowIfNull(sources);
 
@@ -72,6 +80,11 @@ public static class WorkflowPackage
             foreach (KeyValuePair<string, byte[]> source in orderedSources)
             {
                 WriteEntry(archive, SourcesPrefix + source.Key + ".json", source.Value);
+            }
+
+            if (!schemas.IsEmpty)
+            {
+                WriteEntry(archive, SchemasEntryName, schemas.Span);
             }
         }
 
@@ -104,7 +117,7 @@ public static class WorkflowPackage
         }
 
         sources.Sort((a, b) => string.CompareOrdinal(a.Key, b.Key));
-        return new WorkflowPackageContents(workflow, sources);
+        return new WorkflowPackageContents(workflow, sources) { Schemas = ReadEntry(archive, SchemasEntryName) };
     }
 
     /// <summary>
@@ -201,7 +214,10 @@ public static class WorkflowPackage
 /// <param name="Sources">The referenced source documents (name → bytes), ordered by name.</param>
 public readonly record struct WorkflowPackageContents(byte[] Workflow, IReadOnlyList<KeyValuePair<string, byte[]>> Sources)
 {
-    /// <summary>Gets a single document by name: <see cref="WorkflowPackage.WorkflowDocumentName"/> for the workflow, else a source name.</summary>
+    /// <summary>Gets the precomputed schema-metadata document (<see cref="WorkflowPackage.SchemasEntryName"/>), or <see langword="null"/> if the package carries none.</summary>
+    public byte[]? Schemas { get; init; }
+
+    /// <summary>Gets a single document by name: <see cref="WorkflowPackage.WorkflowDocumentName"/> for the workflow, <see cref="WorkflowPackage.SchemasDocumentName"/> for the schema metadata, else a source name.</summary>
     /// <param name="documentName">The document name.</param>
     /// <returns>The document bytes, or <see langword="null"/> if not present.</returns>
     public byte[]? GetDocument(string documentName)
@@ -209,6 +225,11 @@ public readonly record struct WorkflowPackageContents(byte[] Workflow, IReadOnly
         if (documentName == WorkflowPackage.WorkflowDocumentName)
         {
             return this.Workflow;
+        }
+
+        if (documentName == WorkflowPackage.SchemasDocumentName)
+        {
+            return this.Schemas;
         }
 
         foreach (KeyValuePair<string, byte[]> source in this.Sources)
