@@ -35,8 +35,13 @@ namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 /// <c>date-time</c>/<c>date</c>/<c>time</c>/<c>email</c>/<c>uri</c>/<c>uuid</c>/…), <c>enum</c>, <c>nullable</c>,
 /// the validation constraints (<c>minimum</c>/<c>maximum</c>/<c>multipleOf</c>/<c>minLength</c>/<c>maxLength</c>/
 /// <c>pattern</c>/…), <c>default</c>, <c>const</c>, <c>title</c>/<c>description</c>, and recursively
-/// <c>properties</c>+<c>required</c> (objects) / <c>items</c> (arrays). Anything that cannot be resolved degrades
-/// to <c>{ "type": "unknown" }</c> rather than failing, so the document is always producible.</para>
+/// <c>properties</c>+<c>required</c> (objects) / <c>items</c> (arrays). It also recognises a few composite shapes:
+/// a simple polymorphic union (<c>oneOf</c>/<c>anyOf</c>) becomes <c>{ "type": "union", "variants": [ … ],
+/// "discriminator"?: "&lt;prop&gt;" }</c> (a <c>X | null</c> union collapses to a nullable <c>X</c>); a tuple
+/// (<c>prefixItems</c> or the legacy array-form <c>items</c>) adds <c>"prefixItems": [ … ]</c> with an optional
+/// trailing <c>items</c> schema; and a free-form map (<c>additionalProperties</c>/<c>unevaluatedProperties</c>)
+/// adds <c>"additionalProperties": &lt;TypeDescriptor&gt;</c>. Anything that cannot be resolved degrades to
+/// <c>{ "type": "unknown" }</c> rather than failing, so the document is always producible.</para>
 /// </remarks>
 public static class WorkflowSchemaMetadataGenerator
 {
@@ -626,9 +631,56 @@ public static class WorkflowSchemaMetadataGenerator
     // ---- type descriptor ------------------------------------------------------------------------
 
     /// <summary>Writes the normalised recursive type descriptor for a JSON Schema node.</summary>
-    private static void WriteTypeDescriptor(Utf8JsonWriter writer, JsonElement schema, JsonElement documentRoot, int depth)
+    private static void WriteTypeDescriptor(Utf8JsonWriter writer, JsonElement schema, JsonElement documentRoot, int depth, bool forceNullable = false)
     {
         schema = SchemaClassifier.ResolveRef(schema, documentRoot);
+
+        // Polymorphic union (oneOf/anyOf). "X | null" collapses to X with nullable; a single remaining branch
+        // unwraps to that branch; two or more become a "union" descriptor (a typed variant picker in the UI).
+        if (depth < MaxDepth && schema.ValueKind == JsonValueKind.Object
+            && TryReadUnionVariants(schema, out List<JsonElement> variants, out bool unionHasNull))
+        {
+            if (variants.Count == 1)
+            {
+                WriteTypeDescriptor(writer, variants[0], documentRoot, depth, forceNullable || unionHasNull);
+                return;
+            }
+
+            writer.WriteStartObject();
+            if (variants.Count == 0)
+            {
+                writer.WriteString("type", unionHasNull ? "null" : "unknown");
+                writer.WriteEndObject();
+                return;
+            }
+
+            writer.WriteString("type", "union");
+            if (unionHasNull || forceNullable)
+            {
+                writer.WriteBoolean("nullable", true);
+            }
+
+            if (schema.TryGetProperty("description", out JsonElement unionDescription) && unionDescription.ValueKind == JsonValueKind.String)
+            {
+                writer.WriteString("description", unionDescription.GetString());
+            }
+
+            if (TryDiscriminatorProperty(schema, out string discriminator))
+            {
+                writer.WriteString("discriminator", discriminator);
+            }
+
+            writer.WritePropertyName("variants");
+            writer.WriteStartArray();
+            foreach (JsonElement variant in variants)
+            {
+                WriteTypeDescriptor(writer, variant, documentRoot, depth + 1);
+            }
+
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+            return;
+        }
 
         writer.WriteStartObject();
         if (depth >= MaxDepth || schema.ValueKind != JsonValueKind.Object)
@@ -645,7 +697,7 @@ public static class WorkflowSchemaMetadataGenerator
             {
                 type = "object";
             }
-            else if (schema.TryGetProperty("items", out _))
+            else if (schema.TryGetProperty("items", out _) || schema.TryGetProperty("prefixItems", out _))
             {
                 type = "array";
             }
@@ -656,7 +708,7 @@ public static class WorkflowSchemaMetadataGenerator
             writer.WriteString("type", type);
         }
 
-        if (nullable)
+        if (nullable || forceNullable)
         {
             writer.WriteBoolean("nullable", true);
         }
@@ -707,10 +759,43 @@ public static class WorkflowSchemaMetadataGenerator
             }
         }
 
-        if (type == "array" && schema.TryGetProperty("items", out JsonElement items) && items.ValueKind == JsonValueKind.Object)
+        if (type == "object" && TryAdditionalSchema(schema, "additionalProperties", "unevaluatedProperties", out JsonElement valueSchema))
         {
-            writer.WritePropertyName("items");
-            WriteTypeDescriptor(writer, items, documentRoot, depth + 1);
+            // A free-form map (open object): arbitrary keys whose values follow this schema.
+            writer.WritePropertyName("additionalProperties");
+            WriteTypeDescriptor(writer, valueSchema, documentRoot, depth + 1);
+        }
+
+        if (type == "array")
+        {
+            // A tuple: positional `prefixItems` (2020-12) or the legacy array-form `items`.
+            JsonElement prefixItems = default;
+            bool isTuple = (schema.TryGetProperty("prefixItems", out prefixItems) && prefixItems.ValueKind == JsonValueKind.Array)
+                || (schema.TryGetProperty("items", out prefixItems) && prefixItems.ValueKind == JsonValueKind.Array);
+            if (isTuple)
+            {
+                writer.WritePropertyName("prefixItems");
+                writer.WriteStartArray();
+                foreach (JsonElement element in prefixItems.EnumerateArray())
+                {
+                    WriteTypeDescriptor(writer, element, documentRoot, depth + 1);
+                }
+
+                writer.WriteEndArray();
+
+                // The schema for any items beyond the fixed prefix (2020-12 `items`, or legacy `additionalItems`).
+                if (TryAdditionalSchema(schema, "additionalItems", "unevaluatedItems", out JsonElement extraItems)
+                    || (schema.TryGetProperty("items", out extraItems) && extraItems.ValueKind == JsonValueKind.Object))
+                {
+                    writer.WritePropertyName("items");
+                    WriteTypeDescriptor(writer, extraItems, documentRoot, depth + 1);
+                }
+            }
+            else if (schema.TryGetProperty("items", out JsonElement items) && items.ValueKind == JsonValueKind.Object)
+            {
+                writer.WritePropertyName("items");
+                WriteTypeDescriptor(writer, items, documentRoot, depth + 1);
+            }
         }
 
         writer.WriteEndObject();
@@ -751,6 +836,105 @@ public static class WorkflowSchemaMetadataGenerator
         }
 
         return (null, schema.TryGetProperty("nullable", out JsonElement nb) && nb.ValueKind == JsonValueKind.True);
+    }
+
+    /// <summary>
+    /// Reads the branches of a simple polymorphic union (<c>oneOf</c>/<c>anyOf</c>), separating out a pure
+    /// <c>null</c> branch (so a <c>X | null</c> union collapses to a nullable <c>X</c>).
+    /// </summary>
+    private static bool TryReadUnionVariants(JsonElement schema, out List<JsonElement> variants, out bool hasNull)
+    {
+        variants = [];
+        hasNull = false;
+
+        JsonElement union;
+        if (!((schema.TryGetProperty("oneOf", out union) && union.ValueKind == JsonValueKind.Array)
+            || (schema.TryGetProperty("anyOf", out union) && union.ValueKind == JsonValueKind.Array)))
+        {
+            return false;
+        }
+
+        foreach (JsonElement branch in union.EnumerateArray())
+        {
+            if (IsPureNullSchema(branch))
+            {
+                hasNull = true;
+            }
+            else
+            {
+                variants.Add(branch);
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>Whether a schema is exactly the null type (<c>{ "type": "null" }</c> or <c>{ "type": ["null"] }</c>).</summary>
+    private static bool IsPureNullSchema(JsonElement schema)
+    {
+        if (schema.ValueKind != JsonValueKind.Object || !schema.TryGetProperty("type", out JsonElement type))
+        {
+            return false;
+        }
+
+        if (type.ValueKind == JsonValueKind.String)
+        {
+            return type.GetString() == "null";
+        }
+
+        if (type.ValueKind == JsonValueKind.Array)
+        {
+            bool any = false;
+            foreach (JsonElement member in type.EnumerateArray())
+            {
+                any = true;
+                if (member.ValueKind != JsonValueKind.String || member.GetString() != "null")
+                {
+                    return false;
+                }
+            }
+
+            return any;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Reads the <c>discriminator.propertyName</c> — the property whose value selects the variant. This is an
+    /// <em>OpenAPI extension</em>, not a JSON Schema keyword (there is no <c>discriminator</c> in JSON Schema
+    /// 2020-12 or earlier), so it is read opportunistically when present on an OpenAPI source and simply absent
+    /// otherwise; the UI degrades to labelling variants by title/type when there is no discriminator.
+    /// </summary>
+    private static bool TryDiscriminatorProperty(JsonElement schema, out string propertyName)
+    {
+        propertyName = string.Empty;
+        if (schema.TryGetProperty("discriminator", out JsonElement discriminator)
+            && discriminator.ValueKind == JsonValueKind.Object
+            && discriminator.TryGetProperty("propertyName", out JsonElement name)
+            && name.ValueKind == JsonValueKind.String)
+        {
+            propertyName = name.GetString() ?? string.Empty;
+        }
+
+        return propertyName.Length > 0;
+    }
+
+    /// <summary>Reads an open-shape value schema from the first of two keywords whose value is an object schema.</summary>
+    private static bool TryAdditionalSchema(JsonElement schema, string primary, string fallback, out JsonElement valueSchema)
+    {
+        if (schema.TryGetProperty(primary, out valueSchema) && valueSchema.ValueKind == JsonValueKind.Object)
+        {
+            return true;
+        }
+
+        if (schema.TryGetProperty(fallback, out valueSchema) && valueSchema.ValueKind == JsonValueKind.Object)
+        {
+            return true;
+        }
+
+        valueSchema = default;
+        return false;
     }
 
     // ---- navigation helpers ---------------------------------------------------------------------
