@@ -78,7 +78,7 @@ internal sealed class MockDefaultHandler : IApiDefaultHandler
         => new(UploadItemDataResult.Created(ReturnInvalidResponse ? ItemEntity.ParseValue("""{}"""u8) : DefaultItem, workspace));
 
     public ValueTask<DownloadFileResult> HandleDownloadFileAsync(DownloadFileParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
-        => new(DownloadFileResult.Ok());
+        => new(DownloadFileResult.Ok("file-content"u8.ToArray()));
 
     public ValueTask<GetQuirkyResult> HandleGetQuirkyAsync(GetQuirkyParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
         => new(GetQuirkyResult.Ok(ReturnInvalidResponse ? ItemEntity.ParseValue("""{}"""u8) : DefaultItem, workspace));
@@ -87,7 +87,7 @@ internal sealed class MockDefaultHandler : IApiDefaultHandler
         => new(GetStyledQuirkyResult.Ok(ReturnInvalidResponse ? ItemEntity.ParseValue("""{}"""u8) : DefaultItem, workspace));
 
     public ValueTask<ExportDataResult> HandleExportDataAsync(ExportDataParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
-        => new(ExportDataResult.Ok());
+        => new(ExportDataResult.Ok("export-data"u8.ToArray()));
 
     public ValueTask<GetEmptyServersResult> HandleGetEmptyServersAsync(GetEmptyServersParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
@@ -101,7 +101,7 @@ internal sealed class MockDefaultHandler : IApiDefaultHandler
         => new(HeadHealthResult.Ok());
 
     public ValueTask<TraceHealthResult> HandleTraceHealthAsync(TraceHealthParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
-        => new(TraceHealthResult.Ok());
+        => new(TraceHealthResult.Ok("trace-health"u8.ToArray()));
 
     public ValueTask<GetAdvancedStylesResult> HandleGetAdvancedStylesAsync(GetAdvancedStylesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
