@@ -201,6 +201,14 @@ const STEP_OUTPUTS = {
       },
       totalDelta: { type: 'number' },
       reportUrl: { type: 'string', format: 'uri' },
+      // A tuple (prefixItems) — drives the patch builder's fixed positional slots.
+      range: {
+        type: 'array', description: 'The [from, to] transaction sequence numbers scanned.',
+        prefixItems: [
+          { type: 'integer', minimum: 0, title: 'from' },
+          { type: 'integer', minimum: 0, title: 'to' },
+        ],
+      },
     },
   },
   'onboard-customer': {
@@ -220,6 +228,39 @@ const STEP_OUTPUTS = {
         required: ['fullName'],
       },
       flags: { type: 'array', description: 'Screening hits, if any.', items: { type: 'string', enum: ['pep', 'sanctions', 'adverse-media'] } },
+      // A polymorphic union (oneOf with a discriminator) — drives the patch builder's variant picker.
+      evidence: {
+        type: 'union', description: 'The evidence that established the identity.', discriminator: 'kind',
+        variants: [
+          {
+            type: 'object', title: 'Document',
+            properties: {
+              kind: { type: 'string', const: 'document' },
+              documentType: { type: 'string', enum: ['passport', 'driving-licence', 'national-id'] },
+              documentNumber: { type: 'string', maxLength: 40 },
+              expiry: { type: 'string', format: 'date' },
+            },
+            required: ['kind', 'documentType', 'documentNumber'],
+          },
+          {
+            type: 'object', title: 'Biometric',
+            properties: {
+              kind: { type: 'string', const: 'biometric' },
+              modality: { type: 'string', enum: ['face', 'fingerprint', 'voice'] },
+              confidence: { type: 'number', minimum: 0, maximum: 1 },
+            },
+            required: ['kind', 'modality', 'confidence'],
+          },
+          {
+            type: 'object', title: 'Knowledge-based',
+            properties: {
+              kind: { type: 'string', const: 'knowledge-based' },
+              questionsPassed: { type: 'integer', minimum: 0, maximum: 5 },
+            },
+            required: ['kind', 'questionsPassed'],
+          },
+        ],
+      },
     },
     provisionResources: {
       accountUrl: { type: 'string', format: 'uri' },
@@ -237,6 +278,8 @@ const STEP_OUTPUTS = {
           required: ['kind', 'name'],
         },
       },
+      // A free-form map (additionalProperties) — drives the patch builder's key/value editor.
+      tags: { type: 'object', description: 'Arbitrary resource tags (key → value).', additionalProperties: { type: 'string' } },
     },
   },
 };
@@ -287,6 +330,10 @@ function validateNode(d, value, path, errors) {
     return;
   }
   if (value === undefined || value === null) return; // presence handled by the parent's `required`
+  if (d.const !== undefined) {
+    if (value !== d.const) add(`must be ${JSON.stringify(d.const)}`);
+    return;
+  }
   if (Array.isArray(d.enum)) {
     if (!d.enum.some((e) => e === value)) add(`must be one of: ${d.enum.join(', ')}`);
     return;
@@ -294,17 +341,32 @@ function validateNode(d, value, path, errors) {
   switch (d.type) {
     case 'object': {
       if (typeof value !== 'object' || Array.isArray(value)) { add('must be an object'); return; }
+      const props = d.properties || {};
       for (const name of (Array.isArray(d.required) ? d.required : [])) {
         if (value[name] === undefined) errors.push({ instancePath: `${path}/${name}`, message: `"${name}" is required` });
       }
-      for (const [name, child] of Object.entries(d.properties || {})) {
+      for (const [name, child] of Object.entries(props)) {
         if (value[name] !== undefined) validateNode(child, value[name], `${path}/${name}`, errors);
+      }
+      // Free-form map: keys not covered by `properties` are validated against `additionalProperties`.
+      if (d.additionalProperties && typeof d.additionalProperties === 'object') {
+        for (const name of Object.keys(value)) {
+          if (!(name in props)) validateNode(d.additionalProperties, value[name], `${path}/${name}`, errors);
+        }
       }
       break;
     }
     case 'array': {
       if (!Array.isArray(value)) { add('must be an array'); return; }
-      if (d.items) value.forEach((item, i) => validateNode(d.items, item, `${path}/${i}`, errors));
+      if (Array.isArray(d.prefixItems)) {
+        // Tuple: each position has its own schema; any tail items fall back to `items`.
+        value.forEach((item, i) => {
+          const schema = d.prefixItems[i] ?? d.items;
+          if (schema) validateNode(schema, item, `${path}/${i}`, errors);
+        });
+      } else if (d.items) {
+        value.forEach((item, i) => validateNode(d.items, item, `${path}/${i}`, errors));
+      }
       break;
     }
     case 'integer':
