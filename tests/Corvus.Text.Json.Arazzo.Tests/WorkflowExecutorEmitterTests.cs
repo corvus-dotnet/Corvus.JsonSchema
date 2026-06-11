@@ -252,18 +252,26 @@ public class WorkflowExecutorEmitterTests
         source.ShouldContain("new Acme.Pets.SearchPetsRequest {");
         source.ShouldContain(".WriteResolvedPath(");
         source.ShouldContain(".WriteQueryString(");
-        source.ShouldContain(".BeginRequestUrlQuery()");
 
         // Static-path operation (no path/query parameters): writes the path template from a default request.
         source.ShouldContain("default(Acme.Pets.CreateThingRequest)");
         source.ShouldContain("Acme.Pets.CreateThingRequest.PathTemplateUtf8");
 
-        // The URL is written into a context-owned reused buffer and finalised by the runtime — the
-        // generated code allocates no per-step writer and no intermediate managed string.
-        source.ShouldContain(".BeginRequestUrl()");
-        source.ShouldContain(".EndRequestUrl(");
+        // The $url criteria are inlined: each step resolves the URL into an executor-owned, reused
+        // [ThreadStatic] ArrayBufferWriter<byte> and compares against the resulting byte[] directly — so the
+        // workflow needs no WorkflowExecutionContext and no per-step heap writer. The query string is
+        // appended through a '?' separator only when non-empty.
+        source.ShouldContain("[ThreadStatic]");
+        source.ShouldContain("private static ArrayBufferWriter<byte>?");
+        source.ShouldContain("??= new ArrayBufferWriter<byte>(");
+        source.ShouldContain(".ResetWrittenCount();");
+        source.ShouldContain(".WrittenSpan.ToArray();");
+        source.ShouldContain(".Write(\"?\"u8);");
+        source.ShouldContain(".WrittenCount > 0)");
+        source.ShouldNotContain(".BeginRequestUrl()");
+        source.ShouldNotContain(".EndRequestUrl(");
+        source.ShouldNotContain("WorkflowExecutionContext");
         source.ShouldNotContain("PooledBufferWriter");
-        source.ShouldNotContain("new System.Buffers.ArrayBufferWriter");
         source.ShouldNotContain("Encoding.UTF8.GetString");
     }
 

@@ -163,8 +163,10 @@ internal static class ControlFlowEmitter
         string responseBodyLocal = $"{camel}ResponseBody";
         string? bindBodyLocal = step.BindResponseBody ? responseBodyLocal : null;
 
+        bool referencesUrl = StepReferencesUrl(step);
+        string urlLocal = RequestUrlEmitter.UrlLocal(prefix);
         var requestContext = new StepRequestContext(
-            operation.Operation.Method.ToString().ToUpperInvariant(), step.Arguments, step.RequestBody);
+            operation.Operation.Method.ToString().ToUpperInvariant(), step.Arguments, step.RequestBody, referencesUrl ? urlLocal : null);
 
         RequestBindingCode request = RequestBindingEmitter.Emit(
             operation, step.Arguments, "context", prefix, stepOutputLocals, "inputs", options.InputAccessors, step.RequestBody);
@@ -200,6 +202,7 @@ internal static class ControlFlowEmitter
 
         string gateText = gate.ToString();
         bool usesContext = gateText.Contains("context", StringComparison.Ordinal);
+        bool urlInlined = referencesUrl && gateText.Contains(urlLocal, StringComparison.Ordinal);
 
         string gateBody = BuildOperationGateBody(step, operation, usesContext, responseVar, responseBodyLocal, gateText);
 
@@ -210,11 +213,16 @@ internal static class ControlFlowEmitter
         WorkflowExecutorEmitter.AppendIndented(c, request.Statements, 4);
 
         // A $url criterion (on the success gate or any onSuccess/onFailure action) resolves against the
-        // request's relative URL: rebuild the request struct from the resolved Sources and feed its
-        // WriteResolvedPath/WriteQueryString output to the context, before the client call disposes them.
-        if (StepReferencesUrl(step))
+        // request's relative URL, rebuilt from the resolved Sources before the client call disposes them.
+        // When inlined it compares an executor-owned byte[] (no context); a non-inlined $url (fallback to
+        // a CompiledCriterion, which already forces the context) resolves via the context.
+        if (urlInlined)
         {
-            WorkflowExecutorEmitter.AppendIndented(c, RequestUrlEmitter.Emit(operation, request.ParameterBindings, prefix, "workspace", "context"), 4);
+            WorkflowExecutorEmitter.AppendIndented(c, RequestUrlEmitter.Emit(operation, request.ParameterBindings, prefix, "workspace", fields), 4);
+        }
+        else if (referencesUrl)
+        {
+            WorkflowExecutorEmitter.AppendIndented(c, RequestUrlEmitter.EmitToContext(operation, request.ParameterBindings, prefix, "workspace", "context"), 4);
         }
 
         c.Append("    var ").Append(clientVar).Append(" = new ").Append(operation.Operation.ClientTypeName).Append('(').AppendLine("transport);");
