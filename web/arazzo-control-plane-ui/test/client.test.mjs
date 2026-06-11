@@ -231,10 +231,19 @@ test('addCatalogVersion is rejected (400) when the package workflow id already c
     (e) => e instanceof ProblemError && e.status === 400);
 });
 
-test('deleteCatalogVersion removes a version (then 404)', async () => {
+test('deleteCatalogVersion removes an unreferenced version (then 404)', async () => {
   const c = makeClient();
-  await c.deleteCatalogVersion('onboard-customer', 1);
-  await assert.rejects(() => c.getCatalogVersion('onboard-customer', 1), (e) => e.status === 404);
+  // nightly-reconcile v1 is Obsolete and has no referencing runs in the seed.
+  await c.deleteCatalogVersion('nightly-reconcile', 1);
+  await assert.rejects(() => c.getCatalogVersion('nightly-reconcile', 1), (e) => e.status === 404);
+});
+
+test('deleteCatalogVersion is refused (409) while runs reference the version', async () => {
+  const c = makeClient();
+  // adopt-pet v1 is referenced by seeded runs (workflowId adopt-pet-v1).
+  await assert.rejects(
+    () => c.deleteCatalogVersion('adopt-pet', 1),
+    (e) => e instanceof ProblemError && e.status === 409);
 });
 
 test('purgeCatalog reaps obsolete, unreferenced versions', async () => {

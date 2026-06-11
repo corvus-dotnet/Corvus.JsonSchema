@@ -25,46 +25,46 @@ function seedRuns() {
   const day = 24 * hr;
   return [
     {
-      id: 'run-7f3a9c21', workflowId: 'adopt-pet', status: 'Faulted', cursor: 2,
+      id: 'run-7f3a9c21', workflowId: 'adopt-pet-v1', status: 'Faulted', cursor: 2,
       createdAt: iso(-3 * hr), updatedAt: iso(-2 * min), etag: nextEtag(),
       fault: { stepId: 'reservePayment', attempt: 3, error: 'HttpRequestException: 502 from payments (upstream)', at: iso(-2 * min) },
       _errorType: 'HttpRequestException',
       correlationId: '7f3a9c21d4e54a1b9c0d1e2f3a4b5c6d', tags: ['tenant-42', 'priority'],
     },
     {
-      id: 'run-1b88de40', workflowId: 'adopt-pet', status: 'Suspended', cursor: 4,
+      id: 'run-1b88de40', workflowId: 'adopt-pet-v1', status: 'Suspended', cursor: 4,
       createdAt: iso(-90 * min), updatedAt: iso(-30 * min), etag: nextEtag(),
       wait: { kind: 'Timer', dueAt: iso(45 * min) },
       correlationId: '1b88de40a1b2c3d4e5f60718293a4b5c', tags: ['tenant-42'],
     },
     {
-      id: 'run-9c0142ab', workflowId: 'onboard-customer', status: 'Suspended', cursor: 1,
+      id: 'run-9c0142ab', workflowId: 'onboard-customer-v1', status: 'Suspended', cursor: 1,
       createdAt: iso(-5 * hr), updatedAt: iso(-4 * hr), etag: nextEtag(),
       wait: { kind: 'Message', channel: 'kyc.results', correlationId: 'cust-55021' },
       correlationId: '9c0142ab5d6e7f80911a2b3c4d5e6f70', tags: ['tenant-7'],
     },
     {
-      id: 'run-33aa71f9', workflowId: 'onboard-customer', status: 'Running', cursor: 3,
+      id: 'run-33aa71f9', workflowId: 'onboard-customer-v1', status: 'Running', cursor: 3,
       createdAt: iso(-8 * min), updatedAt: iso(-10000), etag: nextEtag(),
       correlationId: '33aa71f9b5c6d7e8f90a1b2c3d4e5f60', tags: ['tenant-7'],
     },
     {
-      id: 'run-0a5512cd', workflowId: 'adopt-pet', status: 'Completed', cursor: 6,
+      id: 'run-0a5512cd', workflowId: 'adopt-pet-v1', status: 'Completed', cursor: 6,
       createdAt: iso(-2 * day), updatedAt: iso(-2 * day + 5 * min), etag: nextEtag(),
       correlationId: '0a5512cd6e7f8a9b0c1d2e3f4a5b6c7d', tags: ['tenant-42'],
     },
     {
-      id: 'run-44b0e7e2', workflowId: 'nightly-reconcile', status: 'Completed', cursor: 9,
+      id: 'run-44b0e7e2', workflowId: 'nightly-reconcile-v2', status: 'Completed', cursor: 9,
       createdAt: iso(-9 * day), updatedAt: iso(-9 * day + 2 * min), etag: nextEtag(),
       correlationId: '44b0e7e2c3d4e5f6a7b8c9d0e1f20314',
     },
     {
-      id: 'run-6610ffac', workflowId: 'onboard-customer', status: 'Cancelled', cursor: 2,
+      id: 'run-6610ffac', workflowId: 'onboard-customer-v1', status: 'Cancelled', cursor: 2,
       createdAt: iso(-40 * day), updatedAt: iso(-40 * day + min), etag: nextEtag(),
       correlationId: '6610ffac1726354455647382910a0b0c',
     },
     {
-      id: 'run-2d77b410', workflowId: 'nightly-reconcile', status: 'Pending', cursor: 0,
+      id: 'run-2d77b410', workflowId: 'nightly-reconcile-v3', status: 'Pending', cursor: 0,
       createdAt: iso(-20000), updatedAt: iso(-20000), etag: nextEtag(),
       correlationId: '2d77b410aabbccddeeff00112233445566',
     },
