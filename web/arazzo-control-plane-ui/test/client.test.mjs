@@ -102,3 +102,107 @@ test('a problem+json error surfaces as ProblemError with status and title', asyn
     () => c.getRun('missing'),
     (e) => e instanceof ProblemError && e.status === 404 && typeof e.title === 'string');
 });
+
+// ---- catalog ------------------------------------------------------------------------------------
+
+test('searchCatalog returns all seeded versions', async () => {
+  const { versions, nextPageToken } = await makeClient().searchCatalog({ limit: 100 });
+  assert.equal(versions.length, 5);
+  assert.equal(nextPageToken, null);
+});
+
+test('searchCatalog filters by status, tag, owner and free-text q', async () => {
+  const c = makeClient();
+  assert.equal((await c.searchCatalog({ status: 'Obsolete' })).versions.length, 1);
+  assert.equal((await c.searchCatalog({ status: 'Active' })).versions.length, 4);
+  assert.equal((await c.searchCatalog({ tags: ['beta'] })).versions.length, 1);
+  assert.equal((await c.searchCatalog({ tags: ['prod', 'billing'] })).versions.length, 3);
+  assert.equal((await c.searchCatalog({ owner: 'onboarding' })).versions.length, 2);
+  assert.equal((await c.searchCatalog({ q: 'adopt' })).versions.length, 1);
+});
+
+test('searchCatalog filters by baseWorkflowId', async () => {
+  const { versions } = await makeClient().searchCatalog({ baseWorkflowId: 'nightly-reconcile' });
+  assert.equal(versions.length, 3);
+  assert.ok(versions.every((v) => v.baseWorkflowId === 'nightly-reconcile'));
+});
+
+test('searchCatalogPaged walks every page via the keyset token', async () => {
+  let total = 0; let pages = 0;
+  for await (const page of makeClient().searchCatalogPaged({ limit: 2 })) { total += page.versions.length; pages++; }
+  assert.equal(total, 5);
+  assert.equal(pages, 3);
+});
+
+test('listCatalogVersions returns the versions of one base id, ordered', async () => {
+  const { versions } = await makeClient().listCatalogVersions('nightly-reconcile');
+  assert.deepEqual(versions.map((v) => v.versionNumber), [1, 2, 3]);
+});
+
+test('getCatalogVersion returns metadata and 404s for an unknown version', async () => {
+  const c = makeClient();
+  const v = await c.getCatalogVersion('nightly-reconcile', 3);
+  assert.equal(v.status, 'Active');
+  assert.deepEqual(v.tags, ['prod', 'billing', 'beta']);
+  assert.equal(v.owner.email, 'reconcile@example.com');
+  await assert.rejects(() => c.getCatalogVersion('nightly-reconcile', 99), (e) => e instanceof ProblemError && e.status === 404);
+});
+
+test('getCatalogPackage returns the archive as a Blob', async () => {
+  const blob = await makeClient().getCatalogPackage('adopt-pet', 1);
+  assert.ok(blob instanceof Blob);
+  assert.ok(blob.size > 0);
+});
+
+test('getCatalogWorkflow and getCatalogSource return documents (and 404 for an unknown source)', async () => {
+  const c = makeClient();
+  const wf = await c.getCatalogWorkflow('adopt-pet', 1);
+  assert.equal(wf.workflows[0].workflowId, 'adopt-pet-v1');
+  const src = await c.getCatalogSource('adopt-pet', 1, 'petstore');
+  assert.equal(src.openapi, '3.1.0');
+  await assert.rejects(() => c.getCatalogSource('adopt-pet', 1, 'nope'), (e) => e.status === 404);
+});
+
+test('updateCatalogVersion patches governance metadata', async () => {
+  const c = makeClient();
+  const updated = await c.updateCatalogVersion('adopt-pet', 1, { tags: ['prod', 'reviewed'] });
+  assert.deepEqual(updated.tags, ['prod', 'reviewed']);
+  assert.ok(updated.lastUpdatedAt);
+});
+
+test('obsoleteCatalogVersion flips status to Obsolete with audit fields', async () => {
+  const c = makeClient();
+  const v = await c.obsoleteCatalogVersion('nightly-reconcile', 2);
+  assert.equal(v.status, 'Obsolete');
+  assert.ok(v.obsoletedBy);
+  assert.ok(v.obsoletedAt);
+});
+
+test('addCatalogVersion uploads a package as multipart and returns the new summary', async () => {
+  const c = makeClient();
+  const pkg = new Blob([new TextEncoder().encode('fake-zip-bytes')], { type: 'application/octet-stream' });
+  const added = await c.addCatalogVersion({ package: pkg, owner: { name: 'Me', email: 'me@example.com' }, tags: ['draft'] });
+  assert.equal(added.status, 'Active');
+  assert.deepEqual(added.tags, ['draft']);
+  assert.equal((await c.searchCatalog({ limit: 100 })).versions.length, 6);
+});
+
+test('addCatalogVersion rejects a missing package or owner before calling the server', async () => {
+  await assert.rejects(async () => makeClient().addCatalogVersion({ owner: { name: 'x', email: 'y' } }), TypeError);
+  await assert.rejects(async () => makeClient().addCatalogVersion({ package: new Blob(['x']) }), TypeError);
+});
+
+test('deleteCatalogVersion removes a version (then 404)', async () => {
+  const c = makeClient();
+  await c.deleteCatalogVersion('onboard-customer', 1);
+  await assert.rejects(() => c.getCatalogVersion('onboard-customer', 1), (e) => e.status === 404);
+});
+
+test('purgeCatalog reaps obsolete, unreferenced versions', async () => {
+  const c = makeClient();
+  const before = (await c.searchCatalog({ limit: 100 })).versions.length;
+  const { purgedCount } = await c.purgeCatalog();
+  const after = (await c.searchCatalog({ limit: 100 })).versions.length;
+  assert.ok(purgedCount >= 1);
+  assert.equal(after, before - purgedCount);
+});

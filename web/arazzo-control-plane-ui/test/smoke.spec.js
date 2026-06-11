@@ -48,3 +48,27 @@ test('the time-window filter narrows the list', async ({ page }) => {
 
   await expect.poll(async () => rows.count()).toBeLessThan(before);
 });
+
+test('the Catalog tab lists versions and opens a version detail with downloads', async ({ page }) => {
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/index.html');
+
+  // Switch to the Catalog tab.
+  await page.getByRole('tab', { name: 'Catalog' }).click();
+  await expect(page.locator('arazzo-catalog')).toBeVisible();
+  const rows = page.locator('arazzo-catalog-table tbody tr[data-key]');
+  await expect(rows.first()).toBeVisible();
+  expect(await rows.count()).toBeGreaterThan(1);
+
+  // Select a version → its detail panel appears with the content hash and download actions.
+  await rows.first().click();
+  const detail = page.locator('arazzo-catalog-detail');
+  await expect(detail).toBeVisible();
+  await expect(detail.locator('[part="hash"]')).toBeVisible();
+  await expect(detail.getByRole('button', { name: /package/i })).toBeVisible();
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});

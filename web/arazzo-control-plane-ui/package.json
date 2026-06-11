@@ -25,12 +25,14 @@
   ],
   "exports": {
     ".": "./src/arazzo-control-plane.js",
+    "./catalog": "./src/arazzo-catalog.js",
     "./client": "./src/arazzo-client.js",
     "./kit.css": "./src/arazzo-kit.css",
     "./components/*": "./src/components/*"
   },
   "sideEffects": [
     "./src/arazzo-control-plane.js",
+    "./src/arazzo-catalog.js",
     "./src/components/*.js"
   ],
   "files": [

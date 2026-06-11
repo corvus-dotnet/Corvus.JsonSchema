@@ -30,6 +30,9 @@ export const RESUME_MODES = Object.freeze([
   'StatePatch',
 ]);
 
+/** The valid catalog version lifecycle statuses. */
+export const CATALOG_STATUSES = Object.freeze(['Active', 'Obsolete']);
+
 /**
  * An error carrying an RFC 9457 `application/problem+json` body returned by the control plane. Widgets
  * branch on {@link ProblemError#status} (notably `404` and `409`) rather than parsing messages.
@@ -196,20 +199,191 @@ export class ArazzoControlPlaneClient {
     return this._request('PURGE', `/runs${qs(search)}`, { signal: request.signal });
   }
 
+  // ---- catalog:read -----------------------------------------------------------------------------
+
+  /**
+   * `searchCatalog` — one page of catalog version summaries.
+   * @param {{ q?: string, baseWorkflowId?: string, tags?: string[], status?: string, owner?: string, limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   *   `tags` are AND-matched; `q` is free-text over title/description; `owner` matches owner name/email.
+   * @returns {Promise<{ versions: object[], nextPageToken: (string|null) }>} A {@link CatalogPage}.
+   */
+  async searchCatalog(query = {}) {
+    const search = new URLSearchParams();
+    if (query.q) search.set('q', query.q);
+    if (query.baseWorkflowId) search.set('baseWorkflowId', query.baseWorkflowId);
+    for (const tag of query.tags ?? []) {
+      if (tag) search.append('tag', tag);
+    }
+    if (query.status) search.set('status', query.status);
+    if (query.owner) search.set('owner', query.owner);
+    if (query.limit != null) search.set('limit', String(query.limit));
+    if (query.pageToken) search.set('pageToken', query.pageToken);
+    const page = await this._request('GET', `/catalog${qs(search)}`, { signal: query.signal });
+    return { versions: page.versions ?? [], nextPageToken: page.nextPageToken ?? null };
+  }
+
+  /**
+   * `searchCatalog`, as an async iterator walking every page via the keyset `nextPageToken`.
+   * @param {{ q?: string, baseWorkflowId?: string, tags?: string[], status?: string, owner?: string, limit?: number, signal?: AbortSignal }} [query]
+   * @returns {AsyncGenerator<{ versions: object[], nextPageToken: (string|null) }>}
+   */
+  async *searchCatalogPaged(query = {}) {
+    let pageToken;
+    do {
+      const page = await this.searchCatalog({ ...query, pageToken });
+      yield page;
+      pageToken = page.nextPageToken || undefined;
+    } while (pageToken);
+  }
+
+  /**
+   * `listCatalogVersions` — the versions of one base workflow id.
+   * @param {string} baseWorkflowId
+   * @param {{ limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ versions: object[], nextPageToken: (string|null) }>}
+   */
+  async listCatalogVersions(baseWorkflowId, query = {}) {
+    const search = new URLSearchParams();
+    if (query.limit != null) search.set('limit', String(query.limit));
+    if (query.pageToken) search.set('pageToken', query.pageToken);
+    const page = await this._request('GET', `/catalog/${encodeURIComponent(baseWorkflowId)}${qs(search)}`, { signal: query.signal });
+    return { versions: page.versions ?? [], nextPageToken: page.nextPageToken ?? null };
+  }
+
+  /**
+   * `getCatalogVersion` — a version's metadata (no documents).
+   * @param {string} baseWorkflowId
+   * @param {number} versionNumber
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} A {@link CatalogVersionSummary}. Throws {@link ProblemError} `404` if absent.
+   */
+  getCatalogVersion(baseWorkflowId, versionNumber, opts = {}) {
+    return this._request('GET', this._versionPath(baseWorkflowId, versionNumber), { signal: opts.signal });
+  }
+
+  /**
+   * `getCatalogPackage` — the whole package archive (an opaque binary ZIP).
+   * @param {string} baseWorkflowId
+   * @param {number} versionNumber
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<Blob>} The package archive bytes.
+   */
+  getCatalogPackage(baseWorkflowId, versionNumber, opts = {}) {
+    return this._request('GET', `${this._versionPath(baseWorkflowId, versionNumber)}/package`, { signal: opts.signal, raw: true });
+  }
+
+  /**
+   * `getCatalogWorkflow` — just the version's Arazzo workflow document.
+   * @param {string} baseWorkflowId
+   * @param {number} versionNumber
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The Arazzo workflow document.
+   */
+  getCatalogWorkflow(baseWorkflowId, versionNumber, opts = {}) {
+    return this._request('GET', `${this._versionPath(baseWorkflowId, versionNumber)}/workflow`, { signal: opts.signal });
+  }
+
+  /**
+   * `getCatalogSource` — one named source document from a version's package.
+   * @param {string} baseWorkflowId
+   * @param {number} versionNumber
+   * @param {string} sourceName
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The source document.
+   */
+  getCatalogSource(baseWorkflowId, versionNumber, sourceName, opts = {}) {
+    return this._request('GET', `${this._versionPath(baseWorkflowId, versionNumber)}/sources/${encodeURIComponent(sourceName)}`, { signal: opts.signal });
+  }
+
+  // ---- catalog:write ----------------------------------------------------------------------------
+
+  /**
+   * `addCatalogVersion` — upload a new immutable version as `multipart/form-data`.
+   * @param {{ package: (Blob|ArrayBuffer|Uint8Array), owner: { name: string, email: string, team?: string, url?: string }, tags?: string[], signal?: AbortSignal }} request
+   *   `package` is the package archive (the `{workflow, sources}` content as the ZIP from `WorkflowPackage`).
+   * @returns {Promise<object>} The added {@link CatalogVersionSummary}. Throws {@link ProblemError} `400`/`409`.
+   */
+  addCatalogVersion(request) {
+    if (!request || request.package == null || !request.owner) {
+      throw new TypeError('addCatalogVersion requires a package and an owner.');
+    }
+    const form = new FormData();
+    const blob = request.package instanceof Blob ? request.package : new Blob([request.package], { type: 'application/octet-stream' });
+    form.append('package', blob, 'package.zip');
+    form.append('owner', new Blob([JSON.stringify(request.owner)], { type: 'application/json' }));
+    for (const tag of request.tags ?? []) {
+      if (tag) form.append('tags', tag);
+    }
+    return this._request('POST', '/catalog', { form, signal: request.signal });
+  }
+
+  /**
+   * `updateCatalogVersion` — update a version's governance metadata (owner / tags / status).
+   * @param {string} baseWorkflowId
+   * @param {number} versionNumber
+   * @param {{ owner?: object, tags?: string[], status?: string }} patch
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The updated {@link CatalogVersionSummary}.
+   */
+  updateCatalogVersion(baseWorkflowId, versionNumber, patch, opts = {}) {
+    return this._request('PATCH', this._versionPath(baseWorkflowId, versionNumber), { body: patch ?? {}, signal: opts.signal });
+  }
+
+  /**
+   * `obsoleteCatalogVersion` — mark a version `Obsolete` (a convenience over {@link #updateCatalogVersion}).
+   * @param {string} baseWorkflowId
+   * @param {number} versionNumber
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The updated {@link CatalogVersionSummary}.
+   */
+  obsoleteCatalogVersion(baseWorkflowId, versionNumber, opts = {}) {
+    return this.updateCatalogVersion(baseWorkflowId, versionNumber, { status: 'Obsolete' }, opts);
+  }
+
+  // ---- catalog:purge ----------------------------------------------------------------------------
+
+  /**
+   * `deleteCatalogVersion` — delete a single version. Refused (`409`) while runs reference it.
+   * @param {string} baseWorkflowId
+   * @param {number} versionNumber
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<void>} Resolves on `204`.
+   */
+  async deleteCatalogVersion(baseWorkflowId, versionNumber, opts = {}) {
+    await this._request('DELETE', this._versionPath(baseWorkflowId, versionNumber), { signal: opts.signal });
+  }
+
+  /**
+   * `purgeCatalog` — bulk-reap obsolete versions with no referencing runs.
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<{ purgedCount: number }>} A {@link PurgeResult}.
+   */
+  purgeCatalog(opts = {}) {
+    return this._request('PURGE', '/catalog', { signal: opts.signal });
+  }
+
+  /** @private */
+  _versionPath(baseWorkflowId, versionNumber) {
+    return `/catalog/${encodeURIComponent(baseWorkflowId)}/versions/${encodeURIComponent(versionNumber)}`;
+  }
+
   // ---- internals --------------------------------------------------------------------------------
 
   /**
    * @private
    * @param {string} method
    * @param {string} path
-   * @param {{ body?: any, signal?: AbortSignal }} [opts]
+   * @param {{ body?: any, form?: FormData, raw?: boolean, signal?: AbortSignal }} [opts]
    */
   async _request(method, path, opts = {}) {
     const url = `${this._baseUrl}${path}`;
     /** @type {RequestInit} */
-    const init = { method, headers: { Accept: 'application/json' } };
+    const init = { method, headers: { Accept: opts.raw ? 'application/octet-stream' : 'application/json' } };
 
-    if (opts.body !== undefined) {
+    if (opts.form !== undefined) {
+      // multipart/form-data: let fetch set the Content-Type (with its boundary).
+      init.body = opts.form;
+    } else if (opts.body !== undefined) {
       init.headers['Content-Type'] = 'application/json';
       init.body = JSON.stringify(opts.body);
     }
@@ -234,6 +408,10 @@ export class ArazzoControlPlaneClient {
 
     if (response.status === 204) {
       return undefined;
+    }
+
+    if (opts.raw) {
+      return response.blob();
     }
 
     const text = await response.text();

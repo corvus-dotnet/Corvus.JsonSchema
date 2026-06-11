@@ -22,12 +22,14 @@ The kit is **layered** so you adopt at any granularity (paths shown for direct/C
 package `exports` — `@corvus-dotnet/arazzo-control-plane-ui`, `.../client`, `.../components/runs-table.js`):
 
 - **Layer 0 — `ArazzoControlPlaneClient`** ([`src/arazzo-client.js`](./src/arazzo-client.js)): a DOM-free
-  client for the six operations. Useful on its own (Node, tests, CLIs, any UI).
+  client for the run **and** catalog operations. Useful on its own (Node, tests, CLIs, any UI).
 - **Layer 1 — standalone components** ([`src/components/`](./src/components)): `<arazzo-runs-table>`,
   `<arazzo-run-detail>`, `<arazzo-resume-dialog>`, `<arazzo-cancel-button>`, `<arazzo-purge-dialog>`,
-  `<arazzo-status-badge>`. Each works alone.
-- **Layer 2 — `<arazzo-control-plane>`** ([`src/arazzo-control-plane.js`](./src/arazzo-control-plane.js)): the
-  reference panel that composes Layer 1 into a run-management screen.
+  `<arazzo-status-badge>` for runs; `<arazzo-catalog-table>`, `<arazzo-catalog-detail>` for the workflow
+  catalog. Each works alone.
+- **Layer 2 — `<arazzo-control-plane>`** ([`src/arazzo-control-plane.js`](./src/arazzo-control-plane.js)) and
+  **`<arazzo-catalog>`** ([`src/arazzo-catalog.js`](./src/arazzo-catalog.js)): the reference panels that
+  compose Layer 1 into a run-management screen and a catalog browse/govern screen respectively.
 
 ## Quick start
 
