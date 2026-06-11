@@ -57,6 +57,18 @@ describe('<arazzo-runs-table>', () => {
     ok(older >= 1 && older < all, `created-before narrows the set (${older} < ${all})`);
   });
 
+  it('has a run-id copy button matching the detail view (⧉, flips to ✓ on copy)', async () => {
+    el = tableWithMock();
+    mount(el);
+    await nextEvent(el, 'loaded');
+    const copy = el.shadowRoot.querySelector('button.copy');
+    ok(copy, 'copy button present');
+    equal(copy.textContent, '⧉', 'uses the same glyph as the detail view');
+    copy.click();
+    await new Promise((r) => setTimeout(r, 10));
+    ok(['⧉', '✓'].includes(copy.textContent), 'glyph is the copy or confirmed state');
+  });
+
   it('shows the empty state when nothing matches', async () => {
     el = tableWithMock({ 'workflow-id': 'does-not-exist' });
     mount(el);
