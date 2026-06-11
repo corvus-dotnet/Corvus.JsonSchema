@@ -163,6 +163,35 @@ describe('<arazzo-value-editor>', () => {
     equal(el.value.labels.env, 'prod', 'assembles the typed map');
   });
 
+  it('marks required fields and shows constraint hints', async () => {
+    el = document.createElement('arazzo-value-editor');
+    el.descriptor = {
+      type: 'object',
+      required: ['score'],
+      properties: {
+        score: { type: 'number', minimum: 0, maximum: 1 },
+        name: { type: 'string', maxLength: 80 },
+      },
+    };
+    mount(el);
+    await waitFor(() => el.shadowRoot.querySelector('.field'));
+    ok(el.shadowRoot.querySelector('.field.required'), 'the required field is marked');
+    const hints = [...el.shadowRoot.querySelectorAll('.field .hint')].map((h) => h.textContent);
+    ok(hints.some((t) => t.includes('0–1')), 'numeric range hint shown');
+    ok(hints.some((t) => t.includes('80 chars')), 'string length hint shown');
+  });
+
+  it('assembles best-effort without throwing on a missing required field', async () => {
+    el = document.createElement('arazzo-value-editor');
+    el.descriptor = { type: 'object', required: ['score'], properties: { score: { type: 'number' }, name: { type: 'string' } } };
+    mount(el);
+    await waitFor(() => el.shadowRoot.querySelector('input[type="text"]'));
+    el.shadowRoot.querySelector('input[type="text"]').value = 'x';
+    const v = el.value; // must not throw even though required `score` is blank
+    equal(v.name, 'x');
+    ok(!('score' in v), 'blank required field is simply omitted (server reports conformance)');
+  });
+
   it('shows live, inline per-field validation errors from the validator', async () => {
     el = document.createElement('arazzo-value-editor');
     el.descriptor = { type: 'object', properties: { score: { type: 'number' }, name: { type: 'string' } } };
