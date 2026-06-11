@@ -64,7 +64,7 @@ internal sealed class MockDefaultHandler : IApiDefaultHandler
     }
 
     public ValueTask<DownloadFileResult> HandleDownloadFileAsync(DownloadFileParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
-        => new(DownloadFileResult.Ok());
+        => new(DownloadFileResult.Ok("file-content"u8.ToArray()));
 
     public ValueTask<GetQuirkyResult> HandleGetQuirkyAsync(GetQuirkyParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
         => new(GetQuirkyResult.Ok(ReturnInvalidResponse ? InvalidItemBody : DefaultItem, workspace));
