@@ -203,14 +203,16 @@ export class ArazzoControlPlaneClient {
 
   /**
    * `searchCatalog` — one page of catalog version summaries.
-   * @param {{ q?: string, baseWorkflowId?: string, tags?: string[], status?: string, owner?: string, limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
-   *   `tags` are AND-matched; `q` is free-text over title/description; `owner` matches owner name/email.
+   * @param {{ q?: string, baseWorkflowId?: string, workflowIdPrefix?: string, tags?: string[], status?: string, owner?: string, limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   *   `tags` are AND-matched; `q` is free-text over title/description; `owner` matches owner name/email;
+   *   `workflowIdPrefix` is an anchored, case-insensitive prefix over the versioned workflow id (for type-ahead).
    * @returns {Promise<{ versions: object[], nextPageToken: (string|null) }>} A {@link CatalogPage}.
    */
   async searchCatalog(query = {}) {
     const search = new URLSearchParams();
     if (query.q) search.set('q', query.q);
     if (query.baseWorkflowId) search.set('baseWorkflowId', query.baseWorkflowId);
+    if (query.workflowIdPrefix) search.set('workflowIdPrefix', query.workflowIdPrefix);
     for (const tag of query.tags ?? []) {
       if (tag) search.append('tag', tag);
     }
