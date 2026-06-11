@@ -1,13 +1,13 @@
-// Tier 3 — <arazzo-patch-builder>: a strongly-typed form built from a TypeDescriptor.
-import '../../src/components/patch-builder.js';
+// Tier 3 — <arazzo-value-editor>: a strongly-typed form built from a TypeDescriptor.
+import '../../src/components/value-editor.js';
 import { ok, equal, waitFor, mount } from './helpers.js';
 
-describe('<arazzo-patch-builder>', () => {
+describe('<arazzo-value-editor>', () => {
   let el;
   afterEach(() => el?.remove());
 
   it('renders a control per field type and assembles a typed object', async () => {
-    el = document.createElement('arazzo-patch-builder');
+    el = document.createElement('arazzo-value-editor');
     el.descriptor = {
       type: 'object',
       properties: {
@@ -34,7 +34,7 @@ describe('<arazzo-patch-builder>', () => {
   });
 
   it('omits blank optional fields', async () => {
-    el = document.createElement('arazzo-patch-builder');
+    el = document.createElement('arazzo-value-editor');
     el.descriptor = { type: 'object', properties: { a: { type: 'string' }, b: { type: 'number' } } };
     mount(el);
     await waitFor(() => el.shadowRoot.querySelector('input'));
@@ -45,7 +45,7 @@ describe('<arazzo-patch-builder>', () => {
   });
 
   it('collapses array-of-object items into an editable summary row', async () => {
-    el = document.createElement('arazzo-patch-builder');
+    el = document.createElement('arazzo-value-editor');
     el.descriptor = {
       type: 'object',
       properties: {
@@ -84,7 +84,7 @@ describe('<arazzo-patch-builder>', () => {
   });
 
   it('keeps scalar array items as compact inline rows', async () => {
-    el = document.createElement('arazzo-patch-builder');
+    el = document.createElement('arazzo-value-editor');
     el.descriptor = { type: 'object', properties: { tags: { type: 'array', items: { type: 'string' } } } };
     mount(el);
     const addBtn = await waitFor(() => [...el.shadowRoot.querySelectorAll('button')].find((b) => b.textContent.includes('Add item')));
@@ -96,7 +96,7 @@ describe('<arazzo-patch-builder>', () => {
   });
 
   it('renders a polymorphic union as a type chooser that reveals the chosen variant', async () => {
-    el = document.createElement('arazzo-patch-builder');
+    el = document.createElement('arazzo-value-editor');
     el.descriptor = {
       type: 'object',
       properties: {
@@ -127,7 +127,7 @@ describe('<arazzo-patch-builder>', () => {
   });
 
   it('renders a tuple as fixed positional slots', async () => {
-    el = document.createElement('arazzo-patch-builder');
+    el = document.createElement('arazzo-value-editor');
     el.descriptor = {
       type: 'object',
       properties: {
@@ -146,7 +146,7 @@ describe('<arazzo-patch-builder>', () => {
   });
 
   it('renders a free-form map (additionalProperties) as key/value rows', async () => {
-    el = document.createElement('arazzo-patch-builder');
+    el = document.createElement('arazzo-value-editor');
     el.descriptor = {
       type: 'object',
       properties: {
@@ -164,7 +164,7 @@ describe('<arazzo-patch-builder>', () => {
   });
 
   it('falls back to a raw JSON editor when there is no typed schema', async () => {
-    el = document.createElement('arazzo-patch-builder');
+    el = document.createElement('arazzo-value-editor');
     el.descriptor = { type: 'object', properties: {} };
     mount(el);
     const ta = await waitFor(() => el.shadowRoot.querySelector('textarea'));
@@ -173,7 +173,7 @@ describe('<arazzo-patch-builder>', () => {
   });
 
   it('throws a friendly error on invalid JSON in the fallback', async () => {
-    el = document.createElement('arazzo-patch-builder');
+    el = document.createElement('arazzo-value-editor');
     el.descriptor = null;
     mount(el);
     const ta = await waitFor(() => el.shadowRoot.querySelector('textarea'));
