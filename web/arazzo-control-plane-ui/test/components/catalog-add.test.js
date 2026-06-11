@@ -38,24 +38,37 @@ describe('<arazzo-catalog-add-dialog>', () => {
   let el;
   afterEach(() => el?.remove());
 
-  it('builds a package from documents and emits version-added with the assigned version', async () => {
+  it('derives the required sources from the workflow and builds the package on submit', async () => {
     el = dialogWithMock();
     mount(el);
     el.open();
     setFile(el.$('#workflowFile'), 'workflow.json', workflowJson('nightly-reconcile', 'Nightly Reconcile'));
-    // suggestSourcesFromWorkflow pre-fills a row named "petstore"; give it a file.
-    await waitFor(() => el.$$('.src-name').some((i) => i.value === 'petstore'));
-    const row = el.$$('.source-row').find((r) => r.querySelector('.src-name').value === 'petstore');
-    setFile(row.querySelector('.src-file'), 'petstore.json', JSON.stringify({ openapi: '3.1.0' }));
+    // The dialog reads sourceDescriptions and renders a required file input named "petstore".
+    const input = await waitFor(() => el.$('.src-file[data-name="petstore"]'));
+    setFile(input, 'petstore.json', JSON.stringify({ openapi: '3.1.0' }));
     el.$('#ownerName').value = 'Reconciliation Team';
     el.$('#ownerEmail').value = 'team@example.com';
     el.$('#tags').value = 'prod billing';
 
-    const added = nextEvent(el, 'version-added');
+    const added = nextEvent(el, 'workflow-added');
     el.$('.confirm').click();
     const e = await added;
     equal(e.detail.version.baseWorkflowId, 'nightly-reconcile', 'base id read from the built package');
     equal(e.detail.version.versionNumber, 4, 'catalog assigned the next version');
+  });
+
+  it('requires a document for every declared source', async () => {
+    el = dialogWithMock();
+    mount(el);
+    el.open();
+    setFile(el.$('#workflowFile'), 'workflow.json', workflowJson('nightly-reconcile', 'Nightly Reconcile'));
+    await waitFor(() => el.$('.src-file[data-name="petstore"]'));
+    el.$('#ownerName').value = 'Me';
+    el.$('#ownerEmail').value = 'me@example.com';
+    // Leave the petstore source file unset.
+    el.$('.confirm').click();
+    const banner = await waitFor(() => { const b = el.$('.error-banner'); return b && !b.hidden ? b : null; });
+    ok(/petstore/.test(banner.textContent), 'reports the missing source document');
   });
 
   it('validates required owner fields before submitting', async () => {
@@ -79,7 +92,7 @@ describe('<arazzo-catalog-add-dialog>', () => {
     el.$('#packageFile').files = dt.files;
     el.$('#ownerName').value = 'Me';
     el.$('#ownerEmail').value = 'me@example.com';
-    const added = nextEvent(el, 'version-added');
+    const added = nextEvent(el, 'workflow-added');
     el.$('.confirm').click();
     const e = await added;
     equal(e.detail.version.status, 'Active');

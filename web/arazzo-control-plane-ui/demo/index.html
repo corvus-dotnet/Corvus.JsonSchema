@@ -114,7 +114,7 @@
     for (const type of ['run-selected', 'run-changed', 'run-deleted', 'purge-completed', 'error']) {
       panel.addEventListener(type, (e) => console.log(`[arazzo] ${type}`, e.detail));
     }
-    for (const type of ['version-selected', 'version-changed', 'version-deleted', 'purge-completed', 'error']) {
+    for (const type of ['version-selected', 'workflow-added', 'version-changed', 'version-deleted', 'purge-completed', 'error']) {
       catalog.addEventListener(type, (e) => console.log(`[arazzo:catalog] ${type}`, e.detail));
     }
   </script>

@@ -1,4 +1,4 @@
-// <arazzo-catalog-add-dialog> — a modal for adding a new catalog version.
+// <arazzo-catalog-add-dialog> — a modal for adding a workflow to the catalog.
 //
 //   const dlg = document.querySelector('arazzo-catalog-add-dialog');
 //   dlg.client = client;
@@ -6,21 +6,20 @@
 //
 // Properties : .client
 // Methods    : open(), close()
-// Events     : version-added {version}, error {problem}
+// Events     : workflow-added {version}, error {problem}
 //
-// Two ways to supply the package: BUILD it in-browser from a workflow document + its source documents (the
-// catalog assigns the version number — submit the bare base workflow id, NOT a `-vN`), or UPLOAD a pre-built
-// package archive (e.g. from the `arazzo catalog pack` CLI). Owner is the governance contact.
+// You add a *workflow* (an Arazzo workflow document + the source documents it references); the catalog
+// assigns the version (a new workflow id starts at v1, an existing one gets the next version — submit the
+// bare workflow id, NOT a `-vN`). Two ways to supply it: BUILD it in-browser from the workflow + its
+// sources (the dialog reads the workflow's `sourceDescriptions` and requires a document for each), or
+// UPLOAD a pre-built package archive (e.g. from the `arazzo catalog pack` CLI).
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import { packWorkflowPackage } from '../workflow-package.js';
 
-class ArazzoCatalogAddDialog extends ArazzoElement {
-  constructor() {
-    super();
-    /** @private */ this._sourceRows = 0;
-  }
+const SOURCES_HINT = 'Choose the workflow document above to see the source documents it requires.';
 
+class ArazzoCatalogAddDialog extends ArazzoElement {
   connectedCallback() {
     if (!this._built) this.render();
   }
@@ -31,9 +30,7 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
     this.$('form').reset();
     this.$('.error-banner').hidden = true;
     this.setMode('build');
-    this.$('.sources').replaceChildren();
-    this._sourceRows = 0;
-    this.addSourceRow();
+    this.$('.sources').innerHTML = `<div class="hint">${SOURCES_HINT}</div>`;
     this.$('dialog').showModal();
   }
 
@@ -70,23 +67,26 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
         .mode { display: inline-flex; gap: 6px; align-items: center; border: 1px solid var(--_border); border-radius: var(--_radius); padding: 6px 10px; cursor: pointer; font-size: 13px; }
         .mode:has(input:checked) { border-color: var(--_accent); background: color-mix(in srgb, var(--_accent) 8%, transparent); }
         label { font-size: 12px; color: var(--_muted); display: block; margin-bottom: 4px; }
-        .row { display: grid; gap: 10px; }
         .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         input[type="text"], input[type="email"], input[type="url"] {
           width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border);
           border-radius: var(--_radius); background: var(--_bg); color: var(--_text);
         }
         input[type="file"] { font: inherit; font-size: 12px; }
-        .source-row { display: grid; grid-template-columns: 1fr 1.4fr auto; gap: 8px; align-items: center; }
-        .source-row .rm { padding: 4px 8px; }
+        .sources { display: grid; gap: 8px; }
+        .source-row { display: grid; grid-template-columns: 1fr 1.3fr; gap: 10px; align-items: center; border: 1px solid var(--_border); border-radius: var(--_radius); padding: 8px 10px; }
+        .src-meta { display: grid; gap: 1px; }
+        .src-label { font-weight: 600; font-size: 13px; color: var(--_text); }
+        .src-type { font-size: 11px; color: var(--_muted); text-transform: uppercase; letter-spacing: 0.03em; }
         .hint { font-size: 11px; color: var(--_muted); }
+        .hint.err { color: var(--_danger); }
         .foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
       </style>
       <dialog part="dialog">
         <form method="dialog">
           <div class="head">
-            <div class="title">Add catalog version</div>
-            <div class="subhead">The catalog assigns the version number — submit the bare workflow id (no <code>-vN</code>).</div>
+            <div class="title">Add workflow</div>
+            <div class="subhead">The catalog assigns the version — a new workflow id starts at v1, an existing one gets the next version. Submit the bare id (no <code>-vN</code>).</div>
           </div>
           <div class="content">
             <div class="modes" part="modes">
@@ -95,13 +95,11 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
             </div>
 
             <fieldset class="mode-fields" data-mode="build">
-              <legend>Documents</legend>
+              <legend>Workflow &amp; sources</legend>
               <div><label for="workflowFile">Arazzo workflow document (.json)</label><input id="workflowFile" type="file" accept=".json,application/json"></div>
               <div>
-                <label>Source documents (name → file)</label>
-                <div class="sources"></div>
-                <button type="button" class="add-source ghost" style="margin-top:8px">+ Add source</button>
-                <div class="hint">Each name must match a <code>sourceDescriptions[].name</code> in the workflow.</div>
+                <label>Source documents (required — one per <code>sourceDescriptions</code> entry)</label>
+                <div class="sources"><div class="hint">${SOURCES_HINT}</div></div>
               </div>
             </fieldset>
 
@@ -126,15 +124,14 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
           </div>
           <div class="foot">
             <button value="dismiss" class="ghost" type="submit">Cancel</button>
-            <button value="confirm" class="primary confirm" type="submit">Add version</button>
+            <button value="confirm" class="primary confirm" type="submit">Add workflow</button>
           </div>
         </form>
       </dialog>
     `;
 
     this.$$('input[name="mode"]').forEach((r) => r.addEventListener('change', () => this.setMode(r.value)));
-    this.$('.add-source').addEventListener('click', () => this.addSourceRow());
-    this.$('#workflowFile').addEventListener('change', () => this.suggestSourcesFromWorkflow());
+    this.$('#workflowFile').addEventListener('change', () => this.deriveSources());
     this.$('form').addEventListener('submit', (e) => {
       if (e.submitter?.value === 'confirm') {
         e.preventDefault();
@@ -143,38 +140,32 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
     });
   }
 
-  addSourceRow(name = '') {
-    const row = document.createElement('div');
-    row.className = 'source-row';
-    row.innerHTML = `
-      <input type="text" class="src-name" placeholder="name" value="${escapeHtml(name)}">
-      <input type="file" class="src-file" accept=".json,application/json">
-      <button type="button" class="rm ghost danger" title="Remove">✕</button>`;
-    row.querySelector('.rm').addEventListener('click', () => row.remove());
-    this.$('.sources').appendChild(row);
-    this._sourceRows++;
-  }
-
-  /** When a workflow file is picked, pre-add a row for each declared sourceDescriptions name not already present. */
-  async suggestSourcesFromWorkflow() {
+  /** Read the chosen workflow and render a required file input for each `sourceDescriptions` entry. */
+  async deriveSources() {
+    const area = this.$('.sources');
     const file = this.$('#workflowFile').files?.[0];
-    if (!file) return;
+    if (!file) { area.innerHTML = `<div class="hint">${SOURCES_HINT}</div>`; return; }
     let doc;
     try {
       doc = JSON.parse(await file.text());
     } catch {
-      return; // invalid JSON is reported on submit
+      area.innerHTML = '<div class="hint err">The workflow document is not valid JSON.</div>';
+      return;
     }
-    const declared = Array.isArray(doc?.sourceDescriptions) ? doc.sourceDescriptions.map((s) => s?.name).filter(Boolean) : [];
-    const present = new Set(this.$$('.src-name').map((i) => i.value.trim()).filter(Boolean));
-    const empties = this.$$('.source-row').filter((r) => !r.querySelector('.src-name').value.trim());
-    for (const name of declared) {
-      if (present.has(name)) continue;
-      const empty = empties.shift();
-      if (empty) empty.querySelector('.src-name').value = name;
-      else this.addSourceRow(name);
-      present.add(name);
+    const decls = Array.isArray(doc?.sourceDescriptions) ? doc.sourceDescriptions.filter((s) => s?.name) : [];
+    if (decls.length === 0) {
+      area.innerHTML = '<div class="hint">This workflow declares no source documents.</div>';
+      return;
     }
+    area.innerHTML = decls.map((s) => `
+      <div class="source-row">
+        <div class="src-meta">
+          <span class="src-label">${escapeHtml(s.name)}</span>
+          ${s.type ? `<span class="src-type">${escapeHtml(s.type)}</span>` : ''}
+          ${s.url ? `<span class="hint">${escapeHtml(s.url)}</span>` : ''}
+        </div>
+        <input type="file" class="src-file" data-name="${escapeHtml(s.name)}" accept=".json,application/json">
+      </div>`).join('');
   }
 
   /** Build the multipart request (package blob + owner + tags), or throw a friendly Error for invalid input. */
@@ -205,13 +196,12 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
       } catch {
         throw new Error('The workflow document is not valid JSON.');
       }
+      // Every source the workflow declares must have a document.
       const sources = [];
-      for (const row of this.$$('.source-row')) {
-        const name = row.querySelector('.src-name').value.trim();
-        const file = row.querySelector('.src-file').files?.[0];
-        if (!name && !file) continue;
-        if (!name) throw new Error('Every source document needs a name.');
-        if (!file) throw new Error(`Choose a file for source "${name}".`);
+      for (const input of this.$$('.src-file')) {
+        const name = input.dataset.name;
+        const file = input.files?.[0];
+        if (!file) throw new Error(`Provide the source document for "${name}".`);
         const content = await file.text();
         try {
           JSON.parse(content);
@@ -243,7 +233,7 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
     try {
       const version = await this.client.addCatalogVersion(request);
       this.close();
-      this.emit('version-added', { version });
+      this.emit('workflow-added', { version });
     } catch (err) {
       const problem = err.problem || { title: err.message };
       banner.textContent = `${problem.title || 'Add failed'}${problem.detail ? ' — ' + problem.detail : ''}`;
