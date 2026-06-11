@@ -534,6 +534,6 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
             PRIMARY KEY (BaseWorkflowId, VersionNumber)
         );
         CREATE INDEX IF NOT EXISTS IX_CatalogVersions_Status ON CatalogVersions (Status);
-        CREATE INDEX IF NOT EXISTS IX_CatalogVersions_WorkflowId ON CatalogVersions (WorkflowId);
+        CREATE INDEX IF NOT EXISTS IX_CatalogVersions_WorkflowId ON CatalogVersions (WorkflowId COLLATE NOCASE);
         """;
 }

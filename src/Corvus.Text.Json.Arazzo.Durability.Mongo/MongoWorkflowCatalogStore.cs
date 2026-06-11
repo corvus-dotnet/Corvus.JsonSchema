@@ -189,8 +189,10 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
 
         if (query.WorkflowIdPrefix is { Length: > 0 } workflowIdPrefix)
         {
-            // Anchored (^) prefix regex — index-usable; case-insensitive to match the other backends.
-            filter = b.And(filter, b.Regex("workflowId", new BsonRegularExpression("^" + EscapeRegex(workflowIdPrefix), "i")));
+            // Anchored (^) prefix regex on the lowercased field, CASE-SENSITIVE (no "i") so it uses the
+            // workflowIdLower index — a case-insensitive regex cannot. The lowercased field + lowercased
+            // prefix give case-insensitive behaviour while staying index-backed.
+            filter = b.And(filter, b.Regex("workflowIdLower", new BsonRegularExpression("^" + EscapeRegex(workflowIdPrefix.ToLowerInvariant()))));
         }
 
         if (query.Tags is { Count: > 0 } tags)
@@ -474,6 +476,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
             ["baseWorkflowId"] = version.BaseWorkflowId,
             ["versionNumber"] = version.VersionNumber,
             ["workflowId"] = version.WorkflowId,
+            ["workflowIdLower"] = version.WorkflowId.ToLowerInvariant(),
             ["title"] = version.Title,
             ["description"] = (BsonValue?)version.Description ?? BsonNull.Value,
             ["status"] = version.Status.ToString(),
@@ -500,6 +503,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
             Builders<BsonDocument>.IndexKeys.Ascending("baseWorkflowId").Descending("versionNumber"));
         var bySortKey = new CreateIndexModel<BsonDocument>(Builders<BsonDocument>.IndexKeys.Ascending("sortKey"));
         var byStatus = new CreateIndexModel<BsonDocument>(Builders<BsonDocument>.IndexKeys.Ascending("status"));
-        await this.versions.Indexes.CreateManyAsync([byBaseVersion, bySortKey, byStatus], cancellationToken).ConfigureAwait(false);
+        var byWorkflowIdLower = new CreateIndexModel<BsonDocument>(Builders<BsonDocument>.IndexKeys.Ascending("workflowIdLower"));
+        await this.versions.Indexes.CreateManyAsync([byBaseVersion, bySortKey, byStatus, byWorkflowIdLower], cancellationToken).ConfigureAwait(false);
     }
 }
