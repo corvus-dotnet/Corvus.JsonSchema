@@ -50,7 +50,11 @@ class ArazzoValueEditor extends ArazzoElement {
     if (!this._validator) this._clearErrors();
   }
 
-  /** The assembled value. Throws a friendly {@link Error} when a field's input is invalid. */
+  /**
+   * The assembled value. Typed fields assemble best-effort (blank optionals are omitted) and never throw —
+   * conformance is reported by the server via {@link validator}. The raw-JSON fallback still throws on input
+   * that isn't valid JSON, since there is nothing to validate until it parses.
+   */
   get value() { return this._read ? this._read() : undefined; }
 
   renderShell() {
@@ -63,8 +67,10 @@ class ArazzoValueEditor extends ArazzoElement {
         .field > label { font-size: 12px; color: var(--_muted); display: block; margin-bottom: 3px; }
         .field > label.check { display: flex; gap: 8px; align-items: center; margin-bottom: 0; cursor: pointer; }
         .field > label.check input { width: auto; }
-        .field .req { color: var(--_danger); }
+        .field .req { color: var(--_danger); font-weight: 700; }
+        .field.required > label { color: var(--_text); }
         .field .desc { font-size: 11px; color: var(--_muted); margin-top: 2px; }
+        .field .hint { font-size: 11px; color: var(--_muted); margin-top: 2px; font-variant-numeric: tabular-nums; }
         input[type="text"], input[type="number"], input[type="date"], input[type="datetime-local"], input[type="time"],
         input[type="email"], input[type="url"], select, textarea {
           width: 100%; font: inherit; padding: 7px 8px; border: 1px solid var(--_border);
@@ -259,7 +265,8 @@ function attachError(container, ctx, pathFn) {
 
 /**
  * Build one field for a descriptor. Returns its DOM node and a `read()` that returns the field's value (or
- * `undefined` when blank/optional), throwing a friendly Error on invalid input.
+ * `undefined` when blank/optional). Typed readers never throw — they assemble best-effort and leave
+ * conformance to the server; only the raw-JSON fallback throws (on input that isn't valid JSON).
  * @param {object} d The TypeDescriptor.
  * @param {{ name: (string|null), required: boolean }} ctx
  * @returns {{ node: HTMLElement, read: () => any }}
@@ -298,6 +305,37 @@ function descHtml(d) {
   return d?.description ? `<div class="desc">${escapeHtml(d.description)}</div>` : '';
 }
 
+/** A compact, human hint of a field's constraints (range, length, multipleOf, pattern, …) for the label area. */
+function constraintHint(d) {
+  if (!d || typeof d !== 'object') return '';
+  const parts = [];
+  if (d.type === 'integer' || d.type === 'number') {
+    if (d.minimum != null && d.maximum != null) parts.push(`${d.minimum}–${d.maximum}`);
+    else if (d.exclusiveMinimum != null) parts.push(`> ${d.exclusiveMinimum}`);
+    else if (d.minimum != null) parts.push(`≥ ${d.minimum}`);
+    else if (d.exclusiveMaximum != null) parts.push(`< ${d.exclusiveMaximum}`);
+    else if (d.maximum != null) parts.push(`≤ ${d.maximum}`);
+    if (d.multipleOf != null) parts.push(`multiple of ${d.multipleOf}`);
+  } else if (d.type === 'string') {
+    if (d.minLength != null && d.maxLength != null) parts.push(`${d.minLength}–${d.maxLength} chars`);
+    else if (d.maxLength != null) parts.push(`≤ ${d.maxLength} chars`);
+    else if (d.minLength != null) parts.push(`≥ ${d.minLength} chars`);
+    if (d.format && !STRING_FORMAT_INPUT[d.format]) parts.push(d.format);
+    if (d.pattern) parts.push(`pattern: ${d.pattern}`);
+  } else if (d.type === 'array') {
+    if (d.minItems != null && d.maxItems != null) parts.push(`${d.minItems}–${d.maxItems} items`);
+    else if (d.maxItems != null) parts.push(`≤ ${d.maxItems} items`);
+    else if (d.minItems != null) parts.push(`≥ ${d.minItems} items`);
+    if (d.uniqueItems) parts.push('unique');
+  }
+  return parts.join(' · ');
+}
+
+function hintHtml(d) {
+  const hint = constraintHint(d);
+  return hint ? `<div class="hint">${escapeHtml(hint)}</div>` : '';
+}
+
 function objectField(d, ctx) {
   const props = (d.properties && typeof d.properties === 'object') ? d.properties : {};
   const required = new Set(Array.isArray(d.required) ? d.required : []);
@@ -324,7 +362,7 @@ function objectField(d, ctx) {
     const childPath = () => { const p = ctx.path(); return p == null ? null : `${p}/${escapePointer(name)}`; };
     const childCtx = { name, required: required.has(name), path: childPath, editor: ctx.editor };
     const field = document.createElement('div');
-    field.className = 'field';
+    field.className = childCtx.required ? 'field required' : 'field';
     const built = buildField(props[name], childCtx);
     if (props[name]?.type === 'boolean') {
       // A checkbox reads best inline with its label, not stacked beneath it.
@@ -343,6 +381,7 @@ function objectField(d, ctx) {
       }
       field.appendChild(built.node);
     }
+    field.insertAdjacentHTML('beforeend', hintHtml(props[name]));
     field.insertAdjacentHTML('beforeend', descHtml(props[name]));
     attachError(field, ctx, childPath);
     wrap.appendChild(field);
@@ -359,10 +398,9 @@ function objectField(d, ctx) {
 
   const read = () => {
     const out = {};
-    for (const [name, r, req] of readers) {
+    for (const [name, r] of readers) {
       const v = r();
       if (v !== undefined) out[name] = v;
-      else if (req) throw new Error(`"${name}" is required.`);
     }
     const entries = readMap();
     for (const k of Object.keys(entries)) out[k] = entries[k];
@@ -447,13 +485,7 @@ function unionField(d, ctx) {
   wrap.append(select, slot);
   return {
     node: wrap,
-    read: () => {
-      if (!current) {
-        if (ctx.required) throw new Error(`"${ctx.name ?? 'value'}" requires a choice.`);
-        return undefined;
-      }
-      return current.read();
-    },
+    read: () => (current ? current.read() : undefined),
   };
 }
 
@@ -486,6 +518,7 @@ function tupleField(d, ctx) {
       field.appendChild(label);
     }
     field.appendChild(built.node);
+    field.insertAdjacentHTML('beforeend', hintHtml(pd));
     field.insertAdjacentHTML('beforeend', descHtml(pd));
     attachError(field, ctx, slotPath);
     wrap.appendChild(field);
@@ -555,10 +588,9 @@ function numberField(d, ctx) {
     node: input,
     read: () => {
       const raw = input.value.trim();
-      if (raw === '') { if (ctx.required) throw new Error(`"${ctx.name}" is required.`); return undefined; }
+      if (raw === '') return undefined;
       const n = Number(raw);
-      if (Number.isNaN(n)) throw new Error(`"${ctx.name}" must be a number.`);
-      return n;
+      return Number.isNaN(n) ? undefined : n; // conformance is the server's job; assemble best-effort
     },
   };
 }
@@ -580,8 +612,7 @@ function stringField(d, ctx) {
       let raw = input.value;
       // datetime-local lacks a timezone; normalise to an ISO instant for date-time.
       if (d.format === 'date-time' && raw) raw = new Date(raw).toISOString();
-      if (raw === '') { if (ctx.required) throw new Error(`"${ctx.name}" is required.`); return undefined; }
-      return raw;
+      return raw === '' ? undefined : raw;
     },
   };
 }
@@ -727,11 +758,12 @@ function unknownField(d, ctx) {
     node: textarea,
     read: () => {
       const raw = textarea.value.trim();
-      if (raw === '') { if (ctx.required) throw new Error(`"${ctx.name}" is required.`); return undefined; }
+      if (raw === '') return undefined;
+      // The one local check that must stay: there's nothing to schema-validate until the text is valid JSON.
       try {
         return JSON.parse(raw);
       } catch {
-        throw new Error(`"${ctx.name ?? 'value'}" is not valid JSON.`);
+        throw new Error('Enter a valid JSON value.');
       }
     },
   };
