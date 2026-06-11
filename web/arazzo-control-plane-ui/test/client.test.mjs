@@ -5,7 +5,17 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { ArazzoControlPlaneClient, ProblemError } from '../src/arazzo-client.js';
+import { packWorkflowPackage } from '../src/workflow-package.js';
 import { createMockControlPlane } from '../demo/mock-api.js';
+
+function workflowJson(workflowId, title, sources = []) {
+  return JSON.stringify({
+    arazzo: '1.1.0',
+    info: { title, description: `${title} — workflow.` },
+    sourceDescriptions: sources.map((s) => ({ name: s.name, type: s.type || 'openapi' })),
+    workflows: [{ workflowId, steps: [] }],
+  });
+}
 
 function makeClient() {
   const mock = createMockControlPlane({ latencyMs: 0 });
@@ -190,6 +200,35 @@ test('addCatalogVersion uploads a package as multipart and returns the new summa
 test('addCatalogVersion rejects a missing package or owner before calling the server', async () => {
   await assert.rejects(async () => makeClient().addCatalogVersion({ owner: { name: 'x', email: 'y' } }), TypeError);
   await assert.rejects(async () => makeClient().addCatalogVersion({ package: new Blob(['x']) }), TypeError);
+});
+
+test('packWorkflowPackage builds an archive the catalog versions by base id (auto-versioning)', async () => {
+  const c = makeClient();
+  // The seed already has nightly-reconcile v1/v2/v3 → an upload becomes v4 for that base.
+  const pkg = packWorkflowPackage(
+    workflowJson('nightly-reconcile', 'Nightly Reconcile', [{ name: 'petstore' }]),
+    [{ name: 'petstore', content: JSON.stringify({ openapi: '3.1.0', info: { title: 'Petstore', version: '1.0.0' } }) }],
+  );
+  const added = await c.addCatalogVersion({ package: pkg, owner: { name: 'Me', email: 'me@example.com' }, tags: ['prod'] });
+  assert.equal(added.baseWorkflowId, 'nightly-reconcile');
+  assert.equal(added.versionNumber, 4, 'continues the existing version line');
+  assert.equal(added.workflowId, 'nightly-reconcile-v4', 'workflow id rewritten with the assigned version');
+  assert.deepEqual(added.sources.map((s) => s.name), ['petstore'], 'sources projected from the package');
+
+  // A brand-new base id starts at v1.
+  const fresh = await c.addCatalogVersion({
+    package: packWorkflowPackage(workflowJson('brand-new', 'Brand New'), []),
+    owner: { name: 'Me', email: 'me@example.com' },
+  });
+  assert.equal(fresh.workflowId, 'brand-new-v1');
+});
+
+test('addCatalogVersion is rejected (400) when the package workflow id already carries -vN', async () => {
+  const c = makeClient();
+  const pkg = packWorkflowPackage(workflowJson('thing-v2', 'Thing'), []);
+  await assert.rejects(
+    () => c.addCatalogVersion({ package: pkg, owner: { name: 'a', email: 'b@example.com' } }),
+    (e) => e instanceof ProblemError && e.status === 400);
 });
 
 test('deleteCatalogVersion removes a version (then 404)', async () => {

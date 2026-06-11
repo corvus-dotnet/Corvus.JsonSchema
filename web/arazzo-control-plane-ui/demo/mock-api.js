@@ -411,7 +411,8 @@ export function createMockControlPlane(options = {}) {
   }
 
   async function addCatalogVersion(form) {
-    if (!form || !form.get('package') || !form.get('owner')) {
+    const pkg = form?.get('package');
+    if (!pkg || !form.get('owner')) {
       return problem(400, 'Invalid submission', 'A package and an owner are required.');
     }
     let owner;
@@ -420,15 +421,49 @@ export function createMockControlPlane(options = {}) {
     } catch {
       owner = { name: 'unknown', email: 'unknown' };
     }
-    const base = 'uploaded-workflow';
+
+    // Read the package the way the server does: pull the base workflow id from the bundled workflow.json,
+    // assign the next version for that base, and rewrite the workflow id to "<base>-vN".
+    let base = 'uploaded-workflow';
+    let title = 'Uploaded workflow';
+    let description = null;
+    let workflowDoc = { arazzo: '1.1.0', info: { title }, workflows: [{ workflowId: base }] };
+    const sources = {};
+    const sourceRefs = [];
+    try {
+      const entries = await readZip(await pkg.arrayBuffer());
+      if (entries?.has('workflow.json')) {
+        workflowDoc = JSON.parse(entries.get('workflow.json'));
+        const wfId = workflowDoc.workflows?.[0]?.workflowId || '';
+        if (/-v\d+$/.test(wfId)) {
+          return problem(400, 'Versioned workflow id', 'Submit the bare workflow id without a -vN suffix; the catalog assigns the version.');
+        }
+        base = wfId || base;
+        title = workflowDoc.info?.title || base;
+        description = workflowDoc.info?.description ?? null;
+        for (const [name, text] of entries) {
+          if (name.startsWith('sources/') && name.endsWith('.json')) {
+            const sn = name.slice('sources/'.length, -'.json'.length);
+            sources[sn] = JSON.parse(text);
+            const sd = (workflowDoc.sourceDescriptions || []).find((s) => s.name === sn);
+            sourceRefs.push({ name: sn, type: sd?.type || 'openapi' });
+          }
+        }
+      }
+    } catch {
+      // A non-package upload falls back to the generic placeholder base.
+    }
+
     const versionNumber = (catalog.filter((v) => v.baseWorkflowId === base).reduce((m, v) => Math.max(m, v.versionNumber), 0)) + 1;
+    const workflowId = `${base}-v${versionNumber}`;
+    if (workflowDoc.workflows?.[0]) workflowDoc.workflows[0].workflowId = workflowId;
     const v = {
-      baseWorkflowId: base, versionNumber, workflowId: `${base}-v${versionNumber}`,
-      title: 'Uploaded workflow', description: null, status: 'Active',
-      tags: form.getAll('tags'), owner, sources: [], hash: `mock-${Date.now()}`,
+      baseWorkflowId: base, versionNumber, workflowId,
+      title, description, status: 'Active',
+      tags: form.getAll('tags'), owner, sources: sourceRefs, hash: `${base}${versionNumber}`.padEnd(64, '0'),
       createdBy: 'demo', createdAt: iso(0),
-      _workflow: { arazzo: '1.1.0', info: { title: 'Uploaded workflow' }, workflows: [{ workflowId: `${base}-v${versionNumber}` }] },
-      _sources: {},
+      _workflow: workflowDoc,
+      _sources: sources,
     };
     catalog.push(v);
     return json(toCatalogSummary(v), 201);
@@ -453,6 +488,44 @@ function parseMs(value) {
   if (!value) return null;
   const ms = Date.parse(value);
   return Number.isNaN(ms) ? null : ms;
+}
+
+// Minimal ZIP reader (central-directory walk) → Map<entryName, utf8 text>. Handles the store method (the
+// in-browser packer) and DEFLATE (CLI-built packages, via DecompressionStream). Returns null if not a ZIP.
+async function readZip(arrayBuffer) {
+  const dv = new DataView(arrayBuffer);
+  const bytes = new Uint8Array(arrayBuffer);
+  const dec = new TextDecoder();
+  let eocd = -1;
+  for (let i = dv.byteLength - 22; i >= 0; i--) {
+    if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  }
+  if (eocd < 0) return null;
+  const count = dv.getUint16(eocd + 10, true);
+  let p = dv.getUint32(eocd + 16, true);
+  const out = new Map();
+  for (let n = 0; n < count; n++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    const method = dv.getUint16(p + 10, true);
+    const compSize = dv.getUint32(p + 20, true);
+    const nameLen = dv.getUint16(p + 28, true);
+    const extraLen = dv.getUint16(p + 30, true);
+    const commentLen = dv.getUint16(p + 32, true);
+    const localOff = dv.getUint32(p + 42, true);
+    const name = dec.decode(bytes.subarray(p + 46, p + 46 + nameLen));
+    const lhNameLen = dv.getUint16(localOff + 26, true);
+    const lhExtraLen = dv.getUint16(localOff + 28, true);
+    const dataStart = localOff + 30 + lhNameLen + lhExtraLen;
+    const comp = bytes.subarray(dataStart, dataStart + compSize);
+    if (method === 0) {
+      out.set(name, dec.decode(comp));
+    } else {
+      const stream = new Response(comp).body.pipeThrough(new DecompressionStream('deflate-raw'));
+      out.set(name, dec.decode(await new Response(stream).arrayBuffer()));
+    }
+    p += 46 + nameLen + extraLen + commentLen;
+  }
+  return out;
 }
 
 function btoaSafe(s) { return typeof btoa === 'function' ? btoa(s) : Buffer.from(s).toString('base64'); }
