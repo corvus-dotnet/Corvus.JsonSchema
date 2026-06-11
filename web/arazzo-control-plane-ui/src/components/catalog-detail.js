@@ -135,7 +135,7 @@ class ArazzoCatalogDetail extends ArazzoElement {
         header .wf { font-weight: 700; font-size: 15px; }
         header .ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; color: var(--_muted); }
         header .vswitch { font-size: 12px; color: var(--_muted); display: inline-flex; gap: 5px; align-items: center; }
-        header .vswitch select { font: inherit; font-size: 12px; padding: 3px 6px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: var(--_text); }
+        header .vswitch select { font: inherit; font-size: 12px; padding: 3px 22px 3px 6px; border: 1px solid var(--_border); border-radius: 6px; background-color: var(--_bg); color: var(--_text); background-position: right 6px center; background-size: 9px; }
         header .grow { flex: 1; }
         header .close { font-size: 16px; line-height: 1; }
         .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; }

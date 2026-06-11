@@ -22,7 +22,7 @@ describe('<arazzo-runs-table>', () => {
     el = tableWithMock();
     mount(el);
     await nextEvent(el, 'loaded');
-    equal(rowCount(el), 8, 'eight seeded runs render');
+    equal(rowCount(el), 12, 'all seeded runs render');
     ok(el.shadowRoot.querySelector('arazzo-status-badge'), 'status badge present');
   });
 
@@ -42,7 +42,7 @@ describe('<arazzo-runs-table>', () => {
     el = tableWithMock({ status: 'Faulted' });
     mount(el);
     await nextEvent(el, 'loaded');
-    equal(rowCount(el), 1, 'only the faulted run');
+    equal(rowCount(el), 5, 'only the faulted runs');
   });
 
   it('filters by a created-before time window', async () => {

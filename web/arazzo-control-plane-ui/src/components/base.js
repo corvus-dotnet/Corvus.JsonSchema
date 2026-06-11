@@ -45,6 +45,18 @@ export const SHARED_CSS = `
   button.ghost { background: transparent; border-color: transparent; }
   a { color: var(--_accent); }
   .muted { color: var(--_muted); }
+  /* Replace the native dropdown chevron (which ignores the kit theme and vanishes on dark surfaces)
+     with a neutral-grey one that reads on both light and dark backgrounds. Components must use
+     'background-color' (never the 'background' shorthand) on selects so they don't reset this image. */
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%23808a99' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 11px;
+    padding-right: 30px;
+  }
   .error-banner {
     border: 1px solid var(--_danger);
     background: color-mix(in srgb, var(--_danger) 8%, transparent);
