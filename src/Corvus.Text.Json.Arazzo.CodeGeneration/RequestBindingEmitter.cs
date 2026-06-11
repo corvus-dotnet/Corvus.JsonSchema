@@ -329,10 +329,12 @@ public readonly record struct PayloadReplacement(string Target, string Value, Ar
 /// <param name="Method">The operation's HTTP method, upper-cased (e.g. <c>GET</c>).</param>
 /// <param name="Arguments">The step's parameter arguments, keyed by name.</param>
 /// <param name="Body">The step's request body, or <see langword="null"/>.</param>
+/// <param name="UrlLocal">The executor-owned <c>byte[]</c> local holding the resolved relative request URL (for an inlined <c>$url</c> operand), or <see langword="null"/> when no step criterion references <c>$url</c>.</param>
 public readonly record struct StepRequestContext(
     string Method,
     IReadOnlyList<StepArgument> Arguments,
-    StepBody? Body);
+    StepBody? Body,
+    string? UrlLocal = null);
 
 /// <summary>
 /// The code emitted for a step's request binding (plan §3.1).
