@@ -17,13 +17,17 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore
     // Keyed by sort key ("{baseWorkflowId}{versionNumber:D10}") so enumeration is stable for keyset paging.
     private readonly SortedDictionary<string, Stored> versions = new(StringComparer.Ordinal);
     private readonly TimeProvider timeProvider;
+    private readonly IWorkflowMetadataProvider? metadataProvider;
     private readonly Lock gate = new();
 
     /// <summary>Initializes a new instance of the <see cref="InMemoryWorkflowCatalogStore"/> class.</summary>
     /// <param name="timeProvider">The time source for audit timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
-    public InMemoryWorkflowCatalogStore(TimeProvider? timeProvider = null)
+    /// <param name="metadataProvider">An optional provider that bakes the typed schema-metadata document into each
+    /// added version; <see langword="null"/> to store packages without it.</param>
+    public InMemoryWorkflowCatalogStore(TimeProvider? timeProvider = null, IWorkflowMetadataProvider? metadataProvider = null)
     {
         this.timeProvider = timeProvider ?? TimeProvider.System;
+        this.metadataProvider = metadataProvider;
     }
 
     /// <inheritdoc/>
@@ -37,7 +41,7 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore
         lock (this.gate)
         {
             int versionNumber = this.MaxVersion(baseWorkflowId) + 1;
-            CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber);
+            CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider);
             var version = new CatalogVersion(
                 BaseWorkflowId: baseWorkflowId,
                 VersionNumber: versionNumber,
