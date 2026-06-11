@@ -16,7 +16,6 @@ import { ArazzoControlPlaneClient, CATALOG_STATUSES } from './arazzo-client.js';
 import { ArazzoElement, SHARED_CSS, escapeHtml, confirmDialog, define } from './components/base.js';
 import './components/catalog-table.js';
 import './components/catalog-detail.js';
-import './components/catalog-add-dialog.js';
 
 const LIGHT = `
   --arazzo-bg:#fff; --arazzo-surface:#f7f8fa; --arazzo-border:#e3e6ea; --arazzo-text:#1c2024;
@@ -91,8 +90,6 @@ class ArazzoCatalog extends ArazzoElement {
     if (detail) detail.setAttribute('scopes', this.getAttribute('scopes') || '');
     const purgeBtn = this.$('.purge-btn');
     if (purgeBtn) purgeBtn.hidden = !this.hasScope('catalog:purge');
-    const addBtn = this.$('.add-btn');
-    if (addBtn) addBtn.hidden = !this.hasScope('catalog:write');
   }
 
   themeTokens() {
@@ -116,8 +113,8 @@ class ArazzoCatalog extends ArazzoElement {
         .search { flex: 1; min-width: 150px; }
         .search input { width: 100%; font: inherit; padding: 6px 10px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); }
         .grow { flex: 1; }
-        .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
-        @media (min-width: 880px) { .layout.has-selection { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: start; } }
+        .layout { display: grid; grid-template-columns: 1fr; gap: 14px; }
+        @media (min-width: 880px) { .layout.has-selection { grid-template-columns: 1.4fr 1fr; align-items: start; } }
       </style>
       <div class="toolbar" part="toolbar">
         <div class="chips" part="filters">
@@ -128,14 +125,12 @@ class ArazzoCatalog extends ArazzoElement {
         <div class="search"><input class="owner-search" type="search" placeholder="Owner…" aria-label="Filter by owner"></div>
         <div class="search"><input class="tag-search" type="search" placeholder="Tags (space-separated, AND)…" aria-label="Filter by tags"></div>
         <button class="refresh ghost" type="button" title="Refresh">↻</button>
-        <button class="add-btn primary" type="button" ${this.hasScope('catalog:write') ? '' : 'hidden'}>Add workflow…</button>
         <button class="purge-btn danger" type="button" ${this.hasScope('catalog:purge') ? '' : 'hidden'}>Purge obsolete…</button>
       </div>
       <div class="layout" part="layout">
         <arazzo-catalog-table selectable part="table"></arazzo-catalog-table>
         <div class="detail-pane"></div>
       </div>
-      <arazzo-catalog-add-dialog></arazzo-catalog-add-dialog>
     `;
     void scopes;
   }
@@ -146,7 +141,7 @@ class ArazzoCatalog extends ArazzoElement {
     const layout = this.$('.layout');
 
     table.addEventListener('version-selected', (e) => {
-      this.showDetail(e.detail.version, e.detail.versions);
+      this.showDetail(e.detail.version);
       this.emit('version-selected', e.detail);
     });
     table.addEventListener('error', (e) => this.emit('error', e.detail));
@@ -168,15 +163,6 @@ class ArazzoCatalog extends ArazzoElement {
 
     this.$('.refresh').addEventListener('click', () => table.reload());
     this.$('.purge-btn').addEventListener('click', () => this.confirmPurge());
-
-    const addDialog = this.$('arazzo-catalog-add-dialog');
-    this.$('.add-btn').addEventListener('click', () => { addDialog.client = this.buildClient(); addDialog.open(); });
-    addDialog.addEventListener('workflow-added', (e) => {
-      table.reload();
-      this.showDetail(e.detail.version);
-      this.emit('workflow-added', e.detail);
-    });
-    addDialog.addEventListener('error', (e) => this.emit('error', e.detail));
 
     pane.addEventListener('version-changed', (e) => { table.refresh(); this.emit('version-changed', e.detail); });
     pane.addEventListener('version-deleted', (e) => { table.refresh(); this.clearDetail(); this.emit('version-deleted', e.detail); });
@@ -205,7 +191,7 @@ class ArazzoCatalog extends ArazzoElement {
     }
   }
 
-  showDetail(version, versions) {
+  showDetail(version) {
     if (!version) return this.clearDetail();
     let detail = this._pane.querySelector('arazzo-catalog-detail');
     if (!detail) {
@@ -215,7 +201,6 @@ class ArazzoCatalog extends ArazzoElement {
       detail.client = this.buildClient();
       this._pane.replaceChildren(detail);
     }
-    if (versions) detail.versions = versions;
     detail.version = version;
     this._layout.classList.add('has-selection');
   }
@@ -224,18 +209,6 @@ class ArazzoCatalog extends ArazzoElement {
     this._pane.replaceChildren();
     this._layout.classList.remove('has-selection');
   }
-
-  /**
-   * Reload the catalog list from page 1 and clear any open detail — the public hook the demo calls on a persona change.
-   * The new caller's reach changes the visible workflows, so the previous list and any now-out-of-reach open detail (which
-   * would 404 in the detail view) must be discarded.
-   */
-  reload() {
-    this.$('arazzo-catalog-table')?.reload();
-    this.clearDetail();
-  }
-
-  refresh() { this.reload(); }
 }
 
 define('arazzo-catalog', ArazzoCatalog);

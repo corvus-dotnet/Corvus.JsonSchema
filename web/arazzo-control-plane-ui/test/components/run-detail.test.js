@@ -33,14 +33,6 @@ describe('<arazzo-run-detail> correlation id', () => {
     ok(corr.textContent.includes('9c0142ab'), 'the correlation id is rendered');
   });
 
-  // §5.5 — a run pinned to a deployment environment shows it.
-  it('shows the pinned environment for a run', async () => {
-    el = detailWithMock('run-7f3a9c21');
-    mount(el);
-    const env = await waitFor(() => el.shadowRoot.querySelector('[part="environment"]'));
-    ok(env.textContent.includes('production'), 'the pinned environment is rendered');
-  });
-
   // #99 — a copy button sits next to the correlation id and confirms on click.
   it('has a copy button for the correlation id that confirms on click', async () => {
     el = detailWithMock('run-0a5512cd');

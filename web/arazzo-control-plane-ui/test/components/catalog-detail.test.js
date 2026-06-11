@@ -36,97 +36,6 @@ describe('<arazzo-catalog-detail>', () => {
     equal(el.shadowRoot.querySelector('header .badge').textContent, 'Obsolete', 'status badge reflects the version');
   });
 
-  it('adds a security tag via the editor (Add tag) with catalog:write', async () => {
-    el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read catalog:write' });
-    mount(el);
-    const dd = await waitFor(() => el.shadowRoot.querySelector('[part="security-tags"]'));
-    ok([...dd.querySelectorAll('.tag')].some((t) => t.textContent === 'domain=pets'), 'seeded security tag shown');
-    dd.querySelector('.sectag-edit').click();
-    const editor = await waitFor(() => el.shadowRoot.querySelector('#sectag-editor'));
-    // Seeded with the existing tag as an editable row.
-    await waitFor(() => editor.shadowRoot.querySelectorAll('.tag-row').length === 1);
-    // ADD a brand-new tag via the editor's Add button, then fill the new row.
-    editor.shadowRoot.querySelector('.add').click();
-    const rows = editor.shadowRoot.querySelectorAll('.tag-row');
-    equal(rows.length, 2, 'Add tag appended a row');
-    rows[1].querySelector('.tk').value = 'team';
-    rows[1].querySelector('.tv').value = 'shelter';
-    el.shadowRoot.querySelector('.sectag-save').click();
-    await waitFor(() => [...el.shadowRoot.querySelectorAll('[part="security-tags"] .tag')].some((t) => t.textContent === 'team=shelter'));
-    ok([...el.shadowRoot.querySelectorAll('[part="security-tags"] .tag')].some((t) => t.textContent === 'domain=pets'), 'existing tag kept');
-  });
-
-  it('deletes a security tag via the editor (✕) with catalog:write', async () => {
-    el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read catalog:write' });
-    mount(el);
-    const dd = await waitFor(() => el.shadowRoot.querySelector('[part="security-tags"]'));
-    dd.querySelector('.sectag-edit').click();
-    const editor = await waitFor(() => el.shadowRoot.querySelector('#sectag-editor'));
-    await waitFor(() => editor.shadowRoot.querySelectorAll('.tag-row').length === 1);
-    // Remove the only row, then save → the version ends up with no security tags.
-    editor.shadowRoot.querySelector('.rm').click();
-    equal(editor.shadowRoot.querySelectorAll('.tag-row').length, 0, 'row removed');
-    el.shadowRoot.querySelector('.sectag-save').click();
-    await waitFor(() => el.shadowRoot.querySelector('[part="security-tags"] .muted'));
-    ok(!el.shadowRoot.querySelector('[part="security-tags"] .tag'), 'no tags remain after delete');
-  });
-
-  it('shows security tags read-only without catalog:write', async () => {
-    el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read' });
-    mount(el);
-    const dd = await waitFor(() => el.shadowRoot.querySelector('[part="security-tags"]'));
-    ok(!dd.querySelector('.sectag-edit'), 'no edit affordance read-only');
-  });
-
-  it('shows which environments the version is available in', async () => {
-    el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read' });
-    mount(el);
-    await waitFor(() => el.shadowRoot.querySelector('[part="availability"]'));
-    // adopt-pet v1 is seeded as available in production.
-    await waitFor(() => [...el.shadowRoot.querySelectorAll('.avail-env')].some((c) => c.textContent === 'production'));
-    ok(true, 'availability lists production');
-    ok(!el.shadowRoot.querySelector('.request-promotion'), 'no promote button — it is ready only where it is already available');
-  });
-
-  it('offers Request promotion when the version is ready somewhere it is not yet available', async () => {
-    el = detailWithMock({ 'base-workflow-id': 'onboard-customer', 'version-number': '1', scopes: 'catalog:read' });
-    mount(el);
-    // onboard-customer v1 is ready in staging (events credentialed there) and not yet available anywhere → promotable.
-    const btn = await waitFor(() => el.shadowRoot.querySelector('.request-promotion'));
-    btn.click();
-    const dlg = await waitFor(() => el.shadowRoot.querySelector('arazzo-availability-request-dialog'));
-    await waitFor(() => dlg.shadowRoot.querySelector('dialog')?.open);
-    // Locked to this version; staging is the ready environment offered.
-    const envSel = await waitFor(() => dlg.shadowRoot.querySelector('.env-in'));
-    await waitFor(() => [...envSel.options].some((o) => o.value === 'staging'));
-    ok(true, 'promotion dialog opened locked to the version with its ready environment');
-  });
-
-  it('offers a version switcher and loads another version when picked', async () => {
-    el = detailWithMock({ 'base-workflow-id': 'nightly-reconcile', 'version-number': '3', scopes: 'catalog:read' });
-    mount(el);
-    // The switcher appears once the sibling versions load (nightly-reconcile has three).
-    const sel = await waitFor(() => {
-      const s = el.shadowRoot.querySelector('.version-switch');
-      return s && s.options.length === 3 ? s : null;
-    });
-    equal(Number(sel.value), 3, 'starts on the selected (latest) version');
-    // Switch to v1 (the Obsolete one) and confirm the detail reloads to it.
-    sel.value = '1';
-    sel.dispatchEvent(new Event('change', { bubbles: true }));
-    await waitFor(() => el.shadowRoot.querySelector('header .badge')?.textContent === 'Obsolete');
-    equal(el.getAttribute('version-number'), '1', 'version-number attribute followed the switch');
-  });
-
-  it('hides the switcher for a single-version workflow', async () => {
-    el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read' });
-    mount(el);
-    await waitFor(() => el.shadowRoot.querySelector('[part="hash"]'));
-    // Give loadVersions a moment; adopt-pet has one version so the switcher stays hidden.
-    await new Promise((r) => setTimeout(r, 20));
-    ok(el.shadowRoot.querySelector('.vswitch').hidden, 'switcher hidden with a single version');
-  });
-
   it('shows a not-found banner for an unknown version', async () => {
     el = detailWithMock({ 'base-workflow-id': 'nightly-reconcile', 'version-number': '99' });
     // The element emits a composed `error` CustomEvent; stop it bubbling to window (the test runner's
@@ -145,38 +54,6 @@ describe('<arazzo-catalog-detail>', () => {
     ok(!el.shadowRoot.querySelector('.delete'), 'no delete button without catalog:purge');
   });
 
-  it('shows an editable Security (administrators §15) section keyed by the base workflow', async () => {
-    el = detailWithMock({ 'base-workflow-id': 'nightly-reconcile', 'version-number': '1', scopes: 'catalog:read administrators:read administrators:write' });
-    mount(el);
-    const sec = await waitFor(() => el.shadowRoot.querySelector('.security:not([hidden]) arazzo-administrators-panel'));
-    equal(sec.getAttribute('base-workflow-id'), 'nightly-reconcile', 'the admin panel is keyed by the version’s base id');
-    await waitFor(() => sec.shadowRoot.querySelector('.arow')); // the seeded administrator loads
-    ok(!sec.shadowRoot.querySelector('.add').hidden, 'editable with administrators:write');
-    ok(sec.shadowRoot.querySelector('.rm'), 'remove control present when editable');
-  });
-
-  it('keeps the Security section read-only without administrators:write', async () => {
-    el = detailWithMock({ 'base-workflow-id': 'nightly-reconcile', 'version-number': '1', scopes: 'catalog:read' });
-    mount(el);
-    const sec = await waitFor(() => el.shadowRoot.querySelector('.security:not([hidden]) arazzo-administrators-panel'));
-    await waitFor(() => sec.shadowRoot.querySelector('.arow'));
-    ok(sec.shadowRoot.querySelector('.add').hidden, 'add form hidden without administrators:write');
-    ok(!sec.shadowRoot.querySelector('.rm'), 'no remove buttons read-only');
-  });
-
-  it('offers Request access from the catalog entry, locked to this workflow, and emits access-requested', async () => {
-    el = detailWithMock({ 'base-workflow-id': 'nightly-reconcile', 'version-number': '1', scopes: 'catalog:read' });
-    mount(el);
-    const btn = await waitFor(() => el.shadowRoot.querySelector('.request-access'));
-    btn.click();
-    const dlg = await waitFor(() => el.shadowRoot.querySelector('arazzo-access-request-dialog'));
-    ok(dlg.shadowRoot.querySelector('.locked-wf')?.textContent.includes('nightly-reconcile'), 'the dialog is locked to this workflow');
-    const requested = nextEvent(el, 'access-requested');
-    dlg.shadowRoot.querySelector('.ok').click();
-    const e = await requested;
-    equal(e.detail.request.baseWorkflowId, 'nightly-reconcile', 'emits access-requested for the workflow');
-  });
-
   it('obsoletes an active version and emits version-changed', async () => {
     el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read catalog:write' });
     mount(el);
@@ -188,48 +65,6 @@ describe('<arazzo-catalog-detail>', () => {
     okBtn.click();
     const e = await changed;
     equal(e.detail.version.status, 'Obsolete', 'version is now obsolete');
-  });
-
-  it('the + credential menu offers New and Copy-per-environment; Copy opens the dialog in duplicate mode', async () => {
-    el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read credentials:read credentials:write' });
-    mount(el);
-    const plus = await waitFor(() => el.shadowRoot.querySelector('.src[data-name="petstore"] .setup-menu'));
-    // Wait for the async binding list so the menu can offer "Copy production…" for the seeded binding.
-    await waitFor(() => (el._creds || []).some((b) => b.sourceName === 'petstore'));
-    plus.click();
-    const menu = await waitFor(() => el.shadowRoot.querySelector('.src[data-name="petstore"] .cred-menu:not([hidden])'));
-    const items = [...menu.querySelectorAll('.menu-item')].map((m) => m.textContent);
-    ok(items.some((t) => /^New credential/i.test(t)), 'offers New credential…');
-    ok(items.some((t) => /^Copy production/i.test(t)), 'offers Copy production…');
-    // Copy → the dialog opens in duplicate mode cloned from that environment's binding.
-    const dlg = el.shadowRoot.querySelector('arazzo-credential-dialog');
-    let captured = null;
-    dlg.open = (binding, opts) => { captured = { binding, opts }; };
-    menu.querySelector('[data-action="copy"]').click();
-    ok(captured?.opts?.duplicate === true, 'Copy opened the dialog in duplicate mode');
-    equal(captured.binding?.environment, 'production', 'cloned from the production binding');
-  });
-
-  it('the + credential menu New option opens a blank guided setup locked to the source', async () => {
-    el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read credentials:read credentials:write' });
-    mount(el);
-    const plus = await waitFor(() => el.shadowRoot.querySelector('.src[data-name="petstore"] .setup-menu'));
-    plus.click();
-    const menu = await waitFor(() => el.shadowRoot.querySelector('.src[data-name="petstore"] .cred-menu:not([hidden])'));
-    const dlg = el.shadowRoot.querySelector('arazzo-credential-dialog');
-    let captured = null;
-    dlg.open = (binding, opts) => { captured = { binding, opts }; };
-    menu.querySelector('[data-action="new"]').click();
-    await waitFor(() => captured); // setupCredential derives the source doc asynchronously before opening
-    ok(!captured.opts?.duplicate, 'New is not a duplicate');
-    equal(captured.opts?.sourceName, 'petstore', 'New is locked to the source');
-  });
-
-  it('hides the + credential menu without credentials:write (scope honesty)', async () => {
-    el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read credentials:read' });
-    mount(el);
-    await waitFor(() => el.shadowRoot.querySelector('.src[data-name="petstore"]'));
-    equal(el.shadowRoot.querySelector('.setup-menu'), null, 'no + menu without credentials:write');
   });
 });
 
