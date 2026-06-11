@@ -172,6 +172,17 @@ test('getCatalogPackage returns the archive as a Blob', async () => {
   assert.ok(blob.size > 0);
 });
 
+test('getCatalogWorkflowSchemas returns typed inputs and resolved step outputs', async () => {
+  const c = makeClient();
+  const schemas = await c.getCatalogWorkflowSchemas('adopt-pet', 1);
+  const wf = schemas.workflows['adopt-pet-v1'];
+  assert.ok(wf, 'keyed by the versioned workflow id');
+  const reserve = wf.steps.reservePayment.outputs;
+  assert.equal(reserve.paymentId.format, 'uuid', 'string format recognised');
+  assert.equal(reserve.status.enum.length, 3, 'enum carried through for a dropdown');
+  assert.equal(reserve.amount.type, 'number');
+});
+
 test('getCatalogWorkflow and getCatalogSource return documents (and 404 for an unknown source)', async () => {
   const c = makeClient();
   const wf = await c.getCatalogWorkflow('adopt-pet', 1);
