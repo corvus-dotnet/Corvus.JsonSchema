@@ -4,7 +4,9 @@
 //   b.descriptor = { type: 'object', properties: { amount: { type:'number' }, status:{ type:'string', enum:[...] } } };
 //   const value = b.value;   // the assembled value (throws a friendly Error on invalid input)
 //
-// Properties : .descriptor (a TypeDescriptor — usually an object whose `properties` are the fields), .value
+// Properties : .descriptor (a TypeDescriptor — usually an object whose `properties` are the fields), .value,
+//              .validator (optional `async (value) => { valid, errors[] }` — when set, the editor validates on
+//              edit and shows each error next to the field its `instancePath` maps to, plus an unplaced summary)
 // Events     : (none; the host reads .value on submit)
 //
 // It renders a control suited to each field's recognised type/format/enum/constraints (date/datetime/email/uri
@@ -14,11 +16,17 @@
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 
+const VALIDATE_DEBOUNCE_MS = 350;
+
 class ArazzoValueEditor extends ArazzoElement {
   constructor() {
     super();
     /** @private */ this._descriptor = null;
     /** @private */ this._read = null; // root value reader installed by render()
+    /** @private */ this._validator = null;
+    /** @private */ this._errorTargets = []; // { pathFn: () => (string|null), el: HTMLElement }
+    /** @private */ this._validateSeq = 0;
+    /** @private */ this._validateTimer = null;
   }
 
   connectedCallback() {
@@ -32,6 +40,14 @@ class ArazzoValueEditor extends ArazzoElement {
   set descriptor(value) {
     this._descriptor = value;
     if (this.isConnected) { if (!this._built) this.renderShell(); this.renderForm(); }
+  }
+
+  /** An optional `async (value) => { valid, errors }` validator; when set, the editor validates live on edit. */
+  get validator() { return this._validator; }
+
+  set validator(fn) {
+    this._validator = typeof fn === 'function' ? fn : null;
+    if (!this._validator) this._clearErrors();
   }
 
   /** The assembled value. Throws a friendly {@link Error} when a field's input is invalid. */
@@ -74,9 +90,22 @@ class ArazzoValueEditor extends ArazzoElement {
         .union-slot:empty { display: none; }
         .union-slot { display: grid; gap: 10px; padding-left: 10px; border-left: 2px solid var(--_border); }
         .empty { color: var(--_muted); font-size: 12px; }
+        .err { color: var(--_danger); font-size: 11px; margin-top: 3px; }
+        .array-row .err, .map-row .err, .item .err { grid-column: 1 / -1; }
+        .item .err { padding: 0 8px 8px; }
+        .validation-summary {
+          border: 1px solid var(--_danger); border-radius: var(--_radius);
+          background: color-mix(in srgb, var(--_danger) 8%, transparent);
+          color: var(--_text); padding: 8px 10px; margin-bottom: 10px; font-size: 12px;
+        }
+        .validation-summary ul { margin: 4px 0 0; padding-left: 18px; }
       </style>
+      <div class="validation-summary" part="validation-summary" hidden></div>
       <div class="root"></div>
     `;
+    // Validate (debounced) whenever a control's value changes anywhere in the form.
+    this.shadowRoot.addEventListener('input', () => this._scheduleValidation());
+    this.shadowRoot.addEventListener('change', () => this._scheduleValidation());
   }
 
   renderForm() {
@@ -84,26 +113,148 @@ class ArazzoValueEditor extends ArazzoElement {
     if (!root) return;
     root.replaceChildren();
     this._read = null;
+    this._errorTargets = [];
+    this._clearErrors();
 
     const descriptor = this._descriptor;
     const noFields = !descriptor || typeof descriptor !== 'object'
-      || (descriptor.type === 'object' && (!descriptor.properties || Object.keys(descriptor.properties).length === 0));
+      || (descriptor.type === 'object'
+        && (!descriptor.properties || Object.keys(descriptor.properties).length === 0)
+        && !descriptor.additionalProperties);
 
     if (noFields) {
       // No typed schema → a raw-JSON object editor so the field still works.
       const hint = document.createElement('div');
       hint.className = 'empty';
       hint.textContent = 'No typed schema available — enter a JSON object.';
-      const built = unknownField({ type: 'unknown' }, { name: null, required: false });
+      const built = unknownField({ type: 'unknown' }, { name: null, required: false, path: rootPath, editor: this });
       root.append(hint, built.node);
       this._read = built.read;
       return;
     }
 
-    const built = buildField(descriptor, { name: null, required: false });
+    const built = buildField(descriptor, { name: null, required: false, path: rootPath, editor: this });
     root.appendChild(built.node);
     this._read = built.read;
   }
+
+  /** Register an error slot: `pathFn` returns the JSON Pointer this field currently maps to (or null). */
+  _registerError(pathFn, el) {
+    this._errorTargets.push({ pathFn, el });
+  }
+
+  /** @private */ _scheduleValidation() {
+    if (!this._validator) return;
+    if (this._validateTimer) clearTimeout(this._validateTimer);
+    this._validateTimer = setTimeout(() => this._runValidation(), VALIDATE_DEBOUNCE_MS);
+  }
+
+  /**
+   * Validate the current value and surface the results inline. Returns the result (or null when there's no
+   * validator or the value can't be assembled). Safe to call directly (e.g. from a host before submit).
+   */
+  async validate() {
+    if (!this._validator) return null;
+    let value;
+    try {
+      value = this.value;
+    } catch (err) {
+      this._clearFieldErrors();
+      this._setSummary([err.message]);
+      return { valid: false, errors: [{ message: err.message }] };
+    }
+    const seq = ++this._validateSeq;
+    let result;
+    try {
+      result = await this._validator(value);
+    } catch {
+      this._clearErrors(); // validation unavailable → don't show stale/false errors
+      return null;
+    }
+    if (seq !== this._validateSeq) return result; // superseded by a newer run
+    this._applyValidation(result?.errors || []);
+    return result;
+  }
+
+  /** @private */ _runValidation() { void this.validate(); }
+
+  /** @private */ _applyValidation(errors) {
+    // Drop slots whose field was removed (a deleted row, or a switched-away union variant).
+    this._errorTargets = this._errorTargets.filter((t) => t.el.isConnected);
+    const byPath = new Map();
+    for (const e of errors) {
+      const p = normalizePath(e.instancePath);
+      if (!byPath.has(p)) byPath.set(p, []);
+      byPath.get(p).push(e.message);
+    }
+
+    const placed = new Set();
+    for (const target of this._errorTargets) {
+      const path = target.pathFn();
+      const msgs = path != null ? byPath.get(normalizePath(path)) : null;
+      if (msgs && msgs.length) {
+        target.el.textContent = msgs.join('; ');
+        target.el.hidden = false;
+        placed.add(normalizePath(path));
+      } else {
+        target.el.textContent = '';
+        target.el.hidden = true;
+      }
+    }
+
+    const summary = [];
+    for (const [path, msgs] of byPath) {
+      if (!placed.has(path)) {
+        for (const m of msgs) summary.push(`${path || '(root)'}: ${m}`);
+      }
+    }
+    this._setSummary(summary);
+  }
+
+  /** @private */ _clearFieldErrors() {
+    for (const target of this._errorTargets) { target.el.textContent = ''; target.el.hidden = true; }
+  }
+
+  /** @private */ _clearErrors() {
+    this._clearFieldErrors();
+    this._setSummary([]);
+  }
+
+  /** @private */ _setSummary(messages) {
+    const el = this.$('.validation-summary');
+    if (!el) return;
+    if (!messages.length) { el.hidden = true; el.replaceChildren(); return; }
+    el.hidden = false;
+    el.replaceChildren();
+    const head = document.createElement('strong');
+    head.textContent = messages.length === 1 ? '1 problem' : `${messages.length} problems`;
+    const list = document.createElement('ul');
+    for (const m of messages) {
+      const li = document.createElement('li');
+      li.textContent = m;
+      list.appendChild(li);
+    }
+    el.append(head, list);
+  }
+}
+
+/** The root field's path function — the empty JSON Pointer. */
+function rootPath() { return ''; }
+
+/** Escape a JSON Pointer reference token (RFC 6901). */
+function escapePointer(token) { return String(token).replaceAll('~', '~0').replaceAll('/', '~1'); }
+
+/** Normalise a JSON Pointer for comparison (treat the root as ""). */
+function normalizePath(path) { return (path === '/' || path == null) ? '' : path; }
+
+/** Append an error slot to a field container and register it under `pathFn` with the editor. */
+function attachError(container, ctx, pathFn) {
+  if (!ctx.editor) return;
+  const el = document.createElement('div');
+  el.className = 'err';
+  el.hidden = true;
+  container.appendChild(el);
+  ctx.editor._registerError(pathFn, el);
 }
 
 /**
@@ -170,7 +321,8 @@ function objectField(d, ctx) {
 
   const readers = [];
   for (const name of names) {
-    const childCtx = { name, required: required.has(name) };
+    const childPath = () => { const p = ctx.path(); return p == null ? null : `${p}/${escapePointer(name)}`; };
+    const childCtx = { name, required: required.has(name), path: childPath, editor: ctx.editor };
     const field = document.createElement('div');
     field.className = 'field';
     const built = buildField(props[name], childCtx);
@@ -192,6 +344,7 @@ function objectField(d, ctx) {
       field.appendChild(built.node);
     }
     field.insertAdjacentHTML('beforeend', descHtml(props[name]));
+    attachError(field, ctx, childPath);
     wrap.appendChild(field);
     readers.push([name, built.read, childCtx.required]);
   }
@@ -199,7 +352,7 @@ function objectField(d, ctx) {
   // A free-form map (additionalProperties): arbitrary user-named keys whose values follow one schema.
   let readMap = () => ({});
   if (mapValue) {
-    const map = mapField(mapValue);
+    const map = mapField(mapValue, ctx);
     wrap.appendChild(map.node);
     readMap = map.read;
   }
@@ -219,7 +372,7 @@ function objectField(d, ctx) {
 }
 
 /** A map editor for an object's `additionalProperties`: rows of a user-typed key plus a typed value control. */
-function mapField(valueDesc) {
+function mapField(valueDesc, ctx) {
   const wrap = document.createElement('div');
   wrap.className = 'map';
   const head = document.createElement('div');
@@ -240,11 +393,14 @@ function mapField(valueDesc) {
     key.type = 'text';
     key.placeholder = 'key';
     key.className = 'map-key';
-    const built = buildField(valueDesc, { name: null, required: false });
+    // The value's path follows the live key (a map entry is `<parent>/<key>`).
+    const valuePath = () => { const p = ctx.path(); const k = key.value.trim(); return (p == null || !k) ? null : `${p}/${escapePointer(k)}`; };
+    const built = buildField(valueDesc, { name: null, required: false, path: valuePath, editor: ctx.editor });
     const rm = removeButton();
     const entry = { key, read: built.read, row };
-    rm.addEventListener('click', () => { row.remove(); const i = rows.indexOf(entry); if (i >= 0) rows.splice(i, 1); });
+    rm.addEventListener('click', () => { row.remove(); const i = rows.indexOf(entry); if (i >= 0) rows.splice(i, 1); ctx.editor?._scheduleValidation(); });
     row.append(key, built.node, rm);
+    attachError(row, ctx, valuePath);
     items.appendChild(row);
     rows.push(entry);
   };
@@ -283,7 +439,8 @@ function unionField(d, ctx) {
     current = null;
     if (select.value === '') return;
     const variant = variants[Number(select.value)];
-    current = buildField(variant, { name: null, required: true });
+    // A union adds no path segment — the chosen variant's value lives at the union's own path.
+    current = buildField(variant, { name: null, required: true, path: ctx.path, editor: ctx.editor });
     slot.appendChild(current.node);
   };
   select.addEventListener('change', rebuild);
@@ -320,7 +477,8 @@ function tupleField(d, ctx) {
   prefix.forEach((pd, i) => {
     const field = document.createElement('div');
     field.className = 'field';
-    const childCtx = { name: pd?.title || `#${i + 1}`, required: false };
+    const slotPath = () => { const p = ctx.path(); return p == null ? null : `${p}/${i}`; };
+    const childCtx = { name: pd?.title || `#${i + 1}`, required: false, path: slotPath, editor: ctx.editor };
     const built = buildField(pd, childCtx);
     if (pd?.type !== 'object') {
       const label = document.createElement('label');
@@ -329,13 +487,14 @@ function tupleField(d, ctx) {
     }
     field.appendChild(built.node);
     field.insertAdjacentHTML('beforeend', descHtml(pd));
+    attachError(field, ctx, slotPath);
     wrap.appendChild(field);
     slotReaders.push(built.read);
   });
 
   let readExtra = () => undefined;
   if (d.items && typeof d.items === 'object') {
-    const extra = arrayField({ type: 'array', items: d.items }, { name: null, required: false });
+    const extra = arrayField({ type: 'array', items: d.items }, { name: null, required: false, path: ctx.path, editor: ctx.editor });
     const label = document.createElement('div');
     label.className = 'desc';
     label.textContent = 'Additional items';
@@ -440,16 +599,32 @@ function arrayField(d, ctx) {
   add.className = 'ghost';
   add.textContent = '+ Add item';
   const rowReaders = [];
-  const removeEntry = (entry) => { const i = rowReaders.indexOf(entry); if (i >= 0) rowReaders.splice(i, 1); };
+  const removeEntry = (entry) => { const i = rowReaders.indexOf(entry); if (i >= 0) rowReaders.splice(i, 1); ctx.editor?._scheduleValidation(); };
+  // A row's path is its index within the *built* array (blank/undefined rows are excluded, as in read()).
+  const rowPath = (entry) => () => {
+    const p = ctx.path();
+    if (p == null) return null;
+    let idx = 0;
+    for (const e of rowReaders) {
+      let v;
+      try { v = e.read(); } catch { v = undefined; }
+      if (v === undefined) { if (e === entry) return null; continue; }
+      if (e === entry) return `${p}/${idx}`;
+      idx++;
+    }
+    return null;
+  };
 
   const addInlineRow = () => {
     const row = document.createElement('div');
     row.className = 'array-row';
-    const built = buildField(itemDesc, { name: null, required: false });
+    const entry = { read: null, row };
+    const built = buildField(itemDesc, { name: null, required: false, path: rowPath(entry), editor: ctx.editor });
+    entry.read = built.read;
     const rm = removeButton();
-    const entry = { read: built.read, row };
     rm.addEventListener('click', () => { row.remove(); removeEntry(entry); });
     row.append(built.node, rm);
+    attachError(row, ctx, rowPath(entry));
     items.appendChild(row);
     rowReaders.push(entry);
   };
@@ -467,12 +642,14 @@ function arrayField(d, ctx) {
     const rm = removeButton();
     const body = document.createElement('div');
     body.className = 'item-body';
-    const built = buildField(itemDesc, { name: null, required: false });
+    const entry = { read: null, row };
+    const built = buildField(itemDesc, { name: null, required: false, path: rowPath(entry), editor: ctx.editor });
+    entry.read = built.read;
     body.appendChild(built.node);
     head.append(summary, edit, rm);
     row.append(head, body);
+    attachError(row, ctx, rowPath(entry));
 
-    const entry = { read: built.read, row };
     let editing = false;
     const setEditing = (v) => {
       editing = v;
