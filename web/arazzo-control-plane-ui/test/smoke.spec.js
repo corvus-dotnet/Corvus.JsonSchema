@@ -98,8 +98,8 @@ test('the Catalog Add version flow builds a package in-browser and the catalog v
   await page.locator('arazzo-catalog-add-dialog #workflowFile').setInputFiles({
     name: 'workflow.json', mimeType: 'application/json', buffer: Buffer.from(workflow),
   });
-  // The dialog auto-suggests a "petstore" source row from sourceDescriptions; attach its file.
-  await page.locator('arazzo-catalog-add-dialog .source-row .src-file').first().setInputFiles({
+  // The dialog derives a required "petstore" source from sourceDescriptions; attach its document.
+  await page.locator('arazzo-catalog-add-dialog .src-file[data-name="petstore"]').setInputFiles({
     name: 'petstore.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ openapi: '3.1.0' })),
   });
   await page.locator('arazzo-catalog-add-dialog #ownerName').fill('Reconciliation Team');
