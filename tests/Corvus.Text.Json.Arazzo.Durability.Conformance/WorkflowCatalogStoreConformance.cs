@@ -151,17 +151,24 @@ public abstract class WorkflowCatalogStoreConformance
         await store.AddAsync("adopt-pet", Package("adopt-pet"), Meta(), default);                   // adopt-pet-v1
         await store.AddAsync("adopt-pet", Package("adopt-pet"), Meta(), default);                   // adopt-pet-v2
         await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default);   // nightly-reconcile-v1
+        await store.AddAsync("Billing-Sync", Package("Billing-Sync"), Meta(), default);             // Billing-Sync-v1 (mixed case)
 
         // A base-name prefix matches every version of that workflow (the versioned id begins with the base id).
         (await store.QueryAsync(new CatalogQuery(WorkflowIdPrefix: "adopt"), default)).Versions.Count.ShouldBe(2);
-        // Case-insensitive.
-        (await store.QueryAsync(new CatalogQuery(WorkflowIdPrefix: "ADOPT-PET"), default)).Versions.Count.ShouldBe(2);
         // A versioned-id prefix narrows to the single version.
         (await store.QueryAsync(new CatalogQuery(WorkflowIdPrefix: "adopt-pet-v2"), default)).Versions.Count.ShouldBe(1);
         // A different workflow.
         (await store.QueryAsync(new CatalogQuery(WorkflowIdPrefix: "nightly"), default)).Versions.Count.ShouldBe(1);
         // No match.
         (await store.QueryAsync(new CatalogQuery(WorkflowIdPrefix: "zzz"), default)).Versions.Count.ShouldBe(0);
+
+        // Case-insensitive BOTH ways: an upper-case prefix matches lower-case ids, and a lower-case prefix
+        // matches a mixed-case id. (Backends index this via lower()/NOCASE/lowered-field, see the stores.)
+        (await store.QueryAsync(new CatalogQuery(WorkflowIdPrefix: "ADOPT-PET"), default)).Versions.Count.ShouldBe(2);
+        (await store.QueryAsync(new CatalogQuery(WorkflowIdPrefix: "AdOpT"), default)).Versions.Count.ShouldBe(2);
+        (await store.QueryAsync(new CatalogQuery(WorkflowIdPrefix: "billing"), default)).Versions.Count.ShouldBe(1);
+        (await store.QueryAsync(new CatalogQuery(WorkflowIdPrefix: "BILLING-SYNC"), default)).Versions.Count.ShouldBe(1);
+        (await store.QueryAsync(new CatalogQuery(WorkflowIdPrefix: "billing-sync-v1"), default)).Versions.Count.ShouldBe(1);
     }
 
     [TestMethod]
