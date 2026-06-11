@@ -36,6 +36,31 @@ describe('<arazzo-catalog-detail>', () => {
     equal(el.shadowRoot.querySelector('header .badge').textContent, 'Obsolete', 'status badge reflects the version');
   });
 
+  it('offers a version switcher and loads another version when picked', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'nightly-reconcile', 'version-number': '3', scopes: 'catalog:read' });
+    mount(el);
+    // The switcher appears once the sibling versions load (nightly-reconcile has three).
+    const sel = await waitFor(() => {
+      const s = el.shadowRoot.querySelector('.version-switch');
+      return s && s.options.length === 3 ? s : null;
+    });
+    equal(Number(sel.value), 3, 'starts on the selected (latest) version');
+    // Switch to v1 (the Obsolete one) and confirm the detail reloads to it.
+    sel.value = '1';
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+    await waitFor(() => el.shadowRoot.querySelector('header .badge')?.textContent === 'Obsolete');
+    equal(el.getAttribute('version-number'), '1', 'version-number attribute followed the switch');
+  });
+
+  it('hides the switcher for a single-version workflow', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read' });
+    mount(el);
+    await waitFor(() => el.shadowRoot.querySelector('[part="hash"]'));
+    // Give loadVersions a moment; adopt-pet has one version so the switcher stays hidden.
+    await new Promise((r) => setTimeout(r, 20));
+    ok(el.shadowRoot.querySelector('.vswitch').hidden, 'switcher hidden with a single version');
+  });
+
   it('shows a not-found banner for an unknown version', async () => {
     el = detailWithMock({ 'base-workflow-id': 'nightly-reconcile', 'version-number': '99' });
     // The element emits a composed `error` CustomEvent; stop it bubbling to window (the test runner's
