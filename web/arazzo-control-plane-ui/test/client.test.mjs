@@ -164,7 +164,10 @@ test('validateCatalogValue handles unions, tuples and maps', async () => {
   // Union (oneOf with a discriminator): a document variant needs its document fields.
   const evidence = (value) => c.validateCatalogValue('onboard-customer', 1, { kind: 'stepOutputs', workflowId: 'onboard-customer-v1', stepId: 'verifyIdentity' }, value);
   assert.equal((await evidence({ evidence: { kind: 'document', documentType: 'passport', documentNumber: 'X1' } })).valid, true);
-  assert.equal((await evidence({ evidence: { kind: 'document' } })).valid, false); // missing required variant fields
+  // The discriminator pins the variant, so errors are the document variant's own fields, not a blanket "no match".
+  const docErrors = (await evidence({ evidence: { kind: 'document' } })).errors;
+  assert.ok(docErrors.some((e) => e.instancePath === '/evidence/documentType'), 'reports the chosen variant\'s field');
+  assert.ok(!docErrors.some((e) => /any allowed type/.test(e.message)), 'no blanket union failure');
   assert.equal((await evidence({ score: 5 })).valid, false); // score exceeds maximum 1
 
   // Tuple (prefixItems): each position is an integer >= 0.
