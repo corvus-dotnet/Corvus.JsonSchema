@@ -7,7 +7,7 @@
 // Events     : run-selected {run}, loaded {count, hasMore}, error {problem}
 // Parts      : table, row, cell, status, pager, filters
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, countdown, define } from './base.js';
+import { ArazzoElement, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, countdown, copyToClipboard, define } from './base.js';
 import './status-badge.js';
 
 class ArazzoRunsTable extends ArazzoElement {
@@ -167,7 +167,7 @@ class ArazzoRunsTable extends ArazzoElement {
         tbody tr.selectable:hover { background: var(--_surface); }
         tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); }
         .id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
-        .id button { padding: 0 4px; font-size: 11px; }
+        .copy { font-size: 12px; padding: 0 6px; margin-left: 6px; line-height: 1.4; vertical-align: baseline; }
         .wf { font-weight: 600; }
         .wait, .err { font-size: 12px; }
         .err { color: var(--arazzo-status-faulted, #d4351c); }
@@ -239,9 +239,12 @@ class ArazzoRunsTable extends ArazzoElement {
         });
       });
     }
-    this.$$('button.copy').forEach((btn) => btn.addEventListener('click', (e) => {
+    this.$$('button.copy').forEach((btn) => btn.addEventListener('click', async (e) => {
       e.stopPropagation();
-      navigator.clipboard?.writeText(btn.dataset.id);
+      if (await copyToClipboard(btn.dataset.id)) {
+        btn.textContent = '✓';
+        setTimeout(() => { btn.textContent = '⧉'; }, 1200);
+      }
     }));
     this.updatePager();
   }
@@ -261,7 +264,7 @@ class ArazzoRunsTable extends ArazzoElement {
       <tr part="row" class="${selectable ? 'selectable' : ''}" data-id="${escapeHtml(run.id)}"${sel}>
         <td part="cell"><arazzo-status-badge part="status" status="${escapeHtml(run.status)}"></arazzo-status-badge></td>
         <td part="cell" class="wf">${escapeHtml(run.workflowId)}</td>
-        <td part="cell" class="id"><span title="${escapeHtml(run.id)}">${escapeHtml(shortId(run.id))}</span> <button class="copy ghost" type="button" data-id="${escapeHtml(run.id)}" title="Copy run id" aria-label="Copy run id">⎘</button></td>
+        <td part="cell" class="id"><span title="${escapeHtml(run.id)}">${escapeHtml(shortId(run.id))}</span><button class="copy ghost" type="button" data-id="${escapeHtml(run.id)}" title="Copy run id" aria-label="Copy run id">⧉</button></td>
         <td part="cell" class="muted" title="${escapeHtml(absoluteTime(run.createdAt))}">${escapeHtml(relativeTime(run.createdAt))}</td>
         <td part="cell">${waiting}</td>
         <td part="cell">${err}</td>
