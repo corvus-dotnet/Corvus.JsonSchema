@@ -202,27 +202,6 @@ public readonly partial struct PostCatalogBody
     }
 
     /// <summary>
-    /// Gets the (optional) <c>securityTags</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Non-internal security tags (&#167;14.2 reach labels) to stamp on the version at add, alongside the deployment&#39;s internal tenant tag. The reserved internal-tag prefix is rejected (400).
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.CatalogSecurityTagArray SecurityTags
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SecurityTagsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.CatalogSecurityTagArray value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
     /// Gets the (optional) <c>tags</c> property.
     /// </summary>
     /// <remarks>
@@ -697,11 +676,6 @@ public readonly partial struct PostCatalogBody
         public const string Package = "package";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="SecurityTags"/>.
-        /// </summary>
-        public const string SecurityTags = "securityTags";
-
-        /// <summary>
         /// Gets the JSON property name for <see cref="Tags"/>.
         /// </summary>
         public const string Tags = "tags";
@@ -715,11 +689,6 @@ public readonly partial struct PostCatalogBody
         /// Gets the JSON property name for <see cref="Package"/>.
         /// </summary>
         public static ReadOnlySpan<byte> PackageUtf8 => "package"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="SecurityTags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> SecurityTagsUtf8 => "securityTags"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Tags"/>.
@@ -743,11 +712,6 @@ public readonly partial struct PostCatalogBody
         public static ReadOnlySpan<byte> Package => "package"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="SecurityTags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> SecurityTags => "securityTags"u8;
-
-        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Tags"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Tags => "tags"u8;
@@ -768,11 +732,6 @@ public readonly partial struct PostCatalogBody
         /// Gets the pre-baked property name blob for <see cref="Package"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Package => [0x95, 0x00, 0x00, 0x00, 0x22, 0x70, 0x61, 0x63, 0x6B, 0x61, 0x67, 0x65, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="SecurityTags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> SecurityTags => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x65, 0x63, 0x75, 0x72, 0x69, 0x74, 0x79, 0x54, 0x61, 0x67, 0x73, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Tags"/>.

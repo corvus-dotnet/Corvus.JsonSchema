@@ -32,11 +32,6 @@ public readonly struct SearchCatalogRequest : IApiRequest<SearchCatalogRequest>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString BaseWorkflowId { get; init; }
 
     /// <summary>
-    /// Gets the workflowIdPrefix parameter.
-    /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString WorkflowIdPrefix { get; init; }
-
-    /// <summary>
     /// Gets the tag parameter.
     /// </summary>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.TagList Tag { get; init; }
@@ -50,11 +45,6 @@ public readonly struct SearchCatalogRequest : IApiRequest<SearchCatalogRequest>
     /// Gets the owner parameter.
     /// </summary>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Owner { get; init; }
-
-    /// <summary>
-    /// Gets the distinctWorkflows parameter.
-    /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean DistinctWorkflows { get; init; }
 
     /// <summary>
     /// Gets the limit parameter.
@@ -138,27 +128,6 @@ public readonly struct SearchCatalogRequest : IApiRequest<SearchCatalogRequest>
             first = false;
         }
 
-        if (this.WorkflowIdPrefix.IsNotUndefined())
-        {
-            if (!first)
-            {
-                writer.Write("&"u8);
-                totalWritten++;
-            }
-
-            writer.Write("workflowIdPrefix="u8);
-            totalWritten += 17;
-            using UnescapedUtf8JsonString utf8WorkflowIdPrefix = ((JsonElement)this.WorkflowIdPrefix).GetUtf8String();
-            Span<byte> escWorkflowIdPrefix = stackalloc byte[utf8WorkflowIdPrefix.Span.Length * 3];
-            if (Utf8Uri.TryEscapeDataString(utf8WorkflowIdPrefix.Span, escWorkflowIdPrefix, out int ewWorkflowIdPrefix))
-            {
-                writer.Write(escWorkflowIdPrefix[..ewWorkflowIdPrefix]);
-                totalWritten += ewWorkflowIdPrefix;
-            }
-
-            first = false;
-        }
-
         if (this.Tag.IsNotUndefined())
         {
             foreach (var itemTag in ((JsonElement)this.Tag).EnumerateArray())
@@ -216,23 +185,6 @@ public readonly struct SearchCatalogRequest : IApiRequest<SearchCatalogRequest>
                 writer.Write(escOwner[..ewOwner]);
                 totalWritten += ewOwner;
             }
-
-            first = false;
-        }
-
-        if (this.DistinctWorkflows.IsNotUndefined())
-        {
-            if (!first)
-            {
-                writer.Write("&"u8);
-                totalWritten++;
-            }
-
-            writer.Write("distinctWorkflows="u8);
-            totalWritten += 18;
-            bool bv = (bool)this.DistinctWorkflows;
-            writer.Write(bv ? "true"u8 : "false"u8);
-            totalWritten += bv ? 4 : 5;
 
             first = false;
         }
@@ -320,15 +272,6 @@ public readonly struct SearchCatalogRequest : IApiRequest<SearchCatalogRequest>
                 }
             }
 
-            if (this.WorkflowIdPrefix.IsNotUndefined())
-            {
-                using JsonSchemaResultsCollector collectorWorkflowIdPrefix = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-                if (!this.WorkflowIdPrefix.EvaluateSchema(collectorWorkflowIdPrefix))
-                {
-                    ThrowHelper.ThrowRequestParameterValidationFailed("workflowIdPrefix", SchemaValidationDetail.FormatResults(collectorWorkflowIdPrefix));
-                }
-            }
-
             if (this.Tag.IsNotUndefined())
             {
                 using JsonSchemaResultsCollector collectorTag = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
@@ -353,15 +296,6 @@ public readonly struct SearchCatalogRequest : IApiRequest<SearchCatalogRequest>
                 if (!this.Owner.EvaluateSchema(collectorOwner))
                 {
                     ThrowHelper.ThrowRequestParameterValidationFailed("owner", SchemaValidationDetail.FormatResults(collectorOwner));
-                }
-            }
-
-            if (this.DistinctWorkflows.IsNotUndefined())
-            {
-                using JsonSchemaResultsCollector collectorDistinctWorkflows = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-                if (!this.DistinctWorkflows.EvaluateSchema(collectorDistinctWorkflows))
-                {
-                    ThrowHelper.ThrowRequestParameterValidationFailed("distinctWorkflows", SchemaValidationDetail.FormatResults(collectorDistinctWorkflows));
                 }
             }
 
@@ -396,11 +330,6 @@ public readonly struct SearchCatalogRequest : IApiRequest<SearchCatalogRequest>
                 ThrowHelper.ThrowRequestParameterValidationFailed("baseWorkflowId");
             }
 
-            if (this.WorkflowIdPrefix.IsNotUndefined() && !this.WorkflowIdPrefix.EvaluateSchema())
-            {
-                ThrowHelper.ThrowRequestParameterValidationFailed("workflowIdPrefix");
-            }
-
             if (this.Tag.IsNotUndefined() && !this.Tag.EvaluateSchema())
             {
                 ThrowHelper.ThrowRequestParameterValidationFailed("tag");
@@ -414,11 +343,6 @@ public readonly struct SearchCatalogRequest : IApiRequest<SearchCatalogRequest>
             if (this.Owner.IsNotUndefined() && !this.Owner.EvaluateSchema())
             {
                 ThrowHelper.ThrowRequestParameterValidationFailed("owner");
-            }
-
-            if (this.DistinctWorkflows.IsNotUndefined() && !this.DistinctWorkflows.EvaluateSchema())
-            {
-                ThrowHelper.ThrowRequestParameterValidationFailed("distinctWorkflows");
             }
 
             if (this.Limit.IsNotUndefined() && !this.Limit.EvaluateSchema())

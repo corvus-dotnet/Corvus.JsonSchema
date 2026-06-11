@@ -7,7 +7,7 @@ using System.Buffers.Binary;
 using System.Buffers.Text;
 using System.Globalization;
 using System.Text;
-using Corvus.Runtime.InteropServices;
+using System.Text.Json;
 using NATS.Client.Core;
 using NATS.Client.JetStream;
 using NATS.Client.KeyValueStore;
@@ -27,23 +27,19 @@ namespace Corvus.Text.Json.Arazzo.Durability.NatsJetStream;
 /// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> after provisioning with
 /// <see cref="PrepareAsync(string, CancellationToken)"/>.
 /// </remarks>
-public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, ISupportsRowSecurityFilter, IAsyncDisposable
+public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDisposable
 {
     private const string CatalogBucket = "arazzo_catalog";
 
     private readonly NatsConnection? ownedConnection;
     private readonly INatsKVStore catalog;
     private readonly TimeProvider timeProvider;
-    private readonly IWorkflowMetadataProvider? metadataProvider;
-    private readonly IWorkflowExecutorProvider? executorProvider;
 
-    private NatsJetStreamWorkflowCatalogStore(NatsConnection? ownedConnection, INatsKVStore catalog, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider)
+    private NatsJetStreamWorkflowCatalogStore(NatsConnection? ownedConnection, INatsKVStore catalog, TimeProvider timeProvider)
     {
         this.ownedConnection = ownedConnection;
         this.catalog = catalog;
         this.timeProvider = timeProvider;
-        this.metadataProvider = metadataProvider;
-        this.executorProvider = executorProvider;
     }
 
     /// <summary>
@@ -76,8 +72,6 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
     public static async ValueTask<NatsJetStreamWorkflowCatalogStore> ConnectAsync(
         string url,
         TimeProvider? timeProvider = null,
-        IWorkflowMetadataProvider? metadataProvider = null,
-        IWorkflowExecutorProvider? executorProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(url);
@@ -86,7 +80,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         {
             var kv = new NatsKVContext(new NatsJSContext(connection));
             INatsKVStore catalog = await kv.GetStoreAsync(CatalogBucket, cancellationToken).ConfigureAwait(false);
-            return new NatsJetStreamWorkflowCatalogStore(connection, catalog, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider);
+            return new NatsJetStreamWorkflowCatalogStore(connection, catalog, timeProvider ?? TimeProvider.System);
         }
         catch
         {
@@ -123,34 +117,27 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
     public static async ValueTask<NatsJetStreamWorkflowCatalogStore> ConnectAsync(
         INatsConnection connection,
         TimeProvider? timeProvider = null,
-        IWorkflowMetadataProvider? metadataProvider = null,
-        IWorkflowExecutorProvider? executorProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connection);
         var kv = new NatsKVContext(new NatsJSContext(connection));
         INatsKVStore catalog = await kv.GetStoreAsync(CatalogBucket, cancellationToken).ConfigureAwait(false);
-        return new NatsJetStreamWorkflowCatalogStore(ownedConnection: null, catalog, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider);
+        return new NatsJetStreamWorkflowCatalogStore(ownedConnection: null, catalog, timeProvider ?? TimeProvider.System);
     }
 
     /// <inheritdoc/>
-    public ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
+    public ValueTask<CatalogVersion> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
-        return this.AddCoreAsync(baseWorkflowId, packageUtf8, metadata, cancellationToken);
+        return this.AddCoreAsync(baseWorkflowId, packageUtf8.ToArray(), metadata, cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<CatalogVersion>?> GetAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    public async ValueTask<CatalogVersion?> GetAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(baseWorkflowId);
         NatsKVEntry<byte[]>? entry = await this.TryGetAsync(Key(baseWorkflowId, versionNumber), cancellationToken).ConfigureAwait(false);
-
-        // The envelope header bytes ARE the version document JSON; realize a pooled, disposable document over them
-        // (the byte-backend idiom) rather than cloning a bare value out.
-        return entry is { Value: { } value }
-            ? ParsedJsonDocument<CatalogVersion>.Parse(Envelope.DecodeHeader(value))
-            : null;
+        return entry is { Value: { } value } ? Envelope.DecodeMetadata(value) : null;
     }
 
     /// <inheritdoc/>
@@ -175,129 +162,40 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
     /// <inheritdoc/>
     public async ValueTask<CatalogPage> QueryAsync(CatalogQuery query, CancellationToken cancellationToken)
     {
-        // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
-        string? after = null;
-        if (query.ContinuationToken.IsNotUndefined())
-        {
-            using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
-            after = WorkflowContinuationToken.Decode(tokenUtf8.Span);
-        }
-
+        string? after = WorkflowContinuationToken.Decode(query.ContinuationToken);
         int limit = query.Limit <= 0 ? 100 : query.Limit;
 
-        if (query.DistinctWorkflows)
+        // The KV bucket has no server-side ordering or filtering, so collect matches, sort by the composite
+        // sort key, and keyset-page here — mirroring how the run store answers visibility queries.
+        var matches = new List<(string SortKey, CatalogVersion Version)>();
+        await foreach (CatalogVersion candidate in this.ScanAsync(cancellationToken).ConfigureAwait(false))
         {
-            return await this.QueryDistinctWorkflowsAsync(query, after, limit, cancellationToken).ConfigureAwait(false);
-        }
-
-        // The KV bucket has no server-side ordering or filtering, so collect the matching header bytes, sort them by
-        // the composite sort key, then realize and page the result here — mirroring how the run store answers
-        // visibility queries. Only the matching rows are parsed (each inspected once for filtering, with the inspection
-        // document disposed before it is re-parsed into the owned page), so non-matches never enter the pool.
-        var matches = new List<(string SortKey, byte[] Header)>();
-        await foreach (byte[] header in this.ScanHeadersAsync(cancellationToken).ConfigureAwait(false))
-        {
-            using ParsedJsonDocument<CatalogVersion> candidate = ParsedJsonDocument<CatalogVersion>.Parse(header);
-            CatalogVersionRef reference = candidate.RootElement.Ref;
-            string sortKey = SortKey(reference.BaseWorkflowId, reference.VersionNumber);
+            string sortKey = SortKey(candidate.BaseWorkflowId, candidate.VersionNumber);
             if (after is not null && string.CompareOrdinal(sortKey, after) <= 0)
             {
                 continue;
             }
 
-            if (Matches(candidate.RootElement, query))
+            if (Matches(candidate, query))
             {
-                matches.Add((sortKey, header));
+                matches.Add((sortKey, candidate));
             }
         }
 
         matches.Sort(static (a, b) => string.CompareOrdinal(a.SortKey, b.SortKey));
 
-        string? nextSortKey = null;
+        string? continuation = null;
         if (matches.Count > limit)
         {
-            nextSortKey = matches[limit - 1].SortKey;
             matches = matches.GetRange(0, limit);
+            continuation = WorkflowContinuationToken.Encode(matches[^1].SortKey);
         }
 
-        // The page is a pooled batch of disposable version documents (the caller disposes the page); realize each
-        // selected header into the batch, disposing a partially-built batch if a parse throws.
-        var versions = new PooledDocumentList<CatalogVersion>(matches.Count);
-        try
-        {
-            foreach ((_, byte[] header) in matches)
-            {
-                versions.Add(ParsedJsonDocument<CatalogVersion>.Parse(header));
-            }
-        }
-        catch
-        {
-            versions.Dispose();
-            throw;
-        }
-
-        return nextSortKey is not null ? CatalogPage.Create(versions, nextSortKey) : CatalogPage.Create(versions);
-    }
-
-    // The distinct-workflow (collapse-by-base) query: one representative version per base workflow, keyset-paged by base id.
-    // A base is included if any of its versions matches the filter; the representative is the best-matching version — the
-    // newest Active, else the newest Obsolete, else the newest (mirroring InMemoryWorkflowCatalogStore.QueryDistinctWorkflows,
-    // the reference the client-side UI collapse replaced). The KV bucket has no server-side grouping/ordering, so scan the
-    // same filtered set as the version-mode query, group by base id retaining only the winning per-base header bytes, order
-    // the bases ordinally, seek strictly past the cursor base id, then re-parse the page window into the pooled batch.
-    private async ValueTask<CatalogPage> QueryDistinctWorkflowsAsync(CatalogQuery query, string? after, int limit, CancellationToken cancellationToken)
-    {
-        var reps = new SortedDictionary<string, RepCandidate>(StringComparer.Ordinal);
-        await foreach (byte[] header in this.ScanHeadersAsync(cancellationToken).ConfigureAwait(false))
-        {
-            using ParsedJsonDocument<CatalogVersion> candidate = ParsedJsonDocument<CatalogVersion>.Parse(header);
-            if (!Matches(candidate.RootElement, query))
-            {
-                continue;
-            }
-
-            CatalogVersionRef reference = candidate.RootElement.Ref;
-            var incoming = new RepCandidate(header, StatusRank(candidate.RootElement.StatusValue), reference.VersionNumber);
-            if (!reps.TryGetValue(reference.BaseWorkflowId, out RepCandidate existing) || incoming.IsBetterThan(existing))
-            {
-                reps[reference.BaseWorkflowId] = incoming;
-            }
-        }
-
-        // The page is a pooled batch of disposable version documents (the caller disposes the page); the cursor is the base
-        // id alone (ordinal), and the +1 lookahead beyond the limit tells us whether a next page exists.
-        var versions = new PooledDocumentList<CatalogVersion>(limit);
-        string? nextBaseId = null;
-        try
-        {
-            foreach (KeyValuePair<string, RepCandidate> entry in reps)
-            {
-                if (after is not null && string.CompareOrdinal(entry.Key, after) <= 0)
-                {
-                    continue;
-                }
-
-                if (versions.Count == limit)
-                {
-                    // There is at least one more matching base workflow beyond this page.
-                    nextBaseId = versions[versions.Count - 1].Ref.BaseWorkflowId;
-                    break;
-                }
-
-                versions.Add(ParsedJsonDocument<CatalogVersion>.Parse(entry.Value.Header));
-            }
-        }
-        catch
-        {
-            versions.Dispose();
-            throw;
-        }
-
-        return nextBaseId is not null ? CatalogPage.Create(versions, nextBaseId) : CatalogPage.Create(versions);
+        return new CatalogPage(matches.ConvertAll(static m => m.Version), continuation);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<CatalogVersion>?> UpdateMetadataAsync(string baseWorkflowId, int versionNumber, CatalogMetadataPatch patch, CancellationToken cancellationToken)
+    public async ValueTask<CatalogVersion?> UpdateMetadataAsync(string baseWorkflowId, int versionNumber, CatalogMetadataPatch patch, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(baseWorkflowId);
         DateTimeOffset now = this.timeProvider.GetUtcNow();
@@ -308,21 +206,26 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
             return null;
         }
 
+        CatalogVersion current = Envelope.DecodeMetadata(value);
         byte[] package = Envelope.DecodePackage(value);
 
-        // The envelope header bytes ARE the current version document JSON; inspect them through a short-lived pooled
-        // document, then rebuild the updated header bytes — never cloning a bare value out of the read.
-        byte[] updatedHeader;
-        using (ParsedJsonDocument<CatalogVersion> currentDoc = ParsedJsonDocument<CatalogVersion>.Parse(Envelope.DecodeHeader(value)))
-        {
-            // Patch only the changed governance fields through the mutable builder; every other field — including the
-            // security tags — is carried bytes-to-bytes (no per-field string realisation, and no longer dropping the
-            // securityTags the field-by-field rebuild used to strip).
-            updatedHeader = CatalogVersion.CreatePatchedBytes(currentDoc.RootElement, patch, now);
-        }
+        CatalogStatus status = patch.Status ?? current.Status;
+        bool newlyObsolete = status == CatalogStatus.Obsolete && current.Status != CatalogStatus.Obsolete;
+        bool reactivated = status == CatalogStatus.Active && current.Status == CatalogStatus.Obsolete;
 
-        await this.catalog.PutAsync(key, Envelope.Encode(updatedHeader, package), cancellationToken: cancellationToken).ConfigureAwait(false);
-        return ParsedJsonDocument<CatalogVersion>.Parse(updatedHeader);
+        CatalogVersion updated = current with
+        {
+            Owner = patch.Owner ?? current.Owner,
+            Tags = patch.Tags is { } tags ? [.. tags] : current.Tags,
+            Status = status,
+            LastUpdatedBy = patch.UpdatedBy,
+            LastUpdatedAt = now,
+            ObsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedBy,
+            ObsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAt,
+        };
+
+        await this.catalog.PutAsync(key, Envelope.Encode(updated, package), cancellationToken: cancellationToken).ConfigureAwait(false);
+        return updated;
     }
 
     /// <inheritdoc/>
@@ -344,13 +247,11 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
     public async ValueTask<IReadOnlyList<CatalogVersionRef>> ListObsoleteAsync(CancellationToken cancellationToken)
     {
         var refs = new List<CatalogVersionRef>();
-        await foreach (byte[] header in this.ScanHeadersAsync(cancellationToken).ConfigureAwait(false))
+        await foreach (CatalogVersion version in this.ScanAsync(cancellationToken).ConfigureAwait(false))
         {
-            using ParsedJsonDocument<CatalogVersion> doc = ParsedJsonDocument<CatalogVersion>.Parse(header);
-            if (doc.RootElement.StatusValue == CatalogStatus.Obsolete)
+            if (version.Status == CatalogStatus.Obsolete)
             {
-                // CatalogVersionRef materializes its strings, so it outlives the document.
-                refs.Add(doc.RootElement.Ref);
+                refs.Add(version.Ref);
             }
         }
 
@@ -384,72 +285,44 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
     private static string SortKey(string baseWorkflowId, int versionNumber)
         => string.Create(CultureInfo.InvariantCulture, $"{baseWorkflowId}{versionNumber:D10}");
 
-    // The representative-precedence rank: newest Active wins over newest Obsolete wins over newest of any other status.
-    private static int StatusRank(CatalogStatus status) => status switch
+    private static bool Matches(CatalogVersion version, CatalogQuery query)
     {
-        CatalogStatus.Active => 0,
-        CatalogStatus.Obsolete => 1,
-        _ => 2,
-    };
-
-    private static bool Matches(in CatalogVersion version, CatalogQuery query)
-    {
-        if (query.BaseWorkflowId is { } baseId && version.Ref.BaseWorkflowId != baseId)
+        if (query.BaseWorkflowId is { } baseId && version.BaseWorkflowId != baseId)
         {
             return false;
         }
 
-        if (query.WorkflowIdPrefix is { Length: > 0 } prefix
-            && !((string)version.WorkflowId).StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        if (query.Status is { } status && version.StatusValue != status)
+        if (query.Status is { } status && version.Status != status)
         {
             return false;
         }
 
         if (query.Text is { Length: > 0 } text
-            && ((string)version.Title).IndexOf(text, StringComparison.OrdinalIgnoreCase) < 0
-            && (version.DescriptionOrNull is null || version.DescriptionOrNull.IndexOf(text, StringComparison.OrdinalIgnoreCase) < 0))
+            && version.Title.IndexOf(text, StringComparison.OrdinalIgnoreCase) < 0
+            && (version.Description is null || version.Description.IndexOf(text, StringComparison.OrdinalIgnoreCase) < 0))
         {
             return false;
         }
 
         if (query.Owner is { Length: > 0 } owner
-            && version.OwnerValue.Name.IndexOf(owner, StringComparison.OrdinalIgnoreCase) < 0
-            && version.OwnerValue.Email.IndexOf(owner, StringComparison.OrdinalIgnoreCase) < 0)
+            && version.Owner.Name.IndexOf(owner, StringComparison.OrdinalIgnoreCase) < 0
+            && version.Owner.Email.IndexOf(owner, StringComparison.OrdinalIgnoreCase) < 0)
         {
             return false;
         }
 
-        if (!query.Tags.AllContainedIn(version.TagsValue))
+        if (query.Tags is { Count: > 0 } queryTags && !queryTags.All(version.Tags.Contains))
         {
             return false;
-        }
-
-        // Row-security reach (§14.2): the KV store has no server-side filtering, so apply the reach filter in
-        // process over the version's persisted security tags — the only correct option for a key/value backend.
-        if (query.Security is { } security)
-        {
-            SecurityTagSet securityTags = version.SecurityTags.IsNotUndefined()
-                ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(version.SecurityTags).Memory)
-                : SecurityTagSet.Empty;
-            if (!security.IsSatisfiedBy(securityTags))
-            {
-                return false;
-            }
         }
 
         return true;
     }
 
-    private async ValueTask<ParsedJsonDocument<CatalogVersion>> AddCoreAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
+    private async ValueTask<CatalogVersion> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
-        TagSet tags = metadata.Tags;
-        SecurityTagSet securityTags = metadata.SecurityTags;
+        IReadOnlyList<string> tags = metadata.Tags is { Count: > 0 } t ? [.. t] : [];
 
         // Assign the next version number safely: compute the current max for the base id by scanning the bucket,
         // then optimistically Create the new key. A concurrent add that grabbed the same number makes Create
@@ -459,31 +332,26 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         {
             cancellationToken.ThrowIfCancellationRequested();
             int versionNumber = await this.MaxVersionAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false) + 1;
-            CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
+            CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber);
+            var version = new CatalogVersion(
+                BaseWorkflowId: baseWorkflowId,
+                VersionNumber: versionNumber,
+                WorkflowId: projection.WorkflowId,
+                Title: projection.Title,
+                Description: projection.Description,
+                Status: CatalogStatus.Active,
+                Tags: tags,
+                Owner: metadata.Owner,
+                Sources: projection.Sources,
+                Hash: projection.Hash,
+                CreatedBy: metadata.CreatedBy,
+                CreatedAt: now);
 
-            // The envelope header IS the version document JSON; build those bytes directly (the byte-backend idiom),
-            // store the envelope, and realize a pooled, disposable document over the same header bytes for the return.
-            byte[] header = CatalogVersion.CreateBytes(
-                baseWorkflowId: baseWorkflowId,
-                versionNumber: versionNumber,
-                workflowId: projection.WorkflowId,
-                title: projection.Title,
-                description: projection.Description,
-                status: CatalogStatus.Active,
-                tags: tags,
-                owner: metadata.Owner,
-                sources: SourceSet.FromSources(projection.Sources),
-                hash: projection.Hash,
-                createdBy: metadata.CreatedBy,
-                createdAt: now,
-                runnable: projection.HasExecutor,
-                securityTags: securityTags);
-
-            byte[] value = Envelope.Encode(header, projection.CanonicalPackage.Span);
+            byte[] value = Envelope.Encode(version, projection.CanonicalPackage.Span);
             try
             {
                 await this.catalog.CreateAsync(Key(baseWorkflowId, versionNumber), value, cancellationToken: cancellationToken).ConfigureAwait(false);
-                return ParsedJsonDocument<CatalogVersion>.Parse(header);
+                return version;
             }
             catch (NatsKVException)
             {
@@ -495,29 +363,25 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
     private async ValueTask<int> MaxVersionAsync(string baseWorkflowId, CancellationToken cancellationToken)
     {
         int max = 0;
-        await foreach (byte[] header in this.ScanHeadersAsync(cancellationToken).ConfigureAwait(false))
+        await foreach (CatalogVersion version in this.ScanAsync(cancellationToken).ConfigureAwait(false))
         {
-            using ParsedJsonDocument<CatalogVersion> doc = ParsedJsonDocument<CatalogVersion>.Parse(header);
-            CatalogVersionRef reference = doc.RootElement.Ref;
-            if (reference.BaseWorkflowId == baseWorkflowId && reference.VersionNumber > max)
+            if (version.BaseWorkflowId == baseWorkflowId && version.VersionNumber > max)
             {
-                max = reference.VersionNumber;
+                max = version.VersionNumber;
             }
         }
 
         return max;
     }
 
-    // Yields each stored version's header bytes (the version document JSON); callers parse a short-lived pooled
-    // document over them to inspect fields, never cloning a bare value out of the scan.
-    private async IAsyncEnumerable<byte[]> ScanHeadersAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    private async IAsyncEnumerable<CatalogVersion> ScanAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         await foreach (string key in this.catalog.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
         {
             NatsKVEntry<byte[]>? entry = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
             if (entry is { Value: { } value })
             {
-                yield return Envelope.DecodeHeader(value);
+                yield return Envelope.DecodeMetadata(value);
             }
         }
     }
@@ -552,22 +416,90 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         }
     }
 
-    // A base workflow's best-matching representative during a distinct-workflow scan: the winning version's header bytes (the
-    // version document JSON) plus the fields the precedence compares (lower status rank wins; ties break to the higher version
-    // number). The header bytes are a freshly-decoded copy from the scan, so re-parsing them into the page later is safe.
-    private readonly record struct RepCandidate(byte[] Header, int Rank, int VersionNumber)
-    {
-        public bool IsBetterThan(RepCandidate other)
-            => this.Rank != other.Rank ? this.Rank < other.Rank : this.VersionNumber > other.VersionNumber;
-    }
-
     private static class Envelope
     {
-        // The header IS the CatalogVersion JSON document (push-JSON-to-the-store); the value is
-        // [4-byte little-endian header length][CatalogVersion JSON][package bytes]. The header bytes are built by the
-        // byte-backend factory (CatalogVersion.CreateBytes) at the call site, so Encode just frames them.
-        public static byte[] Encode(byte[] header, ReadOnlySpan<byte> package)
+        public static byte[] Encode(CatalogVersion version, ReadOnlySpan<byte> package)
         {
+            var headerBuffer = new ArrayBufferWriter<byte>();
+            using (var writer = new Utf8JsonWriter(headerBuffer))
+            {
+                writer.WriteStartObject();
+                writer.WriteString("baseWorkflowId", version.BaseWorkflowId);
+                writer.WriteNumber("versionNumber", version.VersionNumber);
+                writer.WriteString("workflowId", version.WorkflowId);
+                writer.WriteString("title", version.Title);
+                if (version.Description is { } description)
+                {
+                    writer.WriteString("description", description);
+                }
+
+                writer.WriteString("status", version.Status.ToString());
+
+                writer.WriteStartArray("tags");
+                foreach (string tag in version.Tags)
+                {
+                    writer.WriteStringValue(tag);
+                }
+
+                writer.WriteEndArray();
+
+                writer.WriteStartObject("owner");
+                writer.WriteString("name", version.Owner.Name);
+                writer.WriteString("email", version.Owner.Email);
+                if (version.Owner.Team is { } team)
+                {
+                    writer.WriteString("team", team);
+                }
+
+                if (version.Owner.Url is { } url)
+                {
+                    writer.WriteString("url", url);
+                }
+
+                writer.WriteEndObject();
+
+                writer.WriteStartArray("sources");
+                foreach (CatalogSourceRef source in version.Sources)
+                {
+                    writer.WriteStartObject();
+                    writer.WriteString("name", source.Name);
+                    if (source.Type is { } type)
+                    {
+                        writer.WriteString("type", type);
+                    }
+
+                    writer.WriteEndObject();
+                }
+
+                writer.WriteEndArray();
+
+                writer.WriteString("hash", version.Hash);
+                writer.WriteString("createdBy", version.CreatedBy);
+                writer.WriteNumber("createdAt", version.CreatedAt.ToUnixTimeMilliseconds());
+                if (version.LastUpdatedBy is { } lastUpdatedBy)
+                {
+                    writer.WriteString("lastUpdatedBy", lastUpdatedBy);
+                }
+
+                if (version.LastUpdatedAt is { } lastUpdatedAt)
+                {
+                    writer.WriteNumber("lastUpdatedAt", lastUpdatedAt.ToUnixTimeMilliseconds());
+                }
+
+                if (version.ObsoletedBy is { } obsoletedBy)
+                {
+                    writer.WriteString("obsoletedBy", obsoletedBy);
+                }
+
+                if (version.ObsoletedAt is { } obsoletedAt)
+                {
+                    writer.WriteNumber("obsoletedAt", obsoletedAt.ToUnixTimeMilliseconds());
+                }
+
+                writer.WriteEndObject();
+            }
+
+            ReadOnlySpan<byte> header = headerBuffer.WrittenSpan;
             var result = new byte[4 + header.Length + package.Length];
             BinaryPrimitives.WriteInt32LittleEndian(result, header.Length);
             header.CopyTo(result.AsSpan(4));
@@ -581,12 +513,73 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
             return value.AsSpan(4 + headerLength).ToArray();
         }
 
-        // Returns the version document JSON bytes from the envelope; the store realizes a pooled, disposable
-        // document over them via ParsedJsonDocument<CatalogVersion>.Parse (never a bare-value clone).
-        public static byte[] DecodeHeader(byte[] value)
+        public static CatalogVersion DecodeMetadata(byte[] value)
         {
             int headerLength = BinaryPrimitives.ReadInt32LittleEndian(value);
-            return value.AsSpan(4, headerLength).ToArray();
+            using var document = JsonDocument.Parse(value.AsMemory(4, headerLength));
+            System.Text.Json.JsonElement root = document.RootElement;
+
+            System.Text.Json.JsonElement ownerElement = root.GetProperty("owner");
+            var owner = new CatalogOwner(
+                ownerElement.GetProperty("name").GetString()!,
+                ownerElement.GetProperty("email").GetString()!,
+                ownerElement.TryGetProperty("team", out System.Text.Json.JsonElement team) ? team.GetString() : null,
+                ownerElement.TryGetProperty("url", out System.Text.Json.JsonElement url) ? url.GetString() : null);
+
+            return new CatalogVersion(
+                BaseWorkflowId: root.GetProperty("baseWorkflowId").GetString()!,
+                VersionNumber: root.GetProperty("versionNumber").GetInt32(),
+                WorkflowId: root.GetProperty("workflowId").GetString()!,
+                Title: root.GetProperty("title").GetString()!,
+                Description: root.TryGetProperty("description", out System.Text.Json.JsonElement description) ? description.GetString() : null,
+                Status: Enum.Parse<CatalogStatus>(root.GetProperty("status").GetString()!),
+                Tags: DecodeTags(root),
+                Owner: owner,
+                Sources: DecodeSources(root),
+                Hash: root.GetProperty("hash").GetString()!,
+                CreatedBy: root.GetProperty("createdBy").GetString()!,
+                CreatedAt: DateTimeOffset.FromUnixTimeMilliseconds(root.GetProperty("createdAt").GetInt64()),
+                LastUpdatedBy: root.TryGetProperty("lastUpdatedBy", out System.Text.Json.JsonElement lastUpdatedBy) ? lastUpdatedBy.GetString() : null,
+                LastUpdatedAt: root.TryGetProperty("lastUpdatedAt", out System.Text.Json.JsonElement lastUpdatedAt) ? DateTimeOffset.FromUnixTimeMilliseconds(lastUpdatedAt.GetInt64()) : null,
+                ObsoletedBy: root.TryGetProperty("obsoletedBy", out System.Text.Json.JsonElement obsoletedBy) ? obsoletedBy.GetString() : null,
+                ObsoletedAt: root.TryGetProperty("obsoletedAt", out System.Text.Json.JsonElement obsoletedAt) ? DateTimeOffset.FromUnixTimeMilliseconds(obsoletedAt.GetInt64()) : null);
+        }
+
+        private static IReadOnlyList<string> DecodeTags(System.Text.Json.JsonElement root)
+        {
+            if (!root.TryGetProperty("tags", out System.Text.Json.JsonElement tags))
+            {
+                return [];
+            }
+
+            var list = new List<string>();
+            foreach (System.Text.Json.JsonElement tag in tags.EnumerateArray())
+            {
+                if (tag.GetString() is { } value)
+                {
+                    list.Add(value);
+                }
+            }
+
+            return list;
+        }
+
+        private static IReadOnlyList<CatalogSourceRef> DecodeSources(System.Text.Json.JsonElement root)
+        {
+            if (!root.TryGetProperty("sources", out System.Text.Json.JsonElement sources))
+            {
+                return [];
+            }
+
+            var list = new List<CatalogSourceRef>();
+            foreach (System.Text.Json.JsonElement source in sources.EnumerateArray())
+            {
+                list.Add(new CatalogSourceRef(
+                    source.GetProperty("name").GetString()!,
+                    source.TryGetProperty("type", out System.Text.Json.JsonElement type) ? type.GetString() : null));
+            }
+
+            return list;
         }
     }
 }

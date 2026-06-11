@@ -32,11 +32,6 @@ public readonly struct SearchCatalogParams
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString BaseWorkflowId { get; init; }
 
     /// <summary>
-    /// Gets the 'workflowIdPrefix' query parameter.
-    /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString WorkflowIdPrefix { get; init; }
-
-    /// <summary>
     /// Gets the 'tag' query parameter.
     /// </summary>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.TagList Tag { get; init; }
@@ -50,11 +45,6 @@ public readonly struct SearchCatalogParams
     /// Gets the 'owner' query parameter.
     /// </summary>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Owner { get; init; }
-
-    /// <summary>
-    /// Gets the 'distinctWorkflows' query parameter.
-    /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean DistinctWorkflows { get; init; }
 
     /// <summary>
     /// Gets the 'limit' query parameter.

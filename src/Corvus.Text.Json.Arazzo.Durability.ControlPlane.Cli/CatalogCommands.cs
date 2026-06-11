@@ -198,10 +198,6 @@ internal sealed class CatalogAddSettings : RunsSettings
     [Description("A free-form tag (repeat to add several).")]
     public string[] Tags { get; init; } = [];
 
-    [CommandOption("--security-tag <KEY=VALUE>")]
-    [Description("A security tag (KVP reach label) scoping who may see the version, e.g. --security-tag team=payments (repeatable; the reserved 'sys:' prefix is not permitted).")]
-    public ILookup<string, string>? SecurityTags { get; init; }
-
     /// <inheritdoc/>
     public override Spectre.Console.ValidationResult Validate()
     {
@@ -314,10 +310,6 @@ internal sealed class CatalogUpdateSettings : CatalogVersionSettings
     [CommandOption("--tag <TAG>")]
     [Description("Replace the tag set (repeat to set several).")]
     public string[] Tags { get; init; } = [];
-
-    [CommandOption("--security-tag <KEY=VALUE>")]
-    [Description("Replace the version's security tags (KVP reach labels), e.g. --security-tag team=billing (repeatable). Omit to leave them unchanged; the reserved 'sys:' prefix is not permitted and deployment-internal tags are always preserved.")]
-    public ILookup<string, string>? SecurityTags { get; init; }
 
     [CommandOption("--status <STATUS>")]
     [Description("Set the lifecycle status (Active/Obsolete).")]
@@ -451,28 +443,6 @@ internal sealed class CatalogAddCommand : AsyncCommand<CatalogAddSettings>
             return 1;
         }
 
-        // Refuse to register an undeployable workflow: it must be "ready" — every source it references has a credential
-        // — in at least one environment (mirrors the §7.7 promotion gate and the add-workflow UI wizard; the UI's
-        // upload path deliberately defers this enforcement to here). Skipped only when readiness can't be verified.
-        IReadOnlyList<string> sourceNames;
-        try
-        {
-            sourceNames = CatalogPackage.ReadSourceNames(envelope);
-        }
-        catch (Exception)
-        {
-            sourceNames = [];
-        }
-
-        if (sourceNames.Count > 0)
-        {
-            int? refusal = await CheckReadinessAsync(settings, sourceNames, cancellationToken);
-            if (refusal is { } code)
-            {
-                return code;
-            }
-        }
-
         var package = new BinaryPartData((stream, ct) => { stream.Write(envelope); return ValueTask.CompletedTask; }, "application/json", "package.json");
 
         (HttpClient http, HttpClientTransport transport, ApiCatalogClient client) = await settings.CreateCatalogClientAsync(cancellationToken);
@@ -494,13 +464,7 @@ internal sealed class CatalogAddCommand : AsyncCommand<CatalogAddSettings>
                 });
             }
 
-            // Named args: the generated Build takes (owner, package, securityTags, tags) — pass by name so adding a
-            // property never silently misaligns positions. The binary package is sent separately (below), not in the body.
-            Models.PostCatalogBody.Source body = Models.PostCatalogBody.Build(
-                owner: BuildOwner(settings.OwnerName!, settings.OwnerEmail!, settings.OwnerTeam, settings.OwnerUrl),
-                package: default,
-                securityTags: WriteAddSecurityTags(settings.SecurityTags),
-                tags: tags);
+            Models.PostCatalogBody.Source body = Models.PostCatalogBody.Build(BuildOwner(settings.OwnerName!, settings.OwnerEmail!, settings.OwnerTeam, settings.OwnerUrl), default, tags);
             await using AddCatalogVersionResponse response = await client.AddCatalogVersionAsync(body, package, cancellationToken, validationMode: ValidationMode.None);
             return response.MatchResult(
                 summary => Output.Print(summary.ToString()),
@@ -517,164 +481,6 @@ internal sealed class CatalogAddCommand : AsyncCommand<CatalogAddSettings>
             Models.JsonIri.Source urlSource = url is { } u ? (Models.JsonIri.Source)u : default;
             b.Create(email: email, name: name, team: teamSource, url: urlSource);
         });
-
-    // Projects the --security-tag KVPs into the add body's security-tag array (default = property omitted). An ILookup
-    // preserves duplicate keys (e.g. two tenant= tags). The reserved-prefix check is the server's (returns 400).
-    private static Models.PostCatalogBody.CatalogSecurityTagArray.Source WriteAddSecurityTags(ILookup<string, string>? tags)
-    {
-        if (tags is null)
-        {
-            return default;
-        }
-
-        return new Models.PostCatalogBody.CatalogSecurityTagArray.Source((ref Models.PostCatalogBody.CatalogSecurityTagArray.Builder ab) =>
-        {
-            foreach (IGrouping<string, string> group in tags)
-            {
-                foreach (string value in group)
-                {
-                    ab.AddItem(new Models.CatalogSecurityTag.Source((ref Models.CatalogSecurityTag.Builder tb) => tb.Create(group.Key, value)));
-                }
-            }
-        });
-    }
-
-    /// <summary>
-    /// Verifies the workflow is deployable — every referenced source has a credential in at least one environment
-    /// (§7.7). Returns an exit code to refuse the add, or <see langword="null"/> to proceed (ready, or readiness
-    /// could not be verified because the caller cannot read environments/credentials).
-    /// </summary>
-    private static async Task<int?> CheckReadinessAsync(CatalogAddSettings settings, IReadOnlyList<string> sourceNames, CancellationToken cancellationToken)
-    {
-        // The environments the caller can see.
-        List<string>? environments = await CollectAsync(
-            await settings.CreateEnvironmentsClientAsync(cancellationToken),
-            async (client, accumulate) =>
-            {
-                string? pageToken = null;
-                do
-                {
-                    string? next = null;
-                    await using ListEnvironmentsResponse response = await client.ListEnvironmentsAsync(
-                        pageToken: pageToken is { } t ? (Models.JsonString.Source)t : default, cancellationToken: cancellationToken);
-                    bool ok = response.MatchResult(
-                        list =>
-                        {
-                            next = list.NextPageToken.IsNotUndefined() ? (string)list.NextPageToken : null;
-                            foreach (Models.EnvironmentSummary e in list.Environments.EnumerateArray())
-                            {
-                                accumulate((string)e.Name);
-                            }
-
-                            return true;
-                        },
-                        _ => false);
-                    if (!ok)
-                    {
-                        return false;
-                    }
-
-                    pageToken = next;
-                }
-                while (pageToken is not null);
-                return true;
-            });
-
-        if (environments is null)
-        {
-            Console.Error.WriteLine("Warning: could not read environments to verify readiness; skipping the readiness check.");
-            return null;
-        }
-
-        // Per environment, the set of sources that already have a credential there.
-        var credentialedSources = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
-        List<string>? credentialsOk = await CollectAsync(
-            await settings.CreateCredentialsClientAsync(cancellationToken),
-            async (client, _) =>
-            {
-                string? pageToken = null;
-                do
-                {
-                    string? next = null;
-                    await using ListCredentialsResponse response = await client.ListCredentialsAsync(
-                        pageToken: pageToken is { } t ? (Models.JsonString.Source)t : default, cancellationToken: cancellationToken);
-                    bool ok = response.MatchResult(
-                        list =>
-                        {
-                            next = list.NextPageToken.IsNotUndefined() ? (string)list.NextPageToken : null;
-                            foreach (Models.CredentialBindingSummary b in list.Credentials.EnumerateArray())
-                            {
-                                string environment = (string)b.Environment;
-                                if (!credentialedSources.TryGetValue(environment, out HashSet<string>? set))
-                                {
-                                    credentialedSources[environment] = set = new HashSet<string>(StringComparer.Ordinal);
-                                }
-
-                                set.Add((string)b.SourceName);
-                            }
-
-                            return true;
-                        },
-                        _ => false);
-                    if (!ok)
-                    {
-                        return false;
-                    }
-
-                    pageToken = next;
-                }
-                while (pageToken is not null);
-                return true;
-            });
-
-        if (credentialsOk is null)
-        {
-            Console.Error.WriteLine("Warning: could not read credentials to verify readiness; skipping the readiness check.");
-            return null;
-        }
-
-        // Ready = an environment in which EVERY source has a credential.
-        bool readyAnywhere = environments.Any(env => sourceNames.All(s => credentialedSources.TryGetValue(env, out HashSet<string>? set) && set.Contains(s)));
-        if (readyAnywhere)
-        {
-            return null;
-        }
-
-        Console.Error.WriteLine("Refusing to add: this workflow is not ready in any environment — every source it references must have a credential in the same environment so it can run.");
-        if (environments.Count == 0)
-        {
-            Console.Error.WriteLine($"  No environments are visible. Create an environment and set up a credential for each source ({string.Join(", ", sourceNames)}).");
-        }
-        else
-        {
-            foreach (string env in environments)
-            {
-                credentialedSources.TryGetValue(env, out HashSet<string>? set);
-                List<string> missing = sourceNames.Where(s => set?.Contains(s) != true).ToList();
-                if (missing.Count > 0)
-                {
-                    Console.Error.WriteLine($"  {env}: missing a credential for {string.Join(", ", missing)}");
-                }
-            }
-        }
-
-        Console.Error.WriteLine("Set credentials up with 'credentials create' and retry.");
-        return 1;
-    }
-
-    /// <summary>Runs <paramref name="walk"/> over a freshly-created client (disposing its transport), returning the
-    /// accumulated names, or <see langword="null"/> if the walk reported it could not read the resource.</summary>
-    private static async Task<List<string>?> CollectAsync<TClient>((HttpClient Http, HttpClientTransport Transport, TClient Client) connection, Func<TClient, Action<string>, Task<bool>> walk)
-    {
-        var items = new List<string>();
-        (HttpClient http, HttpClientTransport transport, TClient client) = connection;
-        using (http)
-        await using (transport)
-        {
-            bool ok = await walk(client, items.Add);
-            return ok ? items : null;
-        }
-    }
 }
 
 internal sealed class CatalogSearchCommand : AsyncCommand<CatalogSearchSettings>
@@ -705,7 +511,7 @@ internal sealed class CatalogSearchCommand : AsyncCommand<CatalogSearchSettings>
                 });
             }
 
-            await using SearchCatalogResponse response = await client.SearchCatalogAsync(query, baseWorkflowId, workflowIdPrefix: default, tag, status, owner, distinctWorkflows: default, limit, pageToken, cancellationToken);
+            await using SearchCatalogResponse response = await client.SearchCatalogAsync(query, baseWorkflowId, tag, status, owner, limit, pageToken, cancellationToken);
             bool asJson = settings.Output.Equals("json", StringComparison.OrdinalIgnoreCase);
             return response.MatchResult(
                 page => asJson ? Output.Print(page.ToString()) : RenderVersions(page),
@@ -915,18 +721,10 @@ internal sealed class CatalogUpdateCommand : AsyncCommand<CatalogUpdateSettings>
                 });
             }
 
-            // Named args: the generated Build takes (owner, securityTags, status, tags) — pass by name so adding a
-            // property never silently misaligns positions. A present --security-tag re-tags the version's non-internal
-            // labels (absent leaves them unchanged); the server preserves the deployment-internal tags.
-            Models.CatalogMetadataPatch.Source body = Models.CatalogMetadataPatch.Build(
-                owner: owner,
-                securityTags: WriteUpdateSecurityTags(settings.SecurityTags),
-                status: status,
-                tags: tags);
+            Models.CatalogMetadataPatch.Source body = Models.CatalogMetadataPatch.Build(owner, status, tags);
             await using UpdateCatalogVersionResponse response = await client.UpdateCatalogVersionAsync(settings.BaseWorkflowId, settings.Version, body, cancellationToken);
             return response.MatchResult(
                 summary => Output.Print(summary.ToString()),
-                Output.Problem,
                 Output.Problem,
                 Output.Problem,
                 Output.Unexpected);
@@ -940,28 +738,6 @@ internal sealed class CatalogUpdateCommand : AsyncCommand<CatalogUpdateSettings>
             Models.JsonIri.Source urlSource = url is { } u ? (Models.JsonIri.Source)u : default;
             b.Create(email: email, name: name, team: teamSource, url: urlSource);
         });
-
-    // Projects the --security-tag KVPs into the patch body's security-tag array. A null (option omitted) leaves the
-    // version's tags unchanged; a present set re-tags the non-internal labels (the server preserves internal tags and
-    // rejects the reserved prefix with 400). An ILookup preserves duplicate keys.
-    private static Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source WriteUpdateSecurityTags(ILookup<string, string>? tags)
-    {
-        if (tags is null)
-        {
-            return default;
-        }
-
-        return new Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source((ref Models.CatalogMetadataPatch.CatalogSecurityTagArray.Builder ab) =>
-        {
-            foreach (IGrouping<string, string> group in tags)
-            {
-                foreach (string value in group)
-                {
-                    ab.AddItem(new Models.CatalogSecurityTag.Source((ref Models.CatalogSecurityTag.Builder tb) => tb.Create(group.Key, value)));
-                }
-            }
-        });
-    }
 }
 
 internal sealed class CatalogObsoleteCommand : AsyncCommand<CatalogVersionSettings>
@@ -976,7 +752,6 @@ internal sealed class CatalogObsoleteCommand : AsyncCommand<CatalogVersionSettin
             await using UpdateCatalogVersionResponse response = await client.UpdateCatalogVersionAsync(settings.BaseWorkflowId, settings.Version, body, cancellationToken);
             return response.MatchResult(
                 summary => Output.Print(summary.ToString()),
-                Output.Problem,
                 Output.Problem,
                 Output.Problem,
                 Output.Unexpected);
@@ -1000,7 +775,6 @@ internal sealed class CatalogDeleteCommand : AsyncCommand<CatalogVersionSettings
             }
 
             return response.MatchResult(
-                Output.Problem,
                 Output.Problem,
                 Output.Problem,
                 Output.Unexpected);

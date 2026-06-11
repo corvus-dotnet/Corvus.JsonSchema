@@ -40,11 +40,6 @@ public struct UpdateCatalogVersionResponse : IApiResponse<UpdateCatalogVersionRe
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails BadRequestBody { get; private set; }
 
     /// <summary>
-    /// Gets the 403 response body.
-    /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails ForbiddenBody { get; private set; }
-
-    /// <summary>
     /// Gets the 404 response body.
     /// </summary>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails NotFoundBody { get; private set; }
@@ -77,14 +72,6 @@ public struct UpdateCatalogVersionResponse : IApiResponse<UpdateCatalogVersionRe
             var badRequestDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = badRequestDoc;
             response.BadRequestBody = badRequestDoc.RootElement;
-            return response;
-        }
-
-        if (statusCode == 403)
-        {
-            var forbiddenDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
-            response.parsedDocument = forbiddenDoc;
-            response.ForbiddenBody = forbiddenDoc.RootElement;
             return response;
         }
 
@@ -134,23 +121,6 @@ public struct UpdateCatalogVersionResponse : IApiResponse<UpdateCatalogVersionRe
     }
 
     /// <summary>
-    /// Tries to get the 403 typed response body.
-    /// </summary>
-    /// <param name="result">The typed response body if the status matches.</param>
-    /// <returns><see langword="true"/> if the status code is 403.</returns>
-    public bool TryGetForbidden(out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails result)
-    {
-        if (this.StatusCode == 403)
-        {
-            result = this.ForbiddenBody;
-            return true;
-        }
-
-        result = default;
-        return false;
-    }
-
-    /// <summary>
     /// Tries to get the 404 typed response body.
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
@@ -174,14 +144,12 @@ public struct UpdateCatalogVersionResponse : IApiResponse<UpdateCatalogVersionRe
     /// <typeparam name="TResult">The type of the result returned by the handler.</typeparam>
     /// <param name="matchOk">Handler for the 200 response.</param>
     /// <param name="matchBadRequest">Handler for the 400 response.</param>
-    /// <param name="matchForbidden">Handler for the 403 response.</param>
     /// <param name="matchNotFound">Handler for the 404 response.</param>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogVersionSummary, TResult> matchOk,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TResult> matchBadRequest,
-        ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TResult> matchForbidden,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TResult> matchNotFound,
         ResponseMatcher<int, TResult> matchDefault)
     {
@@ -193,11 +161,6 @@ public struct UpdateCatalogVersionResponse : IApiResponse<UpdateCatalogVersionRe
         if (this.StatusCode == 400)
         {
             return matchBadRequest(this.BadRequestBody);
-        }
-
-        if (this.StatusCode == 403)
-        {
-            return matchForbidden(this.ForbiddenBody);
         }
 
         if (this.StatusCode == 404)
@@ -217,7 +180,6 @@ public struct UpdateCatalogVersionResponse : IApiResponse<UpdateCatalogVersionRe
     /// <param name="context">The context to pass to the handler.</param>
     /// <param name="matchOk">Handler for the 200 response.</param>
     /// <param name="matchBadRequest">Handler for the 400 response.</param>
-    /// <param name="matchForbidden">Handler for the 403 response.</param>
     /// <param name="matchNotFound">Handler for the 404 response.</param>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
@@ -225,7 +187,6 @@ public struct UpdateCatalogVersionResponse : IApiResponse<UpdateCatalogVersionRe
         in TContext context,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogVersionSummary, TContext, TResult> matchOk,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TContext, TResult> matchBadRequest,
-        ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TContext, TResult> matchForbidden,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TContext, TResult> matchNotFound,
         ResponseMatcher<int, TContext, TResult> matchDefault)
     where TContext : allows ref struct
@@ -238,11 +199,6 @@ public struct UpdateCatalogVersionResponse : IApiResponse<UpdateCatalogVersionRe
         if (this.StatusCode == 400)
         {
             return matchBadRequest(this.BadRequestBody, context);
-        }
-
-        if (this.StatusCode == 403)
-        {
-            return matchForbidden(this.ForbiddenBody, context);
         }
 
         if (this.StatusCode == 404)
@@ -278,14 +234,6 @@ public struct UpdateCatalogVersionResponse : IApiResponse<UpdateCatalogVersionRe
                     ThrowHelper.ThrowResponseBodyValidationFailed(400, SchemaValidationDetail.FormatResults(collector));
                 }
             }
-            else if (this.StatusCode == 403)
-            {
-                using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-                if (!this.ForbiddenBody.EvaluateSchema(collector))
-                {
-                    ThrowHelper.ThrowResponseBodyValidationFailed(403, SchemaValidationDetail.FormatResults(collector));
-                }
-            }
             else if (this.StatusCode == 404)
             {
                 using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
@@ -309,13 +257,6 @@ public struct UpdateCatalogVersionResponse : IApiResponse<UpdateCatalogVersionRe
                 if (!this.BadRequestBody.EvaluateSchema())
                 {
                     ThrowHelper.ThrowResponseBodyValidationFailed(400);
-                }
-            }
-            else if (this.StatusCode == 403)
-            {
-                if (!this.ForbiddenBody.EvaluateSchema())
-                {
-                    ThrowHelper.ThrowResponseBodyValidationFailed(403);
                 }
             }
             else if (this.StatusCode == 404)

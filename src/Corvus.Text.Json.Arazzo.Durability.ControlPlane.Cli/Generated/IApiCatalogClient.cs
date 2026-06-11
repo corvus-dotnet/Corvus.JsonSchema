@@ -62,7 +62,7 @@ public interface IApiCatalogClient : IAsyncDisposable
         /// <summary>
         /// Gets all available scopes for <c>oauth2</c>.
         /// </summary>
-        public static readonly string[] Oauth2AvailableScopes = ["administrators:read", "administrators:write", "availability:read", "availability:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "environments:read", "environments:write", "runs:purge", "runs:read", "runs:write", "security:read", "security:write", "sources:read", "sources:write"];
+        public static readonly string[] Oauth2AvailableScopes = ["catalog:purge", "catalog:read", "catalog:write", "runs:purge", "runs:read", "runs:write"];
 
 
         /// <summary>
@@ -188,56 +188,6 @@ public interface IApiCatalogClient : IAsyncDisposable
         public static readonly string[] GetCatalogWorkflowOpenIdConnectScopes = ["catalog:read"];
 
         /// <summary>
-        /// Gets the scopes required by <c>GetCatalogWorkflowSchemas</c> for the <c>Oauth2</c> scheme.
-        /// </summary>
-        public static readonly string[] GetCatalogWorkflowSchemasOauth2Scopes = ["catalog:read"];
-
-        /// <summary>
-        /// Gets the scopes required by <c>GetCatalogWorkflowSchemas</c> for the <c>OpenIdConnect</c> scheme.
-        /// </summary>
-        public static readonly string[] GetCatalogWorkflowSchemasOpenIdConnectScopes = ["catalog:read"];
-
-        /// <summary>
-        /// Gets the scopes required by <c>GetCatalogExecutor</c> for the <c>Oauth2</c> scheme.
-        /// </summary>
-        public static readonly string[] GetCatalogExecutorOauth2Scopes = ["catalog:read"];
-
-        /// <summary>
-        /// Gets the scopes required by <c>GetCatalogExecutor</c> for the <c>OpenIdConnect</c> scheme.
-        /// </summary>
-        public static readonly string[] GetCatalogExecutorOpenIdConnectScopes = ["catalog:read"];
-
-        /// <summary>
-        /// Gets the scopes required by <c>GetCatalogExecutorManifest</c> for the <c>Oauth2</c> scheme.
-        /// </summary>
-        public static readonly string[] GetCatalogExecutorManifestOauth2Scopes = ["catalog:read"];
-
-        /// <summary>
-        /// Gets the scopes required by <c>GetCatalogExecutorManifest</c> for the <c>OpenIdConnect</c> scheme.
-        /// </summary>
-        public static readonly string[] GetCatalogExecutorManifestOpenIdConnectScopes = ["catalog:read"];
-
-        /// <summary>
-        /// Gets the scopes required by <c>ValidateCatalogValue</c> for the <c>Oauth2</c> scheme.
-        /// </summary>
-        public static readonly string[] ValidateCatalogValueOauth2Scopes = ["catalog:read"];
-
-        /// <summary>
-        /// Gets the scopes required by <c>ValidateCatalogValue</c> for the <c>OpenIdConnect</c> scheme.
-        /// </summary>
-        public static readonly string[] ValidateCatalogValueOpenIdConnectScopes = ["catalog:read"];
-
-        /// <summary>
-        /// Gets the scopes required by <c>StartCatalogWorkflowRun</c> for the <c>Oauth2</c> scheme.
-        /// </summary>
-        public static readonly string[] StartCatalogWorkflowRunOauth2Scopes = ["runs:write"];
-
-        /// <summary>
-        /// Gets the scopes required by <c>StartCatalogWorkflowRun</c> for the <c>OpenIdConnect</c> scheme.
-        /// </summary>
-        public static readonly string[] StartCatalogWorkflowRunOpenIdConnectScopes = ["runs:write"];
-
-        /// <summary>
         /// Gets the scopes required by <c>GetCatalogSource</c> for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] GetCatalogSourceOauth2Scopes = ["catalog:read"];
@@ -250,12 +200,12 @@ public interface IApiCatalogClient : IAsyncDisposable
         /// <summary>
         /// Gets all scopes required by any operation for the <c>Oauth2</c> scheme.
         /// </summary>
-        public static readonly string[] AllOauth2Scopes = ["catalog:purge", "catalog:read", "catalog:write", "runs:write"];
+        public static readonly string[] AllOauth2Scopes = ["catalog:purge", "catalog:read", "catalog:write"];
 
         /// <summary>
         /// Gets all scopes required by any operation for the <c>OpenIdConnect</c> scheme.
         /// </summary>
-        public static readonly string[] AllOpenIdConnectScopes = ["catalog:purge", "catalog:read", "catalog:write", "runs:write"];
+        public static readonly string[] AllOpenIdConnectScopes = ["catalog:purge", "catalog:read", "catalog:write"];
     }
 
     /// <summary>
@@ -266,15 +216,13 @@ public interface IApiCatalogClient : IAsyncDisposable
     /// </remarks>
     /// <param name="q">The q parameter.</param>
     /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
-    /// <param name="workflowIdPrefix">The workflowIdPrefix parameter.</param>
     /// <param name="tag">The tag parameter.</param>
     /// <param name="status">The status parameter.</param>
     /// <param name="owner">The owner parameter.</param>
-    /// <param name="distinctWorkflows">The distinctWorkflows parameter.</param>
     /// <param name="limit">The limit parameter.</param>
     /// <param name="pageToken">The pageToken parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<SearchCatalogResponse> SearchCatalogAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source q = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source workflowIdPrefix = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.TagList.Source tag = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source owner = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source distinctWorkflows = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<SearchCatalogResponse> SearchCatalogAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source q = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.TagList.Source tag = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source owner = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Add a workflow version
@@ -360,64 +308,6 @@ public interface IApiCatalogClient : IAsyncDisposable
     /// <param name="versionNumber">The versionNumber parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<GetCatalogWorkflowResponse> GetCatalogWorkflowAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
-
-    /// <summary>
-    /// Get a version's precomputed schema metadata
-    /// </summary>
-    /// <remarks>
-    /// Returns the precomputed schema-metadata document baked into the package — the typed shape of each workflow's inputs and each step's resolved outputs (and, progressively, requests and responses) — so UIs can render strongly-typed forms (a typed patch/output builder, a workflow editor) without re-parsing the OpenAPI/AsyncAPI sources. 404 if the version carries no baked metadata.
-    /// </remarks>
-    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
-    /// <param name="versionNumber">The versionNumber parameter.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<GetCatalogWorkflowSchemasResponse> GetCatalogWorkflowSchemasAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
-
-    /// <summary>
-    /// Download a version's compiled workflow executor assembly
-    /// </summary>
-    /// <remarks>
-    /// Streams the compiled workflow executor assembly (a .NET DLL) baked into the package as a single binary download — the artifact an execution host dynamically loads to run the workflow. 404 if the version is not runnable (carries no baked executor).
-    /// </remarks>
-    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
-    /// <param name="versionNumber">The versionNumber parameter.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<GetCatalogExecutorResponse> GetCatalogExecutorAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
-
-    /// <summary>
-    /// Get a version's executor manifest
-    /// </summary>
-    /// <remarks>
-    /// Returns the executor manifest baked alongside the compiled assembly — the target framework, the assembly digest binding the DLL to this version, the entry type, and the declared sources — so a runner can verify and load the executor. 404 if the version is not runnable (carries no baked executor).
-    /// </remarks>
-    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
-    /// <param name="versionNumber">The versionNumber parameter.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<GetCatalogExecutorManifestResponse> GetCatalogExecutorManifestAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
-
-    /// <summary>
-    /// Validate a value against a schema in a version
-    /// </summary>
-    /// <remarks>
-    /// Validates a JSON value against the true JSON Schema of a target within this version's package — a workflow's `inputs`, a step's request or response body, or a step's `outputs` object — using a full JSON Schema validator (not the lossy precomputed metadata). Returns a structured result (valid plus any errors with their instance locations); a malformed value still yields `200` with `valid: false`. Returns `404` when the version or the requested target schema cannot be resolved.
-    /// </remarks>
-    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
-    /// <param name="versionNumber">The versionNumber parameter.</param>
-    /// <param name="body">The request body..</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<ValidateCatalogValueResponse> ValidateCatalogValueAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ValidationRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
-
-    /// <summary>
-    /// Start a run of a workflow version
-    /// </summary>
-    /// <remarks>
-    /// Triggers a new run of this runnable version in a deployment environment (design §5.5): validates the supplied inputs against the version's baked inputs schema, pins the run to the required `environment`, then creates a Pending run that a runner serving that environment claims and executes asynchronously and durably. The run is pinned to the environment at start — it selects the credential set and constrains dispatch to runners authorized to serve it. Returns 202 with the run id; observe the run via the runs endpoints. 404 if the version does not exist, or the environment does not exist or is outside the caller's reach; 409 if the version is not available in the environment (§7.8), is not runnable (carries no executor), or no registered runner currently serves the environment; 422 if the inputs fail validation.
-    /// </remarks>
-    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
-    /// <param name="versionNumber">The versionNumber parameter.</param>
-    /// <param name="environment">The environment parameter.</param>
-    /// <param name="body">The request body..</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<StartCatalogWorkflowRunResponse> StartCatalogWorkflowRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source environment, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonObject.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Get a single source document from a version

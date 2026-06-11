@@ -161,11 +161,11 @@ public readonly partial struct WorkflowRunSummary
     /// <summary>
     /// Gets the (optional) <c>awaitingChannel</c> property.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.AwaitingChannelEntity AwaitingChannel
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString AwaitingChannel
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AwaitingChannelUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.AwaitingChannelEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AwaitingChannelUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
             {
                 return value;
             }
@@ -177,11 +177,11 @@ public readonly partial struct WorkflowRunSummary
     /// <summary>
     /// Gets the (optional) <c>awaitingCorrelationId</c> property.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.AwaitingCorrelationIdEntity AwaitingCorrelationId
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString AwaitingCorrelationId
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AwaitingCorrelationIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.AwaitingCorrelationIdEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AwaitingCorrelationIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
             {
                 return value;
             }
@@ -198,11 +198,11 @@ public readonly partial struct WorkflowRunSummary
     /// The run-wide telemetry correlation id set at creation (the value stamped on the run&#39;s `corvus.arazzo.correlation_id` spans), if any.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.CorrelationIdEntity CorrelationId
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString CorrelationId
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CorrelationIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.CorrelationIdEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CorrelationIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
             {
                 return value;
             }
@@ -235,11 +235,11 @@ public readonly partial struct WorkflowRunSummary
     /// <summary>
     /// Gets the (optional) <c>dueAt</c> property.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.DueAtEntity DueAt
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime DueAt
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DueAtUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.DueAtEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DueAtUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime value))
             {
                 return value;
             }
@@ -256,11 +256,11 @@ public readonly partial struct WorkflowRunSummary
     /// The fault error, if the run is/was faulted.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.TheFaultErrorIfTheRunIsWasFaulted ErrorType
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString ErrorType
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ErrorTypeUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.TheFaultErrorIfTheRunIsWasFaulted value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ErrorTypeUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
             {
                 return value;
             }

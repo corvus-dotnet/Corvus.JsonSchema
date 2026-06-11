@@ -102,51 +102,6 @@ public interface IApiCatalogHandler
     ValueTask<GetCatalogWorkflowResult> HandleGetCatalogWorkflowAsync(GetCatalogWorkflowParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Handles GET /catalog/{baseWorkflowId}/versions/{versionNumber}/schemas — Get a version's precomputed schema metadata
-    /// </summary>
-    /// <param name="parameters">The operation parameters.</param>
-    /// <param name="workspace">The workspace for building response values.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The operation result.</returns>
-    ValueTask<GetCatalogWorkflowSchemasResult> HandleGetCatalogWorkflowSchemasAsync(GetCatalogWorkflowSchemasParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Handles GET /catalog/{baseWorkflowId}/versions/{versionNumber}/executor — Download a version's compiled workflow executor assembly
-    /// </summary>
-    /// <param name="parameters">The operation parameters.</param>
-    /// <param name="workspace">The workspace for building response values.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The operation result.</returns>
-    ValueTask<GetCatalogExecutorResult> HandleGetCatalogExecutorAsync(GetCatalogExecutorParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Handles GET /catalog/{baseWorkflowId}/versions/{versionNumber}/executorManifest — Get a version's executor manifest
-    /// </summary>
-    /// <param name="parameters">The operation parameters.</param>
-    /// <param name="workspace">The workspace for building response values.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The operation result.</returns>
-    ValueTask<GetCatalogExecutorManifestResult> HandleGetCatalogExecutorManifestAsync(GetCatalogExecutorManifestParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Handles POST /catalog/{baseWorkflowId}/versions/{versionNumber}/validate — Validate a value against a schema in a version
-    /// </summary>
-    /// <param name="parameters">The operation parameters.</param>
-    /// <param name="workspace">The workspace for building response values.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The operation result.</returns>
-    ValueTask<ValidateCatalogValueResult> HandleValidateCatalogValueAsync(ValidateCatalogValueParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Handles POST /catalog/{baseWorkflowId}/versions/{versionNumber}/runs — Start a run of a workflow version
-    /// </summary>
-    /// <param name="parameters">The operation parameters.</param>
-    /// <param name="workspace">The workspace for building response values.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The operation result.</returns>
-    ValueTask<StartCatalogWorkflowRunResult> HandleStartCatalogWorkflowRunAsync(StartCatalogWorkflowRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Handles GET /catalog/{baseWorkflowId}/versions/{versionNumber}/sources/{sourceName} — Get a single source document from a version
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>

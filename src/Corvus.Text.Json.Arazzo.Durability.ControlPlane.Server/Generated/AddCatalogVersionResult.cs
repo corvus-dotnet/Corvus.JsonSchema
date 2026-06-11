@@ -42,18 +42,6 @@ public readonly struct AddCatalogVersionResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="AddCatalogVersionResult"/> with status 201.</returns>
     public static AddCatalogVersionResult Created(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.Source body, JsonWorkspace workspace) => new(201, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CreateBuilder(workspace, body, 30).RootElement, "application/json");
-    /// <summary>
-    /// Creates a 201 Created result from a context-threaded body, materialised in a single pass.
-    /// </summary>
-    /// <typeparam name="TContext">The type of the context carried by the body.</typeparam>
-    /// <param name="body">The context-threaded response body.</param>
-    /// <param name="workspace">The workspace for building the response value.</param>
-    /// <returns>A <see cref="AddCatalogVersionResult"/> with status 201.</returns>
-    public static AddCatalogVersionResult Created<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.Source<TContext> body, JsonWorkspace workspace)
-    #if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-    #endif
-        => new(201, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Creates a 400 BadRequest result.
@@ -62,18 +50,6 @@ public readonly struct AddCatalogVersionResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="AddCatalogVersionResult"/> with status 400.</returns>
     public static AddCatalogVersionResult BadRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(400, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/json");
-    /// <summary>
-    /// Creates a 400 BadRequest result from a context-threaded body, materialised in a single pass.
-    /// </summary>
-    /// <typeparam name="TContext">The type of the context carried by the body.</typeparam>
-    /// <param name="body">The context-threaded response body.</param>
-    /// <param name="workspace">The workspace for building the response value.</param>
-    /// <returns>A <see cref="AddCatalogVersionResult"/> with status 400.</returns>
-    public static AddCatalogVersionResult BadRequest<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source<TContext> body, JsonWorkspace workspace)
-    #if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-    #endif
-        => new(400, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Creates a 409 Conflict result.
@@ -82,18 +58,6 @@ public readonly struct AddCatalogVersionResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="AddCatalogVersionResult"/> with status 409.</returns>
     public static AddCatalogVersionResult Conflict(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(409, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/json");
-    /// <summary>
-    /// Creates a 409 Conflict result from a context-threaded body, materialised in a single pass.
-    /// </summary>
-    /// <typeparam name="TContext">The type of the context carried by the body.</typeparam>
-    /// <param name="body">The context-threaded response body.</param>
-    /// <param name="workspace">The workspace for building the response value.</param>
-    /// <returns>A <see cref="AddCatalogVersionResult"/> with status 409.</returns>
-    public static AddCatalogVersionResult Conflict<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source<TContext> body, JsonWorkspace workspace)
-    #if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-    #endif
-        => new(409, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.

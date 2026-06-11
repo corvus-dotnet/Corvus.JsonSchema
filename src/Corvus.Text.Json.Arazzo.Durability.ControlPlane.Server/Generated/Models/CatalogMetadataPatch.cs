@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A partial update of a version&#39;s mutable governance metadata; omitted fields are left unchanged. Closed (additionalProperties: false) so an unknown field is rejected with 400 rather than silently ignored. `securityTags` sets the version&#39;s NON-internal reach labels (&#167;14.2) — a governed edit for a workflow administrator; the reserved internal-tag prefix is rejected (400), since internal tags (e.g. the deployment tenant) stay deployment-stamped and immutable.
+/// A partial update of a version&#39;s mutable governance metadata; omitted fields are left unchanged.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -60,6 +60,105 @@ public readonly partial struct CatalogMetadataPatch
     public static CatalogMetadataPatch DefaultInstance { get; }
 
     /// <summary>
+    /// Gets the value of the property with the given name.
+    /// </summary>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <returns>The value of the property with the given name.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    public JsonElement this[ReadOnlySpan<byte> propertyName]
+    {
+        get
+        {
+            CheckValidInstance();
+            if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement value))
+            {
+                return default;
+            }
+
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// Gets the value of the property with the given name.
+    /// </summary>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <returns>The value of the property with the given name.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    public JsonElement this[ReadOnlySpan<char> propertyName]
+    {
+        get
+        {
+            CheckValidInstance();
+            if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement value))
+            {
+                return default;
+            }
+
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// Gets the value of the property with the given name.
+    /// </summary>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <returns>The value of the property with the given name.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    public JsonElement this[string propertyName]
+    {
+        get
+        {
+            CheckValidInstance();
+            if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement value))
+            {
+                return default;
+            }
+
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// Tries to get the value of the property with the given name.
+    /// </summary>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <param name="value">The value of the property, if present.</param>
+    /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out JsonElement value)
+    {
+        CheckValidInstance();
+        return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
+    }
+
+    /// <summary>
+    /// Tries to get the value of the property with the given name.
+    /// </summary>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <param name="value">The value of the property, if present.</param>
+    /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    public bool TryGetProperty(ReadOnlySpan<char> propertyName, out JsonElement value)
+    {
+        CheckValidInstance();
+        return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
+    }
+
+    /// <summary>
+    /// Tries to get the value of the property with the given name.
+    /// </summary>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <param name="value">The value of the property, if present.</param>
+    /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    public bool TryGetProperty(string propertyName, out JsonElement value)
+    {
+        CheckValidInstance();
+        return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
+    }
+
+    /// <summary>
     /// Gets the (optional) <c>owner</c> property.
     /// </summary>
     /// <remarks>
@@ -72,27 +171,6 @@ public readonly partial struct CatalogMetadataPatch
         get
         {
             if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OwnerUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>securityTags</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Replace the version&#39;s non-internal security tags (&#167;14.2 reach labels). The reserved internal-tag prefix is rejected (400); internal tags remain deployment-owned.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray SecurityTags
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SecurityTagsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray value))
             {
                 return value;
             }
@@ -146,6 +224,16 @@ public readonly partial struct CatalogMetadataPatch
     {
         CheckValidInstance();
         return _parent.GetPropertyCount(_idx);
+    }
+
+    /// <summary>
+    /// Enumerates the object.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    public ObjectEnumerator<JsonElement> EnumerateObject()
+    {
+        CheckValidInstance();
+        return EnumeratorCreator.CreateObjectEnumerator<JsonElement>(_parent, _idx);
     }
 
     /// <inheritdoc/>
@@ -577,11 +665,6 @@ public readonly partial struct CatalogMetadataPatch
         public const string Owner = "owner";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="SecurityTags"/>.
-        /// </summary>
-        public const string SecurityTags = "securityTags";
-
-        /// <summary>
         /// Gets the JSON property name for <see cref="Status"/>.
         /// </summary>
         public const string Status = "status";
@@ -595,11 +678,6 @@ public readonly partial struct CatalogMetadataPatch
         /// Gets the JSON property name for <see cref="Owner"/>.
         /// </summary>
         public static ReadOnlySpan<byte> OwnerUtf8 => "owner"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="SecurityTags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> SecurityTagsUtf8 => "securityTags"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Status"/>.
@@ -623,11 +701,6 @@ public readonly partial struct CatalogMetadataPatch
         public static ReadOnlySpan<byte> Owner => "owner"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="SecurityTags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> SecurityTags => "securityTags"u8;
-
-        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Status"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Status => "status"u8;
@@ -648,11 +721,6 @@ public readonly partial struct CatalogMetadataPatch
         /// Gets the pre-baked property name blob for <see cref="Owner"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Owner => [0x75, 0x00, 0x00, 0x00, 0x22, 0x6F, 0x77, 0x6E, 0x65, 0x72, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="SecurityTags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> SecurityTags => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x65, 0x63, 0x75, 0x72, 0x69, 0x74, 0x79, 0x54, 0x61, 0x67, 0x73, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Status"/>.

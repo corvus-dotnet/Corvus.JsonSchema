@@ -350,51 +350,6 @@ public readonly partial struct CatalogVersionSummary
     }
 
     /// <summary>
-    /// Gets the <c>runnable</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// <para>
-    /// Whether this version carries a compiled workflow executor assembly (downloadable via the executor endpoint) that an execution host can run.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean Runnable
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RunnableUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>securityTags</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The version&#39;s non-internal security tags (&#167;14.2) — the reach labels row-security rules match on. Internal/reserved-prefix tags are deployment-owned and stripped from this view. A run inherits its version&#39;s security tags.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogVersionSummary.CatalogSecurityTagArray SecurityTags
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SecurityTagsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogVersionSummary.CatalogSecurityTagArray value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
     /// Gets the <c>sources</c> property.
     /// </summary>
     /// <remarks>
@@ -492,11 +447,11 @@ public readonly partial struct CatalogVersionSummary
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInt32 VersionNumber
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInteger VersionNumber
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VersionNumberUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInt32 value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VersionNumberUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInteger value))
             {
                 return value;
             }
@@ -1023,16 +978,6 @@ public readonly partial struct CatalogVersionSummary
         public const string Owner = "owner";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Runnable"/>.
-        /// </summary>
-        public const string Runnable = "runnable";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="SecurityTags"/>.
-        /// </summary>
-        public const string SecurityTags = "securityTags";
-
-        /// <summary>
         /// Gets the JSON property name for <see cref="Sources"/>.
         /// </summary>
         public const string Sources = "sources";
@@ -1111,16 +1056,6 @@ public readonly partial struct CatalogVersionSummary
         /// Gets the JSON property name for <see cref="Owner"/>.
         /// </summary>
         public static ReadOnlySpan<byte> OwnerUtf8 => "owner"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Runnable"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> RunnableUtf8 => "runnable"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="SecurityTags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> SecurityTagsUtf8 => "securityTags"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Sources"/>.
@@ -1209,16 +1144,6 @@ public readonly partial struct CatalogVersionSummary
         public static ReadOnlySpan<byte> Owner => "owner"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Runnable"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Runnable => "runnable"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="SecurityTags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> SecurityTags => "securityTags"u8;
-
-        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Sources"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Sources => "sources"u8;
@@ -1304,16 +1229,6 @@ public readonly partial struct CatalogVersionSummary
         /// Gets the pre-baked property name blob for <see cref="Owner"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Owner => [0x75, 0x00, 0x00, 0x00, 0x22, 0x6F, 0x77, 0x6E, 0x65, 0x72, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Runnable"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Runnable => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x72, 0x75, 0x6E, 0x6E, 0x61, 0x62, 0x6C, 0x65, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="SecurityTags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> SecurityTags => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x65, 0x63, 0x75, 0x72, 0x69, 0x74, 0x79, 0x54, 0x61, 0x67, 0x73, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Sources"/>.

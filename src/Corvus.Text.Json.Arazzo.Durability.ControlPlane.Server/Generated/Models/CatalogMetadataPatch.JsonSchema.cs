@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A partial update of a version&#39;s mutable governance metadata; omitted fields are left unchanged. Closed (additionalProperties: false) so an unknown field is rejected with 400 rather than silently ignored. `securityTags` sets the version&#39;s NON-internal reach labels (&#167;14.2) — a governed edit for a workflow administrator; the reserved internal-tag prefix is rejected (400), since internal tags (e.g. the deployment tenant) stay deployment-stamped and immutable.
+/// A partial update of a version&#39;s mutable governance metadata; omitted fields are left unchanged.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -33,11 +33,10 @@ public readonly partial struct CatalogMetadataPatch
     public static partial class JsonSchema
     {
         private static readonly JsonSchemaPathProvider OwnerSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/owner/$ref"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider SecurityTagsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/securityTags"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider StatusSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/status/$ref"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider TagsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/tags"u8, buffer, out written);
 
-        private static void MatchOwner(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
+        private static void MatchOwner(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
@@ -52,25 +51,10 @@ public readonly partial struct CatalogMetadataPatch
             context.CommitChildContext(childContext.IsMatch, ref childContext);
         }
 
-        private static void MatchSecurityTags(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
+        private static void MatchStatus(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.JsonSchema.PushChildContextUnescaped(
-                    parentDocument,
-                    parentDocumentIndex,
-                    ref context,
-                    JsonPropertyNames.SecurityTagsUtf8,
-                    evaluationPath: SecurityTagsSchemaEvaluationPath);
-
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
-            context.CommitChildContext(childContext1.IsMatch, ref childContext1);
-        }
-
-        private static void MatchStatus(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
-        {
-            context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext2 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -78,14 +62,14 @@ public readonly partial struct CatalogMetadataPatch
                     JsonPropertyNames.StatusUtf8,
                     evaluationPath: StatusSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
-            context.CommitChildContext(childContext2.IsMatch, ref childContext2);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+            context.CommitChildContext(childContext1.IsMatch, ref childContext1);
         }
 
-        private static void MatchTags(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
+        private static void MatchTags(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext3 =
+            JsonSchemaContext childContext2 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -93,15 +77,14 @@ public readonly partial struct CatalogMetadataPatch
                     JsonPropertyNames.TagsUtf8,
                     evaluationPath: TagsSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
-            context.CommitChildContext(childContext3.IsMatch, ref childContext3);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+            context.CommitChildContext(childContext2.IsMatch, ref childContext2);
         }
 
         private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1> MatchersBuilder()
         {
             return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1>([
                 (static () => JsonPropertyNames.OwnerUtf8, MatchOwner),
-                (static () => JsonPropertyNames.SecurityTagsUtf8, MatchSecurityTags),
                 (static () => JsonPropertyNames.StatusUtf8, MatchStatus),
                 (static () => JsonPropertyNames.TagsUtf8, MatchTags),
             ]);
@@ -117,8 +100,6 @@ public readonly partial struct CatalogMetadataPatch
         {
             return Matchers.TryGetNamedMatcher(span, out matcher);
         }
-
-        private static readonly JsonSchemaPathProvider AdditionalPropertiesSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/additionalProperties"u8, buffer, out written);
 
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
@@ -160,7 +141,6 @@ public readonly partial struct CatalogMetadataPatch
                 {
                     return;
                 }
-                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "additionalProperties"u8);
                 context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "properties"u8);
             }
             else
@@ -175,37 +155,11 @@ public readonly partial struct CatalogMetadataPatch
 
                     if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1? validator))
                     {
-                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context);
+                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex);
 
                         if (!context.HasCollector && !context.IsMatch)
                         {
                             return;
-                        }
-                    }
-                    else
-                    {
-                        if (!context.HasLocalEvaluatedProperty(objectValidation_propertyCount))
-                        {
-                            JsonSchemaContext childContext = Corvus.Text.Json.JsonElementForBooleanFalseSchema.JsonSchema.PushChildContextUnescaped(
-                                parentDocument,
-                                objectValidation_currentIndex,
-                                ref context,
-                                objectValidation_unescapedPropertyName.Span,
-                                evaluationPath: AdditionalPropertiesSchemaEvaluationPath);
-
-                            Corvus.Text.Json.JsonElementForBooleanFalseSchema.JsonSchema.Evaluate(parentDocument, objectValidation_currentIndex, ref childContext);
-
-                            if (!childContext.IsMatch)
-                            {
-                                context.CommitChildContext(false, ref childContext);
-                                context.EvaluatedKeyword(false, messageProvider: JsonSchemaEvaluation.ExpectedPropertyMatchesFallbackSchema, "additionalProperties"u8);
-                            }
-                            else
-                            {
-                                context.CommitChildContext(true, ref childContext);
-                                context.AddLocalEvaluatedProperty(objectValidation_propertyCount);
-                                context.EvaluatedKeyword(true, messageProvider: JsonSchemaEvaluation.ExpectedPropertyMatchesFallbackSchema, "additionalProperties"u8);
-                            }
                         }
                     }
 
@@ -223,7 +177,7 @@ public readonly partial struct CatalogMetadataPatch
             parentDocument,
             parentIndex,
             usingEvaluatedItems: false,
-            usingEvaluatedProperties: true,
+            usingEvaluatedProperties: false,
             resultsCollector: resultsCollector);
 
             try
@@ -262,7 +216,7 @@ public readonly partial struct CatalogMetadataPatch
                     parentDocument,
                     parentDocumentIndex,
                     useEvaluatedItems: false,
-                    useEvaluatedProperties: true,
+                    useEvaluatedProperties: false,
                     evaluationPath: schemaEvaluationPath,
                     documentEvaluationPath: documentEvaluationPath,
                     providerContext: providerContext);
@@ -289,7 +243,7 @@ public readonly partial struct CatalogMetadataPatch
                     parentDocument,
                     parentDocumentIndex,
                     useEvaluatedItems: false,
-                    useEvaluatedProperties: true,
+                    useEvaluatedProperties: false,
                     evaluationPath: schemaEvaluationPath,
                     documentEvaluationPath: documentEvaluationPath);
         }
@@ -315,7 +269,7 @@ public readonly partial struct CatalogMetadataPatch
                     parentDocument,
                     parentDocumentIndex,
                     useEvaluatedItems: false,
-                    useEvaluatedProperties: true,
+                    useEvaluatedProperties: false,
                     propertyName,
                     evaluationPath: evaluationPath,
                     schemaEvaluationPath: SchemaLocationProvider);
@@ -342,7 +296,7 @@ public readonly partial struct CatalogMetadataPatch
                     parentDocument,
                     parentDocumentIndex,
                     useEvaluatedItems: false,
-                    useEvaluatedProperties: true,
+                    useEvaluatedProperties: false,
                     propertyName,
                     evaluationPath: evaluationPath,
                     schemaEvaluationPath: SchemaLocationProvider);
@@ -369,7 +323,7 @@ public readonly partial struct CatalogMetadataPatch
                     parentDocument,
                     parentDocumentIndex,
                     useEvaluatedItems: false,
-                    useEvaluatedProperties: true,
+                    useEvaluatedProperties: false,
                     itemIndex,
                     evaluationPath: evaluationPath,
                     schemaEvaluationPath: SchemaLocationProvider);

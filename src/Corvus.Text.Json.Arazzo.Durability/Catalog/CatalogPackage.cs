@@ -2,8 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
+using System.IO.Compression;
 using System.Text.RegularExpressions;
-using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 
 namespace Corvus.Text.Json.Arazzo.Durability;
@@ -12,8 +13,8 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// The catalog's processing of a <see cref="WorkflowPackage"/> archive: reading the base workflow id, projecting
 /// a submitted package into the stored form (the workflow id rewritten to the versioned form, the archive
 /// repacked canonically and content-hashed, and the searchable metadata extracted), slicing an individual
-/// document out, and the offline build / unpack / verify the CLI uses. The package itself is an opaque binary
-/// artifact (see <see cref="WorkflowPackage"/>); this type is the catalog-facing logic over it.
+/// document out, and the offline build / unpack / verify the CLI uses. The package itself is an opaque ZIP
+/// (see <see cref="WorkflowPackage"/>); this type is the catalog-facing logic over it.
 /// </summary>
 public static partial class CatalogPackage
 {
@@ -53,32 +54,6 @@ public static partial class CatalogPackage
         throw new ArgumentException("The package's Arazzo workflow has no workflowId.", nameof(packageZip));
     }
 
-    /// <summary>Reads the distinct source-description names the package's Arazzo workflow declares (its
-    /// <c>sourceDescriptions[].name</c> values), without otherwise validating or projecting the package.</summary>
-    /// <param name="packageZip">The package archive bytes.</param>
-    /// <returns>The declared source names (possibly empty).</returns>
-    public static IReadOnlyList<string> ReadSourceNames(ReadOnlyMemory<byte> packageZip)
-    {
-        WorkflowPackageContents contents = WorkflowPackage.Open(packageZip);
-        using ParsedJsonDocument<JsonElement> workflow = ParsedJsonDocument<JsonElement>.Parse(contents.Workflow);
-        IReadOnlyList<CatalogSourceRef> sources = ReadSources(workflow.RootElement);
-        if (sources.Count == 0)
-        {
-            return [];
-        }
-
-        var names = new List<string>(sources.Count);
-        foreach (CatalogSourceRef source in sources)
-        {
-            if (!names.Contains(source.Name))
-            {
-                names.Add(source.Name);
-            }
-        }
-
-        return names;
-    }
-
     /// <summary>
     /// Processes a submitted package into the stored form: rewrites the first workflow's id to
     /// <c>{baseWorkflowId}-v{versionNumber}</c>, repacks the archive canonically, content-hashes it, and projects
@@ -87,44 +62,27 @@ public static partial class CatalogPackage
     /// <param name="packageZip">The submitted package archive bytes.</param>
     /// <param name="baseWorkflowId">The base workflow id.</param>
     /// <param name="versionNumber">The version number assigned by the store.</param>
-    /// <param name="metadataProvider">An optional provider that precomputes the typed schema-metadata document
-    /// baked into the canonical package (<see cref="WorkflowPackage.SchemasEntryName"/>); <see langword="null"/>
-    /// to omit it. The content hash is unaffected (it covers only the workflow + sources).</param>
-    /// <param name="executorProvider">An optional provider that compiles the workflow executor assembly baked
-    /// into the canonical package (<see cref="WorkflowPackage.ExecutorEntryName"/> + manifest);
-    /// <see langword="null"/> to omit it. The content hash is unaffected.</param>
     /// <returns>The projection (canonical package archive bytes, versioned id, hash, title, description, sources).</returns>
-    public static CatalogPackageProjection Project(ReadOnlyMemory<byte> packageZip, string baseWorkflowId, int versionNumber, IWorkflowMetadataProvider? metadataProvider = null, IWorkflowExecutorProvider? executorProvider = null)
+    public static CatalogPackageProjection Project(ReadOnlyMemory<byte> packageZip, string baseWorkflowId, int versionNumber)
     {
         ArgumentNullException.ThrowIfNull(baseWorkflowId);
-        string workflowId = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{baseWorkflowId}-v{versionNumber}");
+        string workflowId = $"{baseWorkflowId}-v{versionNumber.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
 
-        // Pooled, borrow-only read of the package's workflow + sources: the documents are views over the package buffer,
-        // so the publish hot path reads them with no per-document heap allocation. Everything that outlives this scope
-        // (canonical package, hash, projected metadata) is freshly owned, never a view over these buffers — so disposing
-        // here is safe.
-        using PooledPackageContents contents = WorkflowPackage.OpenPooled(packageZip);
+        WorkflowPackageContents contents = WorkflowPackage.Open(packageZip);
+        byte[] rewrittenWorkflow = RewriteWorkflowId(contents.Workflow, workflowId);
+        byte[] canonicalPackage = WorkflowPackage.Pack(rewrittenWorkflow, contents.Sources);
+        string hash = WorkflowPackage.ComputeContentHash(rewrittenWorkflow, contents.Sources);
 
-        // Parse the original workflow once: read the (id-independent) title/description/sources and write the id-rewritten
-        // document into a pooled, parsed buffer. That single rewritten document is then BOTH the hash input (its parsed
-        // element) and the packed workflow bytes (its raw UTF-8, via JsonMarshal) — parsed once, with no separate
-        // intermediate array and no re-parse for the hash.
-        using ParsedJsonDocument<JsonElement> rewritten = RewriteWorkflowToDocument(contents.Workflow, workflowId, out string title, out string? description, out IReadOnlyList<CatalogSourceRef> sources);
-        ReadOnlyMemory<byte> rewrittenWorkflow = JsonMarshal.GetRawUtf8Value(rewritten.RootElement).Memory;
+        string title;
+        string? description;
+        IReadOnlyList<CatalogSourceRef> sources;
+        using (ParsedJsonDocument<JsonElement> workflow = ParsedJsonDocument<JsonElement>.Parse(rewrittenWorkflow))
+        {
+            (title, description) = ReadTitleAndDescription(workflow.RootElement);
+            sources = ReadSources(workflow.RootElement);
+        }
 
-        // OpenPooled returns the sources already sorted by name, so the hash skips its defensive re-sort and the workflow
-        // is the element we already parsed (no re-parse).
-        string hash = WorkflowPackage.ComputeContentHashPreSorted(rewritten.RootElement, contents.Sources);
-
-        // The optional providers consume sources as byte[]; materialise once (only when one is configured — the common
-        // path has neither, so the pooled sources are never copied).
-        IReadOnlyList<KeyValuePair<string, byte[]>>? providerSources =
-            metadataProvider is not null || executorProvider is not null ? MaterializeSources(contents.Sources) : null;
-        ReadOnlyMemory<byte> schemas = metadataProvider?.BuildSchemas(rewrittenWorkflow, providerSources!) ?? default;
-        WorkflowExecutorArtifact? executor = executorProvider?.BuildExecutor(rewrittenWorkflow, providerSources!, hash);
-        byte[] canonicalPackage = WorkflowPackage.PackPooled(rewrittenWorkflow, contents.Sources, schemas, executor?.Assembly ?? default, executor?.Manifest ?? default);
-
-        return new CatalogPackageProjection(canonicalPackage, workflowId, hash, title, description, sources, executor.HasValue);
+        return new CatalogPackageProjection(canonicalPackage, workflowId, hash, title, description, sources);
     }
 
     /// <summary>
@@ -290,30 +248,16 @@ public static partial class CatalogPackage
         return sources;
     }
 
-    // Copies pooled source views to owned arrays for the optional metadata/executor providers (which take byte[]); only
-    // called when a provider is configured, so the common publish path never materialises the pooled sources.
-    private static IReadOnlyList<KeyValuePair<string, byte[]>> MaterializeSources(IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> sources)
+    private static byte[] RewriteWorkflowId(ReadOnlyMemory<byte> workflowUtf8, string newWorkflowId)
     {
-        var list = new List<KeyValuePair<string, byte[]>>(sources.Count);
-        foreach (KeyValuePair<string, ReadOnlyMemory<byte>> source in sources)
+        using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(workflowUtf8);
+        var buffer = new ArrayBufferWriter<byte>();
+        using (var writer = new Utf8JsonWriter(buffer, new JsonWriterOptions { Indented = false, SkipValidation = true }))
         {
-            list.Add(new KeyValuePair<string, byte[]>(source.Key, source.Value.ToArray()));
+            WriteWorkflowWithId(document.RootElement, writer, newWorkflowId);
         }
 
-        return list;
-    }
-
-    // Rewrites the first workflow's id and reads the (id-independent) title/description/sources from one parse of the
-    // original, writing the rewritten document into a pooled, parsed document (the caller disposes it). The rewrite changes
-    // only workflows[0].workflowId, so title/description/sources are identical in the original and rewritten documents.
-    private static ParsedJsonDocument<JsonElement> RewriteWorkflowToDocument(ReadOnlyMemory<byte> workflowUtf8, string newWorkflowId, out string title, out string? description, out IReadOnlyList<CatalogSourceRef> sources)
-    {
-        using ParsedJsonDocument<JsonElement> original = ParsedJsonDocument<JsonElement>.Parse(workflowUtf8);
-        (title, description) = ReadTitleAndDescription(original.RootElement);
-        sources = ReadSources(original.RootElement);
-        return PersistedJson.ToPooledDocument<JsonElement, (JsonElement Root, string NewWorkflowId)>(
-            (original.RootElement, newWorkflowId),
-            static (Utf8JsonWriter writer, in (JsonElement Root, string NewWorkflowId) c) => WriteWorkflowWithId(c.Root, writer, c.NewWorkflowId));
+        return buffer.WrittenSpan.ToArray();
     }
 
     private static void WriteWorkflowWithId(JsonElement workflow, Utf8JsonWriter writer, string newWorkflowId)
@@ -382,16 +326,13 @@ public static partial class CatalogPackage
 /// <param name="Title">The title from the workflow's <c>info.title</c>.</param>
 /// <param name="Description">The description (from <c>info.description</c>, falling back to <c>info.summary</c>), if any.</param>
 /// <param name="Sources">The source documents declared by the workflow (name + type).</param>
-/// <param name="HasExecutor">Whether a compiled workflow executor assembly was baked into the canonical package
-/// (i.e. an executor provider was supplied and produced one) — the version is runnable.</param>
 public readonly record struct CatalogPackageProjection(
     ReadOnlyMemory<byte> CanonicalPackage,
     string WorkflowId,
     string Hash,
     string Title,
     string? Description,
-    IReadOnlyList<CatalogSourceRef> Sources,
-    bool HasExecutor = false);
+    IReadOnlyList<CatalogSourceRef> Sources);
 
 /// <summary>The result of a local <see cref="CatalogPackage.Validate"/> of a package archive.</summary>
 /// <param name="IsValid">Whether the package is well-formed and referentially complete (no <paramref name="Issues"/>).</param>

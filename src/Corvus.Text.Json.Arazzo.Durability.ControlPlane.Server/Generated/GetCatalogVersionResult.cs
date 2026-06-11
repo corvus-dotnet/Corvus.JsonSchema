@@ -42,18 +42,6 @@ public readonly struct GetCatalogVersionResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="GetCatalogVersionResult"/> with status 200.</returns>
     public static GetCatalogVersionResult Ok(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.Source body, JsonWorkspace workspace) => new(200, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CreateBuilder(workspace, body, 30).RootElement, "application/json");
-    /// <summary>
-    /// Creates a 200 Ok result from a context-threaded body, materialised in a single pass.
-    /// </summary>
-    /// <typeparam name="TContext">The type of the context carried by the body.</typeparam>
-    /// <param name="body">The context-threaded response body.</param>
-    /// <param name="workspace">The workspace for building the response value.</param>
-    /// <returns>A <see cref="GetCatalogVersionResult"/> with status 200.</returns>
-    public static GetCatalogVersionResult Ok<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.Source<TContext> body, JsonWorkspace workspace)
-    #if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-    #endif
-        => new(200, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Creates a 404 NotFound result.
@@ -62,18 +50,6 @@ public readonly struct GetCatalogVersionResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="GetCatalogVersionResult"/> with status 404.</returns>
     public static GetCatalogVersionResult NotFound(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(404, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/json");
-    /// <summary>
-    /// Creates a 404 NotFound result from a context-threaded body, materialised in a single pass.
-    /// </summary>
-    /// <typeparam name="TContext">The type of the context carried by the body.</typeparam>
-    /// <param name="body">The context-threaded response body.</param>
-    /// <param name="workspace">The workspace for building the response value.</param>
-    /// <returns>A <see cref="GetCatalogVersionResult"/> with status 404.</returns>
-    public static GetCatalogVersionResult NotFound<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source<TContext> body, JsonWorkspace workspace)
-    #if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-    #endif
-        => new(404, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.

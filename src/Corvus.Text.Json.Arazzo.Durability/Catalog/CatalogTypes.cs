@@ -40,8 +40,7 @@ public readonly record struct CatalogVersionRef(string BaseWorkflowId, int Versi
 /// <param name="Owner">The accountable governance owner.</param>
 /// <param name="CreatedBy">The authenticated actor adding the version (recorded for governance + audit).</param>
 /// <param name="Tags">Free-form tags for display and filtering (AND-matched on search), if any.</param>
-/// <param name="SecurityTags">Security tags (KVP labels) — the input to tag-based row authorization (§14.2), distinct from the free-form <paramref name="Tags"/> — if any.</param>
-public readonly record struct CatalogMetadata(CatalogOwner Owner, string CreatedBy, TagSet Tags = default, SecurityTagSet SecurityTags = default);
+public readonly record struct CatalogMetadata(CatalogOwner Owner, string CreatedBy, IReadOnlyList<string>? Tags = null);
 
 /// <summary>A partial update of a version's mutable governance metadata; an unset field is left unchanged. Setting
 /// <see cref="Status"/> to <see cref="CatalogStatus.Obsolete"/> records the obsoletion as a distinct governance event.</summary>
@@ -50,16 +49,51 @@ public readonly record struct CatalogMetadata(CatalogOwner Owner, string Created
 /// <param name="Owner">A replacement owner, if set.</param>
 /// <param name="Tags">A replacement tag set, if set.</param>
 /// <param name="Status">A new status, if set.</param>
-/// <param name="SecurityTags">The <em>effective</em> replacement security-tag set, if the version is being re-tagged
-/// (design §14.2) — <see langword="null"/> leaves the version's security tags unchanged. The set is already the final
-/// tags to persist: the security wrapper has merged the caller's new non-internal labels with the version's preserved
-/// deployment-internal tags, so a store simply replaces its stored/queryable representation with it.</param>
 public readonly record struct CatalogMetadataPatch(
     string UpdatedBy,
     CatalogOwner? Owner = null,
-    TagSet? Tags = null,
-    CatalogStatus? Status = null,
-    SecurityTagSet? SecurityTags = null);
+    IReadOnlyList<string>? Tags = null,
+    CatalogStatus? Status = null);
 
-// The catalog version's persisted metadata is the generated Corvus.Text.Json type CatalogVersion
-// (see CatalogVersion.cs + Schemas/CatalogVersion.json) — the entity stores hold as JSON.
+/// <summary>
+/// A catalog version's metadata — the immutable identity/hash/title/description/sources derived from the package,
+/// plus the mutable governance fields and audit attribution. The package documents themselves are never embedded
+/// here; they are fetched via <see cref="IWorkflowCatalogStore.GetPackageAsync"/> / <see cref="IWorkflowCatalogStore.GetDocumentAsync"/>.
+/// </summary>
+/// <param name="BaseWorkflowId">The base workflow id (no version suffix).</param>
+/// <param name="VersionNumber">The 1-based version number assigned by the store.</param>
+/// <param name="WorkflowId">The versioned workflow id (<c>{baseWorkflowId}-v{versionNumber}</c>) runs execute under.</param>
+/// <param name="Title">The title, extracted from the workflow's <c>info.title</c>.</param>
+/// <param name="Description">The description, from the workflow's <c>info.description</c> (falling back to <c>info.summary</c>), if any.</param>
+/// <param name="Status">The lifecycle status.</param>
+/// <param name="Tags">The free-form tags.</param>
+/// <param name="Owner">The accountable governance owner.</param>
+/// <param name="Sources">The source documents in the package (name + type), addressable individually.</param>
+/// <param name="Hash">The SHA-256 of the canonical package, hex-encoded.</param>
+/// <param name="CreatedBy">The actor that added the version.</param>
+/// <param name="CreatedAt">When the version was added.</param>
+/// <param name="LastUpdatedBy">The actor of the last metadata change, if any.</param>
+/// <param name="LastUpdatedAt">When the metadata was last changed, if ever.</param>
+/// <param name="ObsoletedBy">The actor that marked the version obsolete, if it is.</param>
+/// <param name="ObsoletedAt">When the version was marked obsolete, if it is.</param>
+public sealed record CatalogVersion(
+    string BaseWorkflowId,
+    int VersionNumber,
+    string WorkflowId,
+    string Title,
+    string? Description,
+    CatalogStatus Status,
+    IReadOnlyList<string> Tags,
+    CatalogOwner Owner,
+    IReadOnlyList<CatalogSourceRef> Sources,
+    string Hash,
+    string CreatedBy,
+    DateTimeOffset CreatedAt,
+    string? LastUpdatedBy = null,
+    DateTimeOffset? LastUpdatedAt = null,
+    string? ObsoletedBy = null,
+    DateTimeOffset? ObsoletedAt = null)
+{
+    /// <summary>Gets the minimal identity reference for this version.</summary>
+    public CatalogVersionRef Ref => new(this.BaseWorkflowId, this.VersionNumber, this.WorkflowId);
+}

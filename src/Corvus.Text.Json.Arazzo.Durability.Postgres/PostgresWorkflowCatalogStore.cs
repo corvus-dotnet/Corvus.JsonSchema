@@ -20,28 +20,20 @@ namespace Corvus.Text.Json.Arazzo.Durability.Postgres;
 /// Each operation opens a pooled connection, so the store is naturally concurrent. Create instances with
 /// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> after provisioning with <see cref="PrepareAsync(string, CancellationToken)"/>.
 /// </remarks>
-public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISupportsRowSecurityFilter, IAsyncDisposable
+public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDisposable
 {
     private const string ColumnList =
-        "BaseWorkflowId, VersionNumber, WorkflowId, Title, Description, Status, Tags, OwnerName, OwnerEmail, OwnerTeam, OwnerUrl, Sources, Hash, CreatedBy, CreatedAt, LastUpdatedBy, LastUpdatedAt, ObsoletedBy, ObsoletedAt, Runnable, SecurityTags";
-
-    // Field separators for the denormalized SecurityTags column (control chars, never present in tag text).
-    private const char SecurityTagPairSeparator = (char)0x1F;
-    private const char SecurityTagKeyValueSeparator = (char)0x1E;
+        "BaseWorkflowId, VersionNumber, WorkflowId, Title, Description, Status, Tags, OwnerName, OwnerEmail, OwnerTeam, OwnerUrl, Sources, Hash, CreatedBy, CreatedAt, LastUpdatedBy, LastUpdatedAt, ObsoletedBy, ObsoletedAt";
 
     private readonly NpgsqlDataSource dataSource;
     private readonly bool ownsDataSource;
     private readonly TimeProvider timeProvider;
-    private readonly IWorkflowMetadataProvider? metadataProvider;
-    private readonly IWorkflowExecutorProvider? executorProvider;
 
-    private PostgresWorkflowCatalogStore(NpgsqlDataSource dataSource, bool ownsDataSource, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider)
+    private PostgresWorkflowCatalogStore(NpgsqlDataSource dataSource, bool ownsDataSource, TimeProvider timeProvider)
     {
         this.dataSource = dataSource;
         this.ownsDataSource = ownsDataSource;
         this.timeProvider = timeProvider;
-        this.metadataProvider = metadataProvider;
-        this.executorProvider = executorProvider;
     }
 
     /// <summary>
@@ -76,14 +68,12 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
     public static ValueTask<PostgresWorkflowCatalogStore> ConnectAsync(
         string connectionString,
         TimeProvider? timeProvider = null,
-        IWorkflowMetadataProvider? metadataProvider = null,
-        IWorkflowExecutorProvider? executorProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
         cancellationToken.ThrowIfCancellationRequested();
         return new ValueTask<PostgresWorkflowCatalogStore>(
-            new PostgresWorkflowCatalogStore(NpgsqlDataSource.Create(connectionString), ownsDataSource: true, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider));
+            new PostgresWorkflowCatalogStore(NpgsqlDataSource.Create(connectionString), ownsDataSource: true, timeProvider ?? TimeProvider.System));
     }
 
     /// <summary>Provisions the catalog schema over a caller-supplied data source.</summary>
@@ -118,14 +108,12 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
     public static ValueTask<PostgresWorkflowCatalogStore> ConnectAsync(
         NpgsqlDataSource dataSource,
         TimeProvider? timeProvider = null,
-        IWorkflowMetadataProvider? metadataProvider = null,
-        IWorkflowExecutorProvider? executorProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dataSource);
         cancellationToken.ThrowIfCancellationRequested();
         return new ValueTask<PostgresWorkflowCatalogStore>(
-            new PostgresWorkflowCatalogStore(dataSource, ownsDataSource: false, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider));
+            new PostgresWorkflowCatalogStore(dataSource, ownsDataSource: false, timeProvider ?? TimeProvider.System));
     }
 
     /// <summary>Disposes the data source if this store created it (from a connection string).</summary>
@@ -139,14 +127,14 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
     }
 
     /// <inheritdoc/>
-    public ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
+    public ValueTask<CatalogVersion> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
-        return this.AddCoreAsync(baseWorkflowId, packageUtf8, metadata, cancellationToken);
+        return this.AddCoreAsync(baseWorkflowId, packageUtf8.ToArray(), metadata, cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<CatalogVersion>?> GetAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    public async ValueTask<CatalogVersion?> GetAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         return await ReadOneAsync(connection, baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
@@ -170,57 +158,36 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
     /// <inheritdoc/>
     public async ValueTask<CatalogPage> QueryAsync(CatalogQuery query, CancellationToken cancellationToken)
     {
-        // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
-        string? after = null;
-        if (query.ContinuationToken.IsNotUndefined())
-        {
-            using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
-            after = WorkflowContinuationToken.Decode(tokenUtf8.Span);
-        }
-
+        string? after = WorkflowContinuationToken.Decode(query.ContinuationToken);
         int limit = query.Limit <= 0 ? 100 : query.Limit;
 
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlCommand select = connection.CreateCommand();
+        select.CommandText =
+            "SELECT " + ColumnList +
+            """
 
-        // The shared filter body (base/status/text/owner/prefix/tags/security); both query modes embed it verbatim,
-        // and the {{tagPredicates}}/{{securityPredicate}} placeholders are filled below.
-        const string filterWhere = """
-            (@baseWorkflowId IS NULL OR BaseWorkflowId = @baseWorkflowId)
+            FROM CatalogVersions
+            WHERE (@baseWorkflowId IS NULL OR BaseWorkflowId = @baseWorkflowId)
               AND (@status IS NULL OR Status = @status)
               AND (@text IS NULL OR Title ILIKE @textLike ESCAPE '\' OR (Description IS NOT NULL AND Description ILIKE @textLike ESCAPE '\'))
               AND (@owner IS NULL OR OwnerName ILIKE @ownerLike ESCAPE '\' OR OwnerEmail ILIKE @ownerLike ESCAPE '\')
-              AND (@workflowIdPrefix IS NULL OR lower(WorkflowId) LIKE @workflowIdPrefixLike ESCAPE '\')
               {{tagPredicates}}
-              {{securityPredicate}}
+              AND (@after IS NULL OR (BaseWorkflowId || lpad(VersionNumber::text, 10, '0')) > @after)
+            ORDER BY BaseWorkflowId, VersionNumber
+            LIMIT @limit;
             """;
-
-        // distinctWorkflows: among the filtered versions of each base, rank by (Active < Obsolete < other, then newest)
-        // and keep the representative (RepRank = 1); keyset-page by base workflow id alone. The base compare/order are
-        // forced COLLATE "C" so they are byte-ordinal (matching the in-memory pager's StringComparer.Ordinal) — the
-        // BaseWorkflowId column is not C-collated in this schema, so its default-collation order would not match.
-        // Otherwise page every matching version by (base, version).
-        select.CommandText = query.DistinctWorkflows
-            ? "WITH ranked AS (\n  SELECT " + ColumnList +
-              ",\n    ROW_NUMBER() OVER (PARTITION BY BaseWorkflowId ORDER BY CASE Status WHEN 'Active' THEN 0 WHEN 'Obsolete' THEN 1 ELSE 2 END, VersionNumber DESC) AS RepRank\n" +
-              "  FROM CatalogVersions\n  WHERE " + filterWhere + "\n)\n" +
-              "SELECT " + ColumnList + " FROM ranked\nWHERE RepRank = 1 AND (@after IS NULL OR BaseWorkflowId COLLATE \"C\" > @after COLLATE \"C\")\nORDER BY BaseWorkflowId COLLATE \"C\"\nLIMIT @limit;"
-            : "SELECT " + ColumnList + "\nFROM CatalogVersions\nWHERE " + filterWhere +
-              "\n  AND (@after IS NULL OR (BaseWorkflowId || lpad(VersionNumber::text, 10, '0')) > @after)\nORDER BY BaseWorkflowId, VersionNumber\nLIMIT @limit;";
         select.Parameters.Add(NullableText("baseWorkflowId", query.BaseWorkflowId));
         select.Parameters.Add(NullableText("status", query.Status?.ToString()));
         select.Parameters.Add(NullableText("text", query.Text));
         select.Parameters.Add(NullableText("textLike", query.Text is { Length: > 0 } t ? "%" + EscapeLike(t) + "%" : null));
         select.Parameters.Add(NullableText("owner", query.Owner));
         select.Parameters.Add(NullableText("ownerLike", query.Owner is { Length: > 0 } o ? "%" + EscapeLike(o) + "%" : null));
-        select.Parameters.Add(NullableText("workflowIdPrefix", query.WorkflowIdPrefix));
-        select.Parameters.Add(NullableText("workflowIdPrefixLike", query.WorkflowIdPrefix is { Length: > 0 } p ? EscapeLike(p.ToLowerInvariant()) + "%" : null));
         select.Parameters.Add(NullableText("after", after));
         select.Parameters.AddWithValue("limit", limit + 1);
 
-        if (!query.Tags.IsEmpty)
+        if (query.Tags is { Count: > 0 } tags)
         {
-            List<string> tags = query.Tags.ToList();
             var predicates = new StringBuilder();
             for (int i = 0; i < tags.Count; i++)
             {
@@ -236,116 +203,57 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
             select.CommandText = select.CommandText.Replace("{{tagPredicates}}", string.Empty);
         }
 
-        // Row-security reach (§14.4): correlated EXISTS over the version's security tags.
-        if (query.Security is { } security)
+        var versions = new List<CatalogVersion>();
+        await using NpgsqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
-            int securityParam = 0;
-            var emitter = new SqlSecurityRuleEmitter(
-                "CatalogVersionSecurityTags",
-                ["BaseWorkflowId", "VersionNumber"],
-                "TagKey",
-                "TagValue",
-                "CatalogVersions",
-                value =>
-                {
-                    string name = "sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
-                    select.Parameters.AddWithValue(name, value);
-                    return "@" + name;
-                });
-            select.CommandText = select.CommandText.Replace("{{securityPredicate}}", "AND (" + security.ToSqlPredicate(emitter) + ")");
-        }
-        else
-        {
-            select.CommandText = select.CommandText.Replace("{{securityPredicate}}", string.Empty);
+            versions.Add(ReadVersion(reader));
         }
 
-        // The page is a pooled batch of disposable version documents (the caller disposes the page). One extra row
-        // is fetched as a look-ahead to detect a further page; it is not added to the batch.
-        var versions = new PooledDocumentList<CatalogVersion>(limit);
-        string? nextSortKey = null;
-        try
+        string? continuation = null;
+        if (versions.Count > limit)
         {
-            await using NpgsqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
-            {
-                if (versions.Count == limit)
-                {
-                    // There is at least one more matching row beyond this page; the last kept row is the cursor.
-                    // In distinct mode the cursor is the base workflow id alone (the page is one row per base).
-                    CatalogVersionRef last = versions[versions.Count - 1].Ref;
-                    nextSortKey = query.DistinctWorkflows ? last.BaseWorkflowId : SortKey(last.BaseWorkflowId, last.VersionNumber);
-                    break;
-                }
-
-                versions.Add(ReadVersion(reader));
-            }
-        }
-        catch
-        {
-            versions.Dispose();
-            throw;
+            versions.RemoveAt(versions.Count - 1);
+            CatalogVersion last = versions[^1];
+            continuation = WorkflowContinuationToken.Encode(SortKey(last.BaseWorkflowId, last.VersionNumber));
         }
 
-        return nextSortKey is not null ? CatalogPage.Create(versions, nextSortKey) : CatalogPage.Create(versions);
+        return new CatalogPage(versions, continuation);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<CatalogVersion>?> UpdateMetadataAsync(string baseWorkflowId, int versionNumber, CatalogMetadataPatch patch, CancellationToken cancellationToken)
+    public async ValueTask<CatalogVersion?> UpdateMetadataAsync(string baseWorkflowId, int versionNumber, CatalogMetadataPatch patch, CancellationToken cancellationToken)
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-        CatalogStatus status;
-        CatalogOwner owner;
-        TagSet tags;
-        string? obsoletedBy;
-        DateTimeOffset? obsoletedAt;
-
-        // The current row is read into a pooled, disposable document only to source the unchanged fields; its
-        // field accessors return OWNED COPIES, so the values are safe after the document is disposed.
-        using (ParsedJsonDocument<CatalogVersion>? currentDoc = await ReadOneAsync(connection, baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false))
+        CatalogVersion? current = await ReadOneAsync(connection, baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+        if (current is null)
         {
-            if (currentDoc is not { } cur)
-            {
-                return null;
-            }
-
-            CatalogVersion current = cur.RootElement;
-            CatalogStatus currentStatus = current.StatusValue;
-            status = patch.Status ?? currentStatus;
-            bool newlyObsolete = status == CatalogStatus.Obsolete && currentStatus != CatalogStatus.Obsolete;
-            bool reactivated = status == CatalogStatus.Active && currentStatus == CatalogStatus.Obsolete;
-
-            owner = patch.Owner ?? current.OwnerValue;
-            tags = patch.Tags ?? current.TagsValue;
-            obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedByOrNull;
-            obsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAtValue;
+            return null;
         }
 
-        // Re-tag (§14.2): when the patch replaces the security tags, rewrite the denormalized column AND the indexed
-        // child table atomically with the metadata update — otherwise the tags are left untouched (a single UPDATE).
-        bool reTag = patch.SecurityTags is not null;
-        await using NpgsqlTransaction? transaction = reTag ? await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false) : null;
+        CatalogStatus status = patch.Status ?? current.Status;
+        bool newlyObsolete = status == CatalogStatus.Obsolete && current.Status != CatalogStatus.Obsolete;
+        bool reactivated = status == CatalogStatus.Active && current.Status == CatalogStatus.Obsolete;
+
+        CatalogOwner owner = patch.Owner ?? current.Owner;
+        IReadOnlyList<string> tags = patch.Tags is { } t ? [.. t] : current.Tags;
+        string? obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedBy;
+        DateTimeOffset? obsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAt;
 
         await using NpgsqlCommand update = connection.CreateCommand();
-        update.Transaction = transaction;
-        update.CommandText = reTag
-            ? """
-              UPDATE CatalogVersions
-              SET Status = @status, Tags = @tags, OwnerName = @ownerName, OwnerEmail = @ownerEmail, OwnerTeam = @ownerTeam, OwnerUrl = @ownerUrl,
-                  LastUpdatedBy = @lastUpdatedBy, LastUpdatedAt = @lastUpdatedAt, ObsoletedBy = @obsoletedBy, ObsoletedAt = @obsoletedAt, SecurityTags = @securityTags
-              WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;
-              """
-            : """
-              UPDATE CatalogVersions
-              SET Status = @status, Tags = @tags, OwnerName = @ownerName, OwnerEmail = @ownerEmail, OwnerTeam = @ownerTeam, OwnerUrl = @ownerUrl,
-                  LastUpdatedBy = @lastUpdatedBy, LastUpdatedAt = @lastUpdatedAt, ObsoletedBy = @obsoletedBy, ObsoletedAt = @obsoletedAt
-              WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;
-              """;
+        update.CommandText =
+            """
+            UPDATE CatalogVersions
+            SET Status = @status, Tags = @tags, OwnerName = @ownerName, OwnerEmail = @ownerEmail, OwnerTeam = @ownerTeam, OwnerUrl = @ownerUrl,
+                LastUpdatedBy = @lastUpdatedBy, LastUpdatedAt = @lastUpdatedAt, ObsoletedBy = @obsoletedBy, ObsoletedAt = @obsoletedAt
+            WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;
+            """;
         update.Parameters.AddWithValue("baseWorkflowId", baseWorkflowId);
         update.Parameters.AddWithValue("versionNumber", versionNumber);
         update.Parameters.AddWithValue("status", status.ToString());
-        update.Parameters.Add(NullableText("tags", tags.ToDelimitedOrNull('\u001F')));
+        update.Parameters.Add(NullableText("tags", EncodeTags(tags)));
         update.Parameters.AddWithValue("ownerName", owner.Name);
         update.Parameters.AddWithValue("ownerEmail", owner.Email);
         update.Parameters.Add(NullableText("ownerTeam", owner.Team));
@@ -354,45 +262,18 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
         update.Parameters.AddWithValue("lastUpdatedAt", now.ToUnixTimeMilliseconds());
         update.Parameters.Add(NullableText("obsoletedBy", obsoletedBy));
         update.Parameters.Add(NullableBigint("obsoletedAt", obsoletedAt?.ToUnixTimeMilliseconds()));
-        if (reTag)
-        {
-            update.Parameters.Add(NullableText("securityTags", patch.SecurityTags!.Value.ToSecurityDelimitedOrNull(SecurityTagPairSeparator, SecurityTagKeyValueSeparator)));
-        }
-
         await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
 
-        if (reTag)
+        return current with
         {
-            SecurityTagSet securityTags = patch.SecurityTags!.Value;
-            await using (NpgsqlCommand deleteTags = connection.CreateCommand())
-            {
-                deleteTags.Transaction = transaction;
-                deleteTags.CommandText = "DELETE FROM CatalogVersionSecurityTags WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;";
-                deleteTags.Parameters.AddWithValue("baseWorkflowId", baseWorkflowId);
-                deleteTags.Parameters.AddWithValue("versionNumber", versionNumber);
-                await deleteTags.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            }
-
-            if (!securityTags.IsEmpty)
-            {
-                // Materialize at this write leaf: the ref-struct enumerator cannot cross the per-row await below.
-                foreach (SecurityTag tag in securityTags.ToList())
-                {
-                    await using NpgsqlCommand tagInsert = connection.CreateCommand();
-                    tagInsert.Transaction = transaction;
-                    tagInsert.CommandText = "INSERT INTO CatalogVersionSecurityTags (BaseWorkflowId, VersionNumber, TagKey, TagValue) VALUES (@baseWorkflowId, @versionNumber, @key, @value);";
-                    tagInsert.Parameters.AddWithValue("baseWorkflowId", baseWorkflowId);
-                    tagInsert.Parameters.AddWithValue("versionNumber", versionNumber);
-                    tagInsert.Parameters.AddWithValue("key", tag.Key);
-                    tagInsert.Parameters.AddWithValue("value", tag.Value);
-                    await tagInsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-                }
-            }
-
-            await transaction!.CommitAsync(cancellationToken).ConfigureAwait(false);
-        }
-
-        return await ReadOneAsync(connection, baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+            Owner = owner,
+            Tags = tags,
+            Status = status,
+            LastUpdatedBy = patch.UpdatedBy,
+            LastUpdatedAt = now,
+            ObsoletedBy = obsoletedBy,
+            ObsoletedAt = obsoletedAt,
+        };
     }
 
     /// <inheritdoc/>
@@ -437,14 +318,14 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
         foreach (CatalogVersionRef reference in versions)
         {
             await using NpgsqlCommand delete = connection.CreateCommand();
-            delete.CommandText = "DELETE FROM CatalogVersions WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber; DELETE FROM CatalogVersionSecurityTags WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;";
+            delete.CommandText = "DELETE FROM CatalogVersions WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;";
             delete.Parameters.AddWithValue("baseWorkflowId", reference.BaseWorkflowId);
             delete.Parameters.AddWithValue("versionNumber", reference.VersionNumber);
             await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 
-    private static async ValueTask<ParsedJsonDocument<CatalogVersion>?> ReadOneAsync(NpgsqlConnection connection, string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    private static async ValueTask<CatalogVersion?> ReadOneAsync(NpgsqlConnection connection, string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
         await using NpgsqlCommand select = connection.CreateCommand();
         select.CommandText = $"SELECT {ColumnList} FROM CatalogVersions WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;";
@@ -454,33 +335,90 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
         return await reader.ReadAsync(cancellationToken).ConfigureAwait(false) ? ReadVersion(reader) : null;
     }
 
-    private static ParsedJsonDocument<CatalogVersion> ReadVersion(NpgsqlDataReader reader)
-        => CatalogVersion.Create(
-            baseWorkflowId: reader.GetString(0),
-            versionNumber: reader.GetInt32(1),
-            workflowId: reader.GetString(2),
-            title: reader.GetString(3),
-            description: reader.IsDBNull(4) ? null : reader.GetString(4),
-            status: Enum.Parse<CatalogStatus>(reader.GetString(5)),
-            tags: TagSet.FromDelimited(reader.IsDBNull(6) ? null : reader.GetString(6), '\u001F'),
-            owner: new CatalogOwner(
+    private static CatalogVersion ReadVersion(NpgsqlDataReader reader)
+        => new(
+            BaseWorkflowId: reader.GetString(0),
+            VersionNumber: reader.GetInt32(1),
+            WorkflowId: reader.GetString(2),
+            Title: reader.GetString(3),
+            Description: reader.IsDBNull(4) ? null : reader.GetString(4),
+            Status: Enum.Parse<CatalogStatus>(reader.GetString(5)),
+            Tags: DecodeTags(reader.IsDBNull(6) ? null : reader.GetString(6)) ?? [],
+            Owner: new CatalogOwner(
                 reader.GetString(7),
                 reader.GetString(8),
                 reader.IsDBNull(9) ? null : reader.GetString(9),
                 reader.IsDBNull(10) ? null : reader.GetString(10)),
-            sources: SourceSet.FromJsonStringOrEmpty(reader.IsDBNull(11) ? null : reader.GetString(11)),
-            hash: reader.GetString(12),
-            createdBy: reader.GetString(13),
-            createdAt: DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(14)),
-            lastUpdatedBy: reader.IsDBNull(15) ? null : reader.GetString(15),
-            lastUpdatedAt: reader.IsDBNull(16) ? null : DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(16)),
-            obsoletedBy: reader.IsDBNull(17) ? null : reader.GetString(17),
-            obsoletedAt: reader.IsDBNull(18) ? null : DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(18)),
-            runnable: reader.GetBoolean(19),
-            securityTags: SecurityTagSet.FromSecurityDelimited(reader.IsDBNull(20) ? null : reader.GetString(20), SecurityTagPairSeparator, SecurityTagKeyValueSeparator));
+            Sources: DecodeSources(reader.IsDBNull(11) ? null : reader.GetString(11)),
+            Hash: reader.GetString(12),
+            CreatedBy: reader.GetString(13),
+            CreatedAt: DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(14)),
+            LastUpdatedBy: reader.IsDBNull(15) ? null : reader.GetString(15),
+            LastUpdatedAt: reader.IsDBNull(16) ? null : DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(16)),
+            ObsoletedBy: reader.IsDBNull(17) ? null : reader.GetString(17),
+            ObsoletedAt: reader.IsDBNull(18) ? null : DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(18)));
 
     private static string SortKey(string baseWorkflowId, int versionNumber)
         => string.Create(CultureInfo.InvariantCulture, $"{baseWorkflowId}{versionNumber:D10}");
+
+    private static string? EncodeTags(IReadOnlyList<string> tags)
+        => tags is { Count: > 0 } ? "\u001F" + string.Join('\u001F', tags) + "\u001F" : null;
+
+    private static IReadOnlyList<string>? DecodeTags(string? encoded)
+    {
+        if (string.IsNullOrEmpty(encoded))
+        {
+            return null;
+        }
+
+        string[] parts = encoded.Trim('\u001F').Split('\u001F', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length == 0 ? null : parts;
+    }
+
+    private static string? EncodeSources(IReadOnlyList<CatalogSourceRef> sources)
+    {
+        if (sources.Count == 0)
+        {
+            return null;
+        }
+
+        var builder = new StringBuilder();
+        for (int i = 0; i < sources.Count; i++)
+        {
+            if (i > 0)
+            {
+                builder.Append('\u001E');
+            }
+
+            builder.Append(sources[i].Name);
+            if (sources[i].Type is { } type)
+            {
+                builder.Append('\u001F').Append(type);
+            }
+        }
+
+        return builder.ToString();
+    }
+
+    private static IReadOnlyList<CatalogSourceRef> DecodeSources(string? encoded)
+    {
+        if (string.IsNullOrEmpty(encoded))
+        {
+            return [];
+        }
+
+        string[] records = encoded.Split('\u001E', StringSplitOptions.RemoveEmptyEntries);
+        var sources = new List<CatalogSourceRef>(records.Length);
+        foreach (string record in records)
+        {
+            int sep = record.IndexOf('\u001F', StringComparison.Ordinal);
+            sources.Add(sep < 0
+                ? new CatalogSourceRef(record, null)
+                : new CatalogSourceRef(record[..sep], record[(sep + 1)..]));
+        }
+
+        return sources;
+    }
 
     private static string EscapeLike(string value)
         => value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
@@ -491,7 +429,7 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
     private static NpgsqlParameter NullableBigint(string name, long? value)
         => new(name, NpgsqlDbType.Bigint) { Value = (object?)value ?? DBNull.Value };
 
-    private async ValueTask<ParsedJsonDocument<CatalogVersion>> AddCoreAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
+    private async ValueTask<CatalogVersion> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
@@ -519,79 +457,55 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
             versionNumber = Convert.ToInt32(await max.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false), CultureInfo.InvariantCulture) + 1;
         }
 
-        CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
-        TagSet tags = metadata.Tags;
-        SecurityTagSet securityTags = metadata.SecurityTags;
+        CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber);
+        IReadOnlyList<string> tags = metadata.Tags is { Count: > 0 } t ? [.. t] : [];
+        var version = new CatalogVersion(
+            BaseWorkflowId: baseWorkflowId,
+            VersionNumber: versionNumber,
+            WorkflowId: projection.WorkflowId,
+            Title: projection.Title,
+            Description: projection.Description,
+            Status: CatalogStatus.Active,
+            Tags: tags,
+            Owner: metadata.Owner,
+            Sources: projection.Sources,
+            Hash: projection.Hash,
+            CreatedBy: metadata.CreatedBy,
+            CreatedAt: now);
 
-        // Bind the columns directly from the projected/governance source values (no round-trip through the
-        // CatalogVersion document); the document is built once, for the return value.
         await using (NpgsqlCommand insert = connection.CreateCommand())
         {
             insert.Transaction = transaction;
             insert.CommandText =
                 $"""
                 INSERT INTO CatalogVersions ({ColumnList}, Package)
-                VALUES (@baseWorkflowId, @versionNumber, @workflowId, @title, @description, @status, @tags, @ownerName, @ownerEmail, @ownerTeam, @ownerUrl, @sources, @hash, @createdBy, @createdAt, @lastUpdatedBy, @lastUpdatedAt, @obsoletedBy, @obsoletedAt, @runnable, @securityTags, @package);
+                VALUES (@baseWorkflowId, @versionNumber, @workflowId, @title, @description, @status, @tags, @ownerName, @ownerEmail, @ownerTeam, @ownerUrl, @sources, @hash, @createdBy, @createdAt, @lastUpdatedBy, @lastUpdatedAt, @obsoletedBy, @obsoletedAt, @package);
                 """;
-            insert.Parameters.AddWithValue("baseWorkflowId", baseWorkflowId);
-            insert.Parameters.AddWithValue("versionNumber", versionNumber);
-            insert.Parameters.AddWithValue("workflowId", projection.WorkflowId);
-            insert.Parameters.AddWithValue("title", projection.Title);
-            insert.Parameters.Add(NullableText("description", projection.Description));
-            insert.Parameters.AddWithValue("status", nameof(CatalogStatus.Active));
-            insert.Parameters.Add(NullableText("tags", tags.ToDelimitedOrNull('\u001F')));
-            insert.Parameters.AddWithValue("ownerName", metadata.Owner.Name);
-            insert.Parameters.AddWithValue("ownerEmail", metadata.Owner.Email);
-            insert.Parameters.Add(NullableText("ownerTeam", metadata.Owner.Team));
-            insert.Parameters.Add(NullableText("ownerUrl", metadata.Owner.Url));
-            insert.Parameters.Add(NullableText("sources", SourceSet.FromSources(projection.Sources).ToJsonStringOrNull()));
-            insert.Parameters.AddWithValue("hash", projection.Hash);
-            insert.Parameters.AddWithValue("createdBy", metadata.CreatedBy);
-            insert.Parameters.AddWithValue("createdAt", now.ToUnixTimeMilliseconds());
+            insert.Parameters.AddWithValue("baseWorkflowId", version.BaseWorkflowId);
+            insert.Parameters.AddWithValue("versionNumber", version.VersionNumber);
+            insert.Parameters.AddWithValue("workflowId", version.WorkflowId);
+            insert.Parameters.AddWithValue("title", version.Title);
+            insert.Parameters.Add(NullableText("description", version.Description));
+            insert.Parameters.AddWithValue("status", version.Status.ToString());
+            insert.Parameters.Add(NullableText("tags", EncodeTags(version.Tags)));
+            insert.Parameters.AddWithValue("ownerName", version.Owner.Name);
+            insert.Parameters.AddWithValue("ownerEmail", version.Owner.Email);
+            insert.Parameters.Add(NullableText("ownerTeam", version.Owner.Team));
+            insert.Parameters.Add(NullableText("ownerUrl", version.Owner.Url));
+            insert.Parameters.Add(NullableText("sources", EncodeSources(version.Sources)));
+            insert.Parameters.AddWithValue("hash", version.Hash);
+            insert.Parameters.AddWithValue("createdBy", version.CreatedBy);
+            insert.Parameters.AddWithValue("createdAt", version.CreatedAt.ToUnixTimeMilliseconds());
             insert.Parameters.Add(NullableText("lastUpdatedBy", null));
             insert.Parameters.Add(NullableBigint("lastUpdatedAt", null));
             insert.Parameters.Add(NullableText("obsoletedBy", null));
             insert.Parameters.Add(NullableBigint("obsoletedAt", null));
-            insert.Parameters.AddWithValue("runnable", projection.HasExecutor);
-            insert.Parameters.Add(NullableText("securityTags", securityTags.ToSecurityDelimitedOrNull(SecurityTagPairSeparator, SecurityTagKeyValueSeparator)));
-            insert.Parameters.Add(new NpgsqlParameter<ReadOnlyMemory<byte>>("package", projection.CanonicalPackage));
+            insert.Parameters.AddWithValue("package", projection.CanonicalPackage.ToArray());
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        // Persist the version's security tags for indexed reach-filtering (§14.4), in the same transaction.
-        if (!securityTags.IsEmpty)
-        {
-            // Materialize at this write leaf: the ref-struct enumerator cannot cross the per-row await below.
-            foreach (SecurityTag tag in securityTags.ToList())
-            {
-                await using NpgsqlCommand tagInsert = connection.CreateCommand();
-                tagInsert.Transaction = transaction;
-                tagInsert.CommandText = "INSERT INTO CatalogVersionSecurityTags (BaseWorkflowId, VersionNumber, TagKey, TagValue) VALUES (@baseWorkflowId, @versionNumber, @key, @value);";
-                tagInsert.Parameters.AddWithValue("baseWorkflowId", baseWorkflowId);
-                tagInsert.Parameters.AddWithValue("versionNumber", versionNumber);
-                tagInsert.Parameters.AddWithValue("key", tag.Key);
-                tagInsert.Parameters.AddWithValue("value", tag.Value);
-                await tagInsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            }
-        }
-
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-
-        return CatalogVersion.Create(
-            baseWorkflowId: baseWorkflowId,
-            versionNumber: versionNumber,
-            workflowId: projection.WorkflowId,
-            title: projection.Title,
-            description: projection.Description,
-            status: CatalogStatus.Active,
-            tags: tags,
-            owner: metadata.Owner,
-            sources: SourceSet.FromSources(projection.Sources),
-            hash: projection.Hash,
-            createdBy: metadata.CreatedBy,
-            createdAt: now,
-            runnable: projection.HasExecutor,
-            securityTags: securityTags);
+        return version;
     }
 
     private async ValueTask<byte[]?> LoadPackageAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
@@ -630,20 +544,10 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
             LastUpdatedAt BIGINT NULL,
             ObsoletedBy TEXT NULL,
             ObsoletedAt BIGINT NULL,
-            Runnable BOOLEAN NOT NULL DEFAULT FALSE,
-            SecurityTags TEXT NULL,
             Package BYTEA NOT NULL,
             PRIMARY KEY (BaseWorkflowId, VersionNumber)
         );
         CREATE INDEX IF NOT EXISTS ix_catalogversions_status ON CatalogVersions (Status);
-        CREATE INDEX IF NOT EXISTS ix_catalogversions_workflowid_lower ON CatalogVersions (lower(WorkflowId) text_pattern_ops);
-        CREATE TABLE IF NOT EXISTS CatalogVersionSecurityTags (
-            BaseWorkflowId TEXT NOT NULL,
-            VersionNumber INTEGER NOT NULL,
-            TagKey TEXT NOT NULL,
-            TagValue TEXT NOT NULL
-        );
-        CREATE INDEX IF NOT EXISTS ix_catalogversionsecuritytags_version ON CatalogVersionSecurityTags (BaseWorkflowId, VersionNumber);
-        CREATE INDEX IF NOT EXISTS ix_catalogversionsecuritytags_kv ON CatalogVersionSecurityTags (TagKey, TagValue);
+        CREATE INDEX IF NOT EXISTS ix_catalogversions_workflowid ON CatalogVersions (WorkflowId);
         """;
 }

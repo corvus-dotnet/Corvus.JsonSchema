@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A partial update of a version&#39;s mutable governance metadata; omitted fields are left unchanged. Closed (additionalProperties: false) so an unknown field is rejected with 400 rather than silently ignored. `securityTags` sets the version&#39;s NON-internal reach labels (&#167;14.2) — a governed edit for a workflow administrator; the reserved internal-tag prefix is rejected (400), since internal tags (e.g. the deployment tenant) stay deployment-stamped and immutable.
+/// A partial update of a version&#39;s mutable governance metadata; omitted fields are left unchanged.
 /// </para>
 /// </remarks>
 public readonly partial struct CatalogMetadataPatch
@@ -381,7 +381,7 @@ public readonly partial struct CatalogMetadataPatch
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+            public void InsertItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -407,7 +407,7 @@ public readonly partial struct CatalogMetadataPatch
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+            public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }
@@ -1046,29 +1046,6 @@ public readonly partial struct CatalogMetadataPatch
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
             JsonWorkspace workspace, scoped in Source value, int initialCapacity = 30)
-        {
-            // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
-            value.AddAsItem(ref cvb);
-            Debug.Assert(cvb.MemberCount == 1);
-            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-            return documentBuilder;
-        }
-
-        /// <summary>
-        /// Creates and initializes a mutable document from a context-threaded value.
-        /// </summary>
-        /// <typeparam name="TContext">The type of the context carried by the value.</typeparam>
-        /// <param name="workspace">The JSON workspace.</param>
-        /// <param name="value">The context-threaded value with which to initialize the builder.</param>
-        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
-        /// <returns>An instance of a mutable document initialized with the given value.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-            JsonWorkspace workspace, scoped in Source<TContext> value, int initialCapacity = 30)
-            #if NET9_0_OR_GREATER
-            where TContext : allows ref struct
-            #endif
         {
             // Create the document builder without a MetadataDb
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);

@@ -2,19 +2,13 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Collections.Concurrent;
-using System.Text;
 using Corvus.Text.Json;
-using Corvus.Text.Json.Arazzo.CodeGeneration;
 using Corvus.Text.Json.Arazzo.Durability;
-using Corvus.Text.Json.Arazzo.Durability.Availability;
-using Corvus.Text.Json.Arazzo.Durability.Environments;
-using ValidatorSchema = Corvus.Text.Json.Validator.JsonSchema;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
 /// <summary>
-/// Implements the generated <see cref="IApiCatalogHandler"/> over an <see cref="ISecuredWorkflowCatalog"/>,
+/// Implements the generated <see cref="IApiCatalogHandler"/> over an <see cref="IWorkflowCatalogClient"/>,
 /// mapping each catalog REST operation onto the corresponding catalog-client call and projecting the .NET
 /// metadata records into the generated response models. The package and its individual documents are returned
 /// as their stored JSON; the version-metadata responses carry the HATEOAS links the contract declares.
@@ -23,50 +17,14 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
 {
     private const string ProblemBase = "https://corvus-oss.org/arazzo/control-plane/problems/";
 
-    private const int MaxValidationErrors = 200;
-    private const int MaxCachedSchemas = 512;
-
-    // Compiling a JSON Schema is an expensive one-time job, so cache the compiled validator. The key is
-    // (base/version/target), which is content-stable because catalog versions are immutable — so the cache is
-    // bounded by distinct catalogued schemas, never by request volume. The coarse cap sheds reuse (not
-    // correctness) if a single process accumulates more than MaxCachedSchemas distinct target schemas.
-    private static readonly ConcurrentDictionary<string, ValidatorSchema> SchemaCache = new(StringComparer.Ordinal);
-
-    private readonly ISecuredWorkflowCatalog catalog;
-    private readonly ISecuredWorkflowManagement management;
-    private readonly IRunnerRegistry runners;
-    private readonly ControlPlaneAccess access;
-    private readonly IEnvironmentStore? environmentStore;
-    private readonly IAvailabilityStore? availabilityStore;
-
-    /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneCatalogHandler"/> class (unscoped: full access).</summary>
-    /// <param name="catalog">The catalog client the endpoints delegate to.</param>
-    /// <param name="management">The management client used to create runs when a workflow version is triggered.</param>
-    /// <param name="runners">The runner registry consulted to gate a trigger on a runner that hosts the version.</param>
-    public ArazzoControlPlaneCatalogHandler(ISecuredWorkflowCatalog catalog, ISecuredWorkflowManagement management, IRunnerRegistry runners)
-        : this(catalog, management, runners, new ControlPlaneAccess())
-    {
-    }
+    private readonly IWorkflowCatalogClient catalog;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneCatalogHandler"/> class.</summary>
     /// <param name="catalog">The catalog client the endpoints delegate to.</param>
-    /// <param name="management">The management client used to create runs when a workflow version is triggered.</param>
-    /// <param name="runners">The runner registry consulted to gate a trigger on a runner that hosts the version.</param>
-    /// <param name="access">Resolves the caller's <see cref="AccessContext"/> per request (§14.2).</param>
-    /// <param name="environmentStore">The environment registry used to validate that a run's pinned environment exists and is in the caller's reach (design §5.5); <see langword="null"/> skips that check.</param>
-    /// <param name="availabilityStore">The availability registry used to validate that the version is available in the pinned environment (§7.8); <see langword="null"/> skips that check.</param>
-    internal ArazzoControlPlaneCatalogHandler(ISecuredWorkflowCatalog catalog, ISecuredWorkflowManagement management, IRunnerRegistry runners, ControlPlaneAccess access, IEnvironmentStore? environmentStore = null, IAvailabilityStore? availabilityStore = null)
+    public ArazzoControlPlaneCatalogHandler(IWorkflowCatalogClient catalog)
     {
         ArgumentNullException.ThrowIfNull(catalog);
-        ArgumentNullException.ThrowIfNull(management);
-        ArgumentNullException.ThrowIfNull(runners);
-        ArgumentNullException.ThrowIfNull(access);
         this.catalog = catalog;
-        this.management = management;
-        this.runners = runners;
-        this.access = access;
-        this.environmentStore = environmentStore;
-        this.availabilityStore = availabilityStore;
     }
 
     /// <inheritdoc/>
@@ -80,48 +38,12 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         }
 
         CatalogOwner owner = ToOwner(body.Owner);
-        TagSet tags = ToTags(body.Tags);
-
-        // User-supplied non-internal security tags (§14.2) flow bytes-native from the request body and are validated
-        // string-free: a key carrying the reserved internal prefix is rejected (that keyspace is deployment-owned).
-        // CopyFrom yields the empty set when the property is absent (a non-array element).
-        SecurityTagSet userTags = SecurityTagSet.CopyFrom(body.SecurityTags);
-        try
-        {
-            this.access.ValidateUserTags(userTags);
-        }
-        catch (ArgumentException ex)
-        {
-            return AddCatalogVersionResult.BadRequest(
-                Problem("reserved-security-tag", "Reserved security tag", 400, ex.Message), workspace);
-        }
-
-        // The deployment stamps its internal tags (e.g. the principal's tenant, §14.3) onto the new version so runs
-        // triggered from it inherit them; the user tags are combined with them. Internal keys carry the reserved
-        // prefix and user keys cannot, so the two sets never collide.
-        SecurityTagSet securityTags = CombineSecurityTags(this.access.InternalTags(), userTags);
+        IReadOnlyList<string>? tags = ToTags(body.Tags);
 
         try
         {
-            ParsedJsonDocument<CatalogVersion> version = await this.catalog.AddAsync(parameters.Package, owner, tags, securityTags, cancellationToken).ConfigureAwait(false);
-
-            // The summary is a zero-copy view over the version document, so hand the pooled document to the workspace —
-            // it owns it for the response's lifetime, and a throw cannot leak the rented buffer.
-            workspace.TakeOwnership(version);
-            return AddCatalogVersionResult.Created(Models.CatalogVersionSummary.From(this.PublicView(version.RootElement, workspace)), workspace);
-        }
-        catch (WorkflowAdministrationException ex)
-        {
-            // The base workflow id is administered by a different identity — only an administrator may publish further versions (§13).
-            return AddCatalogVersionResult.Conflict(
-                Problem("workflow-not-administered", "Workflow id not administered", 409, ex.Message), workspace);
-        }
-        catch (Security.SourceCredentialAccessDeniedException ex)
-        {
-            // The workflow declares a credential-protected source the submitter is not entitled to use (§13) — refuse
-            // the submission rather than catalogue a version whose runs could never authenticate the source.
-            return AddCatalogVersionResult.BadRequest(
-                Problem("source-access-denied", "Source credential access denied", 400, ex.Message), workspace);
+            CatalogVersion version = await this.catalog.AddAsync(parameters.Package, owner, tags, cancellationToken).ConfigureAwait(false);
+            return AddCatalogVersionResult.Created(BuildSummary(version), workspace);
         }
         catch (ArgumentException ex)
         {
@@ -135,27 +57,15 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     {
         string? text = parameters.Q.IsNotUndefined() ? (string)parameters.Q : null;
         string? baseWorkflowId = parameters.BaseWorkflowId.IsNotUndefined() ? (string)parameters.BaseWorkflowId : null;
-        string? workflowIdPrefix = parameters.WorkflowIdPrefix.IsNotUndefined() ? (string)parameters.WorkflowIdPrefix : null;
-        TagSet tags = ToTags(parameters.Tag);
+        IReadOnlyList<string>? tags = ToTags(parameters.Tag);
         CatalogStatus? status = parameters.Status.IsNotUndefined() ? Enum.Parse<CatalogStatus>((string)parameters.Status) : null;
         string? owner = parameters.Owner.IsNotUndefined() ? (string)parameters.Owner : null;
         int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 100;
+        string? pageToken = parameters.PageToken.IsNotUndefined() ? (string)parameters.PageToken : null;
 
-        // Absent = false: collapse to one representative version per base workflow (keyset by base id) only when explicitly asked.
-        bool distinctWorkflows = parameters.DistinctWorkflows.IsNotUndefined() && (bool)parameters.DistinctWorkflows;
-
-        // The opaque page token flows to the store as its JSON value (From() rewraps parameters.PageToken — free, no
-        // reify, no managed string; undefined → undefined = first page); the store decodes the cursor bytes-native.
-        JsonString pageToken = JsonString.From(parameters.PageToken);
-
-        using CatalogPage page = await this.catalog.SearchAsync(
-            new CatalogQuery(text, baseWorkflowId, workflowIdPrefix, tags, status, owner, limit, pageToken, DistinctWorkflows: distinctWorkflows), this.access.Current(), cancellationToken).ConfigureAwait(false);
-
-        // The page summaries are views over the pooled version documents, and the response body's Source is materialized
-        // by Ok(...) here but re-read by the later (post-handler) body validation/serialization — so hand the documents
-        // to the workspace (it disposes them at request end); `using page` then only returns the batch's backing array.
-        page.Versions.TransferOwnershipTo(workspace);
-        return SearchCatalogResult.Ok(this.BuildPage(page, workspace), workspace);
+        CatalogPage page = await this.catalog.SearchAsync(
+            new CatalogQuery(text, baseWorkflowId, tags, status, owner, limit, pageToken), cancellationToken).ConfigureAwait(false);
+        return SearchCatalogResult.Ok(BuildPage(page), workspace);
     }
 
     /// <inheritdoc/>
@@ -163,14 +73,11 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     {
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
         int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 100;
-        JsonString pageToken = JsonString.From(parameters.PageToken);
+        string? pageToken = parameters.PageToken.IsNotUndefined() ? (string)parameters.PageToken : null;
 
-        using CatalogPage page = await this.catalog.SearchAsync(
-            new CatalogQuery(BaseWorkflowId: baseWorkflowId, Limit: limit, ContinuationToken: pageToken), this.access.Current(), cancellationToken).ConfigureAwait(false);
-
-        // See HandleSearchCatalogAsync: hand the documents to the workspace so the deferred body materialization is safe.
-        page.Versions.TransferOwnershipTo(workspace);
-        return ListCatalogVersionsResult.Ok(this.BuildPage(page, workspace), workspace);
+        CatalogPage page = await this.catalog.SearchAsync(
+            new CatalogQuery(BaseWorkflowId: baseWorkflowId, Limit: limit, ContinuationToken: pageToken), cancellationToken).ConfigureAwait(false);
+        return ListCatalogVersionsResult.Ok(BuildPage(page), workspace);
     }
 
     /// <inheritdoc/>
@@ -178,16 +85,10 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     {
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
         int versionNumber = (int)parameters.VersionNumber;
-
-        // Gated by read reach (§14.2): a version outside it comes back null → 404 (non-disclosing).
-        ParsedJsonDocument<CatalogVersion>? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, this.access.Current(), cancellationToken).ConfigureAwait(false);
-        if (version is not { } v)
-        {
-            return GetCatalogVersionResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
-        }
-
-        workspace.TakeOwnership(v);
-        return GetCatalogVersionResult.Ok(Models.CatalogVersionSummary.From(this.PublicView(v.RootElement, workspace)), workspace);
+        CatalogVersion? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+        return version is { } v
+            ? GetCatalogVersionResult.Ok(BuildSummary(v), workspace)
+            : GetCatalogVersionResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
     }
 
     /// <inheritdoc/>
@@ -198,45 +99,13 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         Models.CatalogMetadataPatch patch = parameters.Body;
 
         CatalogOwner? owner = patch.Owner.IsNotUndefined() ? ToOwner(patch.Owner) : null;
-        TagSet? tags = ToTags(patch.Tags);
+        IReadOnlyList<string>? tags = ToTags(patch.Tags);
         CatalogStatus? status = patch.Status.IsNotUndefined() ? Enum.Parse<CatalogStatus>((string)patch.Status) : null;
 
-        // Re-tag (§14.2): a present `securityTags` re-tags the version with new non-internal labels (absent = leave them
-        // unchanged). Validated string-free — a key using the reserved internal prefix is rejected (400); the security
-        // wrapper preserves the version's deployment-internal tags and persists the merged result.
-        SecurityTagSet? securityTags = null;
-        if (patch.SecurityTags.IsNotUndefined())
-        {
-            SecurityTagSet userTags = SecurityTagSet.CopyFrom(patch.SecurityTags);
-            try
-            {
-                this.access.ValidateUserTags(userTags);
-            }
-            catch (ArgumentException ex)
-            {
-                return UpdateCatalogVersionResult.BadRequest(
-                    Problem("reserved-security-tag", "Reserved security tag", 400, ex.Message), workspace);
-            }
-
-            securityTags = userTags;
-        }
-
-        // The client resolves read-then-write reach on a single fetch (§14.2): outside read reach → 404 (non-disclosing),
-        // readable but outside write reach → 403 — so the handler no longer pre-fetches the version for the reach check.
-        CatalogUpdateResult result = await this.catalog.UpdateAsync(baseWorkflowId, versionNumber, owner, tags, status, securityTags, this.access.InternalTagPrefix, this.access.Current(), cancellationToken).ConfigureAwait(false);
-        if (result.Outcome == CatalogUpdateOutcome.NotFound)
-        {
-            return UpdateCatalogVersionResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
-        }
-
-        if (result.Outcome == CatalogUpdateOutcome.Forbidden)
-        {
-            return UpdateCatalogVersionResult.Forbidden(ForbiddenProblem(baseWorkflowId, versionNumber), workspace);
-        }
-
-        ParsedJsonDocument<CatalogVersion> v = result.Document!;
-        workspace.TakeOwnership(v);
-        return UpdateCatalogVersionResult.Ok(Models.CatalogVersionSummary.From(this.PublicView(v.RootElement, workspace)), workspace);
+        CatalogVersion? updated = await this.catalog.UpdateAsync(baseWorkflowId, versionNumber, owner, tags, status, cancellationToken).ConfigureAwait(false);
+        return updated is { } v
+            ? UpdateCatalogVersionResult.Ok(BuildSummary(v), workspace)
+            : UpdateCatalogVersionResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
     }
 
     /// <inheritdoc/>
@@ -244,14 +113,10 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     {
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
         int versionNumber = (int)parameters.VersionNumber;
-
-        // The client resolves read-then-write reach on its single fetch (§14.2) — 404 outside read reach (non-disclosing),
-        // 403 readable but outside write reach — so the handler no longer pre-fetches the version for the reach check.
-        CatalogDeleteOutcome outcome = await this.catalog.DeleteAsync(baseWorkflowId, versionNumber, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        CatalogDeleteOutcome outcome = await this.catalog.DeleteAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
         return outcome switch
         {
             CatalogDeleteOutcome.Deleted => DeleteCatalogVersionResult.NoContent(),
-            CatalogDeleteOutcome.Forbidden => DeleteCatalogVersionResult.Forbidden(ForbiddenProblem(baseWorkflowId, versionNumber), workspace),
             CatalogDeleteOutcome.Referenced => DeleteCatalogVersionResult.Conflict(
                 Problem("version-referenced", "Version is referenced", 409, $"Version {versionNumber} of '{baseWorkflowId}' cannot be deleted while workflow runs reference it; mark it obsolete instead."), workspace),
             _ => DeleteCatalogVersionResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace),
@@ -261,9 +126,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     /// <inheritdoc/>
     public async ValueTask<PurgeCatalogResult> HandlePurgeCatalogAsync(PurgeCatalogParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        // The scoped catalog client row-scopes the purge (§14.2): reaps only obsolete versions the principal may
-        // see (see run purge — the capability is orthogonal to reach).
-        int purged = await this.catalog.PurgeAsync(this.access.Current(), cancellationToken).ConfigureAwait(false);
+        int purged = await this.catalog.PurgeAsync(cancellationToken).ConfigureAwait(false);
         return PurgeCatalogResult.Ok(
             new Models.PurgeResult.Source((ref Models.PurgeResult.Builder b) => b.Create(purgedCount: purged)), workspace);
     }
@@ -273,9 +136,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     {
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
         int versionNumber = (int)parameters.VersionNumber;
-
-        // Visibility is enforced inside the read: an invisible version yields null → 404 (no separate pre-check).
-        ReadOnlyMemory<byte>? package = await this.catalog.GetPackageAsync(baseWorkflowId, versionNumber, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        ReadOnlyMemory<byte>? package = await this.catalog.GetPackageAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
         if (package is not { } bytes)
         {
             return GetCatalogPackageResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
@@ -290,8 +151,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     {
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
         int versionNumber = (int)parameters.VersionNumber;
-
-        ReadOnlyMemory<byte>? document = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, CatalogPackage.WorkflowDocumentName, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        ReadOnlyMemory<byte>? document = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, CatalogPackage.WorkflowDocumentName, cancellationToken).ConfigureAwait(false);
         if (document is not { } bytes)
         {
             return GetCatalogWorkflowResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
@@ -305,65 +165,12 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     }
 
     /// <inheritdoc/>
-    public async ValueTask<GetCatalogWorkflowSchemasResult> HandleGetCatalogWorkflowSchemasAsync(GetCatalogWorkflowSchemasParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
-    {
-        string baseWorkflowId = (string)parameters.BaseWorkflowId;
-        int versionNumber = (int)parameters.VersionNumber;
-
-        ReadOnlyMemory<byte>? document = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.SchemasDocumentName, this.access.Current(), cancellationToken).ConfigureAwait(false);
-        if (document is not { } bytes)
-        {
-            return GetCatalogWorkflowSchemasResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
-        }
-
-        // Hand the parsed document to the response workspace so it lives until the response is written.
-        ParsedJsonDocument<Models.JsonObject> parsed = ParsedJsonDocument<Models.JsonObject>.Parse(bytes);
-        workspace.TakeOwnership(parsed);
-        return GetCatalogWorkflowSchemasResult.Ok(parsed.RootElement, workspace);
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<GetCatalogExecutorResult> HandleGetCatalogExecutorAsync(GetCatalogExecutorParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
-    {
-        string baseWorkflowId = (string)parameters.BaseWorkflowId;
-        int versionNumber = (int)parameters.VersionNumber;
-
-        ReadOnlyMemory<byte>? executor = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorDocumentName, this.access.Current(), cancellationToken).ConfigureAwait(false);
-        if (executor is not { } bytes)
-        {
-            return GetCatalogExecutorResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
-        }
-
-        // The compiled executor assembly is an opaque binary artifact streamed back as-is (octet-stream).
-        return GetCatalogExecutorResult.Ok(bytes);
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<GetCatalogExecutorManifestResult> HandleGetCatalogExecutorManifestAsync(GetCatalogExecutorManifestParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
-    {
-        string baseWorkflowId = (string)parameters.BaseWorkflowId;
-        int versionNumber = (int)parameters.VersionNumber;
-
-        ReadOnlyMemory<byte>? document = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorManifestDocumentName, this.access.Current(), cancellationToken).ConfigureAwait(false);
-        if (document is not { } bytes)
-        {
-            return GetCatalogExecutorManifestResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
-        }
-
-        // Hand the parsed document to the response workspace so it lives until the response is written.
-        ParsedJsonDocument<Models.JsonObject> parsed = ParsedJsonDocument<Models.JsonObject>.Parse(bytes);
-        workspace.TakeOwnership(parsed);
-        return GetCatalogExecutorManifestResult.Ok(parsed.RootElement, workspace);
-    }
-
-    /// <inheritdoc/>
     public async ValueTask<GetCatalogSourceResult> HandleGetCatalogSourceAsync(GetCatalogSourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
         int versionNumber = (int)parameters.VersionNumber;
         string sourceName = (string)parameters.SourceName;
-
-        ReadOnlyMemory<byte>? document = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, sourceName, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        ReadOnlyMemory<byte>? document = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, sourceName, cancellationToken).ConfigureAwait(false);
         if (document is not { } bytes)
         {
             return GetCatalogSourceResult.NotFound(
@@ -377,233 +184,6 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         return GetCatalogSourceResult.Ok(parsed.RootElement, workspace);
     }
 
-    /// <inheritdoc/>
-    public async ValueTask<ValidateCatalogValueResult> HandleValidateCatalogValueAsync(ValidateCatalogValueParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
-    {
-        string baseWorkflowId = (string)parameters.BaseWorkflowId;
-        int versionNumber = (int)parameters.VersionNumber;
-        AccessContext ctx = this.access.Current();
-
-        // Gate on read reach (the schema resolution below reads the package): a version outside it reads back null.
-        if (await this.catalog.GetAsync(baseWorkflowId, versionNumber, ctx, cancellationToken).ConfigureAwait(false) is null)
-        {
-            return ValidateCatalogValueResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
-        }
-
-        if (!TryMapTarget(parameters.Body.Target, out WorkflowSchemaTarget target, out string targetKey))
-        {
-            return ValidateCatalogValueResult.NotFound(
-                Problem("validation-target", "Unknown validation target", 404, "The validation target kind is not recognised."), workspace);
-        }
-
-        string cacheKey = $"{baseWorkflowId}/{versionNumber}/{targetKey}";
-        (SchemaResolution resolution, ValidatorSchema schema) = await this.ResolveSchemaAsync(baseWorkflowId, versionNumber, target, cacheKey, ctx, cancellationToken).ConfigureAwait(false);
-        switch (resolution)
-        {
-            case SchemaResolution.VersionMissing:
-                return ValidateCatalogValueResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
-            case SchemaResolution.SchemaMissing:
-                return ValidateCatalogValueResult.NotFound(
-                    Problem("validation-target", "Validation target not found", 404, "The requested schema could not be resolved from this version's package."), workspace);
-        }
-
-        Corvus.Text.Json.JsonElement value = parameters.Body.Value;
-        (bool valid, IReadOnlyList<(string InstancePath, string Message, string SchemaLocation)> errors) = Validate(schema, in value);
-        return ValidateCatalogValueResult.Ok(BuildValidationResult(valid, errors), workspace);
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<StartCatalogWorkflowRunResult> HandleStartCatalogWorkflowRunAsync(StartCatalogWorkflowRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
-    {
-        string baseWorkflowId = (string)parameters.BaseWorkflowId;
-        int versionNumber = (int)parameters.VersionNumber;
-        AccessContext ctx = this.access.Current();
-
-        // The run is pinned to the required deployment environment (§5.5); it is validated below when the registries are wired.
-        string? environment = parameters.Environment.IsNotUndefined() ? (string)parameters.Environment : null;
-
-        // Gated by read reach (§14.2): a version outside it reads back null → 404 (triggering is gated by it). The
-        // pooled document is held (its fields — runnable/workflowId/securityTags — are owned copies) until the run is
-        // started, then disposed at method exit; ParsedJsonDocument is not thread-affine, so holding it across awaits is safe.
-        using ParsedJsonDocument<CatalogVersion>? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, ctx, cancellationToken).ConfigureAwait(false);
-        if (version is not { } catalogVersionDoc)
-        {
-            return StartCatalogWorkflowRunResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
-        }
-
-        // The pinned environment must exist and be in the caller's reach (non-disclosing 404) when an environment
-        // registry is wired; without one the pin is recorded unvalidated. `var` avoids the Environment type-name clash.
-        if (environment is { } environmentName && this.environmentStore is { } envStore)
-        {
-            using var environmentDoc = await envStore.GetAsync(environmentName, ctx, cancellationToken).ConfigureAwait(false);
-            if (environmentDoc is null)
-            {
-                return StartCatalogWorkflowRunResult.NotFound(
-                    Problem("environment-not-found", "Environment not found", 404, $"Environment '{environmentName}' does not exist or is outside your reach."), workspace);
-            }
-        }
-
-        CatalogVersion catalogVersion = catalogVersionDoc.RootElement;
-        if (!(bool)catalogVersion.Runnable)
-        {
-            return StartCatalogWorkflowRunResult.Conflict(
-                Problem("not-runnable", "Version not runnable", 409, $"Version {versionNumber} of '{baseWorkflowId}' carries no compiled executor; it cannot be run."), workspace);
-        }
-
-        // Validate the inputs against the version's baked inputs schema (when it declares one).
-        string workflowId = (string)catalogVersion.WorkflowId;
-        var target = new WorkflowSchemaTarget(WorkflowSchemaTargetKind.Inputs, workflowId, null, null);
-        string cacheKey = $"{baseWorkflowId}/{versionNumber}/inputs/{workflowId}//";
-        (SchemaResolution resolution, ValidatorSchema schema) = await this.ResolveSchemaAsync(baseWorkflowId, versionNumber, target, cacheKey, ctx, cancellationToken).ConfigureAwait(false);
-
-        Corvus.Text.Json.JsonElement inputs = parameters.Body;
-        if (resolution == SchemaResolution.Resolved)
-        {
-            (bool valid, IReadOnlyList<(string InstancePath, string Message, string SchemaLocation)> errors) = Validate(schema, in inputs);
-            if (!valid)
-            {
-                return StartCatalogWorkflowRunResult.UnprocessableEntity(BuildValidationResult(valid, errors), workspace);
-            }
-        }
-
-        // The version must be available in the pinned environment (§7.8) when an availability registry is wired.
-        if (environment is { } availabilityEnvironment && this.availabilityStore is { } availStore)
-        {
-            using var availabilityEntry = await availStore.GetAsync(baseWorkflowId, versionNumber, availabilityEnvironment, cancellationToken).ConfigureAwait(false);
-            if (availabilityEntry is null)
-            {
-                return StartCatalogWorkflowRunResult.Conflict(
-                    Problem("not-available", "Version not available in environment", 409, $"Version {versionNumber} of '{baseWorkflowId}' is not available in environment '{availabilityEnvironment}' (§7.8); make it available and retry."), workspace);
-            }
-        }
-
-        // Gate on a registered runner that hosts this version: a run accepted with no runner to execute it would
-        // sit Pending indefinitely, so refuse it up front with a 409 the caller can act on.
-        if (!await this.runners.IsVersionHostedAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false))
-        {
-            return StartCatalogWorkflowRunResult.Conflict(
-                Problem("no-runner", "No hosting runner", 409, $"No registered runner currently hosts version {versionNumber} of '{baseWorkflowId}'; start a runner that hosts it and retry."), workspace);
-        }
-
-        // A version with no inputs schema (SchemaMissing) accepts any inputs. The run inherits the version's
-        // security tags (KVP labels) so row authorization (§14.2) sees the same labels the workflow carries.
-        WorkflowRunId runId = await this.management.StartAsync(workflowId, inputs, correlationId: null, tags: default, securityTags: catalogVersion.SecurityTagsValue, environment: environment, cancellationToken).ConfigureAwait(false);
-
-        return StartCatalogWorkflowRunResult.Accepted(
-            new Models.WorkflowRunAccepted.Source((ref Models.WorkflowRunAccepted.Builder b) => b.Create(
-                runId: runId.Value,
-                status: WorkflowRunStatus.Pending.ToString(),
-                workflowId: workflowId)),
-            workspace);
-    }
-
-    /// <summary>How a target schema resolved from a version's package.</summary>
-    private enum SchemaResolution
-    {
-        /// <summary>The catalog version does not exist.</summary>
-        VersionMissing,
-
-        /// <summary>The version exists but declares no schema for the target (e.g. a workflow with no inputs schema).</summary>
-        SchemaMissing,
-
-        /// <summary>The schema was resolved (and compiled/cached).</summary>
-        Resolved,
-    }
-
-    private static (bool Valid, IReadOnlyList<(string InstancePath, string Message, string SchemaLocation)> Errors) Validate(ValidatorSchema schema, in Corvus.Text.Json.JsonElement value)
-    {
-        using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-        bool valid = schema.Validate(in value, collector);
-
-        var errors = new List<(string InstancePath, string Message, string SchemaLocation)>();
-        foreach (JsonSchemaResultsCollector.Result result in collector.EnumerateResults())
-        {
-            if (!result.IsMatch)
-            {
-                errors.Add((result.GetDocumentEvaluationLocationText(), result.GetMessageText(), result.GetSchemaEvaluationLocationText()));
-                if (errors.Count >= MaxValidationErrors)
-                {
-                    break;
-                }
-            }
-        }
-
-        return (valid, errors);
-    }
-
-    private async ValueTask<(SchemaResolution Resolution, ValidatorSchema Schema)> ResolveSchemaAsync(string baseWorkflowId, int versionNumber, WorkflowSchemaTarget target, string cacheKey, AccessContext context, CancellationToken cancellationToken)
-    {
-        if (SchemaCache.TryGetValue(cacheKey, out ValidatorSchema cached))
-        {
-            return (SchemaResolution.Resolved, cached);
-        }
-
-        // Read the package through the caller's read reach (§14.2): an out-of-reach version resolves as missing.
-        ReadOnlyMemory<byte>? package = await this.catalog.GetPackageAsync(baseWorkflowId, versionNumber, context, cancellationToken).ConfigureAwait(false);
-        if (package is not { } packageBytes)
-        {
-            return (SchemaResolution.VersionMissing, default!);
-        }
-
-        (byte[] workflow, IReadOnlyList<KeyValuePair<string, byte[]>> sources) = CatalogPackage.Unpack(packageBytes);
-        if (!WorkflowSchemaMetadataGenerator.TryBuildValidationSchema(workflow, sources, target, out byte[] schemaDocument))
-        {
-            return (SchemaResolution.SchemaMissing, default!);
-        }
-
-        ValidatorSchema schema = ValidatorSchema.FromText(Encoding.UTF8.GetString(schemaDocument), "corvus:catalog/" + cacheKey);
-        if (SchemaCache.Count >= MaxCachedSchemas)
-        {
-            SchemaCache.Clear();
-        }
-
-        SchemaCache[cacheKey] = schema;
-        return (SchemaResolution.Resolved, schema);
-    }
-
-    private static bool TryMapTarget(Models.ValidationTarget target, out WorkflowSchemaTarget schemaTarget, out string targetKey)
-    {
-        schemaTarget = default;
-        targetKey = string.Empty;
-
-        string kind = target.Kind.IsNotUndefined() ? (string)target.Kind : string.Empty;
-        WorkflowSchemaTargetKind? kindEnum = kind switch
-        {
-            "inputs" => WorkflowSchemaTargetKind.Inputs,
-            "requestBody" => WorkflowSchemaTargetKind.RequestBody,
-            "responseBody" => WorkflowSchemaTargetKind.ResponseBody,
-            "stepOutputs" => WorkflowSchemaTargetKind.StepOutputs,
-            _ => null,
-        };
-        if (kindEnum is not { } resolvedKind)
-        {
-            return false;
-        }
-
-        string? workflowId = target.WorkflowId.IsNotUndefined() ? (string)target.WorkflowId : null;
-        string? stepId = target.StepId.IsNotUndefined() ? (string)target.StepId : null;
-        string? status = target.Status.IsNotUndefined() ? (string)target.Status : null;
-        schemaTarget = new WorkflowSchemaTarget(resolvedKind, workflowId, stepId, status);
-        targetKey = $"{kind}/{workflowId}/{stepId}/{status}";
-        return true;
-    }
-
-    private static Models.ValidationResult.Source BuildValidationResult(bool valid, IReadOnlyList<(string InstancePath, string Message, string SchemaLocation)> errors)
-        => new((ref Models.ValidationResult.Builder b) => b.Create(
-            valid: valid,
-            errors: new Models.ValidationResult.ValidationErrorArray.Source((ref Models.ValidationResult.ValidationErrorArray.Builder ab) =>
-            {
-                foreach ((string instancePath, string message, string schemaLocation) in errors)
-                {
-                    ab.AddItem(new Models.ValidationError.Source((ref Models.ValidationError.Builder eb) =>
-                    {
-                        Models.JsonString.Source instancePathSource = string.IsNullOrEmpty(instancePath) ? default : (Models.JsonString.Source)instancePath;
-                        Models.JsonString.Source schemaLocationSource = string.IsNullOrEmpty(schemaLocation) ? default : (Models.JsonString.Source)schemaLocation;
-                        eb.Create(message: message, instancePath: instancePathSource, schemaLocation: schemaLocationSource);
-                    }));
-                }
-            })));
-
     private static CatalogOwner ToOwner(Models.CatalogOwner owner)
         => new(
             Name: owner.Name.IsNotUndefined() ? (string)owner.Name : string.Empty,
@@ -611,154 +191,130 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
             Team: owner.Team.IsNotUndefined() ? (string)owner.Team : null,
             Url: owner.Url.IsNotUndefined() ? (string)owner.Url : null);
 
-    // Unions the deployment's internal tags with the validated user tags into one security-tag set. The publish path
-    // is cold, so the internal list is realized once through FromTags; the union itself is bytes-native (each set's
-    // tags are appended from their unescaped UTF-8, no per-tag managed string). Internal keys carry the reserved
-    // prefix and user keys cannot (ValidateUserTags enforced it), so the two sets never collide.
-    private static SecurityTagSet CombineSecurityTags(IReadOnlyList<SecurityTag> internalTags, SecurityTagSet userTags)
+    private static IReadOnlyList<string>? ToTags(Models.PostCatalogBody.JsonStringArray tags)
     {
-        if (userTags.IsEmpty)
+        if (tags.IsUndefined())
         {
-            return SecurityTagSet.FromTags(internalTags);
+            return null;
         }
 
-        if (internalTags.Count == 0)
+        var list = new List<string>();
+        foreach (Models.JsonString item in tags.EnumerateArray())
         {
-            return userTags;
+            list.Add((string)item);
         }
 
-        SecurityTagSet internalSet = SecurityTagSet.FromTags(internalTags);
-        return SecurityTagSet.Build(
-            (Internal: internalSet, User: userTags),
-            static (ref IdentityBuilder builder, in (SecurityTagSet Internal, SecurityTagSet User) s) =>
-            {
-                AppendTags(ref builder, s.Internal);
-                AppendTags(ref builder, s.User);
-            });
+        return list.Count > 0 ? list : null;
     }
 
-    // Appends every tag of a set to the builder from its unescaped UTF-8 key/value spans (string-free).
-    private static void AppendTags(ref IdentityBuilder builder, SecurityTagSet set)
+    private static IReadOnlyList<string>? ToTags(Models.CatalogMetadataPatch.JsonStringArray tags)
     {
-        SecurityTagSet.Utf8Enumerator e = set.EnumerateUtf8();
-        try
+        if (tags.IsUndefined())
         {
-            while (e.MoveNext())
+            return null;
+        }
+
+        var list = new List<string>();
+        foreach (Models.JsonString item in tags.EnumerateArray())
+        {
+            list.Add((string)item);
+        }
+
+        return list.Count > 0 ? list : null;
+    }
+
+    private static IReadOnlyList<string>? ToTags(Models.TagList tags)
+    {
+        if (tags.IsUndefined())
+        {
+            return null;
+        }
+
+        var list = new List<string>();
+        foreach (Models.JsonString item in tags.EnumerateArray())
+        {
+            list.Add((string)item);
+        }
+
+        return list.Count > 0 ? list : null;
+    }
+
+    private static Models.CatalogVersionSummary.Source BuildSummary(CatalogVersion version)
+        => new((ref Models.CatalogVersionSummary.Builder b) =>
+        {
+            Models.JsonString.Source description = version.Description is { } d ? (Models.JsonString.Source)d : default;
+            Models.JsonString.Source lastUpdatedBy = version.LastUpdatedBy is { } lub ? (Models.JsonString.Source)lub : default;
+            Models.JsonDateTime.Source lastUpdatedAt = version.LastUpdatedAt is { } lua ? (Models.JsonDateTime.Source)lua : default;
+            Models.JsonString.Source obsoletedBy = version.ObsoletedBy is { } ob ? (Models.JsonString.Source)ob : default;
+            Models.JsonDateTime.Source obsoletedAt = version.ObsoletedAt is { } oa ? (Models.JsonDateTime.Source)oa : default;
+
+            b.Create(
+                baseWorkflowId: version.BaseWorkflowId,
+                createdAt: version.CreatedAt,
+                createdBy: version.CreatedBy,
+                hash: version.Hash,
+                owner: BuildOwner(version.Owner),
+                sources: BuildSources(version.Sources),
+                status: version.Status.ToString(),
+                tags: BuildTags(version.Tags),
+                title: version.Title,
+                versionNumber: version.VersionNumber,
+                workflowId: version.WorkflowId,
+                description: description,
+                lastUpdatedAt: lastUpdatedAt,
+                lastUpdatedBy: lastUpdatedBy,
+                obsoletedAt: obsoletedAt,
+                obsoletedBy: obsoletedBy);
+        });
+
+    private static Models.CatalogOwner.Source BuildOwner(CatalogOwner owner)
+        => new((ref Models.CatalogOwner.Builder b) =>
+        {
+            Models.JsonString.Source team = owner.Team is { } t ? (Models.JsonString.Source)t : default;
+            Models.JsonIri.Source url = owner.Url is { } u ? (Models.JsonIri.Source)u : default;
+            b.Create(email: owner.Email, name: owner.Name, team: team, url: url);
+        });
+
+    private static Models.CatalogVersionSummary.CatalogSourceRefArray.Source BuildSources(IReadOnlyList<CatalogSourceRef> sources)
+        => new((ref Models.CatalogVersionSummary.CatalogSourceRefArray.Builder ab) =>
+        {
+            foreach (CatalogSourceRef source in sources)
             {
-                builder.Add(e.CurrentKey, e.CurrentValue);
+                ab.AddItem(new Models.CatalogSourceRef.Source((ref Models.CatalogSourceRef.Builder cb) =>
+                {
+                    Models.JsonString.Source type = source.Type is { } t ? (Models.JsonString.Source)t : default;
+                    cb.Create(name: source.Name, type: type);
+                }));
             }
-        }
-        finally
-        {
-            e.Dispose();
-        }
-    }
+        });
 
-    // Returns a client view of the version whose deployment-internal security tags (the reserved prefix, §14.2) are
-    // stripped — the persisted document keeps them for row authorization; only the response drops them. When the
-    // version carries no internal tags the original element is returned unchanged (zero-copy, no rewrite). A rewritten
-    // view is a pooled document owned by the workspace, so its element stays valid through the deferred body
-    // serialization.
-    private CatalogVersion PublicView(CatalogVersion version, JsonWorkspace workspace)
-    {
-        SecurityTagSet full = version.SecurityTagsValue;
-        if (full.IsEmpty || !this.HasInternalTag(full))
+    private static Models.CatalogVersionSummary.JsonStringArray.Source BuildTags(IReadOnlyList<string> tags)
+        => new((ref Models.CatalogVersionSummary.JsonStringArray.Builder ab) =>
         {
-            return version;
-        }
-
-        SecurityTagSet visible = this.BuildVisibleTags(full);
-        var stripped = ParsedJsonDocument<CatalogVersion>.Parse(CatalogVersion.CreateWithSecurityTags(version, visible));
-        workspace.TakeOwnership(stripped);
-        return stripped.RootElement;
-    }
-
-    // Whether the set carries any deployment-internal tag (string-free span scan).
-    private bool HasInternalTag(SecurityTagSet set)
-    {
-        SecurityTagSet.Utf8Enumerator e = set.EnumerateUtf8();
-        try
-        {
-            while (e.MoveNext())
+            foreach (string tag in tags)
             {
-                if (this.access.IsInternalTag(e.CurrentKey))
-                {
-                    return true;
-                }
+                ab.AddItem(tag);
             }
-        }
-        finally
+        });
+
+    private static Models.CatalogPage.Source BuildPage(CatalogPage page)
+        => new((ref Models.CatalogPage.Builder b) =>
         {
-            e.Dispose();
-        }
-
-        return false;
-    }
-
-    // Builds the non-internal (client-visible) subset of a tag set bytes-native — each retained tag is appended from
-    // its unescaped UTF-8 key/value, so no per-tag managed string is created.
-    private SecurityTagSet BuildVisibleTags(SecurityTagSet full)
-        => SecurityTagSet.Build(
-            (Full: full, Access: this.access),
-            static (ref IdentityBuilder builder, in (SecurityTagSet Full, ControlPlaneAccess Access) s) =>
-            {
-                SecurityTagSet.Utf8Enumerator e = s.Full.EnumerateUtf8();
-                try
-                {
-                    while (e.MoveNext())
-                    {
-                        if (!s.Access.IsInternalTag(e.CurrentKey))
-                        {
-                            builder.Add(e.CurrentKey, e.CurrentValue);
-                        }
-                    }
-                }
-                finally
-                {
-                    e.Dispose();
-                }
-            });
-
-    // Copy the parsed tag-list parameter's canonical bytes into the holder (per request, not per row). An add or a
-    // search needle yields an empty holder when absent; a patch yields null (= "leave tags unchanged").
-    private static TagSet ToTags(Models.PostCatalogBody.JsonStringArray tags) => TagSet.CopyFrom(tags);
-
-    private static TagSet? ToTags(Models.CatalogMetadataPatch.JsonStringArray tags) => tags.IsUndefined() ? null : TagSet.CopyFrom(tags);
-
-    private static TagSet ToTags(Models.TagList tags) => TagSet.CopyFrom(tags);
-
-    private Models.CatalogPage.Source BuildPage(CatalogPage page, JsonWorkspace workspace)
-    {
-        // Strip internal tags from each version NOW (before the deferred body serialization runs): a rewritten public
-        // view must have its ownership established up-front so its element stays valid through serialization. Versions
-        // with no internal tags keep their zero-copy element (owned via the page transfer above).
-        var views = new List<CatalogVersion>();
-        foreach (CatalogVersion version in page.Versions)
-        {
-            views.Add(this.PublicView(version, workspace));
-        }
-
-        return new((ref Models.CatalogPage.Builder b) =>
-        {
-            Models.JsonString.Source nextPageToken = page.NextPageToken.IsEmpty ? default : (Models.JsonString.Source)page.NextPageToken.Span;
+            Models.JsonString.Source nextPageToken = page.ContinuationToken is { } token ? (Models.JsonString.Source)token : default;
             b.Create(
                 versions: new Models.CatalogPage.CatalogVersionSummaryArray.Source(
                     (ref Models.CatalogPage.CatalogVersionSummaryArray.Builder ab) =>
                     {
-                        foreach (CatalogVersion view in views)
+                        foreach (CatalogVersion version in page.Versions)
                         {
-                            ab.AddItem(Models.CatalogVersionSummary.From(view));
+                            ab.AddItem(BuildSummary(version));
                         }
                     }),
                 nextPageToken: nextPageToken);
         });
-    }
 
     private static Models.ProblemDetails.Source NotFoundProblem(string baseWorkflowId, int versionNumber)
         => Problem("version-not-found", "Version not found", 404, $"No version {versionNumber} of workflow '{baseWorkflowId}' exists.");
-
-    private static Models.ProblemDetails.Source ForbiddenProblem(string baseWorkflowId, int versionNumber)
-        => Problem("forbidden", "Action not permitted", 403, $"You do not have permission to modify version {versionNumber} of '{baseWorkflowId}'.");
 
     private static Models.ProblemDetails.Source Problem(string type, string title, int status, string detail)
         => new((ref Models.ProblemDetails.Builder b) => b.Create(
