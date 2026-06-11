@@ -56,6 +56,9 @@ public static class ArazzoTelemetry
     /// <summary>The span/measurement tag carrying a run's lifecycle status.</summary>
     public const string StatusTag = "corvus.arazzo.status";
 
+    /// <summary>The span tag carrying a run's telemetry correlation id (the W3C trace id captured at creation).</summary>
+    public const string CorrelationIdTag = "corvus.arazzo.correlation_id";
+
     private static readonly string Version =
         typeof(ArazzoTelemetry).Assembly.GetName().Version?.ToString() ?? "1.0.0";
 

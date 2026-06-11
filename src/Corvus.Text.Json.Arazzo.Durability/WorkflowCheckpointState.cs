@@ -28,7 +28,9 @@ public sealed class WorkflowCheckpointState : IDisposable
         Dictionary<string, JsonElement> stepOutputs,
         JsonElement outputs,
         WorkflowWait? wait,
-        WorkflowFault? fault)
+        WorkflowFault? fault,
+        string? correlationId = null,
+        IReadOnlyList<string>? tags = null)
     {
         this.document = document;
         this.RunId = runId;
@@ -43,6 +45,8 @@ public sealed class WorkflowCheckpointState : IDisposable
         this.Outputs = outputs;
         this.Wait = wait;
         this.Fault = fault;
+        this.CorrelationId = correlationId;
+        this.Tags = tags;
     }
 
     /// <summary>Gets the run id.</summary>
@@ -80,6 +84,12 @@ public sealed class WorkflowCheckpointState : IDisposable
 
     /// <summary>Gets the fault record if the run is faulted (Tier 2).</summary>
     public WorkflowFault? Fault { get; }
+
+    /// <summary>Gets the run-wide telemetry correlation id (the W3C trace id) set at creation, if any.</summary>
+    public string? CorrelationId { get; }
+
+    /// <summary>Gets the free-form tags applied to the run at creation, if any.</summary>
+    public IReadOnlyList<string>? Tags { get; }
 
     /// <inheritdoc/>
     public void Dispose() => this.document.Dispose();

@@ -1,0 +1,69 @@
+/*
+ * Arazzo Control Plane UI kit — optional theme tokens.
+ *
+ * Include this once in the host page to theme the whole kit (the components read these `--arazzo-*`
+ * custom properties, which inherit through Shadow DOM). Without it the components render with built-in
+ * light-mode fallbacks; <arazzo-control-plane theme="dark|light|auto"> can also set the tokens itself.
+ *
+ *   <link rel="stylesheet" href="arazzo-kit.css">
+ *
+ * Dark mode follows the OS by default; force it either way with `data-theme="dark|light"` on a host
+ * element (e.g. <html data-theme="dark">). Override any token in your own CSS (after this file) to
+ * restyle without forking the components.
+ */
+:root {
+  --arazzo-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --arazzo-radius: 8px;
+
+  --arazzo-bg: #ffffff;
+  --arazzo-surface: #f7f8fa;
+  --arazzo-border: #e3e6ea;
+  --arazzo-text: #1c2024;
+  --arazzo-muted: #6b7280;
+  --arazzo-accent: #3b6cf6;
+  --arazzo-danger: #d4351c;
+
+  --arazzo-status-pending: #9aa1ab;
+  --arazzo-status-running: #2f74d0;
+  --arazzo-status-suspended: #b07d18;
+  --arazzo-status-completed: #2a8a4a;
+  --arazzo-status-cancelled: #6b7280;
+  --arazzo-status-faulted: #d4351c;
+}
+
+/* Dark palette — shared by the OS-preference media query and an explicit data-theme="dark". */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --arazzo-bg: #14171b;
+    --arazzo-surface: #1c2026;
+    --arazzo-border: #2c3138;
+    --arazzo-text: #e6e9ee;
+    --arazzo-muted: #9aa3af;
+    --arazzo-accent: #6f9bff;
+    --arazzo-danger: #ff6b5e;
+
+    --arazzo-status-pending: #8b929c;
+    --arazzo-status-running: #6f9bff;
+    --arazzo-status-suspended: #e0a93f;
+    --arazzo-status-completed: #4cc472;
+    --arazzo-status-cancelled: #8b929c;
+    --arazzo-status-faulted: #ff6b5e;
+  }
+}
+
+:root[data-theme="dark"] {
+  --arazzo-bg: #14171b;
+  --arazzo-surface: #1c2026;
+  --arazzo-border: #2c3138;
+  --arazzo-text: #e6e9ee;
+  --arazzo-muted: #9aa3af;
+  --arazzo-accent: #6f9bff;
+  --arazzo-danger: #ff6b5e;
+
+  --arazzo-status-pending: #8b929c;
+  --arazzo-status-running: #6f9bff;
+  --arazzo-status-suspended: #e0a93f;
+  --arazzo-status-completed: #4cc472;
+  --arazzo-status-cancelled: #8b929c;
+  --arazzo-status-faulted: #ff6b5e;
+}

@@ -158,8 +158,8 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             await using MySqlCommand insert = connection.CreateCommand();
             insert.CommandText =
                 """
-                INSERT INTO workflow_runs (run_id, checkpoint, version, status, workflow_id, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type)
-                VALUES (@id, @checkpoint, 1, @status, @workflow_id, @created_at, @updated_at, @due_at, @awaiting_channel, @awaiting_correlation_id, @error_type)
+                INSERT INTO workflow_runs (run_id, checkpoint, version, status, workflow_id, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type, correlation_id, tags)
+                VALUES (@id, @checkpoint, 1, @status, @workflow_id, @created_at, @updated_at, @due_at, @awaiting_channel, @awaiting_correlation_id, @error_type, @correlation_id, @tags)
                 ON DUPLICATE KEY UPDATE run_id = run_id;
                 """;
             BindRun(insert, id, checkpoint, index);
@@ -179,7 +179,8 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             UPDATE workflow_runs
             SET checkpoint = @checkpoint, version = version + 1, status = @status, workflow_id = @workflow_id,
                 created_at = @created_at, updated_at = @updated_at, due_at = @due_at,
-                awaiting_channel = @awaiting_channel, awaiting_correlation_id = @awaiting_correlation_id, error_type = @error_type
+                awaiting_channel = @awaiting_channel, awaiting_correlation_id = @awaiting_correlation_id, error_type = @error_type,
+                correlation_id = @correlation_id, tags = @tags
             WHERE run_id = @id AND version = @expected_version;
             """;
         BindRun(update, id, checkpoint, index);
@@ -312,17 +313,45 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         await using MySqlCommand select = connection.CreateCommand();
         select.CommandText =
             """
-            SELECT run_id, status, workflow_id, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type
+            SELECT run_id, status, workflow_id, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type, correlation_id, tags
             FROM workflow_runs
             WHERE (@status IS NULL OR status = @status) AND (@workflow_id IS NULL OR workflow_id = @workflow_id)
+              AND (@created_after IS NULL OR created_at >= @created_after)
+              AND (@created_before IS NULL OR created_at < @created_before)
+              AND (@updated_after IS NULL OR updated_at >= @updated_after)
+              AND (@updated_before IS NULL OR updated_at < @updated_before)
+              AND (@correlation_id IS NULL OR correlation_id = @correlation_id)
+              {{tagPredicates}}
               AND (@after IS NULL OR run_id > @after)
             ORDER BY run_id
             LIMIT @limit;
             """;
         select.Parameters.AddWithValue("@status", (object?)query.Status?.ToString() ?? DBNull.Value);
         select.Parameters.AddWithValue("@workflow_id", (object?)query.WorkflowId ?? DBNull.Value);
+        select.Parameters.AddWithValue("@created_after", (object?)query.CreatedAfter?.ToUnixTimeMilliseconds() ?? DBNull.Value);
+        select.Parameters.AddWithValue("@created_before", (object?)query.CreatedBefore?.ToUnixTimeMilliseconds() ?? DBNull.Value);
+        select.Parameters.AddWithValue("@updated_after", (object?)query.UpdatedAfter?.ToUnixTimeMilliseconds() ?? DBNull.Value);
+        select.Parameters.AddWithValue("@updated_before", (object?)query.UpdatedBefore?.ToUnixTimeMilliseconds() ?? DBNull.Value);
+        select.Parameters.AddWithValue("@correlation_id", (object?)query.CorrelationId ?? DBNull.Value);
         select.Parameters.AddWithValue("@after", (object?)after ?? DBNull.Value);
         select.Parameters.AddWithValue("@limit", query.Limit + 1);
+
+        if (query.Tags is { Count: > 0 } tags)
+        {
+            var predicates = new System.Text.StringBuilder();
+            for (int i = 0; i < tags.Count; i++)
+            {
+                string name = "@tag" + i.ToString(CultureInfo.InvariantCulture);
+                predicates.Append("AND tags LIKE ").Append(name).Append(" ESCAPE '\\\\'\n              ");
+                select.Parameters.AddWithValue(name, "%" + EscapeLike(tags[i]) + "%");
+            }
+
+            select.CommandText = select.CommandText.Replace("{{tagPredicates}}", predicates.ToString().TrimEnd());
+        }
+        else
+        {
+            select.CommandText = select.CommandText.Replace("{{tagPredicates}}", string.Empty);
+        }
 
         var runs = new List<WorkflowRunListing>();
         await using MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
@@ -336,7 +365,9 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
                 reader.IsDBNull(5) ? null : DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(5)),
                 reader.IsDBNull(6) ? null : reader.GetString(6),
                 reader.IsDBNull(7) ? null : reader.GetString(7),
-                reader.IsDBNull(8) ? null : reader.GetString(8));
+                reader.IsDBNull(8) ? null : reader.GetString(8),
+                CorrelationId: reader.IsDBNull(9) ? null : reader.GetString(9),
+                Tags: DecodeTags(reader.IsDBNull(10) ? null : reader.GetString(10)));
             runs.Add(new WorkflowRunListing(new WorkflowRunId(reader.GetString(0)), entry));
         }
 
@@ -355,7 +386,26 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         command.Parameters.AddWithValue("@awaiting_channel", (object?)index.AwaitingChannel ?? DBNull.Value);
         command.Parameters.AddWithValue("@awaiting_correlation_id", (object?)index.AwaitingCorrelationId ?? DBNull.Value);
         command.Parameters.AddWithValue("@error_type", (object?)index.ErrorType ?? DBNull.Value);
+        command.Parameters.AddWithValue("@correlation_id", (object?)index.CorrelationId ?? DBNull.Value);
+        command.Parameters.AddWithValue("@tags", (object?)EncodeTags(index.Tags) ?? DBNull.Value);
     }
+
+    private static string? EncodeTags(IReadOnlyList<string>? tags)
+        => tags is { Count: > 0 } ? "\u001F" + string.Join('\u001F', tags) + "\u001F" : null;
+
+    private static IReadOnlyList<string>? DecodeTags(string? encoded)
+    {
+        if (string.IsNullOrEmpty(encoded))
+        {
+            return null;
+        }
+
+        string[] parts = encoded.Trim('\u001F').Split('\u001F', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length == 0 ? null : parts;
+    }
+
+    private static string EscapeLike(string value)
+        => value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
 
     private ValueTask<MySqlConnection> OpenAsync(CancellationToken cancellationToken)
         => this.dataSource.OpenConnectionAsync(cancellationToken);
@@ -375,6 +425,8 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             awaiting_channel VARCHAR(255) NULL,
             awaiting_correlation_id VARCHAR(255) NULL,
             error_type VARCHAR(1024) NULL,
+            correlation_id VARCHAR(512) NULL,
+            tags TEXT NULL,
             INDEX ix_workflow_runs_due (status, due_at),
             INDEX ix_workflow_runs_awaiting (status, awaiting_channel, awaiting_correlation_id)
         );

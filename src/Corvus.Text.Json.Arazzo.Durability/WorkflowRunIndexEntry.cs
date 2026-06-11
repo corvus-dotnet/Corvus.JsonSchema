@@ -23,6 +23,8 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// <param name="AwaitingChannel">The channel a suspended run is awaiting a message on, if any (Tier 2).</param>
 /// <param name="AwaitingCorrelationId">The correlation id a suspended run is awaiting, if any (Tier 2).</param>
 /// <param name="ErrorType">The error type of a faulted run, if any.</param>
+/// <param name="CorrelationId">The run-wide telemetry correlation id (the W3C trace id) set at creation, if any.</param>
+/// <param name="Tags">The free-form tags applied to the run at creation, if any.</param>
 public readonly record struct WorkflowRunIndexEntry(
     string WorkflowId,
     WorkflowRunStatus Status,
@@ -31,4 +33,6 @@ public readonly record struct WorkflowRunIndexEntry(
     DateTimeOffset? DueAt = null,
     string? AwaitingChannel = null,
     string? AwaitingCorrelationId = null,
-    string? ErrorType = null);
+    string? ErrorType = null,
+    string? CorrelationId = null,
+    IReadOnlyList<string>? Tags = null);

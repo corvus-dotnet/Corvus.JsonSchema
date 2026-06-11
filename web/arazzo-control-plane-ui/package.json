@@ -1,0 +1,55 @@
+{
+  "name": "@corvus-dotnet/arazzo-control-plane-ui",
+  "version": "0.1.0",
+  "description": "Zero-build, framework-agnostic web-component kit for the Arazzo workflow control-plane REST API.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "author": "endjin",
+  "homepage": "https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/web/arazzo-control-plane-ui",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/corvus-dotnet/Corvus.JsonSchema.git",
+    "directory": "web/arazzo-control-plane-ui"
+  },
+  "bugs": {
+    "url": "https://github.com/corvus-dotnet/Corvus.JsonSchema/issues"
+  },
+  "keywords": [
+    "arazzo",
+    "workflow",
+    "control-plane",
+    "web-components",
+    "custom-elements",
+    "openapi",
+    "corvus"
+  ],
+  "exports": {
+    ".": "./src/arazzo-control-plane.js",
+    "./client": "./src/arazzo-client.js",
+    "./kit.css": "./src/arazzo-kit.css",
+    "./components/*": "./src/components/*"
+  },
+  "sideEffects": [
+    "./src/arazzo-control-plane.js",
+    "./src/components/*.js"
+  ],
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "test": "node --test test/client.test.mjs test/conformance.test.mjs",
+    "test:components": "web-test-runner --config test/web-test-runner.config.mjs",
+    "test:smoke": "playwright test --config test/playwright.config.mjs",
+    "test:browser": "npm run test:components && npm run test:smoke",
+    "test:all": "npm test && npm run test:browser"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "@web/test-runner": "^0.19.0",
+    "@web/test-runner-playwright": "^0.11.0"
+  }
+}

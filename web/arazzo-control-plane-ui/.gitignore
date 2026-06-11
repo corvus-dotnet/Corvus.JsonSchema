@@ -1,0 +1,21 @@
+# Node / npm
+node_modules/
+npm-debug.log*
+yarn-error.log*
+*.tgz
+
+# Playwright / @web/test-runner output
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+.cache/
+
+# Coverage + misc build output
+coverage/
+dist/
+*.tsbuildinfo
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
