@@ -14,6 +14,7 @@
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import './workflow-step-picker.js';
+import './patch-builder.js';
 
 class ArazzoResumeDialog extends ArazzoElement {
   constructor() {
@@ -36,13 +37,41 @@ class ArazzoResumeDialog extends ArazzoElement {
       if (run?.workflowId) picker.setAttribute('workflow-id', run.workflowId); else picker.removeAttribute('workflow-id');
       if (run?.cursor != null) picker.setAttribute('cursor', String(run.cursor)); else picker.removeAttribute('cursor');
     }
-    this.$('#skipOutputs').value = '';
+    this.loadSkipDescriptor(run);
     this.$('#patch').value = '[\n  { "op": "replace", "path": "/inputs/example", "value": 1 }\n]';
     this.setMode('RetryFaultedStep');
     this.$('.subhead').textContent = run?.fault
       ? `Faulted at step "${run.fault.stepId}" (attempt ${run.fault.attempt}).`
       : 'Resume this run.';
     this.$('dialog').showModal();
+  }
+
+  /**
+   * Resolve the typed schema of the step being skipped (the step at the run's cursor) from the catalog so the
+   * skip-outputs builder renders a strongly-typed form; falls back to a raw-JSON editor when unavailable.
+   * @param {object} run
+   */
+  async loadSkipDescriptor(run) {
+    const builder = this.$('.skip-builder');
+    if (!builder) return;
+    builder.descriptor = null; // raw-JSON fallback until/unless a typed schema resolves
+    const parsed = parseVersionedWorkflowId(run?.workflowId);
+    const cursor = run?.cursor;
+    if (!this.client || !parsed || cursor == null) return;
+    try {
+      const [workflow, schemas] = await Promise.all([
+        this.client.getCatalogWorkflow(parsed.base, parsed.version),
+        this.client.getCatalogWorkflowSchemas(parsed.base, parsed.version),
+      ]);
+      const wf = (workflow.workflows || []).find((w) => w.workflowId === run.workflowId) || (workflow.workflows || [])[0];
+      const stepId = wf?.steps?.[cursor]?.stepId;
+      const outputs = schemas?.workflows?.[run.workflowId]?.steps?.[stepId]?.outputs;
+      if (stepId && outputs && Object.keys(outputs).length) {
+        builder.descriptor = { type: 'object', properties: outputs };
+      }
+    } catch {
+      // No catalog metadata (or no catalog:read) → the builder stays a raw-JSON editor.
+    }
   }
 
   close() {
@@ -112,7 +141,7 @@ class ArazzoResumeDialog extends ArazzoElement {
             <div class="mode-fields" data-mode="Skip" hidden>
               <div class="fields">
                 <div><label>Target step (defaults to the current step)</label><arazzo-workflow-step-picker class="skip-picker"></arazzo-workflow-step-picker></div>
-                <div><label for="skipOutputs">Skip outputs (optional JSON object)</label><textarea id="skipOutputs" rows="4" placeholder='{ "result": "manually-supplied" }'></textarea></div>
+                <div><label>Skip outputs (the values to record for the skipped step)</label><arazzo-patch-builder class="skip-builder"></arazzo-patch-builder></div>
               </div>
             </div>
 
@@ -163,9 +192,9 @@ class ArazzoResumeDialog extends ArazzoElement {
       const req = { mode };
       const targetCursor = this.$('.skip-picker').value;
       if (targetCursor != null) req.targetCursor = targetCursor;
-      const outputs = this.$('#skipOutputs').value.trim();
-      if (outputs !== '') {
-        req.skipOutputs = parseJsonField(outputs, 'Skip outputs', 'object');
+      const outputs = this.$('.skip-builder').value; // may throw on invalid input — surfaced as the banner
+      if (outputs !== undefined) {
+        req.skipOutputs = outputs;
       }
       return req;
     }
@@ -203,6 +232,12 @@ class ArazzoResumeDialog extends ArazzoElement {
       confirmBtn.disabled = false;
     }
   }
+}
+
+/** Split a versioned workflow id (`base-vN`) into `{ base, version }`, or null when not versioned. */
+function parseVersionedWorkflowId(workflowId) {
+  const m = /^(.*)-v(\d+)$/.exec(workflowId || '');
+  return m ? { base: m[1], version: Number(m[2]) } : null;
 }
 
 function parseJsonField(value, label, expect) {
