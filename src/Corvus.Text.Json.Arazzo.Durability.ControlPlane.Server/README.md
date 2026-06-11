@@ -23,7 +23,8 @@ app.Run();
 
 This maps the run operations (`GET /runs`, `GET /runs/{runId}`, `POST /runs/{runId}/resume`,
 `POST /runs/{runId}/cancel`, `PURGE /runs`) onto the management client, and the catalog operations
-(`/catalog…`, including `GET /catalog/{baseWorkflowId}/versions/{versionNumber}/schemas`) onto the catalog client.
+(`/catalog…`, including `GET /catalog/{baseWorkflowId}/versions/{versionNumber}/schemas` and
+`POST /catalog/{baseWorkflowId}/versions/{versionNumber}/validate`) onto the catalog client.
 
 ## Catalog schema metadata
 
@@ -50,6 +51,22 @@ app.MapArazzoControlPlane(management, catalog);
 Omit the provider and versions are stored without baked metadata — the `schemas` endpoint then returns `404`
 and clients fall back to untyped editing. The provider pulls in `Corvus.Text.Json.Arazzo.CodeGeneration` (the
 OpenAPI/AsyncAPI classifier), which runs only at add time.
+
+## Schema validation (`POST …/versions/{n}/validate`)
+
+`POST …/versions/{n}/validate` validates a JSON value against the **true JSON Schema** of a target within the
+version's package — a workflow's `inputs`, a step's request or response body, or a step's `outputs` object —
+returning `{ "valid": …, "errors": [ … ] }` (a malformed value still returns `200` with `valid: false`; an
+unresolvable version or target returns `404`). Unlike the precomputed `schemas` metadata (which is a lossy,
+render-oriented shape), this resolves the real schema from the package and runs the full
+`Corvus.Text.Json.Validator`. The compiled schema is cached, keyed by the (immutable) version + target, so it is
+bounded by distinct catalogued schemas rather than request volume.
+
+> **Hosting requirement.** The validator compiles generated model types at runtime, which needs the **host
+> application's** compilation context (preprocessor defines + reference assemblies) in its `deps.json`. Set
+> `<PreserveCompilationContext>true</PreserveCompilationContext>` in the project that hosts this server,
+> otherwise the first `validate` call throws `Unable to compile generated code`. (The other endpoints don't
+> require this.)
 
 ## Security
 

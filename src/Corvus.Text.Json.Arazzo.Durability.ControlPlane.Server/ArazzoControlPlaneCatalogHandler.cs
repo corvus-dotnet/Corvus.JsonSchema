@@ -2,8 +2,12 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Collections.Concurrent;
+using System.Text;
 using Corvus.Text.Json;
+using Corvus.Text.Json.Arazzo.CodeGeneration;
 using Corvus.Text.Json.Arazzo.Durability;
+using ValidatorSchema = Corvus.Text.Json.Validator.JsonSchema;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
@@ -16,6 +20,15 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
 {
     private const string ProblemBase = "https://corvus-oss.org/arazzo/control-plane/problems/";
+
+    private const int MaxValidationErrors = 200;
+    private const int MaxCachedSchemas = 512;
+
+    // Compiling a JSON Schema is an expensive one-time job, so cache the compiled validator. The key is
+    // (base/version/target), which is content-stable because catalog versions are immutable — so the cache is
+    // bounded by distinct catalogued schemas, never by request volume. The coarse cap sheds reuse (not
+    // correctness) if a single process accumulates more than MaxCachedSchemas distinct target schemas.
+    private static readonly ConcurrentDictionary<string, ValidatorSchema> SchemaCache = new(StringComparer.Ordinal);
 
     private readonly IWorkflowCatalogClient catalog;
 
@@ -201,6 +214,106 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         workspace.TakeOwnership(parsed);
         return GetCatalogSourceResult.Ok(parsed.RootElement, workspace);
     }
+
+    /// <inheritdoc/>
+    public async ValueTask<ValidateCatalogValueResult> HandleValidateCatalogValueAsync(ValidateCatalogValueParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string baseWorkflowId = (string)parameters.BaseWorkflowId;
+        int versionNumber = (int)parameters.VersionNumber;
+
+        if (!TryMapTarget(parameters.Body.Target, out WorkflowSchemaTarget target, out string targetKey))
+        {
+            return ValidateCatalogValueResult.NotFound(
+                Problem("validation-target", "Unknown validation target", 404, "The validation target kind is not recognised."), workspace);
+        }
+
+        string cacheKey = $"{baseWorkflowId}/{versionNumber}/{targetKey}";
+        if (!SchemaCache.TryGetValue(cacheKey, out ValidatorSchema schema))
+        {
+            ReadOnlyMemory<byte>? package = await this.catalog.GetPackageAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+            if (package is not { } packageBytes)
+            {
+                return ValidateCatalogValueResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
+            }
+
+            (byte[] workflow, IReadOnlyList<KeyValuePair<string, byte[]>> sources) = CatalogPackage.Unpack(packageBytes);
+            if (!WorkflowSchemaMetadataGenerator.TryBuildValidationSchema(workflow, sources, target, out byte[] schemaDocument))
+            {
+                return ValidateCatalogValueResult.NotFound(
+                    Problem("validation-target", "Validation target not found", 404, "The requested schema could not be resolved from this version's package."), workspace);
+            }
+
+            schema = ValidatorSchema.FromText(Encoding.UTF8.GetString(schemaDocument), "corvus:catalog/" + cacheKey);
+            if (SchemaCache.Count >= MaxCachedSchemas)
+            {
+                SchemaCache.Clear();
+            }
+
+            SchemaCache[cacheKey] = schema;
+        }
+
+        using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+        Corvus.Text.Json.JsonElement value = parameters.Body.Value;
+        bool valid = schema.Validate(in value, collector);
+
+        var errors = new List<(string InstancePath, string Message, string SchemaLocation)>();
+        foreach (JsonSchemaResultsCollector.Result result in collector.EnumerateResults())
+        {
+            if (!result.IsMatch)
+            {
+                errors.Add((result.GetDocumentEvaluationLocationText(), result.GetMessageText(), result.GetSchemaEvaluationLocationText()));
+                if (errors.Count >= MaxValidationErrors)
+                {
+                    break;
+                }
+            }
+        }
+
+        return ValidateCatalogValueResult.Ok(BuildValidationResult(valid, errors), workspace);
+    }
+
+    private static bool TryMapTarget(Models.ValidationTarget target, out WorkflowSchemaTarget schemaTarget, out string targetKey)
+    {
+        schemaTarget = default;
+        targetKey = string.Empty;
+
+        string kind = target.Kind.IsNotUndefined() ? (string)target.Kind : string.Empty;
+        WorkflowSchemaTargetKind? kindEnum = kind switch
+        {
+            "inputs" => WorkflowSchemaTargetKind.Inputs,
+            "requestBody" => WorkflowSchemaTargetKind.RequestBody,
+            "responseBody" => WorkflowSchemaTargetKind.ResponseBody,
+            "stepOutputs" => WorkflowSchemaTargetKind.StepOutputs,
+            _ => null,
+        };
+        if (kindEnum is not { } resolvedKind)
+        {
+            return false;
+        }
+
+        string? workflowId = target.WorkflowId.IsNotUndefined() ? (string)target.WorkflowId : null;
+        string? stepId = target.StepId.IsNotUndefined() ? (string)target.StepId : null;
+        string? status = target.Status.IsNotUndefined() ? (string)target.Status : null;
+        schemaTarget = new WorkflowSchemaTarget(resolvedKind, workflowId, stepId, status);
+        targetKey = $"{kind}/{workflowId}/{stepId}/{status}";
+        return true;
+    }
+
+    private static Models.ValidationResult.Source BuildValidationResult(bool valid, IReadOnlyList<(string InstancePath, string Message, string SchemaLocation)> errors)
+        => new((ref Models.ValidationResult.Builder b) => b.Create(
+            valid: valid,
+            errors: new Models.ValidationResult.ValidationErrorArray.Source((ref Models.ValidationResult.ValidationErrorArray.Builder ab) =>
+            {
+                foreach ((string instancePath, string message, string schemaLocation) in errors)
+                {
+                    ab.AddItem(new Models.ValidationError.Source((ref Models.ValidationError.Builder eb) =>
+                    {
+                        Models.JsonString.Source instancePathSource = string.IsNullOrEmpty(instancePath) ? default : (Models.JsonString.Source)instancePath;
+                        Models.JsonString.Source schemaLocationSource = string.IsNullOrEmpty(schemaLocation) ? default : (Models.JsonString.Source)schemaLocation;
+                        eb.Create(message: message, instancePath: instancePathSource, schemaLocation: schemaLocationSource);
+                    }));
+                }
+            })));
 
     private static CatalogOwner ToOwner(Models.CatalogOwner owner)
         => new(

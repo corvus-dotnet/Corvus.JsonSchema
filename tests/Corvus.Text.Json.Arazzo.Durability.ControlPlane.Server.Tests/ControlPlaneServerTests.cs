@@ -399,8 +399,63 @@ public sealed class ControlPlaneServerTests
         await app.StopAsync();
     }
 
+    [TestMethod]
+    public async Task ValidateCatalogValue_validates_inputs_against_the_real_schema()
+    {
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var catalogStore = new InMemoryWorkflowCatalogStore(clock);
+        var management = new WorkflowManagementClient(runStore, "ops", CompleteResumer, clock);
+        var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
+
+        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), null, default);
+
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        app.MapArazzoControlPlane(management, catalog);
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+
+        // A conforming value validates.
+        HttpResponseMessage valid = await client.PostAsync(
+            "/catalog/flow/versions/1/validate",
+            new StringContent("""{ "target": { "kind": "inputs" }, "value": { "petId": 5 } }""", Encoding.UTF8, "application/json"));
+        valid.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(valid))
+        {
+            doc.RootElement.GetProperty("valid").GetBoolean().ShouldBeTrue();
+            doc.RootElement.GetProperty("errors").GetArrayLength().ShouldBe(0);
+        }
+
+        // A non-conforming value (missing required petId, and below the minimum) fails with errors.
+        HttpResponseMessage invalid = await client.PostAsync(
+            "/catalog/flow/versions/1/validate",
+            new StringContent("""{ "target": { "kind": "inputs" }, "value": { } }""", Encoding.UTF8, "application/json"));
+        invalid.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(invalid))
+        {
+            doc.RootElement.GetProperty("valid").GetBoolean().ShouldBeFalse();
+            doc.RootElement.GetProperty("errors").GetArrayLength().ShouldBeGreaterThan(0);
+        }
+
+        // An unknown version is a 404.
+        HttpResponseMessage missing = await client.PostAsync(
+            "/catalog/flow/versions/99/validate",
+            new StringContent("""{ "target": { "kind": "inputs" }, "value": { "petId": 5 } }""", Encoding.UTF8, "application/json"));
+        missing.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        await app.StopAsync();
+    }
+
     private static byte[] SchemaWorkflowPackage(string id)
         => WorkflowPackage.Pack(Encoding.UTF8.GetBytes($$"""{"arazzo":"1.1.0","info":{"title":"t","version":"1"},"workflows":[{"workflowId":"{{id}}","steps":[]}]}"""), []);
+
+    private static byte[] InputsWorkflowPackage(string id)
+        => WorkflowPackage.Pack(
+            Encoding.UTF8.GetBytes($$$"""{"arazzo":"1.1.0","info":{"title":"t","version":"1"},"workflows":[{"workflowId":"{{{id}}}","inputs":{"type":"object","properties":{"petId":{"type":"integer","minimum":1}},"required":["petId"]},"steps":[]}]}"""),
+            []);
 
     private static async Task TaggedRunAsync(InMemoryWorkflowStateStore store, string id, TimeProvider clock, string correlationId, string[] tags)
     {
