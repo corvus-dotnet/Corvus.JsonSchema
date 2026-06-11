@@ -44,6 +44,57 @@ describe('<arazzo-patch-builder>', () => {
     ok(!('a' in v), 'blank optional string omitted');
   });
 
+  it('collapses array-of-object items into an editable summary row', async () => {
+    el = document.createElement('arazzo-patch-builder');
+    el.descriptor = {
+      type: 'object',
+      properties: {
+        resources: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: { name: { type: 'string' }, kind: { type: 'string', enum: ['db', 'bucket'] } },
+            required: ['name'],
+          },
+        },
+      },
+    };
+    mount(el);
+    const addBtn = await waitFor(() => [...el.shadowRoot.querySelectorAll('button')].find((b) => b.textContent.includes('Add item')));
+    addBtn.click();
+
+    const item = el.shadowRoot.querySelector('.item');
+    ok(item, 'a collapsible item row is created');
+    const body = item.querySelector('.item-body');
+    ok(!body.hidden, 'a new item opens in edit mode');
+
+    body.querySelector('input[type="text"]').value = 'primary';
+    body.querySelector('select').value = '0'; // 'db'
+
+    const edit = item.querySelector('button.edit');
+    equal(edit.textContent, 'Done', 'toggle reads Done while editing');
+    edit.click(); // collapse
+    ok(body.hidden, 'editing collapses the body');
+    equal(edit.textContent, 'Edit', 'toggle reads Edit when collapsed');
+    ok(item.querySelector('.item-summary').textContent.includes('name: primary'), 'summary shows the item');
+
+    const v = el.value;
+    equal(v.resources[0].name, 'primary');
+    equal(v.resources[0].kind, 'db');
+  });
+
+  it('keeps scalar array items as compact inline rows', async () => {
+    el = document.createElement('arazzo-patch-builder');
+    el.descriptor = { type: 'object', properties: { tags: { type: 'array', items: { type: 'string' } } } };
+    mount(el);
+    const addBtn = await waitFor(() => [...el.shadowRoot.querySelectorAll('button')].find((b) => b.textContent.includes('Add item')));
+    addBtn.click();
+    ok(el.shadowRoot.querySelector('.array-row'), 'scalar items use the inline row');
+    ok(!el.shadowRoot.querySelector('.item'), 'no collapsible wrapper for scalars');
+    el.shadowRoot.querySelector('.array-row input[type="text"]').value = 'prod';
+    equal(el.value.tags[0], 'prod');
+  });
+
   it('falls back to a raw JSON editor when there is no typed schema', async () => {
     el = document.createElement('arazzo-patch-builder');
     el.descriptor = { type: 'object', properties: {} };
