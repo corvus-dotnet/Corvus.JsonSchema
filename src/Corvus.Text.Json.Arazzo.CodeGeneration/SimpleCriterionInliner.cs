@@ -167,6 +167,15 @@ internal static class SimpleCriterionInliner
             return true;
         }
 
+        // $url: the resolved relative request URL, built into an executor-owned byte[] before the client
+        // call (RequestUrlEmitter). Compared as UTF-8, like a baked literal — no context, no allocation
+        // beyond the URL bytes themselves.
+        if (expression.Source == ArazzoExpressionSource.Url && bare && requestContext.UrlLocal is { } urlLocal)
+        {
+            comparandExpr = $"Comparand.FromUtf8String({urlLocal})";
+            return true;
+        }
+
         // $request.<location>.<name> / $request.body: resolve the value the step bound to the request.
         if (bare && TryGetRequestValue(expression.Source, expression.Name, requestContext, out ArgumentValueKind requestKind, out string? requestValue))
         {

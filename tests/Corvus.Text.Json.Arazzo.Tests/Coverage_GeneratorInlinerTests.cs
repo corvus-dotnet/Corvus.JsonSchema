@@ -44,9 +44,10 @@ public class Coverage_GeneratorInlinerTests
     [TestMethod]
     public void Simple_criterion_on_unsupported_source_falls_back_to_compiled_criterion()
     {
-        // $url is not statically resolvable by the simple inliner, so the whole criterion is compiled.
+        // An undeclared $response.header is not statically resolvable by the simple inliner (the generated
+        // response exposes no such property), so the whole criterion is compiled.
         string source = EmitWithSuccessCriteria(
-            """{ "condition": "$url == 'https://api/pets/1'" }""");
+            """{ "condition": "$response.header.x-trace-id == 'abc'" }""");
 
         source.ShouldContain("CompiledCriterion");
     }
