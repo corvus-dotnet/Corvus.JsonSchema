@@ -29,6 +29,8 @@ class ArazzoCatalogDetail extends ArazzoElement {
     /** @private */ this._loading = false;
     /** @private */ this._error = null;
     /** @private */ this._reqSeq = 0;
+    /** @private */ this._versions = null;
+    /** @private */ this._versionsBase = null;
   }
 
   connectedCallback() {
@@ -52,6 +54,17 @@ class ArazzoCatalogDetail extends ArazzoElement {
       if (value.versionNumber != null) this.setAttribute('version-number', String(value.versionNumber));
     }
     if (this.isConnected) { this.renderBody(); this.load(); }
+  }
+
+  /** The sibling versions of this base workflow, for the switcher. Injected by the table, or fetched lazily. */
+  get versions() { return this._versions; }
+
+  set versions(list) {
+    if (Array.isArray(list) && list.length) {
+      this._versions = [...list].sort((a, b) => b.versionNumber - a.versionNumber);
+      this._versionsBase = list[0].baseWorkflowId;
+      if (this.isConnected) this.renderVersionSwitch();
+    }
   }
 
   get baseWorkflowId() { return this.getAttribute('base-workflow-id') || this._version?.baseWorkflowId || null; }
@@ -92,6 +105,23 @@ class ArazzoCatalogDetail extends ArazzoElement {
       this.renderBody();
       this.emit('error', { problem: this._error, error: err });
     }
+    this.loadVersions();
+  }
+
+  /** Fetch the full version list for the switcher (authoritative — independent of any table filter). */
+  async loadVersions() {
+    const client = this.client;
+    const base = this.baseWorkflowId;
+    if (!client || !base) return;
+    if (this._versionsBase === base && this._versions) { this.renderVersionSwitch(); return; }
+    try {
+      const { versions } = await client.listCatalogVersions(base, { limit: 200 });
+      this._versions = versions.sort((a, b) => b.versionNumber - a.versionNumber);
+      this._versionsBase = base;
+      this.renderVersionSwitch();
+    } catch {
+      // The switcher is best-effort; a failure just leaves it hidden.
+    }
   }
 
   // ---- rendering --------------------------------------------------------------------------------
@@ -104,6 +134,8 @@ class ArazzoCatalogDetail extends ArazzoElement {
         header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
         header .wf { font-weight: 700; font-size: 15px; }
         header .ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; color: var(--_muted); }
+        header .vswitch { font-size: 12px; color: var(--_muted); display: inline-flex; gap: 5px; align-items: center; }
+        header .vswitch select { font: inherit; font-size: 12px; padding: 3px 6px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: var(--_text); }
         header .grow { flex: 1; }
         header .close { font-size: 16px; line-height: 1; }
         .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; }
@@ -132,6 +164,7 @@ class ArazzoCatalogDetail extends ArazzoElement {
           <span class="badge" part="status"></span>
           <span class="wf"></span>
           <span class="ver"></span>
+          <label class="vswitch" part="version-switch" hidden>Version <select class="version-switch" aria-label="Switch version"></select></label>
           <span class="grow"></span>
           <button class="close ghost" type="button" title="Close" aria-label="Close">✕</button>
         </header>
@@ -139,6 +172,23 @@ class ArazzoCatalogDetail extends ArazzoElement {
       </div>
     `;
     this.$('.close').addEventListener('click', () => this.emit('close'));
+    this.$('.version-switch').addEventListener('change', (e) => {
+      const n = e.target.value;
+      if (n !== '' && Number(n) !== this.versionNumber) this.setAttribute('version-number', String(n));
+    });
+  }
+
+  /** Populate the header version dropdown from {@link #versions} (hidden when there is only one version). */
+  renderVersionSwitch() {
+    const wrap = this.$('.vswitch');
+    const sel = this.$('.version-switch');
+    if (!wrap || !sel) return;
+    const versions = this._versions || [];
+    if (versions.length <= 1) { wrap.hidden = true; sel.innerHTML = ''; return; }
+    wrap.hidden = false;
+    const current = this.versionNumber;
+    sel.innerHTML = versions.map((v) =>
+      `<option value="${escapeHtml(String(v.versionNumber))}"${v.versionNumber === current ? ' selected' : ''}>v${escapeHtml(String(v.versionNumber))} · ${escapeHtml(v.status)}</option>`).join('');
   }
 
   renderBody() {
@@ -147,6 +197,7 @@ class ArazzoCatalogDetail extends ArazzoElement {
     const ver = this.$('header .ver');
     const body = this.$('.body');
     if (!body) return;
+    this.renderVersionSwitch();
 
     if (this._error) {
       badge.style.display = 'none';
