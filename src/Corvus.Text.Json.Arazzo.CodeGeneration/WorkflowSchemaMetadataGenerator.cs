@@ -11,9 +11,11 @@ namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 
 /// <summary>
 /// Precomputes a compact, read-cheap "schema metadata" document for an Arazzo workflow package — for each
-/// workflow, the typed shape of its <c>inputs</c> and of every step's resolved <c>outputs</c> (requests and
-/// responses follow) — by resolving the workflow's expressions against its referenced OpenAPI/AsyncAPI source
-/// documents and normalising the resulting JSON Schema nodes into a small recursive type descriptor.
+/// workflow, the typed shape of its <c>inputs</c>, and for every step its resolved operation reference, its
+/// typed request (parameters + body) and responses (body + headers) for OpenAPI operations or its message
+/// (payload + headers) for AsyncAPI operations, and its resolved <c>outputs</c> — by resolving the workflow's
+/// expressions against its referenced OpenAPI/AsyncAPI source documents and normalising the resulting JSON
+/// Schema nodes into a small recursive type descriptor.
 /// </summary>
 /// <remarks>
 /// <para>The document shape (all type descriptors share one recursive shape):</para>
@@ -148,20 +150,41 @@ public static class WorkflowSchemaMetadataGenerator
             return;
         }
 
+        bool resolved = TryResolveStepOperation(step, sources, out StepOperation op);
+
         writer.WritePropertyName(stepId);
         writer.WriteStartObject();
+
+        if (resolved)
+        {
+            WriteOperationRef(writer, step, op);
+            if (op.IsAsyncApi)
+            {
+                WriteMessage(writer, op);
+            }
+            else
+            {
+                WriteRequest(writer, op);
+                WriteResponses(writer, op);
+            }
+        }
+
+        // The schemas an output expression may resolve against (success response body / message payload / request body).
+        JsonElement responseSchema = default, payloadSchema = default, requestBodySchema = default;
+        bool haveResponse = resolved && !op.IsAsyncApi && TrySuccessResponseBody(op, out responseSchema);
+        bool havePayload = resolved && op.IsAsyncApi && TryMessagePayload(op, out payloadSchema);
+        bool haveRequestBody = resolved && !op.IsAsyncApi && TryRequestBody(op, out requestBodySchema);
+        JsonElement opRoot = resolved ? op.Root : default;
+
         writer.WritePropertyName("outputs");
         writer.WriteStartObject();
-
         if (step.TryGetProperty("outputs", out JsonElement outputs) && outputs.ValueKind == JsonValueKind.Object)
         {
-            bool haveResponse = TryResolveResponseBodySchema(step, sources, out JsonElement responseSchema, out JsonElement responseRoot);
-
             foreach (var output in outputs.EnumerateObject())
             {
                 writer.WritePropertyName(output.Name);
                 string expression = output.Value.ValueKind == JsonValueKind.String ? output.Value.GetString() ?? string.Empty : string.Empty;
-                WriteOutputDescriptor(writer, expression, workflow, workflowRoot, haveResponse, responseSchema, responseRoot);
+                WriteOutputDescriptor(writer, expression, workflow, workflowRoot, opRoot, haveResponse, responseSchema, havePayload, payloadSchema, haveRequestBody, requestBodySchema);
             }
         }
 
@@ -174,9 +197,13 @@ public static class WorkflowSchemaMetadataGenerator
         string expression,
         JsonElement workflow,
         JsonElement workflowRoot,
+        JsonElement opRoot,
         bool haveResponse,
         JsonElement responseSchema,
-        JsonElement responseRoot)
+        bool havePayload,
+        JsonElement payloadSchema,
+        bool haveRequestBody,
+        JsonElement requestBodySchema)
     {
         ArazzoExpr expr = ArazzoExpr.Parse(expression);
         switch (expr.Source)
@@ -191,6 +218,7 @@ public static class WorkflowSchemaMetadataGenerator
             case ArazzoExprSource.ResponseHeader:
             case ArazzoExprSource.RequestPath:
             case ArazzoExprSource.RequestQuery:
+            case ArazzoExprSource.MessageHeader:
                 WriteScalar(writer, "string");
                 return;
 
@@ -206,9 +234,27 @@ public static class WorkflowSchemaMetadataGenerator
                 break;
 
             case ArazzoExprSource.ResponseBody when haveResponse:
-                if (TryNavigatePointer(responseSchema, responseRoot, expr.JsonPointer, out JsonElement resolvedBody))
+                if (TryNavigatePointer(responseSchema, opRoot, expr.JsonPointer, out JsonElement resolvedBody))
                 {
-                    WriteTypeDescriptor(writer, resolvedBody, responseRoot, 0);
+                    WriteTypeDescriptor(writer, resolvedBody, opRoot, 0);
+                    return;
+                }
+
+                break;
+
+            case ArazzoExprSource.RequestBody when haveRequestBody:
+                if (TryNavigatePointer(requestBodySchema, opRoot, expr.JsonPointer, out JsonElement resolvedRequest))
+                {
+                    WriteTypeDescriptor(writer, resolvedRequest, opRoot, 0);
+                    return;
+                }
+
+                break;
+
+            case ArazzoExprSource.MessagePayload when havePayload:
+                if (TryNavigatePointer(payloadSchema, opRoot, expr.JsonPointer, out JsonElement resolvedPayload))
+                {
+                    WriteTypeDescriptor(writer, resolvedPayload, opRoot, 0);
                     return;
                 }
 
@@ -219,26 +265,193 @@ public static class WorkflowSchemaMetadataGenerator
                 return;
         }
 
-        // $steps.*.outputs.*, unresolved $response.body / $inputs, $message.payload, etc. — not yet resolved.
+        // $steps.*.outputs.*, $workflows.*, or an unresolvable source/pointer — not statically typed.
         WriteUnknown(writer);
     }
 
-    /// <summary>
-    /// Resolves a step's success response body schema (the operation's lowest 2xx, else <c>default</c>) from
-    /// the referenced OpenAPI source documents. Best-effort; returns <see langword="false"/> when the step has
-    /// no resolvable operation (AsyncAPI channel / sub-workflow / unresolved operation).
-    /// </summary>
-    private static bool TryResolveResponseBodySchema(JsonElement step, IReadOnlyDictionary<string, JsonElement> sources, out JsonElement schema, out JsonElement documentRoot)
+    // ---- step surface sections (editor metadata) ------------------------------------------------
+
+    /// <summary>Writes the resolved operation reference — source, kind, id, and method/path (or action/channel).</summary>
+    private static void WriteOperationRef(Utf8JsonWriter writer, JsonElement step, StepOperation op)
+    {
+        writer.WritePropertyName("operation");
+        writer.WriteStartObject();
+        writer.WriteString("source", op.Source);
+        writer.WriteString("kind", op.IsAsyncApi ? "asyncapi" : "openapi");
+        if (TryGetString(step, "operationId") is { } operationId)
+        {
+            writer.WriteString("operationId", operationId);
+        }
+
+        if (op.IsAsyncApi)
+        {
+            if (op.Verb is not null)
+            {
+                writer.WriteString("action", op.Verb);
+            }
+
+            if (op.PathOrChannel is not null)
+            {
+                writer.WriteString("channel", op.PathOrChannel);
+            }
+        }
+        else
+        {
+            if (op.Verb is not null)
+            {
+                writer.WriteString("method", op.Verb);
+            }
+
+            if (op.PathOrChannel is not null)
+            {
+                writer.WriteString("path", op.PathOrChannel);
+            }
+        }
+
+        writer.WriteEndObject();
+    }
+
+    /// <summary>Writes the OpenAPI request surface — typed parameters (path/query/header/cookie) and the request body.</summary>
+    private static void WriteRequest(Utf8JsonWriter writer, StepOperation op)
+    {
+        writer.WritePropertyName("request");
+        writer.WriteStartObject();
+
+        writer.WritePropertyName("parameters");
+        writer.WriteStartObject();
+        if (op.Operation.TryGetProperty("parameters", out JsonElement parameters) && parameters.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement raw in parameters.EnumerateArray())
+            {
+                JsonElement parameter = SchemaClassifier.ResolveRef(raw, op.Root);
+                if (TryGetString(parameter, "name") is not { } name)
+                {
+                    continue;
+                }
+
+                writer.WritePropertyName(name);
+                writer.WriteStartObject();
+                if (TryGetString(parameter, "in") is { } location)
+                {
+                    writer.WriteString("in", location);
+                }
+
+                if (parameter.TryGetProperty("required", out JsonElement required) && required.ValueKind == JsonValueKind.True)
+                {
+                    writer.WriteBoolean("required", true);
+                }
+
+                writer.WritePropertyName("schema");
+                if (parameter.TryGetProperty("schema", out JsonElement parameterSchema))
+                {
+                    WriteTypeDescriptor(writer, parameterSchema, op.Root, 0);
+                }
+                else
+                {
+                    WriteUnknown(writer);
+                }
+
+                writer.WriteEndObject();
+            }
+        }
+
+        writer.WriteEndObject(); // parameters
+
+        if (TryRequestBody(op, out JsonElement bodySchema))
+        {
+            writer.WritePropertyName("body");
+            WriteTypeDescriptor(writer, bodySchema, op.Root, 0);
+        }
+
+        writer.WriteEndObject(); // request
+    }
+
+    /// <summary>Writes the OpenAPI response surface — per status code, the typed body and headers.</summary>
+    private static void WriteResponses(Utf8JsonWriter writer, StepOperation op)
+    {
+        writer.WritePropertyName("responses");
+        writer.WriteStartObject();
+        if (op.Operation.TryGetProperty("responses", out JsonElement responses) && responses.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var response in responses.EnumerateObject())
+            {
+                writer.WritePropertyName(response.Name);
+                writer.WriteStartObject();
+                JsonElement resolved = SchemaClassifier.ResolveRef(response.Value, op.Root);
+
+                if (TryBodySchema(resolved, op.Root, out JsonElement bodySchema))
+                {
+                    writer.WritePropertyName("body");
+                    WriteTypeDescriptor(writer, bodySchema, op.Root, 0);
+                }
+
+                if (resolved.TryGetProperty("headers", out JsonElement headers) && headers.ValueKind == JsonValueKind.Object)
+                {
+                    writer.WritePropertyName("headers");
+                    writer.WriteStartObject();
+                    foreach (var header in headers.EnumerateObject())
+                    {
+                        JsonElement headerObject = SchemaClassifier.ResolveRef(header.Value, op.Root);
+                        writer.WritePropertyName(header.Name);
+                        if (headerObject.TryGetProperty("schema", out JsonElement headerSchema))
+                        {
+                            WriteTypeDescriptor(writer, headerSchema, op.Root, 0);
+                        }
+                        else
+                        {
+                            WriteUnknown(writer);
+                        }
+                    }
+
+                    writer.WriteEndObject();
+                }
+
+                writer.WriteEndObject();
+            }
+        }
+
+        writer.WriteEndObject();
+    }
+
+    /// <summary>Writes the AsyncAPI message surface — the first message's typed payload and headers.</summary>
+    private static void WriteMessage(Utf8JsonWriter writer, StepOperation op)
+    {
+        writer.WritePropertyName("message");
+        writer.WriteStartObject();
+        if (TryResolveMessage(op, out JsonElement message))
+        {
+            if (message.TryGetProperty("payload", out JsonElement payload))
+            {
+                writer.WritePropertyName("payload");
+                WriteTypeDescriptor(writer, payload, op.Root, 0);
+            }
+
+            if (message.TryGetProperty("headers", out JsonElement headers))
+            {
+                writer.WritePropertyName("headers");
+                WriteTypeDescriptor(writer, headers, op.Root, 0);
+            }
+        }
+
+        writer.WriteEndObject();
+    }
+
+    private static bool TryRequestBody(StepOperation op, out JsonElement schema)
     {
         schema = default;
-        documentRoot = default;
-
-        if (!TryResolveOperation(step, sources, out JsonElement operation, out documentRoot))
+        if (!op.Operation.TryGetProperty("requestBody", out JsonElement requestBody))
         {
             return false;
         }
 
-        if (!operation.TryGetProperty("responses", out JsonElement responses) || responses.ValueKind != JsonValueKind.Object)
+        return TryBodySchema(SchemaClassifier.ResolveRef(requestBody, op.Root), op.Root, out schema);
+    }
+
+    /// <summary>The success (lowest 2xx, else <c>default</c>) response body schema — what <c>$response.body</c> resolves against.</summary>
+    private static bool TrySuccessResponseBody(StepOperation op, out JsonElement schema)
+    {
+        schema = default;
+        if (!op.Operation.TryGetProperty("responses", out JsonElement responses) || responses.ValueKind != JsonValueKind.Object)
         {
             return false;
         }
@@ -261,16 +474,44 @@ public static class WorkflowSchemaMetadataGenerator
             found = true;
         }
 
-        if (!found || !chosen.TryGetProperty("content", out JsonElement content) || content.ValueKind != JsonValueKind.Object)
+        return found && TryBodySchema(SchemaClassifier.ResolveRef(chosen, op.Root), op.Root, out schema);
+    }
+
+    private static bool TryMessagePayload(StepOperation op, out JsonElement schema)
+    {
+        schema = default;
+        return TryResolveMessage(op, out JsonElement message) && message.TryGetProperty("payload", out schema);
+    }
+
+    private static bool TryResolveMessage(StepOperation op, out JsonElement message)
+    {
+        message = default;
+        if (op.Operation.TryGetProperty("messages", out JsonElement messages) && messages.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement candidate in messages.EnumerateArray())
+            {
+                message = SchemaClassifier.ResolveRef(candidate, op.Root);
+                return true; // the first message describes the step's payload
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>The first JSON media type's <c>schema</c> from a request-body/response <c>content</c> map.</summary>
+    private static bool TryBodySchema(JsonElement carrier, JsonElement documentRoot, out JsonElement schema)
+    {
+        schema = default;
+        _ = documentRoot;
+        if (!carrier.TryGetProperty("content", out JsonElement content) || content.ValueKind != JsonValueKind.Object)
         {
             return false;
         }
 
         foreach (var mediaType in content.EnumerateObject())
         {
-            if (mediaType.Value.TryGetProperty("schema", out JsonElement bodySchema))
+            if (mediaType.Value.TryGetProperty("schema", out schema))
             {
-                schema = bodySchema;
                 return true;
             }
         }
@@ -278,19 +519,33 @@ public static class WorkflowSchemaMetadataGenerator
         return false;
     }
 
-    /// <summary>Resolves a step's <c>operationId</c> (or <c>operationPath</c>) to the operation object + its source document.</summary>
-    private static bool TryResolveOperation(JsonElement step, IReadOnlyDictionary<string, JsonElement> sources, out JsonElement operation, out JsonElement documentRoot)
+    /// <summary>
+    /// Resolves a step's <c>operationId</c> (or <c>operationPath</c>) to the operation object in its source
+    /// document, distinguishing OpenAPI operations (found under <c>paths</c>) from AsyncAPI operations (found
+    /// under <c>operations</c>).
+    /// </summary>
+    private static bool TryResolveStepOperation(JsonElement step, IReadOnlyDictionary<string, JsonElement> sources, out StepOperation result)
     {
-        operation = default;
-        documentRoot = default;
+        result = default;
 
         if (TryGetString(step, "operationId") is { } operationId)
         {
-            foreach (JsonElement source in sources.Values)
+            foreach (KeyValuePair<string, JsonElement> source in sources)
             {
-                if (TryFindOperationById(source, operationId, out operation))
+                JsonElement root = source.Value;
+                if (IsAsyncApi(root))
                 {
-                    documentRoot = source;
+                    if (root.TryGetProperty("operations", out JsonElement operations)
+                        && operations.ValueKind == JsonValueKind.Object
+                        && operations.TryGetProperty(operationId, out JsonElement asyncOperation))
+                    {
+                        result = new StepOperation(asyncOperation, root, true, source.Key, TryGetString(asyncOperation, "action"), ChannelRef(asyncOperation));
+                        return true;
+                    }
+                }
+                else if (TryFindOpenApiOperation(root, operationId, out JsonElement operation, out string? method, out string? path))
+                {
+                    result = new StepOperation(operation, root, false, source.Key, method, path);
                     return true;
                 }
             }
@@ -307,9 +562,9 @@ public static class WorkflowSchemaMetadataGenerator
                 foreach (KeyValuePair<string, JsonElement> source in sources)
                 {
                     if (prefix.Contains(source.Key, StringComparison.Ordinal)
-                        && source.Value.TryResolvePointer(pointer, out operation))
+                        && source.Value.TryResolvePointer(pointer, out JsonElement operation))
                     {
-                        documentRoot = source.Value;
+                        result = new StepOperation(operation, source.Value, IsAsyncApi(source.Value), source.Key, null, null);
                         return true;
                     }
                 }
@@ -319,27 +574,31 @@ public static class WorkflowSchemaMetadataGenerator
         return false;
     }
 
-    private static bool TryFindOperationById(JsonElement openApi, string operationId, out JsonElement operation)
+    private static bool TryFindOpenApiOperation(JsonElement openApi, string operationId, out JsonElement operation, out string? method, out string? path)
     {
         operation = default;
+        method = null;
+        path = null;
         if (!openApi.TryGetProperty("paths", out JsonElement paths) || paths.ValueKind != JsonValueKind.Object)
         {
             return false;
         }
 
-        foreach (var path in paths.EnumerateObject())
+        foreach (var pathItem in paths.EnumerateObject())
         {
-            if (path.Value.ValueKind != JsonValueKind.Object)
+            if (pathItem.Value.ValueKind != JsonValueKind.Object)
             {
                 continue;
             }
 
-            foreach (var method in path.Value.EnumerateObject())
+            foreach (var verb in pathItem.Value.EnumerateObject())
             {
-                if (method.Value.ValueKind == JsonValueKind.Object
-                    && TryGetString(method.Value, "operationId") == operationId)
+                if (verb.Value.ValueKind == JsonValueKind.Object
+                    && TryGetString(verb.Value, "operationId") == operationId)
                 {
-                    operation = method.Value;
+                    operation = verb.Value;
+                    method = verb.Name;
+                    path = pathItem.Name;
                     return true;
                 }
             }
@@ -347,6 +606,22 @@ public static class WorkflowSchemaMetadataGenerator
 
         return false;
     }
+
+    private static bool IsAsyncApi(JsonElement root)
+        => root.ValueKind == JsonValueKind.Object
+            && (root.TryGetProperty("asyncapi", out _)
+                || (root.TryGetProperty("operations", out _) && root.TryGetProperty("channels", out _) && !root.TryGetProperty("paths", out _)));
+
+    private static string? ChannelRef(JsonElement asyncOperation)
+        => asyncOperation.TryGetProperty("channel", out JsonElement channel)
+            && channel.TryGetProperty("$ref", out JsonElement reference)
+            && reference.ValueKind == JsonValueKind.String
+            ? reference.GetString()
+            : null;
+
+    /// <summary>A step's resolved operation: the operation node, its source document + name, whether it is AsyncAPI,
+    /// and the HTTP method/path (OpenAPI) or action/channel (AsyncAPI).</summary>
+    private readonly record struct StepOperation(JsonElement Operation, JsonElement Root, bool IsAsyncApi, string Source, string? Verb, string? PathOrChannel);
 
     // ---- type descriptor ------------------------------------------------------------------------
 
