@@ -134,13 +134,13 @@ class ArazzoResumeDialog extends ArazzoElement {
 
             <div class="mode-fields" data-mode="Rewind" hidden>
               <div class="fields">
-                <div><label>Target step</label><arazzo-workflow-step-picker class="rewind-picker"></arazzo-workflow-step-picker></div>
+                <div><label>Target step (an earlier step to re-run from)</label><arazzo-workflow-step-picker class="rewind-picker" direction="backward"></arazzo-workflow-step-picker></div>
               </div>
             </div>
 
             <div class="mode-fields" data-mode="Skip" hidden>
               <div class="fields">
-                <div><label>Target step (defaults to the current step)</label><arazzo-workflow-step-picker class="skip-picker"></arazzo-workflow-step-picker></div>
+                <div><label>Target step (a later step to advance to)</label><arazzo-workflow-step-picker class="skip-picker" direction="forward"></arazzo-workflow-step-picker></div>
                 <div><label>Skip outputs (the values to record for the skipped step)</label><arazzo-patch-builder class="skip-builder"></arazzo-patch-builder></div>
               </div>
             </div>
