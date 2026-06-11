@@ -3,9 +3,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: '.',
-  // The smoke gate covers smoke.spec.js only; record.spec.js is the clip recorder (run on demand via record.config.mjs),
-  // not a smoke test — a hangover from clip generation that should not gate CI.
-  testMatch: '**/smoke.spec.js',
+  testMatch: '**/*.spec.js',
   fullyParallel: true,
   reporter: process.env.CI ? 'github' : 'list',
   use: { baseURL: 'http://localhost:8138', trace: 'on-first-retry' },

@@ -21,16 +21,6 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
-/// <remarks>
-/// <para>
-/// Examples:
-/// <example>
-/// <code>
-/// 100
-/// </code>
-/// </example>
-/// </para>
-/// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
 public readonly partial struct Schema
 #if NET8_0_OR_GREATER
@@ -62,82 +52,54 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the default instance.
     /// </summary>
-    public static Schema DefaultInstance { get; } = ParsedJsonDocument<Schema>.NumberConstant([.."100"u8]);
+    public static Schema DefaultInstance { get; }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryGetValue(out long value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
+    /// <summary>
+    /// Gets the rank of the array.
+    /// </summary>
+    public static int Rank => 1;
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryGetValue(out int value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
+    /// <summary>
+    /// Gets the item at the given index.
+    /// </summary>
+    /// <param name="index">The index at which to retrieve the item.</param>
+    /// <returns>The item at the given index.</returns>
+    /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
+    /// <exception cref="InvalidOperationException">The value is not an array.</exception>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString this[int index]
+    {
+        get
+        {
+            CheckValidInstance();
+            return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(_idx, index);
+        }
+    }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryGetValue(out short value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
+    /// <summary>
+    /// Gets the array length.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">The value is not an array.</exception>
+    public int GetArrayLength()
+    {
+        CheckValidInstance();
+        return _parent.GetArrayLength(_idx);
+    }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryGetValue(out sbyte value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryGetValue(out ulong value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryGetValue(out uint value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryGetValue(out ushort value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryGetValue(out byte value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
-
-#if NET
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryGetValue(out Int128 value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
-#endif
-
-#if NET
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryGetValue(out UInt128 value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
-#endif
-
-#if NET
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryGetValue(out Half value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
-#endif
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryGetValue(out double value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryGetValue(out float value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryGetValue(out Corvus.Numerics.BigNumber value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryGetValue(out System.Numerics.BigInteger value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryGetValue(out decimal value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
+    /// <summary>
+    /// Enumerates the array.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">The value is not an array.</exception>
+    public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString> EnumerateArray()
+    {
+        CheckValidInstance();
+        return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(_parent, _idx);
+    }
 
     /// <inheritdoc/>
     public JsonValueKind ValueKind => TokenType.ToValueKind();
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static explicit operator long(Schema value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static explicit operator double(Schema value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static explicit operator Corvus.Numerics.BigNumber(Schema value) => value._parent.TryGetValue(value._idx, out Corvus.Numerics.BigNumber result) ? result : throw new FormatException();
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static explicit operator System.Numerics.BigInteger(Schema value) => value._parent.TryGetValue(value._idx, out System.Numerics.BigInteger result) ? result : throw new FormatException();
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static explicit operator decimal(Schema value) => value._parent.TryGetValue(value._idx, out decimal result) ? result : throw new FormatException();
 
     /// <summary>
     /// Operator ==.
@@ -406,36 +368,6 @@ public readonly partial struct Schema
         where T : struct, IJsonElement
     {
         return JsonElementHelpers.DeepEquals(this, other);
-    }
-
-    /// <summary>
-    /// Compare with a normalized JSON number.
-    /// </summary>
-    /// <param ref="number">The normalized JSON number to compare with.</param>
-    /// <returns><see langword="true"/> if the values are equal.</returns>
-    public bool ValueEquals(in NormalizedJsonNumber number)
-    {
-        if (TokenType != JsonTokenType.Number)
-        {
-            return false;
-        }
-
-        JsonElementHelpers.ParseNumber(
-            _parent.GetRawSimpleValueUnsafe(_idx).Span,
-            out bool leftIsNegative,
-            out ReadOnlySpan<byte> leftIntegral,
-            out ReadOnlySpan<byte> leftFractional,
-            out int leftExponent);
-
-        return JsonElementHelpers.AreEqualNormalizedJsonNumbers(
-            leftIsNegative,
-            leftIntegral,
-            leftFractional,
-            leftExponent,
-            number.IsNegative,
-            number.Integral,
-            number.Fractional,
-            number.Exponent);
     }
 
     /// <inheritdoc/>

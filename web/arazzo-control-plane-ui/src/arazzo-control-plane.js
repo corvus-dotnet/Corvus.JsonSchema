@@ -17,7 +17,6 @@ import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './components/base
 import './components/runs-table.js';
 import './components/run-detail.js';
 import './components/purge-dialog.js';
-import './components/workflow-id-input.js';
 
 // Token values mirror arazzo-kit.css so the panel themes itself even without that stylesheet.
 const LIGHT = `
@@ -30,7 +29,6 @@ const DARK = `
   --arazzo-muted:#9aa3af; --arazzo-accent:#6f9bff; --arazzo-danger:#ff6b5e;
   --arazzo-status-pending:#8b929c; --arazzo-status-running:#6f9bff; --arazzo-status-suspended:#e0a93f;
   --arazzo-status-completed:#4cc472; --arazzo-status-cancelled:#8b929c; --arazzo-status-faulted:#ff6b5e;`;
-
 
 class ArazzoControlPlane extends ArazzoElement {
   static get observedAttributes() {
@@ -101,8 +99,6 @@ class ArazzoControlPlane extends ArazzoElement {
     if (table) table.client = client;
     if (detail) detail.client = client;
     if (purge) purge.client = client;
-    const wfInput = this.$('.wf-search');
-    if (wfInput) wfInput.client = client; // the <arazzo-workflow-id-input> owns its catalog autocomplete
   }
 
   applyScopes() {
@@ -120,17 +116,6 @@ class ArazzoControlPlane extends ArazzoElement {
       else table.removeAttribute('poll');
     }
   }
-
-  /**
-   * Reload from page 1 and clear any open detail — the public hook the demo calls on a persona change (the new caller's
-   * scopes + reach change the whole visible set, so a stale page/cursor and a now-out-of-reach detail must be discarded).
-   */
-  reload() {
-    this.$('arazzo-runs-table')?.reload();
-    this.clearDetail?.();
-  }
-
-  refresh() { this.reload(); }
 
   themeTokens() {
     const theme = this.getAttribute('theme') || 'auto';
@@ -169,7 +154,7 @@ class ArazzoControlPlane extends ArazzoElement {
           <button class="chip status-chip" type="button" data-status="" aria-pressed="true">All</button>
           ${RUN_STATUSES.map((s) => `<button class="chip status-chip" type="button" data-status="${s}" aria-pressed="false">${escapeHtml(s)}</button>`).join('')}
         </div>
-        <div class="search"><arazzo-workflow-id-input class="wf-search" placeholder="Filter by workflowId…"></arazzo-workflow-id-input></div>
+        <div class="search"><input class="wf-search" type="search" placeholder="Filter by workflowId…" aria-label="Filter by workflowId"></div>
         <div class="search"><input class="tag-search" type="search" placeholder="Tags (space-separated, AND)…" aria-label="Filter by tags"></div>
         <div class="search"><input class="corr-search" type="search" placeholder="Correlation id…" aria-label="Filter by correlation id"></div>
         <label class="toggle"><input type="checkbox" id="autorefresh"> auto-refresh</label>
@@ -222,7 +207,6 @@ class ArazzoControlPlane extends ArazzoElement {
       const value = e.target.value.trim();
       input._t = setTimeout(() => apply(value), 300);
     });
-    // <arazzo-workflow-id-input> owns its own catalog autocomplete; its input event bubbles out to us.
     debounced(this.$('.wf-search'), (v) => v ? table.setAttribute('workflow-id', v) : table.removeAttribute('workflow-id'));
     debounced(this.$('.tag-search'), (v) => v ? table.setAttribute('tags', v) : table.removeAttribute('tags'));
     debounced(this.$('.corr-search'), (v) => v ? table.setAttribute('correlation-id', v) : table.removeAttribute('correlation-id'));

@@ -22,46 +22,12 @@ The kit is **layered** so you adopt at any granularity (paths shown for direct/C
 package `exports` — `@corvus-dotnet/arazzo-control-plane-ui`, `.../client`, `.../components/runs-table.js`):
 
 - **Layer 0 — `ArazzoControlPlaneClient`** ([`src/arazzo-client.js`](./src/arazzo-client.js)): a DOM-free
-  client for the run **and** catalog operations. Useful on its own (Node, tests, CLIs, any UI).
+  client for the six operations. Useful on its own (Node, tests, CLIs, any UI).
 - **Layer 1 — standalone components** ([`src/components/`](./src/components)): `<arazzo-runs-table>`,
   `<arazzo-run-detail>`, `<arazzo-resume-dialog>`, `<arazzo-cancel-button>`, `<arazzo-purge-dialog>`,
-  `<arazzo-status-badge>`, `<arazzo-workflow-id-input>` (workflowId filter with catalog autocomplete),
-  `<arazzo-workflow-step-picker>` (choose a resume target step by name), `<arazzo-value-editor>` (a
-  strongly-typed form built from a step's precomputed schema metadata — the output editor for Skip's
-  `skipOutputs`), and `<arazzo-runners>` (the §5.4 runner registry / health view — a read-only list of the
-  execution hosts with Online/Stale liveness, capacity, transports, and hosted workflow versions) for runs;
-  `<arazzo-catalog-table>`,
-  `<arazzo-catalog-detail>`, `<arazzo-catalog-add-dialog>` (which can also set up a credential binding §13 per
-  declared source, and stage the workflow's administrator set, as the workflow is added) for the workflow catalog;
-  `<arazzo-credentials-table>` (a status-first rotation worklist), `<arazzo-credential-dialog>` (create/edit; the
-  auth kind drives which secret slot(s) are shown — fixed role + plain label — and each slot has guided per-store
-  `secretRef` fields that compose + preview the canonical reference; the control plane never reads the secret
-  store, so it cannot browse it; re-pointing a reference rotates. `mtls` (§13.1) shows a certificate slot plus
-  optional key/passphrase and, being connection-level, is forced "Shared" with no usage restriction), and
-  `<arazzo-administrators-panel>` (a resolved-identity administrator set — composed into the catalog detail as a
-  per-workflow, authz-gated Security section rather than a standalone screen; administrators are named with the
-  resolved-grantee `<arazzo-grantee-picker>`. **The same panel is subject-agnostic**: set `base-workflow-id` for a
-  workflow's administrators (§15) or `environment` for an environment's (§7.7) — env mode binds the env-admin
-  operations and gates on `environments:write`) for the source-credential (§13) and administration (§15/§7.7)
-  surfaces; `<arazzo-access-requests>` + `<arazzo-access-request-dialog>` (request run access, withdraw your own
-  pending requests, and — for workflows you administer — approve / make-eligible / deny / revoke) for the
-  access-request + approval (§16.5) surface; `<arazzo-scopes-panel>` and `<arazzo-grants-panel>` (the reusable reach
-  vocabulary — named scopes/row-filter expressions and the claim→per-verb reach grant bindings, §14.2) for the
-  **Permissions** surface; `<arazzo-availability-requests>` + `<arazzo-availability-request-dialog>` (request a
-  workflow version be made available — "promoted" — in an environment, and, for environments you administer, the
-  approver inbox: approve / deny / withdraw, §7.8) and `<arazzo-availability-matrix>` (the version × environment
-  promotion grid — direct make/withdraw or request-promotion per cell — embedded in the catalog version detail); and
-  `<arazzo-environments>` (browse / create / administer
-  governed deployment environments and see the workflow versions available in each, §7.7 — a master-detail panel
-  that reuses `<arazzo-administrators-panel>` in `environment` mode for the per-environment administrator set). Each
-  works alone. The
-  add dialog can build the package archive in-browser from a workflow + its sources (`./workflow-package` ·
-  [`src/workflow-package.js`](./src/workflow-package.js)) or upload a pre-built one; the catalog assigns the
-  version number server-side. The credential components move **references and non-secret metadata only — never
-  secret material**.
-- **Layer 2 — `<arazzo-control-plane>`** ([`src/arazzo-control-plane.js`](./src/arazzo-control-plane.js)) and
-  **`<arazzo-catalog>`** ([`src/arazzo-catalog.js`](./src/arazzo-catalog.js)): the reference panels that
-  compose Layer 1 into a run-management screen and a catalog browse/govern screen respectively.
+  `<arazzo-status-badge>`. Each works alone.
+- **Layer 2 — `<arazzo-control-plane>`** ([`src/arazzo-control-plane.js`](./src/arazzo-control-plane.js)): the
+  reference panel that composes Layer 1 into a run-management screen.
 
 ## Quick start
 
@@ -127,18 +93,6 @@ The kit never embeds an IdP flow. Configure credentials one of three ways (prece
 | `<arazzo-cancel-button>` | `base-url`, `runid`, `label`, `disabled`, `no-confirm` | `run-cancelled`, `error` |
 | `<arazzo-purge-dialog>` | (`.client`, `.open()`) | `purge-completed`, `error` |
 | `<arazzo-status-badge>` | `status` | — |
-| `<arazzo-runners>` | `base-url`, `stale-after`, `poll`, `scopes` | `loaded`, `error` |
-| `<arazzo-credentials-table>` | `base-url`, `status`, `source`, `selectable`, `scopes` | `credential-selected`, `credential-new`, `loaded`, `error` |
-| `<arazzo-credential-dialog>` | (`.client`, `.open(binding?)`) | `credential-saved`, `error` |
-| `<arazzo-administrators-panel>` | `base-url`, `base-workflow-id` **or** `environment` (the subject), `scopes` | `administrators-changed`, `error` |
-| `<arazzo-access-requests>` | `base-url`, `view` (`mine`\|`queue`), `base-workflow-id`, `theme` (`.fetch`, `.authProvider`) | `access-request-submitted`, `access-request-decided`, `loaded`, `error` |
-| `<arazzo-access-request-dialog>` | (`.client`, `.open({ baseWorkflowId?, lockWorkflow? })`) | `access-request-submitted`, `error` |
-| `<arazzo-scopes-panel>` | `base-url`, `scopes` | `scopes-changed`, `loaded`, `error` |
-| `<arazzo-grants-panel>` | `base-url`, `scopes` | `grants-changed`, `loaded`, `error` |
-| `<arazzo-availability-requests>` | `base-url`, `view` (`mine`\|`queue`), `environment`, `theme` (`.fetch`, `.authProvider`) | `availability-request-submitted`, `availability-request-decided`, `loaded`, `error` |
-| `<arazzo-availability-request-dialog>` | (`.client`, `.open({ baseWorkflowId?, versionNumber?, environment?, lockWorkflow? })`) | `availability-request-submitted`, `error` |
-| `<arazzo-availability-matrix>` | `base-url`, `base-workflow-id`, `selected-version`, `scopes` | `availability-changed`, `promotion-requested`, `loaded`, `error` |
-| `<arazzo-environments>` | `base-url`, `scopes` (`environments:read`/`environments:write`/`availability:read`) (`.fetch`, `.authProvider`) | `environment-selected`, `environment-created`, `environment-changed`, `environment-deleted`, `loaded`, `error` |
 | `<arazzo-control-plane>` | `base-url`, `scopes`, `theme`, `poll` | re-emits the above |
 
 The runs table / panel filter server-side by status, workflowId, and a **time window** — `created-after` /

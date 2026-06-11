@@ -25,29 +25,6 @@ describe('<arazzo-control-plane>', () => {
     ok(table.shadowRoot.querySelectorAll('tbody tr[data-id]').length > 0, 'rows loaded');
   });
 
-  it('reload() re-fetches the runs list (the demo calls it on a persona change → reach re-applies)', async () => {
-    const mock = createMockControlPlane({ latencyMs: 0 });
-    el = document.createElement('arazzo-control-plane');
-    el.setAttribute('base-url', 'https://mock/arazzo/v1');
-    el.setAttribute('scopes', 'runs:read');
-    el.fetch = mock.fetch;
-    mount(el);
-    const table = el.shadowRoot.querySelector('arazzo-runs-table');
-    await nextEvent(table, 'loaded');
-    const all = table.shadowRoot.querySelectorAll('tbody tr[data-id]').length;
-    equal(all, 12, 'the default (full-reach) persona sees every run');
-
-    // Switch to the reach-scoped reader and reload the wrapper, exactly as the demo's persona selector does.
-    mock.setPersona('team-reader');
-    const reloaded = nextEvent(table, 'loaded');
-    el.reload();
-    await reloaded;
-    const scoped = table.shadowRoot.querySelectorAll('tbody tr[data-id]').length;
-    ok(scoped > 0 && scoped < all, `after the persona change the list is reach-scoped (${scoped} of ${all})`);
-    const workflows = [...table.shadowRoot.querySelectorAll('tbody tr[data-id] td.wf')].map((c) => c.textContent);
-    ok(workflows.every((w) => w.includes('nightly-reconcile')), 'only payments-domain runs remain');
-  });
-
   it('hides the Purge action unless runs:purge is granted (scope honesty)', async () => {
     el = panel('runs:read runs:write');
     mount(el);
@@ -99,21 +76,6 @@ describe('<arazzo-control-plane>', () => {
     corrInput.value = 'trace-abc';
     corrInput.dispatchEvent(new Event('input', { bubbles: true }));
     await waitFor(() => table.getAttribute('correlation-id') === 'trace-abc');
-    ok(true);
-  });
-
-  it('embeds the workflowId autocomplete and applies it to the table filter', async () => {
-    el = panel('runs:read');
-    mount(el);
-    const table = el.shadowRoot.querySelector('arazzo-runs-table');
-    await nextEvent(table, 'loaded');
-    const wfInput = el.shadowRoot.querySelector('arazzo-workflow-id-input.wf-search');
-    ok(wfInput, 'embeds the <arazzo-workflow-id-input> component');
-    // Type into the component's inner input; its input event bubbles out and the panel applies the filter.
-    const inner = wfInput.shadowRoot.querySelector('input');
-    inner.value = 'onboard';
-    inner.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-    await waitFor(() => table.getAttribute('workflow-id') === 'onboard');
     ok(true);
   });
 

@@ -255,6 +255,12 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         {
             if ((query.Status is not { } status || index.Status == status)
                 && (query.WorkflowId is not { } workflowId || index.WorkflowId == workflowId)
+                && (query.CreatedAfter is not { } createdAfter || index.CreatedAt >= createdAfter)
+                && (query.CreatedBefore is not { } createdBefore || index.CreatedAt < createdBefore)
+                && (query.UpdatedAfter is not { } updatedAfter || index.UpdatedAt >= updatedAfter)
+                && (query.UpdatedBefore is not { } updatedBefore || index.UpdatedAt < updatedBefore)
+                && (query.CorrelationId is not { } cid || index.CorrelationId == cid)
+                && (query.Tags is not { Count: > 0 } qtags || (index.Tags is { } rt && qtags.All(rt.Contains)))
                 && (after is null || string.CompareOrdinal(runId.Value, after) > 0))
             {
                 listings.Add(new WorkflowRunListing(runId, index));
@@ -353,6 +359,22 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                     writer.WriteString("errorType", errorType);
                 }
 
+                if (index.CorrelationId is { } runCorrelationId)
+                {
+                    writer.WriteString("correlationId", runCorrelationId);
+                }
+
+                if (index.Tags is { Count: > 0 } tags)
+                {
+                    writer.WriteStartArray("tags");
+                    foreach (var t in tags)
+                    {
+                        writer.WriteStringValue(t);
+                    }
+
+                    writer.WriteEndArray();
+                }
+
                 writer.WriteEndObject();
             }
 
@@ -383,7 +405,28 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                 root.TryGetProperty("dueAt", out System.Text.Json.JsonElement dueAt) ? DateTimeOffset.FromUnixTimeMilliseconds(dueAt.GetInt64()) : null,
                 root.TryGetProperty("awaitingChannel", out System.Text.Json.JsonElement channel) ? channel.GetString() : null,
                 root.TryGetProperty("awaitingCorrelationId", out System.Text.Json.JsonElement correlationId) ? correlationId.GetString() : null,
-                root.TryGetProperty("errorType", out System.Text.Json.JsonElement errorType) ? errorType.GetString() : null);
+                root.TryGetProperty("errorType", out System.Text.Json.JsonElement errorType) ? errorType.GetString() : null,
+                root.TryGetProperty("correlationId", out System.Text.Json.JsonElement queryCorrelationId) ? queryCorrelationId.GetString() : null,
+                DecodeTags(root));
+        }
+
+        private static IReadOnlyList<string>? DecodeTags(System.Text.Json.JsonElement root)
+        {
+            if (!root.TryGetProperty("tags", out System.Text.Json.JsonElement tags))
+            {
+                return null;
+            }
+
+            var list = new List<string>();
+            foreach (System.Text.Json.JsonElement tag in tags.EnumerateArray())
+            {
+                if (tag.GetString() is { } value)
+                {
+                    list.Add(value);
+                }
+            }
+
+            return list.Count > 0 ? list : null;
         }
     }
 

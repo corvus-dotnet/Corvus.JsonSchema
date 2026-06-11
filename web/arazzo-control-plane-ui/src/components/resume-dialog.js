@@ -13,8 +13,6 @@
 // The StatePatch editor is a validated raw RFC 6902 JSON array (a visual builder can come later).
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
-import './workflow-step-picker.js';
-import './value-editor.js';
 
 class ArazzoResumeDialog extends ArazzoElement {
   constructor() {
@@ -31,63 +29,17 @@ class ArazzoResumeDialog extends ArazzoElement {
     this._run = run;
     if (!this._built) this.render();
     this.$('.error-banner').hidden = true;
-    // Point the step pickers at this run's workflow + current cursor (they resolve the step list from the catalog).
-    for (const picker of this.$$('arazzo-workflow-step-picker')) {
-      picker.client = this.client;
-      if (run?.workflowId) picker.setAttribute('workflow-id', run.workflowId); else picker.removeAttribute('workflow-id');
-      if (run?.cursor != null) picker.setAttribute('cursor', String(run.cursor)); else picker.removeAttribute('cursor');
-    }
-    this.loadSkipDescriptor(run);
-    // Outputs are only recorded when explicitly opted into; reset the toggle + hide the builder each open.
-    this.$('.record-outputs').checked = false;
-    this.$('.skip-outputs').hidden = true;
+    // Default the cursor inputs to the faulted cursor where it helps.
+    const cursor = run?.cursor ?? 0;
+    this.$('#rewindCursor').value = String(cursor);
+    this.$('#skipCursor').value = '';
+    this.$('#skipOutputs').value = '';
     this.$('#patch').value = '[\n  { "op": "replace", "path": "/inputs/example", "value": 1 }\n]';
     this.setMode('RetryFaultedStep');
     this.$('.subhead').textContent = run?.fault
       ? `Faulted at step "${run.fault.stepId}" (attempt ${run.fault.attempt}).`
       : 'Resume this run.';
     this.$('dialog').showModal();
-  }
-
-  /**
-   * Resolve the typed schema of the step being skipped (the step at the run's cursor) from the catalog so the
-   * skip-outputs builder renders a strongly-typed form; falls back to a raw-JSON editor when unavailable.
-   * @param {object} run
-   */
-  async loadSkipDescriptor(run) {
-    const builder = this.$('.skip-builder');
-    if (!builder) return;
-    builder.descriptor = null; // raw-JSON fallback until/unless a typed schema resolves
-    builder.validator = null;
-    this._skipParsed = null;
-    this._skipStepId = null;
-    const parsed = parseVersionedWorkflowId(run?.workflowId);
-    const cursor = run?.cursor;
-    if (!this.client || !parsed || cursor == null) return;
-    try {
-      const [workflow, schemas] = await Promise.all([
-        this.client.getCatalogWorkflow(parsed.base, parsed.version),
-        this.client.getCatalogWorkflowSchemas(parsed.base, parsed.version),
-      ]);
-      const wf = (workflow.workflows || []).find((w) => w.workflowId === run.workflowId) || (workflow.workflows || [])[0];
-      const stepId = wf?.steps?.[cursor]?.stepId;
-      const outputs = schemas?.workflows?.[run.workflowId]?.steps?.[stepId]?.outputs;
-      if (stepId) {
-        // Remember the resolved target so submit() can validate the recorded outputs server-side.
-        this._skipParsed = parsed;
-        this._skipStepId = stepId;
-        // Live, inline validation as the operator edits (mirrors the submit-time gate).
-        if (this.client.validateCatalogValue) {
-          builder.validator = (value) => this.client.validateCatalogValue(
-            parsed.base, parsed.version, { kind: 'stepOutputs', workflowId: run.workflowId, stepId }, value);
-        }
-      }
-      if (stepId && outputs && Object.keys(outputs).length) {
-        builder.descriptor = { type: 'object', properties: outputs };
-      }
-    } catch {
-      // No catalog metadata (or no catalog:read) → the builder stays a raw-JSON editor.
-    }
   }
 
   close() {
@@ -132,8 +84,6 @@ class ArazzoResumeDialog extends ArazzoElement {
           border-radius: var(--_radius); background: var(--_bg); color: var(--_text);
         }
         textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; resize: vertical; }
-        label.check { display: flex; gap: 8px; align-items: center; color: var(--_text); font-size: 13px; cursor: pointer; margin: 0; }
-        label.check input { width: auto; }
         .foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
       </style>
       <dialog part="dialog">
@@ -152,15 +102,14 @@ class ArazzoResumeDialog extends ArazzoElement {
 
             <div class="mode-fields" data-mode="Rewind" hidden>
               <div class="fields">
-                <div><label>Target step (an earlier step to re-run from)</label><arazzo-workflow-step-picker class="rewind-picker" direction="backward"></arazzo-workflow-step-picker></div>
+                <div><label for="rewindCursor">Target cursor</label><input id="rewindCursor" type="number" min="0" step="1"></div>
               </div>
             </div>
 
             <div class="mode-fields" data-mode="Skip" hidden>
               <div class="fields">
-                <div><label>Target step (a later step to advance to)</label><arazzo-workflow-step-picker class="skip-picker" direction="forward"></arazzo-workflow-step-picker></div>
-                <label class="check"><input type="checkbox" class="record-outputs"> Record outputs for skipped step</label>
-                <div class="skip-outputs" hidden><arazzo-value-editor class="skip-builder"></arazzo-value-editor></div>
+                <div><label for="skipCursor">Target cursor (optional — defaults to faulted + 1)</label><input id="skipCursor" type="number" min="0" step="1"></div>
+                <div><label for="skipOutputs">Skip outputs (optional JSON object)</label><textarea id="skipOutputs" rows="4" placeholder='{ "result": "manually-supplied" }'></textarea></div>
               </div>
             </div>
 
@@ -181,7 +130,6 @@ class ArazzoResumeDialog extends ArazzoElement {
     `;
 
     this.$$('input[name="mode"]').forEach((r) => r.addEventListener('change', () => this.setMode(r.value)));
-    this.$('.record-outputs').addEventListener('change', (e) => { this.$('.skip-outputs').hidden = !e.target.checked; });
     this.$('form').addEventListener('submit', (e) => {
       if (e.submitter?.value === 'confirm') {
         e.preventDefault();
@@ -203,21 +151,17 @@ class ArazzoResumeDialog extends ArazzoElement {
     if (mode === 'RetryFaultedStep') return { mode };
 
     if (mode === 'Rewind') {
-      const targetCursor = this.$('.rewind-picker').value;
-      if (targetCursor == null) throw new Error('Choose a target step to rewind to.');
+      const targetCursor = parseIntField(this.$('#rewindCursor').value, 'Target cursor');
       return { mode, targetCursor };
     }
 
     if (mode === 'Skip') {
       const req = { mode };
-      const targetCursor = this.$('.skip-picker').value;
-      if (targetCursor != null) req.targetCursor = targetCursor;
-      // Only record outputs for the skipped step when the operator has opted in.
-      if (this.$('.record-outputs').checked) {
-        const outputs = this.$('.skip-builder').value; // may throw on invalid input — surfaced as the banner
-        if (outputs !== undefined) {
-          req.skipOutputs = outputs;
-        }
+      const raw = this.$('#skipCursor').value.trim();
+      if (raw !== '') req.targetCursor = parseIntField(raw, 'Target cursor');
+      const outputs = this.$('#skipOutputs').value.trim();
+      if (outputs !== '') {
+        req.skipOutputs = parseJsonField(outputs, 'Skip outputs', 'object');
       }
       return req;
     }
@@ -243,25 +187,6 @@ class ArazzoResumeDialog extends ArazzoElement {
     const confirmBtn = this.$('.confirm');
     confirmBtn.disabled = true;
     try {
-      // Before recording skip outputs, validate them server-side against the step's true output schema.
-      if (request.mode === 'Skip' && request.skipOutputs !== undefined
-        && this._skipParsed && this._skipStepId && this.client.validateCatalogValue) {
-        try {
-          const result = await this.client.validateCatalogValue(
-            this._skipParsed.base, this._skipParsed.version,
-            { kind: 'stepOutputs', workflowId: this._run.workflowId, stepId: this._skipStepId },
-            request.skipOutputs);
-          if (result && result.valid === false) {
-            banner.textContent = 'Recorded outputs are invalid — '
-              + (result.errors || []).map((e) => `${e.instancePath || '/'}: ${e.message}`).join('; ');
-            banner.hidden = false;
-            return;
-          }
-        } catch {
-          // Validation unavailable (no endpoint / no catalog:read) → don't block the resume.
-        }
-      }
-
       const run = await this.client.resumeRun(this._run.id, request);
       this.close();
       this.emit('resume-submitted', { run, mode: request.mode });
@@ -276,10 +201,12 @@ class ArazzoResumeDialog extends ArazzoElement {
   }
 }
 
-/** Split a versioned workflow id (`base-vN`) into `{ base, version }`, or null when not versioned. */
-function parseVersionedWorkflowId(workflowId) {
-  const m = /^(.*)-v(\d+)$/.exec(workflowId || '');
-  return m ? { base: m[1], version: Number(m[2]) } : null;
+function parseIntField(value, label) {
+  const n = Number(value);
+  if (value === '' || !Number.isInteger(n) || n < 0) {
+    throw new Error(`${label} must be a non-negative integer.`);
+  }
+  return n;
 }
 
 function parseJsonField(value, label, expect) {

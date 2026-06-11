@@ -7,9 +7,8 @@
 // Events     : run-selected {run}, loaded {count, hasMore}, error {problem}
 // Parts      : table, row, cell, status, pager, filters
 
-import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, countdown, copyToClipboard, define } from './base.js';
+import { ArazzoElement, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, countdown, define } from './base.js';
 import './status-badge.js';
-import './pager.js';
 
 class ArazzoRunsTable extends ArazzoElement {
   static get observedAttributes() {
@@ -168,7 +167,7 @@ class ArazzoRunsTable extends ArazzoElement {
         tbody tr.selectable:hover { background: var(--_surface); }
         tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); }
         .id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
-        .copy { font-size: 12px; padding: 0 6px; margin-left: 6px; line-height: 1.4; vertical-align: baseline; }
+        .id button { padding: 0 4px; font-size: 11px; }
         .wf { font-weight: 600; }
         .wait, .err { font-size: 12px; }
         .err { color: var(--arazzo-status-faulted, #d4351c); }
@@ -176,22 +175,29 @@ class ArazzoRunsTable extends ArazzoElement {
         .tag { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_muted); white-space: nowrap; }
         .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
         @keyframes pulse { 50% { opacity: 0.45; } }
-        ${PAGER_CSS}
+        .pager { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: var(--_surface); border-top: 1px solid var(--_border); }
+        .pager .grow { flex: 1; }
+        .pager .count { font-size: 12px; color: var(--_muted); }
       </style>
       <div class="wrap" part="table">
         <table>
           <thead>
             <tr>
-              <th>Status</th><th>Workflow</th><th>Environment</th><th>Run</th><th>Age</th><th>Waiting on</th><th>Error</th><th>Tags</th>
+              <th>Status</th><th>Workflow</th><th>Run</th><th>Age</th><th>Waiting on</th><th>Error</th><th>Tags</th>
             </tr>
           </thead>
           <tbody part="rows"></tbody>
         </table>
-        <arazzo-pager class="pager" part="pager"></arazzo-pager>
+        <div class="pager" part="pager">
+          <button class="prev ghost" type="button">‹ Prev</button>
+          <button class="next ghost" type="button">Next ›</button>
+          <span class="grow"></span>
+          <span class="count"></span>
+        </div>
       </div>
     `;
-    this.$('arazzo-pager').addEventListener('prev', () => this.prevPage());
-    this.$('arazzo-pager').addEventListener('next', () => this.nextPage());
+    this.$('.prev').addEventListener('click', () => this.prevPage());
+    this.$('.next').addEventListener('click', () => this.nextPage());
   }
 
   renderBody() {
@@ -200,7 +206,7 @@ class ArazzoRunsTable extends ArazzoElement {
     const selectable = this.hasAttribute('selectable');
 
     if (this._error) {
-      tbody.innerHTML = `<tr><td colspan="8">
+      tbody.innerHTML = `<tr><td colspan="7">
         <div class="error-banner">
           <span><strong>${escapeHtml(this._error.title || 'Request failed')}</strong>${this._error.detail ? ' — ' + escapeHtml(this._error.detail) : ''}</span>
           <button class="retry" type="button">Retry</button>
@@ -212,13 +218,13 @@ class ArazzoRunsTable extends ArazzoElement {
 
     if (this._loading && this._runs.length === 0) {
       tbody.innerHTML = Array.from({ length: 4 }, () =>
-        `<tr>${'<td><div class="skl"></div></td>'.repeat(8)}</tr>`).join('');
+        `<tr>${'<td><div class="skl"></div></td>'.repeat(6)}</tr>`).join('');
       this.updatePager();
       return;
     }
 
     if (this._runs.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="8"><div class="empty">No runs match the current filters.</div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty">No runs match the current filters.</div></td></tr>`;
       this.updatePager();
       return;
     }
@@ -233,12 +239,9 @@ class ArazzoRunsTable extends ArazzoElement {
         });
       });
     }
-    this.$$('button.copy').forEach((btn) => btn.addEventListener('click', async (e) => {
+    this.$$('button.copy').forEach((btn) => btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (await copyToClipboard(btn.dataset.id)) {
-        btn.textContent = '✓';
-        setTimeout(() => { btn.textContent = '⧉'; }, 1200);
-      }
+      navigator.clipboard?.writeText(btn.dataset.id);
     }));
     this.updatePager();
   }
@@ -258,8 +261,7 @@ class ArazzoRunsTable extends ArazzoElement {
       <tr part="row" class="${selectable ? 'selectable' : ''}" data-id="${escapeHtml(run.id)}"${sel}>
         <td part="cell"><arazzo-status-badge part="status" status="${escapeHtml(run.status)}"></arazzo-status-badge></td>
         <td part="cell" class="wf">${escapeHtml(run.workflowId)}</td>
-        <td part="cell" class="env">${run.environment ? `<span class="tag">${escapeHtml(run.environment)}</span>` : '<span class="muted">—</span>'}</td>
-        <td part="cell" class="id"><span title="${escapeHtml(run.id)}">${escapeHtml(shortId(run.id))}</span><button class="copy ghost" type="button" data-id="${escapeHtml(run.id)}" title="Copy run id" aria-label="Copy run id">⧉</button></td>
+        <td part="cell" class="id"><span title="${escapeHtml(run.id)}">${escapeHtml(shortId(run.id))}</span> <button class="copy ghost" type="button" data-id="${escapeHtml(run.id)}" title="Copy run id" aria-label="Copy run id">⎘</button></td>
         <td part="cell" class="muted" title="${escapeHtml(absoluteTime(run.createdAt))}">${escapeHtml(relativeTime(run.createdAt))}</td>
         <td part="cell">${waiting}</td>
         <td part="cell">${err}</td>
@@ -268,10 +270,16 @@ class ArazzoRunsTable extends ArazzoElement {
   }
 
   updatePager() {
-    const info = this._loading
-      ? 'Loading…'
-      : `${this._runs.length} run${this._runs.length === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`;
-    this.$('arazzo-pager')?.update({ hasPrev: this._history.length > 0, hasNext: !!this._nextToken, loading: this._loading, info });
+    const prev = this.$('.prev');
+    const next = this.$('.next');
+    if (prev) prev.disabled = this._history.length === 0 || this._loading;
+    if (next) next.disabled = !this._nextToken || this._loading;
+    const count = this.$('.count');
+    if (count) {
+      count.textContent = this._loading
+        ? 'Loading…'
+        : `${this._runs.length} run${this._runs.length === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`;
+    }
   }
 
   /** Select a run by id (highlights the row and emits `run-selected`). */

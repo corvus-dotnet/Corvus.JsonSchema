@@ -29,6 +29,13 @@ public interface IWorkflowRun
     int Cursor { get; }
 
     /// <summary>
+    /// Gets the run-wide telemetry correlation id (the W3C trace id captured at creation), if any, so the
+    /// generated executor can re-establish the run's trace context on resume — pinning resumed steps'
+    /// outbound OpenAPI/AsyncAPI calls to the original trace.
+    /// </summary>
+    string? CorrelationId { get; }
+
+    /// <summary>
     /// Gets the correlation register (correlation-id name → token bytes) restored from the checkpoint, owned
     /// by the run so the generated executor can read and mutate it in place. Empty for a fresh run.
     /// </summary>

@@ -301,6 +301,42 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             conditions.Add("c.workflowId = @workflowId");
         }
 
+        if (query.CreatedAfter is not null)
+        {
+            conditions.Add("c.createdAt >= @createdAfter");
+        }
+
+        if (query.CreatedBefore is not null)
+        {
+            conditions.Add("c.createdAt < @createdBefore");
+        }
+
+        if (query.UpdatedAfter is not null)
+        {
+            conditions.Add("c.updatedAt >= @updatedAfter");
+        }
+
+        if (query.UpdatedBefore is not null)
+        {
+            conditions.Add("c.updatedAt < @updatedBefore");
+        }
+
+        if (query.CorrelationId is not null)
+        {
+            conditions.Add("c.correlationId = @correlationId");
+        }
+
+        var tagParameters = new List<(string Name, string Value)>();
+        if (query.Tags is { Count: > 0 } queryTags)
+        {
+            for (int i = 0; i < queryTags.Count; i++)
+            {
+                string name = $"@tag{i}";
+                conditions.Add($"ARRAY_CONTAINS(c.tags, {name})");
+                tagParameters.Add((name, queryTags[i]));
+            }
+        }
+
         string? after = WorkflowContinuationToken.Decode(query.ContinuationToken);
         if (after is not null)
         {
@@ -317,6 +353,36 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         if (query.WorkflowId is { } w)
         {
             definition = definition.WithParameter("@workflowId", w);
+        }
+
+        if (query.CreatedAfter is { } createdAfter)
+        {
+            definition = definition.WithParameter("@createdAfter", createdAfter.ToUnixTimeMilliseconds());
+        }
+
+        if (query.CreatedBefore is { } createdBefore)
+        {
+            definition = definition.WithParameter("@createdBefore", createdBefore.ToUnixTimeMilliseconds());
+        }
+
+        if (query.UpdatedAfter is { } updatedAfter)
+        {
+            definition = definition.WithParameter("@updatedAfter", updatedAfter.ToUnixTimeMilliseconds());
+        }
+
+        if (query.UpdatedBefore is { } updatedBefore)
+        {
+            definition = definition.WithParameter("@updatedBefore", updatedBefore.ToUnixTimeMilliseconds());
+        }
+
+        if (query.CorrelationId is { } correlationId)
+        {
+            definition = definition.WithParameter("@correlationId", correlationId);
+        }
+
+        foreach ((string name, string value) in tagParameters)
+        {
+            definition = definition.WithParameter(name, value);
         }
 
         if (after is not null)
@@ -429,6 +495,12 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         [JsonPropertyName("errorType")]
         public string? ErrorType { get; set; }
 
+        [JsonPropertyName("correlationId")]
+        public string? CorrelationId { get; set; }
+
+        [JsonPropertyName("tags")]
+        public List<string>? Tags { get; set; }
+
         public static RunDocument Build(WorkflowRunId id, byte[] checkpoint, in WorkflowRunIndexEntry index) => new()
         {
             Id = id.Value,
@@ -441,6 +513,8 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             AwaitingChannel = index.AwaitingChannel,
             AwaitingCorrelationId = index.AwaitingCorrelationId,
             ErrorType = index.ErrorType,
+            CorrelationId = index.CorrelationId,
+            Tags = index.Tags is { Count: > 0 } t ? t.ToList() : null,
         };
 
         public WorkflowRunIndexEntry ToIndexEntry() => new(
@@ -451,7 +525,9 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             this.DueAt is { } due ? DateTimeOffset.FromUnixTimeMilliseconds(due) : null,
             this.AwaitingChannel,
             this.AwaitingCorrelationId,
-            this.ErrorType);
+            this.ErrorType,
+            CorrelationId: this.CorrelationId,
+            Tags: this.Tags);
     }
 
     private sealed class LeaseDocument

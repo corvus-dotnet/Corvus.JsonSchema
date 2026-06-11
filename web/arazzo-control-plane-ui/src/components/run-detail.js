@@ -11,7 +11,7 @@
 // itself, so dropping just this element gives a working remediation surface. Layer 2 listens to its
 // events to keep the runs list in sync.
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, countdown, confirmDialog, copyToClipboard, define } from './base.js';
+import { ArazzoElement, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, countdown, confirmDialog, define } from './base.js';
 import './status-badge.js';
 import './resume-dialog.js';
 import './cancel-button.js';
@@ -127,7 +127,6 @@ class ArazzoRunDetail extends ArazzoElement {
         dt { color: var(--_muted); font-size: 12px; }
         dd { margin: 0; font-size: 13px; }
         .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; word-break: break-all; }
-        .copy { font-size: 12px; padding: 0 6px; margin-left: 6px; line-height: 1.4; vertical-align: baseline; }
         .tags { display: flex; gap: 4px; flex-wrap: wrap; }
         .tag { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_muted); }
         .block { margin: 0 14px 14px; padding: 10px 12px; border: 1px solid var(--_border); border-radius: var(--_radius); }
@@ -204,8 +203,7 @@ class ArazzoRunDetail extends ArazzoElement {
         <dt>Run id</dt><dd class="mono" part="cursor">${escapeHtml(run.id)}</dd>
         <dt>Cursor</dt><dd part="cursor">${run.cursor == null ? '<span class="muted">…</span>' : escapeHtml(String(run.cursor)) + ' <span class="muted">(next step index)</span>'}</dd>
         <dt>Created</dt><dd class="muted" title="${escapeHtml(absoluteTime(run.createdAt))}">${escapeHtml(relativeTime(run.createdAt))}</dd>
-        ${run.environment ? `<dt>Environment</dt><dd part="environment"><div class="tags"><span class="tag">${escapeHtml(run.environment)}</span></div></dd>` : ''}
-        ${run.correlationId ? `<dt>Correlation</dt><dd class="mono" part="correlation" title="telemetry trace id">${escapeHtml(run.correlationId)}<button class="copy ghost" type="button" part="copy-correlation" title="Copy correlation id" aria-label="Copy correlation id">⧉</button></dd>` : ''}
+        ${run.correlationId ? `<dt>Correlation</dt><dd class="mono" part="correlation" title="telemetry trace id">${escapeHtml(run.correlationId)}</dd>` : ''}
         ${Array.isArray(run.tags) && run.tags.length > 0 ? `<dt>Tags</dt><dd part="tags"><div class="tags">${run.tags.map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div></dd>` : ''}
         <dt>ETag</dt><dd class="mono muted">${escapeHtml(run.etag || '—')}</dd>
       </dl>
@@ -213,13 +211,6 @@ class ArazzoRunDetail extends ArazzoElement {
       ${this.renderFault(run)}
       <div class="actions" part="actions"></div>
     `;
-    this.$('.copy')?.addEventListener('click', async (e) => {
-      const button = e.currentTarget;
-      if (await copyToClipboard(run.correlationId)) {
-        button.textContent = '✓';
-        setTimeout(() => { button.textContent = '⧉'; }, 1200);
-      }
-    });
     this.renderActions(run);
   }
 
