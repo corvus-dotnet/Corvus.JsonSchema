@@ -79,6 +79,19 @@ describe('<arazzo-control-plane>', () => {
     ok(true);
   });
 
+  it('populates the workflowId filter autocomplete from the catalog', async () => {
+    el = panel('runs:read');
+    mount(el);
+    const list = await waitFor(() => {
+      const dl = el.shadowRoot.querySelector('#wf-id-options');
+      return dl && dl.options.length ? dl : null;
+    });
+    const values = [...list.options].map((o) => o.value);
+    ok(el.shadowRoot.querySelector('.wf-search').getAttribute('list') === 'wf-id-options', 'input wired to the datalist');
+    ok(values.includes('adopt-pet'), 'offers base workflow ids');
+    ok(values.includes('nightly-reconcile-v3'), 'offers the versioned ids the runs carry');
+  });
+
   it('re-selecting the already-selected run keeps the full detail (regression)', async () => {
     el = panel('runs:read');
     mount(el);
