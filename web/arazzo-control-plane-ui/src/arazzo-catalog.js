@@ -128,7 +128,7 @@ class ArazzoCatalog extends ArazzoElement {
         <div class="search"><input class="owner-search" type="search" placeholder="Owner…" aria-label="Filter by owner"></div>
         <div class="search"><input class="tag-search" type="search" placeholder="Tags (space-separated, AND)…" aria-label="Filter by tags"></div>
         <button class="refresh ghost" type="button" title="Refresh">↻</button>
-        <button class="add-btn primary" type="button" ${this.hasScope('catalog:write') ? '' : 'hidden'}>Add version…</button>
+        <button class="add-btn primary" type="button" ${this.hasScope('catalog:write') ? '' : 'hidden'}>Add workflow…</button>
         <button class="purge-btn danger" type="button" ${this.hasScope('catalog:purge') ? '' : 'hidden'}>Purge obsolete…</button>
       </div>
       <div class="layout" part="layout">
@@ -171,10 +171,10 @@ class ArazzoCatalog extends ArazzoElement {
 
     const addDialog = this.$('arazzo-catalog-add-dialog');
     this.$('.add-btn').addEventListener('click', () => { addDialog.client = this.buildClient(); addDialog.open(); });
-    addDialog.addEventListener('version-added', (e) => {
+    addDialog.addEventListener('workflow-added', (e) => {
       table.reload();
       this.showDetail(e.detail.version);
-      this.emit('version-added', e.detail);
+      this.emit('workflow-added', e.detail);
     });
     addDialog.addEventListener('error', (e) => this.emit('error', e.detail));
 
