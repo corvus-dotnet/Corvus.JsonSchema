@@ -192,7 +192,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
 
         if (query.WorkflowIdPrefix is { Length: > 0 })
         {
-            conditions.Add("STARTSWITH(c.workflowId, @workflowIdPrefix, true)");
+            conditions.Add("STARTSWITH(c.workflowIdLower, @workflowIdPrefix)");
         }
 
         var tagParameters = new List<(string Name, string Value)>();
@@ -235,7 +235,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
 
         if (query.WorkflowIdPrefix is { Length: > 0 } workflowIdPrefix)
         {
-            definition = definition.WithParameter("@workflowIdPrefix", workflowIdPrefix);
+            definition = definition.WithParameter("@workflowIdPrefix", workflowIdPrefix.ToLowerInvariant());
         }
 
         foreach ((string name, string value) in tagParameters)
@@ -495,6 +495,11 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
         [JsonPropertyName("workflowId")]
         public string WorkflowId { get; set; } = string.Empty;
 
+        // Lowercased copy of WorkflowId so the case-insensitive prefix search can use a (case-sensitive,
+        // index-using) STARTSWITH against the container's range index — STARTSWITH(.., true) does not.
+        [JsonPropertyName("workflowIdLower")]
+        public string WorkflowIdLower { get; set; } = string.Empty;
+
         [JsonPropertyName("title")]
         public string Title { get; set; } = string.Empty;
 
@@ -544,6 +549,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
             VersionNumber = version.VersionNumber,
             SortKey = SortKey(version.BaseWorkflowId, version.VersionNumber),
             WorkflowId = version.WorkflowId,
+            WorkflowIdLower = version.WorkflowId.ToLowerInvariant(),
             Title = version.Title,
             Description = version.Description,
             Status = version.Status.ToString(),
