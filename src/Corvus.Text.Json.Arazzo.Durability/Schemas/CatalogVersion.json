@@ -11,7 +11,6 @@
     },
     "versionNumber": {
       "type": "integer",
-      "format": "int32",
       "description": "The 1-based version number assigned by the store."
     },
     "workflowId": {
@@ -35,11 +34,6 @@
       "type": "array",
       "description": "The free-form tags.",
       "items": { "type": "string" }
-    },
-    "securityTags": {
-      "type": "array",
-      "description": "The security tags (KVP labels) — the input to tag-based row authorization (§14.2), distinct from the free-form tags. Optional for backward compatibility with versions catalogued before security tags existed.",
-      "items": { "$ref": "#/$defs/SecurityTagInfo" }
     },
     "owner": {
       "$ref": "#/$defs/CatalogOwnerInfo"
@@ -125,23 +119,6 @@
         "type": {
           "type": "string",
           "description": "The source document kind (e.g. openapi, asyncapi), if the workflow declared it."
-        }
-      },
-      "additionalProperties": false
-    },
-    "SecurityTagInfo": {
-      "title": "SecurityTagInfo",
-      "type": "object",
-      "description": "A security label (KVP) on a catalog version: the input to tag-based row authorization (§14.2).",
-      "required": ["key", "value"],
-      "properties": {
-        "key": {
-          "type": "string",
-          "description": "The label key (e.g. tenant)."
-        },
-        "value": {
-          "type": "string",
-          "description": "The label value (e.g. acme)."
         }
       },
       "additionalProperties": false
