@@ -8,6 +8,7 @@ using Corvus.Json;
 using Corvus.Json.CodeGeneration;
 using Corvus.Json.CodeGeneration.DocumentResolvers;
 using Corvus.Json.Internal;
+using Corvus.Text.Json.Arazzo.Generation;
 using Corvus.Text.Json.CodeGeneration;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
 using Corvus.Text.Json.OpenApi30;
@@ -129,7 +130,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                 Dictionary<string, string>? schemaTypeMap = null;
                 if (schemaRefs.Length > 0)
                 {
-                    (schemaTypeMap, modelFileNames) = await OpenApiSchemaTypeGeneration.GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, cancellationToken)
+                    (schemaTypeMap, modelFileNames) = await OpenApiSchemaTypeGeneration.GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, cancellationToken, progress: m => AnsiConsole.WriteLine(m))
                         .ConfigureAwait(false);
                 }
 
@@ -156,7 +157,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                 Dictionary<string, string>? schemaTypeMap = null;
                 if (schemaRefs.Length > 0)
                 {
-                    (schemaTypeMap, modelFileNames) = await OpenApiSchemaTypeGeneration.GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, cancellationToken)
+                    (schemaTypeMap, modelFileNames) = await OpenApiSchemaTypeGeneration.GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, cancellationToken, progress: m => AnsiConsole.WriteLine(m))
                         .ConfigureAwait(false);
                 }
 
@@ -183,7 +184,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                 Dictionary<string, string>? schemaTypeMap = null;
                 if (schemaRefs.Length > 0)
                 {
-                    (schemaTypeMap, modelFileNames) = await OpenApiSchemaTypeGeneration.GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, cancellationToken)
+                    (schemaTypeMap, modelFileNames) = await OpenApiSchemaTypeGeneration.GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, cancellationToken, progress: m => AnsiConsole.WriteLine(m))
                         .ConfigureAwait(false);
                 }
 

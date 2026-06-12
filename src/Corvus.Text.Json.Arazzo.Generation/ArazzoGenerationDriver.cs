@@ -38,7 +38,7 @@ public static class ArazzoGenerationDriver
     /// </param>
     /// <param name="progress">An optional callback invoked with human-readable progress messages.</param>
     /// <returns>The absolute paths of all files written.</returns>
-    public static Task<IReadOnlyList<string>> GenerateAsync(
+    public static async Task<IReadOnlyList<string>> GenerateAsync(
         string arazzoFilePath,
         string rootNamespace,
         string outputPath,
@@ -48,48 +48,13 @@ public static class ArazzoGenerationDriver
         IReadOnlyList<RegisteredDocument>? registeredDocuments = null,
         Action<string>? progress = null)
     {
-        ArgumentException.ThrowIfNullOrEmpty(arazzoFilePath);
-
-        // The Arazzo document is resolved through the loader keyed by its retrieval URI; on disk that is the
-        // file URI of its full path (so a registered in-memory copy under the same URI is preferred).
-        return GenerateAsync(
-            new Uri(Path.GetFullPath(arazzoFilePath)), rootNamespace, outputPath, clientName, durable,
-            cancellationToken, registeredDocuments, progress);
-    }
-
-    /// <summary>
-    /// Generates an Arazzo document's workflows (and the OpenAPI clients/models its sources reference) where
-    /// the Arazzo document — and the URIs its sources resolve against — are addressed entirely by URI rather
-    /// than the file system. The Arazzo document itself must be supplied through <paramref name="registeredDocuments"/>
-    /// under <paramref name="arazzoRetrievalUri"/>. Use this for fully in-memory generation (e.g. compiling a
-    /// catalogued workflow package), choosing a non-<c>file</c> retrieval URI so relative source urls resolve to
-    /// registered (in-memory) documents rather than the local file system.
-    /// </summary>
-    /// <param name="arazzoRetrievalUri">The absolute URI the Arazzo document resolves as (its reference-resolution base, unless it declares a <c>$self</c>).</param>
-    /// <param name="rootNamespace">The root namespace for all generated code.</param>
-    /// <param name="outputPath">The directory to write generated files to.</param>
-    /// <param name="clientName">The OpenAPI client name prefix, or <see langword="null"/> for the default.</param>
-    /// <param name="durable">When <see langword="true"/>, generate durable (checkpoint &amp; resume) executors.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <param name="registeredDocuments">The documents available in memory (must include the Arazzo document under <paramref name="arazzoRetrievalUri"/>), keyed by the absolute URI they resolve as. See the file-path overload for the resolution order.</param>
-    /// <param name="progress">An optional callback invoked with human-readable progress messages.</param>
-    /// <returns>The absolute paths of all files written.</returns>
-    public static async Task<IReadOnlyList<string>> GenerateAsync(
-        Uri arazzoRetrievalUri,
-        string rootNamespace,
-        string outputPath,
-        string? clientName,
-        bool durable,
-        CancellationToken cancellationToken,
-        IReadOnlyList<RegisteredDocument>? registeredDocuments = null,
-        Action<string>? progress = null)
-    {
-        ArgumentNullException.ThrowIfNull(arazzoRetrievalUri);
-
         Func<Uri, byte[]?> documentLoader = BuildDocumentLoader(registeredDocuments);
 
+        // The Arazzo document is itself resolved through the loader (keyed by its retrieval URI), so it too
+        // can be supplied in memory; otherwise the loader reads (and YAML-converts) it from disk.
+        Uri arazzoRetrievalUri = new(Path.GetFullPath(arazzoFilePath));
         byte[] arazzoBytes = documentLoader(arazzoRetrievalUri)
-            ?? throw new FileNotFoundException($"The Arazzo document '{arazzoRetrievalUri}' could not be loaded.");
+            ?? throw new FileNotFoundException($"The Arazzo document '{arazzoFilePath}' could not be loaded.", arazzoFilePath);
 
         Uri baseUri = ComputeBaseUri(arazzoBytes, arazzoRetrievalUri);
         var written = new List<string>();
