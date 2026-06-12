@@ -23,6 +23,9 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// <item><description><c>manifest.json</c> — <c>{ "formatVersion": 1, "workflow": "workflow.json", "sources": [ { "name", "path" } ] }</c>.</description></item>
 /// <item><description><c>workflow.json</c> — the Arazzo workflow document.</description></item>
 /// <item><description><c>sources/&lt;name&gt;.json</c> — each referenced source document.</description></item>
+/// <item><description><c>metadata/schemas.json</c> — optional precomputed schema metadata.</description></item>
+/// <item><description><c>metadata/executor.dll</c> — optional compiled workflow executor assembly (binary).</description></item>
+/// <item><description><c>metadata/executor-manifest.json</c> — optional executor manifest.</description></item>
 /// </list>
 /// <para>
 /// The archive is written deterministically (fixed entry order, fixed timestamps) so identical content yields
@@ -54,6 +57,18 @@ public static class WorkflowPackage
     /// <summary>The archive entry name of the precomputed schema-metadata document.</summary>
     public const string SchemasEntryName = "metadata/schemas.json";
 
+    /// <summary>The reserved document name addressing the package's compiled workflow executor assembly.</summary>
+    public const string ExecutorDocumentName = "$executor";
+
+    /// <summary>The reserved document name addressing the package's executor manifest.</summary>
+    public const string ExecutorManifestDocumentName = "$executorManifest";
+
+    /// <summary>The archive entry name of the compiled workflow executor assembly (a .NET DLL — binary).</summary>
+    public const string ExecutorEntryName = "metadata/executor.dll";
+
+    /// <summary>The archive entry name of the executor manifest (target framework, integrity binding, entry type).</summary>
+    public const string ExecutorManifestEntryName = "metadata/executor-manifest.json";
+
     // The ZIP epoch (1980-01-01) — the earliest timestamp the format can represent — used for every entry so
     // archives are byte-reproducible.
     private static readonly DateTimeOffset DeterministicTimestamp = new(1980, 1, 1, 0, 0, 0, TimeSpan.Zero);
@@ -63,8 +78,17 @@ public static class WorkflowPackage
     /// <param name="sources">The referenced source documents, keyed by their <c>sourceDescriptions</c> name.</param>
     /// <param name="schemas">An optional precomputed schema-metadata document written to
     /// <see cref="SchemasEntryName"/>; omitted when empty.</param>
+    /// <param name="executor">An optional compiled workflow executor assembly written to
+    /// <see cref="ExecutorEntryName"/>; omitted when empty.</param>
+    /// <param name="executorManifest">An optional executor manifest written to
+    /// <see cref="ExecutorManifestEntryName"/>; omitted when empty.</param>
     /// <returns>The package archive bytes (a ZIP).</returns>
-    public static byte[] Pack(ReadOnlyMemory<byte> workflowUtf8, IReadOnlyList<KeyValuePair<string, byte[]>> sources, ReadOnlyMemory<byte> schemas = default)
+    public static byte[] Pack(
+        ReadOnlyMemory<byte> workflowUtf8,
+        IReadOnlyList<KeyValuePair<string, byte[]>> sources,
+        ReadOnlyMemory<byte> schemas = default,
+        ReadOnlyMemory<byte> executor = default,
+        ReadOnlyMemory<byte> executorManifest = default)
     {
         ArgumentNullException.ThrowIfNull(sources);
 
@@ -85,6 +109,16 @@ public static class WorkflowPackage
             if (!schemas.IsEmpty)
             {
                 WriteEntry(archive, SchemasEntryName, schemas.Span);
+            }
+
+            if (!executor.IsEmpty)
+            {
+                WriteEntry(archive, ExecutorEntryName, executor.Span);
+            }
+
+            if (!executorManifest.IsEmpty)
+            {
+                WriteEntry(archive, ExecutorManifestEntryName, executorManifest.Span);
             }
         }
 
@@ -117,7 +151,12 @@ public static class WorkflowPackage
         }
 
         sources.Sort((a, b) => string.CompareOrdinal(a.Key, b.Key));
-        return new WorkflowPackageContents(workflow, sources) { Schemas = ReadEntry(archive, SchemasEntryName) };
+        return new WorkflowPackageContents(workflow, sources)
+        {
+            Schemas = ReadEntry(archive, SchemasEntryName),
+            Executor = ReadEntry(archive, ExecutorEntryName),
+            ExecutorManifest = ReadEntry(archive, ExecutorManifestEntryName),
+        };
     }
 
     /// <summary>
@@ -217,7 +256,13 @@ public readonly record struct WorkflowPackageContents(byte[] Workflow, IReadOnly
     /// <summary>Gets the precomputed schema-metadata document (<see cref="WorkflowPackage.SchemasEntryName"/>), or <see langword="null"/> if the package carries none.</summary>
     public byte[]? Schemas { get; init; }
 
-    /// <summary>Gets a single document by name: <see cref="WorkflowPackage.WorkflowDocumentName"/> for the workflow, <see cref="WorkflowPackage.SchemasDocumentName"/> for the schema metadata, else a source name.</summary>
+    /// <summary>Gets the compiled workflow executor assembly (<see cref="WorkflowPackage.ExecutorEntryName"/>), or <see langword="null"/> if the package carries none.</summary>
+    public byte[]? Executor { get; init; }
+
+    /// <summary>Gets the executor manifest (<see cref="WorkflowPackage.ExecutorManifestEntryName"/>), or <see langword="null"/> if the package carries none.</summary>
+    public byte[]? ExecutorManifest { get; init; }
+
+    /// <summary>Gets a single document by name: <see cref="WorkflowPackage.WorkflowDocumentName"/> for the workflow, <see cref="WorkflowPackage.SchemasDocumentName"/> for the schema metadata, <see cref="WorkflowPackage.ExecutorDocumentName"/> for the executor assembly, <see cref="WorkflowPackage.ExecutorManifestDocumentName"/> for its manifest, else a source name.</summary>
     /// <param name="documentName">The document name.</param>
     /// <returns>The document bytes, or <see langword="null"/> if not present.</returns>
     public byte[]? GetDocument(string documentName)
@@ -230,6 +275,16 @@ public readonly record struct WorkflowPackageContents(byte[] Workflow, IReadOnly
         if (documentName == WorkflowPackage.SchemasDocumentName)
         {
             return this.Schemas;
+        }
+
+        if (documentName == WorkflowPackage.ExecutorDocumentName)
+        {
+            return this.Executor;
+        }
+
+        if (documentName == WorkflowPackage.ExecutorManifestDocumentName)
+        {
+            return this.ExecutorManifest;
         }
 
         foreach (KeyValuePair<string, byte[]> source in this.Sources)
