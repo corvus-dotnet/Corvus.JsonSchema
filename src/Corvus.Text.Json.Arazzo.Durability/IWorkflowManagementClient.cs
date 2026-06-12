@@ -27,6 +27,21 @@ public interface IWorkflowManagementClient
     /// <returns>The id of the newly created pending run.</returns>
     ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, IReadOnlyList<string>? tags, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Starts a run idempotently: the run id is derived deterministically from
+    /// (<paramref name="workflowId"/>, <paramref name="idempotencyKey"/>), so re-invoking with the same key
+    /// (for example on broker message redelivery, or a duplicate schedule fire) is a no-op that returns the
+    /// existing run rather than creating a duplicate.
+    /// </summary>
+    /// <param name="workflowId">The versioned workflow id (<c>{base}-v{n}</c>) to run.</param>
+    /// <param name="inputs">The workflow inputs (used only when the run is first created).</param>
+    /// <param name="idempotencyKey">A stable key identifying the logical start (e.g. a message id or a scheduled-slot timestamp).</param>
+    /// <param name="correlationId">An optional telemetry correlation id; a new one is captured when omitted.</param>
+    /// <param name="tags">Optional free-form tags to attach to the run.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The id of the run for this key (newly created, or the pre-existing one).</returns>
+    ValueTask<WorkflowRunId> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string? correlationId = null, IReadOnlyList<string>? tags = null, CancellationToken cancellationToken = default);
+
     /// <summary>Lists runs matching a visibility query (filter by status / workflow id, paged).</summary>
     /// <param name="query">The visibility query.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
