@@ -31,13 +31,17 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     private static readonly ConcurrentDictionary<string, ValidatorSchema> SchemaCache = new(StringComparer.Ordinal);
 
     private readonly IWorkflowCatalogClient catalog;
+    private readonly IWorkflowManagementClient management;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneCatalogHandler"/> class.</summary>
     /// <param name="catalog">The catalog client the endpoints delegate to.</param>
-    public ArazzoControlPlaneCatalogHandler(IWorkflowCatalogClient catalog)
+    /// <param name="management">The management client used to create runs when a workflow version is triggered.</param>
+    public ArazzoControlPlaneCatalogHandler(IWorkflowCatalogClient catalog, IWorkflowManagementClient management)
     {
         ArgumentNullException.ThrowIfNull(catalog);
+        ArgumentNullException.ThrowIfNull(management);
         this.catalog = catalog;
+        this.management = management;
     }
 
     /// <inheritdoc/>
@@ -260,32 +264,81 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         }
 
         string cacheKey = $"{baseWorkflowId}/{versionNumber}/{targetKey}";
-        if (!SchemaCache.TryGetValue(cacheKey, out ValidatorSchema schema))
+        (SchemaResolution resolution, ValidatorSchema schema) = await this.ResolveSchemaAsync(baseWorkflowId, versionNumber, target, cacheKey, cancellationToken).ConfigureAwait(false);
+        switch (resolution)
         {
-            ReadOnlyMemory<byte>? package = await this.catalog.GetPackageAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
-            if (package is not { } packageBytes)
-            {
+            case SchemaResolution.VersionMissing:
                 return ValidateCatalogValueResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
-            }
-
-            (byte[] workflow, IReadOnlyList<KeyValuePair<string, byte[]>> sources) = CatalogPackage.Unpack(packageBytes);
-            if (!WorkflowSchemaMetadataGenerator.TryBuildValidationSchema(workflow, sources, target, out byte[] schemaDocument))
-            {
+            case SchemaResolution.SchemaMissing:
                 return ValidateCatalogValueResult.NotFound(
                     Problem("validation-target", "Validation target not found", 404, "The requested schema could not be resolved from this version's package."), workspace);
-            }
-
-            schema = ValidatorSchema.FromText(Encoding.UTF8.GetString(schemaDocument), "corvus:catalog/" + cacheKey);
-            if (SchemaCache.Count >= MaxCachedSchemas)
-            {
-                SchemaCache.Clear();
-            }
-
-            SchemaCache[cacheKey] = schema;
         }
 
-        using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
         Corvus.Text.Json.JsonElement value = parameters.Body.Value;
+        (bool valid, IReadOnlyList<(string InstancePath, string Message, string SchemaLocation)> errors) = Validate(schema, in value);
+        return ValidateCatalogValueResult.Ok(BuildValidationResult(valid, errors), workspace);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<StartCatalogWorkflowRunResult> HandleStartCatalogWorkflowRunAsync(StartCatalogWorkflowRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string baseWorkflowId = (string)parameters.BaseWorkflowId;
+        int versionNumber = (int)parameters.VersionNumber;
+
+        CatalogVersion? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+        if (version is not { } catalogVersion)
+        {
+            return StartCatalogWorkflowRunResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
+        }
+
+        if (!catalogVersion.Runnable)
+        {
+            return StartCatalogWorkflowRunResult.Conflict(
+                Problem("not-runnable", "Version not runnable", 409, $"Version {versionNumber} of '{baseWorkflowId}' carries no compiled executor; it cannot be run."), workspace);
+        }
+
+        // Validate the inputs against the version's baked inputs schema (when it declares one).
+        var target = new WorkflowSchemaTarget(WorkflowSchemaTargetKind.Inputs, catalogVersion.WorkflowId, null, null);
+        string cacheKey = $"{baseWorkflowId}/{versionNumber}/inputs/{catalogVersion.WorkflowId}//";
+        (SchemaResolution resolution, ValidatorSchema schema) = await this.ResolveSchemaAsync(baseWorkflowId, versionNumber, target, cacheKey, cancellationToken).ConfigureAwait(false);
+
+        Corvus.Text.Json.JsonElement inputs = parameters.Body;
+        if (resolution == SchemaResolution.Resolved)
+        {
+            (bool valid, IReadOnlyList<(string InstancePath, string Message, string SchemaLocation)> errors) = Validate(schema, in inputs);
+            if (!valid)
+            {
+                return StartCatalogWorkflowRunResult.UnprocessableEntity(BuildValidationResult(valid, errors), workspace);
+            }
+        }
+
+        // A version with no inputs schema (SchemaMissing) accepts any inputs.
+        WorkflowRunId runId = await this.management.StartAsync(catalogVersion.WorkflowId, inputs, correlationId: null, tags: null, cancellationToken).ConfigureAwait(false);
+
+        return StartCatalogWorkflowRunResult.Accepted(
+            new Models.WorkflowRunAccepted.Source((ref Models.WorkflowRunAccepted.Builder b) => b.Create(
+                runId: runId.Value,
+                status: WorkflowRunStatus.Pending.ToString(),
+                workflowId: catalogVersion.WorkflowId)),
+            workspace);
+    }
+
+    /// <summary>How a target schema resolved from a version's package.</summary>
+    private enum SchemaResolution
+    {
+        /// <summary>The catalog version does not exist.</summary>
+        VersionMissing,
+
+        /// <summary>The version exists but declares no schema for the target (e.g. a workflow with no inputs schema).</summary>
+        SchemaMissing,
+
+        /// <summary>The schema was resolved (and compiled/cached).</summary>
+        Resolved,
+    }
+
+    private static (bool Valid, IReadOnlyList<(string InstancePath, string Message, string SchemaLocation)> Errors) Validate(ValidatorSchema schema, in Corvus.Text.Json.JsonElement value)
+    {
+        using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
         bool valid = schema.Validate(in value, collector);
 
         var errors = new List<(string InstancePath, string Message, string SchemaLocation)>();
@@ -301,7 +354,36 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
             }
         }
 
-        return ValidateCatalogValueResult.Ok(BuildValidationResult(valid, errors), workspace);
+        return (valid, errors);
+    }
+
+    private async ValueTask<(SchemaResolution Resolution, ValidatorSchema Schema)> ResolveSchemaAsync(string baseWorkflowId, int versionNumber, WorkflowSchemaTarget target, string cacheKey, CancellationToken cancellationToken)
+    {
+        if (SchemaCache.TryGetValue(cacheKey, out ValidatorSchema cached))
+        {
+            return (SchemaResolution.Resolved, cached);
+        }
+
+        ReadOnlyMemory<byte>? package = await this.catalog.GetPackageAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+        if (package is not { } packageBytes)
+        {
+            return (SchemaResolution.VersionMissing, default!);
+        }
+
+        (byte[] workflow, IReadOnlyList<KeyValuePair<string, byte[]>> sources) = CatalogPackage.Unpack(packageBytes);
+        if (!WorkflowSchemaMetadataGenerator.TryBuildValidationSchema(workflow, sources, target, out byte[] schemaDocument))
+        {
+            return (SchemaResolution.SchemaMissing, default!);
+        }
+
+        ValidatorSchema schema = ValidatorSchema.FromText(Encoding.UTF8.GetString(schemaDocument), "corvus:catalog/" + cacheKey);
+        if (SchemaCache.Count >= MaxCachedSchemas)
+        {
+            SchemaCache.Clear();
+        }
+
+        SchemaCache[cacheKey] = schema;
+        return (SchemaResolution.Resolved, schema);
     }
 
     private static bool TryMapTarget(Models.ValidationTarget target, out WorkflowSchemaTarget schemaTarget, out string targetKey)

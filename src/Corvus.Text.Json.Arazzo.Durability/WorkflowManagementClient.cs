@@ -50,6 +50,17 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
     }
 
     /// <inheritdoc/>
+    public async ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, IReadOnlyList<string>? tags, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(workflowId);
+
+        var id = new WorkflowRunId(Guid.NewGuid().ToString("n", System.Globalization.CultureInfo.InvariantCulture));
+        using WorkflowRun run = WorkflowRun.CreateNew(this.store, id, workflowId, inputs, this.timeProvider, correlationId, tags);
+        await run.EnqueueAsync(cancellationToken).ConfigureAwait(false);
+        return id;
+    }
+
+    /// <inheritdoc/>
     public ValueTask<WorkflowRunPage> ListAsync(WorkflowQuery query, CancellationToken cancellationToken)
         => this.RequireIndex().QueryAsync(query, cancellationToken);
 

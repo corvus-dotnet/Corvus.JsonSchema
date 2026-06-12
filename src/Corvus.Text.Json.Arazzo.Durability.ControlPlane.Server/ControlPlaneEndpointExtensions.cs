@@ -32,6 +32,6 @@ public static class ControlPlaneEndpointExtensions
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
         ArgumentNullException.ThrowIfNull(catalog);
-        return endpoints.MapApiEndpoints(new ArazzoControlPlaneHandler(management), new ArazzoControlPlaneCatalogHandler(catalog));
+        return endpoints.MapApiEndpoints(new ArazzoControlPlaneHandler(management), new ArazzoControlPlaneCatalogHandler(catalog, management));
     }
 }

@@ -552,6 +552,39 @@
         }
       }
     },
+    "/catalog/{baseWorkflowId}/versions/{versionNumber}/runs": {
+      "post": {
+        "operationId": "startCatalogWorkflowRun",
+        "security": [
+          { "oauth2": ["runs:write"] },
+          { "openIdConnect": ["runs:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["catalog"],
+        "summary": "Start a run of a workflow version",
+        "description": "Triggers a new run of this runnable version: validates the supplied inputs against the version's baked inputs schema, then creates a Pending run that a hosting runner claims and executes asynchronously and durably. Returns 202 with the run id; observe the run via the runs endpoints. 404 if the version does not exist; 409 if it is not runnable (carries no executor); 422 if the inputs fail validation.",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "description": "The workflow inputs." } } }
+        },
+        "responses": {
+          "202": {
+            "description": "The run was accepted and is pending execution on a hosting runner.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WorkflowRunAccepted" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "422": {
+            "description": "The inputs failed validation against the version's baked inputs schema.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ValidationResult" } } }
+          }
+        }
+      }
+    },
     "/catalog/{baseWorkflowId}/versions/{versionNumber}/sources/{sourceName}": {
       "get": {
         "operationId": "getCatalogSource",
@@ -1102,6 +1135,16 @@
           }
         },
         "required": ["valid", "errors"]
+      },
+      "WorkflowRunAccepted": {
+        "type": "object",
+        "description": "Acknowledges a triggered run that will execute asynchronously and durably on a hosting runner.",
+        "properties": {
+          "runId": { "type": "string", "description": "The id of the created run; poll the runs endpoints to observe its progress." },
+          "workflowId": { "type": "string", "description": "The versioned workflow id the run executes." },
+          "status": { "type": "string", "description": "The run's initial status (always 'Pending')." }
+        },
+        "required": ["runId", "workflowId", "status"]
       },
       "PageLimit": {
         "type": "integer",
