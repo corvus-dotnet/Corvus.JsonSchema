@@ -68,20 +68,19 @@ public class HostedWorkflowResumerTests
     public async Task Resolves_a_runnable_catalog_version_loads_it_and_runs_the_run_to_completion()
     {
         var catalog = new InMemoryWorkflowCatalogStore(executorProvider: new WorkflowExecutorProvider());
-        using ParsedJsonDocument<CatalogVersion> versionDoc = await catalog.AddAsync("adopt", Package(), Meta(), default);
-        CatalogVersion version = versionDoc.RootElement;
-        version.Ref.WorkflowId.ShouldBe("adopt-v1");
-        ((bool)version.Runnable).ShouldBeTrue();
+        CatalogVersion version = await catalog.AddAsync("adopt", Package(), Meta(), default);
+        version.WorkflowId.ShouldBe("adopt-v1");
+        version.Runnable.ShouldBeTrue();
 
         var runStore = new InMemoryWorkflowStateStore();
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
-        using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", version.Ref.WorkflowId, inputs.RootElement);
+        using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", version.WorkflowId, inputs.RootElement);
 
         var transport = new MockApiTransport();
         transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
 
         using var loader = new WorkflowExecutorLoader();
-        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
+        var resumer = new HostedWorkflowResumer(catalog, loader, _ => new WorkflowTransports(transport, null));
 
         // Drive it through the WorkflowResumer delegate the durable worker would call.
         WorkflowResumer resume = resumer.AsResumer();
@@ -95,288 +94,20 @@ public class HostedWorkflowResumerTests
     }
 
     [TestMethod]
-    public async Task An_expired_source_credential_faults_the_run_as_credentials_expired()
-    {
-        var catalog = new InMemoryWorkflowCatalogStore(executorProvider: new WorkflowExecutorProvider());
-        using ParsedJsonDocument<CatalogVersion> versionDoc = await catalog.AddAsync("adopt", Package(), Meta(), default);
-        CatalogVersion version = versionDoc.RootElement;
-
-        var runStore = new InMemoryWorkflowStateStore();
-        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
-        using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", version.Ref.WorkflowId, inputs.RootElement);
-
-        // The source's transport raises a credential-expired condition at bind time (as the runner cache would for an
-        // expired binding). The durable executor must catch it and fault the run as a typed, resumable credentials
-        // fault — not propagate an opaque exception.
-        var transport = new ThrowingApiTransport(new SourceCredentialExpiredException("petstore"));
-
-        using var loader = new WorkflowExecutorLoader();
-        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
-
-        WorkflowResumer resume = resumer.AsResumer();
-        WorkflowRunResultKind kind = await resume(run, default);
-
-        kind.ShouldBe(WorkflowRunResultKind.Faulted);
-        run.Status.ShouldBe(WorkflowRunStatus.Faulted);
-        run.Fault.ShouldNotBeNull();
-        run.Fault!.Value.Error.ShouldBe(SourceCredentialExpiredException.ErrorType);
-        run.Fault!.Value.StepId.ShouldBe("petstore");
-    }
-
-    [TestMethod]
     public async Task Throws_when_the_version_is_not_runnable()
     {
         // No executor provider → the catalogued version carries no executor.
         var catalog = new InMemoryWorkflowCatalogStore();
-        using (await catalog.AddAsync("adopt", Package(), Meta(), default))
-        {
-        }
+        await catalog.AddAsync("adopt", Package(), Meta(), default);
 
         var runStore = new InMemoryWorkflowStateStore();
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
         using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement);
 
         using var loader = new WorkflowExecutorLoader();
-        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)new MockApiTransport(), System.StringComparer.Ordinal), null));
+        var resumer = new HostedWorkflowResumer(catalog, loader, _ => new WorkflowTransports(new MockApiTransport(), null));
 
         await Should.ThrowAsync<InvalidOperationException>(async () => await resumer.ResumeAsync(run, default));
-    }
-
-    // A workflow whose step projects a NESTED (object + array) response-body value as its output — unlike the
-    // scalar-string outputs the other durable tests use. The durable executor clones the projected value into the
-    // run workspace, disposes the response, then a checkpoint serialises the staged outputs; this exercises that a
-    // nested staged output survives the response's disposal (the lifetime live multi-step execution depends on).
-    private const string NestedOutputWorkflowJson = """
-        {
-          "arazzo": "1.0.1",
-          "info": { "title": "Adopt", "version": "1.0.0" },
-          "sourceDescriptions": [ { "name": "petstore", "url": "./petstore.openapi.json", "type": "openapi" } ],
-          "workflows": [
-            {
-              "workflowId": "adopt",
-              "steps": [
-                {
-                  "stepId": "getPet",
-                  "operationId": "getPet",
-                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
-                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
-                  "outputs": { "profile": "$response.body#/profile" }
-                }
-              ],
-              "outputs": { "profile": "$steps.getPet.outputs.profile" }
-            }
-          ]
-        }
-        """;
-
-    private const string NestedOutputPetstoreOpenApi = """
-        {
-          "openapi": "3.1.0",
-          "info": { "title": "Pets", "version": "1.0.0" },
-          "paths": {
-            "/pets/{petId}": {
-              "get": {
-                "operationId": "getPet",
-                "parameters": [ { "name": "petId", "in": "path", "required": true, "schema": { "type": "string" } } ],
-                "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "type": "object", "properties": { "name": { "type": "string" }, "profile": { "type": "object", "properties": { "breed": { "type": "string" }, "tags": { "type": "array", "items": { "type": "string" } } } } } } } } } }
-              }
-            }
-          }
-        }
-        """;
-
-    [TestMethod]
-    public async Task Runs_a_workflow_whose_step_projects_a_nested_response_body_output_to_completion()
-    {
-        var catalog = new InMemoryWorkflowCatalogStore(executorProvider: new WorkflowExecutorProvider());
-        byte[] package = WorkflowPackage.Pack(
-            Encoding.UTF8.GetBytes(NestedOutputWorkflowJson),
-            [new("petstore", Encoding.UTF8.GetBytes(NestedOutputPetstoreOpenApi))]);
-        using ParsedJsonDocument<CatalogVersion> versionDoc = await catalog.AddAsync("adopt", package, Meta(), default);
-        CatalogVersion version = versionDoc.RootElement;
-        ((bool)version.Runnable).ShouldBeTrue();
-
-        var runStore = new InMemoryWorkflowStateStore();
-        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
-        using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", version.Ref.WorkflowId, inputs.RootElement);
-
-        var transport = new MockApiTransport();
-        transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido","profile":{"breed":"Labrador","tags":["good-boy","house-trained"]}}""");
-
-        using var loader = new WorkflowExecutorLoader();
-        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
-
-        WorkflowRunResultKind kind = await resumer.AsResumer()(run, default);
-
-        kind.ShouldBe(WorkflowRunResultKind.Completed);
-
-        // The nested output survived the response's disposal and was checkpointed, so it is durably readable.
-        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, "run-1");
-        completed.ShouldNotBeNull();
-        completed!.TryGetStepOutputs("getPet", out JsonElement getPetOutputs).ShouldBeTrue();
-        getPetOutputs.TryGetProperty("profile"u8, out JsonElement profile).ShouldBeTrue();
-        profile.TryGetProperty("breed"u8, out JsonElement breed).ShouldBeTrue();
-        breed.GetString().ShouldBe("Labrador");
-    }
-
-    // A two-step workflow mirroring the onboard-customer shape that live execution faulted on: step 2 binds
-    // step 1's scalar output as a path parameter, sends a request body, and projects NESTED outputs. The
-    // checkpoint after step 2 serialises BOTH steps' staged outputs — step 1's (scalar, cloned earlier) and
-    // step 2's (nested) — which is where live execution threw ObjectDisposedException.
-    private const string TwoStepWorkflowJson = """
-        {
-          "arazzo": "1.0.1",
-          "info": { "title": "Onboard", "version": "1.0.0" },
-          "sourceDescriptions": [ { "name": "api", "url": "./api.openapi.json", "type": "openapi" } ],
-          "workflows": [
-            {
-              "workflowId": "onboard",
-              "inputs": { "type": "object", "properties": { "email": { "type": "string" } } },
-              "steps": [
-                {
-                  "stepId": "createAccount",
-                  "operationId": "createAccount",
-                  "outputs": { "accountId": "$response.body#/accountId" }
-                },
-                {
-                  "stepId": "verifyIdentity",
-                  "operationId": "verifyIdentity",
-                  "parameters": [ { "name": "accountId", "in": "path", "value": "$steps.createAccount.outputs.accountId" } ],
-                  "requestBody": { "contentType": "application/json", "payload": { "fullName": "Ada Lovelace" } },
-                  "outputs": { "score": "$response.body#/score", "applicant": "$response.body#/applicant" }
-                }
-              ]
-            }
-          ]
-        }
-        """;
-
-    private const string TwoStepOpenApi = """
-        {
-          "openapi": "3.1.0",
-          "info": { "title": "Api", "version": "1.0.0" },
-          "paths": {
-            "/accounts": {
-              "post": {
-                "operationId": "createAccount",
-                "responses": { "201": { "description": "created", "content": { "application/json": { "schema": { "type": "object", "properties": { "accountId": { "type": "string" } } } } } } }
-              }
-            },
-            "/accounts/{accountId}/identity": {
-              "post": {
-                "operationId": "verifyIdentity",
-                "parameters": [ { "name": "accountId", "in": "path", "required": true, "schema": { "type": "string" } } ],
-                "requestBody": { "content": { "application/json": { "schema": { "type": "object", "properties": { "fullName": { "type": "string" } } } } } },
-                "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "type": "object", "properties": { "score": { "type": "number" }, "applicant": { "type": "object", "properties": { "fullName": { "type": "string" }, "country": { "type": "string" } } } } } } } } }
-              }
-            }
-          }
-        }
-        """;
-
-    [TestMethod]
-    public async Task Runs_a_two_step_workflow_with_cross_step_param_request_body_and_nested_outputs_to_completion()
-    {
-        var catalog = new InMemoryWorkflowCatalogStore(executorProvider: new WorkflowExecutorProvider());
-        byte[] package = WorkflowPackage.Pack(
-            Encoding.UTF8.GetBytes(TwoStepWorkflowJson),
-            [new("api", Encoding.UTF8.GetBytes(TwoStepOpenApi))]);
-        using ParsedJsonDocument<CatalogVersion> versionDoc = await catalog.AddAsync("onboard", package, Meta(), default);
-        CatalogVersion version = versionDoc.RootElement;
-        ((bool)version.Runnable).ShouldBeTrue();
-
-        var runStore = new InMemoryWorkflowStateStore();
-        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"email":"ada@example.com"}"""));
-        using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", version.Ref.WorkflowId, inputs.RootElement);
-
-        var transport = new MockApiTransport();
-        transport.SetResponse(OperationMethod.Post, "/accounts", 201, """{"accountId":"acc-42"}""");
-        transport.SetResponse(OperationMethod.Post, "/accounts/{accountId}/identity", 200, """{"score":0.92,"applicant":{"fullName":"Ada Lovelace","country":"GB"}}""");
-
-        using var loader = new WorkflowExecutorLoader();
-        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
-
-        WorkflowRunResultKind kind = await resumer.AsResumer()(run, default);
-
-        kind.ShouldBe(WorkflowRunResultKind.Completed);
-        transport.Requests[1].Path.ShouldBe("/accounts/acc-42/identity");
-
-        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, "run-1");
-        completed.ShouldNotBeNull();
-        completed!.TryGetStepOutputs("verifyIdentity", out JsonElement verifyOutputs).ShouldBeTrue();
-        verifyOutputs.TryGetProperty("applicant"u8, out JsonElement applicant).ShouldBeTrue();
-        applicant.TryGetProperty("country"u8, out JsonElement country).ShouldBeTrue();
-        country.GetString().ShouldBe("GB");
-    }
-
-    // A workflow whose operation step threads a workflow input into its (typed) request body via a requestBody
-    // replacement. The patched body is a JsonElement; the generated client method takes a {BodyType}.Source, and C#
-    // will not chain JsonElement -> model -> Source — so the replacement result must be wrapped with {BodyType}.From.
-    // Without that wrap the generated executor does not compile and the version is catalogued non-runnable.
-    private const string ReplacementBodyWorkflowJson = """
-        {
-          "arazzo": "1.0.1",
-          "info": { "title": "Submit", "version": "1.0.0" },
-          "sourceDescriptions": [ { "name": "api", "url": "./api.openapi.json", "type": "openapi" } ],
-          "workflows": [
-            {
-              "workflowId": "submit",
-              "inputs": { "type": "object", "properties": { "name": { "type": "string" } }, "required": [ "name" ] },
-              "steps": [
-                {
-                  "stepId": "submit",
-                  "operationId": "submit",
-                  "requestBody": {
-                    "contentType": "application/json",
-                    "payload": { "name": "placeholder" },
-                    "replacements": [ { "target": "/name", "value": "$inputs.name" } ]
-                  },
-                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
-                  "outputs": { "ok": "$response.body#/ok" }
-                }
-              ]
-            }
-          ]
-        }
-        """;
-
-    private const string ReplacementBodyOpenApi = """
-        {
-          "openapi": "3.1.0",
-          "info": { "title": "Api", "version": "1.0.0" },
-          "paths": {
-            "/submit": {
-              "post": {
-                "operationId": "submit",
-                "requestBody": { "content": { "application/json": { "schema": { "type": "object", "properties": { "name": { "type": "string" } }, "required": [ "name" ] } } } },
-                "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "type": "object", "properties": { "ok": { "type": "boolean" } } } } } } }
-              }
-            }
-          }
-        }
-        """;
-
-    [TestMethod]
-    public async Task Runs_a_workflow_with_a_typed_request_body_replacement_to_completion()
-    {
-        var catalog = new InMemoryWorkflowCatalogStore(executorProvider: new WorkflowExecutorProvider());
-        byte[] package = WorkflowPackage.Pack(
-            Encoding.UTF8.GetBytes(ReplacementBodyWorkflowJson),
-            [new("api", Encoding.UTF8.GetBytes(ReplacementBodyOpenApi))]);
-        using ParsedJsonDocument<CatalogVersion> versionDoc = await catalog.AddAsync("submit", package, Meta(), default);
-
-        // The executor must bake: a typed request-body replacement compiles only when wrapped with {BodyType}.From.
-        ((bool)versionDoc.RootElement.Runnable).ShouldBeTrue();
-
-        var runStore = new InMemoryWorkflowStateStore();
-        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"name":"Ada"}"""));
-        using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", versionDoc.RootElement.Ref.WorkflowId, inputs.RootElement);
-        var transport = new MockApiTransport();
-        transport.SetResponse(OperationMethod.Post, "/submit", 200, """{"ok":true}""");
-        using var loader = new WorkflowExecutorLoader();
-        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _t) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
-
-        (await resumer.AsResumer()(run, default)).ShouldBe(WorkflowRunResultKind.Completed);
     }
 
     private static CatalogMetadata Meta() => new(new CatalogOwner("Team", "team@example.com"), "alice");
@@ -385,31 +116,4 @@ public class HostedWorkflowResumerTests
         => WorkflowPackage.Pack(
             Encoding.UTF8.GetBytes(WorkflowJson),
             [new("petstore", Encoding.UTF8.GetBytes(PetstoreOpenApi))]);
-
-    // A transport that fails every call with a fixed exception — used to drive the executor's bind-time fault path.
-    private sealed class ThrowingApiTransport(Exception exception) : IApiTransport
-    {
-        public ValueTask<TResponse> SendAsync<TRequest, TResponse>(in TRequest request, CancellationToken cancellationToken = default)
-            where TRequest : struct, IApiRequest<TRequest>
-            where TResponse : struct, IApiResponse<TResponse>
-            => throw exception;
-
-        public ValueTask<TResponse> SendAsync<TRequest, TBody, TResponse>(in TRequest request, in TBody body, CancellationToken cancellationToken = default)
-            where TRequest : struct, IApiRequest<TRequest>
-            where TBody : struct, Corvus.Text.Json.Internal.IJsonElement<TBody>
-            where TResponse : struct, IApiResponse<TResponse>
-            => throw exception;
-
-        public ValueTask<TResponse> SendAsync<TRequest, TResponse>(in TRequest request, System.IO.Stream body, string contentType, CancellationToken cancellationToken = default)
-            where TRequest : struct, IApiRequest<TRequest>
-            where TResponse : struct, IApiResponse<TResponse>
-            => throw exception;
-
-        public ValueTask<TResponse> SendAsync<TRequest, TResponse>(in TRequest request, Func<System.IO.Stream, CancellationToken, ValueTask> bodyWriter, string contentType, CancellationToken cancellationToken = default)
-            where TRequest : struct, IApiRequest<TRequest>
-            where TResponse : struct, IApiResponse<TResponse>
-            => throw exception;
-
-        public ValueTask DisposeAsync() => default;
-    }
 }

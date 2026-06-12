@@ -10,9 +10,9 @@ using Corvus.Text.Json.OpenApi;
 namespace Corvus.Text.Json.Arazzo.Durability;
 
 /// <summary>The transports a run executes through, resolved per run from its workflow's descriptor.</summary>
-/// <param name="ApiTransports">The API transports the workflow's OpenAPI operation steps call through, keyed by source-description name (<see cref="WorkflowDescriptor.Sources"/>) — one per API source the version uses. The resumer disposes them after the run.</param>
+/// <param name="ApiTransport">The API transport the workflow's OpenAPI operation steps call through. The resumer disposes it after the run.</param>
 /// <param name="MessageTransport">The message transport for AsyncAPI channel steps, or <see langword="null"/> when the workflow needs none. Its lifetime is owned by the binder (typically shared/long-lived), not the resumer.</param>
-public readonly record struct WorkflowTransports(IReadOnlyDictionary<string, IApiTransport> ApiTransports, IMessageTransport? MessageTransport);
+public readonly record struct WorkflowTransports(IApiTransport ApiTransport, IMessageTransport? MessageTransport);
 
 /// <summary>
 /// Binds a workflow's <see cref="WorkflowDescriptor"/> (its source names + transport needs) to the concrete
@@ -20,10 +20,8 @@ public readonly record struct WorkflowTransports(IReadOnlyDictionary<string, IAp
 /// and credentials.
 /// </summary>
 /// <param name="descriptor">The descriptor of the workflow about to run.</param>
-/// <param name="runTags">The run's own security tags (§14.2), so a credential-aware binder can resolve only the
-/// source credential bindings the run is entitled to use (§13). Empty for an unscoped run.</param>
 /// <returns>The transports for the run.</returns>
-public delegate WorkflowTransports WorkflowTransportBinder(WorkflowDescriptor descriptor, SecurityTagSet runTags);
+public delegate WorkflowTransports WorkflowTransportBinder(WorkflowDescriptor descriptor);
 
 /// <summary>
 /// Resolves a run's <see cref="WorkflowRun.WorkflowId"/> to a loaded <see cref="IHostedWorkflow"/> — fetching
@@ -68,19 +66,16 @@ public sealed class HostedWorkflowResumer
         ArgumentNullException.ThrowIfNull(run);
 
         IHostedWorkflow hosted = await this.ResolveAsync(run.WorkflowId, cancellationToken).ConfigureAwait(false);
-        WorkflowTransports transports = this.transportBinder(hosted.Descriptor, run.SecurityTags);
+        WorkflowTransports transports = this.transportBinder(hosted.Descriptor);
 
         using JsonWorkspace workspace = JsonWorkspace.Create();
         try
         {
-            return await hosted.RunAsync(transports.ApiTransports, transports.MessageTransport, workspace, run.Inputs, run, cancellationToken).ConfigureAwait(false);
+            return await hosted.RunAsync(transports.ApiTransport, transports.MessageTransport, workspace, run.Inputs, run, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
-            foreach (IApiTransport apiTransport in transports.ApiTransports.Values)
-            {
-                await apiTransport.DisposeAsync().ConfigureAwait(false);
-            }
+            await transports.ApiTransport.DisposeAsync().ConfigureAwait(false);
         }
     }
 
@@ -103,19 +98,14 @@ public sealed class HostedWorkflowResumer
             return cached.Workflow;
         }
 
-        // The version document is owned here only to read its hash (an owned copy, safe after dispose).
-        string hash;
-        using (ParsedJsonDocument<CatalogVersion> versionDoc = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false)
-            ?? throw new InvalidOperationException($"Version {versionNumber} of '{baseWorkflowId}' is not in the catalog."))
-        {
-            hash = (string)versionDoc.RootElement.Hash;
-        }
+        CatalogVersion version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false)
+            ?? throw new InvalidOperationException($"Version {versionNumber} of '{baseWorkflowId}' is not in the catalog.");
 
         ReadOnlyMemory<byte> assembly = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorDocumentName, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Version {versionNumber} of '{baseWorkflowId}' is not runnable (no executor in the package).");
         ReadOnlyMemory<byte> manifest = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorManifestDocumentName, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Version {versionNumber} of '{baseWorkflowId}' has an executor but no manifest.");
 
-        return this.loader.Load(baseWorkflowId, versionNumber, assembly, manifest, hash).Workflow;
+        return this.loader.Load(baseWorkflowId, versionNumber, assembly, manifest, version.Hash).Workflow;
     }
 }
