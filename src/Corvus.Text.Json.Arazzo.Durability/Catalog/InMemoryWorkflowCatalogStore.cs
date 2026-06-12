@@ -58,7 +58,8 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore
                 Sources: projection.Sources,
                 Hash: projection.Hash,
                 CreatedBy: metadata.CreatedBy,
-                CreatedAt: now);
+                CreatedAt: now,
+                Runnable: projection.HasExecutor);
 
             this.versions[SortKey(baseWorkflowId, versionNumber)] = new Stored(version, projection.CanonicalPackage.ToArray());
             return ValueTask.FromResult(version);

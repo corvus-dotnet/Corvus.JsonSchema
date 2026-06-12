@@ -15,7 +15,7 @@ using Corvus.Text.Json.OpenApi;
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
 /// <summary>
-/// Parameters for the GetCatalogExecutorManifest operation (GET /catalog/{baseWorkflowId}/versions/{versionNumber}/executorManifest).
+/// Parameters for the GetCatalogExecutorManifest operation (GET /catalog/{baseWorkflowId}/versions/{versionNumber}/executor-manifest).
 /// </summary>
 /// <remarks>Returns the executor manifest baked alongside the compiled assembly — the target framework, the assembly digest binding the DLL to this version, the entry type, and the declared sources — so a runner can verify and load the executor. 404 if the version is not runnable (carries no baked executor).</remarks>
 public readonly struct GetCatalogExecutorManifestParams
