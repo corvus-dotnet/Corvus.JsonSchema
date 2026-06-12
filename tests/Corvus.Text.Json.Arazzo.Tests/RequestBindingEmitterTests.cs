@@ -51,15 +51,15 @@ public class RequestBindingEmitterTests
             "Acme.Pets.NewPet"));
 
     [TestMethod]
-    public void Expression_resolves_to_a_JsonElement_passed_straight_as_the_source()
+    public void Expression_resolves_to_a_JsonElement_re_wrapped_as_the_source()
     {
         RequestBindingCode code = Emit([new StepArgument("petId", "$inputs.petId")]);
 
         code.Statements.ShouldContain("((JsonElement)inputs).TryGetProperty(\"petId\"u8, out JsonElement petIdValue);");
 
-        // No reification, no From — the JsonElement is the Source.
-        code.NamedArguments.ShouldContain("petId: petIdValue");
-        code.NamedArguments.ShouldNotContain(a => a.Contains(".From(", StringComparison.Ordinal));
+        // The resolved JsonElement is re-wrapped to the parameter's model type with From (a free
+        // re-interpretation of the same backing JSON), which then converts to the client's {Type}.Source.
+        code.NamedArguments.ShouldContain("petId: Acme.Pets.JsonString.From(petIdValue)");
     }
 
     [TestMethod]
@@ -107,7 +107,7 @@ public class RequestBindingEmitterTests
         ]);
 
         code.Fields.ShouldContain("private static readonly ParsedJsonDocument<JsonElement> GetPet_Limit = ParsedJsonDocument<JsonElement>.Parse(");
-        code.NamedArguments.ShouldContain("limit: GetPet_Limit.RootElement");
+        code.NamedArguments.ShouldContain("limit: Acme.Pets.JsonInt32.From(GetPet_Limit.RootElement)");
     }
 
     [TestMethod]
@@ -146,7 +146,7 @@ public class RequestBindingEmitterTests
     {
         RequestBindingCode code = Emit([new StepArgument("petId", "$inputs.petId")]);
 
-        code.NamedArguments.ShouldContain("petId: petIdValue");
+        code.NamedArguments.ShouldContain("petId: Acme.Pets.JsonString.From(petIdValue)");
         code.NamedArguments.ShouldNotContain(a => a.StartsWith("limit:", StringComparison.Ordinal));
     }
 
@@ -157,15 +157,14 @@ public class RequestBindingEmitterTests
     }
 
     [TestMethod]
-    public void Expression_request_body_is_passed_straight_as_the_body_source()
+    public void Expression_request_body_is_re_wrapped_as_the_body_source()
     {
         RequestBindingCode code = RequestBindingEmitter.Emit(
             CreatePet, [], "context", "CreatePet_", NoSteps, "inputs", null,
             new StepBody("$inputs.pet", ArgumentValueKind.Expression));
 
         code.Statements.ShouldContain("((JsonElement)inputs).TryGetProperty(\"pet\"u8, out JsonElement bodyValue);");
-        code.NamedArguments.ShouldContain("body: bodyValue");
-        code.NamedArguments.ShouldNotContain(a => a.Contains(".From(", StringComparison.Ordinal));
+        code.NamedArguments.ShouldContain("body: Acme.Pets.NewPet.From(bodyValue)");
     }
 
     [TestMethod]

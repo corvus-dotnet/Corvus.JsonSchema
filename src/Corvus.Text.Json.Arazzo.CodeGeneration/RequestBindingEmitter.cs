@@ -13,12 +13,13 @@ namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 /// </summary>
 /// <remarks>
 /// The generated client method takes each value as a <c>{Type}.Source</c> and builds it into its own
-/// workspace, so the executor passes the cheapest source and never reifies a throwaway document:
-/// a runtime-expression result flows in as the resolved <see cref="JsonElement"/> (an
-/// implicit <c>Source</c>); a literal scalar is the C# literal itself (<c>true</c>, <c>10</c>,
-/// <c>"x"u8</c>); a literal object/array is a parse-once constant; an interpolation is built into a
-/// pooled UTF-8 builder. There is no <c>{Type}.From(...)</c> — the implicit <c>Source</c> conversions
-/// do the binding.
+/// workspace, so the executor passes the cheapest source: a runtime-expression result (a
+/// <see cref="JsonElement"/>) and a parse-once object/array constant are re-wrapped to the parameter type
+/// via <c>{Type}.From(...)</c> — a free re-interpretation of the same backing JSON, not a copy — which then
+/// converts to <c>{Type}.Source</c>; a literal scalar is the C# literal itself (<c>true</c>, <c>10</c>,
+/// <c>"x"u8</c>) and an interpolation is built into a pooled UTF-8 builder, each binding directly through a
+/// <c>Source</c> implicit conversion. (A raw <see cref="JsonElement"/> cannot bind to <c>{Type}.Source</c>
+/// directly: C# will not chain the two user-defined conversions <c>JsonElement → {Type} → Source</c>.)
 /// </remarks>
 public static class RequestBindingEmitter
 {
@@ -96,6 +97,17 @@ public static class RequestBindingEmitter
     }
 
     /// <summary>
+    /// Converts a <see cref="JsonElement"/> expression to a generated model type with the model's
+    /// <c>From</c> factory (a free re-wrap of the same backing JSON — see Corvus.Text.Json conversion
+    /// semantics) so the model's single implicit conversion to <c>{Type}.Source</c> applies at the client
+    /// call site (C# does not chain the two user-defined conversions <c>JsonElement → model → Source</c>).
+    /// When the target is itself <see cref="JsonElement"/> (e.g. a request-body payload replacement that
+    /// feeds <c>TryAdd</c> rather than a <c>Source</c>) the value is already correct, so it is passed through.
+    /// </summary>
+    internal static string ConvertToSourceType(string expression, string typeName)
+        => typeName == "Corvus.Text.Json.JsonElement" ? expression : $"{typeName}.From({expression})";
+
+    /// <summary>
     /// Emits any fields/statements needed to produce a value and returns the C# expression to pass as
     /// the client parameter's <c>{Type}.Source</c> (relying on its implicit conversions).
     /// </summary>
@@ -118,10 +130,11 @@ public static class RequestBindingEmitter
         switch (kind)
         {
             case ArgumentValueKind.Expression:
-                // Runtime expression → resolve to a JsonElement (a reference into an existing document),
-                // passed straight in as a Source.
+                // Runtime expression → resolve to a JsonElement (a reference into an existing document).
+                // Re-wrap to the parameter's model type with From so the single model → {Type}.Source implicit
+                // conversion applies at the call site (C# will not chain JsonElement → model → Source itself).
                 ValueResolution.Emit(fields, statements, value, local, contextVariable, stepOutputLocals, fieldName, inputsVariable, inputAccessors);
-                return local;
+                return ConvertToSourceType(local, typeName);
 
             case ArgumentValueKind.Interpolation:
                 // Inline the template (literal segments + statically-navigated $inputs/$steps fragments
@@ -158,15 +171,17 @@ public static class RequestBindingEmitter
                 // the run workspace (resolving $inputs/$steps; there is no message/response source for a
                 // request) and pass the resulting JsonElement as the client method's Source. The generated
                 // client materialises the Source synchronously, so the workspace-built value is safe.
-                return JsonTemplateEmitter.EmitComposite(
-                    propertyName, value, "workspace", default, inputsVariable, stepOutputLocals, inputAccessors, fields, statements, $"{fieldName}Tmpl");
+                return ConvertToSourceType(
+                    JsonTemplateEmitter.EmitComposite(
+                        propertyName, value, "workspace", default, inputsVariable, stepOutputLocals, inputAccessors, fields, statements, $"{fieldName}Tmpl"),
+                    typeName);
 
             default:
                 // Object/array constant: parsed once into a standalone document, passed as a Source.
                 fields.Append("private static readonly ParsedJsonDocument<JsonElement> ").Append(fieldName)
                     .Append(" = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(")
                     .Append(EmitText.Quote(value)).AppendLine("));");
-                return $"{fieldName}.RootElement";
+                return ConvertToSourceType($"{fieldName}.RootElement", typeName);
         }
     }
 
