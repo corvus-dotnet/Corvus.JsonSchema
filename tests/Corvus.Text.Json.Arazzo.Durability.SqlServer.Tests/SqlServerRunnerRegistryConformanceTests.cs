@@ -45,7 +45,7 @@ public sealed class SqlServerRunnerRegistryConformanceTests : RunnerRegistryConf
         {
             await connection.OpenAsync();
             await using SqlCommand reset = connection.CreateCommand();
-            reset.CommandText = "DROP TABLE IF EXISTS runner_hosted_versions; DROP TABLE IF EXISTS runner_registrations;";
+            reset.CommandText = "DROP TABLE IF EXISTS runner_registrations;";
             await reset.ExecuteNonQueryAsync();
         }
 

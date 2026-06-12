@@ -2,8 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Globalization;
-
 using MySqlConnector;
 
 namespace Corvus.Text.Json.Arazzo.Durability.MySql;
@@ -19,19 +17,11 @@ public sealed class MySqlRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     private const string SchemaSql =
         """
         CREATE TABLE IF NOT EXISTS runner_registrations (
-            runner_id VARCHAR(255) COLLATE utf8mb4_bin NOT NULL,
+            runner_id VARCHAR(255) NOT NULL,
             last_seen_at BIGINT NOT NULL,
             doc LONGBLOB NOT NULL,
             PRIMARY KEY (runner_id),
             INDEX ix_runner_registrations_last_seen (last_seen_at)
-        );
-        CREATE TABLE IF NOT EXISTS runner_hosted_versions (
-            runner_id VARCHAR(255) COLLATE utf8mb4_bin NOT NULL,
-            base_workflow_id VARCHAR(255) NOT NULL,
-            version_number INT NOT NULL,
-            PRIMARY KEY (runner_id, base_workflow_id, version_number),
-            INDEX ix_runner_hosted_versions_version (base_workflow_id, version_number),
-            CONSTRAINT fk_runner_hosted FOREIGN KEY (runner_id) REFERENCES runner_registrations (runner_id) ON DELETE CASCADE
         );
         """;
 
@@ -109,58 +99,18 @@ public sealed class MySqlRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     /// <inheritdoc/>
     public async ValueTask RegisterAsync(RunnerRegistration registration, CancellationToken cancellationToken)
     {
-        string runnerId = registration.RunnerIdValue;
-        await using MySqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        await using MySqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-
-        await using (MySqlCommand upsert = connection.CreateCommand())
-        {
-            upsert.Transaction = transaction;
-            upsert.CommandText =
-                """
-                INSERT INTO runner_registrations (runner_id, last_seen_at, doc)
-                VALUES (@runnerId, @lastSeenAt, @doc)
-                ON DUPLICATE KEY UPDATE last_seen_at = VALUES(last_seen_at), doc = VALUES(doc);
-                """;
-            upsert.Parameters.AddWithValue("@runnerId", runnerId);
-            upsert.Parameters.AddWithValue("@lastSeenAt", registration.LastSeenAtValue.ToUnixTimeMilliseconds());
-            upsert.Parameters.AddWithValue("@doc", PersistedJson.ToArray(registration, static (Utf8JsonWriter writer, in RunnerRegistration r) => r.WriteTo(writer)));
-            await upsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        }
-
-        // Re-project this runner's hosting index: drop its old rows, then insert one per loaded hosted version.
-        await using (MySqlCommand clear = connection.CreateCommand())
-        {
-            clear.Transaction = transaction;
-            clear.CommandText = "DELETE FROM runner_hosted_versions WHERE runner_id = @runnerId;";
-            clear.Parameters.AddWithValue("@runnerId", runnerId);
-            await clear.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        }
-
-        foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
-        {
-            await using MySqlCommand insert = connection.CreateCommand();
-            insert.Transaction = transaction;
-            insert.CommandText = "INSERT INTO runner_hosted_versions (runner_id, base_workflow_id, version_number) VALUES (@runnerId, @baseWorkflowId, @versionNumber);";
-            insert.Parameters.AddWithValue("@runnerId", runnerId);
-            insert.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
-            insert.Parameters.AddWithValue("@versionNumber", versionNumber);
-            await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        }
-
-        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(baseWorkflowId);
         await using MySqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using MySqlCommand command = connection.CreateCommand();
-        command.CommandText = "SELECT EXISTS(SELECT 1 FROM runner_hosted_versions WHERE base_workflow_id = @baseWorkflowId AND version_number = @versionNumber);";
-        command.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
-        command.Parameters.AddWithValue("@versionNumber", versionNumber);
-        return Convert.ToInt64(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false)) != 0;
+        command.CommandText =
+            """
+            INSERT INTO runner_registrations (runner_id, last_seen_at, doc)
+            VALUES (@runnerId, @lastSeenAt, @doc)
+            ON DUPLICATE KEY UPDATE last_seen_at = VALUES(last_seen_at), doc = VALUES(doc);
+            """;
+        command.Parameters.AddWithValue("@runnerId", registration.RunnerIdValue);
+        command.Parameters.AddWithValue("@lastSeenAt", registration.LastSeenAtValue.ToUnixTimeMilliseconds());
+        command.Parameters.AddWithValue("@doc", registration.ToJsonBytes());
+        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -169,27 +119,27 @@ public sealed class MySqlRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         ArgumentNullException.ThrowIfNull(runnerId);
         await using MySqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
 
-        // A heartbeat advances only last_seen_at and the document's mirrored lastSeenAt. Rather than read the whole
-        // registration back and rewrite it client-side (two round-trips plus a full-payload rewrite), patch both in
-        // one statement. The doc is a UTF-8 LONGBLOB, so CONVERT(... USING utf8mb4) decodes it as JSON (the explicit
-        // charset is correct — unlike a code-page CAST), JSON_SET replaces the one field, and CAST(... AS BINARY)
-        // re-encodes — entirely server-side. The ISO-8601 string is the caller's round-trip "O" form (the
-        // representation the generated model emits and parses). The update is unconditional (last-writer-wins, the
-        // intended heartbeat semantics); a zero row count means the runner is unknown. (JSON_SET normalises the
-        // document — key order and inter-token spacing change — which is safe: the sole reader parses by name.)
+        byte[]? existing;
+        await using (MySqlCommand select = connection.CreateCommand())
+        {
+            select.CommandText = "SELECT doc FROM runner_registrations WHERE runner_id = @runnerId;";
+            select.Parameters.AddWithValue("@runnerId", runnerId);
+            existing = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) as byte[];
+        }
+
+        if (existing is null)
+        {
+            return false;
+        }
+
+        RunnerRegistration updated = RunnerRegistration.FromJson(existing).WithLastSeenAt(at);
         await using MySqlCommand update = connection.CreateCommand();
-        update.CommandText =
-            """
-            UPDATE runner_registrations
-            SET last_seen_at = @lastSeenAt,
-                doc = CAST(JSON_SET(CONVERT(doc USING utf8mb4), '$.lastSeenAt', @lastSeenIso) AS BINARY)
-            WHERE runner_id = @runnerId;
-            """;
+        update.CommandText = "UPDATE runner_registrations SET last_seen_at = @lastSeenAt, doc = @doc WHERE runner_id = @runnerId;";
         update.Parameters.AddWithValue("@runnerId", runnerId);
         update.Parameters.AddWithValue("@lastSeenAt", at.ToUnixTimeMilliseconds());
-        update.Parameters.AddWithValue("@lastSeenIso", at.ToString("O", CultureInfo.InvariantCulture));
-        int affected = await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        return affected > 0;
+        update.Parameters.AddWithValue("@doc", updated.ToJsonBytes());
+        await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        return true;
     }
 
     /// <inheritdoc/>
@@ -206,115 +156,6 @@ public sealed class MySqlRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         }
 
         return result;
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<RunnerRegistryPage> ListAsync(int limit, JsonString pageToken, CancellationToken cancellationToken)
-    {
-        int pageSize = limit > 0 ? limit : RunnerRegistryPage.DefaultPageSize;
-
-        // Decode the keyset cursor from the request's page token; the runner id reifies to a string only at the
-        // MySqlConnector parameter boundary (a genuine DB-param leaf) — undefined token = first page.
-        string? after = RunnerRegistryContinuationToken.DecodeCursorToString(pageToken);
-
-        await using MySqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        await using MySqlCommand select = connection.CreateCommand();
-
-        // Native keyset page: runner_id is the PRIMARY KEY declared COLLATE utf8mb4_bin, so the index gives a byte-ordinal
-        // order (the same order the in-memory pager sorts by) and drives both the range seek and the ordering; LIMIT bounds
-        // the read to one page — never a full SELECT + parse of every registration. @limit is pageSize + 1 to look ahead.
-        select.CommandText =
-            """
-            SELECT doc FROM runner_registrations
-            WHERE (@after IS NULL OR runner_id > @after)
-            ORDER BY runner_id
-            LIMIT @limit;
-            """;
-        select.Parameters.AddWithValue("@after", (object?)after ?? DBNull.Value);
-        select.Parameters.AddWithValue("@limit", pageSize + 1);
-
-        var page = new List<RunnerRegistration>(pageSize + 1);
-        await using MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
-        {
-            page.Add(RunnerRegistration.FromJson((byte[])reader[0]));
-        }
-
-        if (page.Count <= pageSize)
-        {
-            return RunnerRegistryPage.Create(page);
-        }
-
-        // A (pageSize+1)th row exists → there is a next page; drop it and emit the token from the last kept row's id
-        // (bytes-native: base64url straight over the runner id's persisted UTF-8, no managed id string).
-        page.RemoveAt(page.Count - 1);
-        using UnescapedUtf8JsonString lastId = page[page.Count - 1].RunnerId.GetUtf8String();
-        return RunnerRegistryPage.Create(page, lastId.Span);
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<RunnerRegistryPage> ListAsync(AccessContext context, int limit, JsonString pageToken, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-
-        if (context.ReadReach is null)
-        {
-            // Unrestricted read reach (e.g. the trusted system path): no row is filtered, so the bounded LIMIT keyset query
-            // (one page, no per-row tag work) is exactly right — no full read, no in-memory filter.
-            return await this.ListAsync(limit, pageToken, cancellationToken).ConfigureAwait(false);
-        }
-
-        int pageSize = limit > 0 ? limit : RunnerRegistryPage.DefaultPageSize;
-        string? after = RunnerRegistryContinuationToken.DecodeCursorToString(pageToken);
-
-        await using MySqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        await using MySqlCommand select = connection.CreateCommand();
-
-        // Reach (§14.2) is a per-row ABAC predicate, not expressible as SQL, so runner_id COLLATE utf8mb4_bin drives an
-        // ordered range SEEK past the cursor and rows are streamed + reach-filtered in flight — the reader is consumed only
-        // until the page fills, never the full SELECT + parse of every registration the in-memory fallback does. (No LIMIT:
-        // filtered-out rows don't count toward the page, so the page-fill + one-row look-ahead governs how far the scan reads.)
-        select.CommandText =
-            """
-            SELECT doc FROM runner_registrations
-            WHERE (@after IS NULL OR runner_id > @after)
-            ORDER BY runner_id;
-            """;
-        select.Parameters.AddWithValue("@after", (object?)after ?? DBNull.Value);
-
-        var page = new List<RunnerRegistration>(pageSize);
-        bool hasMore = false;
-        await using MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
-        {
-            RunnerRegistration runner = RunnerRegistration.FromJson((byte[])reader[0]);
-
-            // reachTags is absent on a runner serving an unscoped environment; an empty tag set fails a scoped reach
-            // (fail-closed), so such a runner is invisible to a tenant-scoped caller — matching the in-memory pager.
-            SecurityTagSet tags = runner.ReachTags.IsNotUndefined()
-                ? SecurityTagSet.CopyFrom(runner.ReachTags)
-                : SecurityTagSet.Empty;
-            if (!context.Admits(AccessVerb.Read, tags))
-            {
-                continue;
-            }
-
-            if (page.Count == pageSize)
-            {
-                hasMore = true; // a further reach-visible row exists → there is a next page after the last included row
-                break;
-            }
-
-            page.Add(runner);
-        }
-
-        if (!hasMore)
-        {
-            return RunnerRegistryPage.Create(page);
-        }
-
-        using UnescapedUtf8JsonString lastId = page[page.Count - 1].RunnerId.GetUtf8String();
-        return RunnerRegistryPage.Create(page, lastId.Span);
     }
 
     /// <inheritdoc/>

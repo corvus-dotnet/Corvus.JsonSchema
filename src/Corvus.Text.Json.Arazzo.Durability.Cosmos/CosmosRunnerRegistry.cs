@@ -2,34 +2,28 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Globalization;
 using System.Net;
-using System.Runtime.CompilerServices;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Azure.Cosmos;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
 
 /// <summary>
 /// An Azure Cosmos DB-backed <see cref="IRunnerRegistry"/>. Each <see cref="RunnerRegistration"/> is stored as a
-/// document keyed by (and partitioned on) its runner id, holding the canonical registration JSON as a nested
-/// <c>doc</c> object plus a queryable top-level <c>lastSeenAt</c> used for pruning. Register is a single-partition
-/// upsert and heartbeat is a single-partition partial update (a <c>PatchItem</c> that replaces the top-level
-/// <c>lastSeenAt</c> and the nested <c>doc.lastSeenAt</c> mirror — no read), while list and prune run as
-/// cross-partition queries.
+/// document keyed by (and partitioned on) its runner id, holding the canonical registration JSON as a base64 byte
+/// array plus a queryable <c>lastSeenAt</c> column used for pruning. Register is a single-partition upsert and
+/// heartbeat is a single-partition read-modify-write, while list and prune run as cross-partition queries.
 /// </summary>
 /// <remarks>
-/// Documents are written and read through the Cosmos <em>stream</em> APIs so persistence flows through the
-/// <see cref="RunnerDocument"/> Corvus.Text.Json schema type and never the SDK's reflection serializer. Provision
-/// the database and container once with <see cref="PrepareAsync(string, string, CancellationToken)"/>, then open
-/// the registry with <see cref="ConnectAsync(string, string, CancellationToken)"/>; the overloads taking a
-/// <see cref="CosmosClient"/> let callers configure the client (for example a least-privileged data-plane managed
-/// identity) themselves.
+/// Provision the database and container once with <see cref="PrepareAsync(string, string, CancellationToken)"/>,
+/// then open the registry with <see cref="ConnectAsync(string, string, CancellationToken)"/>; the overloads taking
+/// a <see cref="CosmosClient"/> let callers configure the client (for example a least-privileged data-plane
+/// managed identity) themselves.
 /// </remarks>
 public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
 {
     private const string RunnersContainerId = "runners";
-
-    private static readonly byte[] IdProperty = "id"u8.ToArray();
 
     private readonly CosmosClient client;
     private readonly Container runners;
@@ -120,41 +114,19 @@ public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         return new ValueTask<CosmosRunnerRegistry>(Connect(client, databaseName, ownsClient: false));
     }
 
-    /// <summary>The Cosmos client options the registry relies on.</summary>
-    /// <remarks>
-    /// The registry reads and writes through the Cosmos stream APIs and serializes documents with
-    /// Corvus.Text.Json, so no SDK serializer is configured.
-    /// </remarks>
+    /// <summary>The serializer options the registry relies on (camelCase property names, null properties omitted).</summary>
     /// <returns>The Cosmos client options used by the connection-string overloads.</returns>
-    public static CosmosClientOptions CreateClientOptions() => new();
+    public static CosmosClientOptions CreateClientOptions() => new()
+    {
+        UseSystemTextJsonSerializerWithOptions = SerializerOptions,
+    };
 
     /// <inheritdoc/>
     public async ValueTask RegisterAsync(RunnerRegistration registration, CancellationToken cancellationToken)
     {
         string runnerId = registration.RunnerIdValue;
-        using var stream = RunnerDocument.WriteEnvelopeStream(runnerId, registration);
-        using ResponseMessage response = await this.runners.UpsertItemStreamAsync(stream, new PartitionKey(runnerId), cancellationToken: cancellationToken).ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(baseWorkflowId);
-        var definition = new QueryDefinition(
-            "SELECT VALUE COUNT(1) FROM c JOIN h IN c.loadedVersions WHERE h.baseWorkflowId = @baseWorkflowId AND h.versionNumber = @versionNumber")
-            .WithParameter("@baseWorkflowId", baseWorkflowId)
-            .WithParameter("@versionNumber", versionNumber);
-
-        await foreach (ReadOnlyMemory<byte> element in this.QueryElementsAsync(definition, cancellationToken).ConfigureAwait(false))
-        {
-            if (CosmosJson.AsInt64OrNull(element) is > 0)
-            {
-                return true;
-            }
-        }
-
-        return false;
+        var document = RunnerDocument.From(runnerId, registration);
+        await this.runners.UpsertItemAsync(document, new PartitionKey(runnerId), cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -163,24 +135,20 @@ public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         ArgumentNullException.ThrowIfNull(runnerId);
         var partition = new PartitionKey(runnerId);
 
-        // A heartbeat advances only the timestamps. Rather than read the whole document back and rewrite the envelope
-        // (two round-trips plus a full-payload rewrite), patch the two mirrored fields server-side in one call: the
-        // queryable top-level lastSeenAt (epoch, used by prune) and the nested doc.lastSeenAt (the round-trip "O"
-        // string the read reconstructs from). The loaded-version projection is unaffected (a heartbeat never changes
-        // hosted versions). A NotFound means the runner is unknown.
-        PatchOperation[] operations =
-        [
-            PatchOperation.Replace("/lastSeenAt", at.ToUnixTimeMilliseconds()),
-            PatchOperation.Replace("/doc/lastSeenAt", at.ToString("O", CultureInfo.InvariantCulture)),
-        ];
-
-        using ResponseMessage response = await this.runners.PatchItemStreamAsync(runnerId, partition, operations, cancellationToken: cancellationToken).ConfigureAwait(false);
-        if (response.StatusCode == HttpStatusCode.NotFound)
+        RunnerDocument existing;
+        try
+        {
+            ItemResponse<RunnerDocument> read = await this.runners.ReadItemAsync<RunnerDocument>(runnerId, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
+            existing = read.Resource;
+        }
+        catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
             return false;
         }
 
-        response.EnsureSuccessStatusCode();
+        RunnerRegistration updated = RunnerRegistration.FromJson(existing.Doc).WithLastSeenAt(at);
+        var document = RunnerDocument.From(runnerId, updated);
+        await this.runners.UpsertItemAsync(document, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
         return true;
     }
 
@@ -189,144 +157,39 @@ public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     {
         var definition = new QueryDefinition("SELECT * FROM c");
         var result = new List<RunnerRegistration>();
-        await foreach (ReadOnlyMemory<byte> element in this.QueryElementsAsync(definition, cancellationToken).ConfigureAwait(false))
+        using FeedIterator<RunnerDocument> iterator = this.runners.GetItemQueryIterator<RunnerDocument>(definition);
+        while (iterator.HasMoreResults)
         {
-            result.Add(RunnerRegistration.FromJson(CosmosJson.GetRawValue(element, "doc"u8)));
+            FeedResponse<RunnerDocument> page = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
+            foreach (RunnerDocument document in page)
+            {
+                result.Add(RunnerRegistration.FromJson(document.Doc));
+            }
         }
 
         return result;
     }
 
     /// <inheritdoc/>
-    // This project generates its own RunnerDocument model, which emits a Cosmos-namespace JsonString (per-root type
-    // identity), so the seam parameter is fully qualified to the core JsonString IRunnerRegistry's signature uses.
-    public async ValueTask<RunnerRegistryPage> ListAsync(int limit, global::Corvus.Text.Json.Arazzo.Durability.JsonString pageToken, CancellationToken cancellationToken)
-    {
-        int pageSize = limit > 0 ? limit : RunnerRegistryPage.DefaultPageSize;
-
-        // Decode the keyset cursor; the runner id reifies to a string only for the Cosmos @after query parameter (leaf).
-        string? after = RunnerRegistryContinuationToken.DecodeCursorToString(pageToken);
-
-        // Native keyset page: order by the document id (== runner id; Cosmos orders strings ordinally, the same order the
-        // in-memory pager sorts by) and seek strictly past the cursor. The lazy stream iterator is drained only until one
-        // row beyond the page, so the read is bounded — never every registration.
-        string where = after is null ? string.Empty : " WHERE c.id > @after";
-        var definition = new QueryDefinition("SELECT * FROM c" + where + " ORDER BY c.id");
-        if (after is not null)
-        {
-            definition = definition.WithParameter("@after", after);
-        }
-
-        var page = new List<RunnerRegistration>(pageSize + 1);
-        bool hasMore = false;
-        await foreach (ReadOnlyMemory<byte> element in this.QueryElementsAsync(definition, cancellationToken).ConfigureAwait(false))
-        {
-            if (page.Count == pageSize)
-            {
-                hasMore = true; // a row beyond the page exists → there is a next page; stop early
-                break;
-            }
-
-            page.Add(RunnerRegistration.FromJson(CosmosJson.GetRawValue(element, "doc"u8)));
-        }
-
-        if (!hasMore)
-        {
-            return RunnerRegistryPage.Create(page);
-        }
-
-        using UnescapedUtf8JsonString lastId = page[page.Count - 1].RunnerId.GetUtf8String();
-        return RunnerRegistryPage.Create(page, lastId.Span);
-    }
-
-    /// <inheritdoc/>
-    // This project generates its own RunnerDocument model, which emits a Cosmos-namespace JsonString (per-root type
-    // identity), so the seam parameter is fully qualified to the core JsonString IRunnerRegistry's signature uses.
-    public async ValueTask<RunnerRegistryPage> ListAsync(AccessContext context, int limit, global::Corvus.Text.Json.Arazzo.Durability.JsonString pageToken, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-
-        if (context.ReadReach is null)
-        {
-            // Unrestricted read reach (e.g. the trusted system path): no row is filtered, so the bounded keyset query
-            // (one page, no per-row tag work) is exactly right — no full read, no in-memory filter.
-            return await this.ListAsync(limit, pageToken, cancellationToken).ConfigureAwait(false);
-        }
-
-        int pageSize = limit > 0 ? limit : RunnerRegistryPage.DefaultPageSize;
-
-        // Decode the keyset cursor; the runner id reifies to a string only for the Cosmos @after query parameter (leaf).
-        string? after = RunnerRegistryContinuationToken.DecodeCursorToString(pageToken);
-
-        // Reach (§14.2) is a per-row ABAC predicate, not expressible in the Cosmos query, so the query orders by the
-        // document id (== runner id; Cosmos orders strings ordinally, the same order the in-memory pager sorts by) and
-        // seeks strictly past the cursor, and rows are streamed + reach-filtered in flight. The lazy stream iterator is
-        // drained only until the page fills (with a one-row look-ahead), never every registration the in-memory fallback
-        // reads. (No page-size limit on the query: filtered-out rows don't count toward the page, so the page-fill +
-        // one-row look-ahead governs how far the scan reads.)
-        string where = after is null ? string.Empty : " WHERE c.id > @after";
-        var definition = new QueryDefinition("SELECT * FROM c" + where + " ORDER BY c.id");
-        if (after is not null)
-        {
-            definition = definition.WithParameter("@after", after);
-        }
-
-        var page = new List<RunnerRegistration>(pageSize);
-        bool hasMore = false;
-        await foreach (ReadOnlyMemory<byte> element in this.QueryElementsAsync(definition, cancellationToken).ConfigureAwait(false))
-        {
-            RunnerRegistration runner = RunnerRegistration.FromJson(CosmosJson.GetRawValue(element, "doc"u8));
-
-            // reachTags is absent on a runner serving an unscoped environment; an empty tag set fails a scoped reach
-            // (fail-closed), so such a runner is invisible to a tenant-scoped caller — matching the in-memory pager.
-            SecurityTagSet tags = runner.ReachTags.IsNotUndefined()
-                ? SecurityTagSet.CopyFrom(runner.ReachTags)
-                : SecurityTagSet.Empty;
-            if (!context.Admits(AccessVerb.Read, tags))
-            {
-                continue;
-            }
-
-            if (page.Count == pageSize)
-            {
-                hasMore = true; // a further reach-visible row exists → there is a next page after the last included row
-                break;
-            }
-
-            page.Add(runner);
-        }
-
-        if (!hasMore)
-        {
-            return RunnerRegistryPage.Create(page);
-        }
-
-        using UnescapedUtf8JsonString lastId = page[page.Count - 1].RunnerId.GetUtf8String();
-        return RunnerRegistryPage.Create(page, lastId.Span);
-    }
-
-    /// <inheritdoc/>
     public async ValueTask<int> PruneAsync(DateTimeOffset deadBefore, CancellationToken cancellationToken)
     {
-        var definition = new QueryDefinition("SELECT c.id FROM c WHERE c.lastSeenAt < @cutoff")
+        var definition = new QueryDefinition("SELECT * FROM c WHERE c.lastSeenAt < @cutoff")
             .WithParameter("@cutoff", deadBefore.ToUnixTimeMilliseconds());
 
         var stale = new List<string>();
-        await foreach (ReadOnlyMemory<byte> element in this.QueryElementsAsync(definition, cancellationToken).ConfigureAwait(false))
+        using FeedIterator<RunnerDocument> iterator = this.runners.GetItemQueryIterator<RunnerDocument>(definition);
+        while (iterator.HasMoreResults)
         {
-            if (CosmosJson.GetString(element, IdProperty) is { } runnerId)
+            FeedResponse<RunnerDocument> page = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
+            foreach (RunnerDocument document in page)
             {
-                stale.Add(runnerId);
+                stale.Add(document.Id);
             }
         }
 
         foreach (string runnerId in stale)
         {
-            using ResponseMessage response = await this.runners.DeleteItemStreamAsync(runnerId, new PartitionKey(runnerId), cancellationToken: cancellationToken).ConfigureAwait(false);
-            if (response.StatusCode != HttpStatusCode.NotFound)
-            {
-                response.EnsureSuccessStatusCode();
-            }
+            await this.runners.DeleteItemAsync<RunnerDocument>(runnerId, new PartitionKey(runnerId), cancellationToken: cancellationToken).ConfigureAwait(false);
         }
 
         return stale.Count;
@@ -343,6 +206,12 @@ public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         return default;
     }
 
+    private static readonly JsonSerializerOptions SerializerOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    };
+
     private static async ValueTask ProvisionAsync(CosmosClient client, string databaseName, CancellationToken cancellationToken)
     {
         Database database = await client.CreateDatabaseIfNotExistsAsync(databaseName, cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -358,18 +227,22 @@ public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         return new CosmosRunnerRegistry(client, runners, ownsClient);
     }
 
-    private async IAsyncEnumerable<ReadOnlyMemory<byte>> QueryElementsAsync(QueryDefinition query, [EnumeratorCancellation] CancellationToken cancellationToken)
+    private sealed class RunnerDocument
     {
-        using FeedIterator iterator = this.runners.GetItemQueryStreamIterator(query);
-        while (iterator.HasMoreResults)
+        [JsonPropertyName("id")]
+        public string Id { get; set; } = string.Empty;
+
+        [JsonPropertyName("lastSeenAt")]
+        public long LastSeenAt { get; set; }
+
+        [JsonPropertyName("doc")]
+        public byte[] Doc { get; set; } = [];
+
+        public static RunnerDocument From(string runnerId, RunnerRegistration registration) => new()
         {
-            using ResponseMessage response = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
-            using CosmosJson.RentedResponse page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
-            foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page.Memory))
-            {
-                yield return element;
-            }
-        }
+            Id = runnerId,
+            LastSeenAt = registration.LastSeenAtValue.ToUnixTimeMilliseconds(),
+            Doc = registration.ToJsonBytes(),
+        };
     }
 }

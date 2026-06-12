@@ -50,7 +50,7 @@ public sealed class MySqlRunnerRegistryConformanceTests : RunnerRegistryConforma
         await using (MySqlConnection connection = await dataSource.OpenConnectionAsync())
         {
             await using MySqlCommand reset = connection.CreateCommand();
-            reset.CommandText = "DROP TABLE IF EXISTS runner_hosted_versions; DROP TABLE IF EXISTS runner_registrations;";
+            reset.CommandText = "DROP TABLE IF EXISTS runner_registrations;";
             await reset.ExecuteNonQueryAsync();
         }
 

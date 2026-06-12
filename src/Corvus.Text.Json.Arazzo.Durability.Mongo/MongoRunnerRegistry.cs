@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using Corvus.Text.Json;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
@@ -11,9 +10,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Mongo;
 /// <summary>
 /// A MongoDB-backed <see cref="IRunnerRegistry"/>. Each <see cref="RunnerRegistration"/> is stored as a document
 /// in a dedicated <c>runner_registrations</c> collection, keyed by runner id, holding the canonical JSON document
-/// (a BSON binary) alongside a queryable <c>lastSeenAt</c> field (Unix milliseconds) used for pruning and a
-/// multikey <c>loadedVersions</c> projection (one <c>{ baseWorkflowId, versionNumber }</c> sub-document per loaded
-/// hosted version) used by <see cref="IsVersionHostedAsync"/>.
+/// (a BSON binary) alongside a queryable <c>lastSeenAt</c> field (Unix milliseconds) used for pruning.
 /// </summary>
 /// <remarks>
 /// The driver pools connections internally, so the registry is naturally concurrent. Create instances with
@@ -33,12 +30,6 @@ public sealed class MongoRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         this.ownsClient = ownsClient;
         IMongoDatabase database = client.GetDatabase(databaseName);
         this.registrations = database.GetCollection<BsonDocument>("runner_registrations");
-
-        // Multikey index over the queryable hosting projection, supporting IsVersionHostedAsync.
-        var indexKeys = Builders<BsonDocument>.IndexKeys
-            .Ascending("loadedVersions.baseWorkflowId")
-            .Ascending("loadedVersions.versionNumber");
-        this.registrations.Indexes.CreateOne(new CreateIndexModel<BsonDocument>(indexKeys));
     }
 
     /// <summary>Opens the registry for operation against a database.</summary>
@@ -80,51 +71,15 @@ public sealed class MongoRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     public async ValueTask RegisterAsync(RunnerRegistration registration, CancellationToken cancellationToken)
     {
         string runnerId = registration.RunnerIdValue;
-
-        byte[] doc = PersistedJson.ToArray(registration, static (Utf8JsonWriter writer, in RunnerRegistration r) => r.WriteTo(writer));
-
-        BsonDocument document = BuildDocument(registration, doc, registration.LastSeenAtValue.ToUnixTimeMilliseconds());
+        var document = new BsonDocument
+        {
+            ["_id"] = runnerId,
+            ["lastSeenAt"] = registration.LastSeenAtValue.ToUnixTimeMilliseconds(),
+            ["doc"] = new BsonBinaryData(registration.ToJsonBytes()),
+        };
 
         FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Eq("_id", runnerId);
         await this.registrations.ReplaceOneAsync(filter, document, new ReplaceOptions { IsUpsert = true }, cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(baseWorkflowId);
-
-        // $elemMatch ensures the same array element matches both base id and version.
-        FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.ElemMatch(
-            "loadedVersions",
-            Builders<BsonDocument>.Filter.Eq("baseWorkflowId", baseWorkflowId) & Builders<BsonDocument>.Filter.Eq("versionNumber", versionNumber));
-        return await this.registrations.Find(filter).Limit(1).AnyAsync(cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Builds the stored BSON document for a registration: the canonical JSON (clean) plus the queryable
-    /// <c>lastSeenAt</c> field and the multikey <c>loadedVersions</c> projection used by
-    /// <see cref="IsVersionHostedAsync"/>.
-    /// </summary>
-    private static BsonDocument BuildDocument(RunnerRegistration registration, byte[] doc, long lastSeenAtUnixMilliseconds)
-    {
-        var loadedVersions = new BsonArray();
-        foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
-        {
-            loadedVersions.Add(new BsonDocument
-            {
-                ["baseWorkflowId"] = baseWorkflowId,
-                ["versionNumber"] = versionNumber,
-            });
-        }
-
-        return new BsonDocument
-        {
-            ["_id"] = registration.RunnerIdValue,
-            ["lastSeenAt"] = lastSeenAtUnixMilliseconds,
-            ["doc"] = new BsonBinaryData(doc),
-            ["loadedVersions"] = loadedVersions,
-        };
     }
 
     /// <inheritdoc/>
@@ -138,16 +93,13 @@ public sealed class MongoRunnerRegistry : IRunnerRegistry, IAsyncDisposable
             return false;
         }
 
-        byte[] existingDoc = existing["doc"].AsBsonBinaryData.Bytes;
-        RunnerRegistration current = RunnerRegistration.FromJson(existingDoc);
-
-        byte[] doc = PersistedJson.ToArray((existingDoc, at), static (Utf8JsonWriter writer, in (byte[] Existing, DateTimeOffset At) ctx) =>
+        RunnerRegistration updated = RunnerRegistration.FromJson(existing["doc"].AsBsonBinaryData.Bytes).WithLastSeenAt(at);
+        var document = new BsonDocument
         {
-            using ParsedJsonDocument<RunnerRegistration> parsed = ParsedJsonDocument<RunnerRegistration>.Parse(ctx.Existing);
-            parsed.RootElement.WriteWithLastSeenAt(writer, ctx.At);
-        });
-
-        BsonDocument document = BuildDocument(current, doc, at.ToUnixTimeMilliseconds());
+            ["_id"] = runnerId,
+            ["lastSeenAt"] = at.ToUnixTimeMilliseconds(),
+            ["doc"] = new BsonBinaryData(updated.ToJsonBytes()),
+        };
         await this.registrations.ReplaceOneAsync(filter, document, new ReplaceOptions { IsUpsert = true }, cancellationToken).ConfigureAwait(false);
         return true;
     }
@@ -163,113 +115,6 @@ public sealed class MongoRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         }
 
         return result;
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<RunnerRegistryPage> ListAsync(int limit, JsonString pageToken, CancellationToken cancellationToken)
-    {
-        int pageSize = limit > 0 ? limit : RunnerRegistryPage.DefaultPageSize;
-
-        // Decode the keyset cursor; the runner id reifies to a string only for the Mongo _id filter (a leaf).
-        string? after = RunnerRegistryContinuationToken.DecodeCursorToString(pageToken);
-
-        FilterDefinition<BsonDocument> filter = after is null
-            ? Builders<BsonDocument>.Filter.Empty
-            : Builders<BsonDocument>.Filter.Gt("_id", after);
-
-        // Native keyset page: the _id index (runner id; BSON orders strings by bytes == ordinal == the in-memory pager's
-        // order) drives the seek + sort, and Limit bounds the read to one page + 1 (lookahead) — never every registration.
-        List<BsonDocument> documents = await this.registrations
-            .Find(filter)
-            .Sort(Builders<BsonDocument>.Sort.Ascending("_id"))
-            .Limit(pageSize + 1)
-            .ToListAsync(cancellationToken).ConfigureAwait(false);
-
-        bool hasMore = documents.Count > pageSize;
-        int take = hasMore ? pageSize : documents.Count;
-        var page = new List<RunnerRegistration>(take);
-        for (int i = 0; i < take; i++)
-        {
-            page.Add(RunnerRegistration.FromJson(documents[i]["doc"].AsBsonBinaryData.Bytes));
-        }
-
-        if (!hasMore)
-        {
-            return RunnerRegistryPage.Create(page);
-        }
-
-        using UnescapedUtf8JsonString lastId = page[page.Count - 1].RunnerId.GetUtf8String();
-        return RunnerRegistryPage.Create(page, lastId.Span);
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<RunnerRegistryPage> ListAsync(AccessContext context, int limit, JsonString pageToken, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-
-        if (context.ReadReach is null)
-        {
-            // Unrestricted read reach (e.g. the trusted system path): no row is filtered, so the bounded Limit keyset query
-            // (one page, no per-row tag work) is exactly right — no full read, no in-memory filter.
-            return await this.ListAsync(limit, pageToken, cancellationToken).ConfigureAwait(false);
-        }
-
-        int pageSize = limit > 0 ? limit : RunnerRegistryPage.DefaultPageSize;
-
-        // Same keyset cursor decode + key ordering as the unscoped path so tokens are interchangeable: the runner id
-        // reifies to a string only for the Mongo _id filter (a leaf).
-        string? after = RunnerRegistryContinuationToken.DecodeCursorToString(pageToken);
-
-        FilterDefinition<BsonDocument> filter = after is null
-            ? Builders<BsonDocument>.Filter.Empty
-            : Builders<BsonDocument>.Filter.Gt("_id", after);
-
-        // Reach (§14.2) is a per-row ABAC predicate, not expressible as a Mongo filter, so the _id index (runner id; BSON
-        // orders strings by bytes == ordinal == the in-memory pager's order) drives an ordered range seek past the cursor
-        // and rows are streamed + reach-filtered in flight — the cursor is consumed only until the page fills, never the
-        // whole collection the in-memory fallback reads. (No Limit: filtered-out rows don't count toward the page, so the
-        // page-fill + one-row look-ahead governs how far the scan reads.)
-        var page = new List<RunnerRegistration>(pageSize);
-        bool hasMore = false;
-        using IAsyncCursor<BsonDocument> cursor = await this.registrations
-            .Find(filter)
-            .Sort(Builders<BsonDocument>.Sort.Ascending("_id"))
-            .ToCursorAsync(cancellationToken).ConfigureAwait(false);
-        bool stop = false;
-        while (!stop && await cursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
-        {
-            foreach (BsonDocument document in cursor.Current)
-            {
-                RunnerRegistration runner = RunnerRegistration.FromJson(document["doc"].AsBsonBinaryData.Bytes);
-
-                // reachTags is absent on a runner serving an unscoped environment; an empty tag set fails a scoped reach
-                // (fail-closed), so such a runner is invisible to a tenant-scoped caller — matching the in-memory pager.
-                SecurityTagSet tags = runner.ReachTags.IsNotUndefined()
-                    ? SecurityTagSet.CopyFrom(runner.ReachTags)
-                    : SecurityTagSet.Empty;
-                if (!context.Admits(AccessVerb.Read, tags))
-                {
-                    continue;
-                }
-
-                if (page.Count == pageSize)
-                {
-                    hasMore = true; // a further reach-visible row exists → there is a next page after the last included row
-                    stop = true;
-                    break;
-                }
-
-                page.Add(runner);
-            }
-        }
-
-        if (!hasMore)
-        {
-            return RunnerRegistryPage.Create(page);
-        }
-
-        using UnescapedUtf8JsonString lastId = page[page.Count - 1].RunnerId.GetUtf8String();
-        return RunnerRegistryPage.Create(page, lastId.Span);
     }
 
     /// <inheritdoc/>
