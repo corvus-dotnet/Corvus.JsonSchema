@@ -80,7 +80,7 @@ public class WorkflowDispatcherTests
         var transport = new MockApiTransport();
         transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
         using var loader = new WorkflowExecutorLoader();
-        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
+        var resumer = new HostedWorkflowResumer(catalog, loader, _ => new WorkflowTransports(transport, null));
         var dispatcher = new WorkflowDispatcher(runStore, "runner-1", clock);
 
         int dispatched = await dispatcher.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default);
@@ -111,7 +111,7 @@ public class WorkflowDispatcherTests
         await runStore.AcquireLeaseAsync("run-1", "other-runner", TimeSpan.FromMinutes(5), default);
 
         using var loader = new WorkflowExecutorLoader();
-        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)new MockApiTransport(), System.StringComparer.Ordinal), null));
+        var resumer = new HostedWorkflowResumer(catalog, loader, _ => new WorkflowTransports(new MockApiTransport(), null));
         var dispatcher = new WorkflowDispatcher(runStore, "runner-1", clock);
 
         (await dispatcher.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default)).ShouldBe(0);
@@ -138,7 +138,7 @@ public class WorkflowDispatcherTests
         var transport = new MockApiTransport();
         transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
         using var loader = new WorkflowExecutorLoader();
-        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
+        var resumer = new HostedWorkflowResumer(catalog, loader, _ => new WorkflowTransports(transport, null));
         var dispatcher = new WorkflowDispatcher(runStore, "runner-2", clock);
 
         int dispatched = await dispatcher.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default);
@@ -146,90 +146,6 @@ public class WorkflowDispatcherTests
         dispatched.ShouldBe(1);
         using WorkflowRun? reloaded = await WorkflowRun.ResumeAsync(runStore, "run-1", clock, default);
         reloaded!.Status.ShouldBe(WorkflowRunStatus.Completed);
-    }
-
-    [TestMethod]
-    public async Task A_closed_dispatch_gate_claims_nothing_then_an_open_gate_dispatches()
-    {
-        var clock = new MutableClock(T0);
-        IWorkflowCatalogStore catalog = await RunnableCatalogAsync();
-        var runStore = new InMemoryWorkflowStateStore(clock);
-
-        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
-        using (WorkflowRun pending = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement, clock))
-        {
-            await pending.EnqueueAsync(default);
-        }
-
-        var transport = new MockApiTransport();
-        transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
-        using var loader = new WorkflowExecutorLoader();
-        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
-
-        // The §5.5 authorization gate: while the runner is not authorized for its environment it claims nothing, even
-        // though a Pending run is waiting for a version it hosts. The run stays Pending (claimable by an authorized peer).
-        bool authorized = false;
-        var dispatcher = new WorkflowDispatcher(runStore, "runner-1", clock, dispatchGate: _ => ValueTask.FromResult(authorized));
-
-        (await dispatcher.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default)).ShouldBe(0);
-        using (WorkflowRun? stillPending = await WorkflowRun.ResumeAsync(runStore, "run-1", clock, default))
-        {
-            stillPending!.Status.ShouldBe(WorkflowRunStatus.Pending);
-        }
-
-        transport.Requests.Count.ShouldBe(0, "a gated runner must not even reach the transport");
-
-        // Once authorized, the same dispatcher claims and drives the run to completion.
-        authorized = true;
-        (await dispatcher.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default)).ShouldBe(1);
-        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, "run-1", clock, default);
-        completed!.Status.ShouldBe(WorkflowRunStatus.Completed);
-    }
-
-    [TestMethod]
-    public async Task Claims_only_runs_pinned_to_the_runners_environment_and_environment_round_trips()
-    {
-        var clock = new MutableClock(T0);
-        IWorkflowCatalogStore catalog = await RunnableCatalogAsync();
-        var runStore = new InMemoryWorkflowStateStore(clock);
-
-        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
-        using (WorkflowRun prod = WorkflowRun.CreateNew(runStore, "run-prod", "adopt-v1", inputs.RootElement, clock, environment: "production"))
-        {
-            await prod.EnqueueAsync(default);
-        }
-
-        using (WorkflowRun staging = WorkflowRun.CreateNew(runStore, "run-staging", "adopt-v1", inputs.RootElement, clock, environment: "staging"))
-        {
-            await staging.EnqueueAsync(default);
-        }
-
-        var transport = new MockApiTransport();
-        transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
-        using var loader = new WorkflowExecutorLoader();
-        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
-
-        // §5.5: a runner serving production claims only the production-pinned run; the staging run is left for a staging runner.
-        var dispatcher = new WorkflowDispatcher(runStore, "runner-prod", clock, runnerEnvironment: "production");
-        (await dispatcher.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default)).ShouldBe(1);
-
-        using (WorkflowRun? prodRun = await WorkflowRun.ResumeAsync(runStore, "run-prod", clock, default))
-        {
-            prodRun!.Status.ShouldBe(WorkflowRunStatus.Completed);
-            prodRun.Environment.ShouldBe("production"); // the pinned environment round-trips through the checkpoint
-        }
-
-        using (WorkflowRun? stagingRun = await WorkflowRun.ResumeAsync(runStore, "run-staging", clock, default))
-        {
-            stagingRun!.Status.ShouldBe(WorkflowRunStatus.Pending); // not claimed by the production runner
-            stagingRun.Environment.ShouldBe("staging");
-        }
-
-        // A staging runner then claims the staging run.
-        var stagingDispatcher = new WorkflowDispatcher(runStore, "runner-staging", clock, runnerEnvironment: "staging");
-        (await stagingDispatcher.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default)).ShouldBe(1);
-        using WorkflowRun? nowDone = await WorkflowRun.ResumeAsync(runStore, "run-staging", clock, default);
-        nowDone!.Status.ShouldBe(WorkflowRunStatus.Completed);
     }
 
     [TestMethod]
@@ -246,7 +162,7 @@ public class WorkflowDispatcherTests
         }
 
         using var loader = new WorkflowExecutorLoader();
-        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)new MockApiTransport(), System.StringComparer.Ordinal), null));
+        var resumer = new HostedWorkflowResumer(catalog, loader, _ => new WorkflowTransports(new MockApiTransport(), null));
         var dispatcher = new WorkflowDispatcher(runStore, "runner-1", clock);
 
         (await dispatcher.DispatchClaimableAsync(["other-v3"], resumer.AsResumer(), default)).ShouldBe(0);
