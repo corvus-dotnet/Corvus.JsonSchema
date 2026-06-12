@@ -62,6 +62,29 @@ public static class DynamicCompiler
         IReadOnlyCollection<GeneratedCodeFile> generatedCode,
         Assembly hostAssembly)
     {
+        using MemoryStream outputStream = EmitOrThrow(generatedCode, hostAssembly);
+        Assembly generatedAssembly = LoadAssembly(outputStream);
+        return generatedAssembly.ExportedTypes.Single(t => t.FullName == rootTypeName);
+    }
+
+    /// <summary>
+    /// Compile the generated code files into a single assembly and return its raw PE (DLL) bytes, without
+    /// loading it. Used to produce a storable assembly artifact (e.g. baked into a workflow package).
+    /// </summary>
+    /// <param name="generatedCode">The generated code files.</param>
+    /// <param name="hostAssembly">The host assembly whose compilation context provides metadata references.</param>
+    /// <returns>The emitted assembly bytes.</returns>
+    /// <exception cref="InvalidOperationException">Compilation failed.</exception>
+    public static byte[] CompileToAssemblyBytes(
+        IReadOnlyCollection<GeneratedCodeFile> generatedCode,
+        Assembly hostAssembly)
+    {
+        using MemoryStream outputStream = EmitOrThrow(generatedCode, hostAssembly);
+        return outputStream.ToArray();
+    }
+
+    private static MemoryStream EmitOrThrow(IReadOnlyCollection<GeneratedCodeFile> generatedCode, Assembly hostAssembly)
+    {
         (IReadOnlyList<MetadataReference> references, IReadOnlyList<string?> defines) =
             GetOrBuildMetadataReferences(hostAssembly);
 
@@ -76,11 +99,12 @@ public static class DynamicCompiler
             references,
             options);
 
-        using MemoryStream outputStream = new();
+        MemoryStream outputStream = new();
         EmitResult result = compilation.Emit(outputStream);
 
         if (!result.Success)
         {
+            outputStream.Dispose();
             string errors = BuildCompilationErrors(result);
             throw new InvalidOperationException(
                 "Unable to compile generated code\r\n" + errors);
@@ -88,9 +112,7 @@ public static class DynamicCompiler
 
         outputStream.Flush();
         outputStream.Position = 0;
-
-        Assembly generatedAssembly = LoadAssembly(outputStream);
-        return generatedAssembly.ExportedTypes.Single(t => t.FullName == rootTypeName);
+        return outputStream;
     }
 
     private static (IReadOnlyList<MetadataReference> MetadataReferences, IReadOnlyList<string?> Defines)
