@@ -10,7 +10,7 @@ using Corvus.Text.Json.Arazzo.CodeGeneration;
 using Corvus.Text.Json.Arazzo11;
 using Corvus.Text.Json.AsyncApi.CodeGeneration;
 
-namespace Corvus.Text.Json.CodeGenerator;
+namespace Corvus.Text.Json.Arazzo.Generation;
 
 /// <summary>
 /// Orchestrates end-to-end Arazzo generation: for each OpenAPI source description it generates the
@@ -18,7 +18,7 @@ namespace Corvus.Text.Json.CodeGenerator;
 /// models and executor for every workflow (via <see cref="ArazzoCodeGeneration"/>) and writes everything
 /// to disk. This is the testable core behind the <c>arazzo-generate</c> CLI command.
 /// </summary>
-internal static class ArazzoGenerationDriver
+public static class ArazzoGenerationDriver
 {
     /// <summary>
     /// Generates an Arazzo document's workflows (and the OpenAPI clients/models its sources reference).
@@ -36,6 +36,7 @@ internal static class ArazzoGenerationDriver
     /// file system — so source documents may come from anywhere. Unregistered references fall back to the
     /// file system (and <c>http(s)</c>). <see langword="null"/> or empty means file-system loading only.
     /// </param>
+    /// <param name="progress">An optional callback invoked with human-readable progress messages.</param>
     /// <returns>The absolute paths of all files written.</returns>
     public static async Task<IReadOnlyList<string>> GenerateAsync(
         string arazzoFilePath,
@@ -44,7 +45,8 @@ internal static class ArazzoGenerationDriver
         string? clientName,
         bool durable,
         CancellationToken cancellationToken,
-        IReadOnlyList<RegisteredDocument>? registeredDocuments = null)
+        IReadOnlyList<RegisteredDocument>? registeredDocuments = null,
+        Action<string>? progress = null)
     {
         Func<Uri, byte[]?> documentLoader = BuildDocumentLoader(registeredDocuments);
 
@@ -65,7 +67,7 @@ internal static class ArazzoGenerationDriver
         var generated = new Dictionary<string, string>(StringComparer.Ordinal);
 
         await GenerateDocumentAsync(
-            arazzoBytes, baseUri, rootNamespace, outputPath, clientName, durable, documentLoader, ancestors, generated, written, cancellationToken)
+            arazzoBytes, baseUri, rootNamespace, outputPath, clientName, durable, documentLoader, ancestors, generated, written, cancellationToken, progress)
             .ConfigureAwait(false);
 
         return written;
@@ -90,13 +92,14 @@ internal static class ArazzoGenerationDriver
         HashSet<string> ancestors,
         Dictionary<string, string> generated,
         List<string> written,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Action<string>? progress)
     {
         ancestors.Add(baseUri.AbsoluteUri);
         try
         {
             await GenerateDocumentCoreAsync(
-                arazzoBytes, baseUri, rootNamespace, outputPath, clientName, durable, documentLoader, ancestors, generated, written, cancellationToken)
+                arazzoBytes, baseUri, rootNamespace, outputPath, clientName, durable, documentLoader, ancestors, generated, written, cancellationToken, progress)
                 .ConfigureAwait(false);
         }
         finally
@@ -116,7 +119,8 @@ internal static class ArazzoGenerationDriver
         HashSet<string> ancestors,
         Dictionary<string, string> generated,
         List<string> written,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Action<string>? progress)
     {
         // Generate the client/models for each source description and collect its operations (OpenAPI),
         // channel operations (AsyncAPI), or recursively the workflows of an arazzo-type source.
@@ -155,7 +159,7 @@ internal static class ArazzoGenerationDriver
                     if (sourceType == "openapi")
                     {
                         IReadOnlyList<OpenApi.CodeGeneration.OperationDescriptor> operations = await OpenApiSourceGenerator
-                            .GenerateAsync(specUri, documentLoader, sourceNamespace, sourceOutput, clientName, cancellationToken)
+                            .GenerateAsync(specUri, documentLoader, sourceNamespace, sourceOutput, clientName, cancellationToken, progress)
                             .ConfigureAwait(false);
 
                         clients.Add(new SourceDescriptionClient(name, OperationResolver.Create(name, operations)));
@@ -163,7 +167,7 @@ internal static class ArazzoGenerationDriver
                     else if (sourceType == "asyncapi")
                     {
                         IReadOnlyList<AsyncApiChannelDescriptor> channels = await AsyncApiSourceGenerator
-                            .GenerateAsync(specUri, documentLoader, sourceNamespace, sourceOutput, cancellationToken)
+                            .GenerateAsync(specUri, documentLoader, sourceNamespace, sourceOutput, cancellationToken, progress)
                             .ConfigureAwait(false);
 
                         channelSources.Add(new SourceDescriptionChannels(name, channels));
@@ -189,7 +193,7 @@ internal static class ArazzoGenerationDriver
                         else
                         {
                             await GenerateDocumentAsync(
-                                childBytes, childBaseUri, sourceNamespace, sourceOutput, clientName, durable, documentLoader, ancestors, generated, written, cancellationToken)
+                                childBytes, childBaseUri, sourceNamespace, sourceOutput, clientName, durable, documentLoader, ancestors, generated, written, cancellationToken, progress)
                                 .ConfigureAwait(false);
 
                             string childNamespace = $"{sourceNamespace}.{ArazzoCodeGeneration.DefaultWorkflowsNamespaceSuffix}";

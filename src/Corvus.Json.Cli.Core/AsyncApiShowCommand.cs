@@ -5,6 +5,7 @@
 #if NET10_0_OR_GREATER
 
 using Corvus.Text.Json;
+using Corvus.Text.Json.Arazzo.Generation;
 using Corvus.Text.Json.AsyncApi.CodeGeneration;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -141,31 +142,7 @@ internal sealed class AsyncApiShowCommand : AsyncCommand<AsyncApiSettings>
     }
 
     internal static string DetectAsyncApiVersion(JsonElement specRoot, string? explicitVersion)
-    {
-        if (explicitVersion is not null)
-        {
-            return explicitVersion;
-        }
-
-        if (specRoot.TryGetProperty("asyncapi"u8, out JsonElement versionEl) &&
-            versionEl.ValueKind == JsonValueKind.String)
-        {
-            string ver = versionEl.GetString()!;
-            if (ver.StartsWith("3.0", StringComparison.Ordinal))
-            {
-                return "3.0";
-            }
-
-            if (ver.StartsWith("2.6", StringComparison.Ordinal))
-            {
-                return "2.6";
-            }
-
-            return ver;
-        }
-
-        return "3.0";
-    }
+        => AsyncApiSpecVersion.Detect(specRoot, explicitVersion);
 
     internal static OperationFilter? BuildFilter(AsyncApiSettings settings)
     {
@@ -182,16 +159,10 @@ internal sealed class AsyncApiShowCommand : AsyncCommand<AsyncApiSettings>
     }
 
     internal static bool IsAsyncApi26Version(string specVersion)
-    {
-        return specVersion.StartsWith("2.6", StringComparison.Ordinal) ||
-            string.Equals(specVersion, "2.6", StringComparison.Ordinal);
-    }
+        => AsyncApiSpecVersion.Is26(specVersion);
 
     internal static bool IsAsyncApi30Version(string specVersion)
-    {
-        return specVersion.StartsWith("3.0", StringComparison.Ordinal) ||
-            string.Equals(specVersion, "3.0", StringComparison.Ordinal);
-    }
+        => AsyncApiSpecVersion.Is30(specVersion);
 
     private static string? GetTitle(JsonElement specRoot)
     {

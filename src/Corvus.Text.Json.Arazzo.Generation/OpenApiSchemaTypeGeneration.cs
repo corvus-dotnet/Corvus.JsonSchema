@@ -9,10 +9,10 @@ using Corvus.Json.CodeGeneration;
 using Corvus.Json.CodeGeneration.DocumentResolvers;
 using Corvus.Json.Internal;
 using Corvus.Text.Json.CodeGeneration;
+using Corvus.Text.Json.CodeGenerator;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
-using Spectre.Console;
 
-namespace Corvus.Text.Json.CodeGenerator;
+namespace Corvus.Text.Json.Arazzo.Generation;
 
 /// <summary>
 /// Shared logic for generating the JSON Schema model types referenced by an OpenAPI specification and
@@ -20,7 +20,7 @@ namespace Corvus.Text.Json.CodeGenerator;
 /// both the <c>openapi generate</c> command and the Arazzo workflow generator (which generates the
 /// client + models for each of a workflow document's OpenAPI source descriptions).
 /// </summary>
-internal static class OpenApiSchemaTypeGeneration
+public static class OpenApiSchemaTypeGeneration
 {
     /// <summary>
     /// Generates the schema model types for the given schema references and returns the
@@ -45,6 +45,7 @@ internal static class OpenApiSchemaTypeGeneration
     /// external <c>$ref</c>s) resolve through it ahead of the file-system/HTTP fallback — so the schema
     /// models generate from documents registered in memory.
     /// </param>
+    /// <param name="progress">An optional callback invoked with human-readable progress messages.</param>
     /// <returns>The schema type map and the generated model file names.</returns>
     public static async Task<(Dictionary<string, string> SchemaTypeMap, IReadOnlyList<string> GeneratedFileNames)> GenerateSchemaTypesAsync(
         string specFile,
@@ -56,10 +57,16 @@ internal static class OpenApiSchemaTypeGeneration
         bool useYaml,
         CancellationToken cancellationToken,
         Uri? entryUri = null,
-        Func<Uri, byte[]?>? documentLoader = null)
+        Func<Uri, byte[]?>? documentLoader = null,
+        Action<string>? progress = null)
     {
-        // The entry document key: its virtualized URI when supplied, otherwise its full file-system path.
-        string specFilePath = entryUri is not null ? entryUri.AbsoluteUri : Path.GetFullPath(specFile);
+        // The entry document key. A non-file virtualized URI (http(s)/urn/$self) is handed to the V4
+        // generator verbatim so its resolver matches the in-memory registry; a file URI is reduced to a
+        // plain OS path (the V4 reference normalizer mangles a "file://" URI into "{cwd}/file:/..."); and
+        // with no URI we use the full file-system path.
+        string specFilePath = entryUri is null
+            ? Path.GetFullPath(specFile)
+            : entryUri.IsFile ? entryUri.LocalPath : entryUri.AbsoluteUri;
 
         // Set up the document resolver — virtualized documents (via the loader) first, then the file
         // system and HTTP, with YAML support when the spec is YAML.
@@ -149,8 +156,8 @@ internal static class OpenApiSchemaTypeGeneration
                 reference = new(resolvedDocPath, "#");
             }
 
-            AnsiConsole.MarkupLine($"  [dim]Registering schema:[/] {schemaRef.PositionalPointer}");
 
+            progress?.Invoke($"  Registering schema: {schemaRef.PositionalPointer}");
             TypeDeclaration rootType = await typeBuilder.AddTypeDeclarationsAsync(
                 reference, defaultVocabulary, rebaseAsRoot: false)
                 .ConfigureAwait(false);
@@ -160,7 +167,7 @@ internal static class OpenApiSchemaTypeGeneration
             typesToGenerate.Add(rootType);
         }
 
-        AnsiConsole.MarkupLine($"[yellow]Registered {typesToGenerate.Count} type declarations, generating code...[/]");
+        progress?.Invoke($"Registered {typesToGenerate.Count} type declarations, generating code...");
 
         // Generate code — register OpenAPI naming heuristic for contextual inline schema names
         CSharpLanguageProvider.Options options = new(rootNamespace + ".Models");
@@ -169,7 +176,7 @@ internal static class OpenApiSchemaTypeGeneration
         IReadOnlyCollection<GeneratedCodeFile> generatedCode =
             typeBuilder.GenerateCodeUsing(languageProvider, typesToGenerate, cancellationToken);
 
-        AnsiConsole.MarkupLine($"[yellow]Code generation complete, writing {generatedCode.Count} files...[/]");
+        progress?.Invoke($"Code generation complete, writing {generatedCode.Count} files...");
 
         // Write schema type files
         Directory.CreateDirectory(outputPath);
@@ -181,11 +188,12 @@ internal static class OpenApiSchemaTypeGeneration
             string filePath = TruncateFileNameIfRequired(outputPath, writtenFiles, codeFile);
             await File.WriteAllTextAsync(filePath, codeFile.FileContent, cancellationToken)
                 .ConfigureAwait(false);
-            AnsiConsole.MarkupLine($"  [cyan]Schema type:[/] {filePath}");
             schemaFileNames.Add(Path.GetFileName(filePath));
+            progress?.Invoke($"  Schema type: {filePath}");
         }
 
-        AnsiConsole.MarkupLine($"[green]Generated {schemaFileNames.Count} schema type files[/]");
+        progress?.Invoke($"Generated {schemaFileNames.Count} schema type files");
+
 
         // Build the pointer → fully qualified type name map
         Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal);
@@ -251,11 +259,17 @@ internal static class OpenApiSchemaTypeGeneration
     /// <returns>The document path suitable for <see cref="JsonReference"/>.</returns>
     private static string ResolveDocumentPath(string docPart)
     {
-        // Non-file absolute URIs (http://, https://, urn:, etc.) pass through directly.
-        if (Uri.TryCreate(docPart, UriKind.Absolute, out Uri? uri)
-            && !uri.IsFile)
+        if (Uri.TryCreate(docPart, UriKind.Absolute, out Uri? uri))
         {
-            return docPart;
+            // Non-file absolute URIs (http://, https://, urn:, etc.) pass through directly.
+            if (!uri.IsFile)
+            {
+                return docPart;
+            }
+
+            // A file URI is reduced to its plain OS path; handing the V4 reference normalizer a
+            // "file://" string makes it mangle the value into "{cwd}/file:/...".
+            return Path.GetFullPath(uri.LocalPath);
         }
 
         // Absolute file path — normalize separators

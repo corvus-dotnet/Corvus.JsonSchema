@@ -158,6 +158,7 @@
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.CodeGeneration/Corvus.Text.Json.Arazzo.CodeGeneration.csproj" />
+    <Project Path="src/Corvus.Text.Json.Arazzo.Generation/Corvus.Text.Json.Arazzo.Generation.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Testing/Corvus.Text.Json.Arazzo.Testing.csproj" />
   </Folder>
   <Folder Name="/v5/">
