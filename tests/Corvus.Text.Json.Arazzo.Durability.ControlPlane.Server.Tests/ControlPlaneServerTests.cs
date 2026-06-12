@@ -400,6 +400,78 @@ public sealed class ControlPlaneServerTests
     }
 
     [TestMethod]
+    public async Task GetCatalogExecutor_streams_the_assembly_and_manifest_and_marks_the_version_runnable()
+    {
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
+        var management = new WorkflowManagementClient(runStore, "ops", CompleteResumer, clock);
+        var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
+
+        await catalog.AddAsync(SchemaWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), null, default);
+
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        app.MapArazzoControlPlane(management, catalog);
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+
+        // The compiled assembly streams back as octet-stream, byte-for-byte.
+        HttpResponseMessage executor = await client.GetAsync("/catalog/flow/versions/1/executor");
+        executor.StatusCode.ShouldBe(HttpStatusCode.OK);
+        executor.Content.Headers.ContentType!.MediaType.ShouldBe("application/octet-stream");
+        (await executor.Content.ReadAsByteArrayAsync()).ShouldBe(FakeExecutorProvider.AssemblyBytes);
+
+        // The manifest streams back as JSON.
+        HttpResponseMessage manifest = await client.GetAsync("/catalog/flow/versions/1/executor-manifest");
+        manifest.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await manifest.Content.ReadAsStringAsync()).ShouldContain("\"entryType\"");
+
+        // The version summary advertises that it is runnable.
+        using (Stj.JsonDocument version = await ReadJsonAsync(await client.GetAsync("/catalog/flow/versions/1")))
+        {
+            version.RootElement.GetProperty("runnable").GetBoolean().ShouldBeTrue();
+        }
+
+        HttpResponseMessage missing = await client.GetAsync("/catalog/flow/versions/99/executor");
+        missing.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        await app.StopAsync();
+    }
+
+    [TestMethod]
+    public async Task GetCatalogExecutor_is_404_and_the_version_is_not_runnable_without_a_provider()
+    {
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var catalogStore = new InMemoryWorkflowCatalogStore(clock);
+        var management = new WorkflowManagementClient(runStore, "ops", CompleteResumer, clock);
+        var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
+
+        await catalog.AddAsync(SchemaWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), null, default);
+
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        app.MapArazzoControlPlane(management, catalog);
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+
+        HttpResponseMessage executor = await client.GetAsync("/catalog/flow/versions/1/executor");
+        executor.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        using (Stj.JsonDocument version = await ReadJsonAsync(await client.GetAsync("/catalog/flow/versions/1")))
+        {
+            version.RootElement.GetProperty("runnable").GetBoolean().ShouldBeFalse();
+        }
+
+        await app.StopAsync();
+    }
+
+    [TestMethod]
     public async Task ValidateCatalogValue_validates_inputs_against_the_real_schema()
     {
         var clock = new MutableClock(T0);
@@ -505,6 +577,14 @@ public sealed class ControlPlaneServerTests
     {
         public ReadOnlyMemory<byte>? BuildSchemas(ReadOnlyMemory<byte> workflowUtf8, IReadOnlyList<KeyValuePair<string, byte[]>> sources)
             => Encoding.UTF8.GetBytes("""{"formatVersion":1,"baked":true}""");
+    }
+
+    private sealed class FakeExecutorProvider : IWorkflowExecutorProvider
+    {
+        public static readonly byte[] AssemblyBytes = [0x4D, 0x5A, 0x90, 0x00];
+
+        public WorkflowExecutorArtifact? BuildExecutor(ReadOnlyMemory<byte> workflowUtf8, IReadOnlyList<KeyValuePair<string, byte[]>> sources, string packageHash)
+            => new(AssemblyBytes, Encoding.UTF8.GetBytes($$"""{"formatVersion":1,"entryType":"X","packageHash":"{{packageHash}}"}"""));
     }
 
     private sealed class MutableClock(DateTimeOffset now) : TimeProvider

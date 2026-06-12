@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Postgres;
 public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDisposable
 {
     private const string ColumnList =
-        "BaseWorkflowId, VersionNumber, WorkflowId, Title, Description, Status, Tags, OwnerName, OwnerEmail, OwnerTeam, OwnerUrl, Sources, Hash, CreatedBy, CreatedAt, LastUpdatedBy, LastUpdatedAt, ObsoletedBy, ObsoletedAt";
+        "BaseWorkflowId, VersionNumber, WorkflowId, Title, Description, Status, Tags, OwnerName, OwnerEmail, OwnerTeam, OwnerUrl, Sources, Hash, CreatedBy, CreatedAt, LastUpdatedBy, LastUpdatedAt, ObsoletedBy, ObsoletedAt, Runnable";
 
     private readonly NpgsqlDataSource dataSource;
     private readonly bool ownsDataSource;
@@ -367,7 +367,8 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, IAsync
             LastUpdatedBy: reader.IsDBNull(15) ? null : reader.GetString(15),
             LastUpdatedAt: reader.IsDBNull(16) ? null : DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(16)),
             ObsoletedBy: reader.IsDBNull(17) ? null : reader.GetString(17),
-            ObsoletedAt: reader.IsDBNull(18) ? null : DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(18)));
+            ObsoletedAt: reader.IsDBNull(18) ? null : DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(18)),
+            Runnable: reader.GetBoolean(19));
 
     private static string SortKey(string baseWorkflowId, int versionNumber)
         => string.Create(CultureInfo.InvariantCulture, $"{baseWorkflowId}{versionNumber:D10}");
@@ -482,7 +483,8 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, IAsync
             Sources: projection.Sources,
             Hash: projection.Hash,
             CreatedBy: metadata.CreatedBy,
-            CreatedAt: now);
+            CreatedAt: now,
+            Runnable: projection.HasExecutor);
 
         await using (NpgsqlCommand insert = connection.CreateCommand())
         {
@@ -490,7 +492,7 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, IAsync
             insert.CommandText =
                 $"""
                 INSERT INTO CatalogVersions ({ColumnList}, Package)
-                VALUES (@baseWorkflowId, @versionNumber, @workflowId, @title, @description, @status, @tags, @ownerName, @ownerEmail, @ownerTeam, @ownerUrl, @sources, @hash, @createdBy, @createdAt, @lastUpdatedBy, @lastUpdatedAt, @obsoletedBy, @obsoletedAt, @package);
+                VALUES (@baseWorkflowId, @versionNumber, @workflowId, @title, @description, @status, @tags, @ownerName, @ownerEmail, @ownerTeam, @ownerUrl, @sources, @hash, @createdBy, @createdAt, @lastUpdatedBy, @lastUpdatedAt, @obsoletedBy, @obsoletedAt, @runnable, @package);
                 """;
             insert.Parameters.AddWithValue("baseWorkflowId", version.BaseWorkflowId);
             insert.Parameters.AddWithValue("versionNumber", version.VersionNumber);
@@ -511,6 +513,7 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, IAsync
             insert.Parameters.Add(NullableBigint("lastUpdatedAt", null));
             insert.Parameters.Add(NullableText("obsoletedBy", null));
             insert.Parameters.Add(NullableBigint("obsoletedAt", null));
+            insert.Parameters.AddWithValue("runnable", version.Runnable);
             insert.Parameters.AddWithValue("package", projection.CanonicalPackage.ToArray());
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -555,6 +558,7 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, IAsync
             LastUpdatedAt BIGINT NULL,
             ObsoletedBy TEXT NULL,
             ObsoletedAt BIGINT NULL,
+            Runnable BOOLEAN NOT NULL DEFAULT FALSE,
             Package BYTEA NOT NULL,
             PRIMARY KEY (BaseWorkflowId, VersionNumber)
         );

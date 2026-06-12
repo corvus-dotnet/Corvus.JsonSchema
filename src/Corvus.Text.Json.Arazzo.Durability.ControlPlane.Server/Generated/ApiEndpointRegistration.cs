@@ -1773,6 +1773,213 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "catalog:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "catalog:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __GetCatalogWorkflowSchemasEndpoint);
 
+        IEndpointConventionBuilder __GetCatalogExecutorEndpoint = app.MapGet("/catalog/{baseWorkflowId}/versions/{versionNumber}/executor", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString BaseWorkflowIdValue = default;
+                if (context.Request.RouteValues.TryGetValue("baseWorkflowId", out object? BaseWorkflowIdRouteVal) && BaseWorkflowIdRouteVal is string BaseWorkflowIdRaw)
+                {
+                    BaseWorkflowIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(BaseWorkflowIdRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VersionNumber VersionNumberValue = default;
+                if (context.Request.RouteValues.TryGetValue("versionNumber", out object? VersionNumberRouteVal) && VersionNumberRouteVal is string VersionNumberRaw)
+                {
+                    VersionNumberValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VersionNumber>(VersionNumberRaw, workspace);
+                }
+
+                if (BaseWorkflowIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'baseWorkflowId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (VersionNumberValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'versionNumber' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!BaseWorkflowIdValue.IsUndefined() && !BaseWorkflowIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'baseWorkflowId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!VersionNumberValue.IsUndefined() && !VersionNumberValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'versionNumber' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                GetCatalogExecutorParams parameters = new()
+                {
+                    BaseWorkflowId = BaseWorkflowIdValue,
+                    VersionNumber = VersionNumberValue,
+                }
+                ;
+
+                GetCatalogExecutorResult result = await catalogHandler.HandleGetCatalogExecutorAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (result.HasBinaryBody)
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/octet-stream";
+                    await result.WriteBinaryBodyAsync(context.Response.Body, context.RequestAborted).ConfigureAwait(false);
+                }
+                else if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "getCatalogExecutor",
+                methodName: "GetCatalogExecutor",
+                httpMethod: "GET",
+                routeTemplate: "/catalog/{baseWorkflowId}/versions/{versionNumber}/executor",
+                tags: new[] { "catalog" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "catalog:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "catalog:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __GetCatalogExecutorEndpoint);
+
+        IEndpointConventionBuilder __GetCatalogExecutorManifestEndpoint = app.MapGet("/catalog/{baseWorkflowId}/versions/{versionNumber}/executor-manifest", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString BaseWorkflowIdValue = default;
+                if (context.Request.RouteValues.TryGetValue("baseWorkflowId", out object? BaseWorkflowIdRouteVal) && BaseWorkflowIdRouteVal is string BaseWorkflowIdRaw)
+                {
+                    BaseWorkflowIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(BaseWorkflowIdRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VersionNumber VersionNumberValue = default;
+                if (context.Request.RouteValues.TryGetValue("versionNumber", out object? VersionNumberRouteVal) && VersionNumberRouteVal is string VersionNumberRaw)
+                {
+                    VersionNumberValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VersionNumber>(VersionNumberRaw, workspace);
+                }
+
+                if (BaseWorkflowIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'baseWorkflowId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (VersionNumberValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'versionNumber' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!BaseWorkflowIdValue.IsUndefined() && !BaseWorkflowIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'baseWorkflowId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!VersionNumberValue.IsUndefined() && !VersionNumberValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'versionNumber' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                GetCatalogExecutorManifestParams parameters = new()
+                {
+                    BaseWorkflowId = BaseWorkflowIdValue,
+                    VersionNumber = VersionNumberValue,
+                }
+                ;
+
+                GetCatalogExecutorManifestResult result = await catalogHandler.HandleGetCatalogExecutorManifestAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "getCatalogExecutorManifest",
+                methodName: "GetCatalogExecutorManifest",
+                httpMethod: "GET",
+                routeTemplate: "/catalog/{baseWorkflowId}/versions/{versionNumber}/executor-manifest",
+                tags: new[] { "catalog" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "catalog:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "catalog:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __GetCatalogExecutorManifestEndpoint);
+
         IEndpointConventionBuilder __ValidateCatalogValueEndpoint = app.MapPost("/catalog/{baseWorkflowId}/versions/{versionNumber}/validate", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
@@ -2246,6 +2453,26 @@ public static class ApiEndpointRegistration
         /// Gets the scopes required by <c>GetCatalogWorkflowSchemas</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
         public static readonly string[] GetCatalogWorkflowSchemasOpenIdConnectScopes = ["catalog:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetCatalogExecutor</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] GetCatalogExecutorOauth2Scopes = ["catalog:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetCatalogExecutor</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] GetCatalogExecutorOpenIdConnectScopes = ["catalog:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetCatalogExecutorManifest</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] GetCatalogExecutorManifestOauth2Scopes = ["catalog:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetCatalogExecutorManifest</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] GetCatalogExecutorManifestOpenIdConnectScopes = ["catalog:read"];
 
         /// <summary>
         /// Gets the scopes required by <c>ValidateCatalogValue</c> for the <c>Oauth2</c> scheme.

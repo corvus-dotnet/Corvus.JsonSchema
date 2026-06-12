@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Whether the value conformed to the schema.
+/// Whether this version carries a compiled workflow executor assembly (downloadable via the executor endpoint) that an execution host can run.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
