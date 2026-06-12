@@ -27,13 +27,15 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
     private readonly SqliteConnection connection;
     private readonly TimeProvider timeProvider;
     private readonly IWorkflowMetadataProvider? metadataProvider;
+    private readonly IWorkflowExecutorProvider? executorProvider;
     private readonly SemaphoreSlim gate = new(1, 1);
 
-    private SqliteWorkflowCatalogStore(SqliteConnection connection, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider)
+    private SqliteWorkflowCatalogStore(SqliteConnection connection, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider)
     {
         this.connection = connection;
         this.timeProvider = timeProvider;
         this.metadataProvider = metadataProvider;
+        this.executorProvider = executorProvider;
     }
 
     /// <summary>Provisions the catalog schema (table and indexes) against a file database.</summary>
@@ -54,12 +56,15 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
     /// <summary>Opens a catalog store over the given connection string, ensuring its schema exists.</summary>
     /// <param name="connectionString">A Microsoft.Data.Sqlite connection string (e.g. <c>Data Source=catalog.db</c>).</param>
     /// <param name="timeProvider">The time source for audit timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
+    /// <param name="metadataProvider">An optional provider that supplies metadata for the workflow versions added to the catalog.</param>
+    /// <param name="executorProvider">An optional provider that compiles the workflow executor assembly baked into each added version; <see langword="null"/> to store packages without it.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The opened, schema-initialised store.</returns>
     public static async ValueTask<SqliteWorkflowCatalogStore> ConnectAsync(
         string connectionString,
         TimeProvider? timeProvider = null,
         IWorkflowMetadataProvider? metadataProvider = null,
+        IWorkflowExecutorProvider? executorProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
@@ -71,7 +76,7 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
             using SqliteCommand schema = connection.CreateCommand();
             schema.CommandText = SchemaSql;
             await schema.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            return new SqliteWorkflowCatalogStore(connection, timeProvider ?? TimeProvider.System, metadataProvider);
+            return new SqliteWorkflowCatalogStore(connection, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider);
         }
         catch
         {
@@ -343,7 +348,7 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
                 versionNumber = (int)(long)(await max.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))! + 1;
             }
 
-            CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider);
+            CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
             IReadOnlyList<string> tags = metadata.Tags is { Count: > 0 } t ? [.. t] : [];
             var version = new CatalogVersion(
                 BaseWorkflowId: baseWorkflowId,

@@ -51,6 +51,35 @@ public class WorkflowPackageExecutorProviderTests
         CatalogPackage.GetDocument(projection.CanonicalPackage, WorkflowPackage.ExecutorDocumentName).ShouldBeNull();
     }
 
+    [TestMethod]
+    public async Task Store_threads_the_executor_provider_and_serves_the_assembly_via_GetDocument()
+    {
+        var provider = new FakeExecutorProvider();
+        var store = new InMemoryWorkflowCatalogStore(executorProvider: provider);
+
+        CatalogVersion version = await store.AddAsync("flow", WorkflowPackage.Pack(Workflow("flow"), []), Meta(), default);
+
+        // The store baked the provider's assembly into the stored package and serves it back by name.
+        ReadOnlyMemory<byte>? executor = await store.GetDocumentAsync(version.BaseWorkflowId, version.VersionNumber, WorkflowPackage.ExecutorDocumentName, default);
+        executor.ShouldNotBeNull();
+        executor.Value.ToArray().ShouldBe(FakeExecutorProvider.AssemblyBytes);
+
+        // And it passed the rewritten (versioned) id through to the provider.
+        provider.SeenWorkflow!.ShouldContain("flow-v1");
+    }
+
+    [TestMethod]
+    public async Task Store_omits_the_executor_when_no_provider_is_injected()
+    {
+        var store = new InMemoryWorkflowCatalogStore();
+        CatalogVersion version = await store.AddAsync("flow", WorkflowPackage.Pack(Workflow("flow"), []), Meta(), default);
+
+        ReadOnlyMemory<byte>? executor = await store.GetDocumentAsync(version.BaseWorkflowId, version.VersionNumber, WorkflowPackage.ExecutorDocumentName, default);
+        executor.ShouldBeNull();
+    }
+
+    private static CatalogMetadata Meta() => new(new CatalogOwner("Team", "team@example.com"), "alice");
+
     private static byte[] Workflow(string id)
         => Encoding.UTF8.GetBytes($$"""{"arazzo":"1.1.0","info":{"title":"t","version":"1"},"workflows":[{"workflowId":"{{id}}","steps":[]}]}""");
 
