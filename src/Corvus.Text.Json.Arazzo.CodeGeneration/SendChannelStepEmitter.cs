@@ -10,8 +10,9 @@ namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 /// <summary>
 /// Emits a <c>send</c> AsyncAPI channel step (plan §5): the step publishes a message on a channel by
 /// calling the generated producer's publish method through an <c>IMessageTransport</c>. The message
-/// payload is the step's <c>requestBody</c> (a runtime expression), passed as the producer's
-/// <c>{PayloadType}.Source</c> (a <see cref="JsonElement"/> converts via the implicit operator).
+/// payload is the step's <c>requestBody</c> (a runtime expression), re-wrapped to the producer's
+/// <c>{PayloadType}</c> with <c>From</c> (a free re-interpretation of the same backing JSON) so it converts
+/// to the producer's <c>{PayloadType}.Source</c>.
 /// </summary>
 /// <remarks>
 /// The generated producer owns the AsyncAPI protocol (channel templating, validation, bindings), so the
@@ -137,7 +138,11 @@ internal static class SendChannelStepEmitter
                 throw new NotSupportedException($"Channel step '{stepId}' targets a channel '{descriptor.ChannelAddress}' with no publishable message.");
             }
 
-            statements.Append("await ").Append(producerVariable).Append('.').Append(publishMethod).Append('(').Append(payloadLocal).Append(channelArgs).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
+            // Re-wrap the JsonElement payload to the message's model type with From so the single
+            // model → {Type}.Source implicit conversion applies at the producer call (C# will not chain
+            // JsonElement → model → Source).
+            string publishPayload = RequestBindingEmitter.ConvertToSourceType(payloadLocal, descriptor.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement");
+            statements.Append("await ").Append(producerVariable).Append('.').Append(publishMethod).Append('(').Append(publishPayload).Append(channelArgs).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
 
             EmitCorrelationCapture(captureCorrelation, descriptor.Messages[0], camel, payloadLocal, statements);
             return statements.ToString();

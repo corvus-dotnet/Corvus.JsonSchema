@@ -82,6 +82,7 @@
   <Folder Name="/.tests/">
     <Project Path="Common/tests/TestUtilities/TestUtilities.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Tests/Corvus.Text.Json.Arazzo.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Arazzo.Generation.Tests/Corvus.Text.Json.Arazzo.Generation.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Tests/Corvus.Text.Json.Arazzo.Durability.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Conformance/Corvus.Text.Json.Arazzo.Durability.Conformance.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Sqlite.Tests/Corvus.Text.Json.Arazzo.Durability.Sqlite.Tests.csproj" />
