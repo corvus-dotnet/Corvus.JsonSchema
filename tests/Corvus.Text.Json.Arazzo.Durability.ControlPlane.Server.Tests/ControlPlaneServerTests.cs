@@ -521,6 +521,88 @@ public sealed class ControlPlaneServerTests
         await app.StopAsync();
     }
 
+    [TestMethod]
+    public async Task StartCatalogWorkflowRun_creates_a_pending_run_validating_inputs()
+    {
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
+        var management = new WorkflowManagementClient(runStore, "ops", CompleteResumer, clock);
+        var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
+
+        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), null, default);
+
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        app.MapArazzoControlPlane(management, catalog);
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+
+        // Valid inputs → 202 with the run id; the run is persisted Pending.
+        HttpResponseMessage accepted = await client.PostAsync(
+            "/catalog/flow/versions/1/runs",
+            new StringContent("""{ "petId": 5 }""", Encoding.UTF8, "application/json"));
+        accepted.StatusCode.ShouldBe(HttpStatusCode.Accepted);
+
+        string runId;
+        using (Stj.JsonDocument doc = await ReadJsonAsync(accepted))
+        {
+            doc.RootElement.GetProperty("workflowId").GetString().ShouldBe("flow-v1");
+            doc.RootElement.GetProperty("status").GetString().ShouldBe("Pending");
+            runId = doc.RootElement.GetProperty("runId").GetString()!;
+        }
+
+        using (WorkflowRun? run = await WorkflowRun.ResumeAsync(runStore, runId, clock, default))
+        {
+            run.ShouldNotBeNull();
+            run!.Status.ShouldBe(WorkflowRunStatus.Pending);
+            run.WorkflowId.ShouldBe("flow-v1");
+        }
+
+        // Inputs that fail the baked schema → 422.
+        HttpResponseMessage invalid = await client.PostAsync(
+            "/catalog/flow/versions/1/runs",
+            new StringContent("""{ }""", Encoding.UTF8, "application/json"));
+        invalid.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+
+        // An unknown version → 404.
+        HttpResponseMessage missing = await client.PostAsync(
+            "/catalog/flow/versions/99/runs",
+            new StringContent("""{ "petId": 5 }""", Encoding.UTF8, "application/json"));
+        missing.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        await app.StopAsync();
+    }
+
+    [TestMethod]
+    public async Task StartCatalogWorkflowRun_is_409_for_a_non_runnable_version()
+    {
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var catalogStore = new InMemoryWorkflowCatalogStore(clock); // no executor provider → not runnable
+        var management = new WorkflowManagementClient(runStore, "ops", CompleteResumer, clock);
+        var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
+
+        await catalog.AddAsync(SchemaWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), null, default);
+
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        app.MapArazzoControlPlane(management, catalog);
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+
+        HttpResponseMessage conflict = await client.PostAsync(
+            "/catalog/flow/versions/1/runs",
+            new StringContent("""{ }""", Encoding.UTF8, "application/json"));
+        conflict.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        await app.StopAsync();
+    }
+
     private static byte[] SchemaWorkflowPackage(string id)
         => WorkflowPackage.Pack(Encoding.UTF8.GetBytes($$"""{"arazzo":"1.1.0","info":{"title":"t","version":"1"},"workflows":[{"workflowId":"{{id}}","steps":[]}]}"""), []);
 

@@ -14,6 +14,19 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// </summary>
 public interface IWorkflowManagementClient
 {
+    /// <summary>
+    /// Starts a new run of a workflow: creates a fresh <see cref="WorkflowRunStatus.Pending"/> run with the
+    /// supplied inputs and enqueues it (the store is the queue) for a hosting runner to claim and execute. The
+    /// run executes asynchronously and durably; observe it via <see cref="GetAsync"/>/<see cref="ListAsync"/>.
+    /// </summary>
+    /// <param name="workflowId">The versioned workflow id (<c>{base}-v{n}</c>) to run.</param>
+    /// <param name="inputs">The workflow inputs.</param>
+    /// <param name="correlationId">An optional telemetry correlation id (a W3C trace id); a new one is captured when omitted.</param>
+    /// <param name="tags">Optional free-form tags to attach to the run.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The id of the newly created pending run.</returns>
+    ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, IReadOnlyList<string>? tags, CancellationToken cancellationToken);
+
     /// <summary>Lists runs matching a visibility query (filter by status / workflow id, paged).</summary>
     /// <param name="query">The visibility query.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
