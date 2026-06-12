@@ -228,6 +228,15 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     /// <inheritdoc/>
     public void SetRetryCount(string stepId, int count) => this.retryCounts[stepId] = count;
 
+    /// <summary>
+    /// Persists this freshly created run in its <see cref="WorkflowRunStatus.Pending"/> state so a dispatcher
+    /// can claim and start it — the store is the queue. Call once, after <see cref="CreateNew"/>, before
+    /// handing the run off to a runner; the run does not execute here.
+    /// </summary>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes when the pending run is durable.</returns>
+    public ValueTask EnqueueAsync(CancellationToken cancellationToken) => this.PersistAsync(default, cancellationToken);
+
     /// <inheritdoc/>
     public ValueTask CheckpointAsync(int cursor, CancellationToken cancellationToken)
     {

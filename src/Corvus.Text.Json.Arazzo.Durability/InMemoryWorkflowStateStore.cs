@@ -11,7 +11,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// does for AsyncAPI. It is the reference against which the shared store-conformance suite runs, and is also
 /// usable for a real single-process run that does not need to survive a host restart.
 /// </summary>
-public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex
+public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex
 {
     private readonly Dictionary<string, Entry> entries = [];
     private readonly Dictionary<string, LeaseRecord> leases = [];
@@ -184,6 +184,34 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
 
         return ValueTask.FromResult(new WorkflowRunPage(runs, continuation));
     }
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
+        await Task.CompletedTask.ConfigureAwait(false);
+
+        List<WorkflowRunId> claimable;
+        lock (this.gate)
+        {
+            claimable = this.entries
+                .Where(kvp => hostedWorkflowIds.Contains(kvp.Value.Index.WorkflowId)
+                    && (kvp.Value.Index.Status == WorkflowRunStatus.Pending
+                        || (kvp.Value.Index.Status == WorkflowRunStatus.Running && !this.HasLiveLease(kvp.Key, now))))
+                .Select(kvp => new WorkflowRunId(kvp.Key))
+                .ToList();
+        }
+
+        foreach (WorkflowRunId id in claimable)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return id;
+        }
+    }
+
+    // Must be called while holding the gate.
+    private bool HasLiveLease(string id, DateTimeOffset now)
+        => this.leases.TryGetValue(id, out LeaseRecord lease) && lease.ExpiresAt > now;
 
     private List<WorkflowRunId> Snapshot(Func<Entry, bool> predicate)
     {
