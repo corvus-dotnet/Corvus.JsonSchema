@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Buffers.Text;
+using System.Globalization;
 using System.Text;
 using NATS.Client.Core;
 using NATS.Client.JetStream;
@@ -17,13 +18,28 @@ namespace Corvus.Text.Json.Arazzo.Durability.NatsJetStream;
 /// (<see cref="NatsJetStreamWorkflowCatalogStore"/>) encodes its keys.
 /// </summary>
 /// <remarks>
-/// List and prune scan the bucket's keys and decode each registration, mirroring the catalog store's
-/// scan approach. Create instances with <see cref="ConnectAsync(string, CancellationToken)"/> after provisioning
-/// with <see cref="PrepareAsync(string, CancellationToken)"/>.
+/// <para>
+/// Alongside each runner key, the bucket holds secondary "hosting" index keys — one per loaded hosted version —
+/// of the form <c>hosting.{base64url(baseWorkflowId)}.{versionNumber}.{base64url(runnerId)}</c> with a tiny
+/// marker value. <see cref="IsVersionHostedAsync"/> answers from a prefix-scoped scan of these index keys rather
+/// than decoding every runner's full document.
+/// </para>
+/// <para>
+/// List and prune scan the bucket's runner keys (those that are not hosting-index keys) and decode each
+/// registration, mirroring the catalog store's scan approach. Create instances with
+/// <see cref="ConnectAsync(string, CancellationToken)"/> after provisioning with
+/// <see cref="PrepareAsync(string, CancellationToken)"/>.
+/// </para>
 /// </remarks>
 public sealed class NatsJetStreamRunnerRegistry : IRunnerRegistry, IAsyncDisposable
 {
     private const string RegistryBucket = "arazzo_runners";
+
+    // Hosting-index keys live in the same bucket as runner keys, namespaced by this leading segment. Runner keys
+    // are Base64Url(runnerId), which never starts with this prefix, so the two key spaces never collide.
+    private const string HostingPrefix = "hosting.";
+
+    private static readonly byte[] HostingMarker = "1"u8.ToArray();
 
     private readonly NatsConnection? ownedConnection;
     private readonly INatsKVStore registry;
@@ -112,7 +128,26 @@ public sealed class NatsJetStreamRunnerRegistry : IRunnerRegistry, IAsyncDisposa
     /// <inheritdoc/>
     public async ValueTask RegisterAsync(RunnerRegistration registration, CancellationToken cancellationToken)
     {
-        await this.registry.PutAsync(Key(registration.RunnerIdValue), registration.ToJsonBytes(), cancellationToken: cancellationToken).ConfigureAwait(false);
+        string runnerId = registration.RunnerIdValue;
+        string key = Key(runnerId);
+
+        // Re-registration may change the hosted versions, so drop any stale hosting-index keys for the old doc
+        // before overwriting, then write the new doc and re-project the hosting index from it.
+        NatsKVEntry<byte[]>? existing = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+        if (existing is { Value: { } oldValue })
+        {
+            foreach ((string oldBase, int oldVersion) in RunnerRegistration.FromJson(oldValue).LoadedHostedVersions())
+            {
+                await this.DeleteAsync(HostingKey(oldBase, oldVersion, runnerId), cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        await this.registry.PutAsync(key, registration.ToJsonBytes(), cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
+        {
+            await this.registry.PutAsync(HostingKey(baseWorkflowId, versionNumber, runnerId), HostingMarker, cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
     }
 
     /// <inheritdoc/>
@@ -126,6 +161,7 @@ public sealed class NatsJetStreamRunnerRegistry : IRunnerRegistry, IAsyncDisposa
             return false;
         }
 
+        // A heartbeat only advances liveness; the hosted versions are unchanged, so the hosting index is left as-is.
         RunnerRegistration updated = RunnerRegistration.FromJson(value).WithLastSeenAt(at);
         await this.registry.PutAsync(key, updated.ToJsonBytes(), cancellationToken: cancellationToken).ConfigureAwait(false);
         return true;
@@ -137,6 +173,11 @@ public sealed class NatsJetStreamRunnerRegistry : IRunnerRegistry, IAsyncDisposa
         var result = new List<RunnerRegistration>();
         await foreach (string key in this.registry.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
         {
+            if (IsHostingKey(key))
+            {
+                continue;
+            }
+
             NatsKVEntry<byte[]>? entry = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
             if (entry is { Value: { } value })
             {
@@ -148,16 +189,47 @@ public sealed class NatsJetStreamRunnerRegistry : IRunnerRegistry, IAsyncDisposa
     }
 
     /// <inheritdoc/>
+    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(baseWorkflowId);
+
+        // Enumerate only the hosting-index keys scoped to this (base, version) via a subject-wildcard filter
+        // (KV keys map to subjects; the final '>' matches the single Base64Url(runnerId) segment). GetKeysAsync
+        // already excludes deleted/tombstoned keys, so any returned key means a live runner hosts the version.
+        string filter = HostingKeyPrefix(baseWorkflowId, versionNumber) + ">";
+        await foreach (string unused in this.registry.GetKeysAsync([filter], cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<int> PruneAsync(DateTimeOffset deadBefore, CancellationToken cancellationToken)
     {
         int removed = 0;
         await foreach (string key in this.registry.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
         {
-            NatsKVEntry<byte[]>? entry = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
-            if (entry is { Value: { } value } && RunnerRegistration.FromJson(value).LastSeenAtValue < deadBefore)
+            if (IsHostingKey(key))
             {
-                await this.DeleteAsync(key, cancellationToken).ConfigureAwait(false);
-                removed++;
+                continue;
+            }
+
+            NatsKVEntry<byte[]>? entry = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+            if (entry is { Value: { } value })
+            {
+                RunnerRegistration registration = RunnerRegistration.FromJson(value);
+                if (registration.LastSeenAtValue < deadBefore)
+                {
+                    foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
+                    {
+                        await this.DeleteAsync(HostingKey(baseWorkflowId, versionNumber, registration.RunnerIdValue), cancellationToken).ConfigureAwait(false);
+                    }
+
+                    await this.DeleteAsync(key, cancellationToken).ConfigureAwait(false);
+                    removed++;
+                }
             }
         }
 
@@ -175,7 +247,21 @@ public sealed class NatsJetStreamRunnerRegistry : IRunnerRegistry, IAsyncDisposa
     }
 
     private static string Key(string runnerId)
-        => Base64Url.EncodeToString(Encoding.UTF8.GetBytes(runnerId));
+        => Enc(runnerId);
+
+    private static string HostingKeyPrefix(string baseWorkflowId, int versionNumber)
+        => string.Create(CultureInfo.InvariantCulture, $"{HostingPrefix}{Enc(baseWorkflowId)}.{versionNumber}.");
+
+    private static string HostingKey(string baseWorkflowId, int versionNumber, string runnerId)
+        => HostingKeyPrefix(baseWorkflowId, versionNumber) + Enc(runnerId);
+
+    private static bool IsHostingKey(string key)
+        => key.StartsWith(HostingPrefix, StringComparison.Ordinal);
+
+    // Base64Url of the UTF-8 bytes: KV keys forbid '+' and '/', so the url-safe alphabet keeps every segment
+    // a single dot-free token (periods are reserved here as the segment separator).
+    private static string Enc(string value)
+        => Base64Url.EncodeToString(Encoding.UTF8.GetBytes(value));
 
     private async ValueTask<NatsKVEntry<byte[]>?> TryGetAsync(string key, CancellationToken cancellationToken)
     {

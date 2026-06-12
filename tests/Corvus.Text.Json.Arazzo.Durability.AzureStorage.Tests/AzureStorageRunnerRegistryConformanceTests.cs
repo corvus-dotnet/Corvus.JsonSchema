@@ -21,6 +21,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage.Tests;
 public sealed class AzureStorageRunnerRegistryConformanceTests : RunnerRegistryConformance
 {
     private const string RunnersTable = "arazzoRunners";
+    private const string HostingTable = "arazzoRunnerHosting";
 
     private static AzuriteContainer container = null!;
 
@@ -49,17 +50,10 @@ public sealed class AzureStorageRunnerRegistryConformanceTests : RunnerRegistryC
         string connectionString = container.GetConnectionString();
         var tableService = new TableServiceClient(connectionString);
 
-        // Drop the runners table to isolate each test, then re-provision and open for operation. Deleting a
-        // table can briefly leave it in a "being deleted" state, so retry the recreate until it succeeds.
-        TableClient runners = tableService.GetTableClient(RunnersTable);
-        try
-        {
-            await runners.DeleteAsync();
-        }
-        catch (RequestFailedException ex) when (ex.Status == 404)
-        {
-            // The table does not exist yet — nothing to delete.
-        }
+        // Drop the runners and hosting-index tables to isolate each test, then re-provision and open for operation.
+        // Deleting a table can briefly leave it in a "being deleted" state, so retry the recreate until it succeeds.
+        await DeleteIfExistsAsync(tableService.GetTableClient(RunnersTable));
+        await DeleteIfExistsAsync(tableService.GetTableClient(HostingTable));
 
         while (true)
         {
@@ -76,5 +70,17 @@ public sealed class AzureStorageRunnerRegistryConformanceTests : RunnerRegistryC
         }
 
         return await AzureStorageRunnerRegistry.ConnectAsync(tableService);
+    }
+
+    private static async Task DeleteIfExistsAsync(TableClient table)
+    {
+        try
+        {
+            await table.DeleteAsync();
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            // The table does not exist yet — nothing to delete.
+        }
     }
 }

@@ -10,7 +10,9 @@ namespace Corvus.Text.Json.Arazzo.Durability.Mongo;
 /// <summary>
 /// A MongoDB-backed <see cref="IRunnerRegistry"/>. Each <see cref="RunnerRegistration"/> is stored as a document
 /// in a dedicated <c>runner_registrations</c> collection, keyed by runner id, holding the canonical JSON document
-/// (a BSON binary) alongside a queryable <c>lastSeenAt</c> field (Unix milliseconds) used for pruning.
+/// (a BSON binary) alongside a queryable <c>lastSeenAt</c> field (Unix milliseconds) used for pruning and a
+/// multikey <c>loadedVersions</c> projection (one <c>{ baseWorkflowId, versionNumber }</c> sub-document per loaded
+/// hosted version) used by <see cref="IsVersionHostedAsync"/>.
 /// </summary>
 /// <remarks>
 /// The driver pools connections internally, so the registry is naturally concurrent. Create instances with
@@ -30,6 +32,12 @@ public sealed class MongoRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         this.ownsClient = ownsClient;
         IMongoDatabase database = client.GetDatabase(databaseName);
         this.registrations = database.GetCollection<BsonDocument>("runner_registrations");
+
+        // Multikey index over the queryable hosting projection, supporting IsVersionHostedAsync.
+        var indexKeys = Builders<BsonDocument>.IndexKeys
+            .Ascending("loadedVersions.baseWorkflowId")
+            .Ascending("loadedVersions.versionNumber");
+        this.registrations.Indexes.CreateOne(new CreateIndexModel<BsonDocument>(indexKeys));
     }
 
     /// <summary>Opens the registry for operation against a database.</summary>
@@ -71,15 +79,48 @@ public sealed class MongoRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     public async ValueTask RegisterAsync(RunnerRegistration registration, CancellationToken cancellationToken)
     {
         string runnerId = registration.RunnerIdValue;
-        var document = new BsonDocument
-        {
-            ["_id"] = runnerId,
-            ["lastSeenAt"] = registration.LastSeenAtValue.ToUnixTimeMilliseconds(),
-            ["doc"] = new BsonBinaryData(registration.ToJsonBytes()),
-        };
+        BsonDocument document = BuildDocument(registration);
 
         FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Eq("_id", runnerId);
         await this.registrations.ReplaceOneAsync(filter, document, new ReplaceOptions { IsUpsert = true }, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(baseWorkflowId);
+
+        // $elemMatch ensures the same array element matches both base id and version.
+        FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.ElemMatch(
+            "loadedVersions",
+            Builders<BsonDocument>.Filter.Eq("baseWorkflowId", baseWorkflowId) & Builders<BsonDocument>.Filter.Eq("versionNumber", versionNumber));
+        return await this.registrations.Find(filter).Limit(1).AnyAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Builds the stored BSON document for a registration: the canonical JSON (clean) plus the queryable
+    /// <c>lastSeenAt</c> field and the multikey <c>loadedVersions</c> projection used by
+    /// <see cref="IsVersionHostedAsync"/>.
+    /// </summary>
+    private static BsonDocument BuildDocument(RunnerRegistration registration)
+    {
+        var loadedVersions = new BsonArray();
+        foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
+        {
+            loadedVersions.Add(new BsonDocument
+            {
+                ["baseWorkflowId"] = baseWorkflowId,
+                ["versionNumber"] = versionNumber,
+            });
+        }
+
+        return new BsonDocument
+        {
+            ["_id"] = registration.RunnerIdValue,
+            ["lastSeenAt"] = registration.LastSeenAtValue.ToUnixTimeMilliseconds(),
+            ["doc"] = new BsonBinaryData(registration.ToJsonBytes()),
+            ["loadedVersions"] = loadedVersions,
+        };
     }
 
     /// <inheritdoc/>
@@ -94,12 +135,7 @@ public sealed class MongoRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         }
 
         RunnerRegistration updated = RunnerRegistration.FromJson(existing["doc"].AsBsonBinaryData.Bytes).WithLastSeenAt(at);
-        var document = new BsonDocument
-        {
-            ["_id"] = runnerId,
-            ["lastSeenAt"] = at.ToUnixTimeMilliseconds(),
-            ["doc"] = new BsonBinaryData(updated.ToJsonBytes()),
-        };
+        BsonDocument document = BuildDocument(updated);
         await this.registrations.ReplaceOneAsync(filter, document, new ReplaceOptions { IsUpsert = true }, cancellationToken).ConfigureAwait(false);
         return true;
     }

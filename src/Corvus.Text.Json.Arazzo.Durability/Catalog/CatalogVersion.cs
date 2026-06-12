@@ -26,7 +26,7 @@ public readonly partial struct CatalogVersion
     private static readonly JsonWriterOptions WriterOptions = new() { Indented = false, SkipValidation = true };
 
     /// <summary>Gets the minimal identity reference for this version.</summary>
-    public CatalogVersionRef Ref => new((string)this.BaseWorkflowId, (int)(long)this.VersionNumber, (string)this.WorkflowId);
+    public CatalogVersionRef Ref => new((string)this.BaseWorkflowId, this.VersionNumber, (string)this.WorkflowId);
 
     /// <summary>Gets the lifecycle status as the <see cref="CatalogStatus"/> enum.</summary>
     public CatalogStatus StatusValue => Enum.Parse<CatalogStatus>((string)this.Status);
