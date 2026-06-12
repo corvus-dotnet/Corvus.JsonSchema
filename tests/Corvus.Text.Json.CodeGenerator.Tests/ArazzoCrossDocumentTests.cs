@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Text;
+using Corvus.Text.Json.Arazzo.Generation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.CodeGenerator.Tests;

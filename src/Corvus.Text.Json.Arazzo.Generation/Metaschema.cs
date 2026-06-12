@@ -16,9 +16,15 @@ namespace Corvus.Text.Json.CodeGenerator;
 /// <summary>
 /// Apply the metaschema to a document resolver.
 /// </summary>
-internal static class Metaschema
+public static class Metaschema
 {
-    internal static IDocumentResolver AddMetaschema(this IDocumentResolver documentResolver)
+    /// <summary>
+    /// Adds the bundled JSON Schema metaschema documents (draft-04 through 2020-12, plus the
+    /// Corvus extensions) to a document resolver so they resolve offline during generation.
+    /// </summary>
+    /// <param name="documentResolver">The resolver to register the metaschema documents with.</param>
+    /// <returns>The same <paramref name="documentResolver"/>, for chaining.</returns>
+    public static IDocumentResolver AddMetaschema(this IDocumentResolver documentResolver)
     {
         string assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? throw new InvalidOperationException("Cannot find the executing assembly path.");
 

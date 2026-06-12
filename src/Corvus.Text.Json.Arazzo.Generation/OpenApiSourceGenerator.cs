@@ -10,14 +10,14 @@ using Corvus.Text.Json.OpenApi30;
 using Corvus.Text.Json.OpenApi31;
 using Corvus.Text.Json.OpenApi32;
 
-namespace Corvus.Text.Json.CodeGenerator;
+namespace Corvus.Text.Json.Arazzo.Generation;
 
 /// <summary>
 /// Generates the OpenAPI client + schema models for a single specification file and returns the
 /// operation descriptors — the pieces an Arazzo workflow generator needs to bind each step to a
 /// generated operation. Wraps the same schema-type generation the <c>openapi generate</c> command uses.
 /// </summary>
-internal static class OpenApiSourceGenerator
+public static class OpenApiSourceGenerator
 {
     /// <summary>
     /// Generates the client and models for one OpenAPI source description and returns its operations.
@@ -27,13 +27,15 @@ internal static class OpenApiSourceGenerator
     /// <param name="outputPath">The directory the client + models are written to (models under <c>Models/</c>).</param>
     /// <param name="clientName">The client name prefix, or <see langword="null"/> for the default.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="progress">An optional callback invoked with human-readable progress messages.</param>
     /// <returns>The operations the spec declares, with generated request/response/client type names.</returns>
     public static async Task<IReadOnlyList<OperationDescriptor>> GenerateAsync(
         string specFilePath,
         string rootNamespace,
         string outputPath,
         string? clientName,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Action<string>? progress = null)
     {
         bool useYaml = IsYamlFile(specFilePath);
         byte[] specBytes = await File.ReadAllBytesAsync(specFilePath, cancellationToken).ConfigureAwait(false);
@@ -48,7 +50,7 @@ internal static class OpenApiSourceGenerator
 
         return await GenerateCoreAsync(
             specRoot, resolver, specFilePath, entryUri: null, documentLoader: null, useYaml,
-            rootNamespace, outputPath, clientName, cancellationToken).ConfigureAwait(false);
+            rootNamespace, outputPath, clientName, cancellationToken, progress).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -62,6 +64,7 @@ internal static class OpenApiSourceGenerator
     /// <param name="outputPath">The directory the client + models are written to (models under <c>Models/</c>).</param>
     /// <param name="clientName">The client name prefix, or <see langword="null"/> for the default.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="progress">An optional callback invoked with human-readable progress messages.</param>
     /// <returns>The operations the spec declares, with generated request/response/client type names.</returns>
     public static async Task<IReadOnlyList<OperationDescriptor>> GenerateAsync(
         Uri specUri,
@@ -69,7 +72,8 @@ internal static class OpenApiSourceGenerator
         string rootNamespace,
         string outputPath,
         string? clientName,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Action<string>? progress = null)
     {
         ArgumentNullException.ThrowIfNull(specUri);
         ArgumentNullException.ThrowIfNull(documentLoader);
@@ -83,7 +87,7 @@ internal static class OpenApiSourceGenerator
 
         return await GenerateCoreAsync(
             specRoot, resolver, specUri.AbsoluteUri, specUri, documentLoader, useYaml: false,
-            rootNamespace, outputPath, clientName, cancellationToken).ConfigureAwait(false);
+            rootNamespace, outputPath, clientName, cancellationToken, progress).ConfigureAwait(false);
     }
 
     private static async Task<IReadOnlyList<OperationDescriptor>> GenerateCoreAsync(
@@ -96,9 +100,10 @@ internal static class OpenApiSourceGenerator
         string rootNamespace,
         string outputPath,
         string? clientName,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Action<string>? progress)
     {
-        string version = OpenApiCommandHelpers.DetectSpecVersion(specRoot, null);
+        string version = OpenApiSpecVersion.Detect(specRoot, null);
         string modelsPath = Path.Combine(outputPath, "Models");
 
         IReadOnlyList<GeneratedFile> clientFiles;
@@ -107,7 +112,7 @@ internal static class OpenApiSourceGenerator
         if (version is "3.2")
         {
             SchemaReference[] schemaRefs = OpenApi32CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, null, resolver);
-            Dictionary<string, string> schemaTypeMap = await ResolveSchemaTypesAsync(schemaEntryKey, version, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, entryUri, documentLoader, cancellationToken).ConfigureAwait(false);
+            Dictionary<string, string> schemaTypeMap = await ResolveSchemaTypesAsync(schemaEntryKey, version, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, entryUri, documentLoader, cancellationToken, progress).ConfigureAwait(false);
             OpenApi32CodeGenerator generator = new(rootNamespace, schemaTypeMap, clientName, false);
             clientFiles = generator.Generate(specRoot, null, resolver);
             operations = generator.DescribeOperations(specRoot, null, resolver);
@@ -115,7 +120,7 @@ internal static class OpenApiSourceGenerator
         else if (version is "3.0")
         {
             SchemaReference[] schemaRefs = OpenApi30CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, null, resolver);
-            Dictionary<string, string> schemaTypeMap = await ResolveSchemaTypesAsync(schemaEntryKey, version, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, entryUri, documentLoader, cancellationToken).ConfigureAwait(false);
+            Dictionary<string, string> schemaTypeMap = await ResolveSchemaTypesAsync(schemaEntryKey, version, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, entryUri, documentLoader, cancellationToken, progress).ConfigureAwait(false);
             OpenApi30CodeGenerator generator = new(rootNamespace, schemaTypeMap, clientName, false);
             clientFiles = generator.Generate(specRoot, null, resolver);
             operations = generator.DescribeOperations(specRoot, null, resolver);
@@ -123,7 +128,7 @@ internal static class OpenApiSourceGenerator
         else
         {
             SchemaReference[] schemaRefs = OpenApi31CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, null, resolver);
-            Dictionary<string, string> schemaTypeMap = await ResolveSchemaTypesAsync(schemaEntryKey, version, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, entryUri, documentLoader, cancellationToken).ConfigureAwait(false);
+            Dictionary<string, string> schemaTypeMap = await ResolveSchemaTypesAsync(schemaEntryKey, version, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, entryUri, documentLoader, cancellationToken, progress).ConfigureAwait(false);
             OpenApi31CodeGenerator generator = new(rootNamespace, schemaTypeMap, clientName, false);
             clientFiles = generator.Generate(specRoot, null, resolver);
             operations = generator.DescribeOperations(specRoot, null, resolver);
@@ -148,7 +153,8 @@ internal static class OpenApiSourceGenerator
         bool useYaml,
         Uri? entryUri,
         Func<Uri, byte[]?>? documentLoader,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Action<string>? progress)
     {
         if (schemaRefs.Length == 0)
         {
@@ -156,7 +162,7 @@ internal static class OpenApiSourceGenerator
         }
 
         (Dictionary<string, string> schemaTypeMap, _) = await OpenApiSchemaTypeGeneration.GenerateSchemaTypesAsync(
-            specFilePath, version, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, cancellationToken, entryUri, documentLoader)
+            specFilePath, version, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, cancellationToken, entryUri, documentLoader, progress)
             .ConfigureAwait(false);
         return schemaTypeMap;
     }
