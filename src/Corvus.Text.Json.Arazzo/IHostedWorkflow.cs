@@ -28,7 +28,7 @@ public interface IHostedWorkflow
     /// <summary>
     /// Starts or resumes a durable run of the workflow, returning the tri-state outcome.
     /// </summary>
-    /// <param name="apiTransports">The API transports the workflow's OpenAPI operation steps call through, keyed by source-description name (see <see cref="WorkflowDescriptor.Sources"/>). A single-source workflow's adapter reads its sole source from this map; a multi-source workflow selects per source.</param>
+    /// <param name="transport">The API transport the workflow's OpenAPI operation steps call through.</param>
     /// <param name="messageTransport">The message transport for AsyncAPI channel steps, or <see langword="null"/> when <see cref="WorkflowDescriptor.NeedsMessageTransport"/> is <see langword="false"/>.</param>
     /// <param name="workspace">The JSON workspace the run builds its values in.</param>
     /// <param name="inputs">The run's inputs as a <see cref="JsonElement"/> (the host reads these from the run record); the adapter parses them into the workflow's generated inputs type.</param>
@@ -36,7 +36,7 @@ public interface IHostedWorkflow
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The run outcome: completed, faulted, or suspended.</returns>
     ValueTask<WorkflowRunResultKind> RunAsync(
-        IReadOnlyDictionary<string, IApiTransport> apiTransports,
+        IApiTransport transport,
         IMessageTransport? messageTransport,
         JsonWorkspace workspace,
         JsonElement inputs,

@@ -10,7 +10,7 @@ namespace Corvus.Text.Json.Arazzo;
 /// </summary>
 /// <param name="WorkflowId">The versioned workflow id (<c>{baseWorkflowId}-v{versionNumber}</c>) this executor runs.</param>
 /// <param name="NeedsMessageTransport">Whether the workflow has an AsyncAPI channel step, so the host must supply an <c>IMessageTransport</c> to <see cref="IHostedWorkflow.RunAsync"/>.</param>
-/// <param name="Sources">The API (OpenAPI) <c>sourceDescriptions</c> names the workflow's operation steps call, so the host can resolve an <c>IApiTransport</c> endpoint per source and fail fast when a binding is missing. AsyncAPI sources are not listed here — they are served by the message transport (<see cref="NeedsMessageTransport"/>).</param>
+/// <param name="Sources">The <c>sourceDescriptions</c> names the workflow binds, so the host can resolve a transport endpoint per source and fail fast when a binding is missing.</param>
 public readonly record struct WorkflowDescriptor(
     string WorkflowId,
     bool NeedsMessageTransport,
