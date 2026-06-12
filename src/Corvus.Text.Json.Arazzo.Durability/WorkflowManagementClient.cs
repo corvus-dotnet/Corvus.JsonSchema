@@ -61,6 +61,45 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
     }
 
     /// <inheritdoc/>
+    public async ValueTask<WorkflowRunId> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string? correlationId = null, IReadOnlyList<string>? tags = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(workflowId);
+        ArgumentException.ThrowIfNullOrEmpty(idempotencyKey);
+
+        var id = new WorkflowRunId(DeterministicRunId(workflowId, idempotencyKey));
+        try
+        {
+            using WorkflowRun run = WorkflowRun.CreateNew(this.store, id, workflowId, inputs, this.timeProvider, correlationId, tags);
+            await run.EnqueueAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (WorkflowConflictException)
+        {
+            // A run already exists for this (workflowId, idempotencyKey) — re-delivery / duplicate fire; no-op.
+        }
+
+        return id;
+    }
+
+    private static string DeterministicRunId(string workflowId, string idempotencyKey)
+    {
+        int count = System.Text.Encoding.UTF8.GetByteCount(workflowId) + 1 + System.Text.Encoding.UTF8.GetByteCount(idempotencyKey);
+        byte[] buffer = ArrayPool<byte>.Shared.Rent(count);
+        try
+        {
+            int written = System.Text.Encoding.UTF8.GetBytes(workflowId, buffer);
+            buffer[written++] = 0;
+            written += System.Text.Encoding.UTF8.GetBytes(idempotencyKey, buffer.AsSpan(written));
+            Span<byte> hash = stackalloc byte[32];
+            System.Security.Cryptography.SHA256.HashData(buffer.AsSpan(0, written), hash);
+            return Convert.ToHexStringLower(hash);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+    }
+
+    /// <inheritdoc/>
     public ValueTask<WorkflowRunPage> ListAsync(WorkflowQuery query, CancellationToken cancellationToken)
         => this.RequireIndex().QueryAsync(query, cancellationToken);
 

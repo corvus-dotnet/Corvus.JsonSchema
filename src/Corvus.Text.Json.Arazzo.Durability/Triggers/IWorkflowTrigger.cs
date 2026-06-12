@@ -8,7 +8,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 
 /// <summary>
 /// A request to start a workflow run, raised by a trigger and serviced by the host's start path
-/// (typically <see cref="ISecuredWorkflowManagement.StartIdempotentAsync"/>).
+/// (typically <see cref="IWorkflowManagementClient.StartIdempotentAsync"/>).
 /// </summary>
 /// <param name="WorkflowId">The versioned workflow id (<c>{base}-v{n}</c>) to run.</param>
 /// <param name="Inputs">The workflow inputs.</param>
@@ -20,7 +20,7 @@ public readonly record struct WorkflowStartRequest(
     JsonElement Inputs,
     string IdempotencyKey,
     string? CorrelationId = null,
-    TagSet Tags = default);
+    IReadOnlyList<string>? Tags = null);
 
 /// <summary>
 /// The host's start path: creates (idempotently) and enqueues a <see cref="WorkflowRunStatus.Pending"/> run for

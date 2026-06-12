@@ -4,7 +4,6 @@
 
 using System.Text;
 using Corvus.Text.Json;
-using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.AsyncApi;
 
 namespace Corvus.Text.Json.Arazzo.Durability;
@@ -15,24 +14,17 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// idempotency mapping are deliberately host config (not baked into the Arazzo document) so ops can bind the
 /// same workflow differently per environment.
 /// </summary>
-/// <remarks>
-/// The mappings are <b>Arazzo runtime expressions</b> over the message — the same vocabulary the executor
-/// already uses (<c>$message.payload#/&lt;pointer&gt;</c>, <c>$message.header.&lt;name&gt;</c>), or a literal.
-/// This keeps the binding plain, serializable data (so it can move into a declared-trigger manifest later —
-/// design §6.5) and reuses <see cref="WorkflowExecutionContext"/> to evaluate it, rather than carrying C#
-/// delegates.
-/// </remarks>
 /// <param name="WorkflowId">The versioned workflow id (<c>{base}-v{n}</c>) to start.</param>
 /// <param name="Channel">The start channel address to subscribe to.</param>
-/// <param name="IdempotencyKey">A runtime expression selecting the idempotency key from the message (e.g. <c>$message.payload#/orderId</c> or <c>$message.header.message-id</c>), so a redelivered message does not start a duplicate run.</param>
-/// <param name="Inputs">A runtime expression selecting the workflow inputs from the message; when <see langword="null"/>, the whole payload is used as the inputs.</param>
-/// <param name="CorrelationId">An optional runtime expression selecting a telemetry correlation id from the message.</param>
+/// <param name="IdempotencyKey">Derives the idempotency key for a message (e.g. read a message-id header), so a redelivered message does not start a duplicate run.</param>
+/// <param name="MapInputs">Maps the message payload (and headers) to the workflow inputs; when <see langword="null"/>, the payload is used as the inputs.</param>
+/// <param name="CorrelationId">Optionally derives a telemetry correlation id from the message.</param>
 public sealed record MessageTriggerBinding(
     string WorkflowId,
     string Channel,
-    string IdempotencyKey,
-    string? Inputs = null,
-    string? CorrelationId = null);
+    Func<JsonElement, JsonElement, string> IdempotencyKey,
+    Func<JsonElement, JsonElement, JsonElement>? MapInputs = null,
+    Func<JsonElement, JsonElement, string?>? CorrelationId = null);
 
 /// <summary>
 /// A <see cref="IWorkflowTrigger"/> that starts a workflow run for each inbound message on a configured channel.
@@ -45,11 +37,6 @@ public sealed class MessageWorkflowTrigger : IWorkflowTrigger
     private readonly IMessageTransport transport;
     private readonly WorkflowStartHandler start;
     private readonly MessageTriggerBinding binding;
-
-    // The binding's selectors, parsed once. Plain-data string expressions in, runtime-evaluable expressions out.
-    private readonly ArazzoExpression idempotencyKey;
-    private readonly ArazzoExpression? inputs;
-    private readonly ArazzoExpression? correlationId;
 
     // The channel bytes are retained for the lifetime of the subscription (subscribe/unsubscribe), so they are
     // owned here rather than pool-rented.
@@ -67,9 +54,6 @@ public sealed class MessageWorkflowTrigger : IWorkflowTrigger
         this.transport = transport;
         this.start = start;
         this.binding = binding;
-        this.idempotencyKey = ArazzoExpression.Parse(binding.IdempotencyKey);
-        this.inputs = binding.Inputs is { } i ? ArazzoExpression.Parse(i) : null;
-        this.correlationId = binding.CorrelationId is { } c ? ArazzoExpression.Parse(c) : null;
     }
 
     /// <inheritdoc/>
@@ -85,26 +69,11 @@ public sealed class MessageWorkflowTrigger : IWorkflowTrigger
 
     private async ValueTask OnMessageAsync(JsonElement payload, JsonElement headers, CancellationToken cancellationToken)
     {
-        // Seed a context with the message so the binding's runtime expressions resolve against it, exactly as
-        // the executor resolves $message.* during a run.
-        var context = new WorkflowExecutionContext();
-        context.SetMessagePayload(payload);
-        if (headers.ValueKind == JsonValueKind.Object)
-        {
-            foreach (var header in headers.EnumerateObject())
-            {
-                if (header.Value.ValueKind == JsonValueKind.String)
-                {
-                    context.SetMessageHeader(header.Name.ToString(), header.Value.GetString()!);
-                }
-            }
-        }
+        string idempotencyKey = this.binding.IdempotencyKey(payload, headers);
+        JsonElement inputs = this.binding.MapInputs is { } map ? map(payload, headers) : payload;
+        string? correlationId = this.binding.CorrelationId?.Invoke(payload, headers);
 
-        string key = context.TryResolveString(this.idempotencyKey, out string resolvedKey) ? resolvedKey : string.Empty;
-        JsonElement runInputs = this.inputs is { } inputExpr && context.TryResolveValue(inputExpr, out JsonElement mapped) ? mapped : payload;
-        string? correlation = this.correlationId is { } correlationExpr && context.TryResolveString(correlationExpr, out string resolvedCorrelation) ? resolvedCorrelation : null;
-
-        var request = new WorkflowStartRequest(this.binding.WorkflowId, runInputs, key, correlation);
+        var request = new WorkflowStartRequest(this.binding.WorkflowId, inputs, idempotencyKey, correlationId);
         await this.start(request, cancellationToken).ConfigureAwait(false);
     }
 }
