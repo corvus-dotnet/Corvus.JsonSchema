@@ -44,15 +44,17 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
     private readonly IDatabase database;
     private readonly TimeProvider timeProvider;
     private readonly IWorkflowMetadataProvider? metadataProvider;
+    private readonly IWorkflowExecutorProvider? executorProvider;
     private readonly bool ownsConnection;
 
-    private RedisWorkflowCatalogStore(IConnectionMultiplexer connection, TimeProvider timeProvider, bool ownsConnection, IWorkflowMetadataProvider? metadataProvider)
+    private RedisWorkflowCatalogStore(IConnectionMultiplexer connection, TimeProvider timeProvider, bool ownsConnection, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider)
     {
         this.connection = connection;
         this.database = connection.GetDatabase();
         this.timeProvider = timeProvider;
         this.ownsConnection = ownsConnection;
         this.metadataProvider = metadataProvider;
+        this.executorProvider = executorProvider;
     }
 
     /// <summary>Verifies the store can be reached; Redis needs no schema provisioning.</summary>
@@ -75,25 +77,27 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
         string configuration,
         TimeProvider? timeProvider = null,
         IWorkflowMetadataProvider? metadataProvider = null,
+        IWorkflowExecutorProvider? executorProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(configuration);
         cancellationToken.ThrowIfCancellationRequested();
         IConnectionMultiplexer connection = await ConnectionMultiplexer.ConnectAsync(configuration).ConfigureAwait(false);
-        return new RedisWorkflowCatalogStore(connection, timeProvider ?? TimeProvider.System, ownsConnection: true, metadataProvider);
+        return new RedisWorkflowCatalogStore(connection, timeProvider ?? TimeProvider.System, ownsConnection: true, metadataProvider, executorProvider);
     }
 
     /// <summary>Creates a catalog store over an existing connection (the caller keeps ownership).</summary>
     /// <param name="connection">The Redis connection.</param>
     /// <param name="timeProvider">The time source for audit timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="metadataProvider">An optional provider used to bake schema metadata into the package at add time.</param>
+    /// <param name="executorProvider">An optional provider that compiles the workflow executor assembly baked into each added version; <see langword="null"/> to store packages without it.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The store.</returns>
-    public static RedisWorkflowCatalogStore Connect(IConnectionMultiplexer connection, TimeProvider? timeProvider = null, IWorkflowMetadataProvider? metadataProvider = null, CancellationToken cancellationToken = default)
+    public static RedisWorkflowCatalogStore Connect(IConnectionMultiplexer connection, TimeProvider? timeProvider = null, IWorkflowMetadataProvider? metadataProvider = null, IWorkflowExecutorProvider? executorProvider = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connection);
         cancellationToken.ThrowIfCancellationRequested();
-        return new RedisWorkflowCatalogStore(connection, timeProvider ?? TimeProvider.System, ownsConnection: false, metadataProvider);
+        return new RedisWorkflowCatalogStore(connection, timeProvider ?? TimeProvider.System, ownsConnection: false, metadataProvider, executorProvider);
     }
 
     /// <inheritdoc/>
@@ -450,7 +454,7 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
         RedisResult reserved = await this.database.ScriptEvaluateAsync(ReserveVersionScript, [CounterKey(baseWorkflowId)]).ConfigureAwait(false);
         int versionNumber = (int)(long)reserved;
 
-        CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider);
+        CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
         IReadOnlyList<string> tags = metadata.Tags is { Count: > 0 } t ? [.. t] : [];
         var version = new CatalogVersion(
             BaseWorkflowId: baseWorkflowId,

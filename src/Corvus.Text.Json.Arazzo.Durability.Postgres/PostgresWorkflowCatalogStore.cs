@@ -29,13 +29,15 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, IAsync
     private readonly bool ownsDataSource;
     private readonly TimeProvider timeProvider;
     private readonly IWorkflowMetadataProvider? metadataProvider;
+    private readonly IWorkflowExecutorProvider? executorProvider;
 
-    private PostgresWorkflowCatalogStore(NpgsqlDataSource dataSource, bool ownsDataSource, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider)
+    private PostgresWorkflowCatalogStore(NpgsqlDataSource dataSource, bool ownsDataSource, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider)
     {
         this.dataSource = dataSource;
         this.ownsDataSource = ownsDataSource;
         this.timeProvider = timeProvider;
         this.metadataProvider = metadataProvider;
+        this.executorProvider = executorProvider;
     }
 
     /// <summary>
@@ -71,12 +73,13 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, IAsync
         string connectionString,
         TimeProvider? timeProvider = null,
         IWorkflowMetadataProvider? metadataProvider = null,
+        IWorkflowExecutorProvider? executorProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
         cancellationToken.ThrowIfCancellationRequested();
         return new ValueTask<PostgresWorkflowCatalogStore>(
-            new PostgresWorkflowCatalogStore(NpgsqlDataSource.Create(connectionString), ownsDataSource: true, timeProvider ?? TimeProvider.System, metadataProvider));
+            new PostgresWorkflowCatalogStore(NpgsqlDataSource.Create(connectionString), ownsDataSource: true, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider));
     }
 
     /// <summary>Provisions the catalog schema over a caller-supplied data source.</summary>
@@ -112,12 +115,13 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, IAsync
         NpgsqlDataSource dataSource,
         TimeProvider? timeProvider = null,
         IWorkflowMetadataProvider? metadataProvider = null,
+        IWorkflowExecutorProvider? executorProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dataSource);
         cancellationToken.ThrowIfCancellationRequested();
         return new ValueTask<PostgresWorkflowCatalogStore>(
-            new PostgresWorkflowCatalogStore(dataSource, ownsDataSource: false, timeProvider ?? TimeProvider.System, metadataProvider));
+            new PostgresWorkflowCatalogStore(dataSource, ownsDataSource: false, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider));
     }
 
     /// <summary>Disposes the data source if this store created it (from a connection string).</summary>
@@ -464,7 +468,7 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, IAsync
             versionNumber = Convert.ToInt32(await max.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false), CultureInfo.InvariantCulture) + 1;
         }
 
-        CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider);
+        CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
         IReadOnlyList<string> tags = metadata.Tags is { Count: > 0 } t ? [.. t] : [];
         var version = new CatalogVersion(
             BaseWorkflowId: baseWorkflowId,

@@ -18,16 +18,20 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore
     private readonly SortedDictionary<string, Stored> versions = new(StringComparer.Ordinal);
     private readonly TimeProvider timeProvider;
     private readonly IWorkflowMetadataProvider? metadataProvider;
+    private readonly IWorkflowExecutorProvider? executorProvider;
     private readonly Lock gate = new();
 
     /// <summary>Initializes a new instance of the <see cref="InMemoryWorkflowCatalogStore"/> class.</summary>
     /// <param name="timeProvider">The time source for audit timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="metadataProvider">An optional provider that bakes the typed schema-metadata document into each
     /// added version; <see langword="null"/> to store packages without it.</param>
-    public InMemoryWorkflowCatalogStore(TimeProvider? timeProvider = null, IWorkflowMetadataProvider? metadataProvider = null)
+    /// <param name="executorProvider">An optional provider that compiles the workflow executor assembly into each
+    /// added version; <see langword="null"/> to store packages without it.</param>
+    public InMemoryWorkflowCatalogStore(TimeProvider? timeProvider = null, IWorkflowMetadataProvider? metadataProvider = null, IWorkflowExecutorProvider? executorProvider = null)
     {
         this.timeProvider = timeProvider ?? TimeProvider.System;
         this.metadataProvider = metadataProvider;
+        this.executorProvider = executorProvider;
     }
 
     /// <inheritdoc/>
@@ -41,7 +45,7 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore
         lock (this.gate)
         {
             int versionNumber = this.MaxVersion(baseWorkflowId) + 1;
-            CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider);
+            CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
             var version = new CatalogVersion(
                 BaseWorkflowId: baseWorkflowId,
                 VersionNumber: versionNumber,

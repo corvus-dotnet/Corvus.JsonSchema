@@ -39,13 +39,15 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore
     private readonly TableClient catalog;
     private readonly TimeProvider timeProvider;
     private readonly IWorkflowMetadataProvider? metadataProvider;
+    private readonly IWorkflowExecutorProvider? executorProvider;
 
-    private AzureStorageWorkflowCatalogStore(BlobContainerClient packages, TableClient catalog, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider)
+    private AzureStorageWorkflowCatalogStore(BlobContainerClient packages, TableClient catalog, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider)
     {
         this.packages = packages;
         this.catalog = catalog;
         this.timeProvider = timeProvider;
         this.metadataProvider = metadataProvider;
+        this.executorProvider = executorProvider;
     }
 
     /// <summary>Provisions the store's blob container and table over the given connection string.</summary>
@@ -95,6 +97,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore
         string connectionString,
         TimeProvider? timeProvider = null,
         IWorkflowMetadataProvider? metadataProvider = null,
+        IWorkflowExecutorProvider? executorProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
@@ -103,6 +106,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore
             new TableServiceClient(connectionString),
             timeProvider,
             metadataProvider,
+            executorProvider,
             cancellationToken);
     }
 
@@ -123,6 +127,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore
         TableServiceClient tableService,
         TimeProvider? timeProvider = null,
         IWorkflowMetadataProvider? metadataProvider = null,
+        IWorkflowExecutorProvider? executorProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(blobService);
@@ -131,7 +136,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore
 
         BlobContainerClient packages = blobService.GetBlobContainerClient(CatalogContainer);
         TableClient catalog = tableService.GetTableClient(CatalogTable);
-        return new ValueTask<AzureStorageWorkflowCatalogStore>(new AzureStorageWorkflowCatalogStore(packages, catalog, timeProvider ?? TimeProvider.System, metadataProvider));
+        return new ValueTask<AzureStorageWorkflowCatalogStore>(new AzureStorageWorkflowCatalogStore(packages, catalog, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider));
     }
 
     /// <inheritdoc/>
@@ -443,7 +448,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore
         {
             cancellationToken.ThrowIfCancellationRequested();
             int versionNumber = await this.MaxVersionAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false) + 1;
-            CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider);
+            CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
             var version = new CatalogVersion(
                 BaseWorkflowId: baseWorkflowId,
                 VersionNumber: versionNumber,
