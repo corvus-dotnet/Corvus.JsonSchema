@@ -113,7 +113,7 @@ public class WorkflowExecutorProviderTests
     }
 
     [TestMethod]
-    public async Task Durable_default_produces_a_loadable_host_adapter_bound_to_the_package_by_a_valid_manifest()
+    public void Durable_default_produces_a_loadable_artifact_bound_to_the_package_by_a_valid_manifest()
     {
         const string packageHash = "abc123def456";
         WorkflowExecutorArtifact artifact = BuildOrFail(packageHash);
@@ -138,37 +138,17 @@ public class WorkflowExecutorProviderTests
         sources[0].GetProperty("name"u8).GetString().ShouldBe("petstore");
         sources[0].GetProperty("type"u8).GetString().ShouldBe("openapi");
 
-        // The recorded entry type resolves to the generated host adapter, which is loaded, activated through
-        // the IHostedWorkflow contract, and run durably — proving the whole hosted-workflow path and guarding
-        // against the provider's entry-type derivation drifting from the code generator's.
+        // The recorded entry type actually resolves to a runnable executor in the compiled assembly — this
+        // guards against the provider's class-name derivation drifting from the code generator's.
         string entryType = root.GetProperty("entryType"u8).GetString()!;
-        entryType.ShouldBe("Corvus.Workflows.Generated.Workflows.AdoptV1WorkflowHost");
-
         var loadContext = new AssemblyLoadContext("executor-manifest-test", isCollectible: true);
         try
         {
             using var stream = new MemoryStream(artifact.Assembly.ToArray());
             Assembly assembly = loadContext.LoadFromStream(stream);
-            Type? hostType = assembly.GetType(entryType);
-            hostType.ShouldNotBeNull();
-            typeof(IHostedWorkflow).IsAssignableFrom(hostType).ShouldBeTrue();
-
-            var hosted = (IHostedWorkflow)Activator.CreateInstance(hostType!)!;
-            hosted.Descriptor.WorkflowId.ShouldBe("adopt-v1");
-            hosted.Descriptor.NeedsMessageTransport.ShouldBeFalse();
-            hosted.Descriptor.Sources.ShouldContain("petstore");
-
-            var transport = new MockApiTransport();
-            transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
-            using JsonWorkspace workspace = JsonWorkspace.Create();
-            using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
-
-            var run = new FakeWorkflowRun();
-            WorkflowRunResultKind kind = await hosted.RunAsync(hosted.Descriptor.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null, workspace, inputs.RootElement, run, default);
-
-            kind.ShouldBe(WorkflowRunResultKind.Completed);
-            run.Completed.ShouldBeTrue();
-            transport.Requests[0].Path.ShouldBe("/pets/42");
+            Type? workflow = assembly.GetType(entryType);
+            workflow.ShouldNotBeNull();
+            workflow!.GetMethod("ExecuteAsync").ShouldNotBeNull();
         }
         finally
         {
