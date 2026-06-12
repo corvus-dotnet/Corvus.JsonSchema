@@ -30,6 +30,17 @@ public sealed class SqlServerRunnerRegistry : IRunnerRegistry, IAsyncDisposable
             );
             CREATE INDEX IX_runner_registrations_last_seen ON runner_registrations (last_seen_at);
         END;
+        IF OBJECT_ID(N'runner_hosted_versions', N'U') IS NULL
+        BEGIN
+            CREATE TABLE runner_hosted_versions (
+                runner_id NVARCHAR(450) NOT NULL,
+                base_workflow_id NVARCHAR(450) NOT NULL,
+                version_number INT NOT NULL,
+                CONSTRAINT PK_runner_hosted PRIMARY KEY (runner_id, base_workflow_id, version_number),
+                CONSTRAINT FK_runner_hosted FOREIGN KEY (runner_id) REFERENCES runner_registrations (runner_id) ON DELETE CASCADE
+            );
+            CREATE INDEX IX_runner_hosted_versions_version ON runner_hosted_versions (base_workflow_id, version_number);
+        END;
         """;
 
     private readonly string connectionString;
@@ -78,22 +89,62 @@ public sealed class SqlServerRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     /// <inheritdoc/>
     public async ValueTask RegisterAsync(RunnerRegistration registration, CancellationToken cancellationToken)
     {
+        string runnerId = registration.RunnerIdValue;
+        await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using SqlTransaction transaction = (SqlTransaction)await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+
+        await using (SqlCommand upsert = connection.CreateCommand())
+        {
+            upsert.Transaction = transaction;
+            upsert.CommandText =
+                """
+                MERGE runner_registrations AS target
+                USING (SELECT @runnerId AS runner_id) AS source
+                ON target.runner_id = source.runner_id
+                WHEN MATCHED THEN
+                    UPDATE SET last_seen_at = @lastSeenAt, doc = @doc
+                WHEN NOT MATCHED THEN
+                    INSERT (runner_id, last_seen_at, doc) VALUES (@runnerId, @lastSeenAt, @doc);
+                """;
+            upsert.Parameters.AddWithValue("@runnerId", runnerId);
+            upsert.Parameters.AddWithValue("@lastSeenAt", registration.LastSeenAtValue.ToUnixTimeMilliseconds());
+            upsert.Parameters.AddWithValue("@doc", registration.ToJsonBytes());
+            await upsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        // Re-project this runner's hosting index: drop its old rows, then insert one per loaded hosted version.
+        await using (SqlCommand clear = connection.CreateCommand())
+        {
+            clear.Transaction = transaction;
+            clear.CommandText = "DELETE FROM runner_hosted_versions WHERE runner_id = @runnerId;";
+            clear.Parameters.AddWithValue("@runnerId", runnerId);
+            await clear.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
+        {
+            await using SqlCommand insert = connection.CreateCommand();
+            insert.Transaction = transaction;
+            insert.CommandText = "INSERT INTO runner_hosted_versions (runner_id, base_workflow_id, version_number) VALUES (@runnerId, @baseWorkflowId, @versionNumber);";
+            insert.Parameters.AddWithValue("@runnerId", runnerId);
+            insert.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
+            insert.Parameters.AddWithValue("@versionNumber", versionNumber);
+            await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(baseWorkflowId);
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using SqlCommand command = connection.CreateCommand();
-        command.CommandText =
-            """
-            MERGE runner_registrations AS target
-            USING (SELECT @runnerId AS runner_id) AS source
-            ON target.runner_id = source.runner_id
-            WHEN MATCHED THEN
-                UPDATE SET last_seen_at = @lastSeenAt, doc = @doc
-            WHEN NOT MATCHED THEN
-                INSERT (runner_id, last_seen_at, doc) VALUES (@runnerId, @lastSeenAt, @doc);
-            """;
-        command.Parameters.AddWithValue("@runnerId", registration.RunnerIdValue);
-        command.Parameters.AddWithValue("@lastSeenAt", registration.LastSeenAtValue.ToUnixTimeMilliseconds());
-        command.Parameters.AddWithValue("@doc", registration.ToJsonBytes());
-        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        command.CommandText = "SELECT CASE WHEN EXISTS (SELECT 1 FROM runner_hosted_versions WHERE base_workflow_id = @baseWorkflowId AND version_number = @versionNumber) THEN 1 ELSE 0 END;";
+        command.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
+        command.Parameters.AddWithValue("@versionNumber", versionNumber);
+        return (int)(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))! == 1;
     }
 
     /// <inheritdoc/>

@@ -26,11 +26,12 @@ public static class ApiEndpointRegistration
     /// </summary>
     /// <param name="app">The endpoint route builder.</param>
     /// <param name="runsHandler">The handler for ApiRuns operations.</param>
+    /// <param name="runnersHandler">The handler for ApiRunners operations.</param>
     /// <param name="catalogHandler">The handler for ApiCatalog operations.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiRunsHandler runsHandler, IApiCatalogHandler catalogHandler)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiRunsHandler runsHandler, IApiRunnersHandler runnersHandler, IApiCatalogHandler catalogHandler)
     {
-        return MapApiEndpoints(app, runsHandler, catalogHandler, configureEndpoint: null);
+        return MapApiEndpoints(app, runsHandler, runnersHandler, catalogHandler, configureEndpoint: null);
     }
 
     /// <summary>
@@ -38,10 +39,11 @@ public static class ApiEndpointRegistration
     /// </summary>
     /// <param name="app">The endpoint route builder.</param>
     /// <param name="runsHandler">The handler for ApiRuns operations.</param>
+    /// <param name="runnersHandler">The handler for ApiRunners operations.</param>
     /// <param name="catalogHandler">The handler for ApiCatalog operations.</param>
     /// <param name="configureEndpoint">An optional callback invoked once per generated endpoint, after the route is mapped, to apply per-endpoint conventions (authorization, naming, tags, output caching, rate limiting, etc.). May be <see langword="null"/>.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiRunsHandler runsHandler, IApiCatalogHandler catalogHandler, ConfigureEndpoint? configureEndpoint)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiRunsHandler runsHandler, IApiRunnersHandler runnersHandler, IApiCatalogHandler catalogHandler, ConfigureEndpoint? configureEndpoint)
     {
 
         IEndpointConventionBuilder __ListRunsEndpoint = app.MapGet("/runs", async (HttpContext context) =>
@@ -716,6 +718,59 @@ public static class ApiEndpointRegistration
                 isCallback: false,
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "runs:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "runs:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __CancelRunEndpoint);
+
+        IEndpointConventionBuilder __ListRunnersEndpoint = app.MapGet("/runners", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+
+                ListRunnersParams parameters = new();
+
+                ListRunnersResult result = await runnersHandler.HandleListRunnersAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "listRunners",
+                methodName: "ListRunners",
+                httpMethod: "GET",
+                routeTemplate: "/runners",
+                tags: new[] { "runners" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "runs:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "runs:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __ListRunnersEndpoint);
 
         IEndpointConventionBuilder __SearchCatalogEndpoint = app.MapGet("/catalog", async (HttpContext context) =>
         {
@@ -2478,6 +2533,16 @@ public static class ApiEndpointRegistration
         /// Gets the scopes required by <c>CancelRun</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
         public static readonly string[] CancelRunOpenIdConnectScopes = ["runs:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ListRunners</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] ListRunnersOauth2Scopes = ["runs:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ListRunners</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] ListRunnersOpenIdConnectScopes = ["runs:read"];
 
         /// <summary>
         /// Gets the scopes required by <c>SearchCatalog</c> for the <c>Oauth2</c> scheme.

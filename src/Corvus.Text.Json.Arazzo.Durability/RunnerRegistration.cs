@@ -30,6 +30,41 @@ public readonly partial struct RunnerRegistration
     public DateTimeOffset LastSeenAtValue
         => DateTimeOffset.Parse((string)this.LastSeenAt, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
 
+    /// <summary>Determines whether this runner hosts the given catalog version with it loaded and ready to run.</summary>
+    /// <param name="baseWorkflowId">The base workflow id of the version.</param>
+    /// <param name="versionNumber">The version number.</param>
+    /// <returns><see langword="true"/> if a hosted version matches and is loaded.</returns>
+    public bool HostsVersion(string baseWorkflowId, int versionNumber)
+    {
+        foreach (RunnerHostedVersion hosted in this.HostedVersions.EnumerateArray())
+        {
+            if ((bool)hosted.Loaded
+                && hosted.VersionNumber == versionNumber
+                && (string)hosted.BaseWorkflowId == baseWorkflowId)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>Gets the (baseWorkflowId, versionNumber) pairs this runner hosts with the version loaded — the rows a backend projects into its hosting index.</summary>
+    /// <returns>The loaded hosted versions.</returns>
+    public IReadOnlyList<(string BaseWorkflowId, int VersionNumber)> LoadedHostedVersions()
+    {
+        var list = new List<(string, int)>();
+        foreach (RunnerHostedVersion hosted in this.HostedVersions.EnumerateArray())
+        {
+            if ((bool)hosted.Loaded)
+            {
+                list.Add(((string)hosted.BaseWorkflowId, hosted.VersionNumber));
+            }
+        }
+
+        return list;
+    }
+
     /// <summary>Parses a <see cref="RunnerRegistration"/> from its persisted JSON document, detached from the parse buffer.</summary>
     /// <param name="utf8">The UTF-8 JSON document.</param>
     /// <returns>The runner registration.</returns>

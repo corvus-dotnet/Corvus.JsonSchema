@@ -25,6 +25,7 @@
     },
     "maxConcurrency": {
       "type": "integer",
+      "format": "int32",
       "description": "The maximum number of runs the runner will execute concurrently."
     },
     "transports": {
@@ -51,6 +52,7 @@
         },
         "versionNumber": {
           "type": "integer",
+          "format": "int32",
           "description": "The catalog version number."
         },
         "hash": {

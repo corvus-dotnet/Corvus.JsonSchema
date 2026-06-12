@@ -27,6 +27,13 @@ public sealed class SqliteRunnerRegistry : IRunnerRegistry, IAsyncDisposable
             doc BLOB NOT NULL
         );
         CREATE INDEX IF NOT EXISTS IX_runner_registrations_last_seen ON runner_registrations (last_seen_at);
+        CREATE TABLE IF NOT EXISTS runner_hosted_versions (
+            runner_id TEXT NOT NULL,
+            base_workflow_id TEXT NOT NULL,
+            version_number INTEGER NOT NULL,
+            PRIMARY KEY (runner_id, base_workflow_id, version_number)
+        );
+        CREATE INDEX IF NOT EXISTS IX_runner_hosted_versions_version ON runner_hosted_versions (base_workflow_id, version_number);
         """;
 
     private readonly SqliteConnection connection;
@@ -79,20 +86,67 @@ public sealed class SqliteRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     /// <inheritdoc/>
     public async ValueTask RegisterAsync(RunnerRegistration registration, CancellationToken cancellationToken)
     {
+        string runnerId = registration.RunnerIdValue;
+        await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await using SqliteTransaction transaction = (SqliteTransaction)await this.connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+
+            using (SqliteCommand upsert = this.connection.CreateCommand())
+            {
+                upsert.Transaction = transaction;
+                upsert.CommandText =
+                    """
+                    INSERT INTO runner_registrations (runner_id, last_seen_at, doc)
+                    VALUES (@runnerId, @lastSeenAt, @doc)
+                    ON CONFLICT(runner_id) DO UPDATE SET last_seen_at = excluded.last_seen_at, doc = excluded.doc;
+                    """;
+                upsert.Parameters.AddWithValue("@runnerId", runnerId);
+                upsert.Parameters.AddWithValue("@lastSeenAt", registration.LastSeenAtValue.ToUnixTimeMilliseconds());
+                upsert.Parameters.AddWithValue("@doc", registration.ToJsonBytes());
+                await upsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            // Re-project this runner's hosting index: drop its old rows, then insert one per loaded hosted version.
+            using (SqliteCommand clear = this.connection.CreateCommand())
+            {
+                clear.Transaction = transaction;
+                clear.CommandText = "DELETE FROM runner_hosted_versions WHERE runner_id = @runnerId;";
+                clear.Parameters.AddWithValue("@runnerId", runnerId);
+                await clear.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
+            {
+                using SqliteCommand insert = this.connection.CreateCommand();
+                insert.Transaction = transaction;
+                insert.CommandText = "INSERT INTO runner_hosted_versions (runner_id, base_workflow_id, version_number) VALUES (@runnerId, @baseWorkflowId, @versionNumber);";
+                insert.Parameters.AddWithValue("@runnerId", runnerId);
+                insert.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
+                insert.Parameters.AddWithValue("@versionNumber", versionNumber);
+                await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            this.gate.Release();
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(baseWorkflowId);
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             using SqliteCommand command = this.connection.CreateCommand();
-            command.CommandText =
-                """
-                INSERT INTO runner_registrations (runner_id, last_seen_at, doc)
-                VALUES (@runnerId, @lastSeenAt, @doc)
-                ON CONFLICT(runner_id) DO UPDATE SET last_seen_at = excluded.last_seen_at, doc = excluded.doc;
-                """;
-            command.Parameters.AddWithValue("@runnerId", registration.RunnerIdValue);
-            command.Parameters.AddWithValue("@lastSeenAt", registration.LastSeenAtValue.ToUnixTimeMilliseconds());
-            command.Parameters.AddWithValue("@doc", registration.ToJsonBytes());
-            await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            command.CommandText = "SELECT EXISTS(SELECT 1 FROM runner_hosted_versions WHERE base_workflow_id = @baseWorkflowId AND version_number = @versionNumber);";
+            command.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
+            command.Parameters.AddWithValue("@versionNumber", versionNumber);
+            return (long)(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))! != 0L;
         }
         finally
         {
@@ -164,10 +218,30 @@ public sealed class SqliteRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            using SqliteCommand command = this.connection.CreateCommand();
-            command.CommandText = "DELETE FROM runner_registrations WHERE last_seen_at < @cutoff;";
-            command.Parameters.AddWithValue("@cutoff", deadBefore.ToUnixTimeMilliseconds());
-            return await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            long cutoff = deadBefore.ToUnixTimeMilliseconds();
+            await using SqliteTransaction transaction = (SqliteTransaction)await this.connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+
+            // SQLite does not enforce FK cascade unless PRAGMA foreign_keys=ON per connection, so delete the
+            // child hosting rows for the pruned runners explicitly before removing the parent registrations.
+            using (SqliteCommand clearChildren = this.connection.CreateCommand())
+            {
+                clearChildren.Transaction = transaction;
+                clearChildren.CommandText = "DELETE FROM runner_hosted_versions WHERE runner_id IN (SELECT runner_id FROM runner_registrations WHERE last_seen_at < @cutoff);";
+                clearChildren.Parameters.AddWithValue("@cutoff", cutoff);
+                await clearChildren.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            int pruned;
+            using (SqliteCommand command = this.connection.CreateCommand())
+            {
+                command.Transaction = transaction;
+                command.CommandText = "DELETE FROM runner_registrations WHERE last_seen_at < @cutoff;";
+                command.Parameters.AddWithValue("@cutoff", cutoff);
+                pruned = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return pruned;
         }
         finally
         {

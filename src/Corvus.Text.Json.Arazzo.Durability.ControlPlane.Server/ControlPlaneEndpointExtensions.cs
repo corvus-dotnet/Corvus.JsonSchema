@@ -19,6 +19,7 @@ public static class ControlPlaneEndpointExtensions
     /// <param name="endpoints">The endpoint route builder.</param>
     /// <param name="management">The run control-plane client the run endpoints delegate to.</param>
     /// <param name="catalog">The catalog client the catalog endpoints delegate to.</param>
+    /// <param name="runners">The runner registry the runners endpoint reads and the trigger gate consults.</param>
     /// <returns>The same endpoint route builder, for chaining.</returns>
     /// <remarks>
     /// Authentication/authorization are the host's concern: the generated
@@ -27,11 +28,15 @@ public static class ControlPlaneEndpointExtensions
     /// generated <c>EndpointSecurityConventions.RequireDeclaredAuthorization</c> can apply them when the host
     /// has registered the matching authentication and authorization policies.
     /// </remarks>
-    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, IWorkflowManagementClient management, IWorkflowCatalogClient catalog)
+    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, IWorkflowManagementClient management, IWorkflowCatalogClient catalog, IRunnerRegistry runners)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
         ArgumentNullException.ThrowIfNull(catalog);
-        return endpoints.MapApiEndpoints(new ArazzoControlPlaneHandler(management), new ArazzoControlPlaneCatalogHandler(catalog, management));
+        ArgumentNullException.ThrowIfNull(runners);
+        return endpoints.MapApiEndpoints(
+            new ArazzoControlPlaneHandler(management),
+            new ArazzoControlPlaneRunnersHandler(runners),
+            new ArazzoControlPlaneCatalogHandler(catalog, management, runners));
     }
 }

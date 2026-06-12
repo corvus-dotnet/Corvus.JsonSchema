@@ -32,16 +32,20 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
 
     private readonly IWorkflowCatalogClient catalog;
     private readonly IWorkflowManagementClient management;
+    private readonly IRunnerRegistry runners;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneCatalogHandler"/> class.</summary>
     /// <param name="catalog">The catalog client the endpoints delegate to.</param>
     /// <param name="management">The management client used to create runs when a workflow version is triggered.</param>
-    public ArazzoControlPlaneCatalogHandler(IWorkflowCatalogClient catalog, IWorkflowManagementClient management)
+    /// <param name="runners">The runner registry consulted to gate a trigger on a runner that hosts the version.</param>
+    public ArazzoControlPlaneCatalogHandler(IWorkflowCatalogClient catalog, IWorkflowManagementClient management, IRunnerRegistry runners)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(management);
+        ArgumentNullException.ThrowIfNull(runners);
         this.catalog = catalog;
         this.management = management;
+        this.runners = runners;
     }
 
     /// <inheritdoc/>
@@ -311,6 +315,14 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
             {
                 return StartCatalogWorkflowRunResult.UnprocessableEntity(BuildValidationResult(valid, errors), workspace);
             }
+        }
+
+        // Gate on a registered runner that hosts this version: a run accepted with no runner to execute it would
+        // sit Pending indefinitely, so refuse it up front with a 409 the caller can act on.
+        if (!await this.runners.IsVersionHostedAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false))
+        {
+            return StartCatalogWorkflowRunResult.Conflict(
+                Problem("no-runner", "No hosting runner", 409, $"No registered runner currently hosts version {versionNumber} of '{baseWorkflowId}'; start a runner that hosts it and retry."), workspace);
         }
 
         // A version with no inputs schema (SchemaMissing) accepts any inputs.

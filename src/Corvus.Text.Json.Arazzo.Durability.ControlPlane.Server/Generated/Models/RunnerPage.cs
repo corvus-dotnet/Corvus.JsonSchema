@@ -23,18 +23,18 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Whether the runner has the version loaded and ready to execute.
+/// The workflow runners currently registered with the control plane.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct JsonBoolean
+public readonly partial struct RunnerPage
 #if NET8_0_OR_GREATER
-    : IJsonElement<JsonBoolean>,
+    : IJsonElement<RunnerPage>,
       IFormattable,
       ISpanFormattable,
       IUtf8SpanFormattable
 #else
-    : IJsonElement<JsonBoolean>,
+    : IJsonElement<RunnerPage>,
       IFormattable
 #endif
 {
@@ -44,10 +44,10 @@ public readonly partial struct JsonBoolean
 
     #pragma warning restore CS8618 // JsonDocument nullability
     /// <summary>
-    /// Initializes a new instance of the <see cref="JsonBoolean"/> struct.
+    /// Initializes a new instance of the <see cref="RunnerPage"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
-    internal JsonBoolean(IJsonDocument parent, int idx)
+    internal RunnerPage(IJsonDocument parent, int idx)
     {
         Debug.Assert(idx >= 0);
         _parent = parent;
@@ -57,32 +57,146 @@ public readonly partial struct JsonBoolean
     /// <summary>
     /// Gets the default instance.
     /// </summary>
-    public static JsonBoolean DefaultInstance { get; }
+    public static RunnerPage DefaultInstance { get; }
 
     /// <summary>
-    /// Tries to get the value as a boolean
+    /// Gets the value of the property with the given name.
     /// </summary>
-    /// <param name="value">Provides the boolean value if successful.</param>
-    /// <returns><see langword="true"/> if the value was a boolean, otherwise false.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryGetValue(out bool value)
+    /// <param name="propertyName">The name of the property.</param>
+    /// <returns>The value of the property with the given name.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    public JsonElement this[ReadOnlySpan<byte> propertyName]
+    {
+        get
+        {
+            CheckValidInstance();
+            if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement value))
+            {
+                return default;
+            }
+
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// Gets the value of the property with the given name.
+    /// </summary>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <returns>The value of the property with the given name.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    public JsonElement this[ReadOnlySpan<char> propertyName]
+    {
+        get
+        {
+            CheckValidInstance();
+            if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement value))
+            {
+                return default;
+            }
+
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// Gets the value of the property with the given name.
+    /// </summary>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <returns>The value of the property with the given name.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    public JsonElement this[string propertyName]
+    {
+        get
+        {
+            CheckValidInstance();
+            if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement value))
+            {
+                return default;
+            }
+
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// Tries to get the value of the property with the given name.
+    /// </summary>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <param name="value">The value of the property, if present.</param>
+    /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out JsonElement value)
     {
         CheckValidInstance();
+        return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
+    }
 
-        JsonTokenType type = _parent.GetJsonTokenType(_idx);
+    /// <summary>
+    /// Tries to get the value of the property with the given name.
+    /// </summary>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <param name="value">The value of the property, if present.</param>
+    /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    public bool TryGetProperty(ReadOnlySpan<char> propertyName, out JsonElement value)
+    {
+        CheckValidInstance();
+        return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
+    }
 
-        switch (type)
+    /// <summary>
+    /// Tries to get the value of the property with the given name.
+    /// </summary>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <param name="value">The value of the property, if present.</param>
+    /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    public bool TryGetProperty(string propertyName, out JsonElement value)
+    {
+        CheckValidInstance();
+        return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
+    }
+
+    /// <summary>
+    /// Gets the <c>runners</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray Runners
+    {
+        get
         {
-            case JsonTokenType.True:
-                value = true;
-                return true;
-            case JsonTokenType.False:
-                value = false;
-                return true;
-            default:
-                value = default;
-                return false;
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RunnersUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray value))
+            {
+                return value;
+            }
+
+            return default;
         }
+    }
+
+    /// <summary>
+    /// Gets the number of properties in the object.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    public int GetPropertyCount()
+    {
+        CheckValidInstance();
+        return _parent.GetPropertyCount(_idx);
+    }
+
+    /// <summary>
+    /// Enumerates the object.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    public ObjectEnumerator<JsonElement> EnumerateObject()
+    {
+        CheckValidInstance();
+        return EnumeratorCreator.CreateObjectEnumerator<JsonElement>(_parent, _idx);
     }
 
     /// <inheritdoc/>
@@ -90,22 +204,6 @@ public readonly partial struct JsonBoolean
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator bool(JsonBoolean value)
-    {
-        JsonTokenType type = value._parent.GetJsonTokenType(value._idx);
-
-        switch (type)
-        {
-            case JsonTokenType.True:
-                return true;
-            case JsonTokenType.False:
-                return false;
-            default:
-                throw new FormatException();
-        }
-    }
 
     /// <summary>
     /// Operator ==.
@@ -115,7 +213,7 @@ public readonly partial struct JsonBoolean
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in JsonBoolean left, in JsonBoolean right)
+    public static bool operator ==(in RunnerPage left, in RunnerPage right)
     {
         return left.Equals(right);
     }
@@ -128,7 +226,7 @@ public readonly partial struct JsonBoolean
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in JsonBoolean left, in JsonBoolean right)
+    public static bool operator !=(in RunnerPage left, in RunnerPage right)
     {
         return !left.Equals(right);
     }
@@ -141,7 +239,7 @@ public readonly partial struct JsonBoolean
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in JsonBoolean left, in JsonElement right)
+    public static bool operator ==(in RunnerPage left, in JsonElement right)
     {
         return left.Equals(right);
     }
@@ -154,7 +252,7 @@ public readonly partial struct JsonBoolean
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in JsonBoolean left, in JsonElement right)
+    public static bool operator !=(in RunnerPage left, in JsonElement right)
     {
         return !left.Equals(right);
     }
@@ -165,7 +263,7 @@ public readonly partial struct JsonBoolean
     /// <param name="value">The instance of this type.</param>
     /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator JsonElement(JsonBoolean instance)
+    public static implicit operator JsonElement(RunnerPage instance)
     {
         return JsonElement.From(instance);
     }
@@ -176,9 +274,9 @@ public readonly partial struct JsonBoolean
     /// <param name="value">The instance of this type as a JsonElement.</param>
     /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator JsonBoolean(JsonElement instance)
+    public static implicit operator RunnerPage(JsonElement instance)
     {
-        return JsonBoolean.From(instance);
+        return RunnerPage.From(instance);
     }
 
     /// <summary>
@@ -187,7 +285,7 @@ public readonly partial struct JsonBoolean
     /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the JSON element.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static JsonBoolean From<T>(in T instance)
+    public static RunnerPage From<T>(in T instance)
         where T : struct, IJsonElement<T>
     {
         return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -212,10 +310,10 @@ public readonly partial struct JsonBoolean
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static JsonBoolean ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+    public static RunnerPage ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<JsonBoolean>(utf8Json, options);
+        return JsonElementHelpers.ParseValue<RunnerPage>(utf8Json, options);
         #pragma warning restore CS0618
     }
 
@@ -238,10 +336,10 @@ public readonly partial struct JsonBoolean
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static JsonBoolean ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+    public static RunnerPage ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<JsonBoolean>(json, options);
+        return JsonElementHelpers.ParseValue<RunnerPage>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -264,10 +362,10 @@ public readonly partial struct JsonBoolean
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static JsonBoolean ParseValue(string json, JsonDocumentOptions options = default)
+    public static RunnerPage ParseValue(string json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<JsonBoolean>(json, options);
+        return JsonElementHelpers.ParseValue<RunnerPage>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -307,10 +405,10 @@ public readonly partial struct JsonBoolean
     ///   A value could not be read from the reader.
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-    public static JsonBoolean ParseValue(ref Utf8JsonReader reader)
+    public static RunnerPage ParseValue(ref Utf8JsonReader reader)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<JsonBoolean>(ref reader);
+        return JsonElementHelpers.ParseValue<RunnerPage>(ref reader);
         #pragma warning restore CS0618
     }
 
@@ -352,16 +450,16 @@ public readonly partial struct JsonBoolean
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
-    public static bool TryParseValue(ref Utf8JsonReader reader, out JsonBoolean? result)
+    public static bool TryParseValue(ref Utf8JsonReader reader, out RunnerPage? result)
     {
-        return JsonElementHelpers.TryParseValue<JsonBoolean>(ref reader, out result);
+        return JsonElementHelpers.TryParseValue<RunnerPage>(ref reader, out result);
     }
 
     /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
         return
-            (obj is IJsonElement value && Equals(new JsonBoolean(value.ParentDocument, value.ParentDocumentIndex))) ||
+            (obj is IJsonElement value && Equals(new RunnerPage(value.ParentDocument, value.ParentDocumentIndex))) ||
             (obj is null && this.IsNull());
     }
 
@@ -451,11 +549,11 @@ public readonly partial struct JsonBoolean
     void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-    static JsonBoolean IJsonElement<JsonBoolean>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+    static RunnerPage IJsonElement<RunnerPage>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private string DebuggerDisplay => $"JsonBoolean: ValueKind = {ValueKind} : \"{ToString()}\"";
+    private string DebuggerDisplay => $"RunnerPage: ValueKind = {ValueKind} : \"{ToString()}\"";
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -470,11 +568,11 @@ public readonly partial struct JsonBoolean
     JsonValueKind IJsonElement.ValueKind => ValueKind;
 
     /// <summary>
-    /// Gets a <see cref="JsonBoolean"/> which can be safely stored beyond the lifetime of the
+    /// Gets a <see cref="RunnerPage"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </summary>
     /// <returns>
-    /// A <see cref="JsonBoolean"/> which can be safely stored beyond the lifetime of the
+    /// A <see cref="RunnerPage"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </returns>
     /// <remarks>
@@ -483,10 +581,10 @@ public readonly partial struct JsonBoolean
     /// this method returns the same instance without additional allocation.
     /// </para>
     /// </remarks>
-    public JsonBoolean Clone()
+    public RunnerPage Clone()
     {
         CheckValidInstance();
-        return _parent.CloneElement<JsonBoolean>(_idx);
+        return _parent.CloneElement<RunnerPage>(_idx);
     }
 
     /// <summary>
@@ -494,7 +592,7 @@ public readonly partial struct JsonBoolean
     /// or returns this instance if it is already immutable.
     /// </summary>
     /// <returns>
-    /// An immutable <see cref="JsonBoolean"/> that lives for the lifetime of its
+    /// An immutable <see cref="RunnerPage"/> that lives for the lifetime of its
     /// workspace and its associated documents.
     /// </returns>
     /// <remarks>
@@ -508,14 +606,53 @@ public readonly partial struct JsonBoolean
     /// If this instance is already backed by an immutable document, it is returned as-is.
     /// </para>
     /// </remarks>
-    public JsonBoolean Freeze()
+    public RunnerPage Freeze()
     {
         CheckValidInstance();
         if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
         {
-            return mutable.FreezeElement<JsonBoolean>(_idx);
+            return mutable.FreezeElement<RunnerPage>(_idx);
         }
 
         return this;
+    }
+
+    /// <summary>
+    /// Provides UTF8 and string versions of the JSON property names on the object.
+    /// </summary>
+    public static class JsonPropertyNames
+    {
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Runners"/>.
+        /// </summary>
+        public const string Runners = "runners";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Runners"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RunnersUtf8 => "runners"u8;
+    }
+
+    /// <summary>
+    /// Provides escaped UTF-8 versions of the JSON property names on the object.
+    /// </summary>
+    private static class JsonPropertyNamesEscaped
+    {
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Runners"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Runners => "runners"u8;
+    }
+
+    /// <summary>
+    /// Provides pre-baked property name blobs for fast builder property storage.
+    /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+    /// </summary>
+    private static class JsonPropertyNamesPrebaked
+    {
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Runners"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Runners => [0x95, 0x00, 0x00, 0x00, 0x22, 0x72, 0x75, 0x6E, 0x6E, 0x65, 0x72, 0x73, 0x22];
     }
 }

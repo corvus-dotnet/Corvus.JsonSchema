@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Text;
 using Azure;
 using Azure.Data.Tables;
 
@@ -15,21 +16,33 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 /// the Azurite emulator.
 /// </summary>
 /// <remarks>
+/// <para>
 /// The <c>Doc</c> property is the canonical record — the registration round-trips through it unchanged, exactly as
 /// every other backend keeps the JSON verbatim. Provision the table once with
 /// <see cref="PrepareAsync(string, CancellationToken)"/>, then open the registry with
 /// <see cref="ConnectAsync(string, CancellationToken)"/>.
+/// </para>
+/// <para>
+/// Azure Table cannot query into the JSON <c>Doc</c>, so a second "hosting" index table answers
+/// <see cref="IsVersionHostedAsync"/> with a single partition query. Each loaded hosted (base, version) of a
+/// runner is projected into one index entity whose PartitionKey encodes the (base, version) pair and whose RowKey
+/// is the runner id; <see cref="RegisterAsync"/> re-projects a runner's index entities and <see cref="PruneAsync"/>
+/// removes them, mirroring the SQL backends' hosted-versions table.
+/// </para>
 /// </remarks>
 public sealed class AzureStorageRunnerRegistry : IRunnerRegistry
 {
     private const string RunnersTable = "arazzoRunners";
+    private const string HostingTable = "arazzoRunnerHosting";
     private const string PartitionKey = "runner";
 
     private readonly TableClient runners;
+    private readonly TableClient hosting;
 
-    private AzureStorageRunnerRegistry(TableClient runners)
+    private AzureStorageRunnerRegistry(TableClient runners, TableClient hosting)
     {
         this.runners = runners;
+        this.hosting = hosting;
     }
 
     /// <summary>Provisions the registry's table over the given connection string.</summary>
@@ -55,6 +68,7 @@ public sealed class AzureStorageRunnerRegistry : IRunnerRegistry
     {
         ArgumentNullException.ThrowIfNull(tableService);
         await tableService.GetTableClient(RunnersTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
+        await tableService.GetTableClient(HostingTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Opens the registry for operation against an already-provisioned table.</summary>
@@ -87,14 +101,56 @@ public sealed class AzureStorageRunnerRegistry : IRunnerRegistry
         ArgumentNullException.ThrowIfNull(tableService);
         cancellationToken.ThrowIfCancellationRequested();
         TableClient runners = tableService.GetTableClient(RunnersTable);
-        return new ValueTask<AzureStorageRunnerRegistry>(new AzureStorageRunnerRegistry(runners));
+        TableClient hosting = tableService.GetTableClient(HostingTable);
+        return new ValueTask<AzureStorageRunnerRegistry>(new AzureStorageRunnerRegistry(runners, hosting));
     }
 
     /// <inheritdoc/>
     public async ValueTask RegisterAsync(RunnerRegistration registration, CancellationToken cancellationToken)
     {
-        TableEntity entity = BuildEntity(registration);
-        await this.runners.UpsertEntityAsync(entity, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+        string runnerId = registration.RunnerIdValue;
+
+        // Re-project this runner's hosting index. The index lives in a separate table (Azure cannot query into the
+        // JSON Doc), so first read the runner's existing entity to learn its OLD loaded hosted versions and delete
+        // those index entities, then upsert the runner entity and add one index entity per NEW loaded version.
+        NullableResponse<TableEntity> existing = await this.runners
+            .GetEntityIfExistsAsync<TableEntity>(PartitionKey, runnerId, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        if (existing.HasValue)
+        {
+            RunnerRegistration old = RunnerRegistration.FromJson(existing.Value!.GetBinary("Doc") ?? []);
+            foreach ((string baseWorkflowId, int versionNumber) in old.LoadedHostedVersions())
+            {
+                await this.DeleteHostingEntityAsync(baseWorkflowId, versionNumber, runnerId, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        await this.runners.UpsertEntityAsync(BuildEntity(registration), TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+
+        foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
+        {
+            var index = new TableEntity(HostingPartition(baseWorkflowId, versionNumber), runnerId);
+            await this.hosting.UpsertEntityAsync(index, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(baseWorkflowId);
+        string partition = HostingPartition(baseWorkflowId, versionNumber);
+        string filter = TableClient.CreateQueryFilter($"PartitionKey eq {partition}");
+        IAsyncEnumerator<TableEntity> enumerator = this.hosting
+            .QueryAsync<TableEntity>(filter, maxPerPage: 1, select: ["PartitionKey"], cancellationToken: cancellationToken)
+            .GetAsyncEnumerator(cancellationToken);
+        try
+        {
+            return await enumerator.MoveNextAsync().ConfigureAwait(false);
+        }
+        finally
+        {
+            await enumerator.DisposeAsync().ConfigureAwait(false);
+        }
     }
 
     /// <inheritdoc/>
@@ -136,6 +192,13 @@ public sealed class AzureStorageRunnerRegistry : IRunnerRegistry
         int removed = 0;
         await foreach (TableEntity entity in this.runners.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
         {
+            // Remove this runner's hosting index entities (derived from its stored Doc) before deleting it.
+            RunnerRegistration stale = RunnerRegistration.FromJson(entity.GetBinary("Doc") ?? []);
+            foreach ((string baseWorkflowId, int versionNumber) in stale.LoadedHostedVersions())
+            {
+                await this.DeleteHostingEntityAsync(baseWorkflowId, versionNumber, entity.RowKey, cancellationToken).ConfigureAwait(false);
+            }
+
             await this.runners.DeleteEntityAsync(entity.PartitionKey, entity.RowKey, ETag.All, cancellationToken).ConfigureAwait(false);
             removed++;
         }
@@ -149,4 +212,28 @@ public sealed class AzureStorageRunnerRegistry : IRunnerRegistry
             ["LastSeenAt"] = registration.LastSeenAtValue.ToUnixTimeMilliseconds(),
             ["Doc"] = registration.ToJsonBytes(),
         };
+
+    /// <summary>
+    /// Builds the hosting-index PartitionKey for a (base workflow id, version) pair. The base id is Base64Url-encoded
+    /// so the key never contains a character Azure forbids in PartitionKey/RowKey (<c>/ \ # ?</c> and control chars).
+    /// </summary>
+    private static string HostingPartition(string baseWorkflowId, int versionNumber)
+    {
+        string encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(baseWorkflowId)).Replace('/', '_').Replace('+', '-');
+        return $"{encoded}|{versionNumber}";
+    }
+
+    private async ValueTask DeleteHostingEntityAsync(string baseWorkflowId, int versionNumber, string runnerId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await this.hosting
+                .DeleteEntityAsync(HostingPartition(baseWorkflowId, versionNumber), runnerId, ETag.All, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            // The index entity was already absent — nothing to remove.
+        }
+    }
 }
