@@ -36,6 +36,7 @@ internal static class ControlFlowEmitter
         StringBuilder body,
         StringBuilder auxiliaryTypes,
         Dictionary<string, string> stepOutputLocals,
+        TransportSelection selection,
         bool usesCorrelation = false)
     {
         // A goto targets a step by id; build the id→state-index map and pre-register every step's
@@ -119,15 +120,15 @@ internal static class ControlFlowEmitter
             loop.Append("        case ").Append(i.ToString(CultureInfo.InvariantCulture)).AppendLine(":");
             if (steps[i].SubWorkflowId is not null)
             {
-                EmitSubWorkflowCase(steps[i], i, stepIndex, options, fields, loop, auxiliaryTypes, stepOutputLocals);
+                EmitSubWorkflowCase(steps[i], i, stepIndex, options, fields, loop, auxiliaryTypes, stepOutputLocals, selection);
             }
             else if (steps[i].Channel is not null)
             {
-                EmitChannelCase(steps[i], i, stepIndex, options, fields, loop, auxiliaryTypes, stepOutputLocals, usesCorrelation);
+                EmitChannelCase(steps[i], i, stepIndex, options, fields, loop, auxiliaryTypes, stepOutputLocals, selection, usesCorrelation);
             }
             else
             {
-                EmitCase(steps[i], i, stepIndex, options, fields, loop, auxiliaryTypes, stepOutputLocals);
+                EmitCase(steps[i], i, stepIndex, options, fields, loop, auxiliaryTypes, stepOutputLocals, selection);
             }
         }
 
@@ -152,7 +153,8 @@ internal static class ControlFlowEmitter
         StringBuilder fields,
         StringBuilder loop,
         StringBuilder auxiliaryTypes,
-        Dictionary<string, string> stepOutputLocals)
+        Dictionary<string, string> stepOutputLocals,
+        TransportSelection selection)
     {
         ResolvedOperation operation = step.Operation!.Value;
         string identifier = EmitText.SanitizeIdentifier(step.StepId);
@@ -193,11 +195,11 @@ internal static class ControlFlowEmitter
             WorkflowExecutorEmitter.AppendIndented(gate, outputCode.Statements, 4);
         }
 
-        EmitDispatch(gate, step.OnSuccess, isFailure: false, camel, prefix, responseVar, new CriterionSources(bindBodyLocal), stepIndex, fields, auxiliaryTypes, operation.Operation.ResponseHeaders, requestContext, stepOutputLocals, options);
+        EmitDispatch(gate, step.OnSuccess, isFailure: false, camel, prefix, responseVar, new CriterionSources(bindBodyLocal), stepIndex, fields, auxiliaryTypes, operation.Operation.ResponseHeaders, requestContext, stepOutputLocals, options, selection);
         gate.AppendLine("}");
         gate.AppendLine("else");
         gate.AppendLine("{");
-        EmitDispatch(gate, step.OnFailure, isFailure: true, camel, prefix, responseVar, new CriterionSources(bindBodyLocal), stepIndex, fields, auxiliaryTypes, operation.Operation.ResponseHeaders, requestContext, stepOutputLocals, options);
+        EmitDispatch(gate, step.OnFailure, isFailure: true, camel, prefix, responseVar, new CriterionSources(bindBodyLocal), stepIndex, fields, auxiliaryTypes, operation.Operation.ResponseHeaders, requestContext, stepOutputLocals, options, selection);
         gate.AppendLine("}");
 
         string gateText = gate.ToString();
@@ -225,7 +227,7 @@ internal static class ControlFlowEmitter
             WorkflowExecutorEmitter.AppendIndented(c, RequestUrlEmitter.EmitToContext(operation, request.ParameterBindings, prefix, "workspace", "context"), 4);
         }
 
-        c.Append("    var ").Append(clientVar).Append(" = new ").Append(operation.Operation.ClientTypeName).Append('(').AppendLine("transport);");
+        c.Append("    var ").Append(clientVar).Append(" = new ").Append(operation.Operation.ClientTypeName).Append('(').Append(selection.ForSource(operation.SourceName)).AppendLine(");");
 
         string callToken = EmitTimeoutToken(step, camel, c);
         var callArguments = new List<string>(request.NamedArguments) { $"cancellationToken: {callToken}" };
@@ -243,7 +245,7 @@ internal static class ControlFlowEmitter
             // routes to the step's onFailure dispatch, evaluated without response context — there is no
             // response — so only $inputs/$steps criteria (typically an unconditional retry/goto) apply.
             var timeoutFailure = new StringBuilder();
-            EmitDispatch(timeoutFailure, step.OnFailure, isFailure: true, camel, $"{prefix}to_", string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options);
+            EmitDispatch(timeoutFailure, step.OnFailure, isFailure: true, camel, $"{prefix}to_", string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options, selection);
 
             c.Append("    ").Append(operation.Operation.ResponseTypeName).Append(' ').Append(responseVar).AppendLine(" = default;");
             c.Append("    bool ").Append(camel).AppendLine("Got = false;");
@@ -506,7 +508,8 @@ internal static class ControlFlowEmitter
         StringBuilder fields,
         StringBuilder loop,
         StringBuilder auxiliaryTypes,
-        Dictionary<string, string> stepOutputLocals)
+        Dictionary<string, string> stepOutputLocals,
+        TransportSelection selection)
     {
         string subWorkflowId = step.SubWorkflowId!;
         string identifier = EmitText.SanitizeIdentifier(step.StepId);
@@ -526,9 +529,9 @@ internal static class ControlFlowEmitter
                 "inputs", stepOutputLocals, options.InputAccessors, null, default, options.Namespace);
 
         var successDispatch = new StringBuilder();
-        EmitDispatch(successDispatch, step.OnSuccess, isFailure: false, camel, prefix, string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options);
+        EmitDispatch(successDispatch, step.OnSuccess, isFailure: false, camel, prefix, string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options, selection);
         var failureDispatch = new StringBuilder();
-        EmitDispatch(failureDispatch, step.OnFailure, isFailure: true, camel, prefix, string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options);
+        EmitDispatch(failureDispatch, step.OnFailure, isFailure: true, camel, prefix, string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options, selection);
 
         var inputs = new StringBuilder();
         string builderVariable = SubWorkflowStepEmitter.BuildInputs(fields, inputs, step.StepId, step.Arguments, stepOutputLocals, "inputs", options.InputAccessors, out IReadOnlyDictionary<string, string> inputValueLocals);
@@ -561,7 +564,7 @@ internal static class ControlFlowEmitter
         c.AppendLine("    {");
         c.AppendLine("        ArazzoTelemetry.StepsExecuted.Add(1);");
         c.Append("        ").Append(outputsLocal).Append(" = await ").Append(targetClass)
-            .Append(".ExecuteAsync(transport, workspace, ").Append(builderVariable).Append(".RootElement, ").Append(subToken).AppendLine(").ConfigureAwait(false);");
+            .Append(".ExecuteAsync(").Append(selection.SubWorkflowArgument).Append(", workspace, ").Append(builderVariable).Append(".RootElement, ").Append(subToken).AppendLine(").ConfigureAwait(false);");
 
         // Expose the sub-workflow's outputs for $workflows.<id>.outputs runtime expressions (plan §11) — so a
         // later step's criteria/parameters or the workflow outputs can reference this invocation's results.
@@ -616,6 +619,7 @@ internal static class ControlFlowEmitter
         StringBuilder loop,
         StringBuilder auxiliaryTypes,
         Dictionary<string, string> stepOutputLocals,
+        TransportSelection selection,
         bool usesCorrelation)
     {
         ResolvedChannel channel = step.Channel!.Value;
@@ -632,9 +636,9 @@ internal static class ControlFlowEmitter
 
         // Dispatch runs after the step; for a channel step it has no response/request/message context.
         var successDispatch = new StringBuilder();
-        EmitDispatch(successDispatch, step.OnSuccess, isFailure: false, camel, prefix, string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options);
+        EmitDispatch(successDispatch, step.OnSuccess, isFailure: false, camel, prefix, string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options, selection);
         var failureDispatch = new StringBuilder();
-        EmitDispatch(failureDispatch, step.OnFailure, isFailure: true, camel, prefix, string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options);
+        EmitDispatch(failureDispatch, step.OnFailure, isFailure: true, camel, prefix, string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options, selection);
 
         var c = new StringBuilder();
         c.AppendLine("{");
@@ -930,7 +934,8 @@ internal static class ControlFlowEmitter
         IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
         StepRequestContext requestContext,
         IReadOnlyDictionary<string, string> stepOutputLocals,
-        in WorkflowExecutorOptions options)
+        in WorkflowExecutorOptions options,
+        TransportSelection selection)
     {
         // Resolve each action's criteria expression (its operand statements are appended to `target`
         // before the if-chain) and its effect. First-match wins, so once an unconditional action (empty
@@ -951,7 +956,7 @@ internal static class ControlFlowEmitter
                 action.Criteria, fields, target, auxiliaryTypes, actionPrefix, "context", responseVar, sources,
                 "inputs", stepOutputLocals, options.InputAccessors, responseHeaders, requestContext, options.Namespace);
 
-            resolved.Add((expression, BuildApply(action, camel, stepIndex, options)));
+            resolved.Add((expression, BuildApply(action, camel, stepIndex, options, selection)));
             if (action.Criteria.Count == 0)
             {
                 break;
@@ -1007,7 +1012,7 @@ internal static class ControlFlowEmitter
         // Success with no matching action falls through to the default next state (already set).
     }
 
-    private static string BuildApply(in StepActionInfo action, string camel, IReadOnlyDictionary<string, int> stepIndex, in WorkflowExecutorOptions options)
+    private static string BuildApply(in StepActionInfo action, string camel, IReadOnlyDictionary<string, int> stepIndex, in WorkflowExecutorOptions options, TransportSelection selection)
     {
         switch (action.Kind)
         {
@@ -1022,7 +1027,7 @@ internal static class ControlFlowEmitter
                     // to the target's inputs type via its implicit operator). A cross-document target
                     // ($sourceDescriptions.<name>.<workflowId>) resolves to its per-source namespace.
                     string targetNamespace = WorkflowExecutorEmitter.ResolveSubWorkflowNamespace(options, action.TargetWorkflowSource);
-                    return $"return await {SubWorkflowStepEmitter.TargetClass(targetNamespace, targetWorkflow)}.ExecuteAsync(transport, workspace, (JsonElement)inputs, cancellationToken).ConfigureAwait(false);\n";
+                    return $"return await {SubWorkflowStepEmitter.TargetClass(targetNamespace, targetWorkflow)}.ExecuteAsync({selection.SubWorkflowArgument}, workspace, (JsonElement)inputs, cancellationToken).ConfigureAwait(false);\n";
                 }
 
                 if (action.TargetStepId is not { } targetStep || !stepIndex.TryGetValue(targetStep, out int target))

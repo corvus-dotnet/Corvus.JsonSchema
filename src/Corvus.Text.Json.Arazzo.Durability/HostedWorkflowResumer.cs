@@ -10,9 +10,9 @@ using Corvus.Text.Json.OpenApi;
 namespace Corvus.Text.Json.Arazzo.Durability;
 
 /// <summary>The transports a run executes through, resolved per run from its workflow's descriptor.</summary>
-/// <param name="ApiTransport">The API transport the workflow's OpenAPI operation steps call through. The resumer disposes it after the run.</param>
+/// <param name="ApiTransports">The API transports the workflow's OpenAPI operation steps call through, keyed by source-description name (<see cref="WorkflowDescriptor.Sources"/>) — one per API source the version uses. The resumer disposes them after the run.</param>
 /// <param name="MessageTransport">The message transport for AsyncAPI channel steps, or <see langword="null"/> when the workflow needs none. Its lifetime is owned by the binder (typically shared/long-lived), not the resumer.</param>
-public readonly record struct WorkflowTransports(IApiTransport ApiTransport, IMessageTransport? MessageTransport);
+public readonly record struct WorkflowTransports(IReadOnlyDictionary<string, IApiTransport> ApiTransports, IMessageTransport? MessageTransport);
 
 /// <summary>
 /// Binds a workflow's <see cref="WorkflowDescriptor"/> (its source names + transport needs) to the concrete
@@ -71,11 +71,14 @@ public sealed class HostedWorkflowResumer
         using JsonWorkspace workspace = JsonWorkspace.Create();
         try
         {
-            return await hosted.RunAsync(transports.ApiTransport, transports.MessageTransport, workspace, run.Inputs, run, cancellationToken).ConfigureAwait(false);
+            return await hosted.RunAsync(transports.ApiTransports, transports.MessageTransport, workspace, run.Inputs, run, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
-            await transports.ApiTransport.DisposeAsync().ConfigureAwait(false);
+            foreach (IApiTransport apiTransport in transports.ApiTransports.Values)
+            {
+                await apiTransport.DisposeAsync().ConfigureAwait(false);
+            }
         }
     }
 

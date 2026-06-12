@@ -84,7 +84,7 @@ public class WorkflowExecutorLoaderTests
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
         var run = new FakeWorkflowRun();
 
-        WorkflowRunResultKind kind = await loaded.Workflow.RunAsync(transport, null, workspace, inputs.RootElement, run, default);
+        WorkflowRunResultKind kind = await loaded.Workflow.RunAsync(loaded.Workflow.Descriptor.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null, workspace, inputs.RootElement, run, default);
 
         kind.ShouldBe(WorkflowRunResultKind.Completed);
         run.Completed.ShouldBeTrue();

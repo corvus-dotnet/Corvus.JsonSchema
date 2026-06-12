@@ -41,7 +41,8 @@ internal static class SubWorkflowStepEmitter
         string workflowsNamespace,
         IReadOnlyDictionary<string, string> stepOutputLocals,
         string inputsVariable,
-        IReadOnlyDictionary<string, string>? inputAccessors)
+        IReadOnlyDictionary<string, string>? inputAccessors,
+        string transportArgument)
     {
         ArgumentException.ThrowIfNullOrEmpty(stepId);
         ArgumentException.ThrowIfNullOrEmpty(subWorkflowId);
@@ -55,7 +56,7 @@ internal static class SubWorkflowStepEmitter
 
         statements.AppendLine("ArazzoTelemetry.StepsExecuted.Add(1);");
         statements.Append("JsonElement ").Append(outputsLocal).Append(" = await ").Append(TargetClass(workflowsNamespace, subWorkflowId))
-            .Append(".ExecuteAsync(transport, workspace, ").Append(builderVariable).AppendLine(".RootElement, cancellationToken).ConfigureAwait(false);");
+            .Append(".ExecuteAsync(").Append(transportArgument).Append(", workspace, ").Append(builderVariable).AppendLine(".RootElement, cancellationToken).ConfigureAwait(false);");
 
         return new SubWorkflowStepCode(fields.ToString(), statements.ToString(), inputValueLocals);
     }
