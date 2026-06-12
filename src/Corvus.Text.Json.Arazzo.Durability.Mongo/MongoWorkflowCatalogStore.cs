@@ -229,7 +229,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
         {
             matches.RemoveAt(matches.Count - 1);
             CatalogVersion last = matches[^1];
-            continuation = WorkflowContinuationToken.Encode(SortKey(last.BaseWorkflowId, last.VersionNumber));
+            continuation = WorkflowContinuationToken.Encode(SortKey(last.Ref.BaseWorkflowId, last.Ref.VersionNumber));
         }
 
         return new CatalogPage(matches, continuation);
@@ -246,14 +246,15 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
         }
 
         CatalogVersion current = ReadVersion(document);
-        CatalogStatus status = patch.Status ?? current.Status;
-        bool newlyObsolete = status == CatalogStatus.Obsolete && current.Status != CatalogStatus.Obsolete;
-        bool reactivated = status == CatalogStatus.Active && current.Status == CatalogStatus.Obsolete;
+        CatalogStatus currentStatus = current.StatusValue;
+        CatalogStatus status = patch.Status ?? currentStatus;
+        bool newlyObsolete = status == CatalogStatus.Obsolete && currentStatus != CatalogStatus.Obsolete;
+        bool reactivated = status == CatalogStatus.Active && currentStatus == CatalogStatus.Obsolete;
 
-        CatalogOwner owner = patch.Owner ?? current.Owner;
-        IReadOnlyList<string> tags = patch.Tags is { } t ? [.. t] : current.Tags;
-        string? obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedBy;
-        DateTimeOffset? obsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAt;
+        CatalogOwner owner = patch.Owner ?? current.OwnerValue;
+        IReadOnlyList<string> tags = patch.Tags is { } t ? [.. t] : current.TagsValue;
+        string? obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedByOrNull;
+        DateTimeOffset? obsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAtValue;
 
         var update = new BsonDocument("$set", new BsonDocument
         {
@@ -272,16 +273,24 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
         FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Eq("_id", Id(baseWorkflowId, versionNumber));
         await this.versions.UpdateOneAsync(filter, update, options: null, cancellationToken).ConfigureAwait(false);
 
-        return current with
-        {
-            Owner = owner,
-            Tags = tags,
-            Status = status,
-            LastUpdatedBy = patch.UpdatedBy,
-            LastUpdatedAt = now,
-            ObsoletedBy = obsoletedBy,
-            ObsoletedAt = obsoletedAt,
-        };
+        return CatalogVersion.Create(
+            baseWorkflowId: current.Ref.BaseWorkflowId,
+            versionNumber: current.Ref.VersionNumber,
+            workflowId: current.Ref.WorkflowId,
+            title: (string)current.Title,
+            description: current.DescriptionOrNull,
+            status: status,
+            tags: tags,
+            owner: owner,
+            sources: current.SourcesValue,
+            hash: (string)current.Hash,
+            createdBy: (string)current.CreatedBy,
+            createdAt: current.CreatedAtValue,
+            lastUpdatedBy: patch.UpdatedBy,
+            lastUpdatedAt: now,
+            obsoletedBy: obsoletedBy,
+            obsoletedAt: obsoletedAt,
+            runnable: (bool)current.Runnable);
     }
 
     /// <inheritdoc/>
@@ -343,28 +352,28 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
     private static string EscapeRegex(string value) => System.Text.RegularExpressions.Regex.Escape(value);
 
     private static CatalogVersion ReadVersion(BsonDocument document)
-        => new(
-            BaseWorkflowId: document["baseWorkflowId"].AsString,
-            VersionNumber: (int)document["versionNumber"].AsInt32,
-            WorkflowId: document["workflowId"].AsString,
-            Title: document["title"].AsString,
-            Description: document["description"].IsBsonNull ? null : document["description"].AsString,
-            Status: Enum.Parse<CatalogStatus>(document["status"].AsString),
-            Tags: ReadTags(document),
-            Owner: new CatalogOwner(
+        => CatalogVersion.Create(
+            baseWorkflowId: document["baseWorkflowId"].AsString,
+            versionNumber: (int)document["versionNumber"].AsInt32,
+            workflowId: document["workflowId"].AsString,
+            title: document["title"].AsString,
+            description: document["description"].IsBsonNull ? null : document["description"].AsString,
+            status: Enum.Parse<CatalogStatus>(document["status"].AsString),
+            tags: ReadTags(document),
+            owner: new CatalogOwner(
                 document["ownerName"].AsString,
                 document["ownerEmail"].AsString,
                 document["ownerTeam"].IsBsonNull ? null : document["ownerTeam"].AsString,
                 document["ownerUrl"].IsBsonNull ? null : document["ownerUrl"].AsString),
-            Sources: ReadSources(document),
-            Hash: document["hash"].AsString,
-            Runnable: document.GetValue("runnable", false).AsBoolean,
-            CreatedBy: document["createdBy"].AsString,
-            CreatedAt: DateTimeOffset.FromUnixTimeMilliseconds(document["createdAt"].AsInt64),
-            LastUpdatedBy: document["lastUpdatedBy"].IsBsonNull ? null : document["lastUpdatedBy"].AsString,
-            LastUpdatedAt: document["lastUpdatedAt"].IsBsonNull ? null : DateTimeOffset.FromUnixTimeMilliseconds(document["lastUpdatedAt"].AsInt64),
-            ObsoletedBy: document["obsoletedBy"].IsBsonNull ? null : document["obsoletedBy"].AsString,
-            ObsoletedAt: document["obsoletedAt"].IsBsonNull ? null : DateTimeOffset.FromUnixTimeMilliseconds(document["obsoletedAt"].AsInt64));
+            sources: ReadSources(document),
+            hash: document["hash"].AsString,
+            createdBy: document["createdBy"].AsString,
+            createdAt: DateTimeOffset.FromUnixTimeMilliseconds(document["createdAt"].AsInt64),
+            lastUpdatedBy: document["lastUpdatedBy"].IsBsonNull ? null : document["lastUpdatedBy"].AsString,
+            lastUpdatedAt: document["lastUpdatedAt"].IsBsonNull ? null : DateTimeOffset.FromUnixTimeMilliseconds(document["lastUpdatedAt"].AsInt64),
+            obsoletedBy: document["obsoletedBy"].IsBsonNull ? null : document["obsoletedBy"].AsString,
+            obsoletedAt: document["obsoletedAt"].IsBsonNull ? null : DateTimeOffset.FromUnixTimeMilliseconds(document["obsoletedAt"].AsInt64),
+            runnable: document.GetValue("runnable", false).AsBoolean);
 
     private static IReadOnlyList<string> ReadTags(BsonDocument document)
     {
@@ -417,20 +426,20 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
             cancellationToken.ThrowIfCancellationRequested();
             int versionNumber = await this.MaxVersionAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false) + 1;
             CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
-            var version = new CatalogVersion(
-                BaseWorkflowId: baseWorkflowId,
-                VersionNumber: versionNumber,
-                WorkflowId: projection.WorkflowId,
-                Title: projection.Title,
-                Description: projection.Description,
-                Status: CatalogStatus.Active,
-                Tags: tags,
-                Owner: metadata.Owner,
-                Sources: projection.Sources,
-                Hash: projection.Hash,
-                CreatedBy: metadata.CreatedBy,
-                CreatedAt: now,
-                Runnable: projection.HasExecutor);
+            CatalogVersion version = CatalogVersion.Create(
+                baseWorkflowId: baseWorkflowId,
+                versionNumber: versionNumber,
+                workflowId: projection.WorkflowId,
+                title: projection.Title,
+                description: projection.Description,
+                status: CatalogStatus.Active,
+                tags: tags,
+                owner: metadata.Owner,
+                sources: projection.Sources,
+                hash: projection.Hash,
+                createdBy: metadata.CreatedBy,
+                createdAt: now,
+                runnable: projection.HasExecutor);
 
             BsonDocument document = BuildDocument(version, projection.CanonicalPackage.ToArray());
             try
@@ -473,7 +482,9 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
 
     private static BsonDocument BuildDocument(CatalogVersion version, byte[] package)
     {
-        var sources = new BsonArray(version.Sources.Select(s => new BsonDocument
+        CatalogVersionRef versionRef = version.Ref;
+        CatalogOwner owner = version.OwnerValue;
+        var sources = new BsonArray(version.SourcesValue.Select(s => new BsonDocument
         {
             ["name"] = s.Name,
             ["type"] = (BsonValue?)s.Type ?? BsonNull.Value,
@@ -481,30 +492,30 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
 
         return new BsonDocument
         {
-            ["_id"] = Id(version.BaseWorkflowId, version.VersionNumber),
-            ["sortKey"] = SortKey(version.BaseWorkflowId, version.VersionNumber),
-            ["baseWorkflowId"] = version.BaseWorkflowId,
-            ["versionNumber"] = version.VersionNumber,
-            ["workflowId"] = version.WorkflowId,
-            ["workflowIdLower"] = version.WorkflowId.ToLowerInvariant(),
-            ["title"] = version.Title,
-            ["description"] = (BsonValue?)version.Description ?? BsonNull.Value,
-            ["status"] = version.Status.ToString(),
-            ["tags"] = new BsonArray(version.Tags),
-            ["ownerName"] = version.Owner.Name,
-            ["ownerEmail"] = version.Owner.Email,
-            ["ownerTeam"] = (BsonValue?)version.Owner.Team ?? BsonNull.Value,
-            ["ownerUrl"] = (BsonValue?)version.Owner.Url ?? BsonNull.Value,
+            ["_id"] = Id(versionRef.BaseWorkflowId, versionRef.VersionNumber),
+            ["sortKey"] = SortKey(versionRef.BaseWorkflowId, versionRef.VersionNumber),
+            ["baseWorkflowId"] = versionRef.BaseWorkflowId,
+            ["versionNumber"] = versionRef.VersionNumber,
+            ["workflowId"] = versionRef.WorkflowId,
+            ["workflowIdLower"] = versionRef.WorkflowId.ToLowerInvariant(),
+            ["title"] = (string)version.Title,
+            ["description"] = (BsonValue?)version.DescriptionOrNull ?? BsonNull.Value,
+            ["status"] = version.StatusValue.ToString(),
+            ["tags"] = new BsonArray(version.TagsValue),
+            ["ownerName"] = owner.Name,
+            ["ownerEmail"] = owner.Email,
+            ["ownerTeam"] = (BsonValue?)owner.Team ?? BsonNull.Value,
+            ["ownerUrl"] = (BsonValue?)owner.Url ?? BsonNull.Value,
             ["sources"] = sources,
-            ["hash"] = version.Hash,
-            ["runnable"] = version.Runnable,
+            ["hash"] = (string)version.Hash,
+            ["runnable"] = (bool)version.Runnable,
             ["package"] = new BsonBinaryData(package),
-            ["createdBy"] = version.CreatedBy,
-            ["createdAt"] = version.CreatedAt.ToUnixTimeMilliseconds(),
-            ["lastUpdatedBy"] = (BsonValue?)version.LastUpdatedBy ?? BsonNull.Value,
-            ["lastUpdatedAt"] = version.LastUpdatedAt is { } lua ? lua.ToUnixTimeMilliseconds() : BsonNull.Value,
-            ["obsoletedBy"] = (BsonValue?)version.ObsoletedBy ?? BsonNull.Value,
-            ["obsoletedAt"] = version.ObsoletedAt is { } oa ? oa.ToUnixTimeMilliseconds() : BsonNull.Value,
+            ["createdBy"] = (string)version.CreatedBy,
+            ["createdAt"] = version.CreatedAtValue.ToUnixTimeMilliseconds(),
+            ["lastUpdatedBy"] = (BsonValue?)version.LastUpdatedByOrNull ?? BsonNull.Value,
+            ["lastUpdatedAt"] = version.LastUpdatedAtValue is { } lua ? lua.ToUnixTimeMilliseconds() : BsonNull.Value,
+            ["obsoletedBy"] = (BsonValue?)version.ObsoletedByOrNull ?? BsonNull.Value,
+            ["obsoletedAt"] = version.ObsoletedAtValue is { } oa ? oa.ToUnixTimeMilliseconds() : BsonNull.Value,
         };
     }
 

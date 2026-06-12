@@ -46,20 +46,20 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore
         {
             int versionNumber = this.MaxVersion(baseWorkflowId) + 1;
             CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
-            var version = new CatalogVersion(
-                BaseWorkflowId: baseWorkflowId,
-                VersionNumber: versionNumber,
-                WorkflowId: projection.WorkflowId,
-                Title: projection.Title,
-                Description: projection.Description,
-                Status: CatalogStatus.Active,
-                Tags: metadata.Tags is { Count: > 0 } tags ? [.. tags] : [],
-                Owner: metadata.Owner,
-                Sources: projection.Sources,
-                Hash: projection.Hash,
-                CreatedBy: metadata.CreatedBy,
-                CreatedAt: now,
-                Runnable: projection.HasExecutor);
+            CatalogVersion version = CatalogVersion.Create(
+                baseWorkflowId: baseWorkflowId,
+                versionNumber: versionNumber,
+                workflowId: projection.WorkflowId,
+                title: projection.Title,
+                description: projection.Description,
+                status: CatalogStatus.Active,
+                tags: metadata.Tags is { Count: > 0 } tags ? [.. tags] : [],
+                owner: metadata.Owner,
+                sources: projection.Sources,
+                hash: projection.Hash,
+                createdBy: metadata.CreatedBy,
+                createdAt: now,
+                runnable: projection.HasExecutor);
 
             this.versions[SortKey(baseWorkflowId, versionNumber)] = new Stored(version, projection.CanonicalPackage.ToArray());
             return ValueTask.FromResult(version);
@@ -73,7 +73,7 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore
         lock (this.gate)
         {
             return ValueTask.FromResult(
-                this.versions.TryGetValue(SortKey(baseWorkflowId, versionNumber), out Stored stored) ? stored.Version : null);
+                this.versions.TryGetValue(SortKey(baseWorkflowId, versionNumber), out Stored stored) ? (CatalogVersion?)stored.Version : null);
         }
     }
 
@@ -128,7 +128,7 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore
                 if (matches.Count == limit)
                 {
                     // There is at least one more matching row beyond this page.
-                    continuation = WorkflowContinuationToken.Encode(SortKey(matches[^1].BaseWorkflowId, matches[^1].VersionNumber));
+                    continuation = WorkflowContinuationToken.Encode(SortKey(matches[^1].Ref.BaseWorkflowId, matches[^1].Ref.VersionNumber));
                     break;
                 }
 
@@ -153,20 +153,29 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore
             }
 
             CatalogVersion current = stored.Version;
-            CatalogStatus status = patch.Status ?? current.Status;
-            bool newlyObsolete = status == CatalogStatus.Obsolete && current.Status != CatalogStatus.Obsolete;
-            bool reactivated = status == CatalogStatus.Active && current.Status == CatalogStatus.Obsolete;
+            CatalogStatus currentStatus = current.StatusValue;
+            CatalogStatus status = patch.Status ?? currentStatus;
+            bool newlyObsolete = status == CatalogStatus.Obsolete && currentStatus != CatalogStatus.Obsolete;
+            bool reactivated = status == CatalogStatus.Active && currentStatus == CatalogStatus.Obsolete;
 
-            CatalogVersion updated = current with
-            {
-                Owner = patch.Owner ?? current.Owner,
-                Tags = patch.Tags is { } tags ? [.. tags] : current.Tags,
-                Status = status,
-                LastUpdatedBy = patch.UpdatedBy,
-                LastUpdatedAt = now,
-                ObsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedBy,
-                ObsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAt,
-            };
+            CatalogVersion updated = CatalogVersion.Create(
+                baseWorkflowId: current.Ref.BaseWorkflowId,
+                versionNumber: current.Ref.VersionNumber,
+                workflowId: current.Ref.WorkflowId,
+                title: (string)current.Title,
+                description: current.DescriptionOrNull,
+                status: status,
+                tags: patch.Tags is { } tags ? [.. tags] : current.TagsValue,
+                owner: patch.Owner ?? current.OwnerValue,
+                sources: current.SourcesValue,
+                hash: (string)current.Hash,
+                createdBy: (string)current.CreatedBy,
+                createdAt: current.CreatedAtValue,
+                lastUpdatedBy: patch.UpdatedBy,
+                lastUpdatedAt: now,
+                obsoletedBy: newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedByOrNull,
+                obsoletedAt: newlyObsolete ? now : reactivated ? null : current.ObsoletedAtValue,
+                runnable: (bool)current.Runnable);
 
             this.versions[key] = stored with { Version = updated };
             return ValueTask.FromResult<CatalogVersion?>(updated);
@@ -190,7 +199,7 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore
         lock (this.gate)
         {
             IReadOnlyList<CatalogVersionRef> obsolete = this.versions.Values
-                .Where(s => s.Version.Status == CatalogStatus.Obsolete)
+                .Where(s => s.Version.StatusValue == CatalogStatus.Obsolete)
                 .Select(s => s.Version.Ref)
                 .ToList();
             return ValueTask.FromResult(obsolete);
@@ -216,41 +225,52 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore
     private static string SortKey(string baseWorkflowId, int versionNumber)
         => string.Create(CultureInfo.InvariantCulture, $"{baseWorkflowId}{versionNumber:D10}");
 
-    private static bool Matches(CatalogVersion version, CatalogQuery query)
+    private static bool Matches(in CatalogVersion version, CatalogQuery query)
     {
-        if (query.BaseWorkflowId is { } baseId && version.BaseWorkflowId != baseId)
+        if (query.BaseWorkflowId is { } baseId && (string)version.BaseWorkflowId != baseId)
         {
             return false;
         }
 
         if (query.WorkflowIdPrefix is { Length: > 0 } prefix
-            && !version.WorkflowId.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            && !((string)version.WorkflowId).StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
 
-        if (query.Status is { } status && version.Status != status)
+        if (query.Status is { } status && version.StatusValue != status)
         {
             return false;
         }
 
-        if (query.Text is { Length: > 0 } text
-            && version.Title.IndexOf(text, StringComparison.OrdinalIgnoreCase) < 0
-            && (version.Description is null || version.Description.IndexOf(text, StringComparison.OrdinalIgnoreCase) < 0))
+        if (query.Text is { Length: > 0 } text)
         {
-            return false;
+            string title = (string)version.Title;
+            string? description = version.DescriptionOrNull;
+            if (title.IndexOf(text, StringComparison.OrdinalIgnoreCase) < 0
+                && (description is null || description.IndexOf(text, StringComparison.OrdinalIgnoreCase) < 0))
+            {
+                return false;
+            }
         }
 
-        if (query.Owner is { Length: > 0 } owner
-            && version.Owner.Name.IndexOf(owner, StringComparison.OrdinalIgnoreCase) < 0
-            && version.Owner.Email.IndexOf(owner, StringComparison.OrdinalIgnoreCase) < 0)
+        if (query.Owner is { Length: > 0 } owner)
         {
-            return false;
+            CatalogOwner ownerValue = version.OwnerValue;
+            if (ownerValue.Name.IndexOf(owner, StringComparison.OrdinalIgnoreCase) < 0
+                && ownerValue.Email.IndexOf(owner, StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                return false;
+            }
         }
 
-        if (query.Tags is { Count: > 0 } queryTags && !queryTags.All(version.Tags.Contains))
+        if (query.Tags is { Count: > 0 } queryTags)
         {
-            return false;
+            IReadOnlyList<string> tags = version.TagsValue;
+            if (!queryTags.All(tags.Contains))
+            {
+                return false;
+            }
         }
 
         return true;
@@ -261,9 +281,10 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore
         int max = 0;
         foreach (Stored stored in this.versions.Values)
         {
-            if (stored.Version.BaseWorkflowId == baseWorkflowId && stored.Version.VersionNumber > max)
+            CatalogVersionRef reference = stored.Version.Ref;
+            if (reference.BaseWorkflowId == baseWorkflowId && reference.VersionNumber > max)
             {
-                max = stored.Version.VersionNumber;
+                max = reference.VersionNumber;
             }
         }
 

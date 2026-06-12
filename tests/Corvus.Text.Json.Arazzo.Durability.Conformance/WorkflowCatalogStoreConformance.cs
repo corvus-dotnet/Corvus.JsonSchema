@@ -46,17 +46,17 @@ public abstract class WorkflowCatalogStoreConformance
         IWorkflowCatalogStore store = await this.NewStoreAsync();
         CatalogVersion version = await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default);
 
-        version.VersionNumber.ShouldBe(1);
-        version.BaseWorkflowId.ShouldBe("nightly-reconcile");
-        version.WorkflowId.ShouldBe("nightly-reconcile-v1");
-        version.Title.ShouldBe("Nightly Reconcile");
-        version.Description.ShouldBe("Reconciles state nightly.");
-        version.Status.ShouldBe(CatalogStatus.Active);
-        version.CreatedBy.ShouldBe("alice");
-        version.Hash.Length.ShouldBe(64);
-        version.Sources.Count.ShouldBe(1);
-        version.Sources[0].Name.ShouldBe("petstore");
-        version.Sources[0].Type.ShouldBe("openapi");
+        version.Ref.VersionNumber.ShouldBe(1);
+        version.Ref.BaseWorkflowId.ShouldBe("nightly-reconcile");
+        version.Ref.WorkflowId.ShouldBe("nightly-reconcile-v1");
+        ((string)version.Title).ShouldBe("Nightly Reconcile");
+        version.DescriptionOrNull.ShouldBe("Reconciles state nightly.");
+        version.StatusValue.ShouldBe(CatalogStatus.Active);
+        ((string)version.CreatedBy).ShouldBe("alice");
+        ((string)version.Hash).Length.ShouldBe(64);
+        version.SourcesValue.Count.ShouldBe(1);
+        version.SourcesValue[0].Name.ShouldBe("petstore");
+        version.SourcesValue[0].Type.ShouldBe("openapi");
     }
 
     [TestMethod]
@@ -66,8 +66,8 @@ public abstract class WorkflowCatalogStoreConformance
         await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default);
         CatalogVersion second = await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default);
 
-        second.VersionNumber.ShouldBe(2);
-        second.WorkflowId.ShouldBe("nightly-reconcile-v2");
+        second.Ref.VersionNumber.ShouldBe(2);
+        second.Ref.WorkflowId.ShouldBe("nightly-reconcile-v2");
     }
 
     [TestMethod]
@@ -79,11 +79,11 @@ public abstract class WorkflowCatalogStoreConformance
 
         // The only content difference is the workflow id, which both rewrite to "-v1"; everything else is equal,
         // so the canonical hashes differ only because the ids differ — different base ids => different hashes.
-        a.Hash.ShouldNotBe(b.Hash);
+        ((string)a.Hash).ShouldNotBe((string)b.Hash);
 
         CatalogVersion a2 = await store.AddAsync("base-a", Package("base-a"), Meta(), default);
-        a2.WorkflowId.ShouldBe("base-a-v2");
-        a2.Hash.ShouldNotBe(a.Hash); // v1 vs v2 ids differ
+        a2.Ref.WorkflowId.ShouldBe("base-a-v2");
+        ((string)a2.Hash).ShouldNotBe((string)a.Hash); // v1 vs v2 ids differ
     }
 
     [TestMethod]
@@ -187,8 +187,8 @@ public abstract class WorkflowCatalogStoreConformance
         second.Versions.Count.ShouldBe(1);
         second.ContinuationToken.ShouldBeNull();
 
-        first.Versions.Select(v => v.BaseWorkflowId)
-            .Concat(second.Versions.Select(v => v.BaseWorkflowId))
+        first.Versions.Select(v => v.Ref.BaseWorkflowId)
+            .Concat(second.Versions.Select(v => v.Ref.BaseWorkflowId))
             .ShouldBe(["a", "b", "c"]);
     }
 
@@ -204,13 +204,14 @@ public abstract class WorkflowCatalogStoreConformance
             "svc", 1, new CatalogMetadataPatch("bob", Owner: new CatalogOwner("Team B", "team-b@example.com"), Tags: ["retired"], Status: CatalogStatus.Obsolete), default);
 
         updated.ShouldNotBeNull();
-        updated.Owner.Name.ShouldBe("Team B");
-        updated.Tags.ShouldBe(["retired"]);
-        updated.Status.ShouldBe(CatalogStatus.Obsolete);
-        updated.LastUpdatedBy.ShouldBe("bob");
-        updated.LastUpdatedAt.ShouldBe(T0.AddHours(1));
-        updated.ObsoletedBy.ShouldBe("bob");
-        updated.ObsoletedAt.ShouldBe(T0.AddHours(1));
+        CatalogVersion updatedValue = updated.Value;
+        updatedValue.OwnerValue.Name.ShouldBe("Team B");
+        updatedValue.TagsValue.ShouldBe(["retired"]);
+        updatedValue.StatusValue.ShouldBe(CatalogStatus.Obsolete);
+        updatedValue.LastUpdatedByOrNull.ShouldBe("bob");
+        updatedValue.LastUpdatedAtValue.ShouldBe(T0.AddHours(1));
+        updatedValue.ObsoletedByOrNull.ShouldBe("bob");
+        updatedValue.ObsoletedAtValue.ShouldBe(T0.AddHours(1));
     }
 
     [TestMethod]
@@ -222,9 +223,10 @@ public abstract class WorkflowCatalogStoreConformance
         CatalogVersion? updated = await store.UpdateMetadataAsync("svc", 1, new CatalogMetadataPatch("bob"), default);
 
         updated.ShouldNotBeNull();
-        updated.Tags.ShouldBe(["keep"]);
-        updated.Owner.Email.ShouldBe("team-a@example.com");
-        updated.Status.ShouldBe(CatalogStatus.Active);
+        CatalogVersion updatedValue = updated.Value;
+        updatedValue.TagsValue.ShouldBe(["keep"]);
+        updatedValue.OwnerValue.Email.ShouldBe("team-a@example.com");
+        updatedValue.StatusValue.ShouldBe(CatalogStatus.Active);
     }
 
     [TestMethod]
@@ -237,9 +239,10 @@ public abstract class WorkflowCatalogStoreConformance
         CatalogVersion? reactivated = await store.UpdateMetadataAsync("svc", 1, new CatalogMetadataPatch("carol", Status: CatalogStatus.Active), default);
 
         reactivated.ShouldNotBeNull();
-        reactivated.Status.ShouldBe(CatalogStatus.Active);
-        reactivated.ObsoletedBy.ShouldBeNull();
-        reactivated.ObsoletedAt.ShouldBeNull();
+        CatalogVersion reactivatedValue = reactivated.Value;
+        reactivatedValue.StatusValue.ShouldBe(CatalogStatus.Active);
+        reactivatedValue.ObsoletedByOrNull.ShouldBeNull();
+        reactivatedValue.ObsoletedAtValue.ShouldBeNull();
     }
 
     [TestMethod]

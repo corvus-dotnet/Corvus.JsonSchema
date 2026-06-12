@@ -178,7 +178,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         var matches = new List<(string SortKey, CatalogVersion Version)>();
         await foreach (CatalogVersion candidate in this.ScanAsync(cancellationToken).ConfigureAwait(false))
         {
-            string sortKey = SortKey(candidate.BaseWorkflowId, candidate.VersionNumber);
+            string sortKey = SortKey(candidate.Ref.BaseWorkflowId, candidate.Ref.VersionNumber);
             if (after is not null && string.CompareOrdinal(sortKey, after) <= 0)
             {
                 continue;
@@ -214,23 +214,37 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
             return null;
         }
 
-        CatalogVersion current = Envelope.DecodeMetadata(value);
+        CatalogVersion? current = Envelope.DecodeMetadata(value);
         byte[] package = Envelope.DecodePackage(value);
 
-        CatalogStatus status = patch.Status ?? current.Status;
-        bool newlyObsolete = status == CatalogStatus.Obsolete && current.Status != CatalogStatus.Obsolete;
-        bool reactivated = status == CatalogStatus.Active && current.Status == CatalogStatus.Obsolete;
-
-        CatalogVersion updated = current with
+        if (current is not { } cur)
         {
-            Owner = patch.Owner ?? current.Owner,
-            Tags = patch.Tags is { } tags ? [.. tags] : current.Tags,
-            Status = status,
-            LastUpdatedBy = patch.UpdatedBy,
-            LastUpdatedAt = now,
-            ObsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedBy,
-            ObsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAt,
-        };
+            return null;
+        }
+
+        CatalogStatus status = patch.Status ?? cur.StatusValue;
+        bool newlyObsolete = status == CatalogStatus.Obsolete && cur.StatusValue != CatalogStatus.Obsolete;
+        bool reactivated = status == CatalogStatus.Active && cur.StatusValue == CatalogStatus.Obsolete;
+
+        CatalogVersionRef reference = cur.Ref;
+        CatalogVersion updated = CatalogVersion.Create(
+            baseWorkflowId: reference.BaseWorkflowId,
+            versionNumber: reference.VersionNumber,
+            workflowId: reference.WorkflowId,
+            title: (string)cur.Title,
+            description: cur.DescriptionOrNull,
+            status: status,
+            tags: patch.Tags is { } tags ? [.. tags] : cur.TagsValue,
+            owner: patch.Owner ?? cur.OwnerValue,
+            sources: cur.SourcesValue,
+            hash: (string)cur.Hash,
+            createdBy: (string)cur.CreatedBy,
+            createdAt: cur.CreatedAtValue,
+            lastUpdatedBy: patch.UpdatedBy,
+            lastUpdatedAt: now,
+            obsoletedBy: newlyObsolete ? patch.UpdatedBy : reactivated ? null : cur.ObsoletedByOrNull,
+            obsoletedAt: newlyObsolete ? now : reactivated ? null : cur.ObsoletedAtValue,
+            runnable: (bool)cur.Runnable);
 
         await this.catalog.PutAsync(key, Envelope.Encode(updated, package), cancellationToken: cancellationToken).ConfigureAwait(false);
         return updated;
@@ -257,7 +271,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         var refs = new List<CatalogVersionRef>();
         await foreach (CatalogVersion version in this.ScanAsync(cancellationToken).ConfigureAwait(false))
         {
-            if (version.Status == CatalogStatus.Obsolete)
+            if (version.StatusValue == CatalogStatus.Obsolete)
             {
                 refs.Add(version.Ref);
             }
@@ -295,37 +309,37 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
 
     private static bool Matches(CatalogVersion version, CatalogQuery query)
     {
-        if (query.BaseWorkflowId is { } baseId && version.BaseWorkflowId != baseId)
+        if (query.BaseWorkflowId is { } baseId && version.Ref.BaseWorkflowId != baseId)
         {
             return false;
         }
 
         if (query.WorkflowIdPrefix is { Length: > 0 } prefix
-            && !version.WorkflowId.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            && !((string)version.WorkflowId).StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
 
-        if (query.Status is { } status && version.Status != status)
+        if (query.Status is { } status && version.StatusValue != status)
         {
             return false;
         }
 
         if (query.Text is { Length: > 0 } text
-            && version.Title.IndexOf(text, StringComparison.OrdinalIgnoreCase) < 0
-            && (version.Description is null || version.Description.IndexOf(text, StringComparison.OrdinalIgnoreCase) < 0))
+            && ((string)version.Title).IndexOf(text, StringComparison.OrdinalIgnoreCase) < 0
+            && (version.DescriptionOrNull is null || version.DescriptionOrNull.IndexOf(text, StringComparison.OrdinalIgnoreCase) < 0))
         {
             return false;
         }
 
         if (query.Owner is { Length: > 0 } owner
-            && version.Owner.Name.IndexOf(owner, StringComparison.OrdinalIgnoreCase) < 0
-            && version.Owner.Email.IndexOf(owner, StringComparison.OrdinalIgnoreCase) < 0)
+            && version.OwnerValue.Name.IndexOf(owner, StringComparison.OrdinalIgnoreCase) < 0
+            && version.OwnerValue.Email.IndexOf(owner, StringComparison.OrdinalIgnoreCase) < 0)
         {
             return false;
         }
 
-        if (query.Tags is { Count: > 0 } queryTags && !queryTags.All(version.Tags.Contains))
+        if (query.Tags is { Count: > 0 } queryTags && !queryTags.All(version.TagsValue.Contains))
         {
             return false;
         }
@@ -347,20 +361,20 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
             cancellationToken.ThrowIfCancellationRequested();
             int versionNumber = await this.MaxVersionAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false) + 1;
             CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
-            var version = new CatalogVersion(
-                BaseWorkflowId: baseWorkflowId,
-                VersionNumber: versionNumber,
-                WorkflowId: projection.WorkflowId,
-                Title: projection.Title,
-                Description: projection.Description,
-                Status: CatalogStatus.Active,
-                Tags: tags,
-                Owner: metadata.Owner,
-                Sources: projection.Sources,
-                Hash: projection.Hash,
-                CreatedBy: metadata.CreatedBy,
-                CreatedAt: now,
-                Runnable: projection.HasExecutor);
+            CatalogVersion version = CatalogVersion.Create(
+                baseWorkflowId: baseWorkflowId,
+                versionNumber: versionNumber,
+                workflowId: projection.WorkflowId,
+                title: projection.Title,
+                description: projection.Description,
+                status: CatalogStatus.Active,
+                tags: tags,
+                owner: metadata.Owner,
+                sources: projection.Sources,
+                hash: projection.Hash,
+                createdBy: metadata.CreatedBy,
+                createdAt: now,
+                runnable: projection.HasExecutor);
 
             byte[] value = Envelope.Encode(version, projection.CanonicalPackage.Span);
             try
@@ -380,9 +394,10 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         int max = 0;
         await foreach (CatalogVersion version in this.ScanAsync(cancellationToken).ConfigureAwait(false))
         {
-            if (version.BaseWorkflowId == baseWorkflowId && version.VersionNumber > max)
+            CatalogVersionRef reference = version.Ref;
+            if (reference.BaseWorkflowId == baseWorkflowId && reference.VersionNumber > max)
             {
-                max = version.VersionNumber;
+                max = reference.VersionNumber;
             }
         }
 
@@ -438,20 +453,23 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
             var headerBuffer = new ArrayBufferWriter<byte>();
             using (var writer = new Utf8JsonWriter(headerBuffer))
             {
+                CatalogVersionRef reference = version.Ref;
+                CatalogOwner owner = version.OwnerValue;
+
                 writer.WriteStartObject();
-                writer.WriteString("baseWorkflowId", version.BaseWorkflowId);
-                writer.WriteNumber("versionNumber", version.VersionNumber);
-                writer.WriteString("workflowId", version.WorkflowId);
-                writer.WriteString("title", version.Title);
-                if (version.Description is { } description)
+                writer.WriteString("baseWorkflowId", reference.BaseWorkflowId);
+                writer.WriteNumber("versionNumber", reference.VersionNumber);
+                writer.WriteString("workflowId", reference.WorkflowId);
+                writer.WriteString("title", (string)version.Title);
+                if (version.DescriptionOrNull is { } description)
                 {
                     writer.WriteString("description", description);
                 }
 
-                writer.WriteString("status", version.Status.ToString());
+                writer.WriteString("status", version.StatusValue.ToString());
 
                 writer.WriteStartArray("tags");
-                foreach (string tag in version.Tags)
+                foreach (string tag in version.TagsValue)
                 {
                     writer.WriteStringValue(tag);
                 }
@@ -459,14 +477,14 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
                 writer.WriteEndArray();
 
                 writer.WriteStartObject("owner");
-                writer.WriteString("name", version.Owner.Name);
-                writer.WriteString("email", version.Owner.Email);
-                if (version.Owner.Team is { } team)
+                writer.WriteString("name", owner.Name);
+                writer.WriteString("email", owner.Email);
+                if (owner.Team is { } team)
                 {
                     writer.WriteString("team", team);
                 }
 
-                if (version.Owner.Url is { } url)
+                if (owner.Url is { } url)
                 {
                     writer.WriteString("url", url);
                 }
@@ -474,7 +492,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
                 writer.WriteEndObject();
 
                 writer.WriteStartArray("sources");
-                foreach (CatalogSourceRef source in version.Sources)
+                foreach (CatalogSourceRef source in version.SourcesValue)
                 {
                     writer.WriteStartObject();
                     writer.WriteString("name", source.Name);
@@ -488,26 +506,26 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
 
                 writer.WriteEndArray();
 
-                writer.WriteString("hash", version.Hash);
-                writer.WriteBoolean("runnable", version.Runnable);
-                writer.WriteString("createdBy", version.CreatedBy);
-                writer.WriteNumber("createdAt", version.CreatedAt.ToUnixTimeMilliseconds());
-                if (version.LastUpdatedBy is { } lastUpdatedBy)
+                writer.WriteString("hash", (string)version.Hash);
+                writer.WriteBoolean("runnable", (bool)version.Runnable);
+                writer.WriteString("createdBy", (string)version.CreatedBy);
+                writer.WriteNumber("createdAt", version.CreatedAtValue.ToUnixTimeMilliseconds());
+                if (version.LastUpdatedByOrNull is { } lastUpdatedBy)
                 {
                     writer.WriteString("lastUpdatedBy", lastUpdatedBy);
                 }
 
-                if (version.LastUpdatedAt is { } lastUpdatedAt)
+                if (version.LastUpdatedAtValue is { } lastUpdatedAt)
                 {
                     writer.WriteNumber("lastUpdatedAt", lastUpdatedAt.ToUnixTimeMilliseconds());
                 }
 
-                if (version.ObsoletedBy is { } obsoletedBy)
+                if (version.ObsoletedByOrNull is { } obsoletedBy)
                 {
                     writer.WriteString("obsoletedBy", obsoletedBy);
                 }
 
-                if (version.ObsoletedAt is { } obsoletedAt)
+                if (version.ObsoletedAtValue is { } obsoletedAt)
                 {
                     writer.WriteNumber("obsoletedAt", obsoletedAt.ToUnixTimeMilliseconds());
                 }
@@ -542,24 +560,24 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
                 ownerElement.TryGetProperty("team", out System.Text.Json.JsonElement team) ? team.GetString() : null,
                 ownerElement.TryGetProperty("url", out System.Text.Json.JsonElement url) ? url.GetString() : null);
 
-            return new CatalogVersion(
-                BaseWorkflowId: root.GetProperty("baseWorkflowId").GetString()!,
-                VersionNumber: root.GetProperty("versionNumber").GetInt32(),
-                WorkflowId: root.GetProperty("workflowId").GetString()!,
-                Title: root.GetProperty("title").GetString()!,
-                Description: root.TryGetProperty("description", out System.Text.Json.JsonElement description) ? description.GetString() : null,
-                Status: Enum.Parse<CatalogStatus>(root.GetProperty("status").GetString()!),
-                Tags: DecodeTags(root),
-                Owner: owner,
-                Sources: DecodeSources(root),
-                Hash: root.GetProperty("hash").GetString()!,
-                CreatedBy: root.GetProperty("createdBy").GetString()!,
-                CreatedAt: DateTimeOffset.FromUnixTimeMilliseconds(root.GetProperty("createdAt").GetInt64()),
-                LastUpdatedBy: root.TryGetProperty("lastUpdatedBy", out System.Text.Json.JsonElement lastUpdatedBy) ? lastUpdatedBy.GetString() : null,
-                LastUpdatedAt: root.TryGetProperty("lastUpdatedAt", out System.Text.Json.JsonElement lastUpdatedAt) ? DateTimeOffset.FromUnixTimeMilliseconds(lastUpdatedAt.GetInt64()) : null,
-                ObsoletedBy: root.TryGetProperty("obsoletedBy", out System.Text.Json.JsonElement obsoletedBy) ? obsoletedBy.GetString() : null,
-                ObsoletedAt: root.TryGetProperty("obsoletedAt", out System.Text.Json.JsonElement obsoletedAt) ? DateTimeOffset.FromUnixTimeMilliseconds(obsoletedAt.GetInt64()) : null,
-                Runnable: root.TryGetProperty("runnable", out System.Text.Json.JsonElement runnable) && runnable.GetBoolean());
+            return CatalogVersion.Create(
+                baseWorkflowId: root.GetProperty("baseWorkflowId").GetString()!,
+                versionNumber: root.GetProperty("versionNumber").GetInt32(),
+                workflowId: root.GetProperty("workflowId").GetString()!,
+                title: root.GetProperty("title").GetString()!,
+                description: root.TryGetProperty("description", out System.Text.Json.JsonElement description) ? description.GetString() : null,
+                status: Enum.Parse<CatalogStatus>(root.GetProperty("status").GetString()!),
+                tags: DecodeTags(root),
+                owner: owner,
+                sources: DecodeSources(root),
+                hash: root.GetProperty("hash").GetString()!,
+                createdBy: root.GetProperty("createdBy").GetString()!,
+                createdAt: DateTimeOffset.FromUnixTimeMilliseconds(root.GetProperty("createdAt").GetInt64()),
+                lastUpdatedBy: root.TryGetProperty("lastUpdatedBy", out System.Text.Json.JsonElement lastUpdatedBy) ? lastUpdatedBy.GetString() : null,
+                lastUpdatedAt: root.TryGetProperty("lastUpdatedAt", out System.Text.Json.JsonElement lastUpdatedAt) ? DateTimeOffset.FromUnixTimeMilliseconds(lastUpdatedAt.GetInt64()) : null,
+                obsoletedBy: root.TryGetProperty("obsoletedBy", out System.Text.Json.JsonElement obsoletedBy) ? obsoletedBy.GetString() : null,
+                obsoletedAt: root.TryGetProperty("obsoletedAt", out System.Text.Json.JsonElement obsoletedAt) ? DateTimeOffset.FromUnixTimeMilliseconds(obsoletedAt.GetInt64()) : null,
+                runnable: root.TryGetProperty("runnable", out System.Text.Json.JsonElement runnable) && runnable.GetBoolean());
         }
 
         private static IReadOnlyList<string> DecodeTags(System.Text.Json.JsonElement root)

@@ -272,7 +272,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
                 {
                     // Fetched one beyond the page — a next page exists.
                     CatalogVersion last = versions[^1];
-                    continuation = WorkflowContinuationToken.Encode(SortKey(last.BaseWorkflowId, last.VersionNumber));
+                    continuation = WorkflowContinuationToken.Encode(SortKey(last.Ref.BaseWorkflowId, last.Ref.VersionNumber));
                     return new CatalogPage(versions, continuation);
                 }
 
@@ -304,14 +304,15 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
         }
 
         CatalogVersion current = document.ToVersion();
-        CatalogStatus status = patch.Status ?? current.Status;
-        bool newlyObsolete = status == CatalogStatus.Obsolete && current.Status != CatalogStatus.Obsolete;
-        bool reactivated = status == CatalogStatus.Active && current.Status == CatalogStatus.Obsolete;
+        CatalogStatus currentStatus = current.StatusValue;
+        CatalogStatus status = patch.Status ?? currentStatus;
+        bool newlyObsolete = status == CatalogStatus.Obsolete && currentStatus != CatalogStatus.Obsolete;
+        bool reactivated = status == CatalogStatus.Active && currentStatus == CatalogStatus.Obsolete;
 
-        CatalogOwner ownerValue = patch.Owner ?? current.Owner;
-        IReadOnlyList<string> tags = patch.Tags is { } t ? [.. t] : current.Tags;
-        string? obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedBy;
-        DateTimeOffset? obsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAt;
+        CatalogOwner ownerValue = patch.Owner ?? current.OwnerValue;
+        IReadOnlyList<string> tags = patch.Tags is { } t ? [.. t] : current.TagsValue;
+        string? obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedByOrNull;
+        DateTimeOffset? obsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAtValue;
 
         document.Status = status.ToString();
         document.Tags = tags is { Count: > 0 } ? [.. tags] : null;
@@ -324,16 +325,24 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
         var options = new ItemRequestOptions { IfMatchEtag = etag };
         await this.catalog.ReplaceItemAsync(document, id, partition, options, cancellationToken).ConfigureAwait(false);
 
-        return current with
-        {
-            Owner = ownerValue,
-            Tags = tags,
-            Status = status,
-            LastUpdatedBy = patch.UpdatedBy,
-            LastUpdatedAt = now,
-            ObsoletedBy = obsoletedBy,
-            ObsoletedAt = obsoletedAt,
-        };
+        return CatalogVersion.Create(
+            baseWorkflowId: current.Ref.BaseWorkflowId,
+            versionNumber: current.Ref.VersionNumber,
+            workflowId: current.Ref.WorkflowId,
+            title: (string)current.Title,
+            description: current.DescriptionOrNull,
+            status: status,
+            tags: tags,
+            owner: ownerValue,
+            sources: current.SourcesValue,
+            hash: (string)current.Hash,
+            createdBy: (string)current.CreatedBy,
+            createdAt: current.CreatedAtValue,
+            lastUpdatedBy: patch.UpdatedBy,
+            lastUpdatedAt: now,
+            obsoletedBy: obsoletedBy,
+            obsoletedAt: obsoletedAt,
+            runnable: (bool)current.Runnable);
     }
 
     /// <inheritdoc/>
@@ -430,20 +439,20 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
             cancellationToken.ThrowIfCancellationRequested();
             int versionNumber = await this.MaxVersionAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false) + 1;
             CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
-            var version = new CatalogVersion(
-                BaseWorkflowId: baseWorkflowId,
-                VersionNumber: versionNumber,
-                WorkflowId: projection.WorkflowId,
-                Title: projection.Title,
-                Description: projection.Description,
-                Status: CatalogStatus.Active,
-                Tags: tags,
-                Owner: metadata.Owner,
-                Sources: projection.Sources,
-                Hash: projection.Hash,
-                CreatedBy: metadata.CreatedBy,
-                CreatedAt: now,
-                Runnable: projection.HasExecutor);
+            CatalogVersion version = CatalogVersion.Create(
+                baseWorkflowId: baseWorkflowId,
+                versionNumber: versionNumber,
+                workflowId: projection.WorkflowId,
+                title: projection.Title,
+                description: projection.Description,
+                status: CatalogStatus.Active,
+                tags: tags,
+                owner: metadata.Owner,
+                sources: projection.Sources,
+                hash: projection.Hash,
+                createdBy: metadata.CreatedBy,
+                createdAt: now,
+                runnable: projection.HasExecutor);
 
             var document = CatalogDocument.From(version, projection.CanonicalPackage.ToArray());
 
@@ -560,43 +569,47 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
 
         public static CatalogDocument From(CatalogVersion version, byte[] package) => new()
         {
-            Id = DocumentId(version.BaseWorkflowId, version.VersionNumber),
-            BaseWorkflowId = version.BaseWorkflowId,
-            VersionNumber = version.VersionNumber,
-            SortKey = SortKey(version.BaseWorkflowId, version.VersionNumber),
-            WorkflowId = version.WorkflowId,
-            WorkflowIdLower = version.WorkflowId.ToLowerInvariant(),
-            Title = version.Title,
-            Description = version.Description,
-            Status = version.Status.ToString(),
-            Tags = version.Tags is { Count: > 0 } t ? [.. t] : null,
-            Owner = OwnerDocument.From(version.Owner),
-            Sources = version.Sources is { Count: > 0 } s ? [.. s.Select(SourceDocument.From)] : null,
-            Hash = version.Hash,
-            Runnable = version.Runnable,
+            Id = DocumentId(version.Ref.BaseWorkflowId, version.Ref.VersionNumber),
+            BaseWorkflowId = version.Ref.BaseWorkflowId,
+            VersionNumber = version.Ref.VersionNumber,
+            SortKey = SortKey(version.Ref.BaseWorkflowId, version.Ref.VersionNumber),
+            WorkflowId = version.Ref.WorkflowId,
+            WorkflowIdLower = version.Ref.WorkflowId.ToLowerInvariant(),
+            Title = (string)version.Title,
+            Description = version.DescriptionOrNull,
+            Status = version.StatusValue.ToString(),
+            Tags = version.TagsValue is { Count: > 0 } t ? [.. t] : null,
+            Owner = OwnerDocument.From(version.OwnerValue),
+            Sources = version.SourcesValue is { Count: > 0 } s ? [.. s.Select(SourceDocument.From)] : null,
+            Hash = (string)version.Hash,
+            Runnable = (bool)version.Runnable,
             Package = package,
-            CreatedBy = version.CreatedBy,
-            CreatedAt = version.CreatedAt.ToUnixTimeMilliseconds(),
+            CreatedBy = (string)version.CreatedBy,
+            CreatedAt = version.CreatedAtValue.ToUnixTimeMilliseconds(),
+            LastUpdatedBy = version.LastUpdatedByOrNull,
+            LastUpdatedAt = version.LastUpdatedAtValue?.ToUnixTimeMilliseconds(),
+            ObsoletedBy = version.ObsoletedByOrNull,
+            ObsoletedAt = version.ObsoletedAtValue?.ToUnixTimeMilliseconds(),
         };
 
-        public CatalogVersion ToVersion() => new(
-            BaseWorkflowId: this.BaseWorkflowId,
-            VersionNumber: this.VersionNumber,
-            WorkflowId: this.WorkflowId,
-            Title: this.Title,
-            Description: this.Description,
-            Status: Enum.Parse<CatalogStatus>(this.Status),
-            Tags: this.Tags is { Count: > 0 } t ? [.. t] : [],
-            Owner: this.Owner.ToOwner(),
-            Sources: this.Sources is { Count: > 0 } s ? [.. s.Select(static d => d.ToRef())] : [],
-            Hash: this.Hash,
-            CreatedBy: this.CreatedBy,
-            CreatedAt: DateTimeOffset.FromUnixTimeMilliseconds(this.CreatedAt),
-            LastUpdatedBy: this.LastUpdatedBy,
-            LastUpdatedAt: this.LastUpdatedAt is { } lua ? DateTimeOffset.FromUnixTimeMilliseconds(lua) : null,
-            ObsoletedBy: this.ObsoletedBy,
-            ObsoletedAt: this.ObsoletedAt is { } oa ? DateTimeOffset.FromUnixTimeMilliseconds(oa) : null,
-            Runnable: this.Runnable);
+        public CatalogVersion ToVersion() => CatalogVersion.Create(
+            baseWorkflowId: this.BaseWorkflowId,
+            versionNumber: this.VersionNumber,
+            workflowId: this.WorkflowId,
+            title: this.Title,
+            description: this.Description,
+            status: Enum.Parse<CatalogStatus>(this.Status),
+            tags: this.Tags is { Count: > 0 } t ? [.. t] : [],
+            owner: this.Owner.ToOwner(),
+            sources: this.Sources is { Count: > 0 } s ? [.. s.Select(static d => d.ToRef())] : [],
+            hash: this.Hash,
+            createdBy: this.CreatedBy,
+            createdAt: DateTimeOffset.FromUnixTimeMilliseconds(this.CreatedAt),
+            lastUpdatedBy: this.LastUpdatedBy,
+            lastUpdatedAt: this.LastUpdatedAt is { } lua ? DateTimeOffset.FromUnixTimeMilliseconds(lua) : null,
+            obsoletedBy: this.ObsoletedBy,
+            obsoletedAt: this.ObsoletedAt is { } oa ? DateTimeOffset.FromUnixTimeMilliseconds(oa) : null,
+            runnable: this.Runnable);
     }
 
     private sealed class OwnerDocument
