@@ -43,48 +43,54 @@ public sealed class WorkflowTransportRegistry
     public WorkflowTransportBinder AsBinder() => this.Bind;
 
     /// <summary>
-    /// Verifies the workflow can be bound — every API source it declares has a configured transport and any
-    /// message-transport need is met — without constructing anything. A host calls this at load time so a
-    /// misconfiguration surfaces before the first run.
+    /// Verifies the workflow can be bound — every required transport is configured — without constructing
+    /// anything. A host calls this at load time so a misconfiguration surfaces before the first run.
     /// </summary>
     /// <param name="descriptor">The loaded workflow's descriptor.</param>
-    /// <exception cref="WorkflowTransportBindingException">A required binding is missing.</exception>
+    /// <exception cref="WorkflowTransportBindingException">A required binding is missing or unsupported.</exception>
     public void Validate(WorkflowDescriptor descriptor)
     {
-        foreach (string source in descriptor.Sources)
-        {
-            this.RequireApiSource(descriptor, source);
-        }
-
+        _ = this.ResolveApiSource(descriptor);
         this.EnsureMessageTransport(descriptor);
     }
 
     /// <summary>Resolves the transports a run of <paramref name="descriptor"/> needs.</summary>
     /// <param name="descriptor">The loaded workflow's descriptor.</param>
-    /// <param name="runTags">The run's security tags — unused here (this registry's factories carry static auth); a
-    /// credential-aware binder consumes them. Accepted so the registry satisfies <see cref="WorkflowTransportBinder"/>.</param>
-    /// <returns>One fresh, caller-disposed API transport per declared source, plus the shared message transport if needed.</returns>
-    /// <exception cref="WorkflowTransportBindingException">A required binding is missing.</exception>
-    public WorkflowTransports Bind(WorkflowDescriptor descriptor, SecurityTagSet runTags = default)
+    /// <returns>The API transport (fresh, caller-disposed) and the shared message transport if needed.</returns>
+    /// <exception cref="WorkflowTransportBindingException">A required binding is missing or unsupported.</exception>
+    public WorkflowTransports Bind(WorkflowDescriptor descriptor)
     {
-        _ = runTags;
+        string apiSource = this.ResolveApiSource(descriptor);
         this.EnsureMessageTransport(descriptor);
 
-        var apiTransports = new Dictionary<string, IApiTransport>(descriptor.Sources.Count, StringComparer.Ordinal);
-        foreach (string source in descriptor.Sources)
-        {
-            apiTransports[source] = this.RequireApiSource(descriptor, source).CreateTransport();
-        }
-
+        IApiTransport api = this.apiSources[apiSource].CreateTransport();
         IMessageTransport? message = descriptor.NeedsMessageTransport ? this.messageTransport : null;
-        return new WorkflowTransports(apiTransports, message);
+        return new WorkflowTransports(api, message);
     }
 
-    private IApiTransportFactory RequireApiSource(WorkflowDescriptor descriptor, string source)
-        => this.apiSources.TryGetValue(source, out IApiTransportFactory? factory)
-            ? factory
-            : throw new WorkflowTransportBindingException(
-                $"Workflow '{descriptor.WorkflowId}' requires API source '{source}', which has no configured transport binding.");
+    // The single declared source name that has a configured API transport. The runtime drives every step
+    // through one IApiTransport, so exactly one of the workflow's sources must bind (sources without an entry
+    // — e.g. an AsyncAPI message source — are served by the message transport, not here).
+    private string ResolveApiSource(WorkflowDescriptor descriptor)
+    {
+        string? found = null;
+        foreach (string source in descriptor.Sources)
+        {
+            if (this.apiSources.ContainsKey(source))
+            {
+                if (found is not null)
+                {
+                    throw new WorkflowTransportBindingException(
+                        $"Workflow '{descriptor.WorkflowId}' binds more than one API source ('{found}', '{source}'); multi-source binding is not yet supported.");
+                }
+
+                found = source;
+            }
+        }
+
+        return found ?? throw new WorkflowTransportBindingException(
+            $"Workflow '{descriptor.WorkflowId}' requires an API transport, but none of its sources [{string.Join(", ", descriptor.Sources)}] has a configured binding.");
+    }
 
     private void EnsureMessageTransport(WorkflowDescriptor descriptor)
     {
