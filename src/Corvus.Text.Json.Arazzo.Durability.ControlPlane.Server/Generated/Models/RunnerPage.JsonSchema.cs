@@ -23,29 +23,77 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Whether the runner has the version loaded and ready to execute.
+/// The workflow runners currently registered with the control plane.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct JsonBoolean
-    : IJsonElement<JsonBoolean>
+public readonly partial struct RunnerPage
+    : IJsonElement<RunnerPage>
 {
     public static partial class JsonSchema
     {
+        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyRunnersPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("runners"u8, buffer, out written);
+        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyRunnersNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("runners"u8, buffer, out written);
+
+        private const int RequiredOffsetForRunners = 0;
+        private const uint RequiredBitForRunners = 0b00000000000000000000000000000001;
+
+        private const uint RequiredBitMask0 =
+            RequiredBitForRunners;
+        private static readonly JsonSchemaPathProvider RunnersSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/runners"u8, buffer, out written);
+
+        private static void MatchRunners(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        {
+            context.AddLocalEvaluatedProperty(propertyCount);
+            JsonSchemaContext childContext =
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.JsonSchema.PushChildContextUnescaped(
+                    parentDocument,
+                    parentDocumentIndex,
+                    ref context,
+                    JsonPropertyNames.RunnersUtf8,
+                    evaluationPath: RunnersSchemaEvaluationPath);
+
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            context.CommitChildContext(childContext.IsMatch, ref childContext);
+
+            if (!context.HasCollector && !context.IsMatch)
+            {
+                return;
+            }
+
+            requiredBitBuffer[RequiredOffsetForRunners] |= RequiredBitForRunners;
+        }
+
+        private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
+#if NET
+        [NotNullWhen(true)]
+#endif
+        out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator? matcher)
+        {
+            if (span.SequenceEqual(JsonPropertyNames.RunnersUtf8))
+            {
+                matcher = MatchRunners;
+                return true;
+            }
+
+            matcher = default;
+            return false;
+        }
+
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider? SchemaLocationProvider = null;
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/RunnerPage"u8, buffer, out written);
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public const string SchemaLocation = "";
+        public const string SchemaLocation = "/components/schemas/RunnerPage";
 
         /// <summary>
         /// Gets the schema location from which this type was generated as a UTF-8 string.
         /// </summary>
-        public static ReadOnlySpan<byte> SchemaLocationUtf8 => ""u8;
+        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/RunnerPage"u8;
 
         /// <summary>
         /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -66,11 +114,59 @@ public readonly partial struct JsonBoolean
                 JsonTokenType.EndObject or
                 JsonTokenType.EndArray));
 
-            if (!JsonSchemaEvaluation.MatchTypeBoolean(tokenType,"type"u8, ref context))
+            if (!JsonSchemaEvaluation.MatchTypeObject(tokenType,"type"u8, ref context))
             {
                 if (!context.HasCollector)
                 {
                     return;
+                }
+                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "properties"u8);
+                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "required"u8);
+            }
+            else
+            {
+                Span<uint> requiredPropertyChildHandler_seenItems = stackalloc uint[1];
+                int objectValidation_propertyCount = 0;
+
+                var objectValidation_enumerator = new ObjectEnumerator(parentDocument, parentIndex);
+                while (objectValidation_enumerator.MoveNext())
+                {
+                    int objectValidation_currentIndex = objectValidation_enumerator.CurrentIndex;
+                    using UnescapedUtf8JsonString objectValidation_unescapedPropertyName = parentDocument.GetPropertyNameUnescaped(objectValidation_currentIndex);
+
+                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator? validator))
+                    {
+                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
+
+                        if (!context.HasCollector && !context.IsMatch)
+                        {
+                            return;
+                        }
+                    }
+
+                    objectValidation_propertyCount++;
+                }
+
+                // Do a quick test to see if we have all of the required bits set in each element
+                if ((~(requiredPropertyChildHandler_seenItems[0]) & RequiredBitMask0) == 0)
+                {
+                    context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyRunnersPresent, "runners"u8, "required"u8);
+                }
+                else if (!context.HasCollector)
+                {
+                    context.EvaluatedBooleanSchema(false);
+                    return;
+                }
+                else
+                {
+                    if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForRunners] & RequiredBitForRunners) == 0)
+                    {
+                        context.EvaluatedKeywordForProperty(false, 0, RequiredPropertyRunnersNotPresent, "runners"u8, "required"u8);
+                    }
+                    else
+                    {
+                        context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyRunnersPresent, "runners"u8, "required"u8);
+                    }
                 }
             }
         }

@@ -21,6 +21,13 @@ public sealed class PostgresRunnerRegistry : IRunnerRegistry, IAsyncDisposable
             doc BYTEA NOT NULL
         );
         CREATE INDEX IF NOT EXISTS ix_runner_registrations_last_seen ON runner_registrations (last_seen_at);
+        CREATE TABLE IF NOT EXISTS runner_hosted_versions (
+            runner_id TEXT NOT NULL REFERENCES runner_registrations (runner_id) ON DELETE CASCADE,
+            base_workflow_id TEXT NOT NULL,
+            version_number INTEGER NOT NULL,
+            PRIMARY KEY (runner_id, base_workflow_id, version_number)
+        );
+        CREATE INDEX IF NOT EXISTS ix_runner_hosted_versions_version ON runner_hosted_versions (base_workflow_id, version_number);
         """;
 
     private readonly NpgsqlDataSource dataSource;
@@ -84,18 +91,58 @@ public sealed class PostgresRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     /// <inheritdoc/>
     public async ValueTask RegisterAsync(RunnerRegistration registration, CancellationToken cancellationToken)
     {
+        string runnerId = registration.RunnerIdValue;
+        await using NpgsqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+
+        await using (NpgsqlCommand upsert = connection.CreateCommand())
+        {
+            upsert.Transaction = transaction;
+            upsert.CommandText =
+                """
+                INSERT INTO runner_registrations (runner_id, last_seen_at, doc)
+                VALUES (@runnerId, @lastSeenAt, @doc)
+                ON CONFLICT (runner_id) DO UPDATE SET last_seen_at = EXCLUDED.last_seen_at, doc = EXCLUDED.doc;
+                """;
+            upsert.Parameters.AddWithValue("@runnerId", runnerId);
+            upsert.Parameters.AddWithValue("@lastSeenAt", registration.LastSeenAtValue.ToUnixTimeMilliseconds());
+            upsert.Parameters.AddWithValue("@doc", registration.ToJsonBytes());
+            await upsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        // Re-project this runner's hosting index: drop its old rows, then insert one per loaded hosted version.
+        await using (NpgsqlCommand clear = connection.CreateCommand())
+        {
+            clear.Transaction = transaction;
+            clear.CommandText = "DELETE FROM runner_hosted_versions WHERE runner_id = @runnerId;";
+            clear.Parameters.AddWithValue("@runnerId", runnerId);
+            await clear.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
+        {
+            await using NpgsqlCommand insert = connection.CreateCommand();
+            insert.Transaction = transaction;
+            insert.CommandText = "INSERT INTO runner_hosted_versions (runner_id, base_workflow_id, version_number) VALUES (@runnerId, @baseWorkflowId, @versionNumber);";
+            insert.Parameters.AddWithValue("@runnerId", runnerId);
+            insert.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
+            insert.Parameters.AddWithValue("@versionNumber", versionNumber);
+            await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(baseWorkflowId);
         await using NpgsqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlCommand command = connection.CreateCommand();
-        command.CommandText =
-            """
-            INSERT INTO runner_registrations (runner_id, last_seen_at, doc)
-            VALUES (@runnerId, @lastSeenAt, @doc)
-            ON CONFLICT (runner_id) DO UPDATE SET last_seen_at = EXCLUDED.last_seen_at, doc = EXCLUDED.doc;
-            """;
-        command.Parameters.AddWithValue("@runnerId", registration.RunnerIdValue);
-        command.Parameters.AddWithValue("@lastSeenAt", registration.LastSeenAtValue.ToUnixTimeMilliseconds());
-        command.Parameters.AddWithValue("@doc", registration.ToJsonBytes());
-        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        command.CommandText = "SELECT EXISTS(SELECT 1 FROM runner_hosted_versions WHERE base_workflow_id = @baseWorkflowId AND version_number = @versionNumber);";
+        command.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
+        command.Parameters.AddWithValue("@versionNumber", versionNumber);
+        return await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) is true;
     }
 
     /// <inheritdoc/>

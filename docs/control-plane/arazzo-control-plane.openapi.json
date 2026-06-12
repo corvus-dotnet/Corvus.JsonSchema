@@ -213,6 +213,29 @@
         }
       }
     },
+    "/runners": {
+      "get": {
+        "operationId": "listRunners",
+        "security": [
+          { "oauth2": ["runs:read"] },
+          { "openIdConnect": ["runs:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["runners"],
+        "summary": "List runners",
+        "description": "Returns the workflow runners currently registered with the control plane: each runner's identity, liveness timestamps, capacity, supported transports, and the catalog versions it hosts. Runners self-register and heartbeat directly against the durability layer; this endpoint reads that registry for observability.",
+        "responses": {
+          "200": {
+            "description": "The registered runners.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RunnerPage" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/catalog": {
       "post": {
         "operationId": "addCatalogVersion",
@@ -1257,7 +1280,7 @@
         "description": "A catalog version as projected into the searchable index (one entry in a page).",
         "properties": {
           "baseWorkflowId": { "type": "string" },
-          "versionNumber": { "type": "integer" },
+          "versionNumber": { "type": "integer", "format": "int32" },
           "workflowId": { "type": "string", "description": "The versioned workflow id runs execute under." },
           "title": { "type": "string" },
           "description": { "type": "string" },
@@ -1284,6 +1307,39 @@
           "nextPageToken": { "type": "string", "description": "An opaque token to fetch the next page; absent on the last page." }
         },
         "required": ["versions"]
+      },
+      "RunnerHostedVersion": {
+        "type": "object",
+        "description": "A catalog version a runner currently hosts.",
+        "properties": {
+          "baseWorkflowId": { "type": "string" },
+          "versionNumber": { "type": "integer", "format": "int32" },
+          "hash": { "type": "string", "description": "The content hash of the hosted version's package." },
+          "loaded": { "type": "boolean", "description": "Whether the runner has the version loaded and ready to execute." }
+        },
+        "required": ["baseWorkflowId", "versionNumber", "hash", "loaded"]
+      },
+      "Runner": {
+        "type": "object",
+        "description": "A workflow runner process registered with the control plane.",
+        "properties": {
+          "runnerId": { "type": "string", "description": "The stable identifier of the runner process." },
+          "address": { "type": "string", "description": "An optional address (for example a base URI) at which the runner can be reached." },
+          "startedAt": { "type": "string", "format": "date-time", "description": "When the runner process started." },
+          "lastSeenAt": { "type": "string", "format": "date-time", "description": "The instant of the runner's most recent heartbeat." },
+          "maxConcurrency": { "type": "integer", "format": "int32", "description": "The maximum number of runs the runner will execute concurrently." },
+          "transports": { "type": "array", "items": { "type": "string" }, "description": "The transport identifiers the runner supports." },
+          "hostedVersions": { "type": "array", "items": { "$ref": "#/components/schemas/RunnerHostedVersion" }, "description": "The catalog versions the runner currently hosts." }
+        },
+        "required": ["runnerId", "startedAt", "lastSeenAt", "maxConcurrency", "transports", "hostedVersions"]
+      },
+      "RunnerPage": {
+        "type": "object",
+        "description": "The workflow runners currently registered with the control plane.",
+        "properties": {
+          "runners": { "type": "array", "items": { "$ref": "#/components/schemas/Runner" } }
+        },
+        "required": ["runners"]
       },
       "ProblemDetails": {
         "type": "object",

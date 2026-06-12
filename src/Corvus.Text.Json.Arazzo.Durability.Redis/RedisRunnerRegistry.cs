@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Text;
 using StackExchange.Redis;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Redis;
@@ -13,14 +14,21 @@ namespace Corvus.Text.Json.Arazzo.Durability.Redis;
 /// <see cref="RedisWorkflowCatalogStore"/> uses for catalog versions.
 /// </summary>
 /// <remarks>
-/// Targets a single Redis instance (or a primary): registering and pruning touch both a per-runner key and the
-/// shared index set, which is not Redis-Cluster slot-safe. Create instances with
+/// A secondary index answers <see cref="IsVersionHostedAsync"/> without scanning every runner: a set
+/// <c>arazzo:hosting:{enc(baseWorkflowId)}:{versionNumber}</c> holds the ids of runners that host that version with
+/// the version loaded. <c>RegisterAsync</c> re-projects the index for a runner (dropping the memberships implied by
+/// its previous registration before adding its new ones) and <c>PruneAsync</c> removes a stale runner's memberships.
+/// </remarks>
+/// <remarks>
+/// Targets a single Redis instance (or a primary): registering and pruning touch a per-runner key, the
+/// shared index set, and the per-version hosting sets, which is not Redis-Cluster slot-safe. Create instances with
 /// <see cref="ConnectAsync(string, CancellationToken)"/> (or <see cref="Connect(IConnectionMultiplexer)"/>).
 /// </remarks>
 public sealed class RedisRunnerRegistry : IRunnerRegistry, IAsyncDisposable
 {
     private const string Prefix = "arazzo:runner:";
     private const string IndexKey = "arazzo:runners";
+    private const string HostingPrefix = "arazzo:hosting:";
 
     private readonly IConnectionMultiplexer connection;
     private readonly IDatabase database;
@@ -70,8 +78,35 @@ public sealed class RedisRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     {
         cancellationToken.ThrowIfCancellationRequested();
         string runnerId = registration.RunnerIdValue;
+
+        // Re-project this runner's hosting index. Redis cannot query into the stored JSON doc, so first read the
+        // runner's existing doc to learn its OLD loaded hosted versions and drop those memberships, then overwrite
+        // the doc and add this runner to a hosting set for each of its NEW loaded versions.
+        RedisValue existing = await this.database.StringGetAsync(RunnerKey(runnerId)).ConfigureAwait(false);
+        if (!existing.IsNullOrEmpty)
+        {
+            RunnerRegistration old = RunnerRegistration.FromJson((byte[])existing!);
+            foreach ((string baseWorkflowId, int versionNumber) in old.LoadedHostedVersions())
+            {
+                await this.database.SetRemoveAsync(HostingKey(baseWorkflowId, versionNumber), runnerId).ConfigureAwait(false);
+            }
+        }
+
         await this.database.StringSetAsync(RunnerKey(runnerId), registration.ToJsonBytes()).ConfigureAwait(false);
         await this.database.SetAddAsync(IndexKey, runnerId).ConfigureAwait(false);
+
+        foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
+        {
+            await this.database.SetAddAsync(HostingKey(baseWorkflowId, versionNumber), runnerId).ConfigureAwait(false);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(baseWorkflowId);
+        cancellationToken.ThrowIfCancellationRequested();
+        return await this.database.SetLengthAsync(HostingKey(baseWorkflowId, versionNumber)).ConfigureAwait(false) > 0;
     }
 
     /// <inheritdoc/>
@@ -131,6 +166,12 @@ public sealed class RedisRunnerRegistry : IRunnerRegistry, IAsyncDisposable
             RunnerRegistration registration = RunnerRegistration.FromJson((byte[])value!);
             if (registration.LastSeenAtValue < deadBefore)
             {
+                // Remove this runner's hosting memberships (derived from its stored doc) before deleting it.
+                foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
+                {
+                    await this.database.SetRemoveAsync(HostingKey(baseWorkflowId, versionNumber), runnerId).ConfigureAwait(false);
+                }
+
                 await this.database.KeyDeleteAsync(RunnerKey(runnerId)).ConfigureAwait(false);
                 await this.database.SetRemoveAsync(IndexKey, runnerId).ConfigureAwait(false);
                 removed++;
@@ -152,4 +193,15 @@ public sealed class RedisRunnerRegistry : IRunnerRegistry, IAsyncDisposable
 
     private static RedisKey RunnerKey(string runnerId)
         => Prefix + runnerId;
+
+    /// <summary>
+    /// Builds the hosting-set key for a (base workflow id, version) pair. The base id is Base64Url-encoded (with the
+    /// <c>=</c> padding trimmed) so it never contains a <c>:</c> that would collide with the key's structural
+    /// separators.
+    /// </summary>
+    private static RedisKey HostingKey(string baseWorkflowId, int versionNumber)
+    {
+        string encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(baseWorkflowId)).Replace('/', '_').Replace('+', '-').TrimEnd('=');
+        return $"{HostingPrefix}{encoded}:{versionNumber}";
+    }
 }

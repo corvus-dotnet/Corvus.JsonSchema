@@ -141,6 +141,44 @@ public abstract class RunnerRegistryConformance
         (await registry.ListAsync(default)).Count.ShouldBe(1);
     }
 
+    [TestMethod]
+    public async Task IsVersionHosted_is_true_only_for_a_loaded_hosted_version()
+    {
+        IRunnerRegistry registry = await this.NewRegistryAsync();
+        await registry.RegisterAsync(
+            Reg("runner-1", T0, T0, hosted: [("shipping", 3, "h", true), ("billing", 1, "h", false)]),
+            default);
+
+        (await registry.IsVersionHostedAsync("shipping", 3, default)).ShouldBeTrue();
+        (await registry.IsVersionHostedAsync("billing", 1, default)).ShouldBeFalse();  // hosted but not loaded
+        (await registry.IsVersionHostedAsync("shipping", 4, default)).ShouldBeFalse();  // wrong version
+        (await registry.IsVersionHostedAsync("other", 3, default)).ShouldBeFalse();     // wrong base
+    }
+
+    [TestMethod]
+    public async Task IsVersionHosted_is_false_after_the_hosting_runner_is_pruned()
+    {
+        IRunnerRegistry registry = await this.NewRegistryAsync();
+        await registry.RegisterAsync(Reg("runner-1", T0, T0, hosted: [("shipping", 3, "h", true)]), default);
+        (await registry.IsVersionHostedAsync("shipping", 3, default)).ShouldBeTrue();
+
+        await registry.PruneAsync(T0.AddMinutes(5), default);
+        (await registry.IsVersionHostedAsync("shipping", 3, default)).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task IsVersionHosted_reflects_reregistration_with_different_versions()
+    {
+        IRunnerRegistry registry = await this.NewRegistryAsync();
+        await registry.RegisterAsync(Reg("runner-1", T0, T0, hosted: [("shipping", 3, "h", true)]), default);
+        (await registry.IsVersionHostedAsync("shipping", 3, default)).ShouldBeTrue();
+
+        // The same runner re-registers hosting a different version — the old (shipping, 3) entry must drop out.
+        await registry.RegisterAsync(Reg("runner-1", T0, T0.AddMinutes(1), hosted: [("shipping", 4, "h", true)]), default);
+        (await registry.IsVersionHostedAsync("shipping", 3, default)).ShouldBeFalse();
+        (await registry.IsVersionHostedAsync("shipping", 4, default)).ShouldBeTrue();
+    }
+
     private static RunnerRegistration Reg(
         string runnerId,
         DateTimeOffset startedAt,

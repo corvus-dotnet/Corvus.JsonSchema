@@ -385,7 +385,8 @@ public sealed class ControlPlaneServerTests
         builder.WebHost.UseTestServer();
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
-        app.MapArazzoControlPlane(management, catalog);
+        var runnerRegistry = new InMemoryRunnerRegistry();
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry);
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
 
@@ -414,7 +415,8 @@ public sealed class ControlPlaneServerTests
         builder.WebHost.UseTestServer();
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
-        app.MapArazzoControlPlane(management, catalog);
+        var runnerRegistry = new InMemoryRunnerRegistry();
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry);
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
 
@@ -456,7 +458,8 @@ public sealed class ControlPlaneServerTests
         builder.WebHost.UseTestServer();
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
-        app.MapArazzoControlPlane(management, catalog);
+        var runnerRegistry = new InMemoryRunnerRegistry();
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry);
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
 
@@ -486,7 +489,8 @@ public sealed class ControlPlaneServerTests
         builder.WebHost.UseTestServer();
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
-        app.MapArazzoControlPlane(management, catalog);
+        var runnerRegistry = new InMemoryRunnerRegistry();
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry);
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
 
@@ -536,9 +540,12 @@ public sealed class ControlPlaneServerTests
         builder.WebHost.UseTestServer();
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
-        app.MapArazzoControlPlane(management, catalog);
+        var runnerRegistry = new InMemoryRunnerRegistry();
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry);
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
+
+        await runnerRegistry.RegisterAsync(Runner("flow", 1), default);
 
         // Valid inputs → 202 with the run id; the run is persisted Pending.
         HttpResponseMessage accepted = await client.PostAsync(
@@ -591,7 +598,8 @@ public sealed class ControlPlaneServerTests
         builder.WebHost.UseTestServer();
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
-        app.MapArazzoControlPlane(management, catalog);
+        var runnerRegistry = new InMemoryRunnerRegistry();
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry);
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
 
@@ -601,6 +609,89 @@ public sealed class ControlPlaneServerTests
         conflict.StatusCode.ShouldBe(HttpStatusCode.Conflict);
 
         await app.StopAsync();
+    }
+
+    [TestMethod]
+    public async Task StartCatalogWorkflowRun_is_409_when_no_runner_hosts_the_version()
+    {
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
+        var management = new WorkflowManagementClient(runStore, "ops", CompleteResumer, clock);
+        var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
+
+        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), null, default);
+
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        var runnerRegistry = new InMemoryRunnerRegistry(); // runnable version, but no runner registered to host it
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry);
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+
+        HttpResponseMessage conflict = await client.PostAsync(
+            "/catalog/flow/versions/1/runs",
+            new StringContent("""{ "petId": 5 }""", Encoding.UTF8, "application/json"));
+        conflict.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        await app.StopAsync();
+    }
+
+    [TestMethod]
+    public async Task ListRunners_returns_the_registered_runners()
+    {
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var management = new WorkflowManagementClient(runStore, "ops", CompleteResumer, clock);
+        var catalog = new WorkflowCatalogClient(new InMemoryWorkflowCatalogStore(clock), runStore, "ops");
+
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        var runnerRegistry = new InMemoryRunnerRegistry();
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry);
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+
+        await runnerRegistry.RegisterAsync(Runner("flow", 1, "runner-a"), default);
+        await runnerRegistry.RegisterAsync(Runner("billing", 2, "runner-b"), default);
+
+        using Stj.JsonDocument doc = await ReadJsonAsync(await client.GetAsync("/runners"));
+        System.Collections.Generic.List<Stj.JsonElement> runners = [.. doc.RootElement.GetProperty("runners").EnumerateArray()];
+        runners.Count.ShouldBe(2);
+        runners.Select(r => r.GetProperty("runnerId").GetString()).ShouldBe(["runner-a", "runner-b"], ignoreOrder: true);
+
+        await app.StopAsync();
+    }
+
+    private static RunnerRegistration Runner(string baseWorkflowId, int versionNumber, string runnerId = "r1")
+    {
+        var buffer = new System.Buffers.ArrayBufferWriter<byte>();
+        using (var w = new Stj.Utf8JsonWriter(buffer))
+        {
+            w.WriteStartObject();
+            w.WriteString("runnerId", runnerId);
+            w.WriteString("startedAt", "2026-01-01T00:00:00.0000000+00:00");
+            w.WriteString("lastSeenAt", "2026-01-01T00:00:00.0000000+00:00");
+            w.WriteNumber("maxConcurrency", 4);
+            w.WriteStartArray("transports");
+            w.WriteStringValue("http");
+            w.WriteEndArray();
+            w.WriteStartArray("hostedVersions");
+            w.WriteStartObject();
+            w.WriteString("baseWorkflowId", baseWorkflowId);
+            w.WriteNumber("versionNumber", versionNumber);
+            w.WriteString("hash", "h");
+            w.WriteBoolean("loaded", true);
+            w.WriteEndObject();
+            w.WriteEndArray();
+            w.WriteEndObject();
+        }
+
+        return RunnerRegistration.FromJson(buffer.WrittenMemory);
     }
 
     private static byte[] SchemaWorkflowPackage(string id)
@@ -630,7 +721,8 @@ public sealed class ControlPlaneServerTests
         builder.WebHost.UseTestServer();
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
-        app.MapArazzoControlPlane(management, catalog);
+        var runnerRegistry = new InMemoryRunnerRegistry();
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry);
         await app.StartAsync();
 
         return new Host(app, app.GetTestClient(), store, clock);

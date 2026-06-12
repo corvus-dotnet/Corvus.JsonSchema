@@ -11,6 +11,7 @@
     },
     "versionNumber": {
       "type": "integer",
+      "format": "int32",
       "description": "The 1-based version number assigned by the store."
     },
     "workflowId": {

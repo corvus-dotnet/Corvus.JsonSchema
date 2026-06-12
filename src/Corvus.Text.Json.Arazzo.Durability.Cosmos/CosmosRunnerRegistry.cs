@@ -130,6 +130,31 @@ public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     }
 
     /// <inheritdoc/>
+    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(baseWorkflowId);
+        var definition = new QueryDefinition(
+            "SELECT VALUE COUNT(1) FROM c JOIN h IN c.loadedVersions WHERE h.baseWorkflowId = @baseWorkflowId AND h.versionNumber = @versionNumber")
+            .WithParameter("@baseWorkflowId", baseWorkflowId)
+            .WithParameter("@versionNumber", versionNumber);
+
+        using FeedIterator<long> iterator = this.runners.GetItemQueryIterator<long>(definition);
+        while (iterator.HasMoreResults)
+        {
+            FeedResponse<long> page = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
+            foreach (long count in page)
+            {
+                if (count > 0)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<bool> HeartbeatAsync(string runnerId, DateTimeOffset at, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(runnerId);
@@ -238,11 +263,38 @@ public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         [JsonPropertyName("doc")]
         public byte[] Doc { get; set; } = [];
 
-        public static RunnerDocument From(string runnerId, RunnerRegistration registration) => new()
+        /// <summary>
+        /// A queryable projection of the registration's loaded hosted versions, indexed by
+        /// <see cref="IsVersionHostedAsync"/>. It is recomputed on every register/heartbeat so it stays in
+        /// step with the canonical <see cref="Doc"/> registration; <see cref="ListAsync"/> ignores it.
+        /// </summary>
+        [JsonPropertyName("loadedVersions")]
+        public List<HostedKey> LoadedVersions { get; set; } = [];
+
+        public static RunnerDocument From(string runnerId, RunnerRegistration registration)
         {
-            Id = runnerId,
-            LastSeenAt = registration.LastSeenAtValue.ToUnixTimeMilliseconds(),
-            Doc = registration.ToJsonBytes(),
-        };
+            var loadedVersions = new List<HostedKey>();
+            foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
+            {
+                loadedVersions.Add(new HostedKey { BaseWorkflowId = baseWorkflowId, VersionNumber = versionNumber });
+            }
+
+            return new RunnerDocument
+            {
+                Id = runnerId,
+                LastSeenAt = registration.LastSeenAtValue.ToUnixTimeMilliseconds(),
+                Doc = registration.ToJsonBytes(),
+                LoadedVersions = loadedVersions,
+            };
+        }
+    }
+
+    private sealed class HostedKey
+    {
+        [JsonPropertyName("baseWorkflowId")]
+        public string BaseWorkflowId { get; set; } = string.Empty;
+
+        [JsonPropertyName("versionNumber")]
+        public int VersionNumber { get; set; }
     }
 }

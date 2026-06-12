@@ -44,6 +44,18 @@ public interface IRunnerRegistry
     ValueTask<IReadOnlyList<RunnerRegistration>> ListAsync(CancellationToken cancellationToken);
 
     /// <summary>
+    /// Determines whether any registered runner currently hosts (with the version loaded) the given catalog version.
+    /// </summary>
+    /// <param name="baseWorkflowId">The base workflow id of the version.</param>
+    /// <param name="versionNumber">The version number.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>
+    /// <see langword="true"/> if at least one registered runner advertises this version in its hosted versions
+    /// with <c>loaded == true</c>. Backends answer this from an index, not by scanning every runner.
+    /// </returns>
+    ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Removes every runner whose last heartbeat is strictly older than <paramref name="deadBefore"/>.
     /// </summary>
     /// <param name="deadBefore">Runners last seen before this instant are considered dead and pruned.</param>
