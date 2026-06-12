@@ -37,62 +37,11 @@ public interface IRunnerRegistry
     ValueTask<bool> HeartbeatAsync(string runnerId, DateTimeOffset at, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Lists the currently-registered runners. The full read used by hosting/scan paths and by the default keyset pager;
-    /// the paged <see cref="ListAsync(int, JsonString, CancellationToken)"/> is the API list seam.
+    /// Lists the currently-registered runners.
     /// </summary>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A snapshot of the registered runners. Each value is detached from any store-side buffer.</returns>
     ValueTask<IReadOnlyList<RunnerRegistration>> ListAsync(CancellationToken cancellationToken);
-
-    /// <summary>
-    /// Lists runners as a keyset page: runners ordered by <c>runnerId</c>, bounded to <paramref name="limit"/>, resuming
-    /// strictly after <paramref name="pageToken"/>. The default implementation pages over
-    /// <see cref="ListAsync(CancellationToken)"/> in memory; a backend overrides it with a native keyset query so the read
-    /// itself is bounded.
-    /// </summary>
-    /// <param name="limit">The maximum runners to return (a non-positive value uses the store's default page size).</param>
-    /// <param name="pageToken">The opaque token (its JSON value) from a previous page's <see cref="RunnerRegistryPage.NextPageToken"/>, or undefined for the first page; decoded bytes-native from its UTF-8.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>One keyset page, as a disposable the caller must dispose.</returns>
-    /// <exception cref="FormatException"><paramref name="pageToken"/> is not a valid continuation token.</exception>
-    async ValueTask<RunnerRegistryPage> ListAsync(int limit, JsonString pageToken, CancellationToken cancellationToken)
-    {
-        IReadOnlyList<RunnerRegistration> all = await this.ListAsync(cancellationToken).ConfigureAwait(false);
-        return RunnerRegistryPaging.PageInMemory(all, limit, pageToken);
-    }
-
-    /// <summary>
-    /// Lists runners as a <b>reach-scoped</b> keyset page (design §5.5/§14.2): the same keyset page as
-    /// <see cref="ListAsync(int, JsonString, CancellationToken)"/>, but every runner outside the caller's read reach
-    /// (its <c>reachTags</c> not admitted by <paramref name="context"/>) is dropped first, so a tenant sees only the
-    /// runners serving its environments. This is the seam the control-plane <c>GET /runners</c> endpoint uses.
-    /// </summary>
-    /// <param name="context">The caller's resolved row-access grant (<see cref="AccessContext.System"/> for the trusted, full-reach path).</param>
-    /// <param name="limit">The maximum runners to return (a non-positive value uses the store's default page size).</param>
-    /// <param name="pageToken">The opaque token (its JSON value) from a previous page's <see cref="RunnerRegistryPage.NextPageToken"/>, or undefined for the first page; decoded bytes-native from its UTF-8.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>One reach-filtered keyset page, as a disposable the caller must dispose.</returns>
-    /// <exception cref="FormatException"><paramref name="pageToken"/> is not a valid continuation token.</exception>
-    /// <remarks>The default reach-filters a full read in memory; a backend may override it once it can push the
-    /// <c>reachTags</c> predicate into a native query, exactly as the unscoped overload is overridden for paging.</remarks>
-    async ValueTask<RunnerRegistryPage> ListAsync(AccessContext context, int limit, JsonString pageToken, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-        IReadOnlyList<RunnerRegistration> all = await this.ListAsync(cancellationToken).ConfigureAwait(false);
-        return RunnerRegistryPaging.PageInMemory(all, context, limit, pageToken);
-    }
-
-    /// <summary>
-    /// Determines whether any registered runner currently hosts (with the version loaded) the given catalog version.
-    /// </summary>
-    /// <param name="baseWorkflowId">The base workflow id of the version.</param>
-    /// <param name="versionNumber">The version number.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>
-    /// <see langword="true"/> if at least one registered runner advertises this version in its hosted versions
-    /// with <c>loaded == true</c>. Backends answer this from an index, not by scanning every runner.
-    /// </returns>
-    ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken);
 
     /// <summary>
     /// Removes every runner whose last heartbeat is strictly older than <paramref name="deadBefore"/>.

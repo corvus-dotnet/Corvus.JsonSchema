@@ -3,20 +3,11 @@
   "title": "RunnerRegistration",
   "description": "A registration record for a workflow runner process: its identity, liveness timestamps, capacity, supported transports, and the catalog versions it currently hosts.",
   "type": "object",
-  "required": ["runnerId", "environment", "startedAt", "lastSeenAt", "maxConcurrency", "transports", "hostedVersions"],
+  "required": ["runnerId", "startedAt", "lastSeenAt", "maxConcurrency", "transports", "hostedVersions"],
   "properties": {
     "runnerId": {
       "type": "string",
       "description": "The stable identifier of the runner process."
-    },
-    "environment": {
-      "type": "string",
-      "description": "The single deployment environment this runner serves (design §5.5). Its sources, credentials, and network reach are this environment's; the runner is dispatchable only for runs targeting it, and inherits its reach (§14.2). A host serving several environments runs one runner process per environment."
-    },
-    "reachTags": {
-      "type": "array",
-      "description": "The runner's row-security reach (§14.2): the security tags (KVP labels) scoping who may SEE it. Stamped from the serving environment's managementTags at registration, so a tenant sees only the runners serving its environments. Absent on a runner serving an unscoped environment.",
-      "items": { "$ref": "#/$defs/SecurityTagInfo" }
     },
     "address": {
       "type": "string",
@@ -34,7 +25,6 @@
     },
     "maxConcurrency": {
       "type": "integer",
-      "format": "int32",
       "description": "The maximum number of runs the runner will execute concurrently."
     },
     "transports": {
@@ -50,23 +40,6 @@
   },
   "additionalProperties": false,
   "$defs": {
-    "SecurityTagInfo": {
-      "title": "SecurityTagInfo",
-      "type": "object",
-      "description": "A security label (KVP) scoping the runner for row authorization (§14.2).",
-      "required": ["key", "value"],
-      "properties": {
-        "key": {
-          "type": "string",
-          "description": "The label key (e.g. tenant)."
-        },
-        "value": {
-          "type": "string",
-          "description": "The label value (e.g. acme)."
-        }
-      },
-      "additionalProperties": false
-    },
     "RunnerHostedVersion": {
       "title": "RunnerHostedVersion",
       "type": "object",
@@ -78,7 +51,6 @@
         },
         "versionNumber": {
           "type": "integer",
-          "format": "int32",
           "description": "The catalog version number."
         },
         "hash": {
