@@ -59,6 +59,20 @@ public static class ArazzoCodeGeneration
 
         var workflowDependencies = new List<(string Id, IReadOnlyList<string> DependsOn)>();
 
+        // The document's sourceDescriptions names are surfaced on each durable host adapter's descriptor so
+        // an execution host can bind a transport per source.
+        var sourceNames = new List<string>();
+        if (document.RootElement.SourceDescriptions.IsNotUndefined())
+        {
+            foreach (ArazzoDocument.SourceDescriptionObject source in document.RootElement.SourceDescriptions.EnumerateArray())
+            {
+                if (source.Name.IsNotUndefined() && source.Name.GetString() is { Length: > 0 } sourceName)
+                {
+                    sourceNames.Add(sourceName);
+                }
+            }
+        }
+
         int index = 0;
         foreach (ArazzoDocument.WorkflowObject workflow in document.RootElement.Workflows.EnumerateArray())
         {
@@ -96,7 +110,7 @@ public static class ArazzoCodeGeneration
             string executorSource = WorkflowExecutorEmitter.Emit(
                 workflow,
                 binder,
-                new WorkflowExecutorOptions(workflowsNamespace, className, inputsTypeName, options.OutputsTypeName, inputAccessors, options.Durable, options.SubWorkflowSourceNamespaces),
+                new WorkflowExecutorOptions(workflowsNamespace, className, inputsTypeName, options.OutputsTypeName, inputAccessors, options.Durable, options.SubWorkflowSourceNamespaces, sourceNames),
                 components);
 
             files.Add(new GeneratedModelFile($"{DefaultWorkflowsNamespaceSuffix}/{className}.cs", executorSource));
