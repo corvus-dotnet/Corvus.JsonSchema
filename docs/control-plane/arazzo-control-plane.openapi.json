@@ -476,6 +476,54 @@
         }
       }
     },
+    "/catalog/{baseWorkflowId}/versions/{versionNumber}/executor": {
+      "get": {
+        "operationId": "getCatalogExecutor",
+        "security": [
+          { "oauth2": ["catalog:read"] },
+          { "openIdConnect": ["catalog:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["catalog"],
+        "summary": "Download a version's compiled workflow executor assembly",
+        "description": "Streams the compiled workflow executor assembly (a .NET DLL) baked into the package as a single binary download — the artifact an execution host dynamically loads to run the workflow. 404 if the version is not runnable (carries no baked executor).",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The compiled executor assembly, streamed.",
+            "content": { "application/octet-stream": { "schema": { "type": "string", "format": "binary" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/catalog/{baseWorkflowId}/versions/{versionNumber}/executor-manifest": {
+      "get": {
+        "operationId": "getCatalogExecutorManifest",
+        "security": [
+          { "oauth2": ["catalog:read"] },
+          { "openIdConnect": ["catalog:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["catalog"],
+        "summary": "Get a version's executor manifest",
+        "description": "Returns the executor manifest baked alongside the compiled assembly — the target framework, the assembly digest binding the DLL to this version, the entry type, and the declared sources — so a runner can verify and load the executor. 404 if the version is not runnable (carries no baked executor).",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The executor manifest document.",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
     "/catalog/{baseWorkflowId}/versions/{versionNumber}/validate": {
       "post": {
         "operationId": "validateCatalogValue",
@@ -1174,6 +1222,7 @@
           "tags": { "type": "array", "items": { "type": "string" } },
           "owner": { "$ref": "#/components/schemas/CatalogOwner" },
           "sources": { "type": "array", "items": { "$ref": "#/components/schemas/CatalogSourceRef" }, "description": "The source documents in this version's package, addressable individually via the source endpoint." },
+          "runnable": { "type": "boolean", "description": "Whether this version carries a compiled workflow executor assembly (downloadable via the executor endpoint) that an execution host can run." },
           "hash": { "type": "string", "description": "The SHA-256 of the canonical package, hex-encoded." },
           "createdBy": { "type": "string" },
           "createdAt": { "type": "string", "format": "date-time" },
@@ -1182,7 +1231,7 @@
           "obsoletedBy": { "type": "string" },
           "obsoletedAt": { "type": "string", "format": "date-time" }
         },
-        "required": ["baseWorkflowId", "versionNumber", "workflowId", "title", "status", "tags", "owner", "sources", "hash", "createdBy", "createdAt"]
+        "required": ["baseWorkflowId", "versionNumber", "workflowId", "title", "status", "tags", "owner", "sources", "runnable", "hash", "createdBy", "createdAt"]
       },
       "CatalogPage": {
         "type": "object",

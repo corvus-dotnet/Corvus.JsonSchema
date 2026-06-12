@@ -76,6 +76,7 @@ public readonly record struct CatalogMetadataPatch(
 /// <param name="LastUpdatedAt">When the metadata was last changed, if ever.</param>
 /// <param name="ObsoletedBy">The actor that marked the version obsolete, if it is.</param>
 /// <param name="ObsoletedAt">When the version was marked obsolete, if it is.</param>
+/// <param name="Runnable">Whether the package carries a compiled workflow executor assembly an execution host can run.</param>
 public sealed record CatalogVersion(
     string BaseWorkflowId,
     int VersionNumber,
@@ -92,7 +93,8 @@ public sealed record CatalogVersion(
     string? LastUpdatedBy = null,
     DateTimeOffset? LastUpdatedAt = null,
     string? ObsoletedBy = null,
-    DateTimeOffset? ObsoletedAt = null)
+    DateTimeOffset? ObsoletedAt = null,
+    bool Runnable = false)
 {
     /// <summary>Gets the minimal identity reference for this version.</summary>
     public CatalogVersionRef Ref => new(this.BaseWorkflowId, this.VersionNumber, this.WorkflowId);

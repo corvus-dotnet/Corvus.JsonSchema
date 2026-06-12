@@ -22,7 +22,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.MySql;
 public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDisposable
 {
     private const string ColumnList =
-        "BaseWorkflowId, VersionNumber, WorkflowId, Title, Description, Status, Tags, OwnerName, OwnerEmail, OwnerTeam, OwnerUrl, Sources, Hash, CreatedBy, CreatedAt, LastUpdatedBy, LastUpdatedAt, ObsoletedBy, ObsoletedAt";
+        "BaseWorkflowId, VersionNumber, WorkflowId, Title, Description, Status, Tags, OwnerName, OwnerEmail, OwnerTeam, OwnerUrl, Sources, Hash, CreatedBy, CreatedAt, LastUpdatedBy, LastUpdatedAt, ObsoletedBy, ObsoletedAt, Runnable";
 
     private readonly MySqlDataSource dataSource;
     private readonly bool ownsDataSource;
@@ -367,13 +367,14 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
             Sources: projection.Sources,
             Hash: projection.Hash,
             CreatedBy: metadata.CreatedBy,
-            CreatedAt: now);
+            CreatedAt: now,
+            Runnable: projection.HasExecutor);
 
         await using MySqlCommand insert = connection.CreateCommand();
         insert.CommandText =
             $"""
             INSERT INTO CatalogVersions ({ColumnList}, Package)
-            VALUES (@baseWorkflowId, @versionNumber, @workflowId, @title, @description, @status, @tags, @ownerName, @ownerEmail, @ownerTeam, @ownerUrl, @sources, @hash, @createdBy, @createdAt, @lastUpdatedBy, @lastUpdatedAt, @obsoletedBy, @obsoletedAt, @package);
+            VALUES (@baseWorkflowId, @versionNumber, @workflowId, @title, @description, @status, @tags, @ownerName, @ownerEmail, @ownerTeam, @ownerUrl, @sources, @hash, @createdBy, @createdAt, @lastUpdatedBy, @lastUpdatedAt, @obsoletedBy, @obsoletedAt, @runnable, @package);
             """;
         insert.Parameters.AddWithValue("@baseWorkflowId", version.BaseWorkflowId);
         insert.Parameters.AddWithValue("@versionNumber", version.VersionNumber);
@@ -394,6 +395,7 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
         insert.Parameters.AddWithValue("@lastUpdatedAt", DBNull.Value);
         insert.Parameters.AddWithValue("@obsoletedBy", DBNull.Value);
         insert.Parameters.AddWithValue("@obsoletedAt", DBNull.Value);
+        insert.Parameters.AddWithValue("@runnable", version.Runnable ? 1 : 0);
         insert.Parameters.AddWithValue("@package", projection.CanonicalPackage.ToArray());
         await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
 
@@ -442,7 +444,8 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
             LastUpdatedBy: reader.IsDBNull(15) ? null : reader.GetString(15),
             LastUpdatedAt: reader.IsDBNull(16) ? null : DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(16)),
             ObsoletedBy: reader.IsDBNull(17) ? null : reader.GetString(17),
-            ObsoletedAt: reader.IsDBNull(18) ? null : DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(18)));
+            ObsoletedAt: reader.IsDBNull(18) ? null : DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(18)),
+            Runnable: reader.GetBoolean(19));
 
     private static string SortKey(string baseWorkflowId, int versionNumber)
         => string.Create(CultureInfo.InvariantCulture, $"{baseWorkflowId}{versionNumber:D10}");
@@ -535,6 +538,7 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
             LastUpdatedAt BIGINT NULL,
             ObsoletedBy VARCHAR(255) NULL,
             ObsoletedAt BIGINT NULL,
+            Runnable TINYINT(1) NOT NULL DEFAULT 0,
             Package LONGBLOB NOT NULL,
             PRIMARY KEY (BaseWorkflowId, VersionNumber),
             INDEX ix_catalog_versions_status (Status),
