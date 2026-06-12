@@ -34,7 +34,7 @@ public sealed class MessageWorkflowTriggerTests
         var binding = new MessageTriggerBinding(
             WorkflowId: "orders-v1",
             Channel: "orders/created",
-            IdempotencyKey: (payload, _) => payload.TryGetProperty("orderId"u8, out JsonElement orderId) ? orderId.GetString()! : string.Empty);
+            IdempotencyKey: "$message.payload#/orderId");
 
         await using var trigger = new MessageWorkflowTrigger(transport, start, binding);
         await trigger.StartListeningAsync(default);
