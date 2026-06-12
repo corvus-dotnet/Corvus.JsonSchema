@@ -350,6 +350,30 @@ public readonly partial struct CatalogVersionSummary
     }
 
     /// <summary>
+    /// Gets the <c>runnable</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
+    /// </para>
+    /// <para>
+    /// Whether this version carries a compiled workflow executor assembly (downloadable via the executor endpoint) that an execution host can run.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean Runnable
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RunnableUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the <c>sources</c> property.
     /// </summary>
     /// <remarks>
@@ -978,6 +1002,11 @@ public readonly partial struct CatalogVersionSummary
         public const string Owner = "owner";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="Runnable"/>.
+        /// </summary>
+        public const string Runnable = "runnable";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Sources"/>.
         /// </summary>
         public const string Sources = "sources";
@@ -1056,6 +1085,11 @@ public readonly partial struct CatalogVersionSummary
         /// Gets the JSON property name for <see cref="Owner"/>.
         /// </summary>
         public static ReadOnlySpan<byte> OwnerUtf8 => "owner"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Runnable"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RunnableUtf8 => "runnable"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Sources"/>.
@@ -1144,6 +1178,11 @@ public readonly partial struct CatalogVersionSummary
         public static ReadOnlySpan<byte> Owner => "owner"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Runnable"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Runnable => "runnable"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Sources"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Sources => "sources"u8;
@@ -1229,6 +1268,11 @@ public readonly partial struct CatalogVersionSummary
         /// Gets the pre-baked property name blob for <see cref="Owner"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Owner => [0x75, 0x00, 0x00, 0x00, 0x22, 0x6F, 0x77, 0x6E, 0x65, 0x72, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Runnable"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Runnable => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x72, 0x75, 0x6E, 0x6E, 0x61, 0x62, 0x6C, 0x65, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Sources"/>.

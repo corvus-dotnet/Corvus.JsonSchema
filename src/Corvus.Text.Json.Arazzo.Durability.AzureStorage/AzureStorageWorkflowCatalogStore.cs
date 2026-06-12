@@ -363,6 +363,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore
             ["WorkflowId"] = version.WorkflowId,
             ["Title"] = version.Title,
             ["Hash"] = version.Hash,
+            ["Runnable"] = version.Runnable,
             ["CreatedBy"] = version.CreatedBy,
             ["CreatedAt"] = version.CreatedAt.ToUnixTimeMilliseconds(),
             ["Sources"] = EncodeSources(version.Sources),
@@ -412,7 +413,8 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore
             LastUpdatedBy: entity.GetString("LastUpdatedBy"),
             LastUpdatedAt: entity.GetInt64("LastUpdatedAt") is { } lua ? DateTimeOffset.FromUnixTimeMilliseconds(lua) : null,
             ObsoletedBy: entity.GetString("ObsoletedBy"),
-            ObsoletedAt: entity.GetInt64("ObsoletedAt") is { } oa ? DateTimeOffset.FromUnixTimeMilliseconds(oa) : null);
+            ObsoletedAt: entity.GetInt64("ObsoletedAt") is { } oa ? DateTimeOffset.FromUnixTimeMilliseconds(oa) : null,
+            Runnable: entity.GetBoolean("Runnable") ?? false);
 
     private static string EncodeTags(IReadOnlyList<string> tags)
         => System.Text.Json.JsonSerializer.Serialize(tags);
@@ -461,7 +463,8 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore
                 Sources: projection.Sources,
                 Hash: projection.Hash,
                 CreatedBy: metadata.CreatedBy,
-                CreatedAt: now);
+                CreatedAt: now,
+                Runnable: projection.HasExecutor);
 
             // Write the package blob first; it is keyed by (base, version) and is overwritten harmlessly on a
             // retry. The Table entity, written with create-if-not-exists, is the authority for the version's

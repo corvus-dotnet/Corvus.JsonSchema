@@ -359,7 +359,8 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
                 Sources: projection.Sources,
                 Hash: projection.Hash,
                 CreatedBy: metadata.CreatedBy,
-                CreatedAt: now);
+                CreatedAt: now,
+                Runnable: projection.HasExecutor);
 
             byte[] value = Envelope.Encode(version, projection.CanonicalPackage.Span);
             try
@@ -488,6 +489,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
                 writer.WriteEndArray();
 
                 writer.WriteString("hash", version.Hash);
+                writer.WriteBoolean("runnable", version.Runnable);
                 writer.WriteString("createdBy", version.CreatedBy);
                 writer.WriteNumber("createdAt", version.CreatedAt.ToUnixTimeMilliseconds());
                 if (version.LastUpdatedBy is { } lastUpdatedBy)
@@ -556,7 +558,8 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
                 LastUpdatedBy: root.TryGetProperty("lastUpdatedBy", out System.Text.Json.JsonElement lastUpdatedBy) ? lastUpdatedBy.GetString() : null,
                 LastUpdatedAt: root.TryGetProperty("lastUpdatedAt", out System.Text.Json.JsonElement lastUpdatedAt) ? DateTimeOffset.FromUnixTimeMilliseconds(lastUpdatedAt.GetInt64()) : null,
                 ObsoletedBy: root.TryGetProperty("obsoletedBy", out System.Text.Json.JsonElement obsoletedBy) ? obsoletedBy.GetString() : null,
-                ObsoletedAt: root.TryGetProperty("obsoletedAt", out System.Text.Json.JsonElement obsoletedAt) ? DateTimeOffset.FromUnixTimeMilliseconds(obsoletedAt.GetInt64()) : null);
+                ObsoletedAt: root.TryGetProperty("obsoletedAt", out System.Text.Json.JsonElement obsoletedAt) ? DateTimeOffset.FromUnixTimeMilliseconds(obsoletedAt.GetInt64()) : null,
+                Runnable: root.TryGetProperty("runnable", out System.Text.Json.JsonElement runnable) && runnable.GetBoolean());
         }
 
         private static IReadOnlyList<string> DecodeTags(System.Text.Json.JsonElement root)

@@ -90,7 +90,7 @@ public static partial class CatalogPackage
             sources = ReadSources(workflow.RootElement);
         }
 
-        return new CatalogPackageProjection(canonicalPackage, workflowId, hash, title, description, sources);
+        return new CatalogPackageProjection(canonicalPackage, workflowId, hash, title, description, sources, executor.HasValue);
     }
 
     /// <summary>
@@ -334,13 +334,16 @@ public static partial class CatalogPackage
 /// <param name="Title">The title from the workflow's <c>info.title</c>.</param>
 /// <param name="Description">The description (from <c>info.description</c>, falling back to <c>info.summary</c>), if any.</param>
 /// <param name="Sources">The source documents declared by the workflow (name + type).</param>
+/// <param name="HasExecutor">Whether a compiled workflow executor assembly was baked into the canonical package
+/// (i.e. an executor provider was supplied and produced one) — the version is runnable.</param>
 public readonly record struct CatalogPackageProjection(
     ReadOnlyMemory<byte> CanonicalPackage,
     string WorkflowId,
     string Hash,
     string Title,
     string? Description,
-    IReadOnlyList<CatalogSourceRef> Sources);
+    IReadOnlyList<CatalogSourceRef> Sources,
+    bool HasExecutor = false);
 
 /// <summary>The result of a local <see cref="CatalogPackage.Validate"/> of a package archive.</summary>
 /// <param name="IsValid">Whether the package is well-formed and referentially complete (no <paramref name="Issues"/>).</param>

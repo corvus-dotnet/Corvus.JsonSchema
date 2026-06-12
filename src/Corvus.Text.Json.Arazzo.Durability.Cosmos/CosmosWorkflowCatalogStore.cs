@@ -442,7 +442,8 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
                 Sources: projection.Sources,
                 Hash: projection.Hash,
                 CreatedBy: metadata.CreatedBy,
-                CreatedAt: now);
+                CreatedAt: now,
+                Runnable: projection.HasExecutor);
 
             var document = CatalogDocument.From(version, projection.CanonicalPackage.ToArray());
 
@@ -533,6 +534,9 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
         [JsonPropertyName("hash")]
         public string Hash { get; set; } = string.Empty;
 
+        [JsonPropertyName("runnable")]
+        public bool Runnable { get; set; }
+
         [JsonPropertyName("package")]
         public byte[] Package { get; set; } = [];
 
@@ -569,6 +573,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
             Owner = OwnerDocument.From(version.Owner),
             Sources = version.Sources is { Count: > 0 } s ? [.. s.Select(SourceDocument.From)] : null,
             Hash = version.Hash,
+            Runnable = version.Runnable,
             Package = package,
             CreatedBy = version.CreatedBy,
             CreatedAt = version.CreatedAt.ToUnixTimeMilliseconds(),
@@ -590,7 +595,8 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
             LastUpdatedBy: this.LastUpdatedBy,
             LastUpdatedAt: this.LastUpdatedAt is { } lua ? DateTimeOffset.FromUnixTimeMilliseconds(lua) : null,
             ObsoletedBy: this.ObsoletedBy,
-            ObsoletedAt: this.ObsoletedAt is { } oa ? DateTimeOffset.FromUnixTimeMilliseconds(oa) : null);
+            ObsoletedAt: this.ObsoletedAt is { } oa ? DateTimeOffset.FromUnixTimeMilliseconds(oa) : null,
+            Runnable: this.Runnable);
     }
 
     private sealed class OwnerDocument

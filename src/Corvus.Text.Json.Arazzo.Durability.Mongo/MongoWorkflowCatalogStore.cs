@@ -358,6 +358,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
                 document["ownerUrl"].IsBsonNull ? null : document["ownerUrl"].AsString),
             Sources: ReadSources(document),
             Hash: document["hash"].AsString,
+            Runnable: document.GetValue("runnable", false).AsBoolean,
             CreatedBy: document["createdBy"].AsString,
             CreatedAt: DateTimeOffset.FromUnixTimeMilliseconds(document["createdAt"].AsInt64),
             LastUpdatedBy: document["lastUpdatedBy"].IsBsonNull ? null : document["lastUpdatedBy"].AsString,
@@ -428,7 +429,8 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
                 Sources: projection.Sources,
                 Hash: projection.Hash,
                 CreatedBy: metadata.CreatedBy,
-                CreatedAt: now);
+                CreatedAt: now,
+                Runnable: projection.HasExecutor);
 
             BsonDocument document = BuildDocument(version, projection.CanonicalPackage.ToArray());
             try
@@ -495,6 +497,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
             ["ownerUrl"] = (BsonValue?)version.Owner.Url ?? BsonNull.Value,
             ["sources"] = sources,
             ["hash"] = version.Hash,
+            ["runnable"] = version.Runnable,
             ["package"] = new BsonBinaryData(package),
             ["createdBy"] = version.CreatedBy,
             ["createdAt"] = version.CreatedAt.ToUnixTimeMilliseconds(),

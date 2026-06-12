@@ -442,7 +442,8 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
             LastUpdatedBy: OptString("last_updated_by"),
             LastUpdatedAt: OptTime("last_updated_at"),
             ObsoletedBy: OptString("obsoleted_by"),
-            ObsoletedAt: OptTime("obsoleted_at"));
+            ObsoletedAt: OptTime("obsoleted_at"),
+            Runnable: OptString("runnable") == "1");
     }
 
     private async ValueTask<CatalogVersion> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
@@ -468,7 +469,8 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
             Sources: projection.Sources,
             Hash: projection.Hash,
             CreatedBy: metadata.CreatedBy,
-            CreatedAt: now);
+            CreatedAt: now,
+            Runnable: projection.HasExecutor);
 
         RedisValue[] argv =
         [
@@ -486,6 +488,7 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
             "owner_url", version.Owner.Url ?? string.Empty,
             "sources", EncodeSources(version.Sources),
             "hash", version.Hash,
+            "runnable", version.Runnable ? "1" : "0",
             "created_by", version.CreatedBy,
             "created_at", version.CreatedAt.ToUnixTimeMilliseconds(),
             "package", projection.CanonicalPackage.ToArray(),

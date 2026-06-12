@@ -196,6 +196,38 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     }
 
     /// <inheritdoc/>
+    public async ValueTask<GetCatalogExecutorResult> HandleGetCatalogExecutorAsync(GetCatalogExecutorParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string baseWorkflowId = (string)parameters.BaseWorkflowId;
+        int versionNumber = (int)parameters.VersionNumber;
+        ReadOnlyMemory<byte>? executor = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorDocumentName, cancellationToken).ConfigureAwait(false);
+        if (executor is not { } bytes)
+        {
+            return GetCatalogExecutorResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
+        }
+
+        // The compiled executor assembly is an opaque binary artifact streamed back as-is (octet-stream).
+        return GetCatalogExecutorResult.Ok(bytes);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<GetCatalogExecutorManifestResult> HandleGetCatalogExecutorManifestAsync(GetCatalogExecutorManifestParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string baseWorkflowId = (string)parameters.BaseWorkflowId;
+        int versionNumber = (int)parameters.VersionNumber;
+        ReadOnlyMemory<byte>? document = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorManifestDocumentName, cancellationToken).ConfigureAwait(false);
+        if (document is not { } bytes)
+        {
+            return GetCatalogExecutorManifestResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
+        }
+
+        // Hand the parsed document to the response workspace so it lives until the response is written.
+        ParsedJsonDocument<Models.JsonObject> parsed = ParsedJsonDocument<Models.JsonObject>.Parse(bytes);
+        workspace.TakeOwnership(parsed);
+        return GetCatalogExecutorManifestResult.Ok(parsed.RootElement, workspace);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<GetCatalogSourceResult> HandleGetCatalogSourceAsync(GetCatalogSourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
@@ -385,6 +417,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
                 createdBy: version.CreatedBy,
                 hash: version.Hash,
                 owner: BuildOwner(version.Owner),
+                runnable: version.Runnable,
                 sources: BuildSources(version.Sources),
                 status: version.Status.ToString(),
                 tags: BuildTags(version.Tags),
