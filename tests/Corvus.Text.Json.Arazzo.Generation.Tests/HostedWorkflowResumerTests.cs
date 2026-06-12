@@ -80,7 +80,7 @@ public class HostedWorkflowResumerTests
         transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
 
         using var loader = new WorkflowExecutorLoader();
-        var resumer = new HostedWorkflowResumer(catalog, loader, _ => new WorkflowTransports(transport, null));
+        var resumer = new HostedWorkflowResumer(catalog, loader, d => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
 
         // Drive it through the WorkflowResumer delegate the durable worker would call.
         WorkflowResumer resume = resumer.AsResumer();
@@ -105,7 +105,7 @@ public class HostedWorkflowResumerTests
         using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement);
 
         using var loader = new WorkflowExecutorLoader();
-        var resumer = new HostedWorkflowResumer(catalog, loader, _ => new WorkflowTransports(new MockApiTransport(), null));
+        var resumer = new HostedWorkflowResumer(catalog, loader, d => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)new MockApiTransport(), System.StringComparer.Ordinal), null));
 
         await Should.ThrowAsync<InvalidOperationException>(async () => await resumer.ResumeAsync(run, default));
     }
