@@ -215,7 +215,8 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore
             if (matches.Count == limit)
             {
                 // There is at least one more matching row beyond this page.
-                continuation = WorkflowContinuationToken.Encode(SortKey(matches[^1].BaseWorkflowId, matches[^1].VersionNumber));
+                CatalogVersionRef lastRef = matches[^1].Ref;
+                continuation = WorkflowContinuationToken.Encode(SortKey(lastRef.BaseWorkflowId, lastRef.VersionNumber));
                 break;
             }
 
@@ -242,29 +243,19 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore
         TableEntity entity = existing.Value!;
         CatalogVersion current = ReadVersion(entity);
 
-        CatalogStatus status = patch.Status ?? current.Status;
-        bool newlyObsolete = status == CatalogStatus.Obsolete && current.Status != CatalogStatus.Obsolete;
-        bool reactivated = status == CatalogStatus.Active && current.Status == CatalogStatus.Obsolete;
+        CatalogStatus currentStatus = current.StatusValue;
+        CatalogStatus status = patch.Status ?? currentStatus;
+        bool newlyObsolete = status == CatalogStatus.Obsolete && currentStatus != CatalogStatus.Obsolete;
+        bool reactivated = status == CatalogStatus.Active && currentStatus == CatalogStatus.Obsolete;
 
-        CatalogOwner owner = patch.Owner ?? current.Owner;
-        IReadOnlyList<string> tags = patch.Tags is { } t ? [.. t] : current.Tags;
-        string? obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedBy;
-        DateTimeOffset? obsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAt;
+        CatalogOwner owner = patch.Owner ?? current.OwnerValue;
+        IReadOnlyList<string> tags = patch.Tags is { } t ? [.. t] : current.TagsValue;
+        string? obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedByOrNull;
+        DateTimeOffset? obsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAtValue;
 
-        CatalogVersion updated = current with
-        {
-            Owner = owner,
-            Tags = tags,
-            Status = status,
-            LastUpdatedBy = patch.UpdatedBy,
-            LastUpdatedAt = now,
-            ObsoletedBy = obsoletedBy,
-            ObsoletedAt = obsoletedAt,
-        };
-
-        WriteGovernance(entity, updated);
+        WriteGovernance(entity, status, tags, owner, patch.UpdatedBy, now, obsoletedBy, obsoletedAt);
         await this.catalog.UpdateEntityAsync(entity, entity.ETag, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
-        return updated;
+        return ReadVersion(entity);
     }
 
     /// <inheritdoc/>
@@ -318,39 +309,50 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore
 
     private static bool Matches(CatalogVersion version, CatalogQuery query)
     {
-        if (query.BaseWorkflowId is { } baseId && version.BaseWorkflowId != baseId)
+        if (query.BaseWorkflowId is { } baseId && version.Ref.BaseWorkflowId != baseId)
         {
             return false;
         }
 
         if (query.WorkflowIdPrefix is { Length: > 0 } prefix
-            && !version.WorkflowId.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            && !((string)version.WorkflowId).StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
 
-        if (query.Status is { } status && version.Status != status)
+        if (query.Status is { } status && version.StatusValue != status)
         {
             return false;
         }
 
-        if (query.Text is { Length: > 0 } text
-            && version.Title.IndexOf(text, StringComparison.OrdinalIgnoreCase) < 0
-            && (version.Description is null || version.Description.IndexOf(text, StringComparison.OrdinalIgnoreCase) < 0))
+        if (query.Text is { Length: > 0 } text)
         {
-            return false;
+            string title = (string)version.Title;
+            string? description = version.DescriptionOrNull;
+            if (title.IndexOf(text, StringComparison.OrdinalIgnoreCase) < 0
+                && (description is null || description.IndexOf(text, StringComparison.OrdinalIgnoreCase) < 0))
+            {
+                return false;
+            }
         }
 
-        if (query.Owner is { Length: > 0 } owner
-            && version.Owner.Name.IndexOf(owner, StringComparison.OrdinalIgnoreCase) < 0
-            && version.Owner.Email.IndexOf(owner, StringComparison.OrdinalIgnoreCase) < 0)
+        if (query.Owner is { Length: > 0 } owner)
         {
-            return false;
+            CatalogOwner ownerValue = version.OwnerValue;
+            if (ownerValue.Name.IndexOf(owner, StringComparison.OrdinalIgnoreCase) < 0
+                && ownerValue.Email.IndexOf(owner, StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                return false;
+            }
         }
 
-        if (query.Tags is { Count: > 0 } queryTags && !queryTags.All(version.Tags.Contains))
+        if (query.Tags is { Count: > 0 } queryTags)
         {
-            return false;
+            IReadOnlyList<string> versionTags = version.TagsValue;
+            if (!queryTags.All(versionTags.Contains))
+            {
+                return false;
+            }
         }
 
         return true;
@@ -358,63 +360,80 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore
 
     private static TableEntity BuildEntity(CatalogVersion version)
     {
-        var entity = new TableEntity(version.BaseWorkflowId, RowKey(version.VersionNumber))
+        CatalogVersionRef reference = version.Ref;
+        var entity = new TableEntity(reference.BaseWorkflowId, RowKey(reference.VersionNumber))
         {
-            ["WorkflowId"] = version.WorkflowId,
-            ["Title"] = version.Title,
-            ["Hash"] = version.Hash,
-            ["Runnable"] = version.Runnable,
-            ["CreatedBy"] = version.CreatedBy,
-            ["CreatedAt"] = version.CreatedAt.ToUnixTimeMilliseconds(),
-            ["Sources"] = EncodeSources(version.Sources),
+            ["WorkflowId"] = reference.WorkflowId,
+            ["Title"] = (string)version.Title,
+            ["Hash"] = (string)version.Hash,
+            ["Runnable"] = (bool)version.Runnable,
+            ["CreatedBy"] = (string)version.CreatedBy,
+            ["CreatedAt"] = version.CreatedAtValue.ToUnixTimeMilliseconds(),
+            ["Sources"] = EncodeSources(version.SourcesValue),
         };
 
-        if (version.Description is { } description)
+        if (version.DescriptionOrNull is { } description)
         {
             entity["Description"] = description;
         }
 
-        WriteGovernance(entity, version);
+        WriteGovernance(
+            entity,
+            version.StatusValue,
+            version.TagsValue,
+            version.OwnerValue,
+            version.LastUpdatedByOrNull,
+            version.LastUpdatedAtValue,
+            version.ObsoletedByOrNull,
+            version.ObsoletedAtValue);
         return entity;
     }
 
-    private static void WriteGovernance(TableEntity entity, CatalogVersion version)
+    private static void WriteGovernance(
+        TableEntity entity,
+        CatalogStatus status,
+        IReadOnlyList<string> tags,
+        CatalogOwner owner,
+        string? lastUpdatedBy,
+        DateTimeOffset? lastUpdatedAt,
+        string? obsoletedBy,
+        DateTimeOffset? obsoletedAt)
     {
-        entity["Status"] = version.Status.ToString();
-        entity["Tags"] = EncodeTags(version.Tags);
-        entity["OwnerName"] = version.Owner.Name;
-        entity["OwnerEmail"] = version.Owner.Email;
-        entity["OwnerTeam"] = version.Owner.Team;
-        entity["OwnerUrl"] = version.Owner.Url;
-        entity["LastUpdatedBy"] = version.LastUpdatedBy;
-        entity["LastUpdatedAt"] = version.LastUpdatedAt?.ToUnixTimeMilliseconds();
-        entity["ObsoletedBy"] = version.ObsoletedBy;
-        entity["ObsoletedAt"] = version.ObsoletedAt?.ToUnixTimeMilliseconds();
+        entity["Status"] = status.ToString();
+        entity["Tags"] = EncodeTags(tags);
+        entity["OwnerName"] = owner.Name;
+        entity["OwnerEmail"] = owner.Email;
+        entity["OwnerTeam"] = owner.Team;
+        entity["OwnerUrl"] = owner.Url;
+        entity["LastUpdatedBy"] = lastUpdatedBy;
+        entity["LastUpdatedAt"] = lastUpdatedAt?.ToUnixTimeMilliseconds();
+        entity["ObsoletedBy"] = obsoletedBy;
+        entity["ObsoletedAt"] = obsoletedAt?.ToUnixTimeMilliseconds();
     }
 
     private static CatalogVersion ReadVersion(TableEntity entity)
-        => new(
-            BaseWorkflowId: entity.PartitionKey,
-            VersionNumber: ParseRowKey(entity.RowKey),
-            WorkflowId: entity.GetString("WorkflowId") ?? string.Empty,
-            Title: entity.GetString("Title") ?? string.Empty,
-            Description: entity.GetString("Description"),
-            Status: Enum.Parse<CatalogStatus>(entity.GetString("Status") ?? nameof(CatalogStatus.Active)),
-            Tags: DecodeTags(entity.GetString("Tags")),
-            Owner: new CatalogOwner(
+        => CatalogVersion.Create(
+            baseWorkflowId: entity.PartitionKey,
+            versionNumber: ParseRowKey(entity.RowKey),
+            workflowId: entity.GetString("WorkflowId") ?? string.Empty,
+            title: entity.GetString("Title") ?? string.Empty,
+            description: entity.GetString("Description"),
+            status: Enum.Parse<CatalogStatus>(entity.GetString("Status") ?? nameof(CatalogStatus.Active)),
+            tags: DecodeTags(entity.GetString("Tags")),
+            owner: new CatalogOwner(
                 entity.GetString("OwnerName") ?? string.Empty,
                 entity.GetString("OwnerEmail") ?? string.Empty,
                 entity.GetString("OwnerTeam"),
                 entity.GetString("OwnerUrl")),
-            Sources: DecodeSources(entity.GetString("Sources")),
-            Hash: entity.GetString("Hash") ?? string.Empty,
-            CreatedBy: entity.GetString("CreatedBy") ?? string.Empty,
-            CreatedAt: DateTimeOffset.FromUnixTimeMilliseconds(entity.GetInt64("CreatedAt") ?? 0),
-            LastUpdatedBy: entity.GetString("LastUpdatedBy"),
-            LastUpdatedAt: entity.GetInt64("LastUpdatedAt") is { } lua ? DateTimeOffset.FromUnixTimeMilliseconds(lua) : null,
-            ObsoletedBy: entity.GetString("ObsoletedBy"),
-            ObsoletedAt: entity.GetInt64("ObsoletedAt") is { } oa ? DateTimeOffset.FromUnixTimeMilliseconds(oa) : null,
-            Runnable: entity.GetBoolean("Runnable") ?? false);
+            sources: DecodeSources(entity.GetString("Sources")),
+            hash: entity.GetString("Hash") ?? string.Empty,
+            createdBy: entity.GetString("CreatedBy") ?? string.Empty,
+            createdAt: DateTimeOffset.FromUnixTimeMilliseconds(entity.GetInt64("CreatedAt") ?? 0),
+            lastUpdatedBy: entity.GetString("LastUpdatedBy"),
+            lastUpdatedAt: entity.GetInt64("LastUpdatedAt") is { } lua ? DateTimeOffset.FromUnixTimeMilliseconds(lua) : null,
+            obsoletedBy: entity.GetString("ObsoletedBy"),
+            obsoletedAt: entity.GetInt64("ObsoletedAt") is { } oa ? DateTimeOffset.FromUnixTimeMilliseconds(oa) : null,
+            runnable: entity.GetBoolean("Runnable") ?? false);
 
     private static string EncodeTags(IReadOnlyList<string> tags)
         => System.Text.Json.JsonSerializer.Serialize(tags);
@@ -451,20 +470,20 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore
             cancellationToken.ThrowIfCancellationRequested();
             int versionNumber = await this.MaxVersionAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false) + 1;
             CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
-            var version = new CatalogVersion(
-                BaseWorkflowId: baseWorkflowId,
-                VersionNumber: versionNumber,
-                WorkflowId: projection.WorkflowId,
-                Title: projection.Title,
-                Description: projection.Description,
-                Status: CatalogStatus.Active,
-                Tags: tags,
-                Owner: metadata.Owner,
-                Sources: projection.Sources,
-                Hash: projection.Hash,
-                CreatedBy: metadata.CreatedBy,
-                CreatedAt: now,
-                Runnable: projection.HasExecutor);
+            CatalogVersion version = CatalogVersion.Create(
+                baseWorkflowId: baseWorkflowId,
+                versionNumber: versionNumber,
+                workflowId: projection.WorkflowId,
+                title: projection.Title,
+                description: projection.Description,
+                status: CatalogStatus.Active,
+                tags: tags,
+                owner: metadata.Owner,
+                sources: projection.Sources,
+                hash: projection.Hash,
+                createdBy: metadata.CreatedBy,
+                createdAt: now,
+                runnable: projection.HasExecutor);
 
             // Write the package blob first; it is keyed by (base, version) and is overwritten harmlessly on a
             // retry. The Table entity, written with create-if-not-exists, is the authority for the version's

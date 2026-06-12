@@ -53,8 +53,8 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
 
         CatalogVersion version = await this.catalog.AddAsync(
             baseWorkflowId, packageUtf8, new CatalogMetadata(owner, this.actor, tags), cancellationToken).ConfigureAwait(false);
-        activity?.SetTag(ArazzoTelemetry.VersionNumberTag, version.VersionNumber);
-        activity?.SetTag(ArazzoTelemetry.WorkflowIdTag, version.WorkflowId);
+        activity?.SetTag(ArazzoTelemetry.VersionNumberTag, version.Ref.VersionNumber);
+        activity?.SetTag(ArazzoTelemetry.WorkflowIdTag, version.Ref.WorkflowId);
         activity?.SetTag(ArazzoTelemetry.OutcomeTag, "added");
         return version;
     }
@@ -104,7 +104,7 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
             return CatalogDeleteOutcome.NotFound;
         }
 
-        if (await this.IsReferencedAsync(version.WorkflowId, cancellationToken).ConfigureAwait(false))
+        if (await this.IsReferencedAsync((string)version.Value.WorkflowId, cancellationToken).ConfigureAwait(false))
         {
             activity?.SetTag(ArazzoTelemetry.OutcomeTag, "referenced");
             return CatalogDeleteOutcome.Referenced;

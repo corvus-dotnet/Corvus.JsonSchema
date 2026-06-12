@@ -106,6 +106,6 @@ public sealed class HostedWorkflowResumer
         ReadOnlyMemory<byte> manifest = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorManifestDocumentName, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Version {versionNumber} of '{baseWorkflowId}' has an executor but no manifest.");
 
-        return this.loader.Load(baseWorkflowId, versionNumber, assembly, manifest, version.Hash).Workflow;
+        return this.loader.Load(baseWorkflowId, versionNumber, assembly, manifest, (string)version.Hash).Workflow;
     }
 }

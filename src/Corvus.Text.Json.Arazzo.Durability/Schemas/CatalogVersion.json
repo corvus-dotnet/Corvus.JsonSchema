@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CatalogVersion",
+  "description": "A catalog version's metadata: the immutable identity/hash/title/description/sources derived from the package, plus the mutable governance fields and audit attribution. The package documents are never embedded here.",
+  "type": "object",
+  "required": ["baseWorkflowId", "versionNumber", "workflowId", "title", "status", "tags", "owner", "sources", "hash", "createdBy", "createdAt", "runnable"],
+  "properties": {
+    "baseWorkflowId": {
+      "type": "string",
+      "description": "The base workflow id (no version suffix)."
+    },
+    "versionNumber": {
+      "type": "integer",
+      "description": "The 1-based version number assigned by the store."
+    },
+    "workflowId": {
+      "type": "string",
+      "description": "The versioned workflow id ({baseWorkflowId}-v{versionNumber}) runs execute under."
+    },
+    "title": {
+      "type": "string",
+      "description": "The title, extracted from the workflow's info.title."
+    },
+    "description": {
+      "type": "string",
+      "description": "The description, from the workflow's info.description (falling back to info.summary), if any."
+    },
+    "status": {
+      "type": "string",
+      "description": "The lifecycle status.",
+      "enum": ["Active", "Obsolete"]
+    },
+    "tags": {
+      "type": "array",
+      "description": "The free-form tags.",
+      "items": { "type": "string" }
+    },
+    "owner": {
+      "$ref": "#/$defs/CatalogOwnerInfo"
+    },
+    "sources": {
+      "type": "array",
+      "description": "The source documents in the package (name + type), addressable individually.",
+      "items": { "$ref": "#/$defs/CatalogSourceInfo" }
+    },
+    "hash": {
+      "type": "string",
+      "description": "The SHA-256 of the canonical package, hex-encoded."
+    },
+    "createdBy": {
+      "type": "string",
+      "description": "The actor that added the version."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the version was added."
+    },
+    "lastUpdatedBy": {
+      "type": "string",
+      "description": "The actor of the last metadata change, if any."
+    },
+    "lastUpdatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the metadata was last changed, if ever."
+    },
+    "obsoletedBy": {
+      "type": "string",
+      "description": "The actor that marked the version obsolete, if it is."
+    },
+    "obsoletedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the version was marked obsolete, if it is."
+    },
+    "runnable": {
+      "type": "boolean",
+      "description": "Whether the package carries a compiled workflow executor assembly an execution host can run."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "CatalogOwnerInfo": {
+      "title": "CatalogOwnerInfo",
+      "type": "object",
+      "description": "The accountable governance owner of a cataloged workflow.",
+      "required": ["name", "email"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The owning person or team's display name."
+        },
+        "email": {
+          "type": "string",
+          "description": "A contact email."
+        },
+        "team": {
+          "type": "string",
+          "description": "An optional owning team/group."
+        },
+        "url": {
+          "type": "string",
+          "description": "An optional link (e.g. a runbook or owning-team page)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "CatalogSourceInfo": {
+      "title": "CatalogSourceInfo",
+      "type": "object",
+      "description": "A reference to one source document within a version's package.",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The source name (the workflow's sourceDescriptions name), used to address the document."
+        },
+        "type": {
+          "type": "string",
+          "description": "The source document kind (e.g. openapi, asyncapi), if the workflow declared it."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

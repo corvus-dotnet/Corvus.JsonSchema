@@ -180,7 +180,7 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
 
             if (matches.Count == limit)
             {
-                continuation = WorkflowContinuationToken.Encode(SortKey(matches[^1].BaseWorkflowId, matches[^1].VersionNumber));
+                continuation = WorkflowContinuationToken.Encode(SortKey(matches[^1].Ref.BaseWorkflowId, matches[^1].Ref.VersionNumber));
                 break;
             }
 
@@ -202,43 +202,50 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
             return null;
         }
 
-        CatalogVersion current = ReadVersion(entries);
-        CatalogStatus status = patch.Status ?? current.Status;
-        bool newlyObsolete = status == CatalogStatus.Obsolete && current.Status != CatalogStatus.Obsolete;
-        bool reactivated = status == CatalogStatus.Active && current.Status == CatalogStatus.Obsolete;
+        CatalogVersion cur = ReadVersion(entries);
+        CatalogStatus currentStatus = cur.StatusValue;
+        CatalogStatus status = patch.Status ?? currentStatus;
+        bool newlyObsolete = status == CatalogStatus.Obsolete && currentStatus != CatalogStatus.Obsolete;
+        bool reactivated = status == CatalogStatus.Active && currentStatus == CatalogStatus.Obsolete;
 
-        CatalogOwner owner = patch.Owner ?? current.Owner;
-        IReadOnlyList<string> tags = patch.Tags is { } t ? [.. t] : current.Tags;
-        string? obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedBy;
-        DateTimeOffset? obsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAt;
-
-        CatalogVersion updated = current with
-        {
-            Owner = owner,
-            Tags = tags,
-            Status = status,
-            LastUpdatedBy = patch.UpdatedBy,
-            LastUpdatedAt = now,
-            ObsoletedBy = obsoletedBy,
-            ObsoletedAt = obsoletedAt,
-        };
+        CatalogOwner owner = patch.Owner ?? cur.OwnerValue;
+        IReadOnlyList<string> tags = patch.Tags is { } t ? [.. t] : cur.TagsValue;
+        string? obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : cur.ObsoletedByOrNull;
+        DateTimeOffset? obsoletedAt = newlyObsolete ? now : reactivated ? null : cur.ObsoletedAtValue;
 
         await this.database.HashSetAsync(
             key,
             [
-                new HashEntry("status", updated.Status.ToString()),
-                new HashEntry("tags", EncodeTags(updated.Tags)),
-                new HashEntry("owner_name", updated.Owner.Name),
-                new HashEntry("owner_email", updated.Owner.Email),
-                new HashEntry("owner_team", updated.Owner.Team ?? string.Empty),
-                new HashEntry("owner_url", updated.Owner.Url ?? string.Empty),
-                new HashEntry("last_updated_by", updated.LastUpdatedBy ?? string.Empty),
+                new HashEntry("status", status.ToString()),
+                new HashEntry("tags", EncodeTags(tags)),
+                new HashEntry("owner_name", owner.Name),
+                new HashEntry("owner_email", owner.Email),
+                new HashEntry("owner_team", owner.Team ?? string.Empty),
+                new HashEntry("owner_url", owner.Url ?? string.Empty),
+                new HashEntry("last_updated_by", patch.UpdatedBy ?? string.Empty),
                 new HashEntry("last_updated_at", now.ToUnixTimeMilliseconds()),
                 new HashEntry("obsoleted_by", obsoletedBy ?? string.Empty),
                 new HashEntry("obsoleted_at", obsoletedAt is { } oa ? oa.ToUnixTimeMilliseconds() : string.Empty),
             ]).ConfigureAwait(false);
 
-        return updated;
+        return CatalogVersion.Create(
+            baseWorkflowId: cur.Ref.BaseWorkflowId,
+            versionNumber: cur.Ref.VersionNumber,
+            workflowId: (string)cur.WorkflowId,
+            title: (string)cur.Title,
+            description: cur.DescriptionOrNull,
+            status: status,
+            tags: tags,
+            owner: owner,
+            sources: cur.SourcesValue,
+            hash: (string)cur.Hash,
+            createdBy: (string)cur.CreatedBy,
+            createdAt: cur.CreatedAtValue,
+            lastUpdatedBy: patch.UpdatedBy,
+            lastUpdatedAt: now,
+            obsoletedBy: obsoletedBy,
+            obsoletedAt: obsoletedAt,
+            runnable: (bool)cur.Runnable);
     }
 
     /// <inheritdoc/>
@@ -266,7 +273,7 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
             }
 
             CatalogVersion version = ReadVersion(entries);
-            if (version.Status == CatalogStatus.Obsolete)
+            if (version.StatusValue == CatalogStatus.Obsolete)
             {
                 refs.Add(version.Ref);
             }
@@ -370,37 +377,38 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
 
     private static bool Matches(CatalogVersion version, CatalogQuery query)
     {
-        if (query.BaseWorkflowId is { } baseId && version.BaseWorkflowId != baseId)
+        if (query.BaseWorkflowId is { } baseId && version.Ref.BaseWorkflowId != baseId)
         {
             return false;
         }
 
         if (query.WorkflowIdPrefix is { Length: > 0 } prefix
-            && !version.WorkflowId.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            && !((string)version.WorkflowId).StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
 
-        if (query.Status is { } status && version.Status != status)
+        if (query.Status is { } status && version.StatusValue != status)
         {
             return false;
         }
 
         if (query.Text is { Length: > 0 } text
-            && version.Title.IndexOf(text, StringComparison.OrdinalIgnoreCase) < 0
-            && (version.Description is null || version.Description.IndexOf(text, StringComparison.OrdinalIgnoreCase) < 0))
+            && ((string)version.Title).IndexOf(text, StringComparison.OrdinalIgnoreCase) < 0
+            && (version.DescriptionOrNull is null || version.DescriptionOrNull.IndexOf(text, StringComparison.OrdinalIgnoreCase) < 0))
         {
             return false;
         }
 
-        if (query.Owner is { Length: > 0 } owner
-            && version.Owner.Name.IndexOf(owner, StringComparison.OrdinalIgnoreCase) < 0
-            && version.Owner.Email.IndexOf(owner, StringComparison.OrdinalIgnoreCase) < 0)
+        CatalogOwner owner = version.OwnerValue;
+        if (query.Owner is { Length: > 0 } ownerQuery
+            && owner.Name.IndexOf(ownerQuery, StringComparison.OrdinalIgnoreCase) < 0
+            && owner.Email.IndexOf(ownerQuery, StringComparison.OrdinalIgnoreCase) < 0)
         {
             return false;
         }
 
-        if (query.Tags is { Count: > 0 } queryTags && !queryTags.All(version.Tags.Contains))
+        if (query.Tags is { Count: > 0 } queryTags && !queryTags.All(version.TagsValue.Contains))
         {
             return false;
         }
@@ -422,28 +430,28 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
         DateTimeOffset? OptTime(string field)
             => OptString(field) is { } s ? DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(s, CultureInfo.InvariantCulture)) : null;
 
-        return new CatalogVersion(
-            BaseWorkflowId: (string)fields["base_workflow_id"]!,
-            VersionNumber: (int)(long)fields["version_number"],
-            WorkflowId: (string)fields["workflow_id"]!,
-            Title: (string)fields["title"]!,
-            Description: OptString("description"),
-            Status: Enum.Parse<CatalogStatus>((string)fields["status"]!),
-            Tags: DecodeTags(OptString("tags")),
-            Owner: new CatalogOwner(
+        return CatalogVersion.Create(
+            baseWorkflowId: (string)fields["base_workflow_id"]!,
+            versionNumber: (int)(long)fields["version_number"],
+            workflowId: (string)fields["workflow_id"]!,
+            title: (string)fields["title"]!,
+            description: OptString("description"),
+            status: Enum.Parse<CatalogStatus>((string)fields["status"]!),
+            tags: DecodeTags(OptString("tags")),
+            owner: new CatalogOwner(
                 (string)fields["owner_name"]!,
                 (string)fields["owner_email"]!,
                 OptString("owner_team"),
                 OptString("owner_url")),
-            Sources: DecodeSources(OptString("sources")),
-            Hash: (string)fields["hash"]!,
-            CreatedBy: (string)fields["created_by"]!,
-            CreatedAt: DateTimeOffset.FromUnixTimeMilliseconds((long)fields["created_at"]),
-            LastUpdatedBy: OptString("last_updated_by"),
-            LastUpdatedAt: OptTime("last_updated_at"),
-            ObsoletedBy: OptString("obsoleted_by"),
-            ObsoletedAt: OptTime("obsoleted_at"),
-            Runnable: OptString("runnable") == "1");
+            sources: DecodeSources(OptString("sources")),
+            hash: (string)fields["hash"]!,
+            createdBy: (string)fields["created_by"]!,
+            createdAt: DateTimeOffset.FromUnixTimeMilliseconds((long)fields["created_at"]),
+            lastUpdatedBy: OptString("last_updated_by"),
+            lastUpdatedAt: OptTime("last_updated_at"),
+            obsoletedBy: OptString("obsoleted_by"),
+            obsoletedAt: OptTime("obsoleted_at"),
+            runnable: OptString("runnable") == "1");
     }
 
     private async ValueTask<CatalogVersion> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
@@ -457,44 +465,45 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
 
         CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
         IReadOnlyList<string> tags = metadata.Tags is { Count: > 0 } t ? [.. t] : [];
-        var version = new CatalogVersion(
-            BaseWorkflowId: baseWorkflowId,
-            VersionNumber: versionNumber,
-            WorkflowId: projection.WorkflowId,
-            Title: projection.Title,
-            Description: projection.Description,
-            Status: CatalogStatus.Active,
-            Tags: tags,
-            Owner: metadata.Owner,
-            Sources: projection.Sources,
-            Hash: projection.Hash,
-            CreatedBy: metadata.CreatedBy,
-            CreatedAt: now,
-            Runnable: projection.HasExecutor);
 
+        // Bind the hash fields directly from the projected/governance source values (no round-trip through the
+        // CatalogVersion document); the document is built once, for the return value.
         RedisValue[] argv =
         [
             SortKey(baseWorkflowId, versionNumber),
-            "base_workflow_id", version.BaseWorkflowId,
-            "version_number", version.VersionNumber,
-            "workflow_id", version.WorkflowId,
-            "title", version.Title,
-            "description", version.Description ?? string.Empty,
-            "status", version.Status.ToString(),
-            "tags", EncodeTags(version.Tags),
-            "owner_name", version.Owner.Name,
-            "owner_email", version.Owner.Email,
-            "owner_team", version.Owner.Team ?? string.Empty,
-            "owner_url", version.Owner.Url ?? string.Empty,
-            "sources", EncodeSources(version.Sources),
-            "hash", version.Hash,
-            "runnable", version.Runnable ? "1" : "0",
-            "created_by", version.CreatedBy,
-            "created_at", version.CreatedAt.ToUnixTimeMilliseconds(),
+            "base_workflow_id", baseWorkflowId,
+            "version_number", versionNumber,
+            "workflow_id", projection.WorkflowId,
+            "title", projection.Title,
+            "description", projection.Description ?? string.Empty,
+            "status", nameof(CatalogStatus.Active),
+            "tags", EncodeTags(tags),
+            "owner_name", metadata.Owner.Name,
+            "owner_email", metadata.Owner.Email,
+            "owner_team", metadata.Owner.Team ?? string.Empty,
+            "owner_url", metadata.Owner.Url ?? string.Empty,
+            "sources", EncodeSources(projection.Sources),
+            "hash", projection.Hash,
+            "runnable", projection.HasExecutor ? "1" : "0",
+            "created_by", metadata.CreatedBy,
+            "created_at", now.ToUnixTimeMilliseconds(),
             "package", projection.CanonicalPackage.ToArray(),
         ];
 
         await this.database.ScriptEvaluateAsync(StoreScript, [VersionKey(sortKey: SortKey(baseWorkflowId, versionNumber)), IndexKey], argv).ConfigureAwait(false);
-        return version;
+        return CatalogVersion.Create(
+            baseWorkflowId: baseWorkflowId,
+            versionNumber: versionNumber,
+            workflowId: projection.WorkflowId,
+            title: projection.Title,
+            description: projection.Description,
+            status: CatalogStatus.Active,
+            tags: tags,
+            owner: metadata.Owner,
+            sources: projection.Sources,
+            hash: projection.Hash,
+            createdBy: metadata.CreatedBy,
+            createdAt: now,
+            runnable: projection.HasExecutor);
     }
 }
