@@ -448,92 +448,11 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
 
     private static class Envelope
     {
+        // The header IS the CatalogVersion JSON document (push-JSON-to-the-store); the value is
+        // [4-byte little-endian header length][CatalogVersion JSON][package bytes].
         public static byte[] Encode(CatalogVersion version, ReadOnlySpan<byte> package)
         {
-            var headerBuffer = new ArrayBufferWriter<byte>();
-            using (var writer = new Utf8JsonWriter(headerBuffer))
-            {
-                CatalogVersionRef reference = version.Ref;
-                CatalogOwner owner = version.OwnerValue;
-
-                writer.WriteStartObject();
-                writer.WriteString("baseWorkflowId", reference.BaseWorkflowId);
-                writer.WriteNumber("versionNumber", reference.VersionNumber);
-                writer.WriteString("workflowId", reference.WorkflowId);
-                writer.WriteString("title", (string)version.Title);
-                if (version.DescriptionOrNull is { } description)
-                {
-                    writer.WriteString("description", description);
-                }
-
-                writer.WriteString("status", version.StatusValue.ToString());
-
-                writer.WriteStartArray("tags");
-                foreach (string tag in version.TagsValue)
-                {
-                    writer.WriteStringValue(tag);
-                }
-
-                writer.WriteEndArray();
-
-                writer.WriteStartObject("owner");
-                writer.WriteString("name", owner.Name);
-                writer.WriteString("email", owner.Email);
-                if (owner.Team is { } team)
-                {
-                    writer.WriteString("team", team);
-                }
-
-                if (owner.Url is { } url)
-                {
-                    writer.WriteString("url", url);
-                }
-
-                writer.WriteEndObject();
-
-                writer.WriteStartArray("sources");
-                foreach (CatalogSourceRef source in version.SourcesValue)
-                {
-                    writer.WriteStartObject();
-                    writer.WriteString("name", source.Name);
-                    if (source.Type is { } type)
-                    {
-                        writer.WriteString("type", type);
-                    }
-
-                    writer.WriteEndObject();
-                }
-
-                writer.WriteEndArray();
-
-                writer.WriteString("hash", (string)version.Hash);
-                writer.WriteBoolean("runnable", (bool)version.Runnable);
-                writer.WriteString("createdBy", (string)version.CreatedBy);
-                writer.WriteNumber("createdAt", version.CreatedAtValue.ToUnixTimeMilliseconds());
-                if (version.LastUpdatedByOrNull is { } lastUpdatedBy)
-                {
-                    writer.WriteString("lastUpdatedBy", lastUpdatedBy);
-                }
-
-                if (version.LastUpdatedAtValue is { } lastUpdatedAt)
-                {
-                    writer.WriteNumber("lastUpdatedAt", lastUpdatedAt.ToUnixTimeMilliseconds());
-                }
-
-                if (version.ObsoletedByOrNull is { } obsoletedBy)
-                {
-                    writer.WriteString("obsoletedBy", obsoletedBy);
-                }
-
-                if (version.ObsoletedAtValue is { } obsoletedAt)
-                {
-                    writer.WriteNumber("obsoletedAt", obsoletedAt.ToUnixTimeMilliseconds());
-                }
-
-                writer.WriteEndObject();
-            }
-
-            ReadOnlySpan<byte> header = headerBuffer.WrittenSpan;
+            byte[] header = version.ToJsonBytes();
             var result = new byte[4 + header.Length + package.Length];
             BinaryPrimitives.WriteInt32LittleEndian(result, header.Length);
             header.CopyTo(result.AsSpan(4));
@@ -550,71 +469,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         public static CatalogVersion DecodeMetadata(byte[] value)
         {
             int headerLength = BinaryPrimitives.ReadInt32LittleEndian(value);
-            using var document = JsonDocument.Parse(value.AsMemory(4, headerLength));
-            System.Text.Json.JsonElement root = document.RootElement;
-
-            System.Text.Json.JsonElement ownerElement = root.GetProperty("owner");
-            var owner = new CatalogOwner(
-                ownerElement.GetProperty("name").GetString()!,
-                ownerElement.GetProperty("email").GetString()!,
-                ownerElement.TryGetProperty("team", out System.Text.Json.JsonElement team) ? team.GetString() : null,
-                ownerElement.TryGetProperty("url", out System.Text.Json.JsonElement url) ? url.GetString() : null);
-
-            return CatalogVersion.Create(
-                baseWorkflowId: root.GetProperty("baseWorkflowId").GetString()!,
-                versionNumber: root.GetProperty("versionNumber").GetInt32(),
-                workflowId: root.GetProperty("workflowId").GetString()!,
-                title: root.GetProperty("title").GetString()!,
-                description: root.TryGetProperty("description", out System.Text.Json.JsonElement description) ? description.GetString() : null,
-                status: Enum.Parse<CatalogStatus>(root.GetProperty("status").GetString()!),
-                tags: DecodeTags(root),
-                owner: owner,
-                sources: DecodeSources(root),
-                hash: root.GetProperty("hash").GetString()!,
-                createdBy: root.GetProperty("createdBy").GetString()!,
-                createdAt: DateTimeOffset.FromUnixTimeMilliseconds(root.GetProperty("createdAt").GetInt64()),
-                lastUpdatedBy: root.TryGetProperty("lastUpdatedBy", out System.Text.Json.JsonElement lastUpdatedBy) ? lastUpdatedBy.GetString() : null,
-                lastUpdatedAt: root.TryGetProperty("lastUpdatedAt", out System.Text.Json.JsonElement lastUpdatedAt) ? DateTimeOffset.FromUnixTimeMilliseconds(lastUpdatedAt.GetInt64()) : null,
-                obsoletedBy: root.TryGetProperty("obsoletedBy", out System.Text.Json.JsonElement obsoletedBy) ? obsoletedBy.GetString() : null,
-                obsoletedAt: root.TryGetProperty("obsoletedAt", out System.Text.Json.JsonElement obsoletedAt) ? DateTimeOffset.FromUnixTimeMilliseconds(obsoletedAt.GetInt64()) : null,
-                runnable: root.TryGetProperty("runnable", out System.Text.Json.JsonElement runnable) && runnable.GetBoolean());
-        }
-
-        private static IReadOnlyList<string> DecodeTags(System.Text.Json.JsonElement root)
-        {
-            if (!root.TryGetProperty("tags", out System.Text.Json.JsonElement tags))
-            {
-                return [];
-            }
-
-            var list = new List<string>();
-            foreach (System.Text.Json.JsonElement tag in tags.EnumerateArray())
-            {
-                if (tag.GetString() is { } value)
-                {
-                    list.Add(value);
-                }
-            }
-
-            return list;
-        }
-
-        private static IReadOnlyList<CatalogSourceRef> DecodeSources(System.Text.Json.JsonElement root)
-        {
-            if (!root.TryGetProperty("sources", out System.Text.Json.JsonElement sources))
-            {
-                return [];
-            }
-
-            var list = new List<CatalogSourceRef>();
-            foreach (System.Text.Json.JsonElement source in sources.EnumerateArray())
-            {
-                list.Add(new CatalogSourceRef(
-                    source.GetProperty("name").GetString()!,
-                    source.TryGetProperty("type", out System.Text.Json.JsonElement type) ? type.GetString() : null));
-            }
-
-            return list;
+            return CatalogVersion.FromJson(value.AsMemory(4, headerLength));
         }
     }
 }

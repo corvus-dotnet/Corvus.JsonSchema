@@ -25,6 +25,8 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
 {
     private const string Prefix = "arazzo:catalog:";
     private const string IndexKey = Prefix + "index";
+    private const string DocField = "doc";
+    private const string PackageField = "package";
 
     // Reserve the next version number for a base id, atomically. KEYS: per-base counter. Returns the new number.
     private const string ReserveVersionScript = "return redis.call('INCR', KEYS[1])";
@@ -213,22 +215,7 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
         string? obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : cur.ObsoletedByOrNull;
         DateTimeOffset? obsoletedAt = newlyObsolete ? now : reactivated ? null : cur.ObsoletedAtValue;
 
-        await this.database.HashSetAsync(
-            key,
-            [
-                new HashEntry("status", status.ToString()),
-                new HashEntry("tags", EncodeTags(tags)),
-                new HashEntry("owner_name", owner.Name),
-                new HashEntry("owner_email", owner.Email),
-                new HashEntry("owner_team", owner.Team ?? string.Empty),
-                new HashEntry("owner_url", owner.Url ?? string.Empty),
-                new HashEntry("last_updated_by", patch.UpdatedBy ?? string.Empty),
-                new HashEntry("last_updated_at", now.ToUnixTimeMilliseconds()),
-                new HashEntry("obsoleted_by", obsoletedBy ?? string.Empty),
-                new HashEntry("obsoleted_at", obsoletedAt is { } oa ? oa.ToUnixTimeMilliseconds() : string.Empty),
-            ]).ConfigureAwait(false);
-
-        return CatalogVersion.Create(
+        CatalogVersion updated = CatalogVersion.Create(
             baseWorkflowId: cur.Ref.BaseWorkflowId,
             versionNumber: cur.Ref.VersionNumber,
             workflowId: (string)cur.WorkflowId,
@@ -246,6 +233,9 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
             obsoletedBy: obsoletedBy,
             obsoletedAt: obsoletedAt,
             runnable: (bool)cur.Runnable);
+
+        await this.database.HashSetAsync(key, DocField, updated.ToJsonBytes()).ConfigureAwait(false);
+        return updated;
     }
 
     /// <inheritdoc/>
@@ -316,65 +306,6 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
     private static string SortKey(string baseWorkflowId, int versionNumber)
         => string.Create(CultureInfo.InvariantCulture, $"{baseWorkflowId}{versionNumber:D10}");
 
-    private static string EncodeTags(IReadOnlyList<string> tags)
-        => tags is { Count: > 0 } ? "\u001F" + string.Join('\u001F', tags) + "\u001F" : string.Empty;
-
-    private static IReadOnlyList<string> DecodeTags(string? encoded)
-    {
-        if (string.IsNullOrEmpty(encoded))
-        {
-            return [];
-        }
-
-        string[] parts = encoded.Trim('\u001F').Split('\u001F', StringSplitOptions.RemoveEmptyEntries);
-        return parts.Length == 0 ? [] : parts;
-    }
-
-    private static string EncodeSources(IReadOnlyList<CatalogSourceRef> sources)
-    {
-        if (sources.Count == 0)
-        {
-            return string.Empty;
-        }
-
-        var builder = new StringBuilder();
-        for (int i = 0; i < sources.Count; i++)
-        {
-            if (i > 0)
-            {
-                builder.Append('\u001E');
-            }
-
-            builder.Append(sources[i].Name);
-            if (sources[i].Type is { } type)
-            {
-                builder.Append('\u001F').Append(type);
-            }
-        }
-
-        return builder.ToString();
-    }
-
-    private static IReadOnlyList<CatalogSourceRef> DecodeSources(string? encoded)
-    {
-        if (string.IsNullOrEmpty(encoded))
-        {
-            return [];
-        }
-
-        string[] records = encoded.Split('\u001E', StringSplitOptions.RemoveEmptyEntries);
-        var sources = new List<CatalogSourceRef>(records.Length);
-        foreach (string record in records)
-        {
-            int sep = record.IndexOf('\u001F', StringComparison.Ordinal);
-            sources.Add(sep < 0
-                ? new CatalogSourceRef(record, null)
-                : new CatalogSourceRef(record[..sep], record[(sep + 1)..]));
-        }
-
-        return sources;
-    }
-
     private static bool Matches(CatalogVersion version, CatalogQuery query)
     {
         if (query.BaseWorkflowId is { } baseId && version.Ref.BaseWorkflowId != baseId)
@@ -418,40 +349,15 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
 
     private static CatalogVersion ReadVersion(HashEntry[] entries)
     {
-        var fields = new Dictionary<string, RedisValue>(entries.Length, StringComparer.Ordinal);
         foreach (HashEntry entry in entries)
         {
-            fields[(string)entry.Name!] = entry.Value;
+            if (entry.Name == DocField)
+            {
+                return CatalogVersion.FromJson((byte[])entry.Value!);
+            }
         }
 
-        string? OptString(string field)
-            => fields.TryGetValue(field, out RedisValue v) && !v.IsNull && ((string)v!).Length > 0 ? (string)v! : null;
-
-        DateTimeOffset? OptTime(string field)
-            => OptString(field) is { } s ? DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(s, CultureInfo.InvariantCulture)) : null;
-
-        return CatalogVersion.Create(
-            baseWorkflowId: (string)fields["base_workflow_id"]!,
-            versionNumber: (int)(long)fields["version_number"],
-            workflowId: (string)fields["workflow_id"]!,
-            title: (string)fields["title"]!,
-            description: OptString("description"),
-            status: Enum.Parse<CatalogStatus>((string)fields["status"]!),
-            tags: DecodeTags(OptString("tags")),
-            owner: new CatalogOwner(
-                (string)fields["owner_name"]!,
-                (string)fields["owner_email"]!,
-                OptString("owner_team"),
-                OptString("owner_url")),
-            sources: DecodeSources(OptString("sources")),
-            hash: (string)fields["hash"]!,
-            createdBy: (string)fields["created_by"]!,
-            createdAt: DateTimeOffset.FromUnixTimeMilliseconds((long)fields["created_at"]),
-            lastUpdatedBy: OptString("last_updated_by"),
-            lastUpdatedAt: OptTime("last_updated_at"),
-            obsoletedBy: OptString("obsoleted_by"),
-            obsoletedAt: OptTime("obsoleted_at"),
-            runnable: OptString("runnable") == "1");
+        throw new InvalidOperationException("The catalog version hash is missing its document field.");
     }
 
     private async ValueTask<CatalogVersion> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
@@ -466,32 +372,7 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
         CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
         IReadOnlyList<string> tags = metadata.Tags is { Count: > 0 } t ? [.. t] : [];
 
-        // Bind the hash fields directly from the projected/governance source values (no round-trip through the
-        // CatalogVersion document); the document is built once, for the return value.
-        RedisValue[] argv =
-        [
-            SortKey(baseWorkflowId, versionNumber),
-            "base_workflow_id", baseWorkflowId,
-            "version_number", versionNumber,
-            "workflow_id", projection.WorkflowId,
-            "title", projection.Title,
-            "description", projection.Description ?? string.Empty,
-            "status", nameof(CatalogStatus.Active),
-            "tags", EncodeTags(tags),
-            "owner_name", metadata.Owner.Name,
-            "owner_email", metadata.Owner.Email,
-            "owner_team", metadata.Owner.Team ?? string.Empty,
-            "owner_url", metadata.Owner.Url ?? string.Empty,
-            "sources", EncodeSources(projection.Sources),
-            "hash", projection.Hash,
-            "runnable", projection.HasExecutor ? "1" : "0",
-            "created_by", metadata.CreatedBy,
-            "created_at", now.ToUnixTimeMilliseconds(),
-            "package", projection.CanonicalPackage.ToArray(),
-        ];
-
-        await this.database.ScriptEvaluateAsync(StoreScript, [VersionKey(sortKey: SortKey(baseWorkflowId, versionNumber)), IndexKey], argv).ConfigureAwait(false);
-        return CatalogVersion.Create(
+        CatalogVersion version = CatalogVersion.Create(
             baseWorkflowId: baseWorkflowId,
             versionNumber: versionNumber,
             workflowId: projection.WorkflowId,
@@ -505,5 +386,17 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
             createdBy: metadata.CreatedBy,
             createdAt: now,
             runnable: projection.HasExecutor);
+
+        // Store the CatalogVersion JSON document verbatim in the "doc" field and the package alongside; the
+        // sorted-set index orders by sortKey for keyset paging.
+        RedisValue[] argv =
+        [
+            SortKey(baseWorkflowId, versionNumber),
+            DocField, version.ToJsonBytes(),
+            PackageField, projection.CanonicalPackage.ToArray(),
+        ];
+
+        await this.database.ScriptEvaluateAsync(StoreScript, [VersionKey(sortKey: SortKey(baseWorkflowId, versionNumber)), IndexKey], argv).ConfigureAwait(false);
+        return version;
     }
 }
