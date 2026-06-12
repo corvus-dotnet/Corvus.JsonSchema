@@ -17,12 +17,12 @@ public sealed class ScheduleWorkflowTriggerTests
     public async Task A_due_tick_fires_every_elapsed_slot_and_re_ticking_is_idempotent()
     {
         var store = new InMemoryWorkflowStateStore();
-        var management = new SecuredWorkflowManagement(store, owner: "ops");
+        var management = new WorkflowManagementClient(store, owner: "ops");
         var time = new TestTimeProvider(Start);
 
         WorkflowStartHandler start = (request, cancellationToken) =>
             management.StartIdempotentAsync(
-                request.WorkflowId, request.Inputs, request.IdempotencyKey, request.CorrelationId, request.Tags, cancellationToken: cancellationToken);
+                request.WorkflowId, request.Inputs, request.IdempotencyKey, request.CorrelationId, request.Tags, cancellationToken);
 
         var binding = new ScheduleTriggerBinding("nightly-reconcile-v1");
         await using var trigger = new ScheduleWorkflowTrigger(start, binding, new IntervalSchedule(TimeSpan.FromHours(1)), time);
@@ -42,7 +42,7 @@ public sealed class ScheduleWorkflowTriggerTests
         (await trigger.FireDueAsync(default)).ShouldBe(1);
 
         // Four distinct Pending runs exist — one per slot, none duplicated.
-        using WorkflowRunPage pending = await management.ListAsync(new WorkflowQuery(WorkflowRunStatus.Pending), AccessContext.System, default);
+        WorkflowRunPage pending = await management.ListAsync(new WorkflowQuery(WorkflowRunStatus.Pending), default);
         pending.Runs.Count.ShouldBe(4);
     }
 
@@ -50,11 +50,11 @@ public sealed class ScheduleWorkflowTriggerTests
     public async Task A_retried_fire_for_the_same_slot_resolves_to_the_same_run()
     {
         var store = new InMemoryWorkflowStateStore();
-        var management = new SecuredWorkflowManagement(store, owner: "ops");
+        var management = new WorkflowManagementClient(store, owner: "ops");
 
         WorkflowStartHandler start = (request, cancellationToken) =>
             management.StartIdempotentAsync(
-                request.WorkflowId, request.Inputs, request.IdempotencyKey, request.CorrelationId, request.Tags, cancellationToken: cancellationToken);
+                request.WorkflowId, request.Inputs, request.IdempotencyKey, request.CorrelationId, request.Tags, cancellationToken);
 
         var binding = new ScheduleTriggerBinding("nightly-reconcile-v1");
         await using var trigger = new ScheduleWorkflowTrigger(start, binding, new IntervalSchedule(TimeSpan.FromHours(1)), new TestTimeProvider(Start));
@@ -66,7 +66,7 @@ public sealed class ScheduleWorkflowTriggerTests
         a1.ShouldBe(a2);
         b1.ShouldNotBe(a1);
 
-        using WorkflowRunPage pending = await management.ListAsync(new WorkflowQuery(WorkflowRunStatus.Pending), AccessContext.System, default);
+        WorkflowRunPage pending = await management.ListAsync(new WorkflowQuery(WorkflowRunStatus.Pending), default);
         pending.Runs.Count.ShouldBe(2);
     }
 
