@@ -29,12 +29,14 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore
     private readonly string connectionString;
     private readonly TimeProvider timeProvider;
     private readonly IWorkflowMetadataProvider? metadataProvider;
+    private readonly IWorkflowExecutorProvider? executorProvider;
 
-    private SqlServerWorkflowCatalogStore(string connectionString, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider)
+    private SqlServerWorkflowCatalogStore(string connectionString, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider)
     {
         this.connectionString = connectionString;
         this.timeProvider = timeProvider;
         this.metadataProvider = metadataProvider;
+        this.executorProvider = executorProvider;
     }
 
     /// <summary>
@@ -65,17 +67,20 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore
     /// </remarks>
     /// <param name="connectionString">A Microsoft.Data.SqlClient connection string.</param>
     /// <param name="timeProvider">The time source for audit timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
+    /// <param name="metadataProvider">An optional provider that supplies projected metadata for each added version; <see langword="null"/> to store packages without it.</param>
+    /// <param name="executorProvider">An optional provider that compiles the workflow executor assembly baked into each added version; <see langword="null"/> to store packages without it.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The opened store.</returns>
     public static ValueTask<SqlServerWorkflowCatalogStore> ConnectAsync(
         string connectionString,
         TimeProvider? timeProvider = null,
         IWorkflowMetadataProvider? metadataProvider = null,
+        IWorkflowExecutorProvider? executorProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
         cancellationToken.ThrowIfCancellationRequested();
-        return new ValueTask<SqlServerWorkflowCatalogStore>(new SqlServerWorkflowCatalogStore(connectionString, timeProvider ?? TimeProvider.System, metadataProvider));
+        return new ValueTask<SqlServerWorkflowCatalogStore>(new SqlServerWorkflowCatalogStore(connectionString, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider));
     }
 
     /// <inheritdoc/>
@@ -394,7 +399,7 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore
             versionNumber = (int)(await max.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))! + 1;
         }
 
-        CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider);
+        CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
         IReadOnlyList<string> tags = metadata.Tags is { Count: > 0 } t ? [.. t] : [];
         var version = new CatalogVersion(
             BaseWorkflowId: baseWorkflowId,
