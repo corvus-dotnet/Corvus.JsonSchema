@@ -2,9 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
-using System.Globalization;
-using System.Text.Json;
 using System.Threading;
 using Corvus.Text.Json;
 
@@ -14,14 +11,12 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// The in-memory reference implementation of <see cref="IRunnerRegistry"/>. Each runner's
 /// <see cref="RunnerRegistration"/> is held as its UTF-8 JSON document — exactly the "push JSON to the store"
 /// shape every backend persists — keyed by runner id, with reads detaching the value via
-/// <see cref="RunnerRegistration.Clone"/> so it outlives the parse. It is the reference against which the
+/// <see cref="RunnerRegistration.FromJson"/> so it outlives the parse. It is the reference against which the
 /// shared registry-conformance suite runs, and is usable for a single-process host that does not need the
 /// registry to survive a restart.
 /// </summary>
 public sealed class InMemoryRunnerRegistry : IRunnerRegistry
 {
-    private static readonly JsonWriterOptions WriterOptions = new() { Indented = false, SkipValidation = true };
-
     private readonly Dictionary<string, byte[]> entries = [];
     private readonly Lock gate = new();
 
@@ -30,8 +25,8 @@ public sealed class InMemoryRunnerRegistry : IRunnerRegistry
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        string runnerId = (string)registration.RunnerId;
-        byte[] document = Serialize(registration);
+        string runnerId = registration.RunnerIdValue;
+        byte[] document = registration.ToJsonBytes();
 
         lock (this.gate)
         {
@@ -54,9 +49,7 @@ public sealed class InMemoryRunnerRegistry : IRunnerRegistry
                 return ValueTask.FromResult(false);
             }
 
-            using ParsedJsonDocument<RunnerRegistration> doc = ParsedJsonDocument<RunnerRegistration>.Parse(bytes);
-            RunnerRegistration existing = doc.RootElement;
-            this.entries[runnerId] = Rebuild(existing, at);
+            this.entries[runnerId] = RunnerRegistration.FromJson(bytes).WithLastSeenAt(at).ToJsonBytes();
             return ValueTask.FromResult(true);
         }
     }
@@ -71,8 +64,7 @@ public sealed class InMemoryRunnerRegistry : IRunnerRegistry
             var result = new List<RunnerRegistration>(this.entries.Count);
             foreach (byte[] bytes in this.entries.Values)
             {
-                using ParsedJsonDocument<RunnerRegistration> doc = ParsedJsonDocument<RunnerRegistration>.Parse(bytes);
-                result.Add(doc.RootElement.Clone());
+                result.Add(RunnerRegistration.FromJson(bytes));
             }
 
             return ValueTask.FromResult<IReadOnlyList<RunnerRegistration>>(result);
@@ -89,8 +81,7 @@ public sealed class InMemoryRunnerRegistry : IRunnerRegistry
             List<string>? dead = null;
             foreach (KeyValuePair<string, byte[]> entry in this.entries)
             {
-                using ParsedJsonDocument<RunnerRegistration> doc = ParsedJsonDocument<RunnerRegistration>.Parse(entry.Value);
-                if (ReadLastSeen(doc.RootElement) < deadBefore)
+                if (RunnerRegistration.FromJson(entry.Value).LastSeenAtValue < deadBefore)
                 {
                     (dead ??= []).Add(entry.Key);
                 }
@@ -109,34 +100,4 @@ public sealed class InMemoryRunnerRegistry : IRunnerRegistry
             return ValueTask.FromResult(dead.Count);
         }
     }
-
-    private static byte[] Serialize(in RunnerRegistration registration)
-    {
-        var buffer = new ArrayBufferWriter<byte>();
-        using (var writer = new Utf8JsonWriter(buffer, WriterOptions))
-        {
-            registration.WriteTo(writer);
-        }
-
-        return buffer.WrittenSpan.ToArray();
-    }
-
-    private static byte[] Rebuild(in RunnerRegistration existing, DateTimeOffset lastSeenAt)
-    {
-        using JsonWorkspace workspace = JsonWorkspace.Create();
-        using JsonDocumentBuilder<RunnerRegistration.Mutable> builder = RunnerRegistration.CreateBuilder(
-            workspace,
-            hostedVersions: existing.HostedVersions,
-            lastSeenAt: (JsonDateTime.Source)lastSeenAt.ToString("O", CultureInfo.InvariantCulture),
-            maxConcurrency: existing.MaxConcurrency,
-            runnerId: existing.RunnerId,
-            startedAt: existing.StartedAt,
-            transports: existing.Transports,
-            address: existing.Address.ValueKind == JsonValueKind.Undefined ? default : (JsonString.Source)existing.Address);
-
-        return Serialize(builder.RootElement);
-    }
-
-    private static DateTimeOffset ReadLastSeen(in RunnerRegistration registration)
-        => DateTimeOffset.Parse((string)registration.LastSeenAt, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
 }
