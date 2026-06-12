@@ -49,7 +49,7 @@ public sealed class PostgresRunnerRegistryConformanceTests : RunnerRegistryConfo
         await using (NpgsqlConnection connection = await dataSource.OpenConnectionAsync())
         {
             await using NpgsqlCommand reset = connection.CreateCommand();
-            reset.CommandText = "DROP TABLE IF EXISTS runner_registrations;";
+            reset.CommandText = "DROP TABLE IF EXISTS runner_hosted_versions; DROP TABLE IF EXISTS runner_registrations;";
             await reset.ExecuteNonQueryAsync();
         }
 

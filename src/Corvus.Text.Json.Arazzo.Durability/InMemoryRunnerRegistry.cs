@@ -72,6 +72,26 @@ public sealed class InMemoryRunnerRegistry : IRunnerRegistry
     }
 
     /// <inheritdoc/>
+    public ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(baseWorkflowId);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        lock (this.gate)
+        {
+            foreach (byte[] bytes in this.entries.Values)
+            {
+                if (RunnerRegistration.FromJson(bytes).HostsVersion(baseWorkflowId, versionNumber))
+                {
+                    return ValueTask.FromResult(true);
+                }
+            }
+
+            return ValueTask.FromResult(false);
+        }
+    }
+
+    /// <inheritdoc/>
     public ValueTask<int> PruneAsync(DateTimeOffset deadBefore, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

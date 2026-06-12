@@ -342,11 +342,11 @@ public readonly partial struct RunnerHostedVersion
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Mutable VersionNumber
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Mutable VersionNumber
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VersionNumberUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VersionNumberUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Mutable value))
                 {
                     return value;
                 }
@@ -398,7 +398,7 @@ public readonly partial struct RunnerHostedVersion
         /// Set the <c>baseWorkflowId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBaseWorkflowId(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetBaseWorkflowId(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -429,7 +429,7 @@ public readonly partial struct RunnerHostedVersion
         /// Set the <c>hash</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetHash(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetHash(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -460,7 +460,7 @@ public readonly partial struct RunnerHostedVersion
         /// Set the <c>loaded</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLoaded(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source value)
+        public void SetLoaded(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -491,7 +491,7 @@ public readonly partial struct RunnerHostedVersion
         /// Set the <c>versionNumber</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetVersionNumber(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source value)
+        public void SetVersionNumber(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source value)
         {
             CheckValidInstance();
 
@@ -623,7 +623,7 @@ public readonly partial struct RunnerHostedVersion
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
+        public void SetProperty(string propertyName, in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -646,7 +646,7 @@ public readonly partial struct RunnerHostedVersion
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -693,7 +693,7 @@ public readonly partial struct RunnerHostedVersion
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -851,7 +851,7 @@ public readonly partial struct RunnerHostedVersion
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg1;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg2;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source _createArg3;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source _createArg4;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source _createArg4;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -866,7 +866,7 @@ public readonly partial struct RunnerHostedVersion
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerHostedVersion.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg4)
+        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source arg4)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1148,7 +1148,7 @@ public readonly partial struct RunnerHostedVersion
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source hash,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source loaded,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source versionNumber)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source versionNumber)
         {
             baseWorkflowId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BaseWorkflowId, ref builder);
             hash.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Hash, ref builder);
@@ -1163,7 +1163,7 @@ public readonly partial struct RunnerHostedVersion
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source hash,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source loaded,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source versionNumber)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source versionNumber)
         {
             Create(ref _builder, baseWorkflowId, hash, loaded, versionNumber);
         }
@@ -1268,7 +1268,7 @@ public readonly partial struct RunnerHostedVersion
         /// <param name="arg3">The value of the property.</param>
         /// <param name="arg4">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg4, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source arg4, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4);
@@ -1313,7 +1313,7 @@ public readonly partial struct RunnerHostedVersion
     /// <param name="loaded">The value of the <c>"loaded"</c> property.</param>
     /// <param name="versionNumber">The value of the <c>"versionNumber"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source hash, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source loaded, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source versionNumber)
+    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source hash, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source loaded, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source versionNumber)
     {
         return new Source(baseWorkflowId, hash, loaded, versionNumber);
     }
@@ -1327,29 +1327,6 @@ public readonly partial struct RunnerHostedVersion
     /// <returns>An instance of a mutable document initialized with the given value.</returns>
     public static JsonDocumentBuilder<Mutable> CreateBuilder(
         JsonWorkspace workspace, scoped in Source value, int initialCapacity = 30)
-    {
-        // Create the document builder without a MetadataDb
-        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
-        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
-        value.AddAsItem(ref cvb);
-        Debug.Assert(cvb.MemberCount == 1);
-        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-        return documentBuilder;
-    }
-
-    /// <summary>
-    /// Creates and initializes a mutable document from a context-threaded value.
-    /// </summary>
-    /// <typeparam name="TContext">The type of the context carried by the value.</typeparam>
-    /// <param name="workspace">The JSON workspace.</param>
-    /// <param name="value">The context-threaded value with which to initialize the builder.</param>
-    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
-    /// <returns>An instance of a mutable document initialized with the given value.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-        JsonWorkspace workspace, scoped in Source<TContext> value, int initialCapacity = 30)
-        #if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-        #endif
     {
         // Create the document builder without a MetadataDb
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
@@ -1417,7 +1394,7 @@ public readonly partial struct RunnerHostedVersion
     /// <param name="versionNumber">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source hash, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source loaded, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source versionNumber, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source hash, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source loaded, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source versionNumber, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

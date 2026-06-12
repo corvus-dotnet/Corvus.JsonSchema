@@ -235,11 +235,11 @@ public readonly partial struct RunnerHostedVersion
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32 VersionNumber
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger VersionNumber
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VersionNumberUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32 value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VersionNumberUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger value))
             {
                 return value;
             }
