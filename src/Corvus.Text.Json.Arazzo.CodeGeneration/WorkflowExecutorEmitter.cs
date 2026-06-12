@@ -177,6 +177,27 @@ public static class WorkflowExecutorEmitter
         // precede it. Sequential executors must honour this; document order is used as the tie-break.
         boundSteps = TopologicallyOrder(boundSteps);
 
+        // A multi-source document (more than one API source declared) passes a source→transport map and
+        // selects the transport per operation step; a single-source document keeps the original single
+        // `transport` parameter (no map, no per-run dictionary). The choice is document-level so a workflow
+        // can hand the whole map to a sub-workflow that uses a different source.
+        var selection = new TransportSelection((options.Sources?.Count ?? 0) > 1);
+
+        // In multi-source mode the executor hoists one transport local per API source that THIS workflow's
+        // own operation steps call (sub-workflow sources are reached via the map it forwards).
+        var usedApiSources = new List<string>();
+        if (selection.MultiSource)
+        {
+            var seenSources = new HashSet<string>(StringComparer.Ordinal);
+            foreach (ControlFlowStep boundStep in boundSteps)
+            {
+                if (boundStep.Operation is { } boundOperation && seenSources.Add(boundOperation.SourceName))
+                {
+                    usedApiSources.Add(boundOperation.SourceName);
+                }
+            }
+        }
+
         // When a receive step correlates (1.1 correlationId), a per-execution register links the token a
         // prior send published to the response this receive waits for; it is keyed by correlation id name.
         bool usesCorrelation = false;
@@ -201,7 +222,7 @@ public static class WorkflowExecutorEmitter
 
         if (usesControlFlow)
         {
-            ControlFlowEmitter.Emit(boundSteps, workflow, options, fields, body, auxiliaryTypes, stepOutputLocals, usesCorrelation);
+            ControlFlowEmitter.Emit(boundSteps, workflow, options, fields, body, auxiliaryTypes, stepOutputLocals, selection, usesCorrelation);
         }
         else
         {
@@ -240,7 +261,7 @@ public static class WorkflowExecutorEmitter
                 if (step.SubWorkflowId is { } subWorkflowId)
                 {
                     SubWorkflowStepCode subStep = SubWorkflowStepEmitter.Emit(
-                        step.StepId, subWorkflowId, step.Arguments, ResolveSubWorkflowNamespace(options, step.SubWorkflowSource), stepOutputLocals, "inputs", options.InputAccessors);
+                        step.StepId, subWorkflowId, step.Arguments, ResolveSubWorkflowNamespace(options, step.SubWorkflowSource), stepOutputLocals, "inputs", options.InputAccessors, selection.SubWorkflowArgument);
                     fields.Append(subStep.Fields);
                     AppendIndented(body, subStep.Statements, 12);
                     string subWorkflowOutputsLocal = EmitText.StepOutputsElementLocal(step.StepId);
@@ -263,7 +284,7 @@ public static class WorkflowExecutorEmitter
                 // The step body builds the step's outputs product inside the step (while the response
                 // is alive), so output extraction is not a separate post-step pass.
                 StepBodyCode stepBody = StepBodyEmitter.Emit(
-                    step.StepId, step.Operation!.Value, step.Arguments, step.SuccessCriteria, step.Outputs, "transport", "workspace", "context", "cancellationToken", stepOutputLocals, "inputs", options.InputAccessors, options.Namespace, step.RequestBody, step.BindResponseBody);
+                    step.StepId, step.Operation!.Value, step.Arguments, step.SuccessCriteria, step.Outputs, selection.ForSource(step.Operation!.Value.SourceName), "workspace", "context", "cancellationToken", stepOutputLocals, "inputs", options.InputAccessors, options.Namespace, step.RequestBody, step.BindResponseBody);
                 fields.Append(stepBody.Fields);
                 AppendIndented(body, stepBody.Statements, 12);
                 auxiliaryTypes.Append(stepBody.AuxiliaryTypes);
@@ -286,7 +307,7 @@ public static class WorkflowExecutorEmitter
         // inlined and every value resolves statically, the context leaves the value path entirely.
         bool needsContext = bodyText.Contains("context", StringComparison.Ordinal);
 
-        return Compose(options, workflowId, fields.ToString(), bodyText, auxiliaryTypes.ToString(), needsContext, ReadWorkflowDependsOn(workflow), hasChannelStep);
+        return Compose(options, workflowId, fields.ToString(), bodyText, auxiliaryTypes.ToString(), needsContext, ReadWorkflowDependsOn(workflow), hasChannelStep, selection, usedApiSources);
     }
 
     private static List<StepArgument> ReadArguments(in JsonElement parameters, in JsonElement components)
@@ -999,7 +1020,7 @@ public static class WorkflowExecutorEmitter
         }
     }
 
-    private static string Compose(in WorkflowExecutorOptions options, string workflowId, string fields, string body, string auxiliaryTypes, bool needsContext, IReadOnlyList<string> workflowDependsOn, bool needsMessageTransport)
+    private static string Compose(in WorkflowExecutorOptions options, string workflowId, string fields, string body, string auxiliaryTypes, bool needsContext, IReadOnlyList<string> workflowDependsOn, bool needsMessageTransport, TransportSelection selection, IReadOnlyList<string> usedApiSources)
     {
         var writer = new StringBuilder();
         writer.AppendLine("// <auto-generated>");
@@ -1061,18 +1082,35 @@ public static class WorkflowExecutorEmitter
         string runParameter = options.Durable ? "IWorkflowRun? run = null, " : string.Empty;
         string returnType = options.Durable ? $"WorkflowRunResult<{options.OutputsTypeName}>" : options.OutputsTypeName;
 
+        // A multi-source document selects the transport per source from a map; a single-source document keeps
+        // the single transport parameter.
+        string transportParameter = selection.MultiSource
+            ? "System.Collections.Generic.IReadOnlyDictionary<string, IApiTransport> transports, "
+            : "IApiTransport transport, ";
+
         writer.Append("    /// <summary>Executes the '").Append(workflowId).AppendLine("' workflow.</summary>");
         writer.Append("    public static async ValueTask<").Append(returnType)
-            .Append("> ExecuteAsync(IApiTransport transport, ").Append(messageTransportParameter).Append("JsonWorkspace workspace, ")
+            .Append("> ExecuteAsync(").Append(transportParameter).Append(messageTransportParameter).Append("JsonWorkspace workspace, ")
             .Append(options.InputsTypeName).Append(" inputs, ").Append(runParameter).AppendLine("CancellationToken cancellationToken = default, TimeProvider? timeProvider = null)");
         writer.AppendLine("    {");
-        writer.AppendLine("        ArgumentNullException.ThrowIfNull(transport);");
+        writer.Append("        ArgumentNullException.ThrowIfNull(").Append(selection.ParameterName).AppendLine(");");
         if (needsMessageTransport)
         {
             writer.AppendLine("        ArgumentNullException.ThrowIfNull(messageTransport);");
         }
 
         writer.AppendLine("        ArgumentNullException.ThrowIfNull(workspace);");
+
+        // Hoist one transport local per API source this workflow's operation steps use (multi-source only),
+        // selected from the map; each operation step then uses its source's transport.
+        if (selection.MultiSource)
+        {
+            foreach (string apiSource in usedApiSources)
+            {
+                writer.Append("        IApiTransport ").Append(TransportSelection.TransportLocal(apiSource))
+                    .Append(" = transports[").Append(EmitText.Quote(apiSource)).AppendLine("];");
+            }
+        }
 
         // The context is created only when a criterion or value still resolves through it.
         if (needsContext)
@@ -1128,7 +1166,7 @@ public static class WorkflowExecutorEmitter
         // execution host can load and run the workflow without referencing its generated input/output types.
         if (options.Durable)
         {
-            AppendHostAdapter(writer, options, workflowId, needsMessageTransport);
+            AppendHostAdapter(writer, options, workflowId, needsMessageTransport, selection);
         }
 
         // Sibling types (ahead-of-time-compiled jsonpath query classes) live after the executor class
@@ -1148,13 +1186,20 @@ public static class WorkflowExecutorEmitter
     /// generated input/output types: it advertises a <see cref="WorkflowDescriptor"/>, parses the run's
     /// inputs, delegates to the static durable <c>ExecuteAsync</c>, and returns the tri-state outcome.
     /// </summary>
-    private static void AppendHostAdapter(StringBuilder writer, in WorkflowExecutorOptions options, string workflowId, bool needsMessageTransport)
+    private static void AppendHostAdapter(StringBuilder writer, in WorkflowExecutorOptions options, string workflowId, bool needsMessageTransport, TransportSelection selection)
     {
         IReadOnlyList<string> sources = options.Sources ?? [];
         string sourcesList = string.Join(", ", sources.Select(EmitText.Quote));
         string messageTransportArgument = needsMessageTransport ? "messageTransport!, " : string.Empty;
         bool typedInputs = !string.Equals(options.InputsTypeName, "Corvus.Text.Json.JsonElement", StringComparison.Ordinal);
         string inputsArgument = typedInputs ? "typedInputs" : "inputs";
+
+        // The uniform host contract supplies one IApiTransport per source name; a single-source executor
+        // picks its sole source from the map, a multi-source executor forwards the whole map, and a workflow
+        // with no API source gets no transport (its steps make no API calls).
+        string transportArgument = selection.MultiSource
+            ? "apiTransports, "
+            : sources.Count > 0 ? $"apiTransports[{EmitText.Quote(sources[0])}], " : "default(IApiTransport)!, ";
 
         writer.AppendLine();
         writer.Append("/// <summary>Host adapter for the '").Append(workflowId).AppendLine("' workflow — the non-generic IHostedWorkflow an execution host loads and runs.</summary>");
@@ -1166,7 +1211,7 @@ public static class WorkflowExecutorEmitter
             .Append(", [").Append(sourcesList).AppendLine("]);");
         writer.AppendLine();
         writer.AppendLine("    /// <inheritdoc/>");
-        writer.AppendLine("    public async ValueTask<WorkflowRunResultKind> RunAsync(IApiTransport transport, IMessageTransport? messageTransport, JsonWorkspace workspace, JsonElement inputs, IWorkflowRun run, CancellationToken cancellationToken)");
+        writer.AppendLine("    public async ValueTask<WorkflowRunResultKind> RunAsync(System.Collections.Generic.IReadOnlyDictionary<string, IApiTransport> apiTransports, IMessageTransport? messageTransport, JsonWorkspace workspace, JsonElement inputs, IWorkflowRun run, CancellationToken cancellationToken)");
         writer.AppendLine("    {");
         if (typedInputs)
         {
@@ -1174,7 +1219,7 @@ public static class WorkflowExecutorEmitter
         }
 
         writer.Append("        WorkflowRunResult<").Append(options.OutputsTypeName).Append("> result = await ").Append(options.ClassName)
-            .Append(".ExecuteAsync(transport, ").Append(messageTransportArgument).Append("workspace, ").Append(inputsArgument)
+            .Append(".ExecuteAsync(").Append(transportArgument).Append(messageTransportArgument).Append("workspace, ").Append(inputsArgument)
             .AppendLine(", run, cancellationToken).ConfigureAwait(false);");
         writer.AppendLine("        return result.Kind;");
         writer.AppendLine("    }");

@@ -26,7 +26,8 @@ public sealed class WorkflowTransportRegistryTests
 
         WorkflowTransports transports = registry.Bind(new WorkflowDescriptor("orders-v1", NeedsMessageTransport: false, ["petstore"]));
 
-        transports.ApiTransport.ShouldNotBeNull();
+        transports.ApiTransports.Count.ShouldBe(1);
+        transports.ApiTransports["petstore"].ShouldNotBeNull();
         transports.MessageTransport.ShouldBeNull();
         factory.Created.ShouldBe(1);
     }
@@ -66,18 +67,35 @@ public sealed class WorkflowTransportRegistryTests
     }
 
     [TestMethod]
-    public void Binding_more_than_one_api_source_is_not_yet_supported()
+    public void Bind_resolves_a_transport_for_every_api_source_a_multi_source_workflow_declares()
     {
+        var petstore = new CountingFactory();
+        var billing = new CountingFactory();
         var registry = new WorkflowTransportRegistry(
             new Dictionary<string, IApiTransportFactory>
             {
-                ["petstore"] = new CountingFactory(),
-                ["billing"] = new CountingFactory(),
+                ["petstore"] = petstore,
+                ["billing"] = billing,
             });
+
+        WorkflowTransports transports = registry.Bind(new WorkflowDescriptor("orders-v1", NeedsMessageTransport: false, ["petstore", "billing"]));
+
+        transports.ApiTransports.Count.ShouldBe(2);
+        transports.ApiTransports["petstore"].ShouldNotBeNull();
+        transports.ApiTransports["billing"].ShouldNotBeNull();
+        petstore.Created.ShouldBe(1);
+        billing.Created.ShouldBe(1);
+    }
+
+    [TestMethod]
+    public void A_multi_source_workflow_with_one_unconfigured_source_fails_fast()
+    {
+        var registry = new WorkflowTransportRegistry(
+            new Dictionary<string, IApiTransportFactory> { ["petstore"] = new CountingFactory() });
 
         Should.Throw<WorkflowTransportBindingException>(
             () => registry.Bind(new WorkflowDescriptor("orders-v1", NeedsMessageTransport: false, ["petstore", "billing"])))
-            .Message.ShouldContain("multi-source");
+            .Message.ShouldContain("billing");
     }
 
     [TestMethod]
@@ -100,7 +118,7 @@ public sealed class WorkflowTransportRegistryTests
         WorkflowTransportBinder binder = registry.AsBinder();
         WorkflowTransports transports = binder(new WorkflowDescriptor("orders-v1", NeedsMessageTransport: false, ["petstore"]));
 
-        transports.ApiTransport.ShouldNotBeNull();
+        transports.ApiTransports["petstore"].ShouldNotBeNull();
     }
 
     /// <summary>An <see cref="IApiTransportFactory"/> that counts how many transports it has created.</summary>
