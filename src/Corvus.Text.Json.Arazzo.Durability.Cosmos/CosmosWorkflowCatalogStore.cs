@@ -34,15 +34,17 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
     private readonly Container catalog;
     private readonly TimeProvider timeProvider;
     private readonly IWorkflowMetadataProvider? metadataProvider;
+    private readonly IWorkflowExecutorProvider? executorProvider;
     private readonly bool ownsClient;
 
-    private CosmosWorkflowCatalogStore(CosmosClient client, Container catalog, TimeProvider timeProvider, bool ownsClient, IWorkflowMetadataProvider? metadataProvider)
+    private CosmosWorkflowCatalogStore(CosmosClient client, Container catalog, TimeProvider timeProvider, bool ownsClient, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider)
     {
         this.client = client;
         this.catalog = catalog;
         this.timeProvider = timeProvider;
         this.ownsClient = ownsClient;
         this.metadataProvider = metadataProvider;
+        this.executorProvider = executorProvider;
     }
 
     /// <summary>Provisions the catalog's database and container over the given connection string.</summary>
@@ -90,6 +92,8 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
     /// <param name="connectionString">An Azure Cosmos DB connection string.</param>
     /// <param name="databaseName">The database to use; defaults to <c>arazzo</c>.</param>
     /// <param name="timeProvider">The time source for audit timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
+    /// <param name="metadataProvider">An optional provider that enriches the projected metadata of each added version; <see langword="null"/> to project without it.</param>
+    /// <param name="executorProvider">An optional provider that compiles the workflow executor assembly baked into each added version; <see langword="null"/> to store packages without it.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The opened store (it owns and disposes the client).</returns>
     public static ValueTask<CosmosWorkflowCatalogStore> ConnectAsync(
@@ -97,12 +101,13 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
         string databaseName = "arazzo",
         TimeProvider? timeProvider = null,
         IWorkflowMetadataProvider? metadataProvider = null,
+        IWorkflowExecutorProvider? executorProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
         cancellationToken.ThrowIfCancellationRequested();
         var client = new CosmosClient(connectionString, CreateClientOptions());
-        return new ValueTask<CosmosWorkflowCatalogStore>(Connect(client, databaseName, timeProvider, ownsClient: true, metadataProvider));
+        return new ValueTask<CosmosWorkflowCatalogStore>(Connect(client, databaseName, timeProvider, ownsClient: true, metadataProvider, executorProvider));
     }
 
     /// <summary>Opens the catalog store for operation over a caller-supplied <see cref="CosmosClient"/>.</summary>
@@ -115,6 +120,8 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
     /// <param name="client">A configured Cosmos client; the caller retains ownership and must dispose it.</param>
     /// <param name="databaseName">The database to use; defaults to <c>arazzo</c>.</param>
     /// <param name="timeProvider">The time source for audit timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
+    /// <param name="metadataProvider">An optional provider that enriches the projected metadata of each added version; <see langword="null"/> to project without it.</param>
+    /// <param name="executorProvider">An optional provider that compiles the workflow executor assembly baked into each added version; <see langword="null"/> to store packages without it.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The opened store (it does not dispose the supplied client).</returns>
     public static ValueTask<CosmosWorkflowCatalogStore> ConnectAsync(
@@ -122,11 +129,12 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
         string databaseName = "arazzo",
         TimeProvider? timeProvider = null,
         IWorkflowMetadataProvider? metadataProvider = null,
+        IWorkflowExecutorProvider? executorProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(client);
         cancellationToken.ThrowIfCancellationRequested();
-        return new ValueTask<CosmosWorkflowCatalogStore>(Connect(client, databaseName, timeProvider, ownsClient: false, metadataProvider));
+        return new ValueTask<CosmosWorkflowCatalogStore>(Connect(client, databaseName, timeProvider, ownsClient: false, metadataProvider, executorProvider));
     }
 
     /// <summary>The serializer options the store relies on (camelCase property names, null properties omitted).</summary>
@@ -396,13 +404,13 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
         await database.CreateContainerIfNotExistsAsync(new ContainerProperties(CatalogContainerId, "/baseWorkflowId"), cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
-    private static CosmosWorkflowCatalogStore Connect(CosmosClient client, string databaseName, TimeProvider? timeProvider, bool ownsClient, IWorkflowMetadataProvider? metadataProvider)
+    private static CosmosWorkflowCatalogStore Connect(CosmosClient client, string databaseName, TimeProvider? timeProvider, bool ownsClient, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider)
     {
         // GetDatabase/GetContainer return proxies without network I/O (no creation), so this is a pure
         // data-plane open against the already-provisioned resources.
         Database database = client.GetDatabase(databaseName);
         Container catalog = database.GetContainer(CatalogContainerId);
-        return new CosmosWorkflowCatalogStore(client, catalog, timeProvider ?? TimeProvider.System, ownsClient, metadataProvider);
+        return new CosmosWorkflowCatalogStore(client, catalog, timeProvider ?? TimeProvider.System, ownsClient, metadataProvider, executorProvider);
     }
 
     private static string DocumentId(string baseWorkflowId, int versionNumber)
@@ -421,7 +429,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
         {
             cancellationToken.ThrowIfCancellationRequested();
             int versionNumber = await this.MaxVersionAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false) + 1;
-            CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider);
+            CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
             var version = new CatalogVersion(
                 BaseWorkflowId: baseWorkflowId,
                 VersionNumber: versionNumber,
