@@ -163,7 +163,7 @@ public class WorkflowExecutorProviderTests
             using JsonWorkspace workspace = JsonWorkspace.Create();
             using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
 
-            var run = new FakeRun();
+            var run = new FakeWorkflowRun();
             WorkflowRunResultKind kind = await hosted.RunAsync(transport, null, workspace, inputs.RootElement, run, default);
 
             kind.ShouldBe(WorkflowRunResultKind.Completed);
@@ -242,56 +242,5 @@ public class WorkflowExecutorProviderTests
     {
         using ParsedJsonDocument<JsonElement> manifest = ParsedJsonDocument<JsonElement>.Parse(artifact.Manifest);
         return manifest.RootElement.GetProperty(Encoding.UTF8.GetBytes(property)).GetString()!;
-    }
-
-    /// <summary>A minimal in-memory <see cref="IWorkflowRun"/> for a fresh, straight-through completing run.</summary>
-    private sealed class FakeRun : IWorkflowRun
-    {
-        public bool Completed { get; private set; }
-
-        public int Cursor => 0;
-
-        public string? CorrelationId => null;
-
-        public Dictionary<string, byte[]> CorrelationTokens { get; } = new(StringComparer.Ordinal);
-
-        public bool TryGetStepOutputs(string stepId, out JsonElement outputs)
-        {
-            outputs = default;
-            return false;
-        }
-
-        public int GetRetryCount(string stepId) => 0;
-
-        public void SetStepOutputs(string stepId, in JsonElement outputs)
-        {
-        }
-
-        public void SetRetryCount(string stepId, int count)
-        {
-        }
-
-        public ValueTask CheckpointAsync(int cursor, CancellationToken cancellationToken) => default;
-
-        public ValueTask CompleteAsync(JsonElement outputs, CancellationToken cancellationToken)
-        {
-            this.Completed = true;
-            return default;
-        }
-
-        public ValueTask<WorkflowWait> SuspendForTimerAsync(int cursor, TimeSpan delay, CancellationToken cancellationToken)
-            => throw new NotSupportedException();
-
-        public ValueTask<WorkflowWait> SuspendForMessageAsync(int cursor, string channel, string? correlationId, CancellationToken cancellationToken)
-            => throw new NotSupportedException();
-
-        public ValueTask<WorkflowFault> FaultAsync(string stepId, int attempt, string error, CancellationToken cancellationToken)
-            => throw new NotSupportedException();
-
-        public bool TryTakeDeliveredMessage(out JsonElement payload)
-        {
-            payload = default;
-            return false;
-        }
     }
 }
