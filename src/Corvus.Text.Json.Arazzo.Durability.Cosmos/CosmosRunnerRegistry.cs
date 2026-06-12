@@ -1,0 +1,248 @@
+// <copyright file="CosmosRunnerRegistry.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+using System.Net;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Microsoft.Azure.Cosmos;
+
+namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
+
+/// <summary>
+/// An Azure Cosmos DB-backed <see cref="IRunnerRegistry"/>. Each <see cref="RunnerRegistration"/> is stored as a
+/// document keyed by (and partitioned on) its runner id, holding the canonical registration JSON as a base64 byte
+/// array plus a queryable <c>lastSeenAt</c> column used for pruning. Register is a single-partition upsert and
+/// heartbeat is a single-partition read-modify-write, while list and prune run as cross-partition queries.
+/// </summary>
+/// <remarks>
+/// Provision the database and container once with <see cref="PrepareAsync(string, string, CancellationToken)"/>,
+/// then open the registry with <see cref="ConnectAsync(string, string, CancellationToken)"/>; the overloads taking
+/// a <see cref="CosmosClient"/> let callers configure the client (for example a least-privileged data-plane
+/// managed identity) themselves.
+/// </remarks>
+public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
+{
+    private const string RunnersContainerId = "runners";
+
+    private readonly CosmosClient client;
+    private readonly Container runners;
+    private readonly bool ownsClient;
+
+    private CosmosRunnerRegistry(CosmosClient client, Container runners, bool ownsClient)
+    {
+        this.client = client;
+        this.runners = runners;
+        this.ownsClient = ownsClient;
+    }
+
+    /// <summary>Provisions the registry's database and container over the given connection string.</summary>
+    /// <remarks>See <see cref="PrepareAsync(CosmosClient, string, CancellationToken)"/> for the privilege rationale.</remarks>
+    /// <param name="connectionString">An Azure Cosmos DB connection string (typically the account key, which has management-plane rights).</param>
+    /// <param name="databaseName">The database to use; defaults to <c>arazzo</c>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes once the database and container exist (the operation is idempotent).</returns>
+    public static async ValueTask PrepareAsync(
+        string connectionString,
+        string databaseName = "arazzo",
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(connectionString);
+        using var client = new CosmosClient(connectionString, CreateClientOptions());
+        await ProvisionAsync(client, databaseName, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Provisions the registry's database and container over a caller-supplied <see cref="CosmosClient"/>.</summary>
+    /// <remarks>
+    /// Creating a database/container is a Cosmos <em>management-plane</em> operation — the data-plane RBAC roles
+    /// (for example <c>Cosmos DB Built-in Data Contributor</c>) cannot do it. So provisioning needs the account
+    /// key or a control-plane role and must be separated from the least-privileged data-plane credential used to
+    /// <see cref="ConnectAsync(CosmosClient, string, CancellationToken)"/> the registry for operation. Run this
+    /// once at deploy/migration time.
+    /// </remarks>
+    /// <param name="client">A configured Cosmos client (the caller retains ownership and must dispose it).</param>
+    /// <param name="databaseName">The database to use; defaults to <c>arazzo</c>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes once the database and container exist (the operation is idempotent).</returns>
+    public static ValueTask PrepareAsync(
+        CosmosClient client,
+        string databaseName = "arazzo",
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        return ProvisionAsync(client, databaseName, cancellationToken);
+    }
+
+    /// <summary>Opens the registry for operation against an already-provisioned database and container.</summary>
+    /// <remarks>
+    /// This creates no database or container, so it is safe to use a least-privileged data-plane credential.
+    /// Call <see cref="PrepareAsync(string, string, CancellationToken)"/> once beforehand to provision.
+    /// </remarks>
+    /// <param name="connectionString">An Azure Cosmos DB connection string.</param>
+    /// <param name="databaseName">The database to use; defaults to <c>arazzo</c>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The opened registry (it owns and disposes the client).</returns>
+    public static ValueTask<CosmosRunnerRegistry> ConnectAsync(
+        string connectionString,
+        string databaseName = "arazzo",
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(connectionString);
+        cancellationToken.ThrowIfCancellationRequested();
+        var client = new CosmosClient(connectionString, CreateClientOptions());
+        return new ValueTask<CosmosRunnerRegistry>(Connect(client, databaseName, ownsClient: true));
+    }
+
+    /// <summary>Opens the registry for operation over a caller-supplied <see cref="CosmosClient"/>.</summary>
+    /// <remarks>
+    /// Supply a client the caller configured — for example with a managed identity / <c>TokenCredential</c>
+    /// holding only a data-plane role — so the registry runs under a least-privileged principal with no account
+    /// key. This creates no database or container; call <see cref="PrepareAsync(CosmosClient, string, CancellationToken)"/>
+    /// once beforehand.
+    /// </remarks>
+    /// <param name="client">A configured Cosmos client; the caller retains ownership and must dispose it.</param>
+    /// <param name="databaseName">The database to use; defaults to <c>arazzo</c>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The opened registry (it does not dispose the supplied client).</returns>
+    public static ValueTask<CosmosRunnerRegistry> ConnectAsync(
+        CosmosClient client,
+        string databaseName = "arazzo",
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        cancellationToken.ThrowIfCancellationRequested();
+        return new ValueTask<CosmosRunnerRegistry>(Connect(client, databaseName, ownsClient: false));
+    }
+
+    /// <summary>The serializer options the registry relies on (camelCase property names, null properties omitted).</summary>
+    /// <returns>The Cosmos client options used by the connection-string overloads.</returns>
+    public static CosmosClientOptions CreateClientOptions() => new()
+    {
+        UseSystemTextJsonSerializerWithOptions = SerializerOptions,
+    };
+
+    /// <inheritdoc/>
+    public async ValueTask RegisterAsync(RunnerRegistration registration, CancellationToken cancellationToken)
+    {
+        string runnerId = registration.RunnerIdValue;
+        var document = RunnerDocument.From(runnerId, registration);
+        await this.runners.UpsertItemAsync(document, new PartitionKey(runnerId), cancellationToken: cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<bool> HeartbeatAsync(string runnerId, DateTimeOffset at, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(runnerId);
+        var partition = new PartitionKey(runnerId);
+
+        RunnerDocument existing;
+        try
+        {
+            ItemResponse<RunnerDocument> read = await this.runners.ReadItemAsync<RunnerDocument>(runnerId, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
+            existing = read.Resource;
+        }
+        catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            return false;
+        }
+
+        RunnerRegistration updated = RunnerRegistration.FromJson(existing.Doc).WithLastSeenAt(at);
+        var document = RunnerDocument.From(runnerId, updated);
+        await this.runners.UpsertItemAsync(document, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
+        return true;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<IReadOnlyList<RunnerRegistration>> ListAsync(CancellationToken cancellationToken)
+    {
+        var definition = new QueryDefinition("SELECT * FROM c");
+        var result = new List<RunnerRegistration>();
+        using FeedIterator<RunnerDocument> iterator = this.runners.GetItemQueryIterator<RunnerDocument>(definition);
+        while (iterator.HasMoreResults)
+        {
+            FeedResponse<RunnerDocument> page = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
+            foreach (RunnerDocument document in page)
+            {
+                result.Add(RunnerRegistration.FromJson(document.Doc));
+            }
+        }
+
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<int> PruneAsync(DateTimeOffset deadBefore, CancellationToken cancellationToken)
+    {
+        var definition = new QueryDefinition("SELECT * FROM c WHERE c.lastSeenAt < @cutoff")
+            .WithParameter("@cutoff", deadBefore.ToUnixTimeMilliseconds());
+
+        var stale = new List<string>();
+        using FeedIterator<RunnerDocument> iterator = this.runners.GetItemQueryIterator<RunnerDocument>(definition);
+        while (iterator.HasMoreResults)
+        {
+            FeedResponse<RunnerDocument> page = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
+            foreach (RunnerDocument document in page)
+            {
+                stale.Add(document.Id);
+            }
+        }
+
+        foreach (string runnerId in stale)
+        {
+            await this.runners.DeleteItemAsync<RunnerDocument>(runnerId, new PartitionKey(runnerId), cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+
+        return stale.Count;
+    }
+
+    /// <inheritdoc/>
+    public ValueTask DisposeAsync()
+    {
+        if (this.ownsClient)
+        {
+            this.client.Dispose();
+        }
+
+        return default;
+    }
+
+    private static readonly JsonSerializerOptions SerializerOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    };
+
+    private static async ValueTask ProvisionAsync(CosmosClient client, string databaseName, CancellationToken cancellationToken)
+    {
+        Database database = await client.CreateDatabaseIfNotExistsAsync(databaseName, cancellationToken: cancellationToken).ConfigureAwait(false);
+        await database.CreateContainerIfNotExistsAsync(new ContainerProperties(RunnersContainerId, "/id"), cancellationToken: cancellationToken).ConfigureAwait(false);
+    }
+
+    private static CosmosRunnerRegistry Connect(CosmosClient client, string databaseName, bool ownsClient)
+    {
+        // GetDatabase/GetContainer return proxies without network I/O (no creation), so this is a pure
+        // data-plane open against the already-provisioned resources.
+        Database database = client.GetDatabase(databaseName);
+        Container runners = database.GetContainer(RunnersContainerId);
+        return new CosmosRunnerRegistry(client, runners, ownsClient);
+    }
+
+    private sealed class RunnerDocument
+    {
+        [JsonPropertyName("id")]
+        public string Id { get; set; } = string.Empty;
+
+        [JsonPropertyName("lastSeenAt")]
+        public long LastSeenAt { get; set; }
+
+        [JsonPropertyName("doc")]
+        public byte[] Doc { get; set; } = [];
+
+        public static RunnerDocument From(string runnerId, RunnerRegistration registration) => new()
+        {
+            Id = runnerId,
+            LastSeenAt = registration.LastSeenAtValue.ToUnixTimeMilliseconds(),
+            Doc = registration.ToJsonBytes(),
+        };
+    }
+}
