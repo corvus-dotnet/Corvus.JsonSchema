@@ -577,9 +577,9 @@ public class AsyncApi30CodeGeneratorTests
 
         // Dynamic address: method should accept 'string channel' parameter
         StringAssert.Contains(producer.Content, "string channel");
-        // Dynamic address: also emits ReadOnlySpan<char> and ReadOnlyMemory<byte> overloads
+        // Dynamic address: also emits ReadOnlySpan<char> and byte-span/memory overloads
         StringAssert.Contains(producer.Content, "ReadOnlySpan<char> channel");
-        StringAssert.Contains(producer.Content, "ReadOnlyMemory<byte> channelUtf8");
+        StringAssert.Contains(producer.Content, "ReadOnlySpan<byte> channelUtf8");
         // The string overload delegates to the ReadOnlySpan<char> overload
         StringAssert.Contains(producer.Content, "channel.AsSpan()");
         // All overloads delegate to a shared private Core
@@ -604,7 +604,7 @@ public class AsyncApi30CodeGeneratorTests
 
         // Dynamic: StartAsync should accept channel parameter
         StringAssert.Contains(consumer.Content, "StartAsync(string channel");
-        // Dynamic: also emits ReadOnlySpan<char> and ReadOnlyMemory<byte> overloads
+        // Dynamic: also emits ReadOnlySpan<char> and byte-span/memory overloads
         StringAssert.Contains(consumer.Content, "StartAsync(ReadOnlySpan<char> channel");
         StringAssert.Contains(consumer.Content, "StartAsync(ReadOnlyMemory<byte> channelUtf8");
         // The string overload delegates to the ReadOnlySpan<char> overload
@@ -2200,7 +2200,7 @@ public class AsyncApi30CodeGeneratorTests
         // Dynamic address: StartAsync takes a channel parameter and stores it
         StringAssert.Contains(consumer.Content, "string channel");
         StringAssert.Contains(consumer.Content, "this.subscribedChannel = channel;");
-        // Dynamic address: also emits ReadOnlySpan<char> and ReadOnlyMemory<byte> overloads (auth path)
+        // Dynamic address: also emits ReadOnlySpan<char> and byte-span/memory overloads (auth path)
         StringAssert.Contains(consumer.Content, "StartAsync(ReadOnlySpan<char> channel");
         StringAssert.Contains(consumer.Content, "StartAsync(ReadOnlyMemory<byte> channelUtf8");
         StringAssert.Contains(consumer.Content, "channel.AsSpan()");
@@ -2321,9 +2321,9 @@ public class AsyncApi30CodeGeneratorTests
         // Dynamic address: request method takes a channel parameter
         StringAssert.Contains(producer.Content, "SendAndReceiveRpcRequestAsync");
         StringAssert.Contains(producer.Content, "string channel");
-        // Dynamic address: also emits ReadOnlySpan<char> and ReadOnlyMemory<byte> overloads
+        // Dynamic address: also emits ReadOnlySpan<char> and byte-span/memory overloads
         StringAssert.Contains(producer.Content, "ReadOnlySpan<char> channel");
-        StringAssert.Contains(producer.Content, "ReadOnlyMemory<byte> channelUtf8");
+        StringAssert.Contains(producer.Content, "ReadOnlySpan<byte> channelUtf8");
         // The string overload delegates to the ReadOnlySpan<char> overload
         StringAssert.Contains(producer.Content, "channel.AsSpan()");
         // All overloads delegate to a shared private Core

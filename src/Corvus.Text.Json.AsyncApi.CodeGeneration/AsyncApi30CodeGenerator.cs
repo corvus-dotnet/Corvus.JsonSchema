@@ -1696,15 +1696,17 @@ public sealed class AsyncApi30CodeGenerator
                 w.WriteLine($"return {methodName}Core({leadingArgs}, channelRental.AsMemory(0, channelLen), channelRental, cancellationToken);");
                 w.CloseBrace();
 
-                // ReadOnlyMemory<byte> overload — channel is already UTF-8; pass it straight through with no
-                // copy and no rental (the caller owns the memory until the returned task completes).
+                // ReadOnlySpan<byte> overload — channel is already UTF-8; copy it into a pooled rental (no
+                // encode), which the Core hands to the transport and returns to the pool after the send.
                 w.WriteLine();
                 EmitLeadingDocs($"Publishes a <c>{msg.Name}</c> message.");
-                w.WriteLine($"/// <param name=\"channelUtf8\">The target channel address as UTF-8 bytes; must remain valid until the returned task completes.</param>");
+                w.WriteLine($"/// <param name=\"channelUtf8\">The target channel address as UTF-8 bytes.</param>");
                 w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-                w.WriteLine($"public ValueTask {methodName}({leadingParams}, ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken = default)");
+                w.WriteLine($"public ValueTask {methodName}({leadingParams}, ReadOnlySpan<byte> channelUtf8, CancellationToken cancellationToken = default)");
                 w.OpenBrace();
-                w.WriteLine($"return {methodName}Core({leadingArgs}, channelUtf8, null, cancellationToken);");
+                w.WriteLine("byte[] channelRental = ArrayPool<byte>.Shared.Rent(channelUtf8.Length);");
+                w.WriteLine("channelUtf8.CopyTo(channelRental);");
+                w.WriteLine($"return {methodName}Core({leadingArgs}, channelRental.AsMemory(0, channelUtf8.Length), channelRental, cancellationToken);");
                 w.CloseBrace();
 
                 // Private Core — shared body, receives the channel as already-built UTF-8.
@@ -1719,9 +1721,9 @@ public sealed class AsyncApi30CodeGenerator
                 }
 
                 w.WriteLine($"/// <param name=\"channelUtf8\">The target channel address as UTF-8 bytes.</param>");
-                w.WriteLine($"/// <param name=\"channelRental\">The rented buffer backing <paramref name=\"channelUtf8\"/> to return to the pool, or <see langword=\"null\"/> when the memory is caller-owned.</param>");
+                w.WriteLine($"/// <param name=\"channelRental\">The rented buffer backing <paramref name=\"channelUtf8\"/> to return to the pool after the send.</param>");
                 w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-                w.WriteLine($"private ValueTask {methodName}Core({leadingParams}, ReadOnlyMemory<byte> channelUtf8, byte[]? channelRental, CancellationToken cancellationToken)");
+                w.WriteLine($"private ValueTask {methodName}Core({leadingParams}, ReadOnlyMemory<byte> channelUtf8, byte[] channelRental, CancellationToken cancellationToken)");
                 w.OpenBrace();
                 EmitPublishBody();
                 w.CloseBrace();
@@ -1941,16 +1943,18 @@ public sealed class AsyncApi30CodeGenerator
                     w.WriteLine($"return {requestMethodName}Core({leadingArgs}, channelRental.AsMemory(0, channelLen), channelRental, cancellationToken);");
                     w.CloseBrace();
 
-                    // ReadOnlyMemory<byte> overload — channel is already UTF-8; pass it straight through with no
-                    // copy and no rental (the caller owns the memory until the returned task completes).
+                    // ReadOnlySpan<byte> overload — channel is already UTF-8; copy it into a pooled rental (no
+                    // encode), which the Core hands to the transport and returns to the pool after the send.
                     w.WriteLine();
                     EmitLeadingDocs();
-                    w.WriteLine($"/// <param name=\"channelUtf8\">The target channel address as UTF-8 bytes; must remain valid until the returned task completes.</param>");
+                    w.WriteLine($"/// <param name=\"channelUtf8\">The target channel address as UTF-8 bytes.</param>");
                     w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
                     w.WriteLine($"/// <returns>The reply payload.</returns>");
-                    w.WriteLine($"public ValueTask<{replyType}> {requestMethodName}({leadingParams}, ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken = default)");
+                    w.WriteLine($"public ValueTask<{replyType}> {requestMethodName}({leadingParams}, ReadOnlySpan<byte> channelUtf8, CancellationToken cancellationToken = default)");
                     w.OpenBrace();
-                    w.WriteLine($"return {requestMethodName}Core({leadingArgs}, channelUtf8, null, cancellationToken);");
+                    w.WriteLine("byte[] channelRental = ArrayPool<byte>.Shared.Rent(channelUtf8.Length);");
+                    w.WriteLine("channelUtf8.CopyTo(channelRental);");
+                    w.WriteLine($"return {requestMethodName}Core({leadingArgs}, channelRental.AsMemory(0, channelUtf8.Length), channelRental, cancellationToken);");
                     w.CloseBrace();
 
                     // Private Core — shared body, receives the channel as already-built UTF-8.
@@ -1965,10 +1969,10 @@ public sealed class AsyncApi30CodeGenerator
                     }
 
                     w.WriteLine($"/// <param name=\"channelUtf8\">The target channel address as UTF-8 bytes.</param>");
-                    w.WriteLine($"/// <param name=\"channelRental\">The rented buffer backing <paramref name=\"channelUtf8\"/> to return to the pool, or <see langword=\"null\"/> when the memory is caller-owned.</param>");
+                    w.WriteLine($"/// <param name=\"channelRental\">The rented buffer backing <paramref name=\"channelUtf8\"/> to return to the pool after the send.</param>");
                     w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
                     w.WriteLine($"/// <returns>The reply payload.</returns>");
-                    w.WriteLine($"private ValueTask<{replyType}> {requestMethodName}Core({leadingParams}, ReadOnlyMemory<byte> channelUtf8, byte[]? channelRental, CancellationToken cancellationToken)");
+                    w.WriteLine($"private ValueTask<{replyType}> {requestMethodName}Core({leadingParams}, ReadOnlyMemory<byte> channelUtf8, byte[] channelRental, CancellationToken cancellationToken)");
                     w.OpenBrace();
                     EmitRequestBody();
                     w.CloseBrace();
