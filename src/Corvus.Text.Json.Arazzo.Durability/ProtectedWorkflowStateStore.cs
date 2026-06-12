@@ -20,10 +20,11 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// also implements <see cref="IWorkflowWaitIndex"/>, so does this wrapper (delegating); otherwise the wait-index
 /// members throw <see cref="NotSupportedException"/>.
 /// </remarks>
-public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IAsyncDisposable
+public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, IAsyncDisposable
 {
     private readonly IWorkflowStateStore inner;
     private readonly IWorkflowWaitIndex? innerIndex;
+    private readonly IWorkflowDispatchIndex? innerDispatch;
     private readonly ICheckpointProtector protector;
 
     /// <summary>Initializes a new instance of the <see cref="ProtectedWorkflowStateStore"/> class.</summary>
@@ -35,6 +36,7 @@ public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflow
         ArgumentNullException.ThrowIfNull(protector);
         this.inner = inner;
         this.innerIndex = inner as IWorkflowWaitIndex;
+        this.innerDispatch = inner as IWorkflowDispatchIndex;
         this.protector = protector;
     }
 
@@ -96,6 +98,10 @@ public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflow
     /// <inheritdoc/>
     public ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
         => this.RequireIndex().QueryAsync(query, cancellationToken);
+
+    /// <inheritdoc/>
+    public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
+        => (this.innerDispatch ?? throw new NotSupportedException("The wrapped store does not implement IWorkflowDispatchIndex.")).QueryClaimableAsync(hostedWorkflowIds, now, cancellationToken);
 
     /// <inheritdoc/>
     public async ValueTask DisposeAsync()

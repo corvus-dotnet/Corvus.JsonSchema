@@ -23,9 +23,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
 /// <see cref="CosmosClient"/> let callers configure the client (for example a least-privileged data-plane
 /// managed identity) themselves.
 /// </remarks>
-public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IAsyncDisposable
+public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, IAsyncDisposable
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
+    private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
+    private const string RunningStatus = nameof(WorkflowRunStatus.Running);
     private const string RunsContainerId = "workflow_runs";
     private const string LeasesContainerId = "workflow_leases";
 
@@ -283,6 +285,59 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             if (correlationId is null || result.AwaitingCorrelationId is null || result.AwaitingCorrelationId == correlationId)
             {
                 yield return new WorkflowRunId(result.Id);
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
+        if (hostedWorkflowIds.Count == 0)
+        {
+            yield break;
+        }
+
+        // Candidate runs are Pending (always claimable) or Running (claimable only if no live lease holds them).
+        var candidateQuery = new QueryDefinition(
+            "SELECT c.id, c.status FROM c WHERE (c.status = @pending OR c.status = @running) AND ARRAY_CONTAINS(@hosted, c.workflowId)")
+            .WithParameter("@pending", PendingStatus)
+            .WithParameter("@running", RunningStatus)
+            .WithParameter("@hosted", new List<string>(hostedWorkflowIds));
+
+        var candidates = new List<ClaimableResult>();
+        bool anyRunning = false;
+        await foreach (ClaimableResult result in this.QueryRunsAsync<ClaimableResult>(candidateQuery, cancellationToken).ConfigureAwait(false))
+        {
+            candidates.Add(result);
+            if (result.Status == RunningStatus)
+            {
+                anyRunning = true;
+            }
+        }
+
+        // Only consult the leases container if a Running candidate could be held by a live lease.
+        var heldRunIds = new HashSet<string>();
+        if (anyRunning)
+        {
+            var leaseQuery = new QueryDefinition("SELECT c.id FROM c WHERE c.expiresAt > @now")
+                .WithParameter("@now", now.ToUnixTimeMilliseconds());
+            using FeedIterator<IdResult> leaseIterator = this.leases.GetItemQueryIterator<IdResult>(leaseQuery);
+            while (leaseIterator.HasMoreResults)
+            {
+                FeedResponse<IdResult> page = await leaseIterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
+                foreach (IdResult lease in page)
+                {
+                    heldRunIds.Add(lease.Id);
+                }
+            }
+        }
+
+        foreach (ClaimableResult candidate in candidates)
+        {
+            if (candidate.Status == PendingStatus || (candidate.Status == RunningStatus && !heldRunIds.Contains(candidate.Id)))
+            {
+                yield return new WorkflowRunId(candidate.Id);
             }
         }
     }
@@ -558,5 +613,14 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
 
         [JsonPropertyName("awaitingCorrelationId")]
         public string? AwaitingCorrelationId { get; set; }
+    }
+
+    private sealed class ClaimableResult
+    {
+        [JsonPropertyName("id")]
+        public string Id { get; set; } = string.Empty;
+
+        [JsonPropertyName("status")]
+        public string Status { get; set; } = string.Empty;
     }
 }

@@ -18,9 +18,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.Sqlite;
 /// operations) and all operations are serialised through it — adequate for the local/embedded use this
 /// adapter targets. Create instances with <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/>, which runs the idempotent schema.
 /// </remarks>
-public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IAsyncDisposable
+public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, IAsyncDisposable
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
+    private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
+    private const string RunningStatus = nameof(WorkflowRunStatus.Running);
 
     private readonly SqliteConnection connection;
     private readonly TimeProvider timeProvider;
@@ -409,6 +411,51 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         => value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
 
     private static DateTimeOffset FromUnixMilliseconds(long milliseconds) => DateTimeOffset.FromUnixTimeMilliseconds(milliseconds);
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
+        if (hostedWorkflowIds.Count == 0)
+        {
+            yield break;
+        }
+
+        var ids = new List<string>(hostedWorkflowIds);
+        var placeholders = new string[ids.Count];
+        for (int i = 0; i < ids.Count; i++)
+        {
+            placeholders[i] = "@w" + i.ToString(CultureInfo.InvariantCulture);
+        }
+
+        string sql =
+            $"""
+            SELECT r.RunId FROM WorkflowRuns r
+            LEFT JOIN WorkflowLeases l ON l.RunId = r.RunId
+            WHERE r.WorkflowId IN ({string.Join(", ", placeholders)})
+              AND (r.Status = @pending OR (r.Status = @running AND (l.RunId IS NULL OR l.ExpiresAt <= @now)));
+            """;
+
+        List<WorkflowRunId> claimable = await this.QueryIdsAsync(
+            sql,
+            cmd =>
+            {
+                cmd.Parameters.AddWithValue("@pending", PendingStatus);
+                cmd.Parameters.AddWithValue("@running", RunningStatus);
+                cmd.Parameters.AddWithValue("@now", now.ToUnixTimeMilliseconds());
+                for (int i = 0; i < ids.Count; i++)
+                {
+                    cmd.Parameters.AddWithValue(placeholders[i], ids[i]);
+                }
+            },
+            cancellationToken).ConfigureAwait(false);
+
+        foreach (WorkflowRunId id in claimable)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return id;
+        }
+    }
 
     private async ValueTask<List<WorkflowRunId>> QueryIdsAsync(string sql, Action<SqliteCommand> bind, CancellationToken cancellationToken)
     {

@@ -22,7 +22,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.NatsJetStream;
 /// Wait/visibility queries scan the bucket's keys and filter on the index header. Create instances with
 /// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> after provisioning with <see cref="PrepareAsync(string, CancellationToken)"/>.
 /// </remarks>
-public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IAsyncDisposable
+public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, IAsyncDisposable
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
     private const string RunsBucket = "arazzo_runs";
@@ -241,6 +241,47 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                 && (correlationId is null || index.AwaitingCorrelationId is null || index.AwaitingCorrelationId == correlationId))
             {
                 yield return runId;
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
+        if (hostedWorkflowIds.Count == 0)
+        {
+            yield break;
+        }
+
+        var hosted = new HashSet<string>(hostedWorkflowIds);
+        await foreach ((WorkflowRunId runId, WorkflowRunIndexEntry entry) in this.ScanAsync(cancellationToken).ConfigureAwait(false))
+        {
+            if (!hosted.Contains(entry.WorkflowId))
+            {
+                continue;
+            }
+
+            if (entry.Status == WorkflowRunStatus.Pending)
+            {
+                yield return runId;
+                continue;
+            }
+
+            if (entry.Status == WorkflowRunStatus.Running)
+            {
+                NatsKVEntry<byte[]>? leaseEntry = await this.TryGetAsync(this.leases, runId.Value, cancellationToken).ConfigureAwait(false);
+                bool live = false;
+                if (leaseEntry is { Value: { } value })
+                {
+                    (_, _, long expiresAt) = LeaseCodec.Decode(value);
+                    live = expiresAt > now.ToUnixTimeMilliseconds();
+                }
+
+                if (!live)
+                {
+                    yield return runId;
+                }
             }
         }
     }

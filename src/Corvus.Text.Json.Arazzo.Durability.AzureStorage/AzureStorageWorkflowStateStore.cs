@@ -21,9 +21,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 /// <see cref="PrepareAsync(string, CancellationToken)"/>, then open the store with
 /// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/>.
 /// </remarks>
-public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex
+public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
+    private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
+    private const string RunningStatus = nameof(WorkflowRunStatus.Running);
     private const string IndexPartition = "run";
     private const string LeasePartition = "lease";
     private const string RunsContainer = "arazzo-runs";
@@ -272,6 +274,60 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             if (correlationId is null || stored is null || stored == correlationId)
             {
                 yield return new WorkflowRunId(entity.RowKey);
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
+
+        if (hostedWorkflowIds.Count == 0)
+        {
+            yield break;
+        }
+
+        var hosted = new HashSet<string>(hostedWorkflowIds);
+
+        // Azure Tables $filter cannot express an IN list cheaply, so the server-side filter narrows to the two
+        // claimable statuses and the small candidate set is filtered by hosted workflow id client-side.
+        string filter = TableClient.CreateQueryFilter($"PartitionKey eq {IndexPartition} and (Status eq {PendingStatus} or Status eq {RunningStatus})");
+        var candidates = new List<(string RowKey, string Status)>();
+        bool anyRunning = false;
+        await foreach (TableEntity entity in this.index.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            string? workflowId = entity.GetString("WorkflowId");
+            if (workflowId is null || !hosted.Contains(workflowId))
+            {
+                continue;
+            }
+
+            string status = entity.GetString("Status") ?? string.Empty;
+            candidates.Add((entity.RowKey, status));
+            if (status == RunningStatus)
+            {
+                anyRunning = true;
+            }
+        }
+
+        // Only the Running candidates need a lease check, so the leases table is queried lazily.
+        HashSet<string>? held = null;
+        if (anyRunning)
+        {
+            held = new HashSet<string>();
+            string leaseFilter = TableClient.CreateQueryFilter($"PartitionKey eq {LeasePartition} and ExpiresAt gt {now.ToUnixTimeMilliseconds()}");
+            await foreach (TableEntity lease in this.leases.QueryAsync<TableEntity>(leaseFilter, cancellationToken: cancellationToken).ConfigureAwait(false))
+            {
+                held.Add(lease.RowKey);
+            }
+        }
+
+        foreach ((string rowKey, string status) in candidates)
+        {
+            if (status == PendingStatus || held?.Contains(rowKey) != true)
+            {
+                yield return new WorkflowRunId(rowKey);
             }
         }
     }
