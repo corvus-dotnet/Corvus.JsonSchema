@@ -5,6 +5,7 @@
 #if NET10_0_OR_GREATER
 
 using Corvus.Text.Json;
+using Corvus.Text.Json.Arazzo.Generation;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
 using Spectre.Console;
 
@@ -69,29 +70,7 @@ internal static class OpenApiCommandHelpers
     /// <param name="userSpecVersion">The user-specified version, or <see langword="null"/> for auto-detection.</param>
     /// <returns>The spec version string ("3.0" or "3.1").</returns>
     internal static string DetectSpecVersion(JsonElement specRoot, string? userSpecVersion)
-    {
-        if (userSpecVersion is not null)
-        {
-            return userSpecVersion;
-        }
-
-        if (specRoot.TryGetProperty("openapi"u8, out JsonElement version)
-            && version.ValueKind == JsonValueKind.String)
-        {
-            string? v = version.GetString();
-            if (v?.StartsWith("3.0", StringComparison.Ordinal) == true)
-            {
-                return "3.0";
-            }
-
-            if (v?.StartsWith("3.2", StringComparison.Ordinal) == true)
-            {
-                return "3.2";
-            }
-        }
-
-        return "3.1";
-    }
+        => OpenApiSpecVersion.Detect(specRoot, userSpecVersion);
 
     /// <summary>
     /// Gets the API title from the spec root.

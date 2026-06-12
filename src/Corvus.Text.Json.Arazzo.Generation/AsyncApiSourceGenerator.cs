@@ -10,8 +10,9 @@ using Corvus.Json.CodeGeneration.DocumentResolvers;
 using Corvus.Json.Internal;
 using Corvus.Text.Json.AsyncApi.CodeGeneration;
 using Corvus.Text.Json.CodeGeneration;
+using Corvus.Text.Json.CodeGenerator;
 
-namespace Corvus.Text.Json.CodeGenerator;
+namespace Corvus.Text.Json.Arazzo.Generation;
 
 /// <summary>
 /// Generates the AsyncAPI producers/consumers + message schema models for a single specification file
@@ -20,7 +21,7 @@ namespace Corvus.Text.Json.CodeGenerator;
 /// <see cref="OpenApiSourceGenerator"/>; wraps the same schema-type generation the
 /// <c>asyncapi-generate</c> command uses, without its console output or lock-file handling.
 /// </summary>
-internal static class AsyncApiSourceGenerator
+public static class AsyncApiSourceGenerator
 {
     /// <summary>
     /// Generates the producers/consumers and models for one AsyncAPI source description and returns its
@@ -30,14 +31,17 @@ internal static class AsyncApiSourceGenerator
     /// <param name="rootNamespace">The root namespace for the generated code.</param>
     /// <param name="outputPath">The directory the producers/consumers are written to (models under <c>Models/</c>).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="progress">An optional callback invoked with human-readable progress messages.</param>
     /// <returns>One descriptor per channel operation the spec declares, with generated producer/consumer details.</returns>
     /// <exception cref="NotSupportedException">The spec is an AsyncAPI version that cannot yet describe channels for Arazzo (only 3.0).</exception>
     public static async Task<IReadOnlyList<AsyncApiChannelDescriptor>> GenerateAsync(
         string specFilePath,
         string rootNamespace,
         string outputPath,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Action<string>? progress = null)
     {
+        _ = progress; // reserved for parity with the OpenAPI source generator; no AsyncAPI progress messages yet
         bool useYaml = IsYamlFile(specFilePath);
         byte[] specBytes = await File.ReadAllBytesAsync(specFilePath, cancellationToken).ConfigureAwait(false);
         if (useYaml)
@@ -64,13 +68,15 @@ internal static class AsyncApiSourceGenerator
     /// <param name="rootNamespace">The root namespace for the generated code.</param>
     /// <param name="outputPath">The directory the producers/consumers are written to (models under <c>Models/</c>).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="progress">An optional callback invoked with human-readable progress messages.</param>
     /// <returns>One descriptor per channel operation the spec declares.</returns>
     public static async Task<IReadOnlyList<AsyncApiChannelDescriptor>> GenerateAsync(
         Uri specUri,
         Func<Uri, byte[]?> documentLoader,
         string rootNamespace,
         string outputPath,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Action<string>? progress = null)
     {
         ArgumentNullException.ThrowIfNull(specUri);
         ArgumentNullException.ThrowIfNull(documentLoader);
@@ -98,10 +104,10 @@ internal static class AsyncApiSourceGenerator
         string outputPath,
         CancellationToken cancellationToken)
     {
-        string version = AsyncApiShowCommand.DetectAsyncApiVersion(specRoot, null);
+        string version = AsyncApiSpecVersion.Detect(specRoot, null);
 
-        bool is26 = AsyncApiShowCommand.IsAsyncApi26Version(version);
-        if (!is26 && !AsyncApiShowCommand.IsAsyncApi30Version(version))
+        bool is26 = AsyncApiSpecVersion.Is26(version);
+        if (!is26 && !AsyncApiSpecVersion.Is30(version))
         {
             throw new NotSupportedException(
                 $"AsyncAPI source '{schemaEntryKey}' is version {version}; Arazzo channel steps require AsyncAPI 2.6 or 3.0.");
@@ -150,8 +156,13 @@ internal static class AsyncApiSourceGenerator
         Func<Uri, byte[]?>? documentLoader,
         CancellationToken cancellationToken)
     {
-        // The entry document key: its virtualized URI when supplied, otherwise its file path.
-        string schemaEntryKey = entryUri is not null ? entryUri.AbsoluteUri : specFilePath;
+        // The entry document key. A non-file virtualized URI (http(s)/urn/$self) is handed to the V4
+        // generator verbatim so its resolver matches the in-memory registry; a file URI is reduced to a
+        // plain OS path (the V4 reference normalizer mangles a "file://" URI into "{cwd}/file:/..."); and
+        // with no URI we use the supplied file path.
+        string schemaEntryKey = entryUri is null
+            ? specFilePath
+            : entryUri.IsFile ? entryUri.LocalPath : entryUri.AbsoluteUri;
 
         IDocumentResolver fileResolver;
         IDocumentResolver httpResolver;
