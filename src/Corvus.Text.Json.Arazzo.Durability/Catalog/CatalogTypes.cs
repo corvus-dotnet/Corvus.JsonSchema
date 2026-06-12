@@ -55,47 +55,5 @@ public readonly record struct CatalogMetadataPatch(
     IReadOnlyList<string>? Tags = null,
     CatalogStatus? Status = null);
 
-/// <summary>
-/// A catalog version's metadata — the immutable identity/hash/title/description/sources derived from the package,
-/// plus the mutable governance fields and audit attribution. The package documents themselves are never embedded
-/// here; they are fetched via <see cref="IWorkflowCatalogStore.GetPackageAsync"/> / <see cref="IWorkflowCatalogStore.GetDocumentAsync"/>.
-/// </summary>
-/// <param name="BaseWorkflowId">The base workflow id (no version suffix).</param>
-/// <param name="VersionNumber">The 1-based version number assigned by the store.</param>
-/// <param name="WorkflowId">The versioned workflow id (<c>{baseWorkflowId}-v{versionNumber}</c>) runs execute under.</param>
-/// <param name="Title">The title, extracted from the workflow's <c>info.title</c>.</param>
-/// <param name="Description">The description, from the workflow's <c>info.description</c> (falling back to <c>info.summary</c>), if any.</param>
-/// <param name="Status">The lifecycle status.</param>
-/// <param name="Tags">The free-form tags.</param>
-/// <param name="Owner">The accountable governance owner.</param>
-/// <param name="Sources">The source documents in the package (name + type), addressable individually.</param>
-/// <param name="Hash">The SHA-256 of the canonical package, hex-encoded.</param>
-/// <param name="CreatedBy">The actor that added the version.</param>
-/// <param name="CreatedAt">When the version was added.</param>
-/// <param name="LastUpdatedBy">The actor of the last metadata change, if any.</param>
-/// <param name="LastUpdatedAt">When the metadata was last changed, if ever.</param>
-/// <param name="ObsoletedBy">The actor that marked the version obsolete, if it is.</param>
-/// <param name="ObsoletedAt">When the version was marked obsolete, if it is.</param>
-/// <param name="Runnable">Whether the package carries a compiled workflow executor assembly an execution host can run.</param>
-public sealed record CatalogVersion(
-    string BaseWorkflowId,
-    int VersionNumber,
-    string WorkflowId,
-    string Title,
-    string? Description,
-    CatalogStatus Status,
-    IReadOnlyList<string> Tags,
-    CatalogOwner Owner,
-    IReadOnlyList<CatalogSourceRef> Sources,
-    string Hash,
-    string CreatedBy,
-    DateTimeOffset CreatedAt,
-    string? LastUpdatedBy = null,
-    DateTimeOffset? LastUpdatedAt = null,
-    string? ObsoletedBy = null,
-    DateTimeOffset? ObsoletedAt = null,
-    bool Runnable = false)
-{
-    /// <summary>Gets the minimal identity reference for this version.</summary>
-    public CatalogVersionRef Ref => new(this.BaseWorkflowId, this.VersionNumber, this.WorkflowId);
-}
+// The catalog version's persisted metadata is the generated Corvus.Text.Json type CatalogVersion
+// (see CatalogVersion.cs + Schemas/CatalogVersion.json) — the entity stores hold as JSON.

@@ -60,7 +60,7 @@ public class WorkflowPackageExecutorProviderTests
         CatalogVersion version = await store.AddAsync("flow", WorkflowPackage.Pack(Workflow("flow"), []), Meta(), default);
 
         // The store baked the provider's assembly into the stored package and serves it back by name.
-        ReadOnlyMemory<byte>? executor = await store.GetDocumentAsync(version.BaseWorkflowId, version.VersionNumber, WorkflowPackage.ExecutorDocumentName, default);
+        ReadOnlyMemory<byte>? executor = await store.GetDocumentAsync(version.Ref.BaseWorkflowId, version.Ref.VersionNumber, WorkflowPackage.ExecutorDocumentName, default);
         executor.ShouldNotBeNull();
         executor.Value.ToArray().ShouldBe(FakeExecutorProvider.AssemblyBytes);
 
@@ -74,7 +74,7 @@ public class WorkflowPackageExecutorProviderTests
         var store = new InMemoryWorkflowCatalogStore();
         CatalogVersion version = await store.AddAsync("flow", WorkflowPackage.Pack(Workflow("flow"), []), Meta(), default);
 
-        ReadOnlyMemory<byte>? executor = await store.GetDocumentAsync(version.BaseWorkflowId, version.VersionNumber, WorkflowPackage.ExecutorDocumentName, default);
+        ReadOnlyMemory<byte>? executor = await store.GetDocumentAsync(version.Ref.BaseWorkflowId, version.Ref.VersionNumber, WorkflowPackage.ExecutorDocumentName, default);
         executor.ShouldBeNull();
     }
 

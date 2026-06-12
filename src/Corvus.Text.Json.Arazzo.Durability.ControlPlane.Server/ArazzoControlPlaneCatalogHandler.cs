@@ -60,7 +60,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         try
         {
             CatalogVersion version = await this.catalog.AddAsync(parameters.Package, owner, tags, cancellationToken).ConfigureAwait(false);
-            return AddCatalogVersionResult.Created(BuildSummary(version), workspace);
+            return AddCatalogVersionResult.Created(Models.CatalogVersionSummary.From(version), workspace);
         }
         catch (ArgumentException ex)
         {
@@ -105,7 +105,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         int versionNumber = (int)parameters.VersionNumber;
         CatalogVersion? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
         return version is { } v
-            ? GetCatalogVersionResult.Ok(BuildSummary(v), workspace)
+            ? GetCatalogVersionResult.Ok(Models.CatalogVersionSummary.From(v), workspace)
             : GetCatalogVersionResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
     }
 
@@ -122,7 +122,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
 
         CatalogVersion? updated = await this.catalog.UpdateAsync(baseWorkflowId, versionNumber, owner, tags, status, cancellationToken).ConfigureAwait(false);
         return updated is { } v
-            ? UpdateCatalogVersionResult.Ok(BuildSummary(v), workspace)
+            ? UpdateCatalogVersionResult.Ok(Models.CatalogVersionSummary.From(v), workspace)
             : UpdateCatalogVersionResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
     }
 
@@ -291,15 +291,16 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
             return StartCatalogWorkflowRunResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
         }
 
-        if (!catalogVersion.Runnable)
+        if (!(bool)catalogVersion.Runnable)
         {
             return StartCatalogWorkflowRunResult.Conflict(
                 Problem("not-runnable", "Version not runnable", 409, $"Version {versionNumber} of '{baseWorkflowId}' carries no compiled executor; it cannot be run."), workspace);
         }
 
         // Validate the inputs against the version's baked inputs schema (when it declares one).
-        var target = new WorkflowSchemaTarget(WorkflowSchemaTargetKind.Inputs, catalogVersion.WorkflowId, null, null);
-        string cacheKey = $"{baseWorkflowId}/{versionNumber}/inputs/{catalogVersion.WorkflowId}//";
+        string workflowId = (string)catalogVersion.WorkflowId;
+        var target = new WorkflowSchemaTarget(WorkflowSchemaTargetKind.Inputs, workflowId, null, null);
+        string cacheKey = $"{baseWorkflowId}/{versionNumber}/inputs/{workflowId}//";
         (SchemaResolution resolution, ValidatorSchema schema) = await this.ResolveSchemaAsync(baseWorkflowId, versionNumber, target, cacheKey, cancellationToken).ConfigureAwait(false);
 
         Corvus.Text.Json.JsonElement inputs = parameters.Body;
@@ -313,13 +314,13 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         }
 
         // A version with no inputs schema (SchemaMissing) accepts any inputs.
-        WorkflowRunId runId = await this.management.StartAsync(catalogVersion.WorkflowId, inputs, correlationId: null, tags: null, cancellationToken).ConfigureAwait(false);
+        WorkflowRunId runId = await this.management.StartAsync(workflowId, inputs, correlationId: null, tags: null, cancellationToken).ConfigureAwait(false);
 
         return StartCatalogWorkflowRunResult.Accepted(
             new Models.WorkflowRunAccepted.Source((ref Models.WorkflowRunAccepted.Builder b) => b.Create(
                 runId: runId.Value,
                 status: WorkflowRunStatus.Pending.ToString(),
-                workflowId: catalogVersion.WorkflowId)),
+                workflowId: workflowId)),
             workspace);
     }
 
@@ -484,65 +485,6 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         return list.Count > 0 ? list : null;
     }
 
-    private static Models.CatalogVersionSummary.Source BuildSummary(CatalogVersion version)
-        => new((ref Models.CatalogVersionSummary.Builder b) =>
-        {
-            Models.JsonString.Source description = version.Description is { } d ? (Models.JsonString.Source)d : default;
-            Models.JsonString.Source lastUpdatedBy = version.LastUpdatedBy is { } lub ? (Models.JsonString.Source)lub : default;
-            Models.JsonDateTime.Source lastUpdatedAt = version.LastUpdatedAt is { } lua ? (Models.JsonDateTime.Source)lua : default;
-            Models.JsonString.Source obsoletedBy = version.ObsoletedBy is { } ob ? (Models.JsonString.Source)ob : default;
-            Models.JsonDateTime.Source obsoletedAt = version.ObsoletedAt is { } oa ? (Models.JsonDateTime.Source)oa : default;
-
-            b.Create(
-                baseWorkflowId: version.BaseWorkflowId,
-                createdAt: version.CreatedAt,
-                createdBy: version.CreatedBy,
-                hash: version.Hash,
-                owner: BuildOwner(version.Owner),
-                runnable: version.Runnable,
-                sources: BuildSources(version.Sources),
-                status: version.Status.ToString(),
-                tags: BuildTags(version.Tags),
-                title: version.Title,
-                versionNumber: version.VersionNumber,
-                workflowId: version.WorkflowId,
-                description: description,
-                lastUpdatedAt: lastUpdatedAt,
-                lastUpdatedBy: lastUpdatedBy,
-                obsoletedAt: obsoletedAt,
-                obsoletedBy: obsoletedBy);
-        });
-
-    private static Models.CatalogOwner.Source BuildOwner(CatalogOwner owner)
-        => new((ref Models.CatalogOwner.Builder b) =>
-        {
-            Models.JsonString.Source team = owner.Team is { } t ? (Models.JsonString.Source)t : default;
-            Models.JsonIri.Source url = owner.Url is { } u ? (Models.JsonIri.Source)u : default;
-            b.Create(email: owner.Email, name: owner.Name, team: team, url: url);
-        });
-
-    private static Models.CatalogVersionSummary.CatalogSourceRefArray.Source BuildSources(IReadOnlyList<CatalogSourceRef> sources)
-        => new((ref Models.CatalogVersionSummary.CatalogSourceRefArray.Builder ab) =>
-        {
-            foreach (CatalogSourceRef source in sources)
-            {
-                ab.AddItem(new Models.CatalogSourceRef.Source((ref Models.CatalogSourceRef.Builder cb) =>
-                {
-                    Models.JsonString.Source type = source.Type is { } t ? (Models.JsonString.Source)t : default;
-                    cb.Create(name: source.Name, type: type);
-                }));
-            }
-        });
-
-    private static Models.CatalogVersionSummary.JsonStringArray.Source BuildTags(IReadOnlyList<string> tags)
-        => new((ref Models.CatalogVersionSummary.JsonStringArray.Builder ab) =>
-        {
-            foreach (string tag in tags)
-            {
-                ab.AddItem(tag);
-            }
-        });
-
     private static Models.CatalogPage.Source BuildPage(CatalogPage page)
         => new((ref Models.CatalogPage.Builder b) =>
         {
@@ -553,7 +495,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
                     {
                         foreach (CatalogVersion version in page.Versions)
                         {
-                            ab.AddItem(BuildSummary(version));
+                            ab.AddItem(Models.CatalogVersionSummary.From(version));
                         }
                     }),
                 nextPageToken: nextPageToken);

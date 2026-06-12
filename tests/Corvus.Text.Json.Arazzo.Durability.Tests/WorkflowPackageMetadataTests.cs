@@ -46,7 +46,7 @@ public class WorkflowPackageMetadataTests
         var store = new InMemoryWorkflowCatalogStore(metadataProvider: new FakeProvider());
         CatalogVersion version = await store.AddAsync("flow", WorkflowPackage.Pack(Workflow("flow"), []), Meta(), default);
 
-        ReadOnlyMemory<byte>? schemas = await store.GetDocumentAsync(version.BaseWorkflowId, version.VersionNumber, WorkflowPackage.SchemasDocumentName, default);
+        ReadOnlyMemory<byte>? schemas = await store.GetDocumentAsync(version.Ref.BaseWorkflowId, version.Ref.VersionNumber, WorkflowPackage.SchemasDocumentName, default);
         schemas.ShouldNotBeNull();
         Encoding.UTF8.GetString(schemas.Value.Span).ShouldContain("\"baked\":true");
     }

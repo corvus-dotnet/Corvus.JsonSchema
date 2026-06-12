@@ -69,12 +69,12 @@ public class HostedWorkflowResumerTests
     {
         var catalog = new InMemoryWorkflowCatalogStore(executorProvider: new WorkflowExecutorProvider());
         CatalogVersion version = await catalog.AddAsync("adopt", Package(), Meta(), default);
-        version.WorkflowId.ShouldBe("adopt-v1");
-        version.Runnable.ShouldBeTrue();
+        version.Ref.WorkflowId.ShouldBe("adopt-v1");
+        ((bool)version.Runnable).ShouldBeTrue();
 
         var runStore = new InMemoryWorkflowStateStore();
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
-        using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", version.WorkflowId, inputs.RootElement);
+        using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", version.Ref.WorkflowId, inputs.RootElement);
 
         var transport = new MockApiTransport();
         transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");

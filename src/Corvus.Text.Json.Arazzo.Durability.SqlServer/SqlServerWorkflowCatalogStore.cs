@@ -173,7 +173,7 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore
         {
             versions.RemoveAt(versions.Count - 1);
             CatalogVersion last = versions[^1];
-            continuation = WorkflowContinuationToken.Encode(SortKey(last.BaseWorkflowId, last.VersionNumber));
+            continuation = WorkflowContinuationToken.Encode(SortKey(last.Ref.BaseWorkflowId, last.Ref.VersionNumber));
         }
 
         return new CatalogPage(versions, continuation);
@@ -185,19 +185,20 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         CatalogVersion? current = await ReadOneAsync(connection, baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
-        if (current is null)
+        if (current is not { } cur)
         {
             return null;
         }
 
-        CatalogStatus status = patch.Status ?? current.Status;
-        bool newlyObsolete = status == CatalogStatus.Obsolete && current.Status != CatalogStatus.Obsolete;
-        bool reactivated = status == CatalogStatus.Active && current.Status == CatalogStatus.Obsolete;
+        CatalogStatus currentStatus = cur.StatusValue;
+        CatalogStatus status = patch.Status ?? currentStatus;
+        bool newlyObsolete = status == CatalogStatus.Obsolete && currentStatus != CatalogStatus.Obsolete;
+        bool reactivated = status == CatalogStatus.Active && currentStatus == CatalogStatus.Obsolete;
 
-        CatalogOwner owner = patch.Owner ?? current.Owner;
-        IReadOnlyList<string> tags = patch.Tags is { } t ? [.. t] : current.Tags;
-        string? obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedBy;
-        DateTimeOffset? obsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAt;
+        CatalogOwner owner = patch.Owner ?? cur.OwnerValue;
+        IReadOnlyList<string> tags = patch.Tags is { } t ? [.. t] : cur.TagsValue;
+        string? obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : cur.ObsoletedByOrNull;
+        DateTimeOffset? obsoletedAt = newlyObsolete ? now : reactivated ? null : cur.ObsoletedAtValue;
 
         await using SqlCommand update = connection.CreateCommand();
         update.CommandText =
@@ -221,16 +222,7 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore
         update.Parameters.Add(NullableBigint("@obsoletedAt", obsoletedAt?.ToUnixTimeMilliseconds()));
         await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
 
-        return current with
-        {
-            Owner = owner,
-            Tags = tags,
-            Status = status,
-            LastUpdatedBy = patch.UpdatedBy,
-            LastUpdatedAt = now,
-            ObsoletedBy = obsoletedBy,
-            ObsoletedAt = obsoletedAt,
-        };
+        return await ReadOneAsync(connection, baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -293,28 +285,28 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore
     }
 
     private static CatalogVersion ReadVersion(SqlDataReader reader)
-        => new(
-            BaseWorkflowId: reader.GetString(0),
-            VersionNumber: reader.GetInt32(1),
-            WorkflowId: reader.GetString(2),
-            Title: reader.GetString(3),
-            Description: reader.IsDBNull(4) ? null : reader.GetString(4),
-            Status: Enum.Parse<CatalogStatus>(reader.GetString(5)),
-            Tags: DecodeTags(reader.IsDBNull(6) ? null : reader.GetString(6)) ?? [],
-            Owner: new CatalogOwner(
+        => CatalogVersion.Create(
+            baseWorkflowId: reader.GetString(0),
+            versionNumber: reader.GetInt32(1),
+            workflowId: reader.GetString(2),
+            title: reader.GetString(3),
+            description: reader.IsDBNull(4) ? null : reader.GetString(4),
+            status: Enum.Parse<CatalogStatus>(reader.GetString(5)),
+            tags: DecodeTags(reader.IsDBNull(6) ? null : reader.GetString(6)) ?? [],
+            owner: new CatalogOwner(
                 reader.GetString(7),
                 reader.GetString(8),
                 reader.IsDBNull(9) ? null : reader.GetString(9),
                 reader.IsDBNull(10) ? null : reader.GetString(10)),
-            Sources: DecodeSources(reader.IsDBNull(11) ? null : reader.GetString(11)),
-            Hash: reader.GetString(12),
-            CreatedBy: reader.GetString(13),
-            CreatedAt: DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(14)),
-            LastUpdatedBy: reader.IsDBNull(15) ? null : reader.GetString(15),
-            LastUpdatedAt: reader.IsDBNull(16) ? null : DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(16)),
-            ObsoletedBy: reader.IsDBNull(17) ? null : reader.GetString(17),
-            ObsoletedAt: reader.IsDBNull(18) ? null : DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(18)),
-            Runnable: reader.GetBoolean(19));
+            sources: DecodeSources(reader.IsDBNull(11) ? null : reader.GetString(11)),
+            hash: reader.GetString(12),
+            createdBy: reader.GetString(13),
+            createdAt: DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(14)),
+            lastUpdatedBy: reader.IsDBNull(15) ? null : reader.GetString(15),
+            lastUpdatedAt: reader.IsDBNull(16) ? null : DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(16)),
+            obsoletedBy: reader.IsDBNull(17) ? null : reader.GetString(17),
+            obsoletedAt: reader.IsDBNull(18) ? null : DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(18)),
+            runnable: reader.GetBoolean(19));
 
     private static string SortKey(string baseWorkflowId, int versionNumber)
         => string.Create(CultureInfo.InvariantCulture, $"{baseWorkflowId}{versionNumber:D10}");
@@ -402,51 +394,52 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore
 
         CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
         IReadOnlyList<string> tags = metadata.Tags is { Count: > 0 } t ? [.. t] : [];
-        var version = new CatalogVersion(
-            BaseWorkflowId: baseWorkflowId,
-            VersionNumber: versionNumber,
-            WorkflowId: projection.WorkflowId,
-            Title: projection.Title,
-            Description: projection.Description,
-            Status: CatalogStatus.Active,
-            Tags: tags,
-            Owner: metadata.Owner,
-            Sources: projection.Sources,
-            Hash: projection.Hash,
-            CreatedBy: metadata.CreatedBy,
-            CreatedAt: now,
-            Runnable: projection.HasExecutor);
 
+        // Bind the columns directly from the projected/governance source values (no round-trip through the
+        // CatalogVersion document); the document is built once, for the return value.
         await using SqlCommand insert = connection.CreateCommand();
         insert.CommandText =
             $"""
             INSERT INTO CatalogVersions ({ColumnList}, Package)
             VALUES (@baseWorkflowId, @versionNumber, @workflowId, @title, @description, @status, @tags, @ownerName, @ownerEmail, @ownerTeam, @ownerUrl, @sources, @hash, @createdBy, @createdAt, @lastUpdatedBy, @lastUpdatedAt, @obsoletedBy, @obsoletedAt, @runnable, @package);
             """;
-        insert.Parameters.AddWithValue("@baseWorkflowId", version.BaseWorkflowId);
-        insert.Parameters.AddWithValue("@versionNumber", version.VersionNumber);
-        insert.Parameters.AddWithValue("@workflowId", version.WorkflowId);
-        insert.Parameters.AddWithValue("@title", version.Title);
-        insert.Parameters.Add(NullableText("@description", version.Description));
-        insert.Parameters.AddWithValue("@status", version.Status.ToString());
-        insert.Parameters.Add(NullableText("@tags", EncodeTags(version.Tags)));
-        insert.Parameters.AddWithValue("@ownerName", version.Owner.Name);
-        insert.Parameters.AddWithValue("@ownerEmail", version.Owner.Email);
-        insert.Parameters.Add(NullableText("@ownerTeam", version.Owner.Team));
-        insert.Parameters.Add(NullableText("@ownerUrl", version.Owner.Url));
-        insert.Parameters.Add(NullableText("@sources", EncodeSources(version.Sources)));
-        insert.Parameters.AddWithValue("@hash", version.Hash);
-        insert.Parameters.AddWithValue("@createdBy", version.CreatedBy);
-        insert.Parameters.AddWithValue("@createdAt", version.CreatedAt.ToUnixTimeMilliseconds());
+        insert.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
+        insert.Parameters.AddWithValue("@versionNumber", versionNumber);
+        insert.Parameters.AddWithValue("@workflowId", projection.WorkflowId);
+        insert.Parameters.AddWithValue("@title", projection.Title);
+        insert.Parameters.Add(NullableText("@description", projection.Description));
+        insert.Parameters.AddWithValue("@status", nameof(CatalogStatus.Active));
+        insert.Parameters.Add(NullableText("@tags", EncodeTags(tags)));
+        insert.Parameters.AddWithValue("@ownerName", metadata.Owner.Name);
+        insert.Parameters.AddWithValue("@ownerEmail", metadata.Owner.Email);
+        insert.Parameters.Add(NullableText("@ownerTeam", metadata.Owner.Team));
+        insert.Parameters.Add(NullableText("@ownerUrl", metadata.Owner.Url));
+        insert.Parameters.Add(NullableText("@sources", EncodeSources(projection.Sources)));
+        insert.Parameters.AddWithValue("@hash", projection.Hash);
+        insert.Parameters.AddWithValue("@createdBy", metadata.CreatedBy);
+        insert.Parameters.AddWithValue("@createdAt", now.ToUnixTimeMilliseconds());
         insert.Parameters.Add(NullableText("@lastUpdatedBy", null));
         insert.Parameters.Add(NullableBigint("@lastUpdatedAt", null));
         insert.Parameters.Add(NullableText("@obsoletedBy", null));
         insert.Parameters.Add(NullableBigint("@obsoletedAt", null));
-        insert.Parameters.AddWithValue("@runnable", version.Runnable);
+        insert.Parameters.AddWithValue("@runnable", projection.HasExecutor);
         insert.Parameters.AddWithValue("@package", projection.CanonicalPackage.ToArray());
         await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
 
-        return version;
+        return CatalogVersion.Create(
+            baseWorkflowId: baseWorkflowId,
+            versionNumber: versionNumber,
+            workflowId: projection.WorkflowId,
+            title: projection.Title,
+            description: projection.Description,
+            status: CatalogStatus.Active,
+            tags: tags,
+            owner: metadata.Owner,
+            sources: projection.Sources,
+            hash: projection.Hash,
+            createdBy: metadata.CreatedBy,
+            createdAt: now,
+            runnable: projection.HasExecutor);
     }
 
     private async ValueTask<byte[]?> LoadPackageAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
