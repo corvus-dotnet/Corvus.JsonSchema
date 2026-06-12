@@ -36,6 +36,10 @@
     <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo11\Corvus.Text.Json.Arazzo11.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.JsonPath\Corvus.Text.Json.JsonPath.csproj" />
+    <!-- The hosted-workflow contract (IHostedWorkflow) exposes the transport interfaces a generated executor
+         is driven through, so the runtime references the OpenAPI/AsyncAPI runtimes that define them. -->
+    <ProjectReference Include="..\Corvus.Text.Json.OpenApi\Corvus.Text.Json.OpenApi.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.AsyncApi\Corvus.Text.Json.AsyncApi.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />

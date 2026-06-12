@@ -1124,6 +1124,13 @@ public static class WorkflowExecutorEmitter
         writer.AppendLine("    }");
         writer.AppendLine("}");
 
+        // The durable shape also emits a non-generic host adapter implementing IHostedWorkflow, so an
+        // execution host can load and run the workflow without referencing its generated input/output types.
+        if (options.Durable)
+        {
+            AppendHostAdapter(writer, options, workflowId, needsMessageTransport);
+        }
+
         // Sibling types (ahead-of-time-compiled jsonpath query classes) live after the executor class
         // in the same namespace.
         if (auxiliaryTypes.Length > 0)
@@ -1133,6 +1140,45 @@ public static class WorkflowExecutorEmitter
         }
 
         return writer.ToString();
+    }
+
+    /// <summary>
+    /// Emits the non-generic host adapter — a <c>sealed class {ClassName}Host : IHostedWorkflow</c> that an
+    /// execution host activates (via the manifest's <c>entryType</c>) to run the workflow without the
+    /// generated input/output types: it advertises a <see cref="WorkflowDescriptor"/>, parses the run's
+    /// inputs, delegates to the static durable <c>ExecuteAsync</c>, and returns the tri-state outcome.
+    /// </summary>
+    private static void AppendHostAdapter(StringBuilder writer, in WorkflowExecutorOptions options, string workflowId, bool needsMessageTransport)
+    {
+        IReadOnlyList<string> sources = options.Sources ?? [];
+        string sourcesList = string.Join(", ", sources.Select(EmitText.Quote));
+        string messageTransportArgument = needsMessageTransport ? "messageTransport!, " : string.Empty;
+        bool typedInputs = !string.Equals(options.InputsTypeName, "Corvus.Text.Json.JsonElement", StringComparison.Ordinal);
+        string inputsArgument = typedInputs ? "typedInputs" : "inputs";
+
+        writer.AppendLine();
+        writer.Append("/// <summary>Host adapter for the '").Append(workflowId).AppendLine("' workflow — the non-generic IHostedWorkflow an execution host loads and runs.</summary>");
+        writer.Append("public sealed class ").Append(options.ClassName).AppendLine("Host : IHostedWorkflow");
+        writer.AppendLine("{");
+        writer.AppendLine("    /// <inheritdoc/>");
+        writer.Append("    public WorkflowDescriptor Descriptor { get; } = new(")
+            .Append(EmitText.Quote(workflowId)).Append(", ").Append(needsMessageTransport ? "true" : "false")
+            .Append(", [").Append(sourcesList).AppendLine("]);");
+        writer.AppendLine();
+        writer.AppendLine("    /// <inheritdoc/>");
+        writer.AppendLine("    public async ValueTask<WorkflowRunResultKind> RunAsync(IApiTransport transport, IMessageTransport? messageTransport, JsonWorkspace workspace, JsonElement inputs, IWorkflowRun run, CancellationToken cancellationToken)");
+        writer.AppendLine("    {");
+        if (typedInputs)
+        {
+            writer.Append("        ").Append(options.InputsTypeName).Append(" typedInputs = ").Append(options.InputsTypeName).AppendLine(".From(inputs);");
+        }
+
+        writer.Append("        WorkflowRunResult<").Append(options.OutputsTypeName).Append("> result = await ").Append(options.ClassName)
+            .Append(".ExecuteAsync(transport, ").Append(messageTransportArgument).Append("workspace, ").Append(inputsArgument)
+            .AppendLine(", run, cancellationToken).ConfigureAwait(false);");
+        writer.AppendLine("        return result.Kind;");
+        writer.AppendLine("    }");
+        writer.AppendLine("}");
     }
 }
 
@@ -1156,6 +1202,10 @@ public static class WorkflowExecutorEmitter
 /// complete with the final outputs. A <see langword="null"/> run behaves exactly like the non-durable form,
 /// so durability is purely additive.
 /// </param>
+/// <param name="Sources">
+/// The <c>sourceDescriptions</c> names the document declares, surfaced on the durable host adapter's
+/// <see cref="WorkflowDescriptor"/> so an execution host can resolve a transport binding per source.
+/// </param>
 public readonly record struct WorkflowExecutorOptions(
     string Namespace,
     string ClassName,
@@ -1163,7 +1213,8 @@ public readonly record struct WorkflowExecutorOptions(
     string OutputsTypeName,
     IReadOnlyDictionary<string, string>? InputAccessors = null,
     bool Durable = false,
-    IReadOnlyDictionary<string, string>? SubWorkflowSourceNamespaces = null);
+    IReadOnlyDictionary<string, string>? SubWorkflowSourceNamespaces = null,
+    IReadOnlyList<string>? Sources = null);
 
 /// <summary>The control-flow effect of an Arazzo success/failure action.</summary>
 internal enum StepActionKind

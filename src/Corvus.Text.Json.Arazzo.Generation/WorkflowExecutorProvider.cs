@@ -181,7 +181,9 @@ public sealed class WorkflowExecutorProvider : IWorkflowExecutorProvider
             this.progress?.Invoke($"Compiling {generatedCode.Count} generated file(s)...");
             byte[] assembly = DynamicCompiler.CompileToAssemblyBytes(generatedCode, typeof(WorkflowExecutorProvider).Assembly);
 
-            string entryType = $"{RootNamespace}.{WorkflowsNamespaceSuffix}.{ToPascalCase(workflowId)}Workflow";
+            // A durable build emits a host adapter ({ClassName}Host : IHostedWorkflow) the runner activates;
+            // a non-durable build has only the static executor class.
+            string entryType = $"{RootNamespace}.{WorkflowsNamespaceSuffix}.{ToPascalCase(workflowId)}Workflow{(this.durable ? "Host" : string.Empty)}";
             byte[] manifest = BuildManifest(assembly, packageHash, workflowId, entryType, this.durable, sourceRefs);
 
             this.progress?.Invoke($"Executor built for '{workflowId}' ({assembly.Length} bytes).");
