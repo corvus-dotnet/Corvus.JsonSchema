@@ -16,12 +16,15 @@ namespace Corvus.Text.Json.Arazzo.Durability.Redis;
 /// Targets a single Redis instance (or a primary): the index-maintenance Lua touches several keys derived
 /// from the run, which is not Redis-Cluster slot-safe. Create instances with <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> (or <see cref="Connect(StackExchange.Redis.IConnectionMultiplexer, TimeProvider?)"/>).
 /// </remarks>
-public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IAsyncDisposable
+public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, IAsyncDisposable
 {
     private const string Prefix = "arazzo:";
     private const string AllKey = Prefix + "runs";
     private const string DueKey = Prefix + "due";
+    private const string RunKeyPrefix = Prefix + "run:";
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
+    private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
+    private const string RunningStatus = nameof(WorkflowRunStatus.Running);
 
     // Create-or-update under optimistic concurrency, maintaining the all/due/awaiting indexes. Returns the new
     // version, or -1 on an etag conflict. KEYS: run hash, all-set, due-zset. ARGV: id, expected ("" = create),
@@ -258,6 +261,50 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     }
 
     /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
+        if (hostedWorkflowIds.Count == 0)
+        {
+            yield break;
+        }
+
+        var hosted = new HashSet<string>(hostedWorkflowIds, StringComparer.Ordinal);
+        long nowMs = now.ToUnixTimeMilliseconds();
+
+        // Redis has no server-side status query, so SCAN the run hashes and filter client-side.
+        IServer server = this.connection.GetServer(this.connection.GetEndPoints()[0]);
+        await foreach (RedisKey key in server.KeysAsync(pattern: RunKeyPrefix + "*").WithCancellation(cancellationToken).ConfigureAwait(false))
+        {
+            string id = ((string)key!)[RunKeyPrefix.Length..];
+
+            RedisValue[] fields = await this.database.HashGetAsync(RunKey(id), ["status", "workflow_id"]).ConfigureAwait(false);
+            RedisValue status = fields[0];
+            RedisValue workflowId = fields[1];
+            if (workflowId.IsNull || !hosted.Contains((string)workflowId!))
+            {
+                continue;
+            }
+
+            if (status == PendingStatus)
+            {
+                yield return new WorkflowRunId(id);
+                continue;
+            }
+
+            if (status == RunningStatus)
+            {
+                RedisValue exp = await this.database.HashGetAsync(LeaseKey(id), "expires_at").ConfigureAwait(false);
+                bool leaseLive = !exp.IsNull && (long)exp > nowMs;
+                if (!leaseLive)
+                {
+                    yield return new WorkflowRunId(id);
+                }
+            }
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
     {
         // Redis has no server-side ordering over the run set, so sort the ids and keyset-page client-side.
@@ -357,7 +404,7 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         }
     }
 
-    private static RedisKey RunKey(string id) => Prefix + "run:" + id;
+    private static RedisKey RunKey(string id) => RunKeyPrefix + id;
 
     private static RedisKey LeaseKey(string id) => Prefix + "lease:" + id;
 

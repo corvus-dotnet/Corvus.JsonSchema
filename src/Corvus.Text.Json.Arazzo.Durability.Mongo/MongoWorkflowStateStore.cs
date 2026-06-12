@@ -18,9 +18,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.Mongo;
 /// The driver pools connections internally, so the store is naturally concurrent. Create instances with
 /// <see cref="ConnectAsync(string, string, TimeProvider?, CancellationToken)"/> after provisioning with <see cref="PrepareAsync(string, string, CancellationToken)"/>.
 /// </remarks>
-public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IAsyncDisposable
+public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, IAsyncDisposable
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
+    private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
+    private const string RunningStatus = nameof(WorkflowRunStatus.Running);
 
     private readonly IMongoClient client;
     private readonly TimeProvider timeProvider;
@@ -269,6 +271,63 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     }
 
     /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
+        if (hostedWorkflowIds.Count == 0)
+        {
+            yield break;
+        }
+
+        FilterDefinitionBuilder<BsonDocument> b = Builders<BsonDocument>.Filter;
+        FilterDefinition<BsonDocument> filter = b.And(
+            b.In("status", new[] { PendingStatus, RunningStatus }),
+            b.In("workflowId", hostedWorkflowIds));
+
+        // Buffer the candidates so we can run the leases query without yielding inside the cursor.
+        var candidates = new List<(string Id, string Status)>();
+        bool anyRunning = false;
+        using (IAsyncCursor<BsonDocument> cursor = await this.runs.Find(filter).Project(IdAndStatus).ToCursorAsync(cancellationToken).ConfigureAwait(false))
+        {
+            while (await cursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
+            {
+                foreach (BsonDocument document in cursor.Current)
+                {
+                    string status = document["status"].AsString;
+                    if (status == RunningStatus)
+                    {
+                        anyRunning = true;
+                    }
+
+                    candidates.Add((document["_id"].AsString, status));
+                }
+            }
+        }
+
+        var heldRunIds = new HashSet<string>();
+        if (anyRunning)
+        {
+            FilterDefinition<BsonDocument> leaseFilter = Builders<BsonDocument>.Filter.Gt("expiresAt", now.ToUnixTimeMilliseconds());
+            using IAsyncCursor<BsonDocument> leaseCursor = await this.leases.Find(leaseFilter).Project(IdOnly).ToCursorAsync(cancellationToken).ConfigureAwait(false);
+            while (await leaseCursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
+            {
+                foreach (BsonDocument document in leaseCursor.Current)
+                {
+                    heldRunIds.Add(document["_id"].AsString);
+                }
+            }
+        }
+
+        foreach ((string id, string status) in candidates)
+        {
+            if (status == PendingStatus || (status == RunningStatus && !heldRunIds.Contains(id)))
+            {
+                yield return new WorkflowRunId(id);
+            }
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
     {
         FilterDefinitionBuilder<BsonDocument> b = Builders<BsonDocument>.Filter;
@@ -356,6 +415,8 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     }
 
     private static readonly ProjectionDefinition<BsonDocument> IdOnly = Builders<BsonDocument>.Projection.Include("_id");
+
+    private static readonly ProjectionDefinition<BsonDocument> IdAndStatus = Builders<BsonDocument>.Projection.Include("_id").Include("status");
 
     private static BsonDocument BuildDocument(WorkflowRunId id, byte[] checkpoint, in WorkflowRunIndexEntry index, long version) => new()
     {

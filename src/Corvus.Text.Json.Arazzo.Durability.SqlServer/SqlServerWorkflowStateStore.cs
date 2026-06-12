@@ -19,9 +19,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.SqlServer;
 /// Each operation opens a pooled connection, so the store is naturally concurrent. Create instances with
 /// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> after provisioning with <see cref="PrepareAsync(string, CancellationToken)"/>.
 /// </remarks>
-public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex
+public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
+    private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
+    private const string RunningStatus = nameof(WorkflowRunStatus.Running);
     private const int UniqueConstraintViolation = 2627;
     private const int DuplicateKeyViolation = 2601;
 
@@ -228,6 +230,46 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
         select.Parameters.AddWithValue("@status", SuspendedStatus);
         select.Parameters.AddWithValue("@channel", channel);
         select.Parameters.Add(NullableText("@correlation_id", correlationId));
+        await using SqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        {
+            yield return new WorkflowRunId(reader.GetString(0));
+        }
+    }
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
+        if (hostedWorkflowIds.Count == 0)
+        {
+            yield break;
+        }
+
+        var ids = new List<string>(hostedWorkflowIds);
+        var placeholders = new string[ids.Count];
+        for (int i = 0; i < ids.Count; i++)
+        {
+            placeholders[i] = "@w" + i.ToString(CultureInfo.InvariantCulture);
+        }
+
+        await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using SqlCommand select = connection.CreateCommand();
+        select.CommandText =
+            $"""
+            SELECT r.run_id FROM workflow_runs r
+            LEFT JOIN workflow_leases l ON l.run_id = r.run_id
+            WHERE r.workflow_id IN ({string.Join(", ", placeholders)})
+              AND (r.status = @pending OR (r.status = @running AND (l.run_id IS NULL OR l.expires_at <= @now)));
+            """;
+        select.Parameters.AddWithValue("@pending", PendingStatus);
+        select.Parameters.AddWithValue("@running", RunningStatus);
+        select.Parameters.AddWithValue("@now", now.ToUnixTimeMilliseconds());
+        for (int i = 0; i < ids.Count; i++)
+        {
+            select.Parameters.AddWithValue(placeholders[i], ids[i]);
+        }
+
         await using SqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {

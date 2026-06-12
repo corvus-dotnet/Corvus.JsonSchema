@@ -220,6 +220,34 @@ public abstract class WorkflowStateStoreConformance
     }
 
     [TestMethod]
+    public async Task QueryClaimable_returns_pending_and_lease_expired_running_for_hosted_workflows()
+    {
+        var clock = new TestClock(T0);
+        IWorkflowStateStore store = await this.NewStoreAsync(clock);
+        var index = (IWorkflowDispatchIndex)store;
+
+        await store.SaveAsync("pending", Bytes("a"), Index(WorkflowRunStatus.Pending), WorkflowEtag.None, default);
+        await store.SaveAsync("orphan", Bytes("a"), Index(WorkflowRunStatus.Running), WorkflowEtag.None, default);
+        await store.SaveAsync("held", Bytes("a"), Index(WorkflowRunStatus.Running), WorkflowEtag.None, default);
+        await store.AcquireLeaseAsync("held", "other-runner", TimeSpan.FromMinutes(5), default);
+        await store.SaveAsync("done", Bytes("a"), Index(WorkflowRunStatus.Completed), WorkflowEtag.None, default);
+        await store.SaveAsync("unhosted", Bytes("a"), new WorkflowRunIndexEntry("other-wf", WorkflowRunStatus.Pending, T0, T0), WorkflowEtag.None, default);
+
+        // At T0 the held lease (expires at T0+5m) is still live, so that run is not claimable; the fresh
+        // Pending run and the unleased Running orphan are. The completed and unhosted runs never are.
+        List<string> claimable = (await Collect(index.QueryClaimableAsync(["wf"], T0, default))).Select(r => r.Value).ToList();
+        claimable.ShouldContain("pending");
+        claimable.ShouldContain("orphan");
+        claimable.ShouldNotContain("held");
+        claimable.ShouldNotContain("done");
+        claimable.ShouldNotContain("unhosted");
+
+        // Once the lease has expired, the previously-held Running run becomes a claimable orphan.
+        List<string> afterExpiry = (await Collect(index.QueryClaimableAsync(["wf"], T0 + TimeSpan.FromMinutes(6), default))).Select(r => r.Value).ToList();
+        afterExpiry.ShouldContain("held");
+    }
+
+    [TestMethod]
     public async Task Query_filters_by_status_and_workflow()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
