@@ -65,17 +65,21 @@ public static partial class CatalogPackage
     /// <param name="metadataProvider">An optional provider that precomputes the typed schema-metadata document
     /// baked into the canonical package (<see cref="WorkflowPackage.SchemasEntryName"/>); <see langword="null"/>
     /// to omit it. The content hash is unaffected (it covers only the workflow + sources).</param>
+    /// <param name="executorProvider">An optional provider that compiles the workflow executor assembly baked
+    /// into the canonical package (<see cref="WorkflowPackage.ExecutorEntryName"/> + manifest);
+    /// <see langword="null"/> to omit it. The content hash is unaffected.</param>
     /// <returns>The projection (canonical package archive bytes, versioned id, hash, title, description, sources).</returns>
-    public static CatalogPackageProjection Project(ReadOnlyMemory<byte> packageZip, string baseWorkflowId, int versionNumber, IWorkflowMetadataProvider? metadataProvider = null)
+    public static CatalogPackageProjection Project(ReadOnlyMemory<byte> packageZip, string baseWorkflowId, int versionNumber, IWorkflowMetadataProvider? metadataProvider = null, IWorkflowExecutorProvider? executorProvider = null)
     {
         ArgumentNullException.ThrowIfNull(baseWorkflowId);
         string workflowId = $"{baseWorkflowId}-v{versionNumber.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
 
         WorkflowPackageContents contents = WorkflowPackage.Open(packageZip);
         byte[] rewrittenWorkflow = RewriteWorkflowId(contents.Workflow, workflowId);
-        ReadOnlyMemory<byte> schemas = metadataProvider?.BuildSchemas(rewrittenWorkflow, contents.Sources) ?? default;
-        byte[] canonicalPackage = WorkflowPackage.Pack(rewrittenWorkflow, contents.Sources, schemas);
         string hash = WorkflowPackage.ComputeContentHash(rewrittenWorkflow, contents.Sources);
+        ReadOnlyMemory<byte> schemas = metadataProvider?.BuildSchemas(rewrittenWorkflow, contents.Sources) ?? default;
+        WorkflowExecutorArtifact? executor = executorProvider?.BuildExecutor(rewrittenWorkflow, contents.Sources, hash);
+        byte[] canonicalPackage = WorkflowPackage.Pack(rewrittenWorkflow, contents.Sources, schemas, executor?.Assembly ?? default, executor?.Manifest ?? default);
 
         string title;
         string? description;
