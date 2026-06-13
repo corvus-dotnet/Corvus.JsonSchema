@@ -606,10 +606,11 @@ trusted system layer the dispatcher, runner, and integrity checks use and which 
   the policy over a `SecurityShell`.
 - **Reads are scoped; single-row access is gated.** List/search apply `ReadReach` in the store query; get and
   every catalog document endpoint return `null` (→ **404**, non-disclosing) for a row outside `ReadReach`.
-- **Writes gate write reach.** Resume/cancel/delete/update gate `WriteReach` *before* acting. A row outside read
-  reach, or readable-but-outside-write-reach, is reported **404** (non-disclosing). A distinct **403** for
-  read-but-not-write is more honest but needs the OpenAPI contract to declare 403 on those operations
-  (regenerate the result types) — noted as a follow-up; 404 is the safe interim.
+- **Writes gate write reach, with 403 vs 404.** Resume/cancel/delete/update gate `WriteReach` *before* acting. A
+  row outside **read** reach is **404** (non-disclosing — you cannot tell it exists). A row you *can* read but
+  cannot write is **403 Forbidden** (its existence is already disclosed by the read, so masking it as 404 would
+  be dishonest). The OpenAPI contract declares 403 (a `Forbidden` response) on resumeRun/cancelRun/deleteRun/
+  updateCatalogVersion/deleteCatalogVersion, and the handlers return it via the generated result type.
 - **Creation stamps internal tags.** Adding a catalog version stamps the deployment's internal tags (e.g. the
   principal's tenant, §14.3) onto it; triggered runs inherit the version's labels.
 - **Purge is row-scoped by `PurgeReach`, orthogonal to the purge capability.** The `runs:purge` *scope* (§14.1)
