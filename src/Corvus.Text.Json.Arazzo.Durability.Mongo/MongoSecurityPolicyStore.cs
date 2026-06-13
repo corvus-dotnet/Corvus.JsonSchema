@@ -2,11 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using System.Globalization;
-using System.Text;
-using System.Text.RegularExpressions;
-using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -23,33 +19,6 @@ namespace Corvus.Text.Json.Arazzo.Durability.Mongo;
 public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisposable
 {
     private const string MetaId = "meta";
-
-    // Singleton comparers (created once) for the client-side snapshot ordering, since the queries do not order: rules by
-    // their name and bindings by Order then id.
-    private static readonly IComparer<ParsedJsonDocument<SecurityRuleDocument>> ByRuleName =
-        Comparer<ParsedJsonDocument<SecurityRuleDocument>>.Create(static (a, b) =>
-        {
-            // Compare the name's unescaped UTF-8 bytes (zero-alloc view) rather than realizing two managed strings; this is
-            // also the COLLATE "C"/binary ordering the SQL backends key on.
-            using UnescapedUtf8JsonString aName = a.RootElement.Name.GetUtf8String();
-            using UnescapedUtf8JsonString bName = b.RootElement.Name.GetUtf8String();
-            return aName.Span.SequenceCompareTo(bName.Span);
-        });
-
-    private static readonly IComparer<ParsedJsonDocument<SecurityBindingDocument>> ByBindingOrder =
-        Comparer<ParsedJsonDocument<SecurityBindingDocument>>.Create(static (a, b) =>
-        {
-            if (a.RootElement.OrderValue != b.RootElement.OrderValue)
-            {
-                return a.RootElement.OrderValue.CompareTo(b.RootElement.OrderValue);
-            }
-
-            // Compare the id's unescaped UTF-8 bytes (zero-alloc view) rather than realizing two managed strings; this is
-            // also the COLLATE "C"/binary ordering the SQL backends key on.
-            using UnescapedUtf8JsonString aId = a.RootElement.Id.GetUtf8String();
-            using UnescapedUtf8JsonString bId = b.RootElement.Id.GetUtf8String();
-            return aId.Span.SequenceCompareTo(bId.Span);
-        });
 
     private readonly IMongoClient client;
     private readonly bool ownsClient;
@@ -97,15 +66,13 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>> AddRuleAsync(string name, SecurityRuleDocument draft, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityRuleRecord> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
+        ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
         ArgumentNullException.ThrowIfNull(actor);
-        WorkflowEtag etag = NewEtag();
-        byte[] json = SecurityPolicySerialization.SerializeNewRule(name, draft, actor, this.timeProvider.GetUtcNow(), etag);
-
-        // Mirror the q-searched expression top-level (the name is _id) so q runs server-side; _id is the keyset.
-        var document = new BsonDocument { ["_id"] = name, ["expression"] = draft.ExpressionValue, ["doc"] = new BsonBinaryData(json) };
+        var record = new SecurityRuleRecord(name, definition.Expression, definition.Description, actor, this.timeProvider.GetUtcNow(), null, null, NewEtag());
+        var document = new BsonDocument { ["_id"] = name, ["doc"] = new BsonBinaryData(SecurityRuleDocument.From(record).ToJsonBytes()) };
         try
         {
             await this.rules.InsertOneAsync(document, options: null, cancellationToken).ConfigureAwait(false);
@@ -116,78 +83,26 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         }
 
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return PersistedJson.ToPooledDocument<SecurityRuleDocument>(json);
+        return record;
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> GetRuleAsync(string name, CancellationToken cancellationToken)
+    public async ValueTask<SecurityRuleRecord?> GetRuleAsync(string name, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
         byte[]? doc = await DocumentAsync(this.rules, name, cancellationToken).ConfigureAwait(false);
-        return doc is null ? null : ParsedJsonDocument<SecurityRuleDocument>.Parse(doc.AsMemory());
+        return doc is null ? null : SecurityRuleDocument.FromJson(doc).ToRecord();
     }
 
     /// <inheritdoc/>
-    public ValueTask<PooledDocumentList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
-        => this.ReadRulesAsync(cancellationToken);
+    public async ValueTask<IReadOnlyList<SecurityRuleRecord>> ListRulesAsync(CancellationToken cancellationToken)
+        => await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRulePage> ListRulesAsync(int limit, JsonString pageToken, JsonString q, CancellationToken cancellationToken)
-    {
-        int pageSize = limit > 0 ? limit : SecurityRulePage.DefaultPageSize;
-        string? after = DecodeRuleCursor(pageToken);
-
-        // _id is the name (the keyset); BSON compares strings by bytes (ordinal == the in-memory pager). q matches the name
-        // (_id) or the mirrored expression field via a case-insensitive literal-substring regex.
-        var b = Builders<BsonDocument>.Filter;
-        FilterDefinition<BsonDocument> filter = b.Empty;
-        if (after is not null)
-        {
-            filter &= b.Gt("_id", after);
-        }
-
-        if (q.IsNotUndefined())
-        {
-            var rx = new BsonRegularExpression(Regex.Escape((string)q), "i");
-            filter &= b.Or(b.Regex("_id", rx), b.Regex("expression", rx));
-        }
-
-        var page = new PooledDocumentList<SecurityRuleDocument>(pageSize);
-        try
-        {
-            List<BsonDocument> documents = await this.rules
-                .Find(filter)
-                .Sort(Builders<BsonDocument>.Sort.Ascending("_id"))
-                .Limit(pageSize + 1)
-                .ToListAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-            bool hasMore = documents.Count > pageSize;
-            int take = hasMore ? pageSize : documents.Count;
-            for (int i = 0; i < take; i++)
-            {
-                page.Add(ParsedJsonDocument<SecurityRuleDocument>.Parse(documents[i]["doc"].AsBsonBinaryData.Bytes.AsMemory()));
-            }
-
-            if (!hasMore)
-            {
-                return SecurityRulePage.Create(page);
-            }
-
-            using UnescapedUtf8JsonString lastName = page[page.Count - 1].Name.GetUtf8String();
-            return SecurityRulePage.Create(page, lastName.Span);
-        }
-        catch
-        {
-            page.Dispose();
-            throw;
-        }
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityRuleRecord?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
+        ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
         ArgumentNullException.ThrowIfNull(actor);
         byte[]? doc = await DocumentAsync(this.rules, name, cancellationToken).ConfigureAwait(false);
         if (doc is null)
@@ -195,104 +110,56 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
             return null;
         }
 
-        WorkflowEtag etag = NewEtag();
-        using ParsedJsonDocument<SecurityRuleDocument> current = ParsedJsonDocument<SecurityRuleDocument>.Parse(doc.AsMemory());
-        byte[] json = SecurityPolicySerialization.SerializeUpdatedRule(current.RootElement, "rule", name, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), etag);
-        var replacement = new BsonDocument { ["_id"] = name, ["expression"] = draft.ExpressionValue, ["doc"] = new BsonBinaryData(json) };
+        SecurityRuleRecord current = SecurityRuleDocument.FromJson(doc).ToRecord();
+        EnsureEtag("rule", name, expectedEtag, current.Etag);
+        var updated = current with
+        {
+            Expression = definition.Expression,
+            Description = definition.Description,
+            UpdatedBy = actor,
+            UpdatedAt = this.timeProvider.GetUtcNow(),
+            Etag = NewEtag(),
+        };
+        var replacement = new BsonDocument { ["_id"] = name, ["doc"] = new BsonBinaryData(SecurityRuleDocument.From(updated).ToJsonBytes()) };
         await this.rules.ReplaceOneAsync(Builders<BsonDocument>.Filter.Eq("_id", name), replacement, cancellationToken: cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return PersistedJson.ToPooledDocument<SecurityRuleDocument>(json);
+        return updated;
     }
 
     /// <inheritdoc/>
     public ValueTask<bool> DeleteRuleAsync(string name, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
-        => this.DeleteAsync(this.rules, "rule", name, expectedEtag, SecurityPolicySerialization.RuleEtagOf, cancellationToken);
+        => this.DeleteAsync(this.rules, "rule", name, expectedEtag, doc => SecurityRuleDocument.FromJson(doc).ToRecord().Etag, cancellationToken);
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>> AddBindingAsync(SecurityBindingDocument draft, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityBinding> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
     {
+        ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
-        WorkflowEtag etag = NewEtag();
-        byte[] json = SecurityPolicySerialization.SerializeNewBinding(id, draft, actor, this.timeProvider.GetUtcNow(), etag);
-        BsonDocument document = BindingDocument(id, draft, json);
+        var record = new SecurityBinding(id, definition.ClaimType, definition.ClaimValue, definition.Read, definition.Write, definition.Purge, definition.Order, definition.Description, actor, this.timeProvider.GetUtcNow(), null, null, NewEtag());
+        var document = new BsonDocument { ["_id"] = id, ["doc"] = new BsonBinaryData(SecurityBindingDocument.From(record).ToJsonBytes()) };
         await this.bindings.InsertOneAsync(document, options: null, cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return PersistedJson.ToPooledDocument<SecurityBindingDocument>(json);
+        return record;
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> GetBindingAsync(string id, CancellationToken cancellationToken)
+    public async ValueTask<SecurityBinding?> GetBindingAsync(string id, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         byte[]? doc = await DocumentAsync(this.bindings, id, cancellationToken).ConfigureAwait(false);
-        return doc is null ? null : ParsedJsonDocument<SecurityBindingDocument>.Parse(doc.AsMemory());
+        return doc is null ? null : SecurityBindingDocument.FromJson(doc).ToRecord();
     }
 
     /// <inheritdoc/>
-    public ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
-        => this.ReadBindingsAsync(cancellationToken);
+    public async ValueTask<IReadOnlyList<SecurityBinding>> ListBindingsAsync(CancellationToken cancellationToken)
+        => await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBindingPage> ListBindingsAsync(int limit, JsonString pageToken, JsonString q, CancellationToken cancellationToken)
-    {
-        int pageSize = limit > 0 ? limit : SecurityBindingPage.DefaultPageSize;
-        bool hasCursor = DecodeBindingCursor(pageToken, out int cursorOrder, out string? cursorId);
-
-        // Keyset (order, _id): the mirrored order field then _id (BSON byte order == the in-memory pager). q matches the
-        // mirrored claimType/claimValue/description via a case-insensitive literal-substring regex.
-        var b = Builders<BsonDocument>.Filter;
-        FilterDefinition<BsonDocument> filter = b.Empty;
-        if (hasCursor)
-        {
-            filter &= b.Or(
-                b.Gt("order", cursorOrder),
-                b.And(b.Eq("order", cursorOrder), b.Gt("_id", cursorId)));
-        }
-
-        if (q.IsNotUndefined())
-        {
-            var rx = new BsonRegularExpression(Regex.Escape((string)q), "i");
-            filter &= b.Or(b.Regex("claimType", rx), b.Regex("claimValue", rx), b.Regex("description", rx));
-        }
-
-        var page = new PooledDocumentList<SecurityBindingDocument>(pageSize);
-        try
-        {
-            List<BsonDocument> documents = await this.bindings
-                .Find(filter)
-                .Sort(Builders<BsonDocument>.Sort.Ascending("order").Ascending("_id"))
-                .Limit(pageSize + 1)
-                .ToListAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-            bool hasMore = documents.Count > pageSize;
-            int take = hasMore ? pageSize : documents.Count;
-            for (int i = 0; i < take; i++)
-            {
-                page.Add(ParsedJsonDocument<SecurityBindingDocument>.Parse(documents[i]["doc"].AsBsonBinaryData.Bytes.AsMemory()));
-            }
-
-            if (!hasMore)
-            {
-                return SecurityBindingPage.Create(page);
-            }
-
-            SecurityBindingDocument last = page[page.Count - 1];
-            using UnescapedUtf8JsonString lastId = last.Id.GetUtf8String();
-            return SecurityBindingPage.Create(page, last.OrderValue, lastId.Span);
-        }
-        catch
-        {
-            page.Dispose();
-            throw;
-        }
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityBinding?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
+        ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
         byte[]? doc = await DocumentAsync(this.bindings, id, cancellationToken).ConfigureAwait(false);
         if (doc is null)
@@ -300,24 +167,36 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
             return null;
         }
 
-        WorkflowEtag etag = NewEtag();
-        using ParsedJsonDocument<SecurityBindingDocument> current = ParsedJsonDocument<SecurityBindingDocument>.Parse(doc.AsMemory());
-        byte[] json = SecurityPolicySerialization.SerializeUpdatedBinding(current.RootElement, "binding", id, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), etag);
-        BsonDocument replacement = BindingDocument(id, draft, json);
+        SecurityBinding current = SecurityBindingDocument.FromJson(doc).ToRecord();
+        EnsureEtag("binding", id, expectedEtag, current.Etag);
+        var updated = current with
+        {
+            ClaimType = definition.ClaimType,
+            ClaimValue = definition.ClaimValue,
+            Read = definition.Read,
+            Write = definition.Write,
+            Purge = definition.Purge,
+            Order = definition.Order,
+            Description = definition.Description,
+            UpdatedBy = actor,
+            UpdatedAt = this.timeProvider.GetUtcNow(),
+            Etag = NewEtag(),
+        };
+        var replacement = new BsonDocument { ["_id"] = id, ["doc"] = new BsonBinaryData(SecurityBindingDocument.From(updated).ToJsonBytes()) };
         await this.bindings.ReplaceOneAsync(Builders<BsonDocument>.Filter.Eq("_id", id), replacement, cancellationToken: cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return PersistedJson.ToPooledDocument<SecurityBindingDocument>(json);
+        return updated;
     }
 
     /// <inheritdoc/>
     public ValueTask<bool> DeleteBindingAsync(string id, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
-        => this.DeleteAsync(this.bindings, "binding", id, expectedEtag, SecurityPolicySerialization.BindingEtagOf, cancellationToken);
+        => this.DeleteAsync(this.bindings, "binding", id, expectedEtag, doc => SecurityBindingDocument.FromJson(doc).ToRecord().Etag, cancellationToken);
 
     /// <inheritdoc/>
     public async ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
     {
-        PooledDocumentList<SecurityRuleDocument> ruleList = await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
-        PooledDocumentList<SecurityBindingDocument> bindingList = await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<SecurityRuleRecord> ruleList = await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<SecurityBinding> bindingList = await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
         BsonDocument? metaDoc = await this.meta.Find(Builders<BsonDocument>.Filter.Eq("_id", MetaId)).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
         long generation = metaDoc is not null && metaDoc.TryGetValue("generation", out BsonValue value) ? value.ToInt64() : 0;
         return new SecurityPolicySnapshot(ruleList, bindingList, generation);
@@ -336,78 +215,11 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
-    // The stored binding document: _id + the canonical doc, plus the mirrored keyset/q fields (order, claimType, and the
-    // optional claimValue/description when present) so the keyset and q run server-side.
-    private static BsonDocument BindingDocument(string id, SecurityBindingDocument draft, byte[] json)
+    private static void EnsureEtag(string kind, string id, WorkflowEtag expected, WorkflowEtag actual)
     {
-        var document = new BsonDocument
+        if (!expected.IsNone && expected != actual)
         {
-            ["_id"] = id,
-            ["order"] = draft.OrderValue,
-            ["claimType"] = draft.ClaimTypeValue,
-            ["doc"] = new BsonBinaryData(json),
-        };
-        if (draft.ClaimValue.IsNotUndefined())
-        {
-            document["claimValue"] = (string)draft.ClaimValue;
-        }
-
-        if (draft.Description.IsNotUndefined())
-        {
-            document["description"] = (string)draft.Description;
-        }
-
-        return document;
-    }
-
-    // Decodes the keyset cursor (rule name) from the request page token; the name reified to a string only for the _id
-    // filter (the leaf). Undefined = first page.
-    private static string? DecodeRuleCursor(JsonString pageToken)
-    {
-        if (!pageToken.IsNotUndefined())
-        {
-            return null;
-        }
-
-        using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
-        byte[] buffer = ArrayPool<byte>.Shared.Rent(SecurityRuleContinuationToken.GetMaxDecodedLength(tokenUtf8.Span.Length));
-        try
-        {
-            return SecurityRuleContinuationToken.TryDecode(tokenUtf8.Span, buffer, out ReadOnlySpan<byte> nameUtf8)
-                ? Encoding.UTF8.GetString(nameUtf8)
-                : null;
-        }
-        finally
-        {
-            ArrayPool<byte>.Shared.Return(buffer);
-        }
-    }
-
-    // Decodes the keyset cursor (order, id) from the request page token; the id reified to a string only for the _id filter.
-    private static bool DecodeBindingCursor(JsonString pageToken, out int order, out string? id)
-    {
-        order = 0;
-        id = null;
-        if (!pageToken.IsNotUndefined())
-        {
-            return false;
-        }
-
-        using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
-        byte[] buffer = ArrayPool<byte>.Shared.Rent(SecurityBindingContinuationToken.GetMaxDecodedLength(tokenUtf8.Span.Length));
-        try
-        {
-            if (SecurityBindingContinuationToken.TryDecode(tokenUtf8.Span, buffer, out order, out ReadOnlySpan<byte> idUtf8))
-            {
-                id = Encoding.UTF8.GetString(idUtf8);
-                return true;
-            }
-
-            return false;
-        }
-        finally
-        {
-            ArrayPool<byte>.Shared.Return(buffer);
+            throw new SecurityPolicyConflictException(kind, id, expected);
         }
     }
 
@@ -417,29 +229,29 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         return document?["doc"].AsBsonBinaryData.Bytes;
     }
 
-    private async ValueTask<PooledDocumentList<SecurityRuleDocument>> ReadRulesAsync(CancellationToken cancellationToken)
+    private async ValueTask<IReadOnlyList<SecurityRuleRecord>> ReadRulesAsync(CancellationToken cancellationToken)
     {
-        var list = new PooledDocumentList<SecurityRuleDocument>();
+        var list = new List<SecurityRuleRecord>();
         List<BsonDocument> documents = await this.rules.Find(Builders<BsonDocument>.Filter.Empty).ToListAsync(cancellationToken).ConfigureAwait(false);
         foreach (BsonDocument document in documents)
         {
-            list.Add(ParsedJsonDocument<SecurityRuleDocument>.Parse(document["doc"].AsBsonBinaryData.Bytes.AsMemory()));
+            list.Add(SecurityRuleDocument.FromJson(document["doc"].AsBsonBinaryData.Bytes).ToRecord());
         }
 
-        list.Sort(ByRuleName);
+        list.Sort(static (a, b) => string.CompareOrdinal(a.Name, b.Name));
         return list;
     }
 
-    private async ValueTask<PooledDocumentList<SecurityBindingDocument>> ReadBindingsAsync(CancellationToken cancellationToken)
+    private async ValueTask<IReadOnlyList<SecurityBinding>> ReadBindingsAsync(CancellationToken cancellationToken)
     {
-        var list = new PooledDocumentList<SecurityBindingDocument>();
+        var list = new List<SecurityBinding>();
         List<BsonDocument> documents = await this.bindings.Find(Builders<BsonDocument>.Filter.Empty).ToListAsync(cancellationToken).ConfigureAwait(false);
         foreach (BsonDocument document in documents)
         {
-            list.Add(ParsedJsonDocument<SecurityBindingDocument>.Parse(document["doc"].AsBsonBinaryData.Bytes.AsMemory()));
+            list.Add(SecurityBindingDocument.FromJson(document["doc"].AsBsonBinaryData.Bytes).ToRecord());
         }
 
-        list.Sort(ByBindingOrder);
+        list.Sort(static (a, b) => a.Order != b.Order ? a.Order.CompareTo(b.Order) : string.CompareOrdinal(a.Id, b.Id));
         return list;
     }
 
@@ -461,7 +273,7 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
             return false;
         }
 
-        SecurityPolicySerialization.EnsureEtag(kind, key, expectedEtag, etagOf(doc));
+        EnsureEtag(kind, key, expectedEtag, etagOf(doc));
         await collection.DeleteOneAsync(Builders<BsonDocument>.Filter.Eq("_id", key), cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
         return true;
