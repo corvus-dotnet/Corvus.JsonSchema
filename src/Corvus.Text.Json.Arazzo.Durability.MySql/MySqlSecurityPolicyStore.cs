@@ -2,11 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using System.Globalization;
-using System.Text;
-using Corvus.Runtime.InteropServices;
-using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using MySqlConnector;
 
@@ -83,165 +79,78 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>> AddRuleAsync(string name, SecurityRuleDocument draft, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityRuleRecord> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
+        ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
         ArgumentNullException.ThrowIfNull(actor);
-        WorkflowEtag etag = NewEtag();
-
-        // Serialize once into the pooled buffer the returned document owns; bind its exact bytes as the LONGBLOB parameter
-        // (MySqlConnector carries the exact length for a ReadOnlyMemory blob — no GC document array, no second copy). The
-        // document is returned on success, disposed on failure.
-        ParsedJsonDocument<SecurityRuleDocument> doc = SecurityPolicySerialization.SerializeNewRuleDoc(name, draft, actor, this.timeProvider.GetUtcNow(), etag);
+        var record = new SecurityRuleRecord(name, definition.Expression, definition.Description, actor, this.timeProvider.GetUtcNow(), null, null, NewEtag());
+        await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using MySqlCommand insert = connection.CreateCommand();
+        insert.CommandText = "INSERT INTO SecurityRules (Name, Etag, Document) VALUES (@name, @etag, @doc);";
+        insert.Parameters.AddWithValue("@name", name);
+        insert.Parameters.AddWithValue("@etag", record.Etag.Value!);
+        insert.Parameters.AddWithValue("@doc", SecurityRuleDocument.From(record).ToJsonBytes());
         try
         {
-            ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory;
-            await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-            await using MySqlCommand insert = connection.CreateCommand();
-            insert.CommandText = "INSERT INTO SecurityRules (Name, Expression, Etag, Document) VALUES (@name, @expression, @etag, @doc);";
-            insert.Parameters.AddWithValue("@name", name);
-            insert.Parameters.AddWithValue("@expression", draft.ExpressionValue);
-            insert.Parameters.AddWithValue("@etag", etag.Value!);
-            insert.Parameters.AddWithValue("@doc", utf8);
-            try
-            {
-                await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            }
-            catch (MySqlException ex) when (ex.ErrorCode == MySqlErrorCode.DuplicateKeyEntry)
-            {
-                throw new InvalidOperationException($"A security rule named '{name}' already exists.");
-            }
-
-            await BumpGenerationAsync(connection, cancellationToken).ConfigureAwait(false);
-            return doc;
+            await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
-        catch
+        catch (MySqlException ex) when (ex.ErrorCode == MySqlErrorCode.DuplicateKeyEntry)
         {
-            doc.Dispose();
-            throw;
+            throw new InvalidOperationException($"A security rule named '{name}' already exists.");
         }
+
+        await BumpGenerationAsync(connection, cancellationToken).ConfigureAwait(false);
+        return record;
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> GetRuleAsync(string name, CancellationToken cancellationToken)
+    public async ValueTask<SecurityRuleRecord?> GetRuleAsync(string name, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         byte[]? doc = await DocumentAsync(connection, "SecurityRules", "Name", name, cancellationToken).ConfigureAwait(false);
-        return doc is null ? null : ParsedJsonDocument<SecurityRuleDocument>.Parse(doc.AsMemory());
+        return doc is null ? null : SecurityRuleDocument.FromJson(doc).ToRecord();
     }
 
     /// <inheritdoc/>
-    public async ValueTask<PooledDocumentList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
+    public async ValueTask<IReadOnlyList<SecurityRuleRecord>> ListRulesAsync(CancellationToken cancellationToken)
     {
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         return await ReadRulesAsync(connection, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRulePage> ListRulesAsync(int limit, JsonString pageToken, JsonString q, CancellationToken cancellationToken)
-    {
-        int pageSize = limit > 0 ? limit : SecurityRulePage.DefaultPageSize;
-        string? after = DecodeRuleCursor(pageToken);
-        string? like = BuildLike(q);
-
-        await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-        await using MySqlCommand select = connection.CreateCommand();
-        var sql = new StringBuilder("SELECT Document FROM SecurityRules");
-        var conditions = new List<string>(2);
-        if (after is not null)
-        {
-            // Name is the PRIMARY KEY declared COLLATE utf8mb4_bin → a byte-ordinal seek + order (the in-memory pager's).
-            conditions.Add("Name > @after");
-            select.Parameters.AddWithValue("@after", after);
-        }
-
-        if (like is not null)
-        {
-            // q is case-insensitive (in-memory OrdinalIgnoreCase); Name is binary-collated, so apply a case-insensitive
-            // collation for its LIKE only (Expression already uses the case-insensitive default collation).
-            conditions.Add("(Name COLLATE utf8mb4_0900_ai_ci LIKE @q ESCAPE '\\\\' OR Expression LIKE @q ESCAPE '\\\\')");
-            select.Parameters.AddWithValue("@q", like);
-        }
-
-        if (conditions.Count > 0)
-        {
-            sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));
-        }
-
-        sql.Append(" ORDER BY Name LIMIT @limit;");
-        select.Parameters.AddWithValue("@limit", pageSize + 1);
-        select.CommandText = sql.ToString();
-
-        var page = new PooledDocumentList<SecurityRuleDocument>(pageSize);
-        try
-        {
-            bool hasMore = false;
-            await using (MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
-            {
-                while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
-                {
-                    if (page.Count == pageSize)
-                    {
-                        hasMore = true; // the (pageSize+1)th row exists → a next page; don't parse it
-                        break;
-                    }
-
-                    page.Add(ParsedJsonDocument<SecurityRuleDocument>.Parse(reader.GetFieldValue<byte[]>(0).AsMemory()));
-                }
-            }
-
-            if (!hasMore)
-            {
-                return SecurityRulePage.Create(page);
-            }
-
-            using UnescapedUtf8JsonString lastName = page[page.Count - 1].Name.GetUtf8String();
-            return SecurityRulePage.Create(page, lastName.Span);
-        }
-        catch
-        {
-            page.Dispose();
-            throw;
-        }
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityRuleRecord?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
+        ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
         ArgumentNullException.ThrowIfNull(actor);
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-        byte[]? existing = await DocumentAsync(connection, "SecurityRules", "Name", name, cancellationToken).ConfigureAwait(false);
-        if (existing is null)
+        byte[]? doc = await DocumentAsync(connection, "SecurityRules", "Name", name, cancellationToken).ConfigureAwait(false);
+        if (doc is null)
         {
             return null;
         }
 
-        WorkflowEtag etag = NewEtag();
-
-        // Parse the existing document NON-COPYING over the driver's array (the read leaf), check the etag, and serialize the
-        // merged result into the pooled buffer the returned document owns — bound as the LONGBLOB parameter (no GC array, no copy).
-        using ParsedJsonDocument<SecurityRuleDocument> current = ParsedJsonDocument<SecurityRuleDocument>.Parse(existing.AsMemory());
-        ParsedJsonDocument<SecurityRuleDocument> updated = SecurityPolicySerialization.SerializeUpdatedRuleDoc(current.RootElement, "rule", name, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), etag);
-        try
+        SecurityRuleRecord current = SecurityRuleDocument.FromJson(doc).ToRecord();
+        EnsureEtag("rule", name, expectedEtag, current.Etag);
+        var updated = current with
         {
-            ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(updated.RootElement).Memory;
-            await using MySqlCommand update = connection.CreateCommand();
-            update.CommandText = "UPDATE SecurityRules SET Expression = @expression, Etag = @etag, Document = @doc WHERE Name = @k;";
-            update.Parameters.AddWithValue("@expression", draft.ExpressionValue);
-            update.Parameters.AddWithValue("@etag", etag.Value!);
-            update.Parameters.AddWithValue("@doc", utf8);
-            update.Parameters.AddWithValue("@k", name);
-            await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            await BumpGenerationAsync(connection, cancellationToken).ConfigureAwait(false);
-            return updated;
-        }
-        catch
-        {
-            updated.Dispose();
-            throw;
-        }
+            Expression = definition.Expression,
+            Description = definition.Description,
+            UpdatedBy = actor,
+            UpdatedAt = this.timeProvider.GetUtcNow(),
+            Etag = NewEtag(),
+        };
+        await using MySqlCommand update = connection.CreateCommand();
+        update.CommandText = "UPDATE SecurityRules SET Etag = @etag, Document = @doc WHERE Name = @k;";
+        update.Parameters.AddWithValue("@etag", updated.Etag.Value!);
+        update.Parameters.AddWithValue("@doc", SecurityRuleDocument.From(updated).ToJsonBytes());
+        update.Parameters.AddWithValue("@k", name);
+        await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        await BumpGenerationAsync(connection, cancellationToken).ConfigureAwait(false);
+        return updated;
     }
 
     /// <inheritdoc/>
@@ -249,162 +158,77 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         => this.DeleteAsync("SecurityRules", "Name", "rule", name, expectedEtag, cancellationToken);
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>> AddBindingAsync(SecurityBindingDocument draft, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityBinding> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
     {
+        ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
-        WorkflowEtag etag = NewEtag();
-
-        // Serialize once into the pooled buffer the returned document owns; bind its exact bytes (no GC array, no copy).
-        ParsedJsonDocument<SecurityBindingDocument> doc = SecurityPolicySerialization.SerializeNewBindingDoc(id, draft, actor, this.timeProvider.GetUtcNow(), etag);
-        try
-        {
-            ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory;
-            await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-            await using MySqlCommand insert = connection.CreateCommand();
-            insert.CommandText = "INSERT INTO SecurityBindings (Id, SortOrder, ClaimType, ClaimValue, Description, Etag, Document) VALUES (@id, @order, @claimType, @claimValue, @description, @etag, @doc);";
-            insert.Parameters.AddWithValue("@id", id);
-            insert.Parameters.AddWithValue("@order", draft.OrderValue);
-            insert.Parameters.AddWithValue("@claimType", draft.ClaimTypeValue);
-            insert.Parameters.AddWithValue("@claimValue", draft.ClaimValue.IsNotUndefined() ? (string)draft.ClaimValue : DBNull.Value);
-            insert.Parameters.AddWithValue("@description", draft.Description.IsNotUndefined() ? (string)draft.Description : DBNull.Value);
-            insert.Parameters.AddWithValue("@etag", etag.Value!);
-            insert.Parameters.AddWithValue("@doc", utf8);
-            await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            await BumpGenerationAsync(connection, cancellationToken).ConfigureAwait(false);
-            return doc;
-        }
-        catch
-        {
-            doc.Dispose();
-            throw;
-        }
+        var record = new SecurityBinding(id, definition.ClaimType, definition.ClaimValue, definition.Read, definition.Write, definition.Purge, definition.Order, definition.Description, actor, this.timeProvider.GetUtcNow(), null, null, NewEtag());
+        await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using MySqlCommand insert = connection.CreateCommand();
+        insert.CommandText = "INSERT INTO SecurityBindings (Id, SortOrder, Etag, Document) VALUES (@id, @order, @etag, @doc);";
+        insert.Parameters.AddWithValue("@id", id);
+        insert.Parameters.AddWithValue("@order", definition.Order);
+        insert.Parameters.AddWithValue("@etag", record.Etag.Value!);
+        insert.Parameters.AddWithValue("@doc", SecurityBindingDocument.From(record).ToJsonBytes());
+        await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        await BumpGenerationAsync(connection, cancellationToken).ConfigureAwait(false);
+        return record;
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> GetBindingAsync(string id, CancellationToken cancellationToken)
+    public async ValueTask<SecurityBinding?> GetBindingAsync(string id, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         byte[]? doc = await DocumentAsync(connection, "SecurityBindings", "Id", id, cancellationToken).ConfigureAwait(false);
-        return doc is null ? null : ParsedJsonDocument<SecurityBindingDocument>.Parse(doc.AsMemory());
+        return doc is null ? null : SecurityBindingDocument.FromJson(doc).ToRecord();
     }
 
     /// <inheritdoc/>
-    public async ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
+    public async ValueTask<IReadOnlyList<SecurityBinding>> ListBindingsAsync(CancellationToken cancellationToken)
     {
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         return await ReadBindingsAsync(connection, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBindingPage> ListBindingsAsync(int limit, JsonString pageToken, JsonString q, CancellationToken cancellationToken)
-    {
-        int pageSize = limit > 0 ? limit : SecurityBindingPage.DefaultPageSize;
-        bool hasCursor = DecodeBindingCursor(pageToken, out int cursorOrder, out string? cursorId);
-        string? like = BuildLike(q);
-
-        await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-        await using MySqlCommand select = connection.CreateCommand();
-        var sql = new StringBuilder("SELECT Document FROM SecurityBindings");
-        var conditions = new List<string>(2);
-        if (hasCursor)
-        {
-            // Id is the PRIMARY KEY declared COLLATE utf8mb4_bin; IX_SecurityBindings_Order (SortOrder, Id) serves the keyset.
-            conditions.Add("(SortOrder > @order OR (SortOrder = @order AND Id > @id))");
-            select.Parameters.AddWithValue("@order", cursorOrder);
-            select.Parameters.AddWithValue("@id", cursorId!);
-        }
-
-        if (like is not null)
-        {
-            // The q columns use the case-insensitive default collation, so plain LIKE is case-insensitive (== in-memory).
-            conditions.Add("(ClaimType LIKE @q ESCAPE '\\\\' OR ClaimValue LIKE @q ESCAPE '\\\\' OR Description LIKE @q ESCAPE '\\\\')");
-            select.Parameters.AddWithValue("@q", like);
-        }
-
-        if (conditions.Count > 0)
-        {
-            sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));
-        }
-
-        sql.Append(" ORDER BY SortOrder, Id LIMIT @limit;");
-        select.Parameters.AddWithValue("@limit", pageSize + 1);
-        select.CommandText = sql.ToString();
-
-        var page = new PooledDocumentList<SecurityBindingDocument>(pageSize);
-        try
-        {
-            bool hasMore = false;
-            await using (MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
-            {
-                while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
-                {
-                    if (page.Count == pageSize)
-                    {
-                        hasMore = true; // the (pageSize+1)th row exists → a next page; don't parse it
-                        break;
-                    }
-
-                    page.Add(ParsedJsonDocument<SecurityBindingDocument>.Parse(reader.GetFieldValue<byte[]>(0).AsMemory()));
-                }
-            }
-
-            if (!hasMore)
-            {
-                return SecurityBindingPage.Create(page);
-            }
-
-            SecurityBindingDocument last = page[page.Count - 1];
-            using UnescapedUtf8JsonString lastId = last.Id.GetUtf8String();
-            return SecurityBindingPage.Create(page, last.OrderValue, lastId.Span);
-        }
-        catch
-        {
-            page.Dispose();
-            throw;
-        }
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityBinding?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
+        ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-        byte[]? existing = await DocumentAsync(connection, "SecurityBindings", "Id", id, cancellationToken).ConfigureAwait(false);
-        if (existing is null)
+        byte[]? doc = await DocumentAsync(connection, "SecurityBindings", "Id", id, cancellationToken).ConfigureAwait(false);
+        if (doc is null)
         {
             return null;
         }
 
-        WorkflowEtag etag = NewEtag();
-
-        // Parse the existing document NON-COPYING over the driver's array (the read leaf), check the etag, and serialize the
-        // merged result into the pooled buffer the returned document owns — bound as the LONGBLOB parameter (no GC array, no copy).
-        using ParsedJsonDocument<SecurityBindingDocument> current = ParsedJsonDocument<SecurityBindingDocument>.Parse(existing.AsMemory());
-        ParsedJsonDocument<SecurityBindingDocument> updated = SecurityPolicySerialization.SerializeUpdatedBindingDoc(current.RootElement, "binding", id, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), etag);
-        try
+        SecurityBinding current = SecurityBindingDocument.FromJson(doc).ToRecord();
+        EnsureEtag("binding", id, expectedEtag, current.Etag);
+        var updated = current with
         {
-            ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(updated.RootElement).Memory;
-            await using MySqlCommand update = connection.CreateCommand();
-            update.CommandText = "UPDATE SecurityBindings SET SortOrder = @order, ClaimType = @claimType, ClaimValue = @claimValue, Description = @description, Etag = @etag, Document = @doc WHERE Id = @k;";
-            update.Parameters.AddWithValue("@order", draft.OrderValue);
-            update.Parameters.AddWithValue("@claimType", draft.ClaimTypeValue);
-            update.Parameters.AddWithValue("@claimValue", draft.ClaimValue.IsNotUndefined() ? (string)draft.ClaimValue : DBNull.Value);
-            update.Parameters.AddWithValue("@description", draft.Description.IsNotUndefined() ? (string)draft.Description : DBNull.Value);
-            update.Parameters.AddWithValue("@etag", etag.Value!);
-            update.Parameters.AddWithValue("@doc", utf8);
-            update.Parameters.AddWithValue("@k", id);
-            await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            await BumpGenerationAsync(connection, cancellationToken).ConfigureAwait(false);
-            return updated;
-        }
-        catch
-        {
-            updated.Dispose();
-            throw;
-        }
+            ClaimType = definition.ClaimType,
+            ClaimValue = definition.ClaimValue,
+            Read = definition.Read,
+            Write = definition.Write,
+            Purge = definition.Purge,
+            Order = definition.Order,
+            Description = definition.Description,
+            UpdatedBy = actor,
+            UpdatedAt = this.timeProvider.GetUtcNow(),
+            Etag = NewEtag(),
+        };
+        await using MySqlCommand update = connection.CreateCommand();
+        update.CommandText = "UPDATE SecurityBindings SET SortOrder = @order, Etag = @etag, Document = @doc WHERE Id = @k;";
+        update.Parameters.AddWithValue("@order", definition.Order);
+        update.Parameters.AddWithValue("@etag", updated.Etag.Value!);
+        update.Parameters.AddWithValue("@doc", SecurityBindingDocument.From(updated).ToJsonBytes());
+        update.Parameters.AddWithValue("@k", id);
+        await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        await BumpGenerationAsync(connection, cancellationToken).ConfigureAwait(false);
+        return updated;
     }
 
     /// <inheritdoc/>
@@ -415,8 +239,8 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     public async ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
     {
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-        PooledDocumentList<SecurityRuleDocument> rules = await ReadRulesAsync(connection, cancellationToken).ConfigureAwait(false);
-        PooledDocumentList<SecurityBindingDocument> bindings = await ReadBindingsAsync(connection, cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<SecurityRuleRecord> rules = await ReadRulesAsync(connection, cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<SecurityBinding> bindings = await ReadBindingsAsync(connection, cancellationToken).ConfigureAwait(false);
         await using MySqlCommand select = connection.CreateCommand();
         select.CommandText = "SELECT Generation FROM SecurityPolicyMeta WHERE Id = 0;";
         object? gen = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
@@ -441,63 +265,13 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
-    // Decodes the keyset cursor (rule name) from the request page token; the name reified to a string only for @after (leaf).
-    private static string? DecodeRuleCursor(JsonString pageToken)
+    private static void EnsureEtag(string kind, string id, WorkflowEtag expected, WorkflowEtag actual)
     {
-        if (!pageToken.IsNotUndefined())
+        if (!expected.IsNone && expected != actual)
         {
-            return null;
-        }
-
-        using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
-        byte[] buffer = ArrayPool<byte>.Shared.Rent(SecurityRuleContinuationToken.GetMaxDecodedLength(tokenUtf8.Span.Length));
-        try
-        {
-            return SecurityRuleContinuationToken.TryDecode(tokenUtf8.Span, buffer, out ReadOnlySpan<byte> nameUtf8)
-                ? Encoding.UTF8.GetString(nameUtf8)
-                : null;
-        }
-        finally
-        {
-            ArrayPool<byte>.Shared.Return(buffer);
+            throw new SecurityPolicyConflictException(kind, id, expected);
         }
     }
-
-    // Decodes the keyset cursor (order, id) from the request page token; the id reified to a string only for @id (leaf).
-    private static bool DecodeBindingCursor(JsonString pageToken, out int order, out string? id)
-    {
-        order = 0;
-        id = null;
-        if (!pageToken.IsNotUndefined())
-        {
-            return false;
-        }
-
-        using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
-        byte[] buffer = ArrayPool<byte>.Shared.Rent(SecurityBindingContinuationToken.GetMaxDecodedLength(tokenUtf8.Span.Length));
-        try
-        {
-            if (SecurityBindingContinuationToken.TryDecode(tokenUtf8.Span, buffer, out order, out ReadOnlySpan<byte> idUtf8))
-            {
-                id = Encoding.UTF8.GetString(idUtf8);
-                return true;
-            }
-
-            return false;
-        }
-        finally
-        {
-            ArrayPool<byte>.Shared.Return(buffer);
-        }
-    }
-
-    // Builds the case-insensitive substring LIKE pattern for the optional q filter ("%<escaped>%"), reifying q to a string
-    // only at this LIKE-parameter leaf; null when q is undefined (no filter).
-    private static string? BuildLike(JsonString q)
-        => q.IsNotUndefined() ? "%" + EscapeLike((string)q) + "%" : null;
-
-    private static string EscapeLike(string value)
-        => value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
 
     private static async ValueTask<byte[]?> DocumentAsync(MySqlConnection connection, string table, string column, string key, CancellationToken cancellationToken)
     {
@@ -508,29 +282,29 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         return result is byte[] bytes ? bytes : null;
     }
 
-    private static async ValueTask<PooledDocumentList<SecurityRuleDocument>> ReadRulesAsync(MySqlConnection connection, CancellationToken cancellationToken)
+    private static async ValueTask<IReadOnlyList<SecurityRuleRecord>> ReadRulesAsync(MySqlConnection connection, CancellationToken cancellationToken)
     {
-        var list = new PooledDocumentList<SecurityRuleDocument>();
+        var list = new List<SecurityRuleRecord>();
         await using MySqlCommand select = connection.CreateCommand();
         select.CommandText = "SELECT Document FROM SecurityRules ORDER BY Name;";
         await using MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
-            list.Add(ParsedJsonDocument<SecurityRuleDocument>.Parse(reader.GetFieldValue<byte[]>(0).AsMemory()));
+            list.Add(SecurityRuleDocument.FromJson(reader.GetFieldValue<byte[]>(0)).ToRecord());
         }
 
         return list;
     }
 
-    private static async ValueTask<PooledDocumentList<SecurityBindingDocument>> ReadBindingsAsync(MySqlConnection connection, CancellationToken cancellationToken)
+    private static async ValueTask<IReadOnlyList<SecurityBinding>> ReadBindingsAsync(MySqlConnection connection, CancellationToken cancellationToken)
     {
-        var list = new PooledDocumentList<SecurityBindingDocument>();
+        var list = new List<SecurityBinding>();
         await using MySqlCommand select = connection.CreateCommand();
         select.CommandText = "SELECT Document FROM SecurityBindings ORDER BY SortOrder, Id;";
         await using MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
-            list.Add(ParsedJsonDocument<SecurityBindingDocument>.Parse(reader.GetFieldValue<byte[]>(0).AsMemory()));
+            list.Add(SecurityBindingDocument.FromJson(reader.GetFieldValue<byte[]>(0)).ToRecord());
         }
 
         return list;
@@ -559,7 +333,7 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
             return false;
         }
 
-        SecurityPolicySerialization.EnsureEtag(kind, key, expectedEtag, new WorkflowEtag(current));
+        EnsureEtag(kind, key, expectedEtag, new WorkflowEtag(current));
         await using MySqlCommand delete = connection.CreateCommand();
         delete.CommandText = $"DELETE FROM {table} WHERE {column} = @k;";
         delete.Parameters.AddWithValue("@k", key);
@@ -571,17 +345,13 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     private const string SchemaSql =
         """
         CREATE TABLE IF NOT EXISTS SecurityRules (
-            Name VARCHAR(255) COLLATE utf8mb4_bin NOT NULL PRIMARY KEY,
-            Expression TEXT NOT NULL,
+            Name VARCHAR(255) NOT NULL PRIMARY KEY,
             Etag VARCHAR(255) NOT NULL,
             Document LONGBLOB NOT NULL
         );
         CREATE TABLE IF NOT EXISTS SecurityBindings (
-            Id VARCHAR(255) COLLATE utf8mb4_bin NOT NULL PRIMARY KEY,
+            Id VARCHAR(255) NOT NULL PRIMARY KEY,
             SortOrder INT NOT NULL,
-            ClaimType TEXT NOT NULL,
-            ClaimValue TEXT NULL,
-            Description TEXT NULL,
             Etag VARCHAR(255) NOT NULL,
             Document LONGBLOB NOT NULL,
             INDEX IX_SecurityBindings_Order (SortOrder, Id)
