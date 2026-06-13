@@ -20,15 +20,20 @@ public static class ControlPlaneEndpointExtensions
     /// <param name="management">The run control-plane client the run endpoints delegate to.</param>
     /// <param name="catalog">The catalog client the catalog endpoints delegate to.</param>
     /// <param name="runners">The runner registry the runners endpoint reads and the trigger gate consults.</param>
+    /// <param name="requireAuthorization">
+    /// When <see langword="true"/>, each endpoint demands its declared capability scope as an authorization
+    /// policy (<see cref="ControlPlaneScopes"/>); the host must register those policies (e.g.
+    /// <see cref="ControlPlaneAuthorization.AddArazzoControlPlaneAuthorization"/>) and an authentication scheme,
+    /// and call <c>UseAuthentication</c>/<c>UseAuthorization</c>. When <see langword="false"/> (the default)
+    /// the endpoints are unsecured — for tests and trusted-network deployments.
+    /// </param>
     /// <returns>The same endpoint route builder, for chaining.</returns>
     /// <remarks>
-    /// Authentication/authorization are the host's concern: the generated
-    /// <see cref="ApiEndpointRegistration.SecuritySchemes"/>/<see cref="ApiEndpointRegistration.SecurityRequirements"/>
-    /// describe the scopes the OpenAPI document declares (runs:* and catalog:*), and the
-    /// generated <c>EndpointSecurityConventions.RequireDeclaredAuthorization</c> can apply them when the host
-    /// has registered the matching authentication and authorization policies.
+    /// Authentication is always the host's concern: the control plane depends only on a <c>ClaimsPrincipal</c>
+    /// and the named scope policies, so a deployment supplies any ASP.NET Core scheme (JWT bearer, OIDC, mTLS,
+    /// a dev key) and how a principal acquires scopes.
     /// </remarks>
-    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, IWorkflowManagementClient management, IWorkflowCatalogClient catalog, IRunnerRegistry runners)
+    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, IWorkflowManagementClient management, IWorkflowCatalogClient catalog, IRunnerRegistry runners, bool requireAuthorization = false)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
@@ -37,6 +42,7 @@ public static class ControlPlaneEndpointExtensions
         return endpoints.MapApiEndpoints(
             new ArazzoControlPlaneHandler(management),
             new ArazzoControlPlaneRunnersHandler(runners),
-            new ArazzoControlPlaneCatalogHandler(catalog, management, runners));
+            new ArazzoControlPlaneCatalogHandler(catalog, management, runners),
+            requireAuthorization ? ControlPlaneAuthorization.RequireDeclaredScopes : null);
     }
 }
