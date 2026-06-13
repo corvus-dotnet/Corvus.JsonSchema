@@ -99,4 +99,50 @@ public sealed class SecurityRuleTests
         Should.Throw<FormatException>(() => SecurityRule.Compile("tenant == 'acme' &&"));
         Should.Throw<FormatException>(() => SecurityRule.Compile("(tenant == 'acme'"));
     }
+
+    [TestMethod]
+    public void Claims_superset_admits_a_row_only_when_every_label_is_covered()
+    {
+        // ABAC clearance: the principal must hold every label the row carries.
+        SecurityRule rule = SecurityRule.Compile("$claims.superset");
+        IReadOnlyDictionary<string, IReadOnlyList<string>> claims = Claims(("tenant", "acme"), ("team", "payments"));
+
+        rule.IsSatisfiedBy([new("tenant", "acme"), new("team", "payments")], claims).ShouldBeTrue();
+        rule.IsSatisfiedBy([new("tenant", "acme")], claims).ShouldBeTrue();
+        rule.IsSatisfiedBy([new("tenant", "acme"), new("team", "hr")], claims).ShouldBeFalse(); // team=hr uncovered
+        rule.IsSatisfiedBy([new("region", "eu")], claims).ShouldBeFalse(); // no region claim
+        rule.IsSatisfiedBy([new("tenant", "acme")], Claims()).ShouldBeFalse(); // empty claims cover nothing
+    }
+
+    [TestMethod]
+    public void Claims_intersects_admits_a_row_when_any_label_is_covered()
+    {
+        SecurityRule rule = SecurityRule.Compile("$claims.intersects");
+        IReadOnlyDictionary<string, IReadOnlyList<string>> claims = Claims(("tenant", "acme"), ("team", "payments"));
+
+        rule.IsSatisfiedBy([new("tenant", "acme"), new("team", "hr")], claims).ShouldBeTrue(); // tenant covered
+        rule.IsSatisfiedBy([new("region", "eu")], claims).ShouldBeFalse(); // nothing covered
+        rule.IsSatisfiedBy([new("tenant", "acme")], Claims()).ShouldBeFalse(); // empty claims
+    }
+
+    [TestMethod]
+    public void Claims_predicates_compose_and_negate()
+    {
+        IReadOnlyDictionary<string, IReadOnlyList<string>> claims = Claims(("tenant", "acme"), ("team", "payments"));
+
+        SecurityRule shareAndTenant = SecurityRule.Compile("$claims.intersects && tenant == $claim.tenant");
+        shareAndTenant.IsSatisfiedBy([new("tenant", "acme"), new("team", "hr")], claims).ShouldBeTrue();
+        shareAndTenant.IsSatisfiedBy([new("tenant", "globex"), new("team", "payments")], claims).ShouldBeFalse();
+
+        SecurityRule notSuperset = SecurityRule.Compile("!$claims.superset");
+        notSuperset.IsSatisfiedBy([new("tenant", "acme"), new("team", "hr")], claims).ShouldBeTrue(); // not fully covered
+        notSuperset.IsSatisfiedBy([new("tenant", "acme")], claims).ShouldBeFalse(); // fully covered
+    }
+
+    [TestMethod]
+    public void An_unknown_claims_predicate_is_rejected_at_compile()
+    {
+        Should.Throw<FormatException>(() => SecurityRule.Compile("$claims.bogus"));
+        Should.Throw<FormatException>(() => SecurityRule.Compile("$claims"));
+    }
 }
