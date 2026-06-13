@@ -49,18 +49,19 @@ public static class ControlPlaneEndpointExtensions
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(runners);
 
-        ControlPlaneRowSecurity? row = null;
-        if (rowSecurity is not null)
-        {
-            // The current principal is read per request through IHttpContextAccessor, which the host must register.
-            IHttpContextAccessor accessor = endpoints.ServiceProvider.GetRequiredService<IHttpContextAccessor>();
-            row = new ControlPlaneRowSecurity(accessor, rowSecurity);
-        }
+        // Resolve the caller's AccessContext per request (§14.2/§14.4): when a row-security policy is configured the
+        // handlers gate every read/write/purge by the principal's per-verb reach — the client operations require a
+        // context, so an unscoped read cannot exist to be misused. With no policy the access binding yields
+        // AccessContext.System throughout (fully unrestricted, behaviour unchanged). The current principal is read
+        // via IHttpContextAccessor, which the host must register (services.AddHttpContextAccessor()).
+        ControlPlaneAccess access = rowSecurity is null
+            ? new ControlPlaneAccess()
+            : new ControlPlaneAccess(endpoints.ServiceProvider.GetRequiredService<IHttpContextAccessor>(), rowSecurity);
 
         return endpoints.MapApiEndpoints(
-            new ArazzoControlPlaneHandler(management, row),
+            new ArazzoControlPlaneHandler(management, access),
             new ArazzoControlPlaneRunnersHandler(runners),
-            new ArazzoControlPlaneCatalogHandler(catalog, management, runners, row),
+            new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access),
             requireAuthorization ? ControlPlaneAuthorization.RequireDeclaredScopes : null);
     }
 }

@@ -617,7 +617,7 @@ public sealed class ControlPlaneServerTests
         }
 
         // The triggered run carries the version's security tags (KVP labels), so row authorization sees them.
-        WorkflowRunDetail? detail = await management.GetAsync(runId, default);
+        WorkflowRunDetail? detail = await management.GetAsync(runId, AccessContext.System, default);
         detail.ShouldNotBeNull();
         detail.Value.SecurityTags.ShouldBe(security);
 

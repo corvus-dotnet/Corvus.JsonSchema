@@ -64,28 +64,64 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
     }
 
     /// <inheritdoc/>
-    public ValueTask<CatalogPage> SearchAsync(CatalogQuery query, CancellationToken cancellationToken)
-        => this.catalog.QueryAsync(query, cancellationToken);
-
-    /// <inheritdoc/>
-    public ValueTask<CatalogVersion?> GetAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
-        => this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken);
-
-    /// <inheritdoc/>
-    public ValueTask<ReadOnlyMemory<byte>?> GetPackageAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
-        => this.catalog.GetPackageAsync(baseWorkflowId, versionNumber, cancellationToken);
-
-    /// <inheritdoc/>
-    public ValueTask<ReadOnlyMemory<byte>?> GetDocumentAsync(string baseWorkflowId, int versionNumber, string documentName, CancellationToken cancellationToken)
-        => this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, documentName, cancellationToken);
-
-    /// <inheritdoc/>
-    public async ValueTask<CatalogVersion?> UpdateAsync(string baseWorkflowId, int versionNumber, CatalogOwner? owner, IReadOnlyList<string>? tags, CatalogStatus? status, CancellationToken cancellationToken)
+    public ValueTask<CatalogPage> SearchAsync(CatalogQuery query, AccessContext context, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(context);
+
+        // Scope the search to the caller's read reach (§14.2); the store applies the filter in its query.
+        return this.catalog.QueryAsync(query with { Security = context.Reach(AccessVerb.Read) }, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<CatalogVersion?> GetAsync(string baseWorkflowId, int versionNumber, AccessContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        CatalogVersion? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+
+        // A version outside the caller's read reach is reported as absent (non-disclosing, §14.2).
+        return version is { } v && context.Admits(AccessVerb.Read, v.SecurityTagsValue) ? v : null;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<ReadOnlyMemory<byte>?> GetPackageAsync(string baseWorkflowId, int versionNumber, AccessContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        if (!await this.IsWithinReachAsync(baseWorkflowId, versionNumber, context, AccessVerb.Read, cancellationToken).ConfigureAwait(false))
+        {
+            return null;
+        }
+
+        return await this.catalog.GetPackageAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<ReadOnlyMemory<byte>?> GetDocumentAsync(string baseWorkflowId, int versionNumber, string documentName, AccessContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        if (!await this.IsWithinReachAsync(baseWorkflowId, versionNumber, context, AccessVerb.Read, cancellationToken).ConfigureAwait(false))
+        {
+            return null;
+        }
+
+        return await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, documentName, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<CatalogVersion?> UpdateAsync(string baseWorkflowId, int versionNumber, CatalogOwner? owner, IReadOnlyList<string>? tags, CatalogStatus? status, AccessContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
         using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity("catalog.update");
         activity?.SetTag(ArazzoTelemetry.ActorTag, this.actor);
         activity?.SetTag(ArazzoTelemetry.BaseWorkflowIdTag, baseWorkflowId);
         activity?.SetTag(ArazzoTelemetry.VersionNumberTag, versionNumber);
+
+        // A version outside the caller's write reach is not modifiable; reported as absent (§14.2).
+        if (!await this.IsWithinReachAsync(baseWorkflowId, versionNumber, context, AccessVerb.Write, cancellationToken).ConfigureAwait(false))
+        {
+            activity?.SetTag(ArazzoTelemetry.OutcomeTag, "missing");
+            return null;
+        }
 
         CatalogVersion? updated = await this.catalog.UpdateMetadataAsync(
             baseWorkflowId, versionNumber, new CatalogMetadataPatch(this.actor, owner, tags, status), cancellationToken).ConfigureAwait(false);
@@ -94,21 +130,25 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
     }
 
     /// <inheritdoc/>
-    public async ValueTask<CatalogDeleteOutcome> DeleteAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    public async ValueTask<CatalogDeleteOutcome> DeleteAsync(string baseWorkflowId, int versionNumber, AccessContext context, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(context);
+
         using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity("catalog.delete");
         activity?.SetTag(ArazzoTelemetry.ActorTag, this.actor);
         activity?.SetTag(ArazzoTelemetry.BaseWorkflowIdTag, baseWorkflowId);
         activity?.SetTag(ArazzoTelemetry.VersionNumberTag, versionNumber);
 
         CatalogVersion? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
-        if (version is null)
+
+        // Absent, or outside the caller's write reach → reported as not found (non-disclosing, §14.2).
+        if (version is not { } v || !context.Admits(AccessVerb.Write, v.SecurityTagsValue))
         {
             activity?.SetTag(ArazzoTelemetry.OutcomeTag, "missing");
             return CatalogDeleteOutcome.NotFound;
         }
 
-        if (await this.IsReferencedAsync((string)version.Value.WorkflowId, cancellationToken).ConfigureAwait(false))
+        if (await this.IsReferencedAsync((string)v.WorkflowId, cancellationToken).ConfigureAwait(false))
         {
             activity?.SetTag(ArazzoTelemetry.OutcomeTag, "referenced");
             return CatalogDeleteOutcome.Referenced;
@@ -120,15 +160,26 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
     }
 
     /// <inheritdoc/>
-    public async ValueTask<int> PurgeAsync(CancellationToken cancellationToken)
+    public async ValueTask<int> PurgeAsync(AccessContext context, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(context);
+
         using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity("catalog.purge");
         activity?.SetTag(ArazzoTelemetry.ActorTag, this.actor);
 
+        SecurityFilter? purgeReach = context.Reach(AccessVerb.Purge);
         IReadOnlyList<CatalogVersionRef> obsolete = await this.catalog.ListObsoleteAsync(cancellationToken).ConfigureAwait(false);
         var unreferenced = new List<CatalogVersionRef>();
         foreach (CatalogVersionRef reference in obsolete)
         {
+            // Row-scope the purge (§14.2): obsolete candidates outside the caller's purge reach are left untouched.
+            // Obsolete refs carry no tags, so reach needs the version's metadata — fetched per candidate (a purge
+            // is rare/administrative; a true indexed filter is the per-backend pushdown, §14.4).
+            if (purgeReach is not null && !await this.IsVersionVisibleAsync(reference.BaseWorkflowId, reference.VersionNumber, purgeReach, cancellationToken).ConfigureAwait(false))
+            {
+                continue;
+            }
+
             if (!await this.IsReferencedAsync(reference.WorkflowId, cancellationToken).ConfigureAwait(false))
             {
                 unreferenced.Add(reference);
@@ -142,6 +193,25 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
 
         activity?.SetTag("corvus.arazzo.purged_count", unreferenced.Count.ToString(CultureInfo.InvariantCulture));
         return unreferenced.Count;
+    }
+
+    // Whether a version is within the caller's reach for a verb (§14.2): unrestricted reach short-circuits without
+    // a fetch; otherwise the version must exist and its security tags must satisfy the verb's reach.
+    private async ValueTask<bool> IsWithinReachAsync(string baseWorkflowId, int versionNumber, AccessContext context, AccessVerb verb, CancellationToken cancellationToken)
+    {
+        if (context.Reach(verb) is null)
+        {
+            return true;
+        }
+
+        CatalogVersion? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+        return version is { } v && context.Admits(verb, v.SecurityTagsValue);
+    }
+
+    private async ValueTask<bool> IsVersionVisibleAsync(string baseWorkflowId, int versionNumber, SecurityFilter security, CancellationToken cancellationToken)
+    {
+        CatalogVersion? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+        return version is { } v && security.IsSatisfiedBy(v.SecurityTagsValue);
     }
 
     private async ValueTask<bool> IsReferencedAsync(string workflowId, CancellationToken cancellationToken)

@@ -44,44 +44,56 @@ public interface IWorkflowManagementClient
     /// <returns>The id of the run for this key (newly created, or the pre-existing one).</returns>
     ValueTask<WorkflowRunId> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string? correlationId = null, IReadOnlyList<string>? tags = null, IReadOnlyList<SecurityTag>? securityTags = null, CancellationToken cancellationToken = default);
 
-    /// <summary>Lists runs matching a visibility query (filter by status / workflow id, paged).</summary>
+    /// <summary>Lists runs matching a visibility query (filter by status / workflow id, paged), scoped to the
+    /// caller's read reach (§14.2).</summary>
     /// <param name="query">The visibility query.</param>
+    /// <param name="context">The caller's access grant; the listing is restricted to its read reach. Use
+    /// <see cref="AccessContext.System"/> for the trusted system path.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>A page of matching runs.</returns>
-    ValueTask<WorkflowRunPage> ListAsync(WorkflowQuery query, CancellationToken cancellationToken);
+    /// <returns>A page of matching runs the caller may read.</returns>
+    ValueTask<WorkflowRunPage> ListAsync(WorkflowQuery query, AccessContext context, CancellationToken cancellationToken);
 
-    /// <summary>Gets a run's current detail (status, cursor, wait/fault, etag) from its authoritative checkpoint.</summary>
+    /// <summary>Gets a run's current detail (status, cursor, wait/fault, etag) from its authoritative checkpoint,
+    /// if the caller's read reach admits it (§14.2).</summary>
     /// <param name="id">The run id.</param>
+    /// <param name="context">The caller's access grant. A run outside its read reach is reported as
+    /// <see langword="null"/> — indistinguishable from absent (non-disclosing). Use <see cref="AccessContext.System"/>
+    /// for the trusted system path.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The run detail, or <see langword="null"/> if no run with that id exists.</returns>
-    ValueTask<WorkflowRunDetail?> GetAsync(WorkflowRunId id, CancellationToken cancellationToken);
+    /// <returns>The run detail, or <see langword="null"/> if no run with that id exists or it is not within read reach.</returns>
+    ValueTask<WorkflowRunDetail?> GetAsync(WorkflowRunId id, AccessContext context, CancellationToken cancellationToken);
 
     /// <summary>Resumes a faulted run, re-executing it from its last checkpoint per the chosen <see cref="ResumeMode"/>.</summary>
     /// <param name="id">The run id.</param>
     /// <param name="options">How to resume — retry the faulted step, rewind to an earlier cursor, skip the faulted step, or apply a state patch first.</param>
+    /// <param name="context">The caller's access grant; the run must be within its write reach (§14.2).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns><see langword="true"/> if the run was resumed; <see langword="false"/> if it was not faulted, was held by another owner, was changed concurrently, or no longer exists.</returns>
-    ValueTask<bool> ResumeAsync(WorkflowRunId id, ResumeOptions options, CancellationToken cancellationToken);
+    /// <returns><see langword="true"/> if the run was resumed; <see langword="false"/> if it was not faulted, was outside the caller's write reach, was held by another owner, was changed concurrently, or no longer exists.</returns>
+    ValueTask<bool> ResumeAsync(WorkflowRunId id, ResumeOptions options, AccessContext context, CancellationToken cancellationToken);
 
     /// <summary>Cancels a non-terminal run, marking it <see cref="WorkflowRunStatus.Cancelled"/>.</summary>
     /// <param name="id">The run id.</param>
     /// <param name="reason">An operator-supplied reason for the cancellation.</param>
+    /// <param name="context">The caller's access grant; the run must be within its write reach (§14.2).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns><see langword="true"/> if the run was cancelled; <see langword="false"/> if it was already terminal, was held by another owner, or no longer exists.</returns>
-    ValueTask<bool> CancelAsync(WorkflowRunId id, string reason, CancellationToken cancellationToken);
+    /// <returns><see langword="true"/> if the run was cancelled; <see langword="false"/> if it was already terminal, was outside the caller's write reach, was held by another owner, or no longer exists.</returns>
+    ValueTask<bool> CancelAsync(WorkflowRunId id, string reason, AccessContext context, CancellationToken cancellationToken);
 
-    /// <summary>Reaps terminal runs (completed or cancelled) older than a cutoff.</summary>
+    /// <summary>Reaps terminal runs (completed or cancelled) older than a cutoff, scoped to the caller's purge reach (§14.2).</summary>
     /// <param name="query">Which terminal runs to reap.</param>
+    /// <param name="context">The caller's access grant; only runs within its purge reach are reaped. Use
+    /// <see cref="AccessContext.System"/> for the trusted system path.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The number of runs deleted.</returns>
-    ValueTask<int> PurgeAsync(WorkflowPurgeQuery query, CancellationToken cancellationToken);
+    ValueTask<int> PurgeAsync(WorkflowPurgeQuery query, AccessContext context, CancellationToken cancellationToken);
 
     /// <summary>Deletes a single run, regardless of status. Unlike <see cref="PurgeAsync"/> (which reaps only old
     /// terminal runs), this removes exactly one run by id — the operator's explicit "remove this" action.</summary>
     /// <param name="id">The run id.</param>
+    /// <param name="context">The caller's access grant; the run must be within its write reach (§14.2).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns><see langword="true"/> if a run was deleted; <see langword="false"/> if no run with that id existed or it was held by another owner.</returns>
-    ValueTask<bool> DeleteAsync(WorkflowRunId id, CancellationToken cancellationToken);
+    /// <returns><see langword="true"/> if a run was deleted; <see langword="false"/> if no run with that id existed, it was outside the caller's write reach, or it was held by another owner.</returns>
+    ValueTask<bool> DeleteAsync(WorkflowRunId id, AccessContext context, CancellationToken cancellationToken);
 }
 
 /// <summary>A run's management-relevant detail, read from its authoritative checkpoint.</summary>
@@ -167,11 +179,8 @@ public readonly record struct ResumeOptions(
     public static ResumeOptions StatePatch(JsonElement patch) => new(ResumeMode.StatePatch, Patch: patch);
 }
 
-/// <summary>Selects terminal runs to reap.</summary>
+/// <summary>Selects terminal runs to reap. The purge reach comes from the <see cref="AccessContext"/> passed to
+/// <see cref="IWorkflowManagementClient.PurgeAsync"/> (§14.2), not from the query.</summary>
 /// <param name="OlderThan">Reap completed/cancelled runs last updated strictly before this instant.</param>
 /// <param name="Limit">The maximum number of runs to delete in one call.</param>
-/// <param name="Security">A row-authorization filter restricting the purge to runs the principal may see (§14.2);
-/// <see langword="null"/> is unrestricted. Purge reaps only rows this filter admits — a tenant admin (a non-null
-/// tenant filter) purges only their tenant's runs; a service operator (a null filter) purges across tenants. The
-/// filter is applied through the same query path <see cref="IWorkflowManagementClient.ListAsync"/> uses.</param>
-public readonly record struct WorkflowPurgeQuery(DateTimeOffset OlderThan, int Limit = 1000, SecurityFilter? Security = null);
+public readonly record struct WorkflowPurgeQuery(DateTimeOffset OlderThan, int Limit = 1000);
