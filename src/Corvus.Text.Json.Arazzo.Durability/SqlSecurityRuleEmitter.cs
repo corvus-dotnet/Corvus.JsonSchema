@@ -68,6 +68,24 @@ public sealed class SqlSecurityRuleEmitter : ISecurityRuleSqlEmitter
         => $"EXISTS (SELECT 1 FROM {this.tagTable} st WHERE {this.CorrelateOuter("st")} AND st.{this.keyColumn} = {keyPlaceholder} AND st.{this.valueColumn} IN ({string.Join(", ", valuePlaceholders)}))";
 
     /// <inheritdoc/>
+    public string ExistsAllTagsCovered(IReadOnlyList<(string KeyPlaceholder, IReadOnlyList<string> ValuePlaceholders)> claimEntries)
+    {
+        // No claims → no tag can be covered, so "no uncovered tag" reduces to "the row has no tag at all".
+        // Emitting this (rather than a true literal) keeps the rule-level SQL equal to the in-memory evaluator
+        // on a tagged row; the filter's ExistsAnyTag guard denies the untagged row on both paths.
+        if (claimEntries.Count == 0)
+        {
+            return $"NOT EXISTS (SELECT 1 FROM {this.tagTable} st WHERE {this.CorrelateOuter("st")})";
+        }
+
+        string covered = string.Join(
+            " OR ",
+            claimEntries.Select(e => $"(st.{this.keyColumn} = {e.KeyPlaceholder} AND st.{this.valueColumn} IN ({string.Join(", ", e.ValuePlaceholders)}))"));
+
+        return $"NOT EXISTS (SELECT 1 FROM {this.tagTable} st WHERE {this.CorrelateOuter("st")} AND NOT ({covered}))";
+    }
+
+    /// <inheritdoc/>
     public string ExistsTagKeysShareValue(string keyPlaceholder1, string keyPlaceholder2)
         => $"EXISTS (SELECT 1 FROM {this.tagTable} st1 JOIN {this.tagTable} st2 ON {Correlate("st1", "st2")} AND st1.{this.valueColumn} = st2.{this.valueColumn} " +
            $"WHERE {this.CorrelateOuter("st1")} AND st1.{this.keyColumn} = {keyPlaceholder1} AND st2.{this.keyColumn} = {keyPlaceholder2})";

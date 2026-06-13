@@ -41,6 +41,21 @@ public sealed class CosmosSecurityRuleEmitter(string arrayPath, string keyProper
         => $"EXISTS (SELECT VALUE st FROM st IN {arrayPath} WHERE st.{keyProperty} = {keyPlaceholder} AND st.{valueProperty} IN ({string.Join(", ", valuePlaceholders)}))";
 
     /// <inheritdoc/>
+    public string ExistsAllTagsCovered(IReadOnlyList<(string KeyPlaceholder, IReadOnlyList<string> ValuePlaceholders)> claimEntries)
+    {
+        if (claimEntries.Count == 0)
+        {
+            return $"NOT EXISTS (SELECT VALUE st FROM st IN {arrayPath})";
+        }
+
+        string covered = string.Join(
+            " OR ",
+            claimEntries.Select(e => $"(st.{keyProperty} = {e.KeyPlaceholder} AND st.{valueProperty} IN ({string.Join(", ", e.ValuePlaceholders)}))"));
+
+        return $"NOT EXISTS (SELECT VALUE st FROM st IN {arrayPath} WHERE NOT ({covered}))";
+    }
+
+    /// <inheritdoc/>
     public string ExistsTagKeysShareValue(string keyPlaceholder1, string keyPlaceholder2)
         => $"EXISTS (SELECT VALUE st1 FROM st1 IN {arrayPath} JOIN st2 IN {arrayPath} " +
            $"WHERE st1.{keyProperty} = {keyPlaceholder1} AND st2.{keyProperty} = {keyPlaceholder2} AND st1.{valueProperty} = st2.{valueProperty})";

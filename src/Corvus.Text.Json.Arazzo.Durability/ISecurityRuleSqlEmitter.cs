@@ -52,6 +52,17 @@ public interface ISecurityRuleSqlEmitter
     /// <returns>A boolean SQL fragment.</returns>
     string ExistsTagKeysShareValue(string keyPlaceholder1, string keyPlaceholder2);
 
+    /// <summary>
+    /// Builds the ABAC superset predicate (<c>$claims.superset</c>, §14.2): the current row has <b>no</b> security
+    /// tag left uncovered by the principal's claims — i.e. for every row tag (k, v) some supplied claim entry has
+    /// key placeholder equal to k and a value placeholder equal to v.
+    /// </summary>
+    /// <param name="claimEntries">The principal's claims as (keyPlaceholder, valuePlaceholders) pairs, each with at
+    /// least one value. An empty list means the principal has no claims — no tag can be covered, so the predicate
+    /// must hold only for an untagged row (which the filter denies anyway via <see cref="ExistsAnyTag"/>).</param>
+    /// <returns>A boolean SQL fragment.</returns>
+    string ExistsAllTagsCovered(IReadOnlyList<(string KeyPlaceholder, IReadOnlyList<string> ValuePlaceholders)> claimEntries);
+
     /// <summary>Negates a boolean fragment.</summary>
     /// <param name="predicate">The fragment.</param>
     /// <returns><c>NOT (predicate)</c>.</returns>
