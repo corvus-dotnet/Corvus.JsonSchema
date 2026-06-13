@@ -35,8 +35,14 @@ public static class ControlPlaneScopes
     /// <summary>Delete or purge runs.</summary>
     public const string RunsPurge = "runs:purge";
 
+    /// <summary>Read the row-security policy (rules and claim→rule bindings).</summary>
+    public const string SecurityRead = "security:read";
+
+    /// <summary>Author the row-security policy (create/update/delete rules and bindings).</summary>
+    public const string SecurityWrite = "security:write";
+
     /// <summary>Gets all control-plane capability scopes.</summary>
-    public static IReadOnlyList<string> All { get; } = [CatalogRead, CatalogWrite, CatalogPurge, RunsRead, RunsWrite, RunsPurge];
+    public static IReadOnlyList<string> All { get; } = [CatalogRead, CatalogWrite, CatalogPurge, RunsRead, RunsWrite, RunsPurge, SecurityRead, SecurityWrite];
 }
 
 /// <summary>
