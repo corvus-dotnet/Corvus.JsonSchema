@@ -355,6 +355,8 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
                 var emitter = new SqlSecurityRuleEmitter(
                     "WorkflowRunSecurityTags",
                     ["RunId"],
+                    "TagKey",
+                    "TagValue",
                     "WorkflowRuns",
                     value =>
                     {
