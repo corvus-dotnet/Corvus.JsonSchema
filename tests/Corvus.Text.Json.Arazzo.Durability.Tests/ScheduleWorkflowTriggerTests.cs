@@ -22,7 +22,7 @@ public sealed class ScheduleWorkflowTriggerTests
 
         WorkflowStartHandler start = (request, cancellationToken) =>
             management.StartIdempotentAsync(
-                request.WorkflowId, request.Inputs, request.IdempotencyKey, request.CorrelationId, request.Tags, cancellationToken);
+                request.WorkflowId, request.Inputs, request.IdempotencyKey, request.CorrelationId, request.Tags, cancellationToken: cancellationToken);
 
         var binding = new ScheduleTriggerBinding("nightly-reconcile-v1");
         await using var trigger = new ScheduleWorkflowTrigger(start, binding, new IntervalSchedule(TimeSpan.FromHours(1)), time);
@@ -54,7 +54,7 @@ public sealed class ScheduleWorkflowTriggerTests
 
         WorkflowStartHandler start = (request, cancellationToken) =>
             management.StartIdempotentAsync(
-                request.WorkflowId, request.Inputs, request.IdempotencyKey, request.CorrelationId, request.Tags, cancellationToken);
+                request.WorkflowId, request.Inputs, request.IdempotencyKey, request.CorrelationId, request.Tags, cancellationToken: cancellationToken);
 
         var binding = new ScheduleTriggerBinding("nightly-reconcile-v1");
         await using var trigger = new ScheduleWorkflowTrigger(start, binding, new IntervalSchedule(TimeSpan.FromHours(1)), new TestTimeProvider(Start));
