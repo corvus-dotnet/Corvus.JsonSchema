@@ -274,7 +274,7 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore
             }
         }
 
-        return true;
+        return query.Security?.IsSatisfiedBy(version.SecurityTagsValue) ?? true;
     }
 
     private int MaxVersion(string baseWorkflowId)

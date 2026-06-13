@@ -19,6 +19,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// <param name="Limit">The maximum number of versions to return in this page.</param>
 /// <param name="ContinuationToken">The opaque token from a previous page's <see cref="CatalogPage.ContinuationToken"/>, or
 /// <see langword="null"/> for the first page.</param>
+/// <param name="Security">A row-authorization filter restricting results to versions whose security tags satisfy the principal's rule(s) (§14.2); <see langword="null"/> is unrestricted.</param>
 public readonly record struct CatalogQuery(
     string? Text = null,
     string? BaseWorkflowId = null,
@@ -27,7 +28,8 @@ public readonly record struct CatalogQuery(
     CatalogStatus? Status = null,
     string? Owner = null,
     int Limit = 100,
-    string? ContinuationToken = null);
+    string? ContinuationToken = null,
+    SecurityFilter? Security = null);
 
 /// <summary>A page of catalog versions matching a <see cref="CatalogQuery"/> (metadata only — no documents).</summary>
 /// <param name="Versions">The matching versions (at most <see cref="CatalogQuery.Limit"/>), ordered by (base workflow id, version number).</param>
