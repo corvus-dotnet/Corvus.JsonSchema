@@ -19,7 +19,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Sqlite;
 /// for the local/embedded use this adapter targets. Create instances with
 /// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/>, which runs the idempotent schema.
 /// </remarks>
-public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDisposable
+public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string ColumnList =
         "BaseWorkflowId, VersionNumber, WorkflowId, Title, Description, Status, Tags, OwnerName, OwnerEmail, OwnerTeam, OwnerUrl, Sources, Hash, CreatedBy, CreatedAt, LastUpdatedBy, LastUpdatedAt, ObsoletedBy, ObsoletedAt, Runnable";
@@ -141,6 +141,7 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
                   AND (@owner IS NULL OR OwnerName LIKE @ownerLike ESCAPE '\' OR OwnerEmail LIKE @ownerLike ESCAPE '\')
                   AND (@workflowIdPrefix IS NULL OR WorkflowId LIKE @workflowIdPrefixLike ESCAPE '\')
                   {{tagPredicates}}
+                  {{securityPredicate}}
                   AND (@after IS NULL OR (BaseWorkflowId || printf('%010d', VersionNumber)) > @after)
                 ORDER BY BaseWorkflowId, VersionNumber
                 LIMIT @limit;
@@ -171,6 +172,28 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
             else
             {
                 select.CommandText = select.CommandText.Replace("{{tagPredicates}}", string.Empty);
+            }
+
+            // Row-security reach (§14.4): translate the filter to a correlated EXISTS over the version's security
+            // tags. Reached only for a store that declares ISupportsRowSecurityFilter.
+            if (query.Security is { } security)
+            {
+                int securityParam = 0;
+                var emitter = new SqlSecurityRuleEmitter(
+                    "CatalogVersionSecurityTags",
+                    ["BaseWorkflowId", "VersionNumber"],
+                    "CatalogVersions",
+                    value =>
+                    {
+                        string name = "@sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
+                        select.Parameters.AddWithValue(name, value);
+                        return name;
+                    });
+                select.CommandText = select.CommandText.Replace("{{securityPredicate}}", "AND (" + security.ToSqlPredicate(emitter) + ")");
+            }
+            else
+            {
+                select.CommandText = select.CommandText.Replace("{{securityPredicate}}", string.Empty);
             }
 
             var versions = new List<CatalogVersion>();
@@ -256,7 +279,7 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
         try
         {
             using SqliteCommand delete = this.connection.CreateCommand();
-            delete.CommandText = "DELETE FROM CatalogVersions WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;";
+            delete.CommandText = "DELETE FROM CatalogVersions WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber; DELETE FROM CatalogVersionSecurityTags WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;";
             delete.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
             delete.Parameters.AddWithValue("@versionNumber", versionNumber);
             return await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) > 0;
@@ -307,7 +330,7 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
             foreach (CatalogVersionRef reference in versions)
             {
                 using SqliteCommand delete = this.connection.CreateCommand();
-                delete.CommandText = "DELETE FROM CatalogVersions WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;";
+                delete.CommandText = "DELETE FROM CatalogVersions WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber; DELETE FROM CatalogVersionSecurityTags WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;";
                 delete.Parameters.AddWithValue("@baseWorkflowId", reference.BaseWorkflowId);
                 delete.Parameters.AddWithValue("@versionNumber", reference.VersionNumber);
                 await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -373,6 +396,22 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
             insert.Parameters.AddWithValue("@runnable", projection.HasExecutor ? 1 : 0);
             insert.Parameters.AddWithValue("@package", projection.CanonicalPackage.ToArray());
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+
+            // Persist the version's security tags into the child table for indexed reach-filtering (§14.4).
+            // Catalog versions are immutable, so this is insert-once at add time.
+            if (metadata.SecurityTags is { Count: > 0 } securityTags)
+            {
+                foreach (SecurityTag tag in securityTags)
+                {
+                    using SqliteCommand tagInsert = this.connection.CreateCommand();
+                    tagInsert.CommandText = "INSERT INTO CatalogVersionSecurityTags (BaseWorkflowId, VersionNumber, TagKey, TagValue) VALUES (@baseWorkflowId, @versionNumber, @key, @value);";
+                    tagInsert.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
+                    tagInsert.Parameters.AddWithValue("@versionNumber", versionNumber);
+                    tagInsert.Parameters.AddWithValue("@key", tag.Key);
+                    tagInsert.Parameters.AddWithValue("@value", tag.Value);
+                    await tagInsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                }
+            }
 
             return CatalogVersion.Create(
                 baseWorkflowId: baseWorkflowId,
@@ -540,5 +579,13 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
         );
         CREATE INDEX IF NOT EXISTS IX_CatalogVersions_Status ON CatalogVersions (Status);
         CREATE INDEX IF NOT EXISTS IX_CatalogVersions_WorkflowId ON CatalogVersions (WorkflowId COLLATE NOCASE);
+        CREATE TABLE IF NOT EXISTS CatalogVersionSecurityTags (
+            BaseWorkflowId TEXT NOT NULL,
+            VersionNumber INTEGER NOT NULL,
+            TagKey TEXT NOT NULL,
+            TagValue TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS IX_CatalogVersionSecurityTags_Version ON CatalogVersionSecurityTags (BaseWorkflowId, VersionNumber);
+        CREATE INDEX IF NOT EXISTS IX_CatalogVersionSecurityTags_KeyValue ON CatalogVersionSecurityTags (TagKey, TagValue);
         """;
 }

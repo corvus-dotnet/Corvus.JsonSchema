@@ -369,6 +369,90 @@ public abstract class WorkflowStateStoreConformance
         collected.ShouldBe(ids);
     }
 
+    [TestMethod]
+    public async Task Query_applies_a_row_security_reach_filter_matching_the_evaluator()
+    {
+        IWorkflowStateStore store = await this.NewStoreAsync();
+        if (store is not ISupportsRowSecurityFilter)
+        {
+            Assert.Inconclusive("This store does not yet push the row-security reach filter down (§14.4).");
+            return;
+        }
+
+        // Runs spanning single-value, multi-value and no-tag shapes.
+        (string Id, SecurityTag[] Tags)[] rows =
+        [
+            ("run-a", [new("tenant", "acme"), new("team", "payments")]),
+            ("run-b", [new("tenant", "acme"), new("team", "hr")]),
+            ("run-c", [new("tenant", "globex"), new("team", "payments")]),
+            ("run-d", []),
+            ("run-e", [new("tenant", "acme"), new("tenant", "beta")]),
+        ];
+        foreach ((string id, SecurityTag[] tags) in rows)
+        {
+            await store.SaveAsync(id, Bytes("x"), Secured(tags), WorkflowEtag.None, default);
+        }
+
+        var index = (IWorkflowWaitIndex)store;
+        var claims = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal)
+        {
+            ["tenant"] = ["acme"],
+            ["both"] = ["acme", "globex"],
+        };
+
+        // Every operator/operand shape the translator handles; each cross-checked against the in-memory evaluator.
+        string[] ruleShapes =
+        [
+            "tenant == $claim.tenant",
+            "tenant == 'acme'",
+            "tenant != $claim.tenant",
+            "tenant",
+            "tenant && team == 'payments'",
+            "tenant == 'acme' || team == 'hr'",
+            "!(tenant == 'globex')",
+            "tenant == $claim.missing",
+            "'a' == 'a'",
+            "team == team",
+            "tenant == $claim.both",
+        ];
+
+        foreach (string ruleText in ruleShapes)
+        {
+            var filter = new SecurityFilter([SecurityRule.Compile(ruleText)], claims);
+            WorkflowRunPage page = await index.QueryAsync(new WorkflowQuery(Limit: 1000, Security: filter), default);
+
+            List<string> actual = page.Runs.Select(r => r.Id.Value).OrderBy(x => x, StringComparer.Ordinal).ToList();
+            List<string> expected = rows.Where(r => filter.IsSatisfiedBy(r.Tags)).Select(r => r.Id).OrderBy(x => x, StringComparer.Ordinal).ToList();
+            actual.ShouldBe(expected, $"rule: {ruleText}");
+        }
+    }
+
+    [TestMethod]
+    public async Task Deleting_a_run_removes_its_security_tags()
+    {
+        IWorkflowStateStore store = await this.NewStoreAsync();
+        if (store is not ISupportsRowSecurityFilter)
+        {
+            Assert.Inconclusive("This store does not yet push the row-security reach filter down (§14.4).");
+            return;
+        }
+
+        var index = (IWorkflowWaitIndex)store;
+        var filter = new SecurityFilter([SecurityRule.Compile("tenant == 'acme'")], new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal));
+
+        await store.SaveAsync("run-x", Bytes("x"), Secured([new("tenant", "acme")]), WorkflowEtag.None, default);
+        (await index.QueryAsync(new WorkflowQuery(Limit: 10, Security: filter), default)).Runs.Count.ShouldBe(1);
+
+        await store.DeleteAsync("run-x", default);
+
+        // The tags are gone too: a run later re-created with the same id must not inherit the deleted run's tags.
+        await store.SaveAsync("run-x", Bytes("x"), Index(), WorkflowEtag.None, default);
+        (await index.QueryAsync(new WorkflowQuery(Limit: 10, Security: filter), default)).Runs.ShouldBeEmpty();
+    }
+
+    private static WorkflowRunIndexEntry Secured(SecurityTag[] securityTags)
+        => new("wf", WorkflowRunStatus.Running, T0, T0, SecurityTags: securityTags);
+
     private static WorkflowRunIndexEntry Index(WorkflowRunStatus status = WorkflowRunStatus.Running)
         => new("wf", status, T0, T0);
 

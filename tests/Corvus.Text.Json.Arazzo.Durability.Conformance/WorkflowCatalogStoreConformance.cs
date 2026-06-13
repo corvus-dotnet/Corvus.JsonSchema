@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Linq;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
@@ -278,6 +279,62 @@ public abstract class WorkflowCatalogStoreConformance
         await store.DeleteManyAsync(obsolete, default);
         (await store.GetAsync("svc", 1, default)).ShouldBeNull();
         (await store.GetAsync("svc", 2, default)).ShouldNotBeNull();
+    }
+
+    [TestMethod]
+    public async Task Search_applies_a_row_security_reach_filter_matching_the_evaluator()
+    {
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+        if (store is not ISupportsRowSecurityFilter)
+        {
+            Assert.Inconclusive("This store does not yet push the row-security reach filter down (§14.4).");
+            return;
+        }
+
+        // Each base id gets a version carrying a distinct security-tag shape (single, multi, none).
+        (string Base, SecurityTag[] Tags)[] rows =
+        [
+            ("flow-a", [new("tenant", "acme"), new("team", "payments")]),
+            ("flow-b", [new("tenant", "acme"), new("team", "hr")]),
+            ("flow-c", [new("tenant", "globex"), new("team", "payments")]),
+            ("flow-d", []),
+            ("flow-e", [new("tenant", "acme"), new("tenant", "beta")]),
+        ];
+        foreach ((string baseId, SecurityTag[] tags) in rows)
+        {
+            await store.AddAsync(baseId, Package(baseId), new CatalogMetadata(new CatalogOwner("Team A", "team-a@example.com"), "alice", null, tags), default);
+        }
+
+        var claims = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal)
+        {
+            ["tenant"] = ["acme"],
+            ["both"] = ["acme", "globex"],
+        };
+
+        string[] ruleShapes =
+        [
+            "tenant == $claim.tenant",
+            "tenant == 'acme'",
+            "tenant != $claim.tenant",
+            "tenant",
+            "tenant && team == 'payments'",
+            "tenant == 'acme' || team == 'hr'",
+            "!(tenant == 'globex')",
+            "tenant == $claim.missing",
+            "'a' == 'a'",
+            "team == team",
+            "tenant == $claim.both",
+        ];
+
+        foreach (string ruleText in ruleShapes)
+        {
+            var filter = new SecurityFilter([SecurityRule.Compile(ruleText)], claims);
+            CatalogPage page = await store.QueryAsync(new CatalogQuery(Limit: 1000, Security: filter), default);
+
+            List<string> actual = page.Versions.Select(v => v.Ref.BaseWorkflowId).OrderBy(x => x, StringComparer.Ordinal).ToList();
+            List<string> expected = rows.Where(r => filter.IsSatisfiedBy(r.Tags)).Select(r => r.Base).OrderBy(x => x, StringComparer.Ordinal).ToList();
+            actual.ShouldBe(expected, $"rule: {ruleText}");
+        }
     }
 
     private static CatalogMetadata Meta(IReadOnlyList<string>? tags = null)
