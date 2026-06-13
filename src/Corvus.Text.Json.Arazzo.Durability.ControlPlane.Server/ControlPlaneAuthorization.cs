@@ -35,44 +35,8 @@ public static class ControlPlaneScopes
     /// <summary>Delete or purge runs.</summary>
     public const string RunsPurge = "runs:purge";
 
-    /// <summary>Read the row-security policy (rules and claim→rule bindings).</summary>
-    public const string SecurityRead = "security:read";
-
-    /// <summary>Author the row-security policy (create/update/delete rules and bindings).</summary>
-    public const string SecurityWrite = "security:write";
-
-    /// <summary>Read source credential bindings (references and metadata only — never secret material).</summary>
-    public const string CredentialsRead = "credentials:read";
-
-    /// <summary>Manage source credential bindings (references and metadata only — never secret material).</summary>
-    public const string CredentialsWrite = "credentials:write";
-
-    /// <summary>Read a workflow's administrator set (described as deployment-mapped grants — never raw internal tags).</summary>
-    public const string AdministratorsRead = "administrators:read";
-
-    /// <summary>Manage a workflow's administrator set (add, remove, transfer — current-administrator membership applies).</summary>
-    public const string AdministratorsWrite = "administrators:write";
-
-    /// <summary>List and read governed deployment environments (reach-scoped).</summary>
-    public const string EnvironmentsRead = "environments:read";
-
-    /// <summary>Create, update, and delete deployment environments and manage their administrators (current-administrator membership applies).</summary>
-    public const string EnvironmentsWrite = "environments:write";
-
-    /// <summary>List and read registered sources (reach-scoped; the source document is returned only on single read).</summary>
-    public const string SourcesRead = "sources:read";
-
-    /// <summary>Register, update, and delete sources (reach-scoped).</summary>
-    public const string SourcesWrite = "sources:write";
-
-    /// <summary>List where workflow versions are available across environments (reach-scoped).</summary>
-    public const string AvailabilityRead = "availability:read";
-
-    /// <summary>Make a workflow version available in an environment, or withdraw it (target-environment-administrator gated; readiness-gated).</summary>
-    public const string AvailabilityWrite = "availability:write";
-
     /// <summary>Gets all control-plane capability scopes.</summary>
-    public static IReadOnlyList<string> All { get; } = [CatalogRead, CatalogWrite, CatalogPurge, RunsRead, RunsWrite, RunsPurge, SecurityRead, SecurityWrite, CredentialsRead, CredentialsWrite, AdministratorsRead, AdministratorsWrite, EnvironmentsRead, EnvironmentsWrite, SourcesRead, SourcesWrite, AvailabilityRead, AvailabilityWrite];
+    public static IReadOnlyList<string> All { get; } = [CatalogRead, CatalogWrite, CatalogPurge, RunsRead, RunsWrite, RunsPurge];
 }
 
 /// <summary>
@@ -87,9 +51,7 @@ public static class ControlPlaneAuthorization
     /// <summary>
     /// Registers one authorization policy per <see cref="ControlPlaneScopes"/> value: an authenticated
     /// principal whose <paramref name="scopeClaimType"/> claim carries the scope (OAuth-style space-delimited
-    /// values are split). Map the control plane with a scope-gating <see cref="ControlPlaneSecurityMode"/>
-    /// (<see cref="ControlPlaneSecurityMode.Scoped"/> or <see cref="ControlPlaneSecurityMode.ScopesOnly"/>) to
-    /// demand them.
+    /// values are split). Call <c>MapArazzoControlPlane(..., requireAuthorization: true)</c> to demand them.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="scopeClaimType">The claim type carrying granted scopes (default <c>scope</c>).</param>
