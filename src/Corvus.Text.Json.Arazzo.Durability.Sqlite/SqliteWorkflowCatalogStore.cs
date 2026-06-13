@@ -182,6 +182,8 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
                 var emitter = new SqlSecurityRuleEmitter(
                     "CatalogVersionSecurityTags",
                     ["BaseWorkflowId", "VersionNumber"],
+                    "TagKey",
+                    "TagValue",
                     "CatalogVersions",
                     value =>
                     {

@@ -17,23 +17,31 @@ public sealed class SqlSecurityRuleEmitter : ISecurityRuleSqlEmitter
 {
     private readonly string tagTable;
     private readonly IReadOnlyList<string> ownerColumns;
+    private readonly string keyColumn;
+    private readonly string valueColumn;
     private readonly string outerReference;
     private readonly Func<string, string> parameter;
 
     /// <summary>Initializes a new instance of the <see cref="SqlSecurityRuleEmitter"/> class.</summary>
-    /// <param name="tagTable">The child table holding one row per security tag: the owner columns plus <c>TagKey</c>, <c>TagValue</c>.</param>
+    /// <param name="tagTable">The child table holding one row per security tag: the owner columns plus the key/value columns.</param>
     /// <param name="ownerColumns">The columns (in both the tag table and the outer row) that identify the owning row — e.g. <c>["RunId"]</c> or <c>["BaseWorkflowId", "VersionNumber"]</c>.</param>
+    /// <param name="keyColumn">The tag-key column name in <paramref name="tagTable"/> (e.g. <c>TagKey</c> or <c>tag_key</c>).</param>
+    /// <param name="valueColumn">The tag-value column name in <paramref name="tagTable"/> (e.g. <c>TagValue</c> or <c>tag_value</c>).</param>
     /// <param name="outerReference">The outer query's table name or alias to qualify the owner columns against (e.g. <c>WorkflowRuns</c>).</param>
     /// <param name="parameter">Binds a value to the command and returns its dialect placeholder.</param>
-    public SqlSecurityRuleEmitter(string tagTable, IReadOnlyList<string> ownerColumns, string outerReference, Func<string, string> parameter)
+    public SqlSecurityRuleEmitter(string tagTable, IReadOnlyList<string> ownerColumns, string keyColumn, string valueColumn, string outerReference, Func<string, string> parameter)
     {
         ArgumentException.ThrowIfNullOrEmpty(tagTable);
         ArgumentNullException.ThrowIfNull(ownerColumns);
         ArgumentOutOfRangeException.ThrowIfZero(ownerColumns.Count);
+        ArgumentException.ThrowIfNullOrEmpty(keyColumn);
+        ArgumentException.ThrowIfNullOrEmpty(valueColumn);
         ArgumentException.ThrowIfNullOrEmpty(outerReference);
         ArgumentNullException.ThrowIfNull(parameter);
         this.tagTable = tagTable;
         this.ownerColumns = ownerColumns;
+        this.keyColumn = keyColumn;
+        this.valueColumn = valueColumn;
         this.outerReference = outerReference;
         this.parameter = parameter;
     }
@@ -49,16 +57,16 @@ public sealed class SqlSecurityRuleEmitter : ISecurityRuleSqlEmitter
 
     /// <inheritdoc/>
     public string ExistsTagKey(string keyPlaceholder)
-        => $"EXISTS (SELECT 1 FROM {this.tagTable} st WHERE {this.CorrelateOuter("st")} AND st.TagKey = {keyPlaceholder})";
+        => $"EXISTS (SELECT 1 FROM {this.tagTable} st WHERE {this.CorrelateOuter("st")} AND st.{this.keyColumn} = {keyPlaceholder})";
 
     /// <inheritdoc/>
     public string ExistsTagValueIn(string keyPlaceholder, IReadOnlyList<string> valuePlaceholders)
-        => $"EXISTS (SELECT 1 FROM {this.tagTable} st WHERE {this.CorrelateOuter("st")} AND st.TagKey = {keyPlaceholder} AND st.TagValue IN ({string.Join(", ", valuePlaceholders)}))";
+        => $"EXISTS (SELECT 1 FROM {this.tagTable} st WHERE {this.CorrelateOuter("st")} AND st.{this.keyColumn} = {keyPlaceholder} AND st.{this.valueColumn} IN ({string.Join(", ", valuePlaceholders)}))";
 
     /// <inheritdoc/>
     public string ExistsTagKeysShareValue(string keyPlaceholder1, string keyPlaceholder2)
-        => $"EXISTS (SELECT 1 FROM {this.tagTable} st1 JOIN {this.tagTable} st2 ON {Correlate("st1", "st2")} AND st1.TagValue = st2.TagValue " +
-           $"WHERE {this.CorrelateOuter("st1")} AND st1.TagKey = {keyPlaceholder1} AND st2.TagKey = {keyPlaceholder2})";
+        => $"EXISTS (SELECT 1 FROM {this.tagTable} st1 JOIN {this.tagTable} st2 ON {Correlate("st1", "st2")} AND st1.{this.valueColumn} = st2.{this.valueColumn} " +
+           $"WHERE {this.CorrelateOuter("st1")} AND st1.{this.keyColumn} = {keyPlaceholder1} AND st2.{this.keyColumn} = {keyPlaceholder2})";
 
     /// <inheritdoc/>
     public string Negate(string predicate) => $"NOT ({predicate})";
