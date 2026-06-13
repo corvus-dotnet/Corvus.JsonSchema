@@ -3,7 +3,9 @@
 // </copyright>
 
 using Corvus.Text.Json.Arazzo.Durability;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
@@ -27,22 +29,38 @@ public static class ControlPlaneEndpointExtensions
     /// and call <c>UseAuthentication</c>/<c>UseAuthorization</c>. When <see langword="false"/> (the default)
     /// the endpoints are unsecured — for tests and trusted-network deployments.
     /// </param>
+    /// <param name="rowSecurity">
+    /// The deployment's row-security policy (§14.2): it scopes every list/search to the rows the principal may
+    /// see, gates single-row reads/writes (an invisible row is reported as not found), scopes purge to the
+    /// principal's reach, and stamps deployment-internal tags onto created rows. When supplied, the host must also
+    /// register <c>IHttpContextAccessor</c> (<c>services.AddHttpContextAccessor()</c>) so the current principal can
+    /// be read. When <see langword="null"/> (the default) the control plane is unscoped — every row is visible.
+    /// </param>
     /// <returns>The same endpoint route builder, for chaining.</returns>
     /// <remarks>
     /// Authentication is always the host's concern: the control plane depends only on a <c>ClaimsPrincipal</c>
     /// and the named scope policies, so a deployment supplies any ASP.NET Core scheme (JWT bearer, OIDC, mTLS,
     /// a dev key) and how a principal acquires scopes.
     /// </remarks>
-    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, IWorkflowManagementClient management, IWorkflowCatalogClient catalog, IRunnerRegistry runners, bool requireAuthorization = false)
+    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, IWorkflowManagementClient management, IWorkflowCatalogClient catalog, IRunnerRegistry runners, bool requireAuthorization = false, ControlPlaneRowSecurityPolicy? rowSecurity = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(runners);
+
+        ControlPlaneRowSecurity? row = null;
+        if (rowSecurity is not null)
+        {
+            // The current principal is read per request through IHttpContextAccessor, which the host must register.
+            IHttpContextAccessor accessor = endpoints.ServiceProvider.GetRequiredService<IHttpContextAccessor>();
+            row = new ControlPlaneRowSecurity(accessor, rowSecurity);
+        }
+
         return endpoints.MapApiEndpoints(
-            new ArazzoControlPlaneHandler(management),
+            new ArazzoControlPlaneHandler(management, row),
             new ArazzoControlPlaneRunnersHandler(runners),
-            new ArazzoControlPlaneCatalogHandler(catalog, management, runners),
+            new ArazzoControlPlaneCatalogHandler(catalog, management, runners, row),
             requireAuthorization ? ControlPlaneAuthorization.RequireDeclaredScopes : null);
     }
 }

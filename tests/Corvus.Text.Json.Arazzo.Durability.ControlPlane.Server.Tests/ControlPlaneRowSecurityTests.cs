@@ -108,82 +108,11 @@ public sealed class ControlPlaneRowSecurityTests
     }
 
     [TestMethod]
-    public async Task Read_reach_and_write_reach_are_independent()
-    {
-        // A principal that may read everything but write nothing: a run is gettable (200), but cancelling/deleting
-        // it is forbidden (403) — the existence was already disclosed by the read, so it is not masked as 404.
-        await using Scoped host = await StartAsync(new ReadAnyWriteNonePolicy());
-        await FaultRunAsync(host.Store, "run-1", host.Clock, new SecurityTag("tenant", "acme"));
-
-        (await host.GetAsync("/runs/run-1", tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await host.PostAsync("/runs/run-1/cancel", """{"reason":"x"}""", tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-
-        using var delete = new HttpRequestMessage(HttpMethod.Delete, "/runs/run-1");
-        (await host.SendAsync(delete, tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-
-        // The run is untouched by the denied writes — still readable and still Faulted.
-        using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync("/runs/run-1", tenant: "acme"));
-        doc.RootElement.GetProperty("status").GetString().ShouldBe("Faulted");
-
-        // Catalog writes are gated the same way: the version is readable (200) but not updatable (403).
-        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
-        (await host.GetAsync("/catalog/flow/versions/1", tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
-        using var patch = new HttpRequestMessage(HttpMethod.Patch, "/catalog/flow/versions/1")
-        {
-            Content = new StringContent("""{ "status": "Obsolete" }""", Encoding.UTF8, "application/json"),
-        };
-        (await host.SendAsync(patch, tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-    }
-
-    [TestMethod]
-    public async Task Patching_a_version_re_tags_user_labels_and_preserves_internal_tags()
-    {
-        // §14.2: a metadata PATCH re-tags the version's non-internal security labels — the caller's new labels replace the
-        // old ones, while every deployment-internal tag (reserved prefix — here the auto-stamped sys:workflow identity) is
-        // preserved and never user-editable. The catalog auto-stamps sys:workflow=<baseId> at creation.
-        await using Scoped host = await StartAsync();
-        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("team", "payments")]), default);
-
-        using var patch = new HttpRequestMessage(HttpMethod.Patch, "/catalog/flow/versions/1")
-        {
-            Content = new StringContent("""{ "securityTags": [ { "key": "team", "value": "billing" } ] }""", Encoding.UTF8, "application/json"),
-        };
-        (await host.SendAsync(patch, tenant: null)).StatusCode.ShouldBe(HttpStatusCode.OK);
-
-        using var fetched = await host.Catalog.GetAsync("flow", 1, AccessContext.System, default);
-        fetched.ShouldNotBeNull();
-        var securityTags = fetched.RootElement.SecurityTagsValue.ToList();
-        securityTags.ShouldContain(new SecurityTag("team", "billing"));      // the caller's new label
-        securityTags.ShouldNotContain(new SecurityTag("team", "payments"));  // the old user label was replaced
-        securityTags.ShouldContain(new SecurityTag("sys:workflow", "flow")); // the internal identity was preserved
-    }
-
-    [TestMethod]
-    public async Task Patching_a_version_rejects_a_reserved_internal_security_tag()
-    {
-        // §14.2: the reserved internal prefix is owned by the deployment — a caller may not set (or re-tag with) a
-        // sys:-prefixed key. A shell-backed policy enforces it; the whole request is rejected (400) and nothing changes.
-        await using Scoped host = await StartAsync(new ShellPolicy());
-        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("team", "payments")]), default);
-
-        using var patch = new HttpRequestMessage(HttpMethod.Patch, "/catalog/flow/versions/1")
-        {
-            Content = new StringContent("""{ "securityTags": [ { "key": "sys:tenant", "value": "evil" } ] }""", Encoding.UTF8, "application/json"),
-        };
-        (await host.SendAsync(patch, tenant: null)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-
-        // The version is unchanged — the reserved-prefix attempt never reached the store.
-        using var fetched = await host.Catalog.GetAsync("flow", 1, AccessContext.System, default);
-        fetched.ShouldNotBeNull();
-        fetched.RootElement.SecurityTagsValue.ToList().ShouldContain(new SecurityTag("team", "payments"));
-    }
-
-    [TestMethod]
     public async Task Searching_the_catalog_is_scoped_to_the_principals_tenant()
     {
         await using Scoped host = await StartAsync();
-        await host.Catalog.AddAsync(Package("acme-flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
-        await host.Catalog.AddAsync(Package("globex-flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), default);
+        await host.Catalog.AddAsync(Package("acme-flow"), Owner, null, [new SecurityTag("tenant", "acme")], default);
+        await host.Catalog.AddAsync(Package("globex-flow"), Owner, null, [new SecurityTag("tenant", "globex")], default);
 
         using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync("/catalog", tenant: "acme"));
 
@@ -197,54 +126,13 @@ public sealed class ControlPlaneRowSecurityTests
     public async Task A_catalog_version_in_another_tenant_is_reported_as_not_found()
     {
         await using Scoped host = await StartAsync();
-        await host.Catalog.AddAsync(Package("globex-flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), default);
+        await host.Catalog.AddAsync(Package("globex-flow"), Owner, null, [new SecurityTag("tenant", "globex")], default);
 
         (await host.GetAsync("/catalog/globex-flow/versions/1", tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
         (await host.GetAsync("/catalog/globex-flow/versions/1", tenant: "globex")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
         // The package and source documents are gated the same way.
         (await host.GetAsync("/catalog/globex-flow/versions/1/package", tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
-    }
-
-    [TestMethod]
-    public async Task Getting_a_version_strips_internal_security_tags_from_the_response()
-    {
-        // §14.2: deployment-internal tags (the reserved `sys:` prefix) are stamped and used for row authorization but
-        // never returned to clients. The version below carries an internal `sys:tenant` tag plus a user `team` tag, and
-        // AddAsync additionally stamps the internal `sys:workflow` identity — the response must expose only `team`.
-        await using Scoped host = await StartAsync();
-        await host.Catalog.AddAsync(
-            Package("flow"),
-            Owner,
-            default,
-            SecurityTagSet.FromTags([new SecurityTag("sys:tenant", "acme"), new SecurityTag("team", "payments")]),
-            default);
-
-        // The operator (no tenant claim) is unrestricted, so the row is visible; the strip is orthogonal to reach.
-        using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync("/catalog/flow/versions/1", tenant: null));
-
-        List<(string Key, string Value)> tags = ReadSecurityTags(doc.RootElement);
-        tags.ShouldContain(("team", "payments"));
-        tags.ShouldNotContain(t => t.Key.StartsWith("sys:", StringComparison.Ordinal));
-    }
-
-    [TestMethod]
-    public async Task Searching_the_catalog_strips_internal_security_tags_from_every_row()
-    {
-        await using Scoped host = await StartAsync();
-        await host.Catalog.AddAsync(
-            Package("flow"),
-            Owner,
-            default,
-            SecurityTagSet.FromTags([new SecurityTag("sys:tenant", "acme"), new SecurityTag("team", "payments")]),
-            default);
-
-        using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync("/catalog", tenant: null));
-
-        foreach (Stj.JsonElement version in doc.RootElement.GetProperty("versions").EnumerateArray())
-        {
-            ReadSecurityTags(version).ShouldNotContain(t => t.Key.StartsWith("sys:", StringComparison.Ordinal));
-        }
     }
 
     private sealed class FixedClock(DateTimeOffset now) : TimeProvider
@@ -260,28 +148,21 @@ public sealed class ControlPlaneRowSecurityTests
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)
         => Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 
-    // The securityTags of a catalog-version summary element as (key, value) pairs, or empty when the property is absent
-    // (an all-internal set is stripped to nothing and the property is omitted).
-    private static List<(string Key, string Value)> ReadSecurityTags(Stj.JsonElement version)
-        => version.TryGetProperty("securityTags", out Stj.JsonElement tags)
-            ? [.. tags.EnumerateArray().Select(t => (t.GetProperty("key").GetString()!, t.GetProperty("value").GetString()!))]
-            : [];
-
     private static async Task SeedRunAsync(InMemoryWorkflowStateStore store, string id, TimeProvider clock, params SecurityTag[] security)
     {
-        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock, securityTags: SecurityTagSet.FromTags(security));
+        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock, securityTags: security);
         await run.EnqueueAsync(default);
     }
 
     private static async Task CompleteRunAsync(InMemoryWorkflowStateStore store, string id, TimeProvider clock, params SecurityTag[] security)
     {
-        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock, securityTags: SecurityTagSet.FromTags(security));
+        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock, securityTags: security);
         await run.CompleteAsync(default, default);
     }
 
     private static async Task FaultRunAsync(InMemoryWorkflowStateStore store, string id, TimeProvider clock, params SecurityTag[] security)
     {
-        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock, securityTags: SecurityTagSet.FromTags(security));
+        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock, securityTags: security);
         await run.FaultAsync("step1", attempt: 1, "boom", default);
     }
 
@@ -291,12 +172,12 @@ public sealed class ControlPlaneRowSecurityTests
         return WorkflowRunResultKind.Completed;
     }
 
-    private static async Task<Scoped> StartAsync(ControlPlaneRowSecurityPolicy? policy = null)
+    private static async Task<Scoped> StartAsync()
     {
         var clock = new FixedClock(T0);
         var store = new InMemoryWorkflowStateStore(clock);
-        var management = new SecuredWorkflowManagement(store, "ops", CompleteResumer, clock);
-        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(clock), store, "ops");
+        var management = new WorkflowManagementClient(store, "ops", CompleteResumer, clock);
+        var catalog = new WorkflowCatalogClient(new InMemoryWorkflowCatalogStore(clock), store, "ops");
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -311,17 +192,17 @@ public sealed class ControlPlaneRowSecurityTests
 
         WebApplication app = builder.Build();
         app.UseAuthentication();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.RowSecurityOnly, rowSecurity: policy ?? new TenantRowSecurityPolicy());
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), rowSecurity: new TenantRowSecurityPolicy());
         await app.StartAsync();
 
         return new Scoped(app, app.GetTestClient(), store, catalog, clock);
     }
 
-    private sealed class Scoped(WebApplication app, HttpClient client, InMemoryWorkflowStateStore store, ISecuredWorkflowCatalog catalog, TimeProvider clock) : IAsyncDisposable
+    private sealed class Scoped(WebApplication app, HttpClient client, InMemoryWorkflowStateStore store, IWorkflowCatalogClient catalog, TimeProvider clock) : IAsyncDisposable
     {
         public InMemoryWorkflowStateStore Store => store;
 
-        public ISecuredWorkflowCatalog Catalog => catalog;
+        public IWorkflowCatalogClient Catalog => catalog;
 
         public TimeProvider Clock => clock;
 
@@ -378,40 +259,18 @@ public sealed class ControlPlaneRowSecurityTests
     /// A deployment row-security policy: a principal carrying a <c>tenant</c> claim is scoped to rows tagged with
     /// that tenant (<c>tenant == $claim.tenant</c>); a principal with no tenant claim is an unrestricted operator.
     /// </summary>
-    /// <summary>Read everything, write/purge nothing — exercises independent per-verb reach (§14.2).</summary>
-    private sealed class ReadAnyWriteNonePolicy : ControlPlaneRowSecurityPolicy
-    {
-        // A rule comparing two distinct literals is never satisfied, so it denies every row.
-        private static readonly SecurityFilter DenyAll = new(
-            [SecurityRule.Compile("'x' == 'y'")],
-            new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal));
-
-        public override AccessContext Resolve(ClaimsPrincipal? principal) => new(readReach: null, writeReach: DenyAll, purgeReach: DenyAll);
-    }
-
     private sealed class TenantRowSecurityPolicy : ControlPlaneRowSecurityPolicy
     {
-        public override AccessContext Resolve(ClaimsPrincipal? principal)
+        public override SecurityFilter? GetFilter(ClaimsPrincipal? principal)
         {
             string? tenant = principal?.FindFirst("tenant")?.Value;
             if (tenant is null)
             {
-                return AccessContext.System;
+                return null;
             }
 
             var claims = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal) { ["tenant"] = [tenant] };
-            return AccessContext.Uniform(new SecurityFilter([SecurityRule.Compile("tenant == $claim.tenant")], claims));
+            return new SecurityFilter([SecurityRule.Compile("tenant == $claim.tenant")], claims);
         }
-    }
-
-    // Unrestricted reach, but backed by a SecurityShell so it enforces the reserved internal-tag prefix (the default
-    // policy accepts everything) — exercises reserved-prefix rejection on user-supplied security tags (§14.2).
-    private sealed class ShellPolicy : ControlPlaneRowSecurityPolicy
-    {
-        private static readonly SecurityShell Shell = new([]);
-
-        public override AccessContext Resolve(ClaimsPrincipal? principal) => AccessContext.System;
-
-        public override void ValidateUserTags(SecurityTagSet userTags) => Shell.ValidateUserTags(userTags);
     }
 }
