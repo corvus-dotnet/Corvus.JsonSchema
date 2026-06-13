@@ -3,8 +3,7 @@
 // </copyright>
 
 using System.Net;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using System.Runtime.CompilerServices;
 using Microsoft.Azure.Cosmos;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
@@ -16,14 +15,18 @@ namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
 /// heartbeat is a single-partition read-modify-write, while list and prune run as cross-partition queries.
 /// </summary>
 /// <remarks>
-/// Provision the database and container once with <see cref="PrepareAsync(string, string, CancellationToken)"/>,
-/// then open the registry with <see cref="ConnectAsync(string, string, CancellationToken)"/>; the overloads taking
-/// a <see cref="CosmosClient"/> let callers configure the client (for example a least-privileged data-plane
-/// managed identity) themselves.
+/// Documents are written and read through the Cosmos <em>stream</em> APIs so persistence flows through the
+/// <see cref="RunnerDocument"/> Corvus.Text.Json schema type and never the SDK's reflection serializer. Provision
+/// the database and container once with <see cref="PrepareAsync(string, string, CancellationToken)"/>, then open
+/// the registry with <see cref="ConnectAsync(string, string, CancellationToken)"/>; the overloads taking a
+/// <see cref="CosmosClient"/> let callers configure the client (for example a least-privileged data-plane managed
+/// identity) themselves.
 /// </remarks>
 public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
 {
     private const string RunnersContainerId = "runners";
+
+    private static readonly byte[] IdProperty = "id"u8.ToArray();
 
     private readonly CosmosClient client;
     private readonly Container runners;
@@ -114,19 +117,22 @@ public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         return new ValueTask<CosmosRunnerRegistry>(Connect(client, databaseName, ownsClient: false));
     }
 
-    /// <summary>The serializer options the registry relies on (camelCase property names, null properties omitted).</summary>
+    /// <summary>The Cosmos client options the registry relies on.</summary>
+    /// <remarks>
+    /// The registry reads and writes through the Cosmos stream APIs and serializes documents with
+    /// Corvus.Text.Json, so no SDK serializer is configured.
+    /// </remarks>
     /// <returns>The Cosmos client options used by the connection-string overloads.</returns>
-    public static CosmosClientOptions CreateClientOptions() => new()
-    {
-        UseSystemTextJsonSerializerWithOptions = SerializerOptions,
-    };
+    public static CosmosClientOptions CreateClientOptions() => new();
 
     /// <inheritdoc/>
     public async ValueTask RegisterAsync(RunnerRegistration registration, CancellationToken cancellationToken)
     {
         string runnerId = registration.RunnerIdValue;
-        var document = RunnerDocument.From(runnerId, registration);
-        await this.runners.UpsertItemAsync(document, new PartitionKey(runnerId), cancellationToken: cancellationToken).ConfigureAwait(false);
+        byte[] body = RunnerDocument.From(runnerId, registration).ToJsonBytes();
+        using var stream = CosmosJson.ToStream(body);
+        using ResponseMessage response = await this.runners.UpsertItemStreamAsync(stream, new PartitionKey(runnerId), cancellationToken: cancellationToken).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
     }
 
     /// <inheritdoc/>
@@ -138,16 +144,11 @@ public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
             .WithParameter("@baseWorkflowId", baseWorkflowId)
             .WithParameter("@versionNumber", versionNumber);
 
-        using FeedIterator<long> iterator = this.runners.GetItemQueryIterator<long>(definition);
-        while (iterator.HasMoreResults)
+        await foreach (ReadOnlyMemory<byte> element in this.QueryElementsAsync(definition, cancellationToken).ConfigureAwait(false))
         {
-            FeedResponse<long> page = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
-            foreach (long count in page)
+            if (CosmosJson.AsInt64OrNull(element) is > 0)
             {
-                if (count > 0)
-                {
-                    return true;
-                }
+                return true;
             }
         }
 
@@ -160,20 +161,20 @@ public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         ArgumentNullException.ThrowIfNull(runnerId);
         var partition = new PartitionKey(runnerId);
 
-        RunnerDocument existing;
-        try
-        {
-            ItemResponse<RunnerDocument> read = await this.runners.ReadItemAsync<RunnerDocument>(runnerId, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
-            existing = read.Resource;
-        }
-        catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        using ResponseMessage read = await this.runners.ReadItemStreamAsync(runnerId, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (read.StatusCode == HttpStatusCode.NotFound)
         {
             return false;
         }
 
-        RunnerRegistration updated = RunnerRegistration.FromJson(existing.Doc).WithLastSeenAt(at);
-        var document = RunnerDocument.From(runnerId, updated);
-        await this.runners.UpsertItemAsync(document, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
+        read.EnsureSuccessStatusCode();
+        ReadOnlyMemory<byte> payload = await CosmosJson.ReadAllAsync(read.Content, cancellationToken).ConfigureAwait(false);
+        RunnerRegistration updated = RunnerDocument.FromJson(payload).ToRegistration().WithLastSeenAt(at);
+
+        byte[] body = RunnerDocument.From(runnerId, updated).ToJsonBytes();
+        using var stream = CosmosJson.ToStream(body);
+        using ResponseMessage response = await this.runners.UpsertItemStreamAsync(stream, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
         return true;
     }
 
@@ -182,14 +183,9 @@ public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     {
         var definition = new QueryDefinition("SELECT * FROM c");
         var result = new List<RunnerRegistration>();
-        using FeedIterator<RunnerDocument> iterator = this.runners.GetItemQueryIterator<RunnerDocument>(definition);
-        while (iterator.HasMoreResults)
+        await foreach (ReadOnlyMemory<byte> element in this.QueryElementsAsync(definition, cancellationToken).ConfigureAwait(false))
         {
-            FeedResponse<RunnerDocument> page = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
-            foreach (RunnerDocument document in page)
-            {
-                result.Add(RunnerRegistration.FromJson(document.Doc));
-            }
+            result.Add(RunnerDocument.FromJson(element).ToRegistration());
         }
 
         return result;
@@ -198,23 +194,25 @@ public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     /// <inheritdoc/>
     public async ValueTask<int> PruneAsync(DateTimeOffset deadBefore, CancellationToken cancellationToken)
     {
-        var definition = new QueryDefinition("SELECT * FROM c WHERE c.lastSeenAt < @cutoff")
+        var definition = new QueryDefinition("SELECT c.id FROM c WHERE c.lastSeenAt < @cutoff")
             .WithParameter("@cutoff", deadBefore.ToUnixTimeMilliseconds());
 
         var stale = new List<string>();
-        using FeedIterator<RunnerDocument> iterator = this.runners.GetItemQueryIterator<RunnerDocument>(definition);
-        while (iterator.HasMoreResults)
+        await foreach (ReadOnlyMemory<byte> element in this.QueryElementsAsync(definition, cancellationToken).ConfigureAwait(false))
         {
-            FeedResponse<RunnerDocument> page = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
-            foreach (RunnerDocument document in page)
+            if (CosmosJson.GetString(element, IdProperty) is { } runnerId)
             {
-                stale.Add(document.Id);
+                stale.Add(runnerId);
             }
         }
 
         foreach (string runnerId in stale)
         {
-            await this.runners.DeleteItemAsync<RunnerDocument>(runnerId, new PartitionKey(runnerId), cancellationToken: cancellationToken).ConfigureAwait(false);
+            using ResponseMessage response = await this.runners.DeleteItemStreamAsync(runnerId, new PartitionKey(runnerId), cancellationToken: cancellationToken).ConfigureAwait(false);
+            if (response.StatusCode != HttpStatusCode.NotFound)
+            {
+                response.EnsureSuccessStatusCode();
+            }
         }
 
         return stale.Count;
@@ -231,12 +229,6 @@ public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         return default;
     }
 
-    private static readonly JsonSerializerOptions SerializerOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-    };
-
     private static async ValueTask ProvisionAsync(CosmosClient client, string databaseName, CancellationToken cancellationToken)
     {
         Database database = await client.CreateDatabaseIfNotExistsAsync(databaseName, cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -252,49 +244,18 @@ public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         return new CosmosRunnerRegistry(client, runners, ownsClient);
     }
 
-    private sealed class RunnerDocument
+    private async IAsyncEnumerable<ReadOnlyMemory<byte>> QueryElementsAsync(QueryDefinition query, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        [JsonPropertyName("id")]
-        public string Id { get; set; } = string.Empty;
-
-        [JsonPropertyName("lastSeenAt")]
-        public long LastSeenAt { get; set; }
-
-        [JsonPropertyName("doc")]
-        public byte[] Doc { get; set; } = [];
-
-        /// <summary>
-        /// A queryable projection of the registration's loaded hosted versions, indexed by
-        /// <see cref="IsVersionHostedAsync"/>. It is recomputed on every register/heartbeat so it stays in
-        /// step with the canonical <see cref="Doc"/> registration; <see cref="ListAsync"/> ignores it.
-        /// </summary>
-        [JsonPropertyName("loadedVersions")]
-        public List<HostedKey> LoadedVersions { get; set; } = [];
-
-        public static RunnerDocument From(string runnerId, RunnerRegistration registration)
+        using FeedIterator iterator = this.runners.GetItemQueryStreamIterator(query);
+        while (iterator.HasMoreResults)
         {
-            var loadedVersions = new List<HostedKey>();
-            foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
+            using ResponseMessage response = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+            ReadOnlyMemory<byte> page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+            foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page))
             {
-                loadedVersions.Add(new HostedKey { BaseWorkflowId = baseWorkflowId, VersionNumber = versionNumber });
+                yield return element;
             }
-
-            return new RunnerDocument
-            {
-                Id = runnerId,
-                LastSeenAt = registration.LastSeenAtValue.ToUnixTimeMilliseconds(),
-                Doc = registration.ToJsonBytes(),
-                LoadedVersions = loadedVersions,
-            };
         }
-    }
-
-    private sealed class HostedKey
-    {
-        [JsonPropertyName("baseWorkflowId")]
-        public string BaseWorkflowId { get; set; } = string.Empty;
-
-        [JsonPropertyName("versionNumber")]
-        public int VersionNumber { get; set; }
     }
 }

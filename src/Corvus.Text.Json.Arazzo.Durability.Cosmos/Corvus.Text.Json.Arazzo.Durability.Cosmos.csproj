@@ -19,14 +19,19 @@
     <InternalsVisibleTo Include="Corvus.Text.Json.Arazzo.Durability.Cosmos.Tests" />
   </ItemGroup>
   <ItemGroup>
+    <AdditionalFiles Include="Schemas\**\*.json" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo\Corvus.Text.Json.Arazzo.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Durability\Corvus.Text.Json.Arazzo.Durability.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.SourceGenerator\Corvus.Text.Json.SourceGenerator.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Cosmos" />
-    <!-- The Cosmos SDK has a hard runtime dependency on Newtonsoft.Json even when the System.Text.Json
-         serializer is configured, so it must be referenced explicitly. -->
+    <!-- The Cosmos SDK has a hard runtime dependency on Newtonsoft.Json (query plans, metadata) even though
+         this store reads and writes through the stream APIs and never uses an SDK serializer, so it must be
+         referenced explicitly. -->
     <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
     <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />

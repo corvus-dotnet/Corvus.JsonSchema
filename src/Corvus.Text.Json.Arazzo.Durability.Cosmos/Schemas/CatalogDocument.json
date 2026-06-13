@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CatalogDocument",
+  "description": "The Azure Cosmos DB document shape for a workflow catalog version: the canonical package (base64) plus the projected, queryable governance/search metadata and the embedded row-security tags.",
+  "type": "object",
+  "required": ["id", "baseWorkflowId", "versionNumber", "sortKey", "workflowId", "workflowIdLower", "title", "status", "owner", "hash", "runnable", "package", "createdBy", "createdAt"],
+  "properties": {
+    "id": { "type": "string", "description": "The document id ({baseWorkflowId}-v{versionNumber})." },
+    "baseWorkflowId": { "type": "string", "description": "The base (version-independent) workflow id (also the partition key)." },
+    "versionNumber": { "type": "integer", "format": "int32", "description": "The catalog version number." },
+    "sortKey": { "type": "string", "description": "The stable ordering key for pagination." },
+    "workflowId": { "type": "string", "description": "The version's workflow id." },
+    "workflowIdLower": { "type": "string", "description": "Lowercased workflow id for index-using prefix search." },
+    "title": { "type": "string", "description": "The version title." },
+    "description": { "type": "string", "description": "The version description, if any." },
+    "status": { "type": "string", "description": "The catalog status." },
+    "tags": { "type": "array", "description": "The free-form tags.", "items": { "type": "string" } },
+    "securityTags": {
+      "type": "array",
+      "description": "The row-security tags embedded for native reach filtering.",
+      "items": { "$ref": "#/$defs/EmbeddedSecurityTag" }
+    },
+    "owner": { "$ref": "#/$defs/OwnerInfo" },
+    "sources": { "type": "array", "description": "The source documents of the version.", "items": { "$ref": "#/$defs/SourceInfo" } },
+    "hash": { "type": "string", "description": "The content hash of the package." },
+    "runnable": { "type": "boolean", "description": "Whether the version has a compiled executor." },
+    "package": { "type": "string", "contentEncoding": "base64", "description": "The canonical package bytes, base64-encoded." },
+    "createdBy": { "type": "string", "description": "The actor that created the version." },
+    "createdAt": { "type": "integer", "format": "int64", "description": "Creation instant, Unix milliseconds." },
+    "lastUpdatedBy": { "type": "string", "description": "The actor that last updated the version, if any." },
+    "lastUpdatedAt": { "type": "integer", "format": "int64", "description": "Last-update instant, Unix milliseconds, if ever." },
+    "obsoletedBy": { "type": "string", "description": "The actor that obsoleted the version, if any." },
+    "obsoletedAt": { "type": "integer", "format": "int64", "description": "Obsoletion instant, Unix milliseconds, if ever." }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "EmbeddedSecurityTag": {
+      "title": "EmbeddedSecurityTag",
+      "type": "object",
+      "required": ["k", "v"],
+      "properties": {
+        "k": { "type": "string", "description": "The tag key." },
+        "v": { "type": "string", "description": "The tag value." }
+      },
+      "additionalProperties": false
+    },
+    "OwnerInfo": {
+      "title": "OwnerInfo",
+      "type": "object",
+      "required": ["name", "email"],
+      "properties": {
+        "name": { "type": "string", "description": "The owner name." },
+        "email": { "type": "string", "description": "The owner email." },
+        "team": { "type": "string", "description": "The owning team, if any." },
+        "url": { "type": "string", "description": "An owner URL, if any." }
+      },
+      "additionalProperties": false
+    },
+    "SourceInfo": {
+      "title": "SourceInfo",
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "description": "The source document name." },
+        "type": { "type": "string", "description": "The source document type, if known." }
+      },
+      "additionalProperties": false
+    }
+  }
+}
