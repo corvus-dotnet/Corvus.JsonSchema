@@ -450,12 +450,10 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
     // Security tags round-trip as a JSON property so a single-row read carries them for the control-plane's
     // authorization check (§14.2); the in-process reach filter below reads the same persisted tags.
     private static string EncodeSecurityTags(IReadOnlyList<SecurityTag> tags)
-        => System.Text.Json.JsonSerializer.Serialize(tags);
+        => Security.SecurityTagSet.From(tags).ToJsonString();
 
     private static IReadOnlyList<SecurityTag>? DecodeSecurityTags(string? encoded)
-        => string.IsNullOrEmpty(encoded)
-            ? null
-            : System.Text.Json.JsonSerializer.Deserialize<List<SecurityTag>>(encoded);
+        => Security.SecurityTagSet.FromJsonStringOrNull(encoded);
 
     private static string EncodeSources(IReadOnlyList<CatalogSourceRef> sources)
         => System.Text.Json.JsonSerializer.Serialize(sources.Select(s => new SourceDto(s.Name, s.Type)).ToList());

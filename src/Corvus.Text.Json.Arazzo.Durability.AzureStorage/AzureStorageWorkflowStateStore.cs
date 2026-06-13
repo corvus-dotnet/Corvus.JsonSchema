@@ -452,7 +452,7 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
 
         if (index.SecurityTags is { Count: > 0 } st)
         {
-            entity["SecurityTagsJson"] = System.Text.Json.JsonSerializer.Serialize(st);
+            entity["SecurityTagsJson"] = Security.SecurityTagSet.From(st).ToJsonString();
         }
 
         return entity;
@@ -472,6 +472,6 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             entity.GetString("ErrorType"),
             CorrelationId: entity.GetString("CorrelationId"),
             Tags: entity.GetString("TagsJson") is { } tagsJson ? System.Text.Json.JsonSerializer.Deserialize<List<string>>(tagsJson) : null,
-            SecurityTags: entity.GetString("SecurityTagsJson") is { } secJson ? System.Text.Json.JsonSerializer.Deserialize<List<SecurityTag>>(secJson) : null);
+            SecurityTags: Security.SecurityTagSet.FromJsonStringOrNull(entity.GetString("SecurityTagsJson")));
     }
 }
