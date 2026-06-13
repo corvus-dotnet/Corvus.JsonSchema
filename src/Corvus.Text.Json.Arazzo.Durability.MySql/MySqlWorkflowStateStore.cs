@@ -18,7 +18,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.MySql;
 /// Each operation opens a pooled connection, so the store is naturally concurrent. Create instances with
 /// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> after provisioning with <see cref="PrepareAsync(string, CancellationToken)"/>.
 /// </remarks>
-public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, IAsyncDisposable
+public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
     private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
@@ -171,6 +171,7 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
                 throw new WorkflowConflictException(id, expected);
             }
 
+            await SyncSecurityTagsAsync(connection, id, index.SecurityTags, cancellationToken).ConfigureAwait(false);
             return new WorkflowEtag("1");
         }
 
@@ -193,7 +194,33 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             throw new WorkflowConflictException(id, expected);
         }
 
+        await SyncSecurityTagsAsync(connection, id, index.SecurityTags, cancellationToken).ConfigureAwait(false);
         return new WorkflowEtag((expectedVersion + 1).ToString(CultureInfo.InvariantCulture));
+    }
+
+    private static async Task SyncSecurityTagsAsync(MySqlConnection connection, WorkflowRunId id, IReadOnlyList<SecurityTag>? securityTags, CancellationToken cancellationToken)
+    {
+        await using (MySqlCommand delete = connection.CreateCommand())
+        {
+            delete.CommandText = "DELETE FROM workflow_run_security_tags WHERE run_id = @id;";
+            delete.Parameters.AddWithValue("@id", id.Value);
+            await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        if (securityTags is not { Count: > 0 })
+        {
+            return;
+        }
+
+        foreach (SecurityTag tag in securityTags)
+        {
+            await using MySqlCommand insert = connection.CreateCommand();
+            insert.CommandText = "INSERT INTO workflow_run_security_tags (run_id, tag_key, tag_value) VALUES (@id, @key, @value);";
+            insert.Parameters.AddWithValue("@id", id.Value);
+            insert.Parameters.AddWithValue("@key", tag.Key);
+            insert.Parameters.AddWithValue("@value", tag.Value);
+            await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
     }
 
     /// <inheritdoc/>
@@ -259,7 +286,7 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     {
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using MySqlCommand deleteRun = connection.CreateCommand();
-        deleteRun.CommandText = "DELETE FROM workflow_runs WHERE run_id = @id;";
+        deleteRun.CommandText = "DELETE FROM workflow_runs WHERE run_id = @id; DELETE FROM workflow_run_security_tags WHERE run_id = @id;";
         deleteRun.Parameters.AddWithValue("@id", id.Value);
         await deleteRun.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
 
@@ -364,6 +391,7 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
               AND (@updated_before IS NULL OR updated_at < @updated_before)
               AND (@correlation_id IS NULL OR correlation_id = @correlation_id)
               {{tagPredicates}}
+              {{securityPredicate}}
               AND (@after IS NULL OR run_id > @after)
             ORDER BY run_id
             LIMIT @limit;
@@ -393,6 +421,29 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         else
         {
             select.CommandText = select.CommandText.Replace("{{tagPredicates}}", string.Empty);
+        }
+
+        // Row-security reach (§14.4): correlated EXISTS over the run's security tags.
+        if (query.Security is { } security)
+        {
+            int securityParam = 0;
+            var emitter = new SqlSecurityRuleEmitter(
+                "workflow_run_security_tags",
+                ["run_id"],
+                "tag_key",
+                "tag_value",
+                "workflow_runs",
+                value =>
+                {
+                    string name = "@sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
+                    select.Parameters.AddWithValue(name, value);
+                    return name;
+                });
+            select.CommandText = select.CommandText.Replace("{{securityPredicate}}", "AND (" + security.ToSqlPredicate(emitter) + ")");
+        }
+        else
+        {
+            select.CommandText = select.CommandText.Replace("{{securityPredicate}}", string.Empty);
         }
 
         var runs = new List<WorkflowRunListing>();
@@ -471,6 +522,15 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             tags TEXT NULL,
             INDEX ix_workflow_runs_due (status, due_at),
             INDEX ix_workflow_runs_awaiting (status, awaiting_channel, awaiting_correlation_id)
+        );
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS workflow_run_security_tags (
+            run_id VARCHAR(255) NOT NULL,
+            tag_key VARCHAR(255) NOT NULL,
+            tag_value VARCHAR(255) NOT NULL,
+            INDEX ix_workflow_run_security_tags_run (run_id),
+            INDEX ix_workflow_run_security_tags_kv (tag_key, tag_value)
         );
         """,
         """

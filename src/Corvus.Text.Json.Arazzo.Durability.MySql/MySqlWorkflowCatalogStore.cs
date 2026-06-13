@@ -19,7 +19,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.MySql;
 /// Each operation opens a pooled connection, so the store is naturally concurrent. Create instances with
 /// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> after provisioning with <see cref="PrepareAsync(string, CancellationToken)"/>.
 /// </remarks>
-public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDisposable
+public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string ColumnList =
         "BaseWorkflowId, VersionNumber, WorkflowId, Title, Description, Status, Tags, OwnerName, OwnerEmail, OwnerTeam, OwnerUrl, Sources, Hash, CreatedBy, CreatedAt, LastUpdatedBy, LastUpdatedAt, ObsoletedBy, ObsoletedAt, Runnable";
@@ -186,6 +186,7 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
               AND (@owner IS NULL OR OwnerName LIKE @ownerLike ESCAPE '\\' OR OwnerEmail LIKE @ownerLike ESCAPE '\\')
               AND (@workflowIdPrefix IS NULL OR WorkflowId LIKE @workflowIdPrefixLike ESCAPE '\\')
               {{tagPredicates}}
+              {{securityPredicate}}
               AND (@after IS NULL OR CONCAT(BaseWorkflowId, LPAD(VersionNumber, 10, '0')) > @after)
             ORDER BY BaseWorkflowId, VersionNumber
             LIMIT @limit;
@@ -216,6 +217,29 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
         else
         {
             select.CommandText = select.CommandText.Replace("{{tagPredicates}}", string.Empty);
+        }
+
+        // Row-security reach (§14.4): correlated EXISTS over the version's security tags.
+        if (query.Security is { } security)
+        {
+            int securityParam = 0;
+            var emitter = new SqlSecurityRuleEmitter(
+                "CatalogVersionSecurityTags",
+                ["BaseWorkflowId", "VersionNumber"],
+                "TagKey",
+                "TagValue",
+                "CatalogVersions",
+                value =>
+                {
+                    string name = "@sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
+                    select.Parameters.AddWithValue(name, value);
+                    return name;
+                });
+            select.CommandText = select.CommandText.Replace("{{securityPredicate}}", "AND (" + security.ToSqlPredicate(emitter) + ")");
+        }
+        else
+        {
+            select.CommandText = select.CommandText.Replace("{{securityPredicate}}", string.Empty);
         }
 
         var versions = new List<CatalogVersion>();
@@ -325,7 +349,7 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
         foreach (CatalogVersionRef reference in versions)
         {
             await using MySqlCommand delete = connection.CreateCommand();
-            delete.CommandText = "DELETE FROM CatalogVersions WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;";
+            delete.CommandText = "DELETE FROM CatalogVersions WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber; DELETE FROM CatalogVersionSecurityTags WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;";
             delete.Parameters.AddWithValue("@baseWorkflowId", reference.BaseWorkflowId);
             delete.Parameters.AddWithValue("@versionNumber", reference.VersionNumber);
             await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -378,6 +402,21 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
         insert.Parameters.AddWithValue("@runnable", projection.HasExecutor ? 1 : 0);
         insert.Parameters.AddWithValue("@package", projection.CanonicalPackage.ToArray());
         await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+
+        // Persist the version's security tags for indexed reach-filtering (§14.4); versions are immutable.
+        if (metadata.SecurityTags is { Count: > 0 } securityTags)
+        {
+            foreach (SecurityTag tag in securityTags)
+            {
+                await using MySqlCommand tagInsert = connection.CreateCommand();
+                tagInsert.CommandText = "INSERT INTO CatalogVersionSecurityTags (BaseWorkflowId, VersionNumber, TagKey, TagValue) VALUES (@baseWorkflowId, @versionNumber, @key, @value);";
+                tagInsert.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
+                tagInsert.Parameters.AddWithValue("@versionNumber", versionNumber);
+                tagInsert.Parameters.AddWithValue("@key", tag.Key);
+                tagInsert.Parameters.AddWithValue("@value", tag.Value);
+                await tagInsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            }
+        }
 
         return CatalogVersion.Create(
             baseWorkflowId: baseWorkflowId,
@@ -536,6 +575,16 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
             PRIMARY KEY (BaseWorkflowId, VersionNumber),
             INDEX ix_catalog_versions_status (Status),
             INDEX ix_catalog_versions_workflow_id (WorkflowId)
+        );
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS CatalogVersionSecurityTags (
+            BaseWorkflowId VARCHAR(255) NOT NULL,
+            VersionNumber INT NOT NULL,
+            TagKey VARCHAR(255) NOT NULL,
+            TagValue VARCHAR(255) NOT NULL,
+            INDEX ix_catalog_version_security_tags_version (BaseWorkflowId, VersionNumber),
+            INDEX ix_catalog_version_security_tags_kv (TagKey, TagValue)
         );
         """,
     ];
