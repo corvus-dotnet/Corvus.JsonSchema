@@ -170,4 +170,8 @@ public readonly record struct ResumeOptions(
 /// <summary>Selects terminal runs to reap.</summary>
 /// <param name="OlderThan">Reap completed/cancelled runs last updated strictly before this instant.</param>
 /// <param name="Limit">The maximum number of runs to delete in one call.</param>
-public readonly record struct WorkflowPurgeQuery(DateTimeOffset OlderThan, int Limit = 1000);
+/// <param name="Security">A row-authorization filter restricting the purge to runs the principal may see (§14.2);
+/// <see langword="null"/> is unrestricted. Purge reaps only rows this filter admits — a tenant admin (a non-null
+/// tenant filter) purges only their tenant's runs; a service operator (a null filter) purges across tenants. The
+/// filter is applied through the same query path <see cref="IWorkflowManagementClient.ListAsync"/> uses.</param>
+public readonly record struct WorkflowPurgeQuery(DateTimeOffset OlderThan, int Limit = 1000, SecurityFilter? Security = null);

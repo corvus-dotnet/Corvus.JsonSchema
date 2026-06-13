@@ -33,12 +33,23 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     private readonly IWorkflowCatalogClient catalog;
     private readonly IWorkflowManagementClient management;
     private readonly IRunnerRegistry runners;
+    private readonly ControlPlaneRowSecurity? rowSecurity;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneCatalogHandler"/> class.</summary>
     /// <param name="catalog">The catalog client the endpoints delegate to.</param>
     /// <param name="management">The management client used to create runs when a workflow version is triggered.</param>
     /// <param name="runners">The runner registry consulted to gate a trigger on a runner that hosts the version.</param>
     public ArazzoControlPlaneCatalogHandler(IWorkflowCatalogClient catalog, IWorkflowManagementClient management, IRunnerRegistry runners)
+        : this(catalog, management, runners, null)
+    {
+    }
+
+    /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneCatalogHandler"/> class.</summary>
+    /// <param name="catalog">The catalog client the endpoints delegate to.</param>
+    /// <param name="management">The management client used to create runs when a workflow version is triggered.</param>
+    /// <param name="runners">The runner registry consulted to gate a trigger on a runner that hosts the version.</param>
+    /// <param name="rowSecurity">The deployment's row-security binding (§14.2), or <see langword="null"/> for an unscoped control plane.</param>
+    internal ArazzoControlPlaneCatalogHandler(IWorkflowCatalogClient catalog, IWorkflowManagementClient management, IRunnerRegistry runners, ControlPlaneRowSecurity? rowSecurity)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(management);
@@ -46,6 +57,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         this.catalog = catalog;
         this.management = management;
         this.runners = runners;
+        this.rowSecurity = rowSecurity;
     }
 
     /// <inheritdoc/>
@@ -61,9 +73,14 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         CatalogOwner owner = ToOwner(body.Owner);
         IReadOnlyList<string>? tags = ToTags(body.Tags);
 
+        // Stamp the deployment's internal tags (e.g. the principal's tenant) onto the new version so it is owned
+        // by the principal's slice of the shell (§14.3); runs triggered from it inherit these labels. User-supplied
+        // security tags would be validated here (ValidateUserTags) once the contract carries them.
+        IReadOnlyList<SecurityTag>? securityTags = this.rowSecurity?.InternalTags();
+
         try
         {
-            CatalogVersion version = await this.catalog.AddAsync(parameters.Package, owner, tags, cancellationToken).ConfigureAwait(false);
+            CatalogVersion version = await this.catalog.AddAsync(parameters.Package, owner, tags, securityTags, cancellationToken).ConfigureAwait(false);
             return AddCatalogVersionResult.Created(Models.CatalogVersionSummary.From(version), workspace);
         }
         catch (ArgumentException ex)
@@ -86,7 +103,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         string? pageToken = parameters.PageToken.IsNotUndefined() ? (string)parameters.PageToken : null;
 
         CatalogPage page = await this.catalog.SearchAsync(
-            new CatalogQuery(text, baseWorkflowId, workflowIdPrefix, tags, status, owner, limit, pageToken), cancellationToken).ConfigureAwait(false);
+            new CatalogQuery(text, baseWorkflowId, workflowIdPrefix, tags, status, owner, limit, pageToken, this.rowSecurity?.Filter()), cancellationToken).ConfigureAwait(false);
         return SearchCatalogResult.Ok(BuildPage(page), workspace);
     }
 
@@ -98,7 +115,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         string? pageToken = parameters.PageToken.IsNotUndefined() ? (string)parameters.PageToken : null;
 
         CatalogPage page = await this.catalog.SearchAsync(
-            new CatalogQuery(BaseWorkflowId: baseWorkflowId, Limit: limit, ContinuationToken: pageToken), cancellationToken).ConfigureAwait(false);
+            new CatalogQuery(BaseWorkflowId: baseWorkflowId, Limit: limit, ContinuationToken: pageToken, Security: this.rowSecurity?.Filter()), cancellationToken).ConfigureAwait(false);
         return ListCatalogVersionsResult.Ok(BuildPage(page), workspace);
     }
 
@@ -108,7 +125,9 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
         int versionNumber = (int)parameters.VersionNumber;
         CatalogVersion? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
-        return version is { } v
+
+        // A version the principal may not see is reported as not found, not forbidden (non-disclosing).
+        return version is { } v && this.IsVisible(v)
             ? GetCatalogVersionResult.Ok(Models.CatalogVersionSummary.From(v), workspace)
             : GetCatalogVersionResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
     }
@@ -119,6 +138,12 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
         int versionNumber = (int)parameters.VersionNumber;
         Models.CatalogMetadataPatch patch = parameters.Body;
+
+        // Gate on visibility before mutating: an invisible version is reported as not found, not forbidden.
+        if (!await this.IsVisibleAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false))
+        {
+            return UpdateCatalogVersionResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
+        }
 
         CatalogOwner? owner = patch.Owner.IsNotUndefined() ? ToOwner(patch.Owner) : null;
         IReadOnlyList<string>? tags = ToTags(patch.Tags);
@@ -135,6 +160,13 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     {
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
         int versionNumber = (int)parameters.VersionNumber;
+
+        // Gate on visibility before mutating: an invisible version is reported as not found, not forbidden.
+        if (!await this.IsVisibleAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false))
+        {
+            return DeleteCatalogVersionResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
+        }
+
         CatalogDeleteOutcome outcome = await this.catalog.DeleteAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
         return outcome switch
         {
@@ -158,6 +190,11 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     {
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
         int versionNumber = (int)parameters.VersionNumber;
+        if (!await this.IsVisibleAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false))
+        {
+            return GetCatalogPackageResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
+        }
+
         ReadOnlyMemory<byte>? package = await this.catalog.GetPackageAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
         if (package is not { } bytes)
         {
@@ -173,6 +210,11 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     {
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
         int versionNumber = (int)parameters.VersionNumber;
+        if (!await this.IsVisibleAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false))
+        {
+            return GetCatalogWorkflowResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
+        }
+
         ReadOnlyMemory<byte>? document = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, CatalogPackage.WorkflowDocumentName, cancellationToken).ConfigureAwait(false);
         if (document is not { } bytes)
         {
@@ -191,6 +233,11 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     {
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
         int versionNumber = (int)parameters.VersionNumber;
+        if (!await this.IsVisibleAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false))
+        {
+            return GetCatalogWorkflowSchemasResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
+        }
+
         ReadOnlyMemory<byte>? document = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.SchemasDocumentName, cancellationToken).ConfigureAwait(false);
         if (document is not { } bytes)
         {
@@ -208,6 +255,11 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     {
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
         int versionNumber = (int)parameters.VersionNumber;
+        if (!await this.IsVisibleAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false))
+        {
+            return GetCatalogExecutorResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
+        }
+
         ReadOnlyMemory<byte>? executor = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorDocumentName, cancellationToken).ConfigureAwait(false);
         if (executor is not { } bytes)
         {
@@ -223,6 +275,11 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     {
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
         int versionNumber = (int)parameters.VersionNumber;
+        if (!await this.IsVisibleAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false))
+        {
+            return GetCatalogExecutorManifestResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
+        }
+
         ReadOnlyMemory<byte>? document = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorManifestDocumentName, cancellationToken).ConfigureAwait(false);
         if (document is not { } bytes)
         {
@@ -240,6 +297,11 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     {
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
         int versionNumber = (int)parameters.VersionNumber;
+        if (!await this.IsVisibleAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false))
+        {
+            return GetCatalogSourceResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
+        }
+
         string sourceName = (string)parameters.SourceName;
         ReadOnlyMemory<byte>? document = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, sourceName, cancellationToken).ConfigureAwait(false);
         if (document is not { } bytes)
@@ -260,6 +322,10 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     {
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
         int versionNumber = (int)parameters.VersionNumber;
+        if (!await this.IsVisibleAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false))
+        {
+            return ValidateCatalogValueResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
+        }
 
         if (!TryMapTarget(parameters.Body.Target, out WorkflowSchemaTarget target, out string targetKey))
         {
@@ -290,7 +356,9 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         int versionNumber = (int)parameters.VersionNumber;
 
         CatalogVersion? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
-        if (version is not { } catalogVersion)
+
+        // An invisible version is reported as not found, not forbidden, so triggering is gated by visibility.
+        if (version is not { } catalogVersion || !this.IsVisible(catalogVersion))
         {
             return StartCatalogWorkflowRunResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
         }
@@ -513,6 +581,24 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
                     }),
                 nextPageToken: nextPageToken);
         });
+
+    // Whether the version is visible to the current principal under the deployment's row-security policy (§14.2);
+    // always true when no policy is configured.
+    private bool IsVisible(CatalogVersion version) => this.rowSecurity?.IsVisible(version.SecurityTagsValue) ?? true;
+
+    // Resolves the version and checks visibility in one step, for the document endpoints that otherwise read a
+    // package/document directly. Returns false when no policy is configured only if the version is absent; with a
+    // policy, a missing or invisible version is reported the same way (not found) by the caller.
+    private async ValueTask<bool> IsVisibleAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    {
+        if (this.rowSecurity is null)
+        {
+            return true;
+        }
+
+        CatalogVersion? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+        return version is { } v && this.rowSecurity.IsVisible(v.SecurityTagsValue);
+    }
 
     private static Models.ProblemDetails.Source NotFoundProblem(string baseWorkflowId, int versionNumber)
         => Problem("version-not-found", "Version not found", 404, $"No version {versionNumber} of workflow '{baseWorkflowId}' exists.");
