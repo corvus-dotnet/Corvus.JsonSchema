@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A keyset page of claim→rule bindings, ordered by (order, id).
+/// All claim→rule bindings.
 /// </para>
 /// </remarks>
 public readonly partial struct SecurityBindingList

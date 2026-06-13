@@ -35,7 +35,7 @@ public readonly partial struct VerbGrant
         private static readonly JsonSchemaPathProvider RuleNamesSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/ruleNames"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider UnrestrictedSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/unrestricted"u8, buffer, out written);
 
-        private static void MatchRuleNames(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
+        private static void MatchRuleNames(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
@@ -50,7 +50,7 @@ public readonly partial struct VerbGrant
             context.CommitChildContext(childContext.IsMatch, ref childContext);
         }
 
-        private static void MatchUnrestricted(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
+        private static void MatchUnrestricted(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
@@ -138,7 +138,7 @@ public readonly partial struct VerbGrant
 
                     if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator1? validator))
                     {
-                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context);
+                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex);
 
                         if (!context.HasCollector && !context.IsMatch)
                         {

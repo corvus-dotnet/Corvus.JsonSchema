@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A keyset page of security rules, ordered by name.
+/// All security rules.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -40,28 +40,12 @@ public readonly partial struct SecurityRuleList
 
         private const uint RequiredBitMask0 =
             RequiredBitForRules;
-        private static readonly JsonSchemaPathProvider NextPageTokenSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/nextPageToken"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider RulesSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/rules"u8, buffer, out written);
 
-        private static void MatchNextPageToken(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        private static void MatchRules(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.PushChildContextUnescaped(
-                    parentDocument,
-                    parentDocumentIndex,
-                    ref context,
-                    JsonPropertyNames.NextPageTokenUtf8,
-                    evaluationPath: NextPageTokenSchemaEvaluationPath);
-
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
-            context.CommitChildContext(childContext.IsMatch, ref childContext);
-        }
-
-        private static void MatchRules(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
-        {
-            context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext1 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -69,8 +53,8 @@ public readonly partial struct SecurityRuleList
                     JsonPropertyNames.RulesUtf8,
                     evaluationPath: RulesSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
-            context.CommitChildContext(childContext1.IsMatch, ref childContext1);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            context.CommitChildContext(childContext.IsMatch, ref childContext);
 
             if (!context.HasCollector && !context.IsMatch)
             {
@@ -80,23 +64,20 @@ public readonly partial struct SecurityRuleList
             requiredBitBuffer[RequiredOffsetForRules] |= RequiredBitForRules;
         }
 
-        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
-        {
-            return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator>([
-                (static () => JsonPropertyNames.NextPageTokenUtf8, MatchNextPageToken),
-                (static () => JsonPropertyNames.RulesUtf8, MatchRules),
-            ]);
-        }
-
-        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
-
         private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
 #if NET
         [NotNullWhen(true)]
 #endif
         out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator? matcher)
         {
-            return Matchers.TryGetNamedMatcher(span, out matcher);
+            if (span.SequenceEqual(JsonPropertyNames.RulesUtf8))
+            {
+                matcher = MatchRules;
+                return true;
+            }
+
+            matcher = default;
+            return false;
         }
 
         /// <summary>
@@ -155,7 +136,7 @@ public readonly partial struct SecurityRuleList
 
                     if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator? validator))
                     {
-                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
+                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
 
                         if (!context.HasCollector && !context.IsMatch)
                         {

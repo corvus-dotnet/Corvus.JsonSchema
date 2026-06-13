@@ -6,8 +6,6 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
-using Corvus.Runtime.InteropServices;
-using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.AspNetCore.Authentication;
@@ -66,41 +64,6 @@ public sealed class ControlPlaneSecurityApiTests
     }
 
     [TestMethod]
-    public async Task The_rule_list_keyset_pages_and_filters_over_http()
-    {
-        await using Scoped host = await StartAsync();
-
-        foreach (string name in new[] { "charlie", "alpha", "bravo" })
-        {
-            (await host.SendJsonAsync(HttpMethod.Post, "/security/rules", $$"""{"name":"{{name}}","expression":"tenant == '{{name}}'"}""", Write))
-                .StatusCode.ShouldBe(HttpStatusCode.Created);
-        }
-
-        // First page (limit 2): the first two rules in name order plus a continuation token (the q/limit/pageToken
-        // query parameters are bound by the generated handler).
-        string token;
-        using (Stj.JsonDocument page1 = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/security/rules?limit=2", Read)))
-        {
-            page1.RootElement.GetProperty("rules").EnumerateArray().Select(r => r.GetProperty("name").GetString()).ShouldBe(["alpha", "bravo"]);
-            token = page1.RootElement.GetProperty("nextPageToken").GetString()!;
-            token.ShouldNotBeNullOrEmpty();
-        }
-
-        // Following the token returns the remainder; the last page omits nextPageToken (no further rules).
-        using (Stj.JsonDocument page2 = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, $"/security/rules?limit=2&pageToken={token}", Read)))
-        {
-            page2.RootElement.GetProperty("rules").EnumerateArray().Select(r => r.GetProperty("name").GetString()).ShouldBe(["charlie"]);
-            page2.RootElement.TryGetProperty("nextPageToken", out _).ShouldBeFalse();
-        }
-
-        // The q filter matches a case-insensitive substring of the name (or expression).
-        using (Stj.JsonDocument filtered = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/security/rules?q=ALPHA", Read)))
-        {
-            filtered.RootElement.GetProperty("rules").EnumerateArray().Select(r => r.GetProperty("name").GetString()).ShouldBe(["alpha"]);
-        }
-    }
-
-    [TestMethod]
     public async Task A_malformed_rule_expression_is_a_bad_request()
     {
         await using Scoped host = await StartAsync();
@@ -133,40 +96,6 @@ public sealed class ControlPlaneSecurityApiTests
 
         // A write scope cannot necessarily read in this fixture (distinct scopes) → 403 on the read endpoint.
         (await host.SendAsync(HttpMethod.Get, "/security/rules", Write)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-    }
-
-    [TestMethod]
-    public async Task The_binding_list_keyset_pages_and_filters_over_http()
-    {
-        await using Scoped host = await StartAsync();
-
-        foreach ((int order, string claim) in new[] { (30, "charlie"), (10, "alpha"), (20, "bravo") })
-        {
-            (await host.SendJsonAsync(HttpMethod.Post, "/security/bindings", $$"""{"claimType":"role","claimValue":"{{claim}}","read":{"unrestricted":true},"write":{"unrestricted":false},"purge":{"unrestricted":false},"order":{{order}}}""", Write))
-                .StatusCode.ShouldBe(HttpStatusCode.Created);
-        }
-
-        // First page (limit 2): the two lowest-order bindings in (order, id) order plus a continuation token.
-        string token;
-        using (Stj.JsonDocument page1 = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/security/bindings?limit=2", Read)))
-        {
-            page1.RootElement.GetProperty("bindings").EnumerateArray().Select(b => b.GetProperty("claimValue").GetString()).ShouldBe(["alpha", "bravo"]);
-            token = page1.RootElement.GetProperty("nextPageToken").GetString()!;
-            token.ShouldNotBeNullOrEmpty();
-        }
-
-        // Following the token returns the remainder; the last page omits nextPageToken.
-        using (Stj.JsonDocument page2 = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, $"/security/bindings?limit=2&pageToken={token}", Read)))
-        {
-            page2.RootElement.GetProperty("bindings").EnumerateArray().Select(b => b.GetProperty("claimValue").GetString()).ShouldBe(["charlie"]);
-            page2.RootElement.TryGetProperty("nextPageToken", out _).ShouldBeFalse();
-        }
-
-        // The q filter matches a case-insensitive substring of the claim type, claim value, or description.
-        using (Stj.JsonDocument filtered = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/security/bindings?q=ALPHA", Read)))
-        {
-            filtered.RootElement.GetProperty("bindings").EnumerateArray().Select(b => b.GetProperty("claimValue").GetString()).ShouldBe(["alpha"]);
-        }
     }
 
     [TestMethod]
@@ -210,109 +139,11 @@ public sealed class ControlPlaneSecurityApiTests
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)
         => Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 
-    [TestMethod]
-    public async Task The_orderings_endpoint_projects_the_configured_orderings_and_is_empty_without_a_policy()
-    {
-        var store = new InMemorySecurityPolicyStore();
-        var orderings = new SecurityLabelOrderings(new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal)
-        {
-            ["classification"] = ["public", "internal", "confidential", "restricted"],
-        });
-        var handler = new ArazzoControlPlaneSecurityHandler(store, new PersistentRowSecurityPolicy(store, orderings: orderings));
-
-        using (JsonWorkspace workspace = JsonWorkspace.Create())
-        {
-            ListSecurityOrderingsResult result = await handler.HandleListSecurityOrderingsAsync(default, workspace);
-            result.StatusCode.ShouldBe(200);
-            using Stj.JsonDocument doc = ReadResultBody(result);
-            Stj.JsonElement classification = doc.RootElement.GetProperty("orderings").EnumerateArray()
-                .Single(o => o.GetProperty("dimension").GetString() == "classification");
-            classification.GetProperty("labels").EnumerateArray().Select(l => l.GetString())
-                .ShouldBe(["public", "internal", "confidential", "restricted"]);
-        }
-
-        // With no policy (the ScopesOnly/Open posture) there are no orderings — an empty list, never a null.
-        var unconfigured = new ArazzoControlPlaneSecurityHandler(store);
-        using (JsonWorkspace workspace = JsonWorkspace.Create())
-        {
-            ListSecurityOrderingsResult result = await unconfigured.HandleListSecurityOrderingsAsync(default, workspace);
-            using Stj.JsonDocument doc = ReadResultBody(result);
-            doc.RootElement.GetProperty("orderings").GetArrayLength().ShouldBe(0);
-        }
-    }
-
-    // Reads a result's CTJ body as UTF-8 and re-parses it with System.Text.Json so the test asserts over the wire shape.
-    private static Stj.JsonDocument ReadResultBody(ListSecurityOrderingsResult result)
-        => Stj.JsonDocument.Parse(JsonMarshal.GetRawUtf8Value(result.Body).Memory);
-
-    [TestMethod]
-    public async Task The_self_elevation_guard_rejects_a_caller_granting_itself_write_or_purge()
-    {
-        var policyStore = new InMemorySecurityPolicyStore();
-        await using Scoped host = await StartSecuredAsync(policyStore);
-
-        // The caller is in the payments team. Granting the payments team WRITE reach is self-elevation → 403.
-        const string caller = "team=payments";
-        (await host.SendJsonAsync(HttpMethod.Post, "/security/bindings", """{"claimType":"team","claimValue":"payments","read":{"unrestricted":false},"write":{"unrestricted":true}}""", Write, caller))
-            .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-
-        // Rule-bounded write the caller matches is also self-elevation.
-        (await host.SendJsonAsync(HttpMethod.Post, "/security/bindings", """{"claimType":"team","claimValue":"payments","write":{"ruleNames":["reach-payments"]}}""", Write, caller))
-            .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-
-        // Read-only reach for the caller's own team is allowed (direct group/role policy authoring).
-        HttpResponseMessage readOnly = await host.SendJsonAsync(HttpMethod.Post, "/security/bindings", """{"claimType":"team","claimValue":"payments","read":{"unrestricted":true}}""", Write, caller);
-        readOnly.StatusCode.ShouldBe(HttpStatusCode.Created);
-
-        // Granting write to a team the caller is NOT in is not self-elevation (a policy decision, allowed).
-        (await host.SendJsonAsync(HttpMethod.Post, "/security/bindings", """{"claimType":"team","claimValue":"billing","write":{"unrestricted":true}}""", Write, caller))
-            .StatusCode.ShouldBe(HttpStatusCode.Created);
-
-        // The guard runs on UPDATE too: editing the caller's own read-only binding up to write is self-elevation → 403.
-        string bindingId;
-        using (Stj.JsonDocument doc = await ReadJsonAsync(readOnly))
-        {
-            bindingId = doc.RootElement.GetProperty("id").GetString()!;
-        }
-
-        (await host.SendJsonAsync(HttpMethod.Put, $"/security/bindings/{bindingId}", """{"claimType":"team","claimValue":"payments","write":{"unrestricted":true}}""", Write, caller))
-            .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-    }
-
-    private static async Task<Scoped> StartSecuredAsync(ISecurityPolicyStore policyStore)
-    {
-        var store = new InMemoryWorkflowStateStore();
-        var management = new SecuredWorkflowManagement(store, "ops");
-        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops");
-
-        WebApplicationBuilder builder = WebApplication.CreateBuilder();
-        builder.WebHost.UseTestServer();
-        builder.Logging.ClearProviders();
-        builder.Services
-            .AddAuthentication(ScopeAuthHandler.SchemeName)
-            .AddScheme<AuthenticationSchemeOptions, ScopeAuthHandler>(ScopeAuthHandler.SchemeName, _ => { });
-        builder.Services.AddArazzoControlPlaneAuthorization();
-        builder.Services.AddHttpContextAccessor();
-
-        WebApplication app = builder.Build();
-        app.UseAuthentication();
-        app.UseAuthorization();
-
-        // RowSecurityOnly: the row-security policy is active (so the security handler sees the caller for the
-        // self-elevation guard) while capability-scope gating is off (the test exercises the guard, not scopes).
-        var policy = new PersistentRowSecurityPolicy(policyStore);
-        await policy.RefreshAsync();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.RowSecurityOnly, rowSecurity: policy, securityPolicyStore: policyStore);
-        await app.StartAsync();
-
-        return new Scoped(app, app.GetTestClient());
-    }
-
     private static async Task<Scoped> StartAsync()
     {
         var store = new InMemoryWorkflowStateStore();
-        var management = new SecuredWorkflowManagement(store, "ops");
-        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops");
+        var management = new WorkflowManagementClient(store, "ops");
+        var catalog = new WorkflowCatalogClient(new InMemoryWorkflowCatalogStore(), store, "ops");
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -326,7 +157,7 @@ public sealed class ControlPlaneSecurityApiTests
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.ScopesOnly, securityPolicyStore: new InMemorySecurityPolicyStore());
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), requireAuthorization: true, securityPolicyStore: new InMemorySecurityPolicyStore());
         await app.StartAsync();
 
         return new Scoped(app, app.GetTestClient());
@@ -339,13 +170,6 @@ public sealed class ControlPlaneSecurityApiTests
 
         public Task<HttpResponseMessage> SendJsonAsync(HttpMethod method, string path, string body, string? scope)
             => this.SendCoreAsync(new HttpRequestMessage(method, path) { Content = new StringContent(body, Encoding.UTF8, "application/json") }, scope);
-
-        public Task<HttpResponseMessage> SendJsonAsync(HttpMethod method, string path, string body, string? scope, string callerClaims)
-        {
-            var request = new HttpRequestMessage(method, path) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
-            request.Headers.Add(ScopeAuthHandler.ClaimsHeader, callerClaims);
-            return this.SendCoreAsync(request, scope);
-        }
 
         public async ValueTask DisposeAsync()
         {
@@ -373,7 +197,6 @@ public sealed class ControlPlaneSecurityApiTests
     {
         public const string SchemeName = "Scopes";
         public const string ScopeHeader = "X-Scopes";
-        public const string ClaimsHeader = "X-Claims";
 
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
@@ -384,21 +207,6 @@ public sealed class ControlPlaneSecurityApiTests
 
             var identity = new ClaimsIdentity(SchemeName);
             identity.AddClaim(new Claim("scope", values.ToString()));
-
-            // Optional caller identity claims (e.g. the self-elevation guard's `team=payments`), as a comma-separated
-            // list of `type=value` pairs in the X-Claims header.
-            if (this.Request.Headers.TryGetValue(ClaimsHeader, out Microsoft.Extensions.Primitives.StringValues claimValues))
-            {
-                foreach (string pair in claimValues.ToString().Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-                {
-                    int eq = pair.IndexOf('=', StringComparison.Ordinal);
-                    if (eq > 0)
-                    {
-                        identity.AddClaim(new Claim(pair[..eq], pair[(eq + 1)..]));
-                    }
-                }
-            }
-
             return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(identity), SchemeName)));
         }
     }

@@ -15,11 +15,11 @@ using Corvus.Text.Json.OpenApi;
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
 /// <summary>
-/// Result type for the DeleteSecurityRule operation.
+/// Result type for the ListSecurityRules operation.
 /// </summary>
-public readonly struct DeleteSecurityRuleResult
+public readonly struct ListSecurityRulesResult
 {
-    private DeleteSecurityRuleResult(int statusCode, JsonElement body = default, string? contentType = null)
+    private ListSecurityRulesResult(int statusCode, JsonElement body = default, string? contentType = null)
     {
         this.StatusCode = statusCode;
         this.Body = body;
@@ -36,18 +36,12 @@ public readonly struct DeleteSecurityRuleResult
     public string? ContentType { get; }
 
     /// <summary>
-    /// Creates a 204 NoContent result.
-    /// </summary>
-    /// <returns>A <see cref="DeleteSecurityRuleResult"/> with status 204.</returns>
-    public static DeleteSecurityRuleResult NoContent() => new(204, default, null);
-
-    /// <summary>
-    /// Creates a 404 NotFound result.
+    /// Creates a 200 Ok result.
     /// </summary>
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
-    /// <returns>A <see cref="DeleteSecurityRuleResult"/> with status 404.</returns>
-    public static DeleteSecurityRuleResult NotFound(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(404, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    /// <returns>A <see cref="ListSecurityRulesResult"/> with status 200.</returns>
+    public static ListSecurityRulesResult Ok(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.Source body, JsonWorkspace workspace) => new(200, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
@@ -58,7 +52,7 @@ public readonly struct DeleteSecurityRuleResult
         if (this.Body.IsUndefined()) return true;
         return this.StatusCode switch
         {
-            404 => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.From(this.Body).EvaluateSchema(),
+            200 => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.From(this.Body).EvaluateSchema(),
             _ => true,
         };
     }

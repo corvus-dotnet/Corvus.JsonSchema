@@ -38,11 +38,6 @@ public struct CreateSecurityBindingResponse : IApiResponse<CreateSecurityBinding
     /// </summary>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails BadRequestBody { get; private set; }
 
-    /// <summary>
-    /// Gets the 403 response body.
-    /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails ForbiddenBody { get; private set; }
-
     /// <inheritdoc/>
     public static async ValueTask<CreateSecurityBindingResponse> CreateAsync(
         int statusCode,
@@ -70,14 +65,6 @@ public struct CreateSecurityBindingResponse : IApiResponse<CreateSecurityBinding
             var badRequestDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = badRequestDoc;
             response.BadRequestBody = badRequestDoc.RootElement;
-            return response;
-        }
-
-        if (statusCode == 403)
-        {
-            var forbiddenDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
-            response.parsedDocument = forbiddenDoc;
-            response.ForbiddenBody = forbiddenDoc.RootElement;
             return response;
         }
 
@@ -119,36 +106,17 @@ public struct CreateSecurityBindingResponse : IApiResponse<CreateSecurityBinding
     }
 
     /// <summary>
-    /// Tries to get the 403 typed response body.
-    /// </summary>
-    /// <param name="result">The typed response body if the status matches.</param>
-    /// <returns><see langword="true"/> if the status code is 403.</returns>
-    public bool TryGetForbidden(out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails result)
-    {
-        if (this.StatusCode == 403)
-        {
-            result = this.ForbiddenBody;
-            return true;
-        }
-
-        result = default;
-        return false;
-    }
-
-    /// <summary>
     /// Matches the response against each status code and content type,
     /// and calls the corresponding handler.
     /// </summary>
     /// <typeparam name="TResult">The type of the result returned by the handler.</typeparam>
     /// <param name="matchCreated">Handler for the 201 response.</param>
     /// <param name="matchBadRequest">Handler for the 400 response.</param>
-    /// <param name="matchForbidden">Handler for the 403 response.</param>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingSummary, TResult> matchCreated,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TResult> matchBadRequest,
-        ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TResult> matchForbidden,
         ResponseMatcher<int, TResult> matchDefault)
     {
         if (this.StatusCode == 201)
@@ -159,11 +127,6 @@ public struct CreateSecurityBindingResponse : IApiResponse<CreateSecurityBinding
         if (this.StatusCode == 400)
         {
             return matchBadRequest(this.BadRequestBody);
-        }
-
-        if (this.StatusCode == 403)
-        {
-            return matchForbidden(this.ForbiddenBody);
         }
 
         return matchDefault(this.StatusCode);
@@ -178,14 +141,12 @@ public struct CreateSecurityBindingResponse : IApiResponse<CreateSecurityBinding
     /// <param name="context">The context to pass to the handler.</param>
     /// <param name="matchCreated">Handler for the 201 response.</param>
     /// <param name="matchBadRequest">Handler for the 400 response.</param>
-    /// <param name="matchForbidden">Handler for the 403 response.</param>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingSummary, TContext, TResult> matchCreated,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TContext, TResult> matchBadRequest,
-        ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TContext, TResult> matchForbidden,
         ResponseMatcher<int, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {
@@ -197,11 +158,6 @@ public struct CreateSecurityBindingResponse : IApiResponse<CreateSecurityBinding
         if (this.StatusCode == 400)
         {
             return matchBadRequest(this.BadRequestBody, context);
-        }
-
-        if (this.StatusCode == 403)
-        {
-            return matchForbidden(this.ForbiddenBody, context);
         }
 
         return matchDefault(this.StatusCode, context);
@@ -232,14 +188,6 @@ public struct CreateSecurityBindingResponse : IApiResponse<CreateSecurityBinding
                     ThrowHelper.ThrowResponseBodyValidationFailed(400, SchemaValidationDetail.FormatResults(collector));
                 }
             }
-            else if (this.StatusCode == 403)
-            {
-                using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-                if (!this.ForbiddenBody.EvaluateSchema(collector))
-                {
-                    ThrowHelper.ThrowResponseBodyValidationFailed(403, SchemaValidationDetail.FormatResults(collector));
-                }
-            }
         }
         else
         {
@@ -255,13 +203,6 @@ public struct CreateSecurityBindingResponse : IApiResponse<CreateSecurityBinding
                 if (!this.BadRequestBody.EvaluateSchema())
                 {
                     ThrowHelper.ThrowResponseBodyValidationFailed(400);
-                }
-            }
-            else if (this.StatusCode == 403)
-            {
-                if (!this.ForbiddenBody.EvaluateSchema())
-                {
-                    ThrowHelper.ThrowResponseBodyValidationFailed(403);
                 }
             }
         }

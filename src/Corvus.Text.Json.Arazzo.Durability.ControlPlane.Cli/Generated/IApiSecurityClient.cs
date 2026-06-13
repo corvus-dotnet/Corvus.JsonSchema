@@ -62,7 +62,7 @@ public interface IApiSecurityClient : IAsyncDisposable
         /// <summary>
         /// Gets all available scopes for <c>oauth2</c>.
         /// </summary>
-        public static readonly string[] Oauth2AvailableScopes = ["administrators:read", "administrators:write", "availability:read", "availability:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "environments:read", "environments:write", "runs:purge", "runs:read", "runs:write", "security:read", "security:write", "sources:read", "sources:write"];
+        public static readonly string[] Oauth2AvailableScopes = ["catalog:purge", "catalog:read", "catalog:write", "runs:purge", "runs:read", "runs:write"];
 
 
         /// <summary>
@@ -98,34 +98,14 @@ public interface IApiSecurityClient : IAsyncDisposable
     public static class SecurityRequirements
     {
         /// <summary>
-        /// Gets the scopes required by <c>GetAccessGrants</c> for the <c>Oauth2</c> scheme.
+        /// Gets the scopes required by <c>ListSecurityRules</c> for the <c>Oauth2</c> scheme.
         /// </summary>
-        public static readonly string[] GetAccessGrantsOauth2Scopes = ["security:read"];
+        public static readonly string[] ListSecurityRulesOauth2Scopes = ["security:read"];
 
         /// <summary>
-        /// Gets the scopes required by <c>GetAccessGrants</c> for the <c>OpenIdConnect</c> scheme.
+        /// Gets the scopes required by <c>ListSecurityRules</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
-        public static readonly string[] GetAccessGrantsOpenIdConnectScopes = ["security:read"];
-
-        /// <summary>
-        /// Gets the scopes required by <c>ListSecurityOrderings</c> for the <c>Oauth2</c> scheme.
-        /// </summary>
-        public static readonly string[] ListSecurityOrderingsOauth2Scopes = ["security:read"];
-
-        /// <summary>
-        /// Gets the scopes required by <c>ListSecurityOrderings</c> for the <c>OpenIdConnect</c> scheme.
-        /// </summary>
-        public static readonly string[] ListSecurityOrderingsOpenIdConnectScopes = ["security:read"];
-
-        /// <summary>
-        /// Gets the scopes required by <c>SearchSecurityRules</c> for the <c>Oauth2</c> scheme.
-        /// </summary>
-        public static readonly string[] SearchSecurityRulesOauth2Scopes = ["security:read"];
-
-        /// <summary>
-        /// Gets the scopes required by <c>SearchSecurityRules</c> for the <c>OpenIdConnect</c> scheme.
-        /// </summary>
-        public static readonly string[] SearchSecurityRulesOpenIdConnectScopes = ["security:read"];
+        public static readonly string[] ListSecurityRulesOpenIdConnectScopes = ["security:read"];
 
         /// <summary>
         /// Gets the scopes required by <c>CreateSecurityRule</c> for the <c>Oauth2</c> scheme.
@@ -168,14 +148,14 @@ public interface IApiSecurityClient : IAsyncDisposable
         public static readonly string[] DeleteSecurityRuleOpenIdConnectScopes = ["security:write"];
 
         /// <summary>
-        /// Gets the scopes required by <c>SearchSecurityBindings</c> for the <c>Oauth2</c> scheme.
+        /// Gets the scopes required by <c>ListSecurityBindings</c> for the <c>Oauth2</c> scheme.
         /// </summary>
-        public static readonly string[] SearchSecurityBindingsOauth2Scopes = ["security:read"];
+        public static readonly string[] ListSecurityBindingsOauth2Scopes = ["security:read"];
 
         /// <summary>
-        /// Gets the scopes required by <c>SearchSecurityBindings</c> for the <c>OpenIdConnect</c> scheme.
+        /// Gets the scopes required by <c>ListSecurityBindings</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
-        public static readonly string[] SearchSecurityBindingsOpenIdConnectScopes = ["security:read"];
+        public static readonly string[] ListSecurityBindingsOpenIdConnectScopes = ["security:read"];
 
         /// <summary>
         /// Gets the scopes required by <c>CreateSecurityBinding</c> for the <c>Oauth2</c> scheme.
@@ -229,35 +209,10 @@ public interface IApiSecurityClient : IAsyncDisposable
     }
 
     /// <summary>
-    /// Who-can-do-what overview for a grantee
-    /// </summary>
-    /// <remarks>
-    /// Aggregates, for a single resolved grantee, all their access: the security bindings whose claim matches the grantee's identity (with per-verb reach), the base workflows the grantee administers, and the source-credential bindings the grantee's runs may use. The grantee is passed as an opaque URL-safe token: the base64url encoding of a resolved grantee's JSON (a ResolvedGrantee object — kind, value, identity, source, complete — exactly as returned by GET /identity/grantees), round-tripped verbatim by the client. Reach-scoped. Binding selection is based on the grantee's resolved sys: identity, so a live token may carry additional non-identity claims (e.g. groups) not represented here, and wildcard ('*') bindings that apply to every principal are omitted.
-    /// </remarks>
-    /// <param name="grantee">The grantee parameter.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<GetAccessGrantsResponse> GetAccessGrantsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source grantee, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
-
-    /// <summary>
-    /// List the configured ordered tag dimensions
-    /// </summary>
-    /// <remarks>
-    /// Returns the deployment's ordered tag dimensions (e.g. classification) and their labels in ascending order, so an authoring UI can offer ordered (&lt;, &lt;=, &gt;, &gt;=) rule templates with the exact labels the policy enforces.
-    /// </remarks>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<ListSecurityOrderingsResponse> ListSecurityOrderingsAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
-
-    /// <summary>
     /// List security rules
     /// </summary>
-    /// <remarks>
-    /// Returns a keyset page of rules ordered by name, bounded by limit and resumable via the page token; q filters by a case-insensitive substring of the name or expression.
-    /// </remarks>
-    /// <param name="q">The q parameter.</param>
-    /// <param name="limit">The limit parameter.</param>
-    /// <param name="pageToken">The pageToken parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<SearchSecurityRulesResponse> SearchSecurityRulesAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source q = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<ListSecurityRulesResponse> ListSecurityRulesAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Create a security rule
@@ -298,13 +253,10 @@ public interface IApiSecurityClient : IAsyncDisposable
     /// List security bindings
     /// </summary>
     /// <remarks>
-    /// Returns a keyset page of claim→rule bindings ordered by (order, id), bounded by limit and resumable via the page token; q filters by a case-insensitive substring of the claim type, claim value, or description.
+    /// Returns all claim→rule bindings, ordered by Order then id.
     /// </remarks>
-    /// <param name="q">The q parameter.</param>
-    /// <param name="limit">The limit parameter.</param>
-    /// <param name="pageToken">The pageToken parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<SearchSecurityBindingsResponse> SearchSecurityBindingsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source q = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<ListSecurityBindingsResponse> ListSecurityBindingsAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Create a security binding

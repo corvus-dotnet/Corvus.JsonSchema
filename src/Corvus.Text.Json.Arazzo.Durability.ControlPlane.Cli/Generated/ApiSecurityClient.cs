@@ -31,65 +31,17 @@ public sealed class ApiSecurityClient : IApiSecurityClient
     }
 
     /// <summary>
-    /// Who-can-do-what overview for a grantee
-    /// </summary>
-    /// <remarks>
-    /// Aggregates, for a single resolved grantee, all their access: the security bindings whose claim matches the grantee's identity (with per-verb reach), the base workflows the grantee administers, and the source-credential bindings the grantee's runs may use. The grantee is passed as an opaque URL-safe token: the base64url encoding of a resolved grantee's JSON (a ResolvedGrantee object — kind, value, identity, source, complete — exactly as returned by GET /identity/grantees), round-tripped verbatim by the client. Reach-scoped. Binding selection is based on the grantee's resolved sys: identity, so a live token may carry additional non-identity claims (e.g. groups) not represented here, and wildcard ('*') bindings that apply to every principal are omitted.
-    /// </remarks>
-    /// <param name="grantee">The grantee parameter.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<GetAccessGrantsResponse> GetAccessGrantsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source grantee, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
-    {
-        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString GranteeValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, grantee, 30).RootElement;
-        GetAccessGrantsRequest request = new(GranteeValue);
-
-        request.Validate(validationMode);
-
-        return SendAsyncCore<GetAccessGrantsRequest, GetAccessGrantsResponse>(workspace, request, responseValidationMode, cancellationToken);
-    }
-
-    /// <summary>
-    /// List the configured ordered tag dimensions
-    /// </summary>
-    /// <remarks>
-    /// Returns the deployment's ordered tag dimensions (e.g. classification) and their labels in ascending order, so an authoring UI can offer ordered (&lt;, &lt;=, &gt;, &gt;=) rule templates with the exact labels the policy enforces.
-    /// </remarks>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<ListSecurityOrderingsResponse> ListSecurityOrderingsAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
-    {
-        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        ListSecurityOrderingsRequest request = new();
-
-        request.Validate(validationMode);
-
-        return SendAsyncCore<ListSecurityOrderingsRequest, ListSecurityOrderingsResponse>(workspace, request, responseValidationMode, cancellationToken);
-    }
-
-    /// <summary>
     /// List security rules
     /// </summary>
-    /// <remarks>
-    /// Returns a keyset page of rules ordered by name, bounded by limit and resumable via the page token; q filters by a case-insensitive substring of the name or expression.
-    /// </remarks>
-    /// <param name="q">The q parameter.</param>
-    /// <param name="limit">The limit parameter.</param>
-    /// <param name="pageToken">The pageToken parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<SearchSecurityRulesResponse> SearchSecurityRulesAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source q = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<ListSecurityRulesResponse> ListSecurityRulesAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        SearchSecurityRulesRequest request = new()
-        {
-            Q = q.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, q, 30).RootElement,
-            Limit = limit.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.CreateBuilder(workspace, limit, 30).RootElement,
-            PageToken = pageToken.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, pageToken, 30).RootElement,
-        }
-        ;
+        ListSecurityRulesRequest request = new();
 
         request.Validate(validationMode);
 
-        return SendAsyncCore<SearchSecurityRulesRequest, SearchSecurityRulesResponse>(workspace, request, responseValidationMode, cancellationToken);
+        return SendAsyncCore<ListSecurityRulesRequest, ListSecurityRulesResponse>(workspace, request, responseValidationMode, cancellationToken);
     }
 
     /// <summary>
@@ -194,26 +146,17 @@ public sealed class ApiSecurityClient : IApiSecurityClient
     /// List security bindings
     /// </summary>
     /// <remarks>
-    /// Returns a keyset page of claim→rule bindings ordered by (order, id), bounded by limit and resumable via the page token; q filters by a case-insensitive substring of the claim type, claim value, or description.
+    /// Returns all claim→rule bindings, ordered by Order then id.
     /// </remarks>
-    /// <param name="q">The q parameter.</param>
-    /// <param name="limit">The limit parameter.</param>
-    /// <param name="pageToken">The pageToken parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<SearchSecurityBindingsResponse> SearchSecurityBindingsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source q = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<ListSecurityBindingsResponse> ListSecurityBindingsAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        SearchSecurityBindingsRequest request = new()
-        {
-            Q = q.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, q, 30).RootElement,
-            Limit = limit.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.CreateBuilder(workspace, limit, 30).RootElement,
-            PageToken = pageToken.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, pageToken, 30).RootElement,
-        }
-        ;
+        ListSecurityBindingsRequest request = new();
 
         request.Validate(validationMode);
 
-        return SendAsyncCore<SearchSecurityBindingsRequest, SearchSecurityBindingsResponse>(workspace, request, responseValidationMode, cancellationToken);
+        return SendAsyncCore<ListSecurityBindingsRequest, ListSecurityBindingsResponse>(workspace, request, responseValidationMode, cancellationToken);
     }
 
     /// <summary>

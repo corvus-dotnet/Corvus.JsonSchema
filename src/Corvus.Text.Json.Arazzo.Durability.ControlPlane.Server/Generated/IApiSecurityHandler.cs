@@ -21,31 +21,13 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 public interface IApiSecurityHandler
 {
     /// <summary>
-    /// Handles GET /access/grants — Who-can-do-what overview for a grantee
-    /// </summary>
-    /// <param name="parameters">The operation parameters.</param>
-    /// <param name="workspace">The workspace for building response values.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The operation result.</returns>
-    ValueTask<GetAccessGrantsResult> HandleGetAccessGrantsAsync(GetAccessGrantsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Handles GET /security/orderings — List the configured ordered tag dimensions
-    /// </summary>
-    /// <param name="parameters">The operation parameters.</param>
-    /// <param name="workspace">The workspace for building response values.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The operation result.</returns>
-    ValueTask<ListSecurityOrderingsResult> HandleListSecurityOrderingsAsync(ListSecurityOrderingsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Handles GET /security/rules — List security rules
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
     /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<SearchSecurityRulesResult> HandleSearchSecurityRulesAsync(SearchSecurityRulesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+    ValueTask<ListSecurityRulesResult> HandleListSecurityRulesAsync(ListSecurityRulesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles POST /security/rules — Create a security rule
@@ -90,7 +72,7 @@ public interface IApiSecurityHandler
     /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<SearchSecurityBindingsResult> HandleSearchSecurityBindingsAsync(SearchSecurityBindingsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+    ValueTask<ListSecurityBindingsResult> HandleListSecurityBindingsAsync(ListSecurityBindingsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles POST /security/bindings — Create a security binding
