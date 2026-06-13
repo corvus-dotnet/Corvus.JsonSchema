@@ -99,38 +99,8 @@ internal sealed class SecurityRuleListCommand : AsyncCommand<RunsSettings>
         using (http)
         await using (transport)
         {
-            // Walk every keyset page (the store pages server-side) so the output is the complete rule set, never the
-            // first page alone.
-            var items = new List<string>();
-            string? pageToken = null;
-            do
-            {
-                string? next = null;
-                await using SearchSecurityRulesResponse response = await client.SearchSecurityRulesAsync(
-                    pageToken: pageToken is { } token ? (Models.JsonString.Source)token : default,
-                    cancellationToken: cancellationToken);
-                int rc = response.MatchResult(
-                    list =>
-                    {
-                        next = list.NextPageToken.IsNotUndefined() ? (string)list.NextPageToken : null;
-                        foreach (Models.SecurityRuleSummary summary in list.Rules.EnumerateArray())
-                        {
-                            items.Add(summary.ToString());
-                        }
-
-                        return 0;
-                    },
-                    Output.Unexpected);
-                if (rc != 0)
-                {
-                    return rc;
-                }
-
-                pageToken = next;
-            }
-            while (pageToken is not null);
-
-            return Output.Print($"{{\"rules\":[{string.Join(",", items)}]}}");
+            await using ListSecurityRulesResponse response = await client.ListSecurityRulesAsync(cancellationToken);
+            return response.MatchResult(list => Output.Print(list.ToString()), Output.Unexpected);
         }
     }
 }
@@ -215,38 +185,8 @@ internal sealed class SecurityBindingListCommand : AsyncCommand<RunsSettings>
         using (http)
         await using (transport)
         {
-            // Walk every keyset page (the store pages server-side) so the output is the complete binding set, never the
-            // first page alone.
-            var items = new List<string>();
-            string? pageToken = null;
-            do
-            {
-                string? next = null;
-                await using SearchSecurityBindingsResponse response = await client.SearchSecurityBindingsAsync(
-                    pageToken: pageToken is { } token ? (Models.JsonString.Source)token : default,
-                    cancellationToken: cancellationToken);
-                int rc = response.MatchResult(
-                    list =>
-                    {
-                        next = list.NextPageToken.IsNotUndefined() ? (string)list.NextPageToken : null;
-                        foreach (Models.SecurityBindingSummary summary in list.Bindings.EnumerateArray())
-                        {
-                            items.Add(summary.ToString());
-                        }
-
-                        return 0;
-                    },
-                    Output.Unexpected);
-                if (rc != 0)
-                {
-                    return rc;
-                }
-
-                pageToken = next;
-            }
-            while (pageToken is not null);
-
-            return Output.Print($"{{\"bindings\":[{string.Join(",", items)}]}}");
+            await using ListSecurityBindingsResponse response = await client.ListSecurityBindingsAsync(cancellationToken);
+            return response.MatchResult(list => Output.Print(list.ToString()), Output.Unexpected);
         }
     }
 }
@@ -274,7 +214,7 @@ internal sealed class SecurityBindingCreateCommand : AsyncCommand<SecurityBindin
         await using (transport)
         {
             await using CreateSecurityBindingResponse response = await client.CreateSecurityBindingAsync(SecurityCommandHelpers.BuildBinding(settings), cancellationToken);
-            return response.MatchResult(binding => Output.Print(binding.ToString()), Output.Problem, Output.Problem, Output.Unexpected);
+            return response.MatchResult(binding => Output.Print(binding.ToString()), Output.Problem, Output.Unexpected);
         }
     }
 }
@@ -288,7 +228,7 @@ internal sealed class SecurityBindingUpdateCommand : AsyncCommand<SecurityBindin
         await using (transport)
         {
             await using UpdateSecurityBindingResponse response = await client.UpdateSecurityBindingAsync(settings.BindingId, SecurityCommandHelpers.BuildBinding(settings), cancellationToken);
-            return response.MatchResult(binding => Output.Print(binding.ToString()), Output.Problem, Output.Problem, Output.Problem, Output.Unexpected);
+            return response.MatchResult(binding => Output.Print(binding.ToString()), Output.Problem, Output.Problem, Output.Unexpected);
         }
     }
 }
