@@ -2,43 +2,20 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using System.Globalization;
-using Corvus.Text.Json;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Security;
 
 /// <summary>
 /// The reference in-memory <see cref="ISecurityPolicyStore"/> — the conformance baseline and a ready store for
-/// single-node / local-development hosts. Each record is held as its UTF-8 JSON document (the "push JSON to the
-/// store" shape every backend persists), keyed by name/id; reads hand back a pooled <see cref="ParsedJsonDocument{T}"/>
-/// the caller disposes. Every mutation bumps a monotonic generation a resolver caches against, and stamps a fresh
-/// per-record etag.
+/// single-node / local-development hosts. Rules are keyed by name, bindings by an assigned id; every mutation
+/// bumps a monotonic generation a resolver caches against, and stamps a fresh per-record etag.
 /// </summary>
 public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
 {
-    // Singleton comparer (created once) for the binding snapshot order: by Order (int, no allocation), with the id as
-    // a tiebreak only when two bindings share an order. Rules sort by their dictionary key (the name), so they need no
-    // comparer and materialize no strings.
-    private static readonly IComparer<ParsedJsonDocument<SecurityBindingDocument>> ByBindingOrder =
-        Comparer<ParsedJsonDocument<SecurityBindingDocument>>.Create(static (a, b) =>
-        {
-            int byOrder = a.RootElement.OrderValue.CompareTo(b.RootElement.OrderValue);
-            if (byOrder != 0)
-            {
-                return byOrder;
-            }
-
-            // Compare the id's unescaped UTF-8 bytes (zero-alloc view) rather than realizing two managed strings; this is
-            // also the COLLATE "C"/binary ordering the SQL backends key on.
-            using UnescapedUtf8JsonString aId = a.RootElement.Id.GetUtf8String();
-            using UnescapedUtf8JsonString bId = b.RootElement.Id.GetUtf8String();
-            return aId.Span.SequenceCompareTo(bId.Span);
-        });
-
     private readonly Lock gate = new();
-    private readonly Dictionary<string, byte[]> rules = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, byte[]> bindings = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, SecurityRuleRecord> rules = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, SecurityBinding> bindings = new(StringComparer.Ordinal);
     private readonly TimeProvider timeProvider;
     private long generation;
     private long etagSequence;
@@ -50,9 +27,10 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
         => this.timeProvider = timeProvider ?? TimeProvider.System;
 
     /// <inheritdoc/>
-    public ValueTask<ParsedJsonDocument<SecurityRuleDocument>> AddRuleAsync(string name, SecurityRuleDocument draft, string actor, CancellationToken cancellationToken)
+    public ValueTask<SecurityRuleRecord> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
+        ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
         ArgumentNullException.ThrowIfNull(actor);
 
         lock (this.gate)
@@ -62,53 +40,61 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
                 throw new InvalidOperationException($"A security rule named '{name}' already exists.");
             }
 
-            byte[] json = SecurityPolicySerialization.SerializeNewRule(name, draft, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
-            this.rules[name] = json;
+            DateTimeOffset now = this.timeProvider.GetUtcNow();
+            var record = new SecurityRuleRecord(name, definition.Expression, definition.Description, actor, now, null, null, this.NextEtag());
+            this.rules[name] = record;
             this.generation++;
-            return new ValueTask<ParsedJsonDocument<SecurityRuleDocument>>(PersistedJson.ToPooledDocument<SecurityRuleDocument>(json));
+            return new ValueTask<SecurityRuleRecord>(record);
         }
     }
 
     /// <inheritdoc/>
-    public ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> GetRuleAsync(string name, CancellationToken cancellationToken)
+    public ValueTask<SecurityRuleRecord?> GetRuleAsync(string name, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
         lock (this.gate)
         {
-            return new ValueTask<ParsedJsonDocument<SecurityRuleDocument>?>(
-                this.rules.TryGetValue(name, out byte[]? json) ? PersistedJson.ToPooledDocument<SecurityRuleDocument>(json) : null);
+            return new ValueTask<SecurityRuleRecord?>(this.rules.TryGetValue(name, out SecurityRuleRecord record) ? record : null);
         }
     }
 
     /// <inheritdoc/>
-    public ValueTask<PooledDocumentList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
+    public ValueTask<IReadOnlyList<SecurityRuleRecord>> ListRulesAsync(CancellationToken cancellationToken)
     {
         lock (this.gate)
         {
-            return new ValueTask<PooledDocumentList<SecurityRuleDocument>>(this.SortedRules());
+            var list = new List<SecurityRuleRecord>(this.rules.Values);
+            list.Sort(static (a, b) => string.CompareOrdinal(a.Name, b.Name));
+            return new ValueTask<IReadOnlyList<SecurityRuleRecord>>(list);
         }
     }
 
     /// <inheritdoc/>
-    public ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public ValueTask<SecurityRuleRecord?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
+        ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
         ArgumentNullException.ThrowIfNull(actor);
 
         lock (this.gate)
         {
-            if (!this.rules.TryGetValue(name, out byte[]? existing))
+            if (!this.rules.TryGetValue(name, out SecurityRuleRecord current))
             {
-                return new ValueTask<ParsedJsonDocument<SecurityRuleDocument>?>((ParsedJsonDocument<SecurityRuleDocument>?)null);
+                return new ValueTask<SecurityRuleRecord?>((SecurityRuleRecord?)null);
             }
 
-            // Parse the existing document NON-COPYING over the stored array (alive in the dictionary through this
-            // synchronous merge under the lock) — the merge reads its etag + audit fields, no per-read pooled copy.
-            using ParsedJsonDocument<SecurityRuleDocument> current = ParsedJsonDocument<SecurityRuleDocument>.Parse(existing.AsMemory());
-            byte[] json = SecurityPolicySerialization.SerializeUpdatedRule(current.RootElement, "rule", name, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
-            this.rules[name] = json;
+            EnsureEtag("rule", name, expectedEtag, current.Etag);
+            var updated = current with
+            {
+                Expression = definition.Expression,
+                Description = definition.Description,
+                UpdatedBy = actor,
+                UpdatedAt = this.timeProvider.GetUtcNow(),
+                Etag = this.NextEtag(),
+            };
+            this.rules[name] = updated;
             this.generation++;
-            return new ValueTask<ParsedJsonDocument<SecurityRuleDocument>?>(PersistedJson.ToPooledDocument<SecurityRuleDocument>(json));
+            return new ValueTask<SecurityRuleRecord?>(updated);
         }
     }
 
@@ -118,17 +104,12 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
         ArgumentNullException.ThrowIfNull(name);
         lock (this.gate)
         {
-            if (!this.rules.TryGetValue(name, out byte[]? existing))
+            if (!this.rules.TryGetValue(name, out SecurityRuleRecord current))
             {
                 return new ValueTask<bool>(false);
             }
 
-            if (!expectedEtag.IsNone)
-            {
-                using ParsedJsonDocument<SecurityRuleDocument> current = ParsedJsonDocument<SecurityRuleDocument>.Parse(existing.AsMemory());
-                SecurityPolicySerialization.EnsureEtag("rule", name, expectedEtag, current.RootElement.EtagValue);
-            }
-
+            EnsureEtag("rule", name, expectedEtag, current.Etag);
             this.rules.Remove(name);
             this.generation++;
             return new ValueTask<bool>(true);
@@ -136,60 +117,85 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
     }
 
     /// <inheritdoc/>
-    public ValueTask<ParsedJsonDocument<SecurityBindingDocument>> AddBindingAsync(SecurityBindingDocument draft, string actor, CancellationToken cancellationToken)
+    public ValueTask<SecurityBinding> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
     {
+        ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
 
         lock (this.gate)
         {
             string id = "bnd-" + (++this.bindingSequence).ToString(CultureInfo.InvariantCulture);
-            byte[] json = SecurityPolicySerialization.SerializeNewBinding(id, draft, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
-            this.bindings[id] = json;
+            DateTimeOffset now = this.timeProvider.GetUtcNow();
+            var record = new SecurityBinding(
+                id,
+                definition.ClaimType,
+                definition.ClaimValue,
+                definition.Read,
+                definition.Write,
+                definition.Purge,
+                definition.Order,
+                definition.Description,
+                actor,
+                now,
+                null,
+                null,
+                this.NextEtag());
+            this.bindings[id] = record;
             this.generation++;
-            return new ValueTask<ParsedJsonDocument<SecurityBindingDocument>>(PersistedJson.ToPooledDocument<SecurityBindingDocument>(json));
+            return new ValueTask<SecurityBinding>(record);
         }
     }
 
     /// <inheritdoc/>
-    public ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> GetBindingAsync(string id, CancellationToken cancellationToken)
+    public ValueTask<SecurityBinding?> GetBindingAsync(string id, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         lock (this.gate)
         {
-            return new ValueTask<ParsedJsonDocument<SecurityBindingDocument>?>(
-                this.bindings.TryGetValue(id, out byte[]? json) ? PersistedJson.ToPooledDocument<SecurityBindingDocument>(json) : null);
+            return new ValueTask<SecurityBinding?>(this.bindings.TryGetValue(id, out SecurityBinding record) ? record : null);
         }
     }
 
     /// <inheritdoc/>
-    public ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
+    public ValueTask<IReadOnlyList<SecurityBinding>> ListBindingsAsync(CancellationToken cancellationToken)
     {
         lock (this.gate)
         {
-            return new ValueTask<PooledDocumentList<SecurityBindingDocument>>(this.SortedBindings());
+            return new ValueTask<IReadOnlyList<SecurityBinding>>(SortBindings(this.bindings.Values));
         }
     }
 
     /// <inheritdoc/>
-    public ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public ValueTask<SecurityBinding?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
+        ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
 
         lock (this.gate)
         {
-            if (!this.bindings.TryGetValue(id, out byte[]? existing))
+            if (!this.bindings.TryGetValue(id, out SecurityBinding current))
             {
-                return new ValueTask<ParsedJsonDocument<SecurityBindingDocument>?>((ParsedJsonDocument<SecurityBindingDocument>?)null);
+                return new ValueTask<SecurityBinding?>((SecurityBinding?)null);
             }
 
-            // Parse the existing document NON-COPYING over the stored array (alive in the dictionary through this
-            // synchronous merge under the lock) — the merge reads its etag + audit fields, no per-read pooled copy.
-            using ParsedJsonDocument<SecurityBindingDocument> current = ParsedJsonDocument<SecurityBindingDocument>.Parse(existing.AsMemory());
-            byte[] json = SecurityPolicySerialization.SerializeUpdatedBinding(current.RootElement, "binding", id, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
-            this.bindings[id] = json;
+            EnsureEtag("binding", id, expectedEtag, current.Etag);
+            var updated = current with
+            {
+                ClaimType = definition.ClaimType,
+                ClaimValue = definition.ClaimValue,
+                Read = definition.Read,
+                Write = definition.Write,
+                Purge = definition.Purge,
+                Order = definition.Order,
+                Description = definition.Description,
+                UpdatedBy = actor,
+                UpdatedAt = this.timeProvider.GetUtcNow(),
+                Etag = this.NextEtag(),
+            };
+            this.bindings[id] = updated;
             this.generation++;
-            return new ValueTask<ParsedJsonDocument<SecurityBindingDocument>?>(PersistedJson.ToPooledDocument<SecurityBindingDocument>(json));
+            return new ValueTask<SecurityBinding?>(updated);
         }
     }
 
@@ -199,17 +205,12 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
         ArgumentNullException.ThrowIfNull(id);
         lock (this.gate)
         {
-            if (!this.bindings.TryGetValue(id, out byte[]? existing))
+            if (!this.bindings.TryGetValue(id, out SecurityBinding current))
             {
                 return new ValueTask<bool>(false);
             }
 
-            if (!expectedEtag.IsNone)
-            {
-                using ParsedJsonDocument<SecurityBindingDocument> current = ParsedJsonDocument<SecurityBindingDocument>.Parse(existing.AsMemory());
-                SecurityPolicySerialization.EnsureEtag("binding", id, expectedEtag, current.RootElement.EtagValue);
-            }
-
+            EnsureEtag("binding", id, expectedEtag, current.Etag);
             this.bindings.Remove(id);
             this.generation++;
             return new ValueTask<bool>(true);
@@ -221,48 +222,29 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
     {
         lock (this.gate)
         {
-            return new ValueTask<SecurityPolicySnapshot>(new SecurityPolicySnapshot(
-                this.SortedRules(),
-                this.SortedBindings(),
-                this.generation));
+            var ruleList = new List<SecurityRuleRecord>(this.rules.Values);
+            ruleList.Sort(static (a, b) => string.CompareOrdinal(a.Name, b.Name));
+            return new ValueTask<SecurityPolicySnapshot>(new SecurityPolicySnapshot(ruleList, SortBindings(this.bindings.Values), this.generation));
         }
     }
 
-    // Rules sort by their dictionary key (the rule name) — already-allocated strings, ordinal — so the comparison
-    // materializes no new strings and needs no comparer over the parsed documents. The key scratch is itself rented
-    // from the pool (and cleared on return so the pool retains no string references) rather than a fresh string[].
-    private PooledDocumentList<SecurityRuleDocument> SortedRules()
+    private static List<SecurityBinding> SortBindings(IEnumerable<SecurityBinding> source)
     {
-        int count = this.rules.Count;
-        string[] names = ArrayPool<string>.Shared.Rent(count);
-        try
+        var list = new List<SecurityBinding>(source);
+        list.Sort(static (a, b) =>
         {
-            this.rules.Keys.CopyTo(names, 0);
-            Array.Sort(names, 0, count, StringComparer.Ordinal);
-            var docs = new PooledDocumentList<SecurityRuleDocument>(count);
-            for (int i = 0; i < count; i++)
-            {
-                docs.Add(PersistedJson.ToPooledDocument<SecurityRuleDocument>(this.rules[names[i]]));
-            }
-
-            return docs;
-        }
-        finally
-        {
-            ArrayPool<string>.Shared.Return(names, clearArray: true);
-        }
+            int byOrder = a.Order.CompareTo(b.Order);
+            return byOrder != 0 ? byOrder : string.CompareOrdinal(a.Id, b.Id);
+        });
+        return list;
     }
 
-    private PooledDocumentList<SecurityBindingDocument> SortedBindings()
+    private static void EnsureEtag(string kind, string id, WorkflowEtag expected, WorkflowEtag actual)
     {
-        var docs = new PooledDocumentList<SecurityBindingDocument>(this.bindings.Count);
-        foreach (byte[] json in this.bindings.Values)
+        if (!expected.IsNone && expected != actual)
         {
-            docs.Add(PersistedJson.ToPooledDocument<SecurityBindingDocument>(json));
+            throw new SecurityPolicyConflictException(kind, id, expected);
         }
-
-        docs.Sort(ByBindingOrder);
-        return docs;
     }
 
     private WorkflowEtag NextEtag() => new((++this.etagSequence).ToString(CultureInfo.InvariantCulture));

@@ -40,19 +40,14 @@ public static class SecurityBootstrap
         var seeded = new List<string>();
         foreach ((string name, string expression, string description) in Rules)
         {
-            ParsedJsonDocument<SecurityRuleDocument>? existing = await store.GetRuleAsync(name, cancellationToken).ConfigureAwait(false);
-            if (existing is not null)
+            if (await store.GetRuleAsync(name, cancellationToken).ConfigureAwait(false) is not null)
             {
-                existing.Dispose();
                 continue;
             }
 
             try
             {
-                // The created document is not needed here; dispose it so its pooled buffer is returned. The draft is a
-                // pooled document too (the store reads it synchronously) — dispose it once the create completes.
-                using ParsedJsonDocument<SecurityRuleDocument> draft = SecurityRuleDocument.Draft(expression, description);
-                (await store.AddRuleAsync(name, draft.RootElement, actor, cancellationToken).ConfigureAwait(false)).Dispose();
+                await store.AddRuleAsync(name, new SecurityRuleDefinition(expression, description), actor, cancellationToken).ConfigureAwait(false);
                 seeded.Add(name);
             }
             catch (InvalidOperationException)
