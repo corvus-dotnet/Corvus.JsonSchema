@@ -3,8 +3,7 @@
 // </copyright>
 
 using System.Net;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using System.Runtime.CompilerServices;
 using Microsoft.Azure.Cosmos;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
@@ -17,7 +16,9 @@ namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
 /// </summary>
 /// <remarks>
 /// The run id is both the document id and the partition key, so every checkpoint operation is a single-partition
-/// point operation. Provision the database and containers once with
+/// point operation. Documents are written and read through the Cosmos <em>stream</em> APIs, so persistence flows
+/// through Corvus.Text.Json schema types (<see cref="RunDocument"/>/<see cref="LeaseDocument"/>) and never the SDK's
+/// reflection serializer. Provision the database and containers once with
 /// <see cref="PrepareAsync(string, string, CancellationToken)"/>, then open the store with
 /// <see cref="ConnectAsync(string, string, TimeProvider?, CancellationToken)"/>; the overloads taking a
 /// <see cref="CosmosClient"/> let callers configure the client (for example a least-privileged data-plane
@@ -30,6 +31,10 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     private const string RunningStatus = nameof(WorkflowRunStatus.Running);
     private const string RunsContainerId = "workflow_runs";
     private const string LeasesContainerId = "workflow_leases";
+
+    private static readonly byte[] IdProperty = "id"u8.ToArray();
+    private static readonly byte[] StatusProperty = "status"u8.ToArray();
+    private static readonly byte[] AwaitingCorrelationIdProperty = "awaitingCorrelationId"u8.ToArray();
 
     private readonly CosmosClient client;
     private readonly Container runs;
@@ -128,12 +133,13 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         return new ValueTask<CosmosWorkflowStateStore>(Connect(client, databaseName, timeProvider, ownsClient: false));
     }
 
-    /// <summary>The serializer options the store relies on (camelCase property names, null properties omitted).</summary>
+    /// <summary>The Cosmos client options the store relies on.</summary>
+    /// <remarks>
+    /// The store reads and writes through the Cosmos stream APIs and serializes documents with Corvus.Text.Json, so
+    /// no SDK serializer is configured.
+    /// </remarks>
     /// <returns>The Cosmos client options used by the connection-string overload.</returns>
-    public static CosmosClientOptions CreateClientOptions() => new()
-    {
-        UseSystemTextJsonSerializerWithOptions = SerializerOptions,
-    };
+    public static CosmosClientOptions CreateClientOptions() => new();
 
     /// <inheritdoc/>
     public ValueTask<WorkflowEtag> SaveAsync(
@@ -146,38 +152,49 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
 
     private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunId id, byte[] checkpoint, WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
     {
-        var document = RunDocument.Build(id, checkpoint, index);
+        byte[] body = RunDocument.Create(id, checkpoint, index).ToJsonBytes();
         var partition = new PartitionKey(id.Value);
-        try
+
+        if (expected.IsNone)
         {
-            if (expected.IsNone)
+            using var stream = CosmosJson.ToStream(body);
+            using ResponseMessage response = await this.runs.CreateItemStreamAsync(stream, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
+            if (response.StatusCode is HttpStatusCode.Conflict)
             {
-                ItemResponse<RunDocument> created = await this.runs.CreateItemAsync(document, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
-                return new WorkflowEtag(created.ETag);
+                throw new WorkflowConflictException(id, expected);
             }
 
-            var options = new ItemRequestOptions { IfMatchEtag = expected.Value };
-            ItemResponse<RunDocument> replaced = await this.runs.ReplaceItemAsync(document, id.Value, partition, options, cancellationToken).ConfigureAwait(false);
-            return new WorkflowEtag(replaced.ETag);
+            response.EnsureSuccessStatusCode();
+            return new WorkflowEtag(response.Headers.ETag);
         }
-        catch (CosmosException ex) when (ex.StatusCode is HttpStatusCode.Conflict or HttpStatusCode.PreconditionFailed or HttpStatusCode.NotFound)
+        else
         {
-            throw new WorkflowConflictException(id, expected);
+            var options = new ItemRequestOptions { IfMatchEtag = expected.Value };
+            using var stream = CosmosJson.ToStream(body);
+            using ResponseMessage response = await this.runs.ReplaceItemStreamAsync(stream, id.Value, partition, options, cancellationToken).ConfigureAwait(false);
+            if (response.StatusCode is HttpStatusCode.Conflict or HttpStatusCode.PreconditionFailed or HttpStatusCode.NotFound)
+            {
+                throw new WorkflowConflictException(id, expected);
+            }
+
+            response.EnsureSuccessStatusCode();
+            return new WorkflowEtag(response.Headers.ETag);
         }
     }
 
     /// <inheritdoc/>
     public async ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunId id, CancellationToken cancellationToken)
     {
-        try
-        {
-            ItemResponse<RunDocument> response = await this.runs.ReadItemAsync<RunDocument>(id.Value, new PartitionKey(id.Value), cancellationToken: cancellationToken).ConfigureAwait(false);
-            return new WorkflowCheckpoint(response.Resource.Checkpoint, new WorkflowEtag(response.ETag));
-        }
-        catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        using ResponseMessage response = await this.runs.ReadItemStreamAsync(id.Value, new PartitionKey(id.Value), cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return null;
         }
+
+        response.EnsureSuccessStatusCode();
+        ReadOnlyMemory<byte> payload = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+        RunDocument document = RunDocument.FromJson(payload);
+        return new WorkflowCheckpoint(document.CheckpointBytes(), new WorkflowEtag(response.Headers.ETag));
     }
 
     /// <inheritdoc/>
@@ -188,66 +205,71 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         DateTimeOffset expiresAt = now + ttl;
         string token = Guid.NewGuid().ToString("N");
-        var document = new LeaseDocument { Id = id.Value, Owner = owner, Token = token, ExpiresAt = expiresAt.ToUnixTimeMilliseconds() };
+        byte[] body = LeaseDocument.Create(id.Value, owner, token, expiresAt.ToUnixTimeMilliseconds()).ToJsonBytes();
         var partition = new PartitionKey(id.Value);
 
-        try
+        using ResponseMessage read = await this.leases.ReadItemStreamAsync(id.Value, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (read.StatusCode == HttpStatusCode.NotFound)
         {
-            LeaseDocument? existing;
-            string existingEtag;
-            try
+            using var createStream = CosmosJson.ToStream(body);
+            using ResponseMessage created = await this.leases.CreateItemStreamAsync(createStream, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
+            if (created.StatusCode is HttpStatusCode.Conflict)
             {
-                ItemResponse<LeaseDocument> read = await this.leases.ReadItemAsync<LeaseDocument>(id.Value, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
-                existing = read.Resource;
-                existingEtag = read.ETag;
-            }
-            catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
-            {
-                existing = null;
-                existingEtag = string.Empty;
-            }
-
-            if (existing is null)
-            {
-                await this.leases.CreateItemAsync(document, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
-                return new WorkflowLease(id, owner, token, expiresAt);
-            }
-
-            if (existing.ExpiresAt > now.ToUnixTimeMilliseconds() && existing.Owner != owner)
-            {
+                // Another worker created the lease concurrently.
                 return null;
             }
 
-            var options = new ItemRequestOptions { IfMatchEtag = existingEtag };
-            await this.leases.ReplaceItemAsync(document, id.Value, partition, options, cancellationToken).ConfigureAwait(false);
+            created.EnsureSuccessStatusCode();
             return new WorkflowLease(id, owner, token, expiresAt);
         }
-        catch (CosmosException ex) when (ex.StatusCode is HttpStatusCode.Conflict or HttpStatusCode.PreconditionFailed)
+
+        read.EnsureSuccessStatusCode();
+        ReadOnlyMemory<byte> payload = await CosmosJson.ReadAllAsync(read.Content, cancellationToken).ConfigureAwait(false);
+        LeaseDocument existing = LeaseDocument.FromJson(payload);
+        if (existing.ExpiresAtValue > now.ToUnixTimeMilliseconds() && existing.OwnerValue != owner)
         {
-            // Another worker created or advanced the lease concurrently.
             return null;
         }
+
+        var options = new ItemRequestOptions { IfMatchEtag = read.Headers.ETag };
+        using var replaceStream = CosmosJson.ToStream(body);
+        using ResponseMessage replaced = await this.leases.ReplaceItemStreamAsync(replaceStream, id.Value, partition, options, cancellationToken).ConfigureAwait(false);
+        if (replaced.StatusCode is HttpStatusCode.Conflict or HttpStatusCode.PreconditionFailed)
+        {
+            // Another worker advanced the lease concurrently.
+            return null;
+        }
+
+        replaced.EnsureSuccessStatusCode();
+        return new WorkflowLease(id, owner, token, expiresAt);
     }
 
     /// <inheritdoc/>
     public async ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken cancellationToken)
     {
         var partition = new PartitionKey(lease.RunId.Value);
-        try
+        using ResponseMessage read = await this.leases.ReadItemStreamAsync(lease.RunId.Value, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (read.StatusCode == HttpStatusCode.NotFound)
         {
-            ItemResponse<LeaseDocument> read = await this.leases.ReadItemAsync<LeaseDocument>(lease.RunId.Value, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
-            if (read.Resource.Token != lease.Token)
-            {
-                return;
-            }
-
-            var options = new ItemRequestOptions { IfMatchEtag = read.ETag };
-            await this.leases.DeleteItemAsync<LeaseDocument>(lease.RunId.Value, partition, options, cancellationToken).ConfigureAwait(false);
+            return;
         }
-        catch (CosmosException ex) when (ex.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.PreconditionFailed)
+
+        read.EnsureSuccessStatusCode();
+        ReadOnlyMemory<byte> payload = await CosmosJson.ReadAllAsync(read.Content, cancellationToken).ConfigureAwait(false);
+        if (LeaseDocument.FromJson(payload).TokenValue != lease.Token)
+        {
+            return;
+        }
+
+        var options = new ItemRequestOptions { IfMatchEtag = read.Headers.ETag };
+        using ResponseMessage deleted = await this.leases.DeleteItemStreamAsync(lease.RunId.Value, partition, options, cancellationToken).ConfigureAwait(false);
+        if (deleted.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.PreconditionFailed)
         {
             // The lease was already released or superseded.
+            return;
         }
+
+        deleted.EnsureSuccessStatusCode();
     }
 
     /// <inheritdoc/>
@@ -259,19 +281,22 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var query = new QueryDefinition("SELECT c.id FROM c WHERE c.status = @status AND IS_DEFINED(c.dueAt) AND c.dueAt <= @before")
             .WithParameter("@status", SuspendedStatus)
             .WithParameter("@before", before.ToUnixTimeMilliseconds());
-        await foreach (IdResult result in this.QueryRunsAsync<IdResult>(query, cancellationToken).ConfigureAwait(false))
+        await foreach (ReadOnlyMemory<byte> element in QueryElementsAsync(this.runs, query, cancellationToken).ConfigureAwait(false))
         {
-            yield return new WorkflowRunId(result.Id);
+            if (CosmosJson.GetString(element, IdProperty) is { } runId)
+            {
+                yield return new WorkflowRunId(runId);
+            }
         }
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(channel);
 
@@ -280,17 +305,24 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         var query = new QueryDefinition("SELECT c.id, c.awaitingCorrelationId FROM c WHERE c.status = @status AND c.awaitingChannel = @channel")
             .WithParameter("@status", SuspendedStatus)
             .WithParameter("@channel", channel);
-        await foreach (AwaitingResult result in this.QueryRunsAsync<AwaitingResult>(query, cancellationToken).ConfigureAwait(false))
+        await foreach (ReadOnlyMemory<byte> element in QueryElementsAsync(this.runs, query, cancellationToken).ConfigureAwait(false))
         {
-            if (correlationId is null || result.AwaitingCorrelationId is null || result.AwaitingCorrelationId == correlationId)
+            string? runId = CosmosJson.GetString(element, IdProperty);
+            if (runId is null)
             {
-                yield return new WorkflowRunId(result.Id);
+                continue;
+            }
+
+            string? awaitingCorrelationId = CosmosJson.GetString(element, AwaitingCorrelationIdProperty);
+            if (correlationId is null || awaitingCorrelationId is null || awaitingCorrelationId == correlationId)
+            {
+                yield return new WorkflowRunId(runId);
             }
         }
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
         if (hostedWorkflowIds.Count == 0)
@@ -305,12 +337,19 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             .WithParameter("@running", RunningStatus)
             .WithParameter("@hosted", new List<string>(hostedWorkflowIds));
 
-        var candidates = new List<ClaimableResult>();
+        var candidates = new List<(string Id, string Status)>();
         bool anyRunning = false;
-        await foreach (ClaimableResult result in this.QueryRunsAsync<ClaimableResult>(candidateQuery, cancellationToken).ConfigureAwait(false))
+        await foreach (ReadOnlyMemory<byte> element in QueryElementsAsync(this.runs, candidateQuery, cancellationToken).ConfigureAwait(false))
         {
-            candidates.Add(result);
-            if (result.Status == RunningStatus)
+            string? candidateId = CosmosJson.GetString(element, IdProperty);
+            string? candidateStatus = CosmosJson.GetString(element, StatusProperty);
+            if (candidateId is null || candidateStatus is null)
+            {
+                continue;
+            }
+
+            candidates.Add((candidateId, candidateStatus));
+            if (candidateStatus == RunningStatus)
             {
                 anyRunning = true;
             }
@@ -322,22 +361,20 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         {
             var leaseQuery = new QueryDefinition("SELECT c.id FROM c WHERE c.expiresAt > @now")
                 .WithParameter("@now", now.ToUnixTimeMilliseconds());
-            using FeedIterator<IdResult> leaseIterator = this.leases.GetItemQueryIterator<IdResult>(leaseQuery);
-            while (leaseIterator.HasMoreResults)
+            await foreach (ReadOnlyMemory<byte> element in QueryElementsAsync(this.leases, leaseQuery, cancellationToken).ConfigureAwait(false))
             {
-                FeedResponse<IdResult> page = await leaseIterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
-                foreach (IdResult lease in page)
+                if (CosmosJson.GetString(element, IdProperty) is { } leaseId)
                 {
-                    heldRunIds.Add(lease.Id);
+                    heldRunIds.Add(leaseId);
                 }
             }
         }
 
-        foreach (ClaimableResult candidate in candidates)
+        foreach ((string id, string status) in candidates)
         {
-            if (candidate.Status == PendingStatus || (candidate.Status == RunningStatus && !heldRunIds.Contains(candidate.Id)))
+            if (status == PendingStatus || (status == RunningStatus && !heldRunIds.Contains(id)))
             {
-                yield return new WorkflowRunId(candidate.Id);
+                yield return new WorkflowRunId(id);
             }
         }
     }
@@ -467,9 +504,10 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         }
 
         var runs = new List<WorkflowRunListing>();
-        await foreach (RunDocument document in this.QueryRunsAsync<RunDocument>(definition, cancellationToken).ConfigureAwait(false))
+        await foreach (ReadOnlyMemory<byte> element in QueryElementsAsync(this.runs, definition, cancellationToken).ConfigureAwait(false))
         {
-            runs.Add(new WorkflowRunListing(new WorkflowRunId(document.Id), document.ToIndexEntry()));
+            RunDocument document = RunDocument.FromJson(element);
+            runs.Add(new WorkflowRunListing(new WorkflowRunId(document.IdValue), document.ToIndexEntry()));
             if (runs.Count > query.Limit)
             {
                 // Fetched one beyond the page — a next page exists; stop early to avoid draining the iterator.
@@ -491,12 +529,6 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         return default;
     }
 
-    private static readonly JsonSerializerOptions SerializerOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-    };
-
     private static async ValueTask ProvisionAsync(CosmosClient client, string databaseName, CancellationToken cancellationToken)
     {
         Database database = await client.CreateDatabaseIfNotExistsAsync(databaseName, cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -516,151 +548,28 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
 
     private static async ValueTask DeleteIfExistsAsync(Container container, string id, PartitionKey partition, CancellationToken cancellationToken)
     {
-        try
-        {
-            await container.DeleteItemAsync<object>(id, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
-        }
-        catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        using ResponseMessage response = await container.DeleteItemStreamAsync(id, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (response.StatusCode == HttpStatusCode.NotFound)
         {
             // Already absent.
+            return;
         }
+
+        response.EnsureSuccessStatusCode();
     }
 
-    private async IAsyncEnumerable<T> QueryRunsAsync<T>(QueryDefinition query, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    private static async IAsyncEnumerable<ReadOnlyMemory<byte>> QueryElementsAsync(Container container, QueryDefinition query, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        using FeedIterator<T> iterator = this.runs.GetItemQueryIterator<T>(query);
+        using FeedIterator iterator = container.GetItemQueryStreamIterator(query);
         while (iterator.HasMoreResults)
         {
-            FeedResponse<T> page = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
-            foreach (T item in page)
+            using ResponseMessage response = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+            ReadOnlyMemory<byte> page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+            foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page))
             {
-                yield return item;
+                yield return element;
             }
         }
-    }
-
-    private sealed class RunDocument
-    {
-        [JsonPropertyName("id")]
-        public string Id { get; set; } = string.Empty;
-
-        [JsonPropertyName("checkpoint")]
-        public byte[] Checkpoint { get; set; } = [];
-
-        [JsonPropertyName("status")]
-        public string Status { get; set; } = string.Empty;
-
-        [JsonPropertyName("workflowId")]
-        public string WorkflowId { get; set; } = string.Empty;
-
-        [JsonPropertyName("createdAt")]
-        public long CreatedAt { get; set; }
-
-        [JsonPropertyName("updatedAt")]
-        public long UpdatedAt { get; set; }
-
-        [JsonPropertyName("dueAt")]
-        public long? DueAt { get; set; }
-
-        [JsonPropertyName("awaitingChannel")]
-        public string? AwaitingChannel { get; set; }
-
-        [JsonPropertyName("awaitingCorrelationId")]
-        public string? AwaitingCorrelationId { get; set; }
-
-        [JsonPropertyName("errorType")]
-        public string? ErrorType { get; set; }
-
-        [JsonPropertyName("correlationId")]
-        public string? CorrelationId { get; set; }
-
-        [JsonPropertyName("tags")]
-        public List<string>? Tags { get; set; }
-
-        [JsonPropertyName("securityTags")]
-        public List<SecurityTagDocument>? SecurityTags { get; set; }
-
-        public static RunDocument Build(WorkflowRunId id, byte[] checkpoint, in WorkflowRunIndexEntry index) => new()
-        {
-            Id = id.Value,
-            Checkpoint = checkpoint,
-            Status = index.Status.ToString(),
-            WorkflowId = index.WorkflowId,
-            CreatedAt = index.CreatedAt.ToUnixTimeMilliseconds(),
-            UpdatedAt = index.UpdatedAt.ToUnixTimeMilliseconds(),
-            DueAt = index.DueAt?.ToUnixTimeMilliseconds(),
-            AwaitingChannel = index.AwaitingChannel,
-            AwaitingCorrelationId = index.AwaitingCorrelationId,
-            ErrorType = index.ErrorType,
-            CorrelationId = index.CorrelationId,
-            Tags = index.Tags is { Count: > 0 } t ? t.ToList() : null,
-            SecurityTags = index.SecurityTags is { Count: > 0 } st ? st.Select(SecurityTagDocument.From).ToList() : null,
-        };
-
-        public WorkflowRunIndexEntry ToIndexEntry() => new(
-            this.WorkflowId,
-            Enum.Parse<WorkflowRunStatus>(this.Status),
-            DateTimeOffset.FromUnixTimeMilliseconds(this.CreatedAt),
-            DateTimeOffset.FromUnixTimeMilliseconds(this.UpdatedAt),
-            this.DueAt is { } due ? DateTimeOffset.FromUnixTimeMilliseconds(due) : null,
-            this.AwaitingChannel,
-            this.AwaitingCorrelationId,
-            this.ErrorType,
-            CorrelationId: this.CorrelationId,
-            Tags: this.Tags,
-            SecurityTags: this.SecurityTags is { Count: > 0 } st ? st.Select(t => t.ToSecurityTag()).ToList() : null);
-    }
-
-    /// <summary>A security tag as embedded in a document's <c>securityTags</c> array.</summary>
-    private sealed class SecurityTagDocument
-    {
-        [JsonPropertyName("k")]
-        public string Key { get; set; } = string.Empty;
-
-        [JsonPropertyName("v")]
-        public string Value { get; set; } = string.Empty;
-
-        public static SecurityTagDocument From(SecurityTag tag) => new() { Key = tag.Key, Value = tag.Value };
-
-        public SecurityTag ToSecurityTag() => new(this.Key, this.Value);
-    }
-
-    private sealed class LeaseDocument
-    {
-        [JsonPropertyName("id")]
-        public string Id { get; set; } = string.Empty;
-
-        [JsonPropertyName("owner")]
-        public string Owner { get; set; } = string.Empty;
-
-        [JsonPropertyName("token")]
-        public string Token { get; set; } = string.Empty;
-
-        [JsonPropertyName("expiresAt")]
-        public long ExpiresAt { get; set; }
-    }
-
-    private sealed class IdResult
-    {
-        [JsonPropertyName("id")]
-        public string Id { get; set; } = string.Empty;
-    }
-
-    private sealed class AwaitingResult
-    {
-        [JsonPropertyName("id")]
-        public string Id { get; set; } = string.Empty;
-
-        [JsonPropertyName("awaitingCorrelationId")]
-        public string? AwaitingCorrelationId { get; set; }
-    }
-
-    private sealed class ClaimableResult
-    {
-        [JsonPropertyName("id")]
-        public string Id { get; set; } = string.Empty;
-
-        [JsonPropertyName("status")]
-        public string Status { get; set; } = string.Empty;
     }
 }
