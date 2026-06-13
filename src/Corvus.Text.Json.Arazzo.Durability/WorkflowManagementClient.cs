@@ -304,7 +304,9 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
             string? token = null;
             do
             {
-                WorkflowRunPage page = await waitIndex.QueryAsync(new WorkflowQuery(status, null, query.Limit, token), cancellationToken).ConfigureAwait(false);
+                // Reuse the row-filtered query path so the purge reaps only rows the principal may see (§14.2):
+                // a tenant admin purges only their tenant's runs, a service operator (null filter) purges all.
+                WorkflowRunPage page = await waitIndex.QueryAsync(new WorkflowQuery(status, null, query.Limit, token, Security: query.Security), cancellationToken).ConfigureAwait(false);
                 foreach (WorkflowRunListing listing in page.Runs)
                 {
                     if (purged >= query.Limit)
