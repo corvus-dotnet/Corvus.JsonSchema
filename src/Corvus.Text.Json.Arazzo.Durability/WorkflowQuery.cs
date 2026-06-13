@@ -23,6 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// <param name="UpdatedBefore">Restrict to runs last updated strictly before this instant (exclusive), if set.</param>
 /// <param name="CorrelationId">Restrict to runs with this telemetry correlation id (exact match), if set.</param>
 /// <param name="Tags">Restrict to runs carrying every one of these tags (AND), if set.</param>
+/// <param name="Security">A row-authorization filter restricting results to runs whose security tags satisfy the principal's rule(s) (§14.2); <see langword="null"/> is unrestricted.</param>
 public readonly record struct WorkflowQuery(
     WorkflowRunStatus? Status = null,
     string? WorkflowId = null,
@@ -33,7 +34,8 @@ public readonly record struct WorkflowQuery(
     DateTimeOffset? UpdatedAfter = null,
     DateTimeOffset? UpdatedBefore = null,
     string? CorrelationId = null,
-    IReadOnlyList<string>? Tags = null);
+    IReadOnlyList<string>? Tags = null,
+    SecurityFilter? Security = null);
 
 /// <summary>One run in a <see cref="WorkflowRunPage"/>: its id and the indexed projection.</summary>
 /// <param name="Id">The run id.</param>
