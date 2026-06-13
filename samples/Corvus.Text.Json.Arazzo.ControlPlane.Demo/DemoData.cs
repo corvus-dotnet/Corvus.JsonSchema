@@ -43,7 +43,7 @@ public static class DemoData
         await catalog.AddAsync(onboarding, OnboardingOwner, ["prod", "kyc"], default).ConfigureAwait(false);
         await catalog.AddAsync(reconcile, ReconcileOwner, ["prod", "billing"], default).ConfigureAwait(false);
         await catalog.AddAsync(reconcile, ReconcileOwner, ["prod", "billing", "beta"], default).ConfigureAwait(false);
-        await catalog.UpdateAsync("nightly-reconcile", 1, owner: null, tags: null, status: CatalogStatus.Obsolete, default).ConfigureAwait(false);
+        await catalog.UpdateAsync("nightly-reconcile", 1, owner: null, tags: null, status: CatalogStatus.Obsolete, AccessContext.System, default).ConfigureAwait(false);
 
         // Runs across statuses. Faulted runs sit on the steps whose outputs carry the rich shapes, so the
         // resume dialog's "Record outputs" editor shows the union / map / tuple controls — and validates them.

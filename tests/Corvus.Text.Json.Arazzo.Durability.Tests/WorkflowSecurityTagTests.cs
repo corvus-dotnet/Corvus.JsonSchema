@@ -49,7 +49,7 @@ public sealed class WorkflowSecurityTagTests
             await run.EnqueueAsync(default);
         }
 
-        WorkflowRunDetail? detail = await management.GetAsync("run-1", default);
+        WorkflowRunDetail? detail = await management.GetAsync("run-1", AccessContext.System, default);
 
         detail.ShouldNotBeNull();
         detail.Value.SecurityTags.ShouldBe([new SecurityTag("tenant", "acme")]);
