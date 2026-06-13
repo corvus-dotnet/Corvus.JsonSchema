@@ -408,7 +408,9 @@ descriptions** to real endpoints + credentials:
    (reference-then-fan-out across ~18 stores); a separate security API in the control plane to manage rules,
    seeded with bootstrap rules (tenant-scoped / ABAC label-superset / intersection); plus the deployment
    access-control shell (§14.3) — reserved-prefix immutable, client-invisible internal tags + a mandated
-   wrapper rule ANDed into every decision for inescapable multi-tenant isolation.
+   wrapper rule ANDed into every decision for inescapable multi-tenant isolation. Engine + InMemory store +
+   shell + **control-plane HTTP enforcement (§14.4)** are done; remaining: the per-backend predicate pushdown
+   (with fail-loud guards until each backend honors the filter) and the security/bootstrap-rule API.
 
 The paused demo work (`samples/.../docs/live-execution.md`) becomes the *manual* prototype of Phase 1–3 (it
 hand-builds the binder + compiles in-process); this design productionises it behind the catalog.
@@ -584,6 +586,34 @@ into another even if a user rule is misconfigured.
   access-control wrapper (the mandated rule + an internal-tag injector at row creation + a response stripper);
   the compiled predicate becomes `wrapperPredicate AND userPredicate`. The wrapper is per-deployment
   configuration, like the auth scheme (§14.1) — the sample demonstrates a tenant shell.
+
+### 14.4 Control-plane enforcement (HTTP)
+
+The control plane turns the row-security model into per-request enforcement via a deployment-supplied
+`ControlPlaneRowSecurityPolicy` (read through `IHttpContextAccessor`), bound by an optional `rowSecurity`
+argument to `MapArazzoControlPlane` (default unset = unscoped; fully backward compatible). The policy exposes
+three decisions: `GetFilter(principal)` (the read `SecurityFilter`, `null` = unrestricted), `GetInternalTags`
+(internal tags to stamp on created rows), `ValidateUserTags`. A deployment typically implements it over a
+`SecurityShell`.
+
+- **Reads are scoped, single-row access is gated.** List/search apply the principal's filter in the store
+  query. Get/update/delete/resume/cancel/trigger and every catalog document endpoint check visibility and
+  report a row the filter excludes as **404, not 403** — a row you may not see is indistinguishable from one
+  that does not exist (non-disclosing). Mutations gate *before* acting, so an invisible row is never touched.
+- **Creation stamps internal tags.** Adding a catalog version stamps the deployment's internal tags (e.g. the
+  principal's tenant) onto it; triggered runs inherit the version's labels.
+- **Purge is row-scoped, and that is orthogonal to the purge capability.** The `runs:purge` *scope* (§14.1)
+  grants the *capability* to purge; the row filter (§14.2) bounds *which rows*. Both apply independently — there
+  is no "operator-only purge". A **tenant admin** (a non-null tenant filter) is elevated *within their tenant*
+  and purges only their tenant's terminal runs; a **service-operator admin** (a null filter, outside any tenant
+  shell) purges across tenants. Mechanically, `PurgeAsync` enumerates through the *same* filtered query path
+  `ListAsync` uses, so purge correctness is subsumed by query correctness — no separate purge filtering exists
+  for runs. (Catalog purge enumerates obsolete versions via `ListObsoleteAsync`, not the filtered query, so its
+  filtering is part of the catalog-store work in the pushdown slice below.)
+- **Backend honoring is the planned pushdown slice.** Enforcement is correct against the InMemory reference
+  today; the non-InMemory stores currently *ignore* `query.Security`, so the per-backend predicate-pushdown
+  slice must implement indexed filtering **and**, until a backend does, have it **fail loud**
+  (`NotSupportedException` on a non-null filter) rather than silently return/destroy unfiltered rows.
 
 **Decision (§14):** operation authz = ASP.NET Core policies named after capability scopes, with the scheme +
 claim mapping supplied per deployment (sample-implemented). Row authz = **security tags (KVP labels) + tag
