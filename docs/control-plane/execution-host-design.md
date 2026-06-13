@@ -428,3 +428,100 @@ hand-builds the binder + compiles in-process); this design productionises it beh
 
 All design decisions are resolved; remaining detail (transport-binding config schema, the declared-trigger
 manifest shape) is deferred to implementation phasing (§11).
+
+## 13. Source credentials — storage, lifecycle, refresh
+
+Sources need credentials (bearer tokens, OAuth client-credentials, API keys, mTLS certs — §8). The run
+requester must **never** supply them: a run carries only inputs. Credentials are **host/operator-managed
+state**, bound to the catalog version's sources and resolved per run by the transport binding (§8), so
+rotation is transparent — the next run/resume picks up the current secret without changing the workflow or
+the request.
+
+### 13.1 Credential store and binding
+
+- **`ISourceCredentialStore`** in the durability layer (per-backend, like the run/catalog/registry stores),
+  holding a `SourceCredential` per `(sourceName, environment/tenant)`:
+  `{ sourceName, kind (bearer | oauth-client-credentials | api-key | mtls), secretRef, expiresAt?, rotatedAt }`.
+  Secret material is **encrypted at rest** via the existing protected-store mechanism (KeyVault/KMS
+  backends already exist), or `secretRef` points at an external secret (a KeyVault URI) the host dereferences
+  — secrets need not live in the Arazzo store at all.
+- **Binding.** `WorkflowTransportRegistry` (§8) resolves each source's `IApiTransportFactory` from the
+  credential store: it builds the `IHttpAuthenticationProvider` (`BearerTokenAuthenticationProvider`,
+  `ApiKeyAuthenticationProvider`, … already exist) from the stored credential. For
+  **oauth-client-credentials** the provider holds the long-lived client id/secret and fetches + caches a
+  short-lived access token at runtime, so *access-token* expiry is handled automatically by re-fetching; only
+  the **long-lived** secret (client secret, refresh token, API key, cert) is what §13.2 tracks for operator
+  rotation.
+- **No per-run credentials, no per-requester secrets.** The seam already established (`IApiTransportFactory`
+  per source) means credential resolution is entirely host-side; the trigger surface (§6) is unchanged.
+
+### 13.2 Expiry tracking, states, and telemetry
+
+- Each `SourceCredential` carries `expiresAt` when knowable (cert `NotAfter`, API-key/refresh-token lifetime).
+- A catalog version derives a **`credentialStatus`** — `Valid` | `ExpiringSoon(at)` | `Expired` — as the worst
+  status across the sources it binds (min `expiresAt`). It surfaces on the version's control-plane GET
+  endpoints and the UI.
+- A control-plane **credential monitor** (a periodic sweep, like the runner-registry prune §5.4) evaluates
+  credentials and:
+  - **emits telemetry** so operators build their own alerting/rotation rules (we expose the signal, not a
+    built-in scheduler): an `arazzo.credential.expires_at` gauge and `arazzo.credential.expired` counter,
+    tagged by `sourceName` / `baseWorkflowId` / `versionNumber`. This is the "auto-reminder" — surfaced in
+    OpenTelemetry and the UI's version view.
+  - when a credential is **expired**, marks the version's binding **`Credentials Expired`** — a degraded,
+    non-runnable state that gates *new* triggers (`409`, like the no-live-runner gate §6.2) while leaving
+    catalogued/in-flight state intact.
+
+### 13.3 Faulted run → refresh → resume
+
+- A run that fails because a source rejected its credential (`401`/`403`, or the binding throws a
+  credential-expired error) records a **typed fault**: `Faulted` with `errorType = "credentials-expired"` and
+  the offending source — distinguishable from ordinary faults and **filterable** in the control plane.
+- An operator **refreshes the credential in the catalog** (uploads a new secret / re-runs OAuth consent /
+  rotates the cert) via a control-plane credential endpoint. The refresh lives with the catalog version's
+  source binding, not the run.
+- **Resume** uses the existing machinery (retry/rewind §7.2): because the transport binding resolves
+  credentials from the store **at bind time**, the resumed run picks up the refreshed credential
+  automatically — the original requester is not involved. At-least-once step re-execution (§10) re-runs the
+  interrupted step against the now-valid credential and continues from the last checkpoint.
+
+**Decision (§13):** credentials are operator-managed catalog state, encrypted/referenced, resolved per run by
+the transport binding; expiry is surfaced as version status + telemetry (operators own the rotation policy);
+a `credentials-expired` fault is refreshable from the catalog and resumable with no requester involvement.
+
+## 14. Authorization — control plane and tag-based row security
+
+Two layers: **operation** authorization (can this principal call this endpoint at all) and **row**
+authorization (which workflows/runs can it see or act on). The control plane is ASP.NET Core; the mechanism
+is standard and **per-deployment configurable**, with a concrete strategy shipped in the sample.
+
+### 14.1 Operation authorization (capability scopes)
+
+- The control plane ships **capability scopes as authorization policy names** — `catalog:read`,
+  `catalog:write`, `runs:read`, `runs:write`, `workflows:run`, `credentials:write` (§9, §13) — and each
+  endpoint declares its requirement (`.RequireAuthorization("workflows:run")`).
+- The **deployment** supplies authentication (any ASP.NET Core scheme — JWT bearer / OIDC / mTLS) and the
+  claim→policy mapping (`AddAuthentication().Add…` + `AddAuthorization`). The control plane does **not**
+  hard-code an identity provider; it depends only on `ClaimsPrincipal` + the named policies. This is the
+  "configurable per deployment" seam.
+- The **sample** implements one concrete strategy (JWT bearer with a `scope` claim mapped to the policies,
+  plus a dev API-key scheme) to demonstrate end to end.
+
+### 14.2 Row-level (tag-based) security
+
+Workflows (catalog versions) and runs already carry `tags`. Authorization is by **tag intersection**:
+
+- The authenticated principal resolves to a set of **tag grants** (from claims — e.g. `tag:team-a` claims, or
+  a group→tags mapping). The claim→grants mapping is deployment-configurable (sample-implemented), like §14.1.
+- **Read filtering is pushed into the store, not post-filtered.** Every list/get on runs and catalog versions
+  takes an **allowed-tags** filter that each backend translates into an **indexed** query (run/version tags
+  are already indexed — `WorkflowRunIndexEntry.Tags`), so a principal only ever materialises rows whose tags
+  intersect its grants. Never scan-then-filter (same rule as the runner-hosting index §5.4).
+- **Write/trigger** requires the principal to hold a tag the target workflow carries; a created run **inherits**
+  its workflow's tags (plus any request tags the principal is allowed to assign), so run-level filtering stays
+  consistent with the workflow it came from.
+- The two layers compose: scopes (§14.1) gate the **operation**, tags gate the **rows**. A `runs:read`
+  principal can list runs, but only those carrying a tag it has been granted.
+
+**Decision (§14):** operation authz = ASP.NET Core policies named after capability scopes, with the scheme +
+claim mapping supplied per deployment (sample-implemented); row authz = tag-intersection filtering pushed into
+the store as an indexed query on the already-indexed tags, applied uniformly to workflows and runs.
