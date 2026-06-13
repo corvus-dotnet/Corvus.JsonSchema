@@ -139,6 +139,7 @@
         "description": "Permanently deletes a single run by id, regardless of status. Unlike `PURGE /runs` (which reaps only old terminal runs in bulk), this removes exactly the named run — the operator's explicit \"remove this\" action. Destructive: requires the `runs:purge` scope.",
         "responses": {
           "204": { "description": "The run was deleted." },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" }
         }
@@ -173,6 +174,7 @@
               }
             }
           },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" }
         }
@@ -208,6 +210,7 @@
             }
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" }
         }
@@ -403,6 +406,7 @@
             }
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" }
         }
       },
@@ -422,6 +426,7 @@
         ],
         "responses": {
           "204": { "description": "The version was deleted." },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" }
         }
@@ -835,6 +840,24 @@
         "content": {
           "application/problem+json": {
             "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "The caller may see the row but is not permitted to perform this action on it (row-level write authorization).",
+        "content": {
+          "application/problem+json": {
+            "schema": { "$ref": "#/components/schemas/ProblemDetails" },
+            "examples": {
+              "forbidden": {
+                "value": {
+                  "type": "https://corvus-oss.org/arazzo/control-plane/problems/forbidden",
+                  "title": "Action not permitted",
+                  "status": 403,
+                  "detail": "You do not have permission to modify run 'adopt-42'."
+                }
+              }
+            }
           }
         }
       },

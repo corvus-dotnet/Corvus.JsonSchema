@@ -52,6 +52,14 @@ public readonly struct UpdateCatalogVersionResult
     public static UpdateCatalogVersionResult BadRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(400, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
+    /// Creates a 403 Forbidden result.
+    /// </summary>
+    /// <param name="body">The response body.</param>
+    /// <param name="workspace">The workspace for building the response value.</param>
+    /// <returns>A <see cref="UpdateCatalogVersionResult"/> with status 403.</returns>
+    public static UpdateCatalogVersionResult Forbidden(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(403, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+
+    /// <summary>
     /// Creates a 404 NotFound result.
     /// </summary>
     /// <param name="body">The response body.</param>
@@ -70,6 +78,7 @@ public readonly struct UpdateCatalogVersionResult
         {
             200 => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.From(this.Body).EvaluateSchema(),
             400 => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.From(this.Body).EvaluateSchema(),
+            403 => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.From(this.Body).EvaluateSchema(),
             404 => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.From(this.Body).EvaluateSchema(),
             _ => true,
         };

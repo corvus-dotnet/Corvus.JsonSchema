@@ -143,9 +143,21 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         CatalogOwner? owner = patch.Owner.IsNotUndefined() ? ToOwner(patch.Owner) : null;
         IReadOnlyList<string>? tags = ToTags(patch.Tags);
         CatalogStatus? status = patch.Status.IsNotUndefined() ? Enum.Parse<CatalogStatus>((string)patch.Status) : null;
+        AccessContext ctx = this.access.Current();
 
-        // Gated by write reach (§14.2): a version absent or out of reach yields null → 404 (non-disclosing).
-        CatalogVersion? updated = await this.catalog.UpdateAsync(baseWorkflowId, versionNumber, owner, tags, status, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        // Gate (§14.2): a version outside read reach → 404 (non-disclosing); readable but outside write reach → 403.
+        CatalogVersion? existing = await this.catalog.GetAsync(baseWorkflowId, versionNumber, ctx, cancellationToken).ConfigureAwait(false);
+        if (existing is not { } ev)
+        {
+            return UpdateCatalogVersionResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
+        }
+
+        if (!ctx.Admits(AccessVerb.Write, ev.SecurityTagsValue))
+        {
+            return UpdateCatalogVersionResult.Forbidden(ForbiddenProblem(baseWorkflowId, versionNumber), workspace);
+        }
+
+        CatalogVersion? updated = await this.catalog.UpdateAsync(baseWorkflowId, versionNumber, owner, tags, status, ctx, cancellationToken).ConfigureAwait(false);
         return updated is { } v
             ? UpdateCatalogVersionResult.Ok(Models.CatalogVersionSummary.From(v), workspace)
             : UpdateCatalogVersionResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
@@ -156,9 +168,21 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     {
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
         int versionNumber = (int)parameters.VersionNumber;
+        AccessContext ctx = this.access.Current();
 
-        // Gated by write reach (§14.2): a version absent or out of reach → NotFound (non-disclosing).
-        CatalogDeleteOutcome outcome = await this.catalog.DeleteAsync(baseWorkflowId, versionNumber, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        // Gate (§14.2): a version outside read reach → 404 (non-disclosing); readable but outside write reach → 403.
+        CatalogVersion? existing = await this.catalog.GetAsync(baseWorkflowId, versionNumber, ctx, cancellationToken).ConfigureAwait(false);
+        if (existing is not { } ev)
+        {
+            return DeleteCatalogVersionResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
+        }
+
+        if (!ctx.Admits(AccessVerb.Write, ev.SecurityTagsValue))
+        {
+            return DeleteCatalogVersionResult.Forbidden(ForbiddenProblem(baseWorkflowId, versionNumber), workspace);
+        }
+
+        CatalogDeleteOutcome outcome = await this.catalog.DeleteAsync(baseWorkflowId, versionNumber, ctx, cancellationToken).ConfigureAwait(false);
         return outcome switch
         {
             CatalogDeleteOutcome.Deleted => DeleteCatalogVersionResult.NoContent(),
@@ -558,6 +582,9 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
 
     private static Models.ProblemDetails.Source NotFoundProblem(string baseWorkflowId, int versionNumber)
         => Problem("version-not-found", "Version not found", 404, $"No version {versionNumber} of workflow '{baseWorkflowId}' exists.");
+
+    private static Models.ProblemDetails.Source ForbiddenProblem(string baseWorkflowId, int versionNumber)
+        => Problem("forbidden", "Action not permitted", 403, $"You do not have permission to modify version {versionNumber} of '{baseWorkflowId}'.");
 
     private static Models.ProblemDetails.Source Problem(string type, string title, int status, string detail)
         => new((ref Models.ProblemDetails.Builder b) => b.Create(

@@ -431,6 +431,7 @@ internal sealed class ResumeCommand : AsyncCommand<ResumeSettings>
         detail => Output.Print(detail.ToString()),
         Output.Problem,
         Output.Problem,
+        Output.Problem,
         Output.Unexpected);
 }
 
@@ -448,6 +449,7 @@ internal sealed class CancelCommand : AsyncCommand<CancelSettings>
                 cancellationToken);
             return response.MatchResult(
                 detail => Output.Print(detail.ToString()),
+                Output.Problem,
                 Output.Problem,
                 Output.Problem,
                 Output.Problem,
@@ -472,6 +474,7 @@ internal sealed class DeleteCommand : AsyncCommand<RunIdSettings>
             }
 
             return response.MatchResult(
+                Output.Problem,
                 Output.Problem,
                 Output.Problem,
                 Output.Unexpected);

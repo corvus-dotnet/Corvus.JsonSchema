@@ -62,46 +62,52 @@ public readonly partial struct CatalogVersionSummary
         private const int RequiredOffsetForOwner = 0;
         private const uint RequiredBitForOwner = 0b00000000000000000000000000010000;
 
+        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyRunnablePresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("runnable"u8, buffer, out written);
+        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyRunnableNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("runnable"u8, buffer, out written);
+
+        private const int RequiredOffsetForRunnable = 0;
+        private const uint RequiredBitForRunnable = 0b00000000000000000000000000100000;
+
         private static readonly JsonSchemaMessageProvider<int> RequiredPropertySourcesPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("sources"u8, buffer, out written);
         private static readonly JsonSchemaMessageProvider<int> RequiredPropertySourcesNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("sources"u8, buffer, out written);
 
         private const int RequiredOffsetForSources = 0;
-        private const uint RequiredBitForSources = 0b00000000000000000000000000100000;
+        private const uint RequiredBitForSources = 0b00000000000000000000000001000000;
 
         private static readonly JsonSchemaMessageProvider<int> RequiredPropertyStatusPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("status"u8, buffer, out written);
         private static readonly JsonSchemaMessageProvider<int> RequiredPropertyStatusNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("status"u8, buffer, out written);
 
         private const int RequiredOffsetForStatus = 0;
-        private const uint RequiredBitForStatus = 0b00000000000000000000000001000000;
+        private const uint RequiredBitForStatus = 0b00000000000000000000000010000000;
 
         private static readonly JsonSchemaMessageProvider<int> RequiredPropertyTagsPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("tags"u8, buffer, out written);
         private static readonly JsonSchemaMessageProvider<int> RequiredPropertyTagsNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("tags"u8, buffer, out written);
 
         private const int RequiredOffsetForTags = 0;
-        private const uint RequiredBitForTags = 0b00000000000000000000000010000000;
+        private const uint RequiredBitForTags = 0b00000000000000000000000100000000;
 
         private static readonly JsonSchemaMessageProvider<int> RequiredPropertyTitlePresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("title"u8, buffer, out written);
         private static readonly JsonSchemaMessageProvider<int> RequiredPropertyTitleNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("title"u8, buffer, out written);
 
         private const int RequiredOffsetForTitle = 0;
-        private const uint RequiredBitForTitle = 0b00000000000000000000000100000000;
+        private const uint RequiredBitForTitle = 0b00000000000000000000001000000000;
 
         private static readonly JsonSchemaMessageProvider<int> RequiredPropertyVersionNumberPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("versionNumber"u8, buffer, out written);
         private static readonly JsonSchemaMessageProvider<int> RequiredPropertyVersionNumberNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("versionNumber"u8, buffer, out written);
 
         private const int RequiredOffsetForVersionNumber = 0;
-        private const uint RequiredBitForVersionNumber = 0b00000000000000000000001000000000;
+        private const uint RequiredBitForVersionNumber = 0b00000000000000000000010000000000;
 
         private static readonly JsonSchemaMessageProvider<int> RequiredPropertyWorkflowIdPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("workflowId"u8, buffer, out written);
         private static readonly JsonSchemaMessageProvider<int> RequiredPropertyWorkflowIdNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("workflowId"u8, buffer, out written);
 
         private const int RequiredOffsetForWorkflowId = 0;
-        private const uint RequiredBitForWorkflowId = 0b00000000000000000000010000000000;
+        private const uint RequiredBitForWorkflowId = 0b00000000000000000000100000000000;
 
         private const uint RequiredBitMask0 =
             RequiredBitForBaseWorkflowId | RequiredBitForCreatedAt | RequiredBitForCreatedBy | RequiredBitForHash |
-            RequiredBitForOwner | RequiredBitForSources | RequiredBitForStatus | RequiredBitForTags |
-            RequiredBitForTitle | RequiredBitForVersionNumber | RequiredBitForWorkflowId;
+            RequiredBitForOwner | RequiredBitForRunnable | RequiredBitForSources | RequiredBitForStatus |
+            RequiredBitForTags | RequiredBitForTitle | RequiredBitForVersionNumber | RequiredBitForWorkflowId;
         private static readonly JsonSchemaPathProvider BaseWorkflowIdSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/baseWorkflowId"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider CreatedAtSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/createdAt"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider CreatedBySchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/createdBy"u8, buffer, out written);
@@ -112,6 +118,7 @@ public readonly partial struct CatalogVersionSummary
         private static readonly JsonSchemaPathProvider ObsoletedAtSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/obsoletedAt"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider ObsoletedBySchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/obsoletedBy"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider OwnerSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/owner/$ref"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider RunnableSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/runnable"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider SourcesSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/sources"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider StatusSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/status/$ref"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider TagsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/tags"u8, buffer, out written);
@@ -304,10 +311,32 @@ public readonly partial struct CatalogVersionSummary
             requiredBitBuffer[RequiredOffsetForOwner] |= RequiredBitForOwner;
         }
 
-        private static void MatchSources(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchRunnable(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext10 =
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.JsonSchema.PushChildContextUnescaped(
+                    parentDocument,
+                    parentDocumentIndex,
+                    ref context,
+                    JsonPropertyNames.RunnableUtf8,
+                    evaluationPath: RunnableSchemaEvaluationPath);
+
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext10);
+            context.CommitChildContext(childContext10.IsMatch, ref childContext10);
+
+            if (!context.HasCollector && !context.IsMatch)
+            {
+                return;
+            }
+
+            requiredBitBuffer[RequiredOffsetForRunnable] |= RequiredBitForRunnable;
+        }
+
+        private static void MatchSources(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        {
+            context.AddLocalEvaluatedProperty(propertyCount);
+            JsonSchemaContext childContext11 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogVersionSummary.CatalogSourceRefArray.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -315,8 +344,8 @@ public readonly partial struct CatalogVersionSummary
                     JsonPropertyNames.SourcesUtf8,
                     evaluationPath: SourcesSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogVersionSummary.CatalogSourceRefArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext10);
-            context.CommitChildContext(childContext10.IsMatch, ref childContext10);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogVersionSummary.CatalogSourceRefArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext11);
+            context.CommitChildContext(childContext11.IsMatch, ref childContext11);
 
             if (!context.HasCollector && !context.IsMatch)
             {
@@ -329,7 +358,7 @@ public readonly partial struct CatalogVersionSummary
         private static void MatchStatus(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext11 =
+            JsonSchemaContext childContext12 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogStatus.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -337,8 +366,8 @@ public readonly partial struct CatalogVersionSummary
                     JsonPropertyNames.StatusUtf8,
                     evaluationPath: StatusSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogStatus.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext11);
-            context.CommitChildContext(childContext11.IsMatch, ref childContext11);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogStatus.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext12);
+            context.CommitChildContext(childContext12.IsMatch, ref childContext12);
 
             if (!context.HasCollector && !context.IsMatch)
             {
@@ -351,7 +380,7 @@ public readonly partial struct CatalogVersionSummary
         private static void MatchTags(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext12 =
+            JsonSchemaContext childContext13 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogVersionSummary.JsonStringArray.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -359,8 +388,8 @@ public readonly partial struct CatalogVersionSummary
                     JsonPropertyNames.TagsUtf8,
                     evaluationPath: TagsSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogVersionSummary.JsonStringArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext12);
-            context.CommitChildContext(childContext12.IsMatch, ref childContext12);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogVersionSummary.JsonStringArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext13);
+            context.CommitChildContext(childContext13.IsMatch, ref childContext13);
 
             if (!context.HasCollector && !context.IsMatch)
             {
@@ -373,7 +402,7 @@ public readonly partial struct CatalogVersionSummary
         private static void MatchTitle(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext13 =
+            JsonSchemaContext childContext14 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -381,8 +410,8 @@ public readonly partial struct CatalogVersionSummary
                     JsonPropertyNames.TitleUtf8,
                     evaluationPath: TitleSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext13);
-            context.CommitChildContext(childContext13.IsMatch, ref childContext13);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext14);
+            context.CommitChildContext(childContext14.IsMatch, ref childContext14);
 
             if (!context.HasCollector && !context.IsMatch)
             {
@@ -395,16 +424,16 @@ public readonly partial struct CatalogVersionSummary
         private static void MatchVersionNumber(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext14 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInteger.JsonSchema.PushChildContextUnescaped(
+            JsonSchemaContext childContext15 =
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInt32.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.VersionNumberUtf8,
                     evaluationPath: VersionNumberSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInteger.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext14);
-            context.CommitChildContext(childContext14.IsMatch, ref childContext14);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInt32.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext15);
+            context.CommitChildContext(childContext15.IsMatch, ref childContext15);
 
             if (!context.HasCollector && !context.IsMatch)
             {
@@ -417,7 +446,7 @@ public readonly partial struct CatalogVersionSummary
         private static void MatchWorkflowId(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext15 =
+            JsonSchemaContext childContext16 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -425,8 +454,8 @@ public readonly partial struct CatalogVersionSummary
                     JsonPropertyNames.WorkflowIdUtf8,
                     evaluationPath: WorkflowIdSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext15);
-            context.CommitChildContext(childContext15.IsMatch, ref childContext15);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext16);
+            context.CommitChildContext(childContext16.IsMatch, ref childContext16);
 
             if (!context.HasCollector && !context.IsMatch)
             {
@@ -449,6 +478,7 @@ public readonly partial struct CatalogVersionSummary
                 (static () => JsonPropertyNames.ObsoletedAtUtf8, MatchObsoletedAt),
                 (static () => JsonPropertyNames.ObsoletedByUtf8, MatchObsoletedBy),
                 (static () => JsonPropertyNames.OwnerUtf8, MatchOwner),
+                (static () => JsonPropertyNames.RunnableUtf8, MatchRunnable),
                 (static () => JsonPropertyNames.SourcesUtf8, MatchSources),
                 (static () => JsonPropertyNames.StatusUtf8, MatchStatus),
                 (static () => JsonPropertyNames.TagsUtf8, MatchTags),
@@ -546,12 +576,13 @@ public readonly partial struct CatalogVersionSummary
                         context.EvaluatedKeywordForProperty(true, 2, RequiredPropertyCreatedByPresent, "createdBy"u8, "required"u8);
                         context.EvaluatedKeywordForProperty(true, 3, RequiredPropertyHashPresent, "hash"u8, "required"u8);
                         context.EvaluatedKeywordForProperty(true, 4, RequiredPropertyOwnerPresent, "owner"u8, "required"u8);
-                        context.EvaluatedKeywordForProperty(true, 5, RequiredPropertySourcesPresent, "sources"u8, "required"u8);
-                        context.EvaluatedKeywordForProperty(true, 6, RequiredPropertyStatusPresent, "status"u8, "required"u8);
-                        context.EvaluatedKeywordForProperty(true, 7, RequiredPropertyTagsPresent, "tags"u8, "required"u8);
-                        context.EvaluatedKeywordForProperty(true, 8, RequiredPropertyTitlePresent, "title"u8, "required"u8);
-                        context.EvaluatedKeywordForProperty(true, 9, RequiredPropertyVersionNumberPresent, "versionNumber"u8, "required"u8);
-                        context.EvaluatedKeywordForProperty(true, 10, RequiredPropertyWorkflowIdPresent, "workflowId"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(true, 5, RequiredPropertyRunnablePresent, "runnable"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(true, 6, RequiredPropertySourcesPresent, "sources"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(true, 7, RequiredPropertyStatusPresent, "status"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(true, 8, RequiredPropertyTagsPresent, "tags"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(true, 9, RequiredPropertyTitlePresent, "title"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(true, 10, RequiredPropertyVersionNumberPresent, "versionNumber"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(true, 11, RequiredPropertyWorkflowIdPresent, "workflowId"u8, "required"u8);
                     }
                 }
                 else if (!context.HasCollector)
@@ -606,58 +637,67 @@ public readonly partial struct CatalogVersionSummary
                         context.EvaluatedKeywordForProperty(true, 4, RequiredPropertyOwnerPresent, "owner"u8, "required"u8);
                     }
 
-                    if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForSources] & RequiredBitForSources) == 0)
+                    if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForRunnable] & RequiredBitForRunnable) == 0)
                     {
-                        context.EvaluatedKeywordForProperty(false, 5, RequiredPropertySourcesNotPresent, "sources"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(false, 5, RequiredPropertyRunnableNotPresent, "runnable"u8, "required"u8);
                     }
                     else
                     {
-                        context.EvaluatedKeywordForProperty(true, 5, RequiredPropertySourcesPresent, "sources"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(true, 5, RequiredPropertyRunnablePresent, "runnable"u8, "required"u8);
+                    }
+
+                    if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForSources] & RequiredBitForSources) == 0)
+                    {
+                        context.EvaluatedKeywordForProperty(false, 6, RequiredPropertySourcesNotPresent, "sources"u8, "required"u8);
+                    }
+                    else
+                    {
+                        context.EvaluatedKeywordForProperty(true, 6, RequiredPropertySourcesPresent, "sources"u8, "required"u8);
                     }
 
                     if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForStatus] & RequiredBitForStatus) == 0)
                     {
-                        context.EvaluatedKeywordForProperty(false, 6, RequiredPropertyStatusNotPresent, "status"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(false, 7, RequiredPropertyStatusNotPresent, "status"u8, "required"u8);
                     }
                     else
                     {
-                        context.EvaluatedKeywordForProperty(true, 6, RequiredPropertyStatusPresent, "status"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(true, 7, RequiredPropertyStatusPresent, "status"u8, "required"u8);
                     }
 
                     if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForTags] & RequiredBitForTags) == 0)
                     {
-                        context.EvaluatedKeywordForProperty(false, 7, RequiredPropertyTagsNotPresent, "tags"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(false, 8, RequiredPropertyTagsNotPresent, "tags"u8, "required"u8);
                     }
                     else
                     {
-                        context.EvaluatedKeywordForProperty(true, 7, RequiredPropertyTagsPresent, "tags"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(true, 8, RequiredPropertyTagsPresent, "tags"u8, "required"u8);
                     }
 
                     if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForTitle] & RequiredBitForTitle) == 0)
                     {
-                        context.EvaluatedKeywordForProperty(false, 8, RequiredPropertyTitleNotPresent, "title"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(false, 9, RequiredPropertyTitleNotPresent, "title"u8, "required"u8);
                     }
                     else
                     {
-                        context.EvaluatedKeywordForProperty(true, 8, RequiredPropertyTitlePresent, "title"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(true, 9, RequiredPropertyTitlePresent, "title"u8, "required"u8);
                     }
 
                     if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForVersionNumber] & RequiredBitForVersionNumber) == 0)
                     {
-                        context.EvaluatedKeywordForProperty(false, 9, RequiredPropertyVersionNumberNotPresent, "versionNumber"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(false, 10, RequiredPropertyVersionNumberNotPresent, "versionNumber"u8, "required"u8);
                     }
                     else
                     {
-                        context.EvaluatedKeywordForProperty(true, 9, RequiredPropertyVersionNumberPresent, "versionNumber"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(true, 10, RequiredPropertyVersionNumberPresent, "versionNumber"u8, "required"u8);
                     }
 
                     if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForWorkflowId] & RequiredBitForWorkflowId) == 0)
                     {
-                        context.EvaluatedKeywordForProperty(false, 10, RequiredPropertyWorkflowIdNotPresent, "workflowId"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(false, 11, RequiredPropertyWorkflowIdNotPresent, "workflowId"u8, "required"u8);
                     }
                     else
                     {
-                        context.EvaluatedKeywordForProperty(true, 10, RequiredPropertyWorkflowIdPresent, "workflowId"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(true, 11, RequiredPropertyWorkflowIdPresent, "workflowId"u8, "required"u8);
                     }
                 }
             }
