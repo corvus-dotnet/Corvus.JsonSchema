@@ -19,13 +19,23 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
     private const string ProblemBase = "https://corvus-oss.org/arazzo/control-plane/problems/";
 
     private readonly IWorkflowManagementClient management;
+    private readonly ControlPlaneRowSecurity? rowSecurity;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneHandler"/> class.</summary>
     /// <param name="management">The control-plane client the endpoints delegate to.</param>
     public ArazzoControlPlaneHandler(IWorkflowManagementClient management)
+        : this(management, null)
+    {
+    }
+
+    /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneHandler"/> class.</summary>
+    /// <param name="management">The control-plane client the endpoints delegate to.</param>
+    /// <param name="rowSecurity">The deployment's row-security binding (§14.2), or <see langword="null"/> for an unscoped control plane.</param>
+    internal ArazzoControlPlaneHandler(IWorkflowManagementClient management, ControlPlaneRowSecurity? rowSecurity)
     {
         ArgumentNullException.ThrowIfNull(management);
         this.management = management;
+        this.rowSecurity = rowSecurity;
     }
 
     /// <inheritdoc/>
@@ -43,7 +53,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         IReadOnlyList<string>? tags = ParseTags(parameters.Tag);
 
         WorkflowRunPage page = await this.management.ListAsync(
-            new WorkflowQuery(status, workflowId, limit, pageToken, createdAfter, createdBefore, updatedAfter, updatedBefore, correlationId, tags),
+            new WorkflowQuery(status, workflowId, limit, pageToken, createdAfter, createdBefore, updatedAfter, updatedBefore, correlationId, tags, this.rowSecurity?.Filter()),
             cancellationToken).ConfigureAwait(false);
         return ListRunsResult.Ok(BuildPage(page), workspace);
     }
@@ -74,17 +84,23 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
     {
         string runId = (string)parameters.RunId;
         WorkflowRunDetail? detail = await this.management.GetAsync(runId, cancellationToken).ConfigureAwait(false);
-        return detail is { } d
+
+        // A row the principal may not see is reported as not found, not forbidden, so its existence is not disclosed.
+        return detail is { } d && this.IsVisible(d)
             ? GetRunResult.Ok(BuildDetail(d), workspace)
             : GetRunResult.NotFound(NotFoundProblem(runId), workspace);
     }
+
+    // Whether the run is visible to the current principal under the deployment's row-security policy (§14.2);
+    // always true when no policy is configured.
+    private bool IsVisible(WorkflowRunDetail detail) => this.rowSecurity?.IsVisible(detail.SecurityTags) ?? true;
 
     /// <inheritdoc/>
     public async ValueTask<DeleteRunResult> HandleDeleteRunAsync(DeleteRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string runId = (string)parameters.RunId;
         WorkflowRunDetail? detail = await this.management.GetAsync(runId, cancellationToken).ConfigureAwait(false);
-        if (detail is null)
+        if (detail is not { } d || !this.IsVisible(d))
         {
             return DeleteRunResult.NotFound(NotFoundProblem(runId), workspace);
         }
@@ -98,6 +114,15 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
     public async ValueTask<ResumeRunResult> HandleResumeRunAsync(ResumeRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string runId = (string)parameters.RunId;
+
+        // Gate on visibility before mutating: a row the principal may not see must not be resumable, and is
+        // reported as not found rather than forbidden.
+        WorkflowRunDetail? before = await this.management.GetAsync(runId, cancellationToken).ConfigureAwait(false);
+        if (before is not { } pre || !this.IsVisible(pre))
+        {
+            return ResumeRunResult.NotFound(NotFoundProblem(runId), workspace);
+        }
+
         ResumeOptions options = ToResumeOptions(parameters.Body);
         if (await this.management.ResumeAsync(runId, options, cancellationToken).ConfigureAwait(false))
         {
@@ -117,6 +142,14 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
     public async ValueTask<CancelRunResult> HandleCancelRunAsync(CancelRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string runId = (string)parameters.RunId;
+
+        // Gate on visibility before mutating (see HandleResumeRunAsync): invisible rows are reported as not found.
+        WorkflowRunDetail? before = await this.management.GetAsync(runId, cancellationToken).ConfigureAwait(false);
+        if (before is not { } pre || !this.IsVisible(pre))
+        {
+            return CancelRunResult.NotFound(NotFoundProblem(runId), workspace);
+        }
+
         string reason = (string)parameters.Body.Reason;
         if (await this.management.CancelAsync(runId, reason, cancellationToken).ConfigureAwait(false))
         {
@@ -135,9 +168,12 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
     /// <inheritdoc/>
     public async ValueTask<PurgeRunsResult> HandlePurgeRunsAsync(PurgeRunsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
+        // Purge is row-scoped by the principal's filter (§14.2), independent of the runs:purge capability scope
+        // (§14.1): a tenant admin purges only their tenant's terminal runs, a service operator (null filter)
+        // purges across tenants.
         var olderThan = DateTimeOffset.Parse((string)parameters.OlderThan, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
         int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 1000;
-        int purged = await this.management.PurgeAsync(new WorkflowPurgeQuery(olderThan, limit), cancellationToken).ConfigureAwait(false);
+        int purged = await this.management.PurgeAsync(new WorkflowPurgeQuery(olderThan, limit, this.rowSecurity?.Filter()), cancellationToken).ConfigureAwait(false);
         return PurgeRunsResult.Ok(
             new Models.PurgeResult.Source((ref Models.PurgeResult.Builder b) => b.Create(purgedCount: purged)),
             workspace);
