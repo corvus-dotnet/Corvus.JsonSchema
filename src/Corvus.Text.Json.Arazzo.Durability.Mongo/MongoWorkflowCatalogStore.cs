@@ -20,7 +20,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Mongo;
 /// <see cref="ConnectAsync(string, string, TimeProvider?, CancellationToken)"/> after provisioning with
 /// <see cref="PrepareAsync(string, string, CancellationToken)"/>.
 /// </remarks>
-public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDisposable
+public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string ObsoleteStatus = nameof(CatalogStatus.Obsolete);
 
@@ -213,15 +213,35 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
             filter = b.And(filter, b.Gt("sortKey", after));
         }
 
-        List<BsonDocument> documents = await this.versions.Find(filter)
-            .Sort(Builders<BsonDocument>.Sort.Ascending("sortKey"))
-            .Limit(limit + 1)
-            .ToListAsync(cancellationToken).ConfigureAwait(false);
-
-        var matches = new List<CatalogVersion>(documents.Count);
-        foreach (BsonDocument document in documents)
+        // Row-security reach (§14.2) is applied in process over each version's persisted security tags (see the
+        // class remarks), so the server-side Limit is dropped when a reach filter is present: stream the
+        // sortKey-ordered cursor and take limit+1 *matching* versions, preserving keyset paging.
+        IFindFluent<BsonDocument, BsonDocument> find = this.versions.Find(filter).Sort(Builders<BsonDocument>.Sort.Ascending("sortKey"));
+        if (query.Security is null)
         {
-            matches.Add(ReadVersion(document));
+            find = find.Limit(limit + 1);
+        }
+
+        var matches = new List<CatalogVersion>();
+        using (IAsyncCursor<BsonDocument> cursor = await find.ToCursorAsync(cancellationToken).ConfigureAwait(false))
+        {
+            while (matches.Count <= limit && await cursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
+            {
+                foreach (BsonDocument document in cursor.Current)
+                {
+                    CatalogVersion candidate = ReadVersion(document);
+                    if (query.Security is { } security && !security.IsSatisfiedBy(candidate.SecurityTagsValue))
+                    {
+                        continue;
+                    }
+
+                    matches.Add(candidate);
+                    if (matches.Count > limit)
+                    {
+                        break;
+                    }
+                }
+            }
         }
 
         string? continuation = null;
@@ -373,7 +393,8 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
             lastUpdatedAt: document["lastUpdatedAt"].IsBsonNull ? null : DateTimeOffset.FromUnixTimeMilliseconds(document["lastUpdatedAt"].AsInt64),
             obsoletedBy: document["obsoletedBy"].IsBsonNull ? null : document["obsoletedBy"].AsString,
             obsoletedAt: document["obsoletedAt"].IsBsonNull ? null : DateTimeOffset.FromUnixTimeMilliseconds(document["obsoletedAt"].AsInt64),
-            runnable: document.GetValue("runnable", false).AsBoolean);
+            runnable: document.GetValue("runnable", false).AsBoolean,
+            securityTags: ReadSecurityTags(document));
 
     private static IReadOnlyList<string> ReadTags(BsonDocument document)
     {
@@ -390,6 +411,24 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
         }
 
         return tags;
+    }
+
+    private static IReadOnlyList<SecurityTag>? ReadSecurityTags(BsonDocument document)
+    {
+        if (!document.TryGetValue("securityTags", out BsonValue value) || value.IsBsonNull)
+        {
+            return null;
+        }
+
+        BsonArray array = value.AsBsonArray;
+        var list = new List<SecurityTag>(array.Count);
+        foreach (BsonValue element in array)
+        {
+            BsonDocument tag = element.AsBsonDocument;
+            list.Add(new SecurityTag(tag["k"].AsString, tag["v"].AsString));
+        }
+
+        return list.Count > 0 ? list : null;
     }
 
     private static IReadOnlyList<CatalogSourceRef> ReadSources(BsonDocument document)
@@ -416,6 +455,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         IReadOnlyList<string> tags = metadata.Tags is { Count: > 0 } t ? [.. t] : [];
+        IReadOnlyList<SecurityTag>? securityTags = metadata.SecurityTags is { Count: > 0 } st ? [.. st] : null;
 
         // Assign the next version number atomically: read the current max for the base id, project + insert under a
         // unique _id ({base}:{version}). A concurrent add racing on the same base id collides on the duplicate _id,
@@ -439,7 +479,8 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
                 hash: projection.Hash,
                 createdBy: metadata.CreatedBy,
                 createdAt: now,
-                runnable: projection.HasExecutor);
+                runnable: projection.HasExecutor,
+                securityTags: securityTags);
 
             BsonDocument document = BuildDocument(version, projection.CanonicalPackage.ToArray());
             try
@@ -502,6 +543,9 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
             ["description"] = (BsonValue?)version.DescriptionOrNull ?? BsonNull.Value,
             ["status"] = version.StatusValue.ToString(),
             ["tags"] = new BsonArray(version.TagsValue),
+            ["securityTags"] = version.SecurityTagsValue is { Count: > 0 } securityTags
+                ? new BsonArray(securityTags.Select(s => new BsonDocument { ["k"] = s.Key, ["v"] = s.Value }))
+                : BsonNull.Value,
             ["ownerName"] = owner.Name,
             ["ownerEmail"] = owner.Email,
             ["ownerTeam"] = (BsonValue?)owner.Team ?? BsonNull.Value,
