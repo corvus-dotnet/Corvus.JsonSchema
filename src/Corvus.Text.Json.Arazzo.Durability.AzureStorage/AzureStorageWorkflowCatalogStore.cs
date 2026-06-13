@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 /// table once with <see cref="PrepareAsync(string, CancellationToken)"/>, then open the store with
 /// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/>.
 /// </remarks>
-public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore
+public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, ISupportsRowSecurityFilter
 {
     private const string ObsoleteStatus = nameof(CatalogStatus.Obsolete);
     private const string CatalogContainer = "arazzo-catalog";
@@ -355,7 +355,9 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore
             }
         }
 
-        return true;
+        // Row-security reach (§14.2): Table OData cannot match inside the serialized security tags, so apply the
+        // reach filter in process over the version's persisted tags — the only correct option for this backend.
+        return query.Security is not { } security || security.IsSatisfiedBy(version.SecurityTagsValue);
     }
 
     private static TableEntity BuildEntity(CatalogVersion version)
@@ -370,6 +372,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore
             ["CreatedBy"] = (string)version.CreatedBy,
             ["CreatedAt"] = version.CreatedAtValue.ToUnixTimeMilliseconds(),
             ["Sources"] = EncodeSources(version.SourcesValue),
+            ["SecurityTags"] = EncodeSecurityTags(version.SecurityTagsValue),
         };
 
         if (version.DescriptionOrNull is { } description)
@@ -433,7 +436,8 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore
             lastUpdatedAt: entity.GetInt64("LastUpdatedAt") is { } lua ? DateTimeOffset.FromUnixTimeMilliseconds(lua) : null,
             obsoletedBy: entity.GetString("ObsoletedBy"),
             obsoletedAt: entity.GetInt64("ObsoletedAt") is { } oa ? DateTimeOffset.FromUnixTimeMilliseconds(oa) : null,
-            runnable: entity.GetBoolean("Runnable") ?? false);
+            runnable: entity.GetBoolean("Runnable") ?? false,
+            securityTags: DecodeSecurityTags(entity.GetString("SecurityTags")));
 
     private static string EncodeTags(IReadOnlyList<string> tags)
         => System.Text.Json.JsonSerializer.Serialize(tags);
@@ -442,6 +446,16 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore
         => string.IsNullOrEmpty(encoded)
             ? []
             : System.Text.Json.JsonSerializer.Deserialize<List<string>>(encoded) ?? [];
+
+    // Security tags round-trip as a JSON property so a single-row read carries them for the control-plane's
+    // authorization check (§14.2); the in-process reach filter below reads the same persisted tags.
+    private static string EncodeSecurityTags(IReadOnlyList<SecurityTag> tags)
+        => System.Text.Json.JsonSerializer.Serialize(tags);
+
+    private static IReadOnlyList<SecurityTag>? DecodeSecurityTags(string? encoded)
+        => string.IsNullOrEmpty(encoded)
+            ? null
+            : System.Text.Json.JsonSerializer.Deserialize<List<SecurityTag>>(encoded);
 
     private static string EncodeSources(IReadOnlyList<CatalogSourceRef> sources)
         => System.Text.Json.JsonSerializer.Serialize(sources.Select(s => new SourceDto(s.Name, s.Type)).ToList());
@@ -461,6 +475,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         IReadOnlyList<string> tags = metadata.Tags is { Count: > 0 } t ? [.. t] : [];
+        IReadOnlyList<SecurityTag>? securityTags = metadata.SecurityTags is { Count: > 0 } st ? [.. st] : null;
 
         // Assign the next version number safely: find the partition's current max, project + insert with
         // create-if-not-exists (AddEntityAsync) so a racing add cannot reuse a number, and retry on the 409 a
@@ -483,7 +498,8 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore
                 hash: projection.Hash,
                 createdBy: metadata.CreatedBy,
                 createdAt: now,
-                runnable: projection.HasExecutor);
+                runnable: projection.HasExecutor,
+                securityTags: securityTags);
 
             // Write the package blob first; it is keyed by (base, version) and is overwritten harmlessly on a
             // retry. The Table entity, written with create-if-not-exists, is the authority for the version's

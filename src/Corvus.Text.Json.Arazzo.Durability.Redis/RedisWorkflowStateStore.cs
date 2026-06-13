@@ -16,7 +16,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Redis;
 /// Targets a single Redis instance (or a primary): the index-maintenance Lua touches several keys derived
 /// from the run, which is not Redis-Cluster slot-safe. Create instances with <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> (or <see cref="Connect(StackExchange.Redis.IConnectionMultiplexer, TimeProvider?)"/>).
 /// </remarks>
-public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, IAsyncDisposable
+public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string Prefix = "arazzo:";
     private const string AllKey = Prefix + "runs";
@@ -48,6 +48,7 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         if ARGV[11] ~= '' then redis.call('HSET', KEYS[1], 'error_type', ARGV[11]) else redis.call('HDEL', KEYS[1], 'error_type') end
         if ARGV[12] ~= '' then redis.call('HSET', KEYS[1], 'correlation_id', ARGV[12]) else redis.call('HDEL', KEYS[1], 'correlation_id') end
         if ARGV[13] ~= '' then redis.call('HSET', KEYS[1], 'tags_json', ARGV[13]) else redis.call('HDEL', KEYS[1], 'tags_json') end
+        if ARGV[14] ~= '' then redis.call('HSET', KEYS[1], 'security_tags_json', ARGV[14]) else redis.call('HDEL', KEYS[1], 'security_tags_json') end
         redis.call('SADD', KEYS[2], ARGV[1])
         if ARGV[4] == 'Suspended' and ARGV[8] ~= '' then redis.call('ZADD', KEYS[3], ARGV[8], ARGV[1]) else redis.call('ZREM', KEYS[3], ARGV[1]) end
         if oldChannel then redis.call('SREM', 'arazzo:awaiting:' .. oldChannel, ARGV[1]) end
@@ -161,6 +162,7 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             index.ErrorType ?? string.Empty,
             index.CorrelationId ?? string.Empty,
             index.Tags is { Count: > 0 } t ? System.Text.Json.JsonSerializer.Serialize(t) : string.Empty,
+            index.SecurityTags is { Count: > 0 } st ? System.Text.Json.JsonSerializer.Serialize(st) : string.Empty,
         ];
 
         RedisResult result = await this.database.ScriptEvaluateAsync(SaveScript, [RunKey(id.Value), AllKey, DueKey], argv).ConfigureAwait(false);
@@ -374,6 +376,15 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
                 continue;
             }
 
+            IReadOnlyList<SecurityTag>? securityTags = fields.TryGetValue("security_tags_json", out RedisValue secV) && !secV.IsNull && ((string)secV!).Length > 0 ? System.Text.Json.JsonSerializer.Deserialize<List<SecurityTag>>((string)secV!) : null;
+
+            // Row-security reach (§14.2): Redis has no server-side filtering over the run set, so apply the reach
+            // filter in process over the persisted security tags — the only correct option for a key/value backend.
+            if (query.Security is { } security && !security.IsSatisfiedBy(securityTags ?? []))
+            {
+                continue;
+            }
+
             var entry = new WorkflowRunIndexEntry(
                 workflowId,
                 status,
@@ -384,7 +395,8 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
                 fields.TryGetValue("awaiting_correlation_id", out RedisValue corr) ? (string)corr! : null,
                 fields.TryGetValue("error_type", out RedisValue err) ? (string)err! : null,
                 CorrelationId: correlationId,
-                Tags: tags);
+                Tags: tags,
+                SecurityTags: securityTags);
             runs.Add(new WorkflowRunListing(new WorkflowRunId(id), entry));
             if (runs.Count > query.Limit)
             {
