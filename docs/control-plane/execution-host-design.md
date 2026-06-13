@@ -415,8 +415,11 @@ descriptions** to real endpoints + credentials:
    (the `$claims.superset`/`$claims.intersects` grammar predicates, the persistent `ISecurityPolicyStore` of
    named rules + per-verb claim→rule bindings, the `PersistentRowSecurityPolicy` resolver, idempotent bootstrap
    seeding, the `/security/*` control-plane endpoints under `security:read`/`security:write` scopes, and the CLI
-   `security rule`/`binding` commands) are done; remaining: the `ISecurityPolicyStore` per-backend fan-out (the
-   reference InMemory store ships; the production backends follow the established reference-then-fan-out pattern).
+   `security rule`/`binding` commands) are done, and the `ISecurityPolicyStore` per-backend fan-out is complete —
+   all eight production backends (Postgres, SqlServer, MySql, Redis, MongoDB, NATS JetStream, Azure Table Storage,
+   Cosmos DB) implement it alongside the InMemory reference and SQLite, each persisting records as their
+   Corvus.Text.Json schema documents with in-document-etag optimistic concurrency and a monotonic generation, and
+   each passing the shared `SecurityPolicyStoreConformance` suite container-verified.
 
 The paused demo work (`samples/.../docs/live-execution.md`) becomes the *manual* prototype of Phase 1–3 (it
 hand-builds the binder + compiles in-process); this design productionises it behind the catalog.
