@@ -49,4 +49,24 @@ public sealed class SecurityFilter
 
         return true;
     }
+
+    /// <summary>
+    /// Translates the filter into a SQL <c>WHERE</c> boolean fragment (design §14.4) selecting exactly the rows
+    /// <see cref="IsSatisfiedBy"/> would admit — the conjunction of each rule's predicate — using the backend's
+    /// dialect/schema fragments. An empty filter (no rules) admits everything (<see cref="ISecurityRuleSqlEmitter.TrueLiteral"/>).
+    /// </summary>
+    /// <param name="emitter">The backend's SQL fragment provider (stateful per query; accumulates bound parameters).</param>
+    /// <returns>A boolean SQL fragment.</returns>
+    public string ToSqlPredicate(ISecurityRuleSqlEmitter emitter)
+    {
+        ArgumentNullException.ThrowIfNull(emitter);
+        string? predicate = null;
+        foreach (SecurityRule rule in this.rules)
+        {
+            string clause = rule.ToSqlPredicate(emitter, this.claims);
+            predicate = predicate is null ? clause : emitter.AndAlso(predicate, clause);
+        }
+
+        return predicate ?? emitter.TrueLiteral;
+    }
 }

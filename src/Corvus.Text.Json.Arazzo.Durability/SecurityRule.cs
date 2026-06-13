@@ -74,6 +74,22 @@ public sealed class SecurityRule
         return this.root.Evaluate(securityTags, claims);
     }
 
+    /// <summary>
+    /// Translates the rule into a SQL <c>WHERE</c> boolean fragment (design §14.4) that selects exactly the rows
+    /// <see cref="IsSatisfiedBy"/> would admit, using the backend's dialect/schema fragments. The principal's
+    /// claims are resolved to bound values here (they are query-time constants); tag-key operands become
+    /// correlated <c>EXISTS</c> subqueries over the row's security tags.
+    /// </summary>
+    /// <param name="emitter">The backend's SQL fragment provider (stateful per query; accumulates bound parameters).</param>
+    /// <param name="claims">The principal's claims: claim name → its values.</param>
+    /// <returns>A boolean SQL fragment.</returns>
+    public string ToSqlPredicate(ISecurityRuleSqlEmitter emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
+    {
+        ArgumentNullException.ThrowIfNull(emitter);
+        ArgumentNullException.ThrowIfNull(claims);
+        return this.root.ToSql(emitter, claims);
+    }
+
     private static bool Intersects(IReadOnlyList<string> a, IReadOnlyList<string> b)
     {
         foreach (string x in a)
@@ -93,24 +109,35 @@ public sealed class SecurityRule
     private abstract class Node
     {
         public abstract bool Evaluate(IReadOnlyList<SecurityTag> tags, IReadOnlyDictionary<string, IReadOnlyList<string>> claims);
+
+        public abstract string ToSql(ISecurityRuleSqlEmitter emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims);
     }
 
     private sealed class OrNode(Node left, Node right) : Node
     {
         public override bool Evaluate(IReadOnlyList<SecurityTag> tags, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
             => left.Evaluate(tags, claims) || right.Evaluate(tags, claims);
+
+        public override string ToSql(ISecurityRuleSqlEmitter emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
+            => emitter.OrElse(left.ToSql(emitter, claims), right.ToSql(emitter, claims));
     }
 
     private sealed class AndNode(Node left, Node right) : Node
     {
         public override bool Evaluate(IReadOnlyList<SecurityTag> tags, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
             => left.Evaluate(tags, claims) && right.Evaluate(tags, claims);
+
+        public override string ToSql(ISecurityRuleSqlEmitter emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
+            => emitter.AndAlso(left.ToSql(emitter, claims), right.ToSql(emitter, claims));
     }
 
     private sealed class NotNode(Node inner) : Node
     {
         public override bool Evaluate(IReadOnlyList<SecurityTag> tags, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
             => !inner.Evaluate(tags, claims);
+
+        public override string ToSql(ISecurityRuleSqlEmitter emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
+            => emitter.Negate(inner.ToSql(emitter, claims));
     }
 
     private sealed class ComparisonNode(Operand left, Op op, Operand right) : Node
@@ -120,16 +147,73 @@ public sealed class SecurityRule
             bool intersects = Intersects(left.Resolve(tags, claims), right.Resolve(tags, claims));
             return op == Op.Equal ? intersects : !intersects;
         }
+
+        public override string ToSql(ISecurityRuleSqlEmitter emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
+        {
+            string intersects;
+            if (left.IsTagKey && right.IsTagKey)
+            {
+                // Both operands are row data: two tag keys share a value.
+                intersects = emitter.ExistsTagKeysShareValue(emitter.Parameter(left.Value), emitter.Parameter(right.Value));
+            }
+            else if (left.IsTagKey || right.IsTagKey)
+            {
+                // One operand is row data (a tag key); the other resolves to query-time-known values.
+                Operand tagKey = left.IsTagKey ? left : right;
+                IReadOnlyList<string> values = (left.IsTagKey ? right : left).ResolveKnown(claims);
+                if (values.Count == 0)
+                {
+                    // No candidate values → the sets cannot intersect.
+                    intersects = emitter.FalseLiteral;
+                }
+                else
+                {
+                    var valuePlaceholders = new List<string>(values.Count);
+                    string keyPlaceholder = emitter.Parameter(tagKey.Value);
+                    foreach (string value in values)
+                    {
+                        valuePlaceholders.Add(emitter.Parameter(value));
+                    }
+
+                    intersects = emitter.ExistsTagValueIn(keyPlaceholder, valuePlaceholders);
+                }
+            }
+            else
+            {
+                // Both operands are query-time constants (claims/literals): a constant intersection.
+                intersects = Intersects(left.ResolveKnown(claims), right.ResolveKnown(claims)) ? emitter.TrueLiteral : emitter.FalseLiteral;
+            }
+
+            return op == Op.Equal ? intersects : emitter.Negate(intersects);
+        }
     }
 
     private sealed class TruthyNode(Operand operand) : Node
     {
         public override bool Evaluate(IReadOnlyList<SecurityTag> tags, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
             => operand.Resolve(tags, claims).Count > 0;
+
+        public override string ToSql(ISecurityRuleSqlEmitter emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
+            => operand.IsTagKey
+                ? emitter.ExistsTagKey(emitter.Parameter(operand.Value))
+                : (operand.ResolveKnown(claims).Count > 0 ? emitter.TrueLiteral : emitter.FalseLiteral);
     }
 
     private readonly struct Operand(OperandKind kind, string value)
     {
+        public bool IsTagKey => kind == OperandKind.TagKey;
+
+        public string Value => value;
+
+        // The query-time-known values of a claim or literal operand. Not valid for a tag-key operand (row data).
+        public IReadOnlyList<string> ResolveKnown(IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
+            => kind switch
+            {
+                OperandKind.Literal => [value],
+                OperandKind.Claim => claims.TryGetValue(value, out IReadOnlyList<string>? values) ? values : [],
+                _ => throw new InvalidOperationException("ResolveKnown is not valid for a tag-key operand."),
+            };
+
         public IReadOnlyList<string> Resolve(IReadOnlyList<SecurityTag> tags, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
         {
             switch (kind)
