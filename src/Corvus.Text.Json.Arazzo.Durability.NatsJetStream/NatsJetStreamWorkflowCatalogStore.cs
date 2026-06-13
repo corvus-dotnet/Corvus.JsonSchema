@@ -27,7 +27,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.NatsJetStream;
 /// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> after provisioning with
 /// <see cref="PrepareAsync(string, CancellationToken)"/>.
 /// </remarks>
-public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDisposable
+public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string CatalogBucket = "arazzo_catalog";
 
@@ -344,6 +344,13 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
             return false;
         }
 
+        // Row-security reach (§14.2): the KV store has no server-side filtering, so apply the reach filter in
+        // process over the version's persisted security tags — the only correct option for a key/value backend.
+        if (query.Security is { } security && !security.IsSatisfiedBy(version.SecurityTagsValue))
+        {
+            return false;
+        }
+
         return true;
     }
 
@@ -351,6 +358,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         IReadOnlyList<string> tags = metadata.Tags is { Count: > 0 } t ? [.. t] : [];
+        IReadOnlyList<SecurityTag>? securityTags = metadata.SecurityTags is { Count: > 0 } st ? [.. st] : null;
 
         // Assign the next version number safely: compute the current max for the base id by scanning the bucket,
         // then optimistically Create the new key. A concurrent add that grabbed the same number makes Create
@@ -374,7 +382,8 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
                 hash: projection.Hash,
                 createdBy: metadata.CreatedBy,
                 createdAt: now,
-                runnable: projection.HasExecutor);
+                runnable: projection.HasExecutor,
+                securityTags: securityTags);
 
             byte[] value = Envelope.Encode(version, projection.CanonicalPackage.Span);
             try

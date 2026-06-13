@@ -282,6 +282,29 @@ public abstract class WorkflowCatalogStoreConformance
     }
 
     [TestMethod]
+    public async Task Get_round_trips_the_versions_security_tags()
+    {
+        // Single-row read authorization (§14.2) checks the returned version's security tags, so every store —
+        // not just those that push the reach filter down — must round-trip the tags it persisted at add time.
+        // Without this the control-plane client would deny a restricted principal access to its own version.
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+        SecurityTag[] tags = [new("tenant", "acme"), new("tenant", "beta"), new("team", "payments")];
+        CatalogVersion added = await store.AddAsync(
+            "secure-flow",
+            Package("secure-flow"),
+            new CatalogMetadata(new CatalogOwner("Team A", "team-a@example.com"), "alice", null, tags),
+            default);
+
+        added.SecurityTagsValue.OrderBy(t => t.Key).ThenBy(t => t.Value).ShouldBe(
+            tags.OrderBy(t => t.Key).ThenBy(t => t.Value));
+
+        CatalogVersion? fetched = await store.GetAsync("secure-flow", added.Ref.VersionNumber, default);
+        fetched.ShouldNotBeNull();
+        fetched.Value.SecurityTagsValue.OrderBy(t => t.Key).ThenBy(t => t.Value).ShouldBe(
+            tags.OrderBy(t => t.Key).ThenBy(t => t.Value));
+    }
+
+    [TestMethod]
     public async Task Search_applies_a_row_security_reach_filter_matching_the_evaluator()
     {
         IWorkflowCatalogStore store = await this.NewStoreAsync();

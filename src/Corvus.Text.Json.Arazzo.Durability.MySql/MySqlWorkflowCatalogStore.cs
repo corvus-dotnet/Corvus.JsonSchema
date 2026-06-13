@@ -22,7 +22,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.MySql;
 public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string ColumnList =
-        "BaseWorkflowId, VersionNumber, WorkflowId, Title, Description, Status, Tags, OwnerName, OwnerEmail, OwnerTeam, OwnerUrl, Sources, Hash, CreatedBy, CreatedAt, LastUpdatedBy, LastUpdatedAt, ObsoletedBy, ObsoletedAt, Runnable";
+        "BaseWorkflowId, VersionNumber, WorkflowId, Title, Description, Status, Tags, OwnerName, OwnerEmail, OwnerTeam, OwnerUrl, Sources, Hash, CreatedBy, CreatedAt, LastUpdatedBy, LastUpdatedAt, ObsoletedBy, ObsoletedAt, Runnable, SecurityTags";
+
+    // Field separators for the denormalized SecurityTags column (control chars, never present in tag text).
+    private const char SecurityTagPairSeparator = (char)0x1F;
+    private const char SecurityTagKeyValueSeparator = (char)0x1E;
 
     private readonly MySqlDataSource dataSource;
     private readonly bool ownsDataSource;
@@ -371,6 +375,7 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
 
         CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
         IReadOnlyList<string> tags = metadata.Tags is { Count: > 0 } t ? [.. t] : [];
+        IReadOnlyList<SecurityTag>? securityTags = metadata.SecurityTags is { Count: > 0 } st ? [.. st] : null;
 
         // Bind the columns directly from the projected/governance source values (no round-trip through the
         // CatalogVersion document); the document is built once, for the return value.
@@ -378,7 +383,7 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         insert.CommandText =
             $"""
             INSERT INTO CatalogVersions ({ColumnList}, Package)
-            VALUES (@baseWorkflowId, @versionNumber, @workflowId, @title, @description, @status, @tags, @ownerName, @ownerEmail, @ownerTeam, @ownerUrl, @sources, @hash, @createdBy, @createdAt, @lastUpdatedBy, @lastUpdatedAt, @obsoletedBy, @obsoletedAt, @runnable, @package);
+            VALUES (@baseWorkflowId, @versionNumber, @workflowId, @title, @description, @status, @tags, @ownerName, @ownerEmail, @ownerTeam, @ownerUrl, @sources, @hash, @createdBy, @createdAt, @lastUpdatedBy, @lastUpdatedAt, @obsoletedBy, @obsoletedAt, @runnable, @securityTags, @package);
             """;
         insert.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
         insert.Parameters.AddWithValue("@versionNumber", versionNumber);
@@ -400,11 +405,12 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         insert.Parameters.AddWithValue("@obsoletedBy", DBNull.Value);
         insert.Parameters.AddWithValue("@obsoletedAt", DBNull.Value);
         insert.Parameters.AddWithValue("@runnable", projection.HasExecutor ? 1 : 0);
+        insert.Parameters.AddWithValue("@securityTags", (object?)EncodeSecurityTags(securityTags) ?? DBNull.Value);
         insert.Parameters.AddWithValue("@package", projection.CanonicalPackage.ToArray());
         await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
 
         // Persist the version's security tags for indexed reach-filtering (§14.4); versions are immutable.
-        if (metadata.SecurityTags is { Count: > 0 } securityTags)
+        if (securityTags is { Count: > 0 })
         {
             foreach (SecurityTag tag in securityTags)
             {
@@ -431,7 +437,8 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             hash: projection.Hash,
             createdBy: metadata.CreatedBy,
             createdAt: now,
-            runnable: projection.HasExecutor);
+            runnable: projection.HasExecutor,
+            securityTags: securityTags);
     }
 
     private async ValueTask<byte[]?> LoadPackageAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
@@ -477,7 +484,8 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             lastUpdatedAt: reader.IsDBNull(16) ? null : DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(16)),
             obsoletedBy: reader.IsDBNull(17) ? null : reader.GetString(17),
             obsoletedAt: reader.IsDBNull(18) ? null : DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(18)),
-            runnable: reader.GetBoolean(19));
+            runnable: reader.GetBoolean(19),
+            securityTags: DecodeSecurityTags(reader.IsDBNull(20) ? null : reader.GetString(20)));
 
     private static string SortKey(string baseWorkflowId, int versionNumber)
         => string.Create(CultureInfo.InvariantCulture, $"{baseWorkflowId}{versionNumber:D10}");
@@ -494,6 +502,47 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
 
         string[] parts = encoded.Trim('\u001F').Split('\u001F', StringSplitOptions.RemoveEmptyEntries);
         return parts.Length == 0 ? null : parts;
+    }
+
+    // Security tags are denormalized into the parent row (key/value pairs, pair-joined by 0x1F, key/value
+    // split by 0x1E) so a single-row read round-trips them for the control-plane's authorization check
+    // (§14.2); the child CatalogVersionSecurityTags table mirrors them for the indexed reach filter.
+    private static string? EncodeSecurityTags(IReadOnlyList<SecurityTag>? tags)
+    {
+        if (tags is not { Count: > 0 })
+        {
+            return null;
+        }
+
+        var builder = new System.Text.StringBuilder();
+        builder.Append(SecurityTagPairSeparator);
+        foreach (SecurityTag tag in tags)
+        {
+            builder.Append(tag.Key).Append(SecurityTagKeyValueSeparator).Append(tag.Value).Append(SecurityTagPairSeparator);
+        }
+
+        return builder.ToString();
+    }
+
+    private static IReadOnlyList<SecurityTag>? DecodeSecurityTags(string? encoded)
+    {
+        if (string.IsNullOrEmpty(encoded))
+        {
+            return null;
+        }
+
+        string[] parts = encoded.Trim(SecurityTagPairSeparator).Split(SecurityTagPairSeparator, StringSplitOptions.RemoveEmptyEntries);
+        var list = new List<SecurityTag>(parts.Length);
+        foreach (string part in parts)
+        {
+            int split = part.IndexOf(SecurityTagKeyValueSeparator);
+            if (split >= 0)
+            {
+                list.Add(new SecurityTag(part[..split], part[(split + 1)..]));
+            }
+        }
+
+        return list.Count > 0 ? list : null;
     }
 
     private static string? EncodeSources(IReadOnlyList<CatalogSourceRef> sources)
@@ -571,6 +620,7 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             ObsoletedBy VARCHAR(255) NULL,
             ObsoletedAt BIGINT NULL,
             Runnable TINYINT(1) NOT NULL DEFAULT 0,
+            SecurityTags TEXT NULL,
             Package LONGBLOB NOT NULL,
             PRIMARY KEY (BaseWorkflowId, VersionNumber),
             INDEX ix_catalog_versions_status (Status),
