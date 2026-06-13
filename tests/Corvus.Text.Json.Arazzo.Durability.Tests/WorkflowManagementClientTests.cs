@@ -23,7 +23,7 @@ public sealed class WorkflowManagementClientTests
         await FaultRunAsync(store, "r1");
         var client = new WorkflowManagementClient(store, owner: "ops");
 
-        WorkflowRunDetail? detail = await client.GetAsync("r1", default);
+        WorkflowRunDetail? detail = await client.GetAsync("r1", AccessContext.System, default);
 
         detail.ShouldNotBeNull();
         detail.Value.Status.ShouldBe(WorkflowRunStatus.Faulted);
@@ -35,7 +35,7 @@ public sealed class WorkflowManagementClientTests
     public async Task Get_returns_null_for_an_unknown_run()
     {
         var client = new WorkflowManagementClient(new InMemoryWorkflowStateStore(), owner: "ops");
-        (await client.GetAsync("nope", default)).ShouldBeNull();
+        (await client.GetAsync("nope", AccessContext.System, default)).ShouldBeNull();
     }
 
     [TestMethod]
@@ -46,7 +46,7 @@ public sealed class WorkflowManagementClientTests
         await CompleteRunAsync(store, "done-1");
         var client = new WorkflowManagementClient(store, owner: "ops");
 
-        WorkflowRunPage page = await client.ListAsync(new WorkflowQuery(WorkflowRunStatus.Faulted), default);
+        WorkflowRunPage page = await client.ListAsync(new WorkflowQuery(WorkflowRunStatus.Faulted), AccessContext.System, default);
 
         page.Runs.Select(r => r.Id.Value).ShouldBe(["faulted-1"]);
     }
@@ -69,11 +69,11 @@ public sealed class WorkflowManagementClientTests
 
         var client = new WorkflowManagementClient(store, owner: "ops", resumer: Resumer);
 
-        bool resumed = await client.ResumeAsync("r1", ResumeOptions.RetryFaultedStep, default);
+        bool resumed = await client.ResumeAsync("r1", ResumeOptions.RetryFaultedStep, AccessContext.System, default);
 
         resumed.ShouldBeTrue();
         seenStatus.ShouldBe(WorkflowRunStatus.Faulted);
-        (await client.GetAsync("r1", default))!.Value.Status.ShouldBe(WorkflowRunStatus.Completed);
+        (await client.GetAsync("r1", AccessContext.System, default))!.Value.Status.ShouldBe(WorkflowRunStatus.Completed);
 
         static async ValueTask<WorkflowRunResultKind> CompleteAndReport(WorkflowRun run, CancellationToken ct)
         {
@@ -95,7 +95,7 @@ public sealed class WorkflowManagementClientTests
             return new ValueTask<WorkflowRunResultKind>(WorkflowRunResultKind.Completed);
         });
 
-        (await client.ResumeAsync("done-1", ResumeOptions.RetryFaultedStep, default)).ShouldBeFalse();
+        (await client.ResumeAsync("done-1", ResumeOptions.RetryFaultedStep, AccessContext.System, default)).ShouldBeFalse();
         invoked.ShouldBeFalse();
     }
 
@@ -106,7 +106,7 @@ public sealed class WorkflowManagementClientTests
         await FaultRunAsync(store, "r1");
         var client = new WorkflowManagementClient(store, owner: "ops");
 
-        await Should.ThrowAsync<InvalidOperationException>(async () => await client.ResumeAsync("r1", ResumeOptions.RetryFaultedStep, default));
+        await Should.ThrowAsync<InvalidOperationException>(async () => await client.ResumeAsync("r1", ResumeOptions.RetryFaultedStep, AccessContext.System, default));
     }
 
     [TestMethod]
@@ -116,9 +116,9 @@ public sealed class WorkflowManagementClientTests
         await FaultRunAsync(store, "r1");
         var client = new WorkflowManagementClient(store, owner: "ops");
 
-        (await client.CancelAsync("r1", "operator abandoned", default)).ShouldBeTrue();
+        (await client.CancelAsync("r1", "operator abandoned", AccessContext.System, default)).ShouldBeTrue();
 
-        WorkflowRunDetail detail = (await client.GetAsync("r1", default))!.Value;
+        WorkflowRunDetail detail = (await client.GetAsync("r1", AccessContext.System, default))!.Value;
         detail.Status.ShouldBe(WorkflowRunStatus.Cancelled);
         detail.Fault!.Value.Error.ShouldBe("boom");
     }
@@ -130,8 +130,8 @@ public sealed class WorkflowManagementClientTests
         await CompleteRunAsync(store, "done-1");
         var client = new WorkflowManagementClient(store, owner: "ops");
 
-        (await client.CancelAsync("done-1", "too late", default)).ShouldBeFalse();
-        (await client.GetAsync("done-1", default))!.Value.Status.ShouldBe(WorkflowRunStatus.Completed);
+        (await client.CancelAsync("done-1", "too late", AccessContext.System, default)).ShouldBeFalse();
+        (await client.GetAsync("done-1", AccessContext.System, default))!.Value.Status.ShouldBe(WorkflowRunStatus.Completed);
     }
 
     [TestMethod]
@@ -142,8 +142,8 @@ public sealed class WorkflowManagementClientTests
         await store.AcquireLeaseAsync("r1", "worker-7", TimeSpan.FromMinutes(5), default);
         var client = new WorkflowManagementClient(store, owner: "ops");
 
-        (await client.CancelAsync("r1", "race", default)).ShouldBeFalse();
-        (await client.GetAsync("r1", default))!.Value.Status.ShouldBe(WorkflowRunStatus.Faulted);
+        (await client.CancelAsync("r1", "race", AccessContext.System, default)).ShouldBeFalse();
+        (await client.GetAsync("r1", AccessContext.System, default))!.Value.Status.ShouldBe(WorkflowRunStatus.Faulted);
     }
 
     [TestMethod]
@@ -161,13 +161,13 @@ public sealed class WorkflowManagementClientTests
 
         var client = new WorkflowManagementClient(store, owner: "ops", timeProvider: clock);
 
-        int purged = await client.PurgeAsync(new WorkflowPurgeQuery(T0 + TimeSpan.FromMinutes(30)), default);
+        int purged = await client.PurgeAsync(new WorkflowPurgeQuery(T0 + TimeSpan.FromMinutes(30)), AccessContext.System, default);
 
         purged.ShouldBe(2);
-        (await client.GetAsync("old-done", default)).ShouldBeNull();
-        (await client.GetAsync("old-cancelled", default)).ShouldBeNull();
-        (await client.GetAsync("old-faulted", default)).ShouldNotBeNull();
-        (await client.GetAsync("recent-done", default)).ShouldNotBeNull();
+        (await client.GetAsync("old-done", AccessContext.System, default)).ShouldBeNull();
+        (await client.GetAsync("old-cancelled", AccessContext.System, default)).ShouldBeNull();
+        (await client.GetAsync("old-faulted", AccessContext.System, default)).ShouldNotBeNull();
+        (await client.GetAsync("recent-done", AccessContext.System, default)).ShouldNotBeNull();
     }
 
     [TestMethod]
@@ -183,10 +183,10 @@ public sealed class WorkflowManagementClientTests
             return CompleteAndReport(run, ct);
         });
 
-        (await client.ResumeAsync("r1", ResumeOptions.Rewind(targetCursor: 1), default)).ShouldBeTrue();
+        (await client.ResumeAsync("r1", ResumeOptions.Rewind(targetCursor: 1), AccessContext.System, default)).ShouldBeTrue();
 
         seenCursor.ShouldBe(1);
-        (await client.GetAsync("r1", default))!.Value.Status.ShouldBe(WorkflowRunStatus.Completed);
+        (await client.GetAsync("r1", AccessContext.System, default))!.Value.Status.ShouldBe(WorkflowRunStatus.Completed);
     }
 
     [TestMethod]
@@ -197,7 +197,7 @@ public sealed class WorkflowManagementClientTests
         var client = new WorkflowManagementClient(store, owner: "ops", resumer: CompleteAndReport);
 
         await Should.ThrowAsync<ArgumentException>(async () =>
-            await client.ResumeAsync("r1", new ResumeOptions(ResumeMode.Rewind), default));
+            await client.ResumeAsync("r1", new ResumeOptions(ResumeMode.Rewind), AccessContext.System, default));
     }
 
     [TestMethod]
@@ -217,7 +217,7 @@ public sealed class WorkflowManagementClientTests
             return CompleteAndReport(run, ct);
         });
 
-        (await client.ResumeAsync("r1", ResumeOptions.Skip(doc.RootElement.GetProperty("skipOutputs"u8)), default)).ShouldBeTrue();
+        (await client.ResumeAsync("r1", ResumeOptions.Skip(doc.RootElement.GetProperty("skipOutputs"u8)), AccessContext.System, default)).ShouldBeTrue();
 
         seenCursor.ShouldBe(3);
         sawSkippedOutputs.ShouldBeTrue();
@@ -240,7 +240,7 @@ public sealed class WorkflowManagementClientTests
             return CompleteAndReport(run, ct);
         });
 
-        (await client.ResumeAsync("r1", ResumeOptions.StatePatch(doc.RootElement.GetProperty("patch"u8)), default)).ShouldBeTrue();
+        (await client.ResumeAsync("r1", ResumeOptions.StatePatch(doc.RootElement.GetProperty("patch"u8)), AccessContext.System, default)).ShouldBeTrue();
 
         seenCursor.ShouldBe(1); // retry the faulted step
         seenX.ShouldBe(2);      // with the patched input
@@ -261,9 +261,9 @@ public sealed class WorkflowManagementClientTests
             return new ValueTask<WorkflowRunResultKind>(WorkflowRunResultKind.Completed);
         });
 
-        (await client.ResumeAsync("r1", ResumeOptions.StatePatch(patch.RootElement), default)).ShouldBeFalse();
+        (await client.ResumeAsync("r1", ResumeOptions.StatePatch(patch.RootElement), AccessContext.System, default)).ShouldBeFalse();
         invoked.ShouldBeFalse();
-        (await client.GetAsync("r1", default))!.Value.Status.ShouldBe(WorkflowRunStatus.Faulted);
+        (await client.GetAsync("r1", AccessContext.System, default))!.Value.Status.ShouldBe(WorkflowRunStatus.Faulted);
     }
 
     [TestMethod]
@@ -273,8 +273,8 @@ public sealed class WorkflowManagementClientTests
         await CompleteRunAsync(store, "r1");
         var client = new WorkflowManagementClient(store, owner: "ops");
 
-        (await client.DeleteAsync("r1", default)).ShouldBeTrue();
-        (await client.GetAsync("r1", default)).ShouldBeNull();
+        (await client.DeleteAsync("r1", AccessContext.System, default)).ShouldBeTrue();
+        (await client.GetAsync("r1", AccessContext.System, default)).ShouldBeNull();
     }
 
     [TestMethod]
@@ -282,7 +282,7 @@ public sealed class WorkflowManagementClientTests
     {
         var client = new WorkflowManagementClient(new InMemoryWorkflowStateStore(), owner: "ops");
 
-        (await client.DeleteAsync("nope", default)).ShouldBeFalse();
+        (await client.DeleteAsync("nope", AccessContext.System, default)).ShouldBeFalse();
     }
 
     [TestMethod]
@@ -293,8 +293,8 @@ public sealed class WorkflowManagementClientTests
         await store.AcquireLeaseAsync("r1", "worker-7", TimeSpan.FromMinutes(5), default);
         var client = new WorkflowManagementClient(store, owner: "ops");
 
-        (await client.DeleteAsync("r1", default)).ShouldBeFalse();
-        (await client.GetAsync("r1", default)).ShouldNotBeNull();
+        (await client.DeleteAsync("r1", AccessContext.System, default)).ShouldBeFalse();
+        (await client.GetAsync("r1", AccessContext.System, default)).ShouldNotBeNull();
     }
 
     [TestMethod]
@@ -305,7 +305,7 @@ public sealed class WorkflowManagementClientTests
         await FaultRunAsync(store, "r1");
         var client = new WorkflowManagementClient(store, owner: "ops", resumer: CompleteAndReport);
 
-        (await client.ResumeAsync("r1", ResumeOptions.RetryFaultedStep, default)).ShouldBeTrue();
+        (await client.ResumeAsync("r1", ResumeOptions.RetryFaultedStep, AccessContext.System, default)).ShouldBeTrue();
 
         telemetry.Sum("corvus.arazzo.workflows.resumed").ShouldBe(1);
         Activity span = telemetry.ActivitiesNamed("workflow.resume").ShouldHaveSingleItem();
@@ -323,8 +323,8 @@ public sealed class WorkflowManagementClientTests
         await CompleteRunAsync(store, "r2");
         var client = new WorkflowManagementClient(store, owner: "ops");
 
-        (await client.CancelAsync("r1", "abandoned", default)).ShouldBeTrue();
-        (await client.DeleteAsync("r2", default)).ShouldBeTrue();
+        (await client.CancelAsync("r1", "abandoned", AccessContext.System, default)).ShouldBeTrue();
+        (await client.DeleteAsync("r2", AccessContext.System, default)).ShouldBeTrue();
 
         telemetry.Sum("corvus.arazzo.workflows.cancelled").ShouldBe(1);
         telemetry.Sum("corvus.arazzo.workflows.deleted").ShouldBe(1);
@@ -366,7 +366,7 @@ public sealed class WorkflowManagementClientTests
     {
         await FaultRunAsync(store, id, clock);
         var client = new WorkflowManagementClient(store, owner: "ops", timeProvider: clock);
-        await client.CancelAsync(id, "test", default);
+        await client.CancelAsync(id, "test", AccessContext.System, default);
     }
 
     private sealed class MutableClock(DateTimeOffset now) : TimeProvider

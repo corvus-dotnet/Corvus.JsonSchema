@@ -49,10 +49,10 @@ public sealed class MessageWorkflowTriggerTests
         startedIds[0].ShouldBe(startedIds[1]);
 
         // Exactly two Pending runs exist in the store.
-        WorkflowRunPage pending = await management.ListAsync(new WorkflowQuery(WorkflowRunStatus.Pending), default);
+        WorkflowRunPage pending = await management.ListAsync(new WorkflowQuery(WorkflowRunStatus.Pending), AccessContext.System, default);
         pending.Runs.Count.ShouldBe(2);
 
-        WorkflowRunDetail? a1 = await management.GetAsync(startedIds[0], default);
+        WorkflowRunDetail? a1 = await management.GetAsync(startedIds[0], AccessContext.System, default);
         a1.ShouldNotBeNull();
         a1.Value.Status.ShouldBe(WorkflowRunStatus.Pending);
     }
