@@ -87,7 +87,9 @@ public sealed class SecurityShell
     /// </summary>
     /// <param name="userRules">The principal's resolved user rule(s) (empty restricts to just the wrapper).</param>
     /// <param name="claims">The principal's claims (name → values).</param>
-    /// <returns>The composed filter the store applies (and single-row checks use).</returns>
+    /// <returns>The composed filter the store applies (and single-row checks use). Deny-by-default: if both the
+    /// wrapper and the user rules are empty the filter admits nothing — an unrestricted principal must be granted
+    /// <see cref="AccessContext.System"/> (a <see langword="null"/> reach), not an empty filter.</returns>
     public SecurityFilter BuildFilter(IReadOnlyList<SecurityRule> userRules, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
     {
         ArgumentNullException.ThrowIfNull(userRules);

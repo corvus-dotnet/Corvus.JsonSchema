@@ -77,6 +77,41 @@ public sealed class SecurityFilterTests
     }
 
     [TestMethod]
+    public void An_empty_rule_set_denies_by_default()
+    {
+        // "No restriction" is a null filter (AccessContext.System), never an empty rule set; an under-specified
+        // filter must deny rather than admit everything (fail-closed).
+        var filter = new SecurityFilter([], Claims(("tenant", "acme")));
+        filter.IsSatisfiedBy([new SecurityTag("tenant", "acme")]).ShouldBeFalse();
+        filter.IsSatisfiedBy([]).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public void An_untagged_row_is_denied_even_by_a_rule_that_would_otherwise_admit_it()
+    {
+        // A negation rule is satisfied by the absence of the value — but an unclassified (untagged) row must not
+        // be visible to a scoped principal regardless. Only a null (full-reach) filter sees untagged rows.
+        var filter = new SecurityFilter([SecurityRule.Compile("tenant != 'globex'")], Claims());
+        filter.IsSatisfiedBy([new SecurityTag("tenant", "acme")]).ShouldBeTrue();
+        filter.IsSatisfiedBy([]).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task An_untagged_run_is_invisible_to_a_scoped_principal()
+    {
+        var store = new InMemoryWorkflowStateStore();
+        var management = new WorkflowManagementClient(store, owner: "ops");
+        await SeedAsync(store, "run-acme", new SecurityTag("tenant", "acme"));
+        await SeedAsync(store, "run-untagged");
+
+        // A permissive-looking rule still must not surface the unclassified run.
+        var filter = new SecurityFilter([SecurityRule.Compile("tenant != 'globex'")], Claims());
+        WorkflowRunPage page = await management.ListAsync(new WorkflowQuery(Status: null), AccessContext.Uniform(filter), default);
+
+        page.Runs.Select(r => r.Id.Value).ShouldBe(["run-acme"]);
+    }
+
+    [TestMethod]
     public async Task A_conjunction_of_rules_models_the_deployment_wrapper_and_the_user_rule()
     {
         var store = new InMemoryWorkflowStateStore();
