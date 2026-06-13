@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SecurityBindingDocument",
+  "description": "The persisted form of a claim→rule binding (design §14.2): per-verb grants plus audit and optimistic-concurrency metadata. Backends store this document verbatim.",
+  "type": "object",
+  "required": ["id", "claimType", "read", "write", "purge", "order", "createdBy", "createdAt", "etag"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "The binding's stable identifier."
+    },
+    "claimType": {
+      "type": "string",
+      "description": "The principal claim type this binding keys on ('*' matches any authenticated principal)."
+    },
+    "claimValue": {
+      "type": "string",
+      "description": "The required claim value; absent matches any value of claimType."
+    },
+    "read": { "$ref": "#/$defs/VerbGrantInfo" },
+    "write": { "$ref": "#/$defs/VerbGrantInfo" },
+    "purge": { "$ref": "#/$defs/VerbGrantInfo" },
+    "order": {
+      "type": "integer",
+      "format": "int32",
+      "description": "Resolution order (ascending)."
+    },
+    "description": {
+      "type": "string",
+      "description": "An optional human description."
+    },
+    "createdBy": {
+      "type": "string",
+      "description": "The actor that created the binding."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the binding was created."
+    },
+    "lastUpdatedBy": {
+      "type": "string",
+      "description": "The actor that last updated the binding, if any."
+    },
+    "lastUpdatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the binding was last updated, if ever."
+    },
+    "etag": {
+      "type": "string",
+      "description": "The optimistic-concurrency token."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "VerbGrantInfo": {
+      "title": "VerbGrantInfo",
+      "type": "object",
+      "description": "A per-verb grant: either unrestricted (full reach) or the conjunction of the named rules.",
+      "properties": {
+        "unrestricted": {
+          "type": "boolean",
+          "description": "When true, the verb is unrestricted (full reach); ruleNames is ignored."
+        },
+        "ruleNames": {
+          "type": "array",
+          "description": "The rule names ANDed for the verb.",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
