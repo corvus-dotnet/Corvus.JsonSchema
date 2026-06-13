@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SecurityRuleDocument",
+  "description": "The persisted form of a named row-authorization rule (design §14.2): the rule expression plus audit and optimistic-concurrency metadata. Backends store this document verbatim.",
+  "type": "object",
+  "required": ["name", "expression", "createdBy", "createdAt", "etag"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "The rule's unique name."
+    },
+    "expression": {
+      "type": "string",
+      "description": "The rule text in the security-rule grammar."
+    },
+    "description": {
+      "type": "string",
+      "description": "An optional human description."
+    },
+    "createdBy": {
+      "type": "string",
+      "description": "The actor that created the rule."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the rule was created."
+    },
+    "lastUpdatedBy": {
+      "type": "string",
+      "description": "The actor that last updated the rule, if any."
+    },
+    "lastUpdatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the rule was last updated, if ever."
+    },
+    "etag": {
+      "type": "string",
+      "description": "The optimistic-concurrency token."
+    }
+  },
+  "additionalProperties": false
+}
