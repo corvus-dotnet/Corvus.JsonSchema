@@ -34,20 +34,13 @@ public sealed class ApiRunnersClient : IApiRunnersClient
     /// List runners
     /// </summary>
     /// <remarks>
-    /// Returns a keyset page of the workflow runners currently registered with the control plane (ordered by runnerId): each runner's identity, liveness timestamps, capacity, supported transports, and the catalog versions it hosts. Runners self-register and heartbeat directly against the durability layer; this endpoint reads that registry for observability. Bounded by limit and resumable via the page token.
+    /// Returns the workflow runners currently registered with the control plane: each runner's identity, liveness timestamps, capacity, supported transports, and the catalog versions it hosts. Runners self-register and heartbeat directly against the durability layer; this endpoint reads that registry for observability.
     /// </remarks>
-    /// <param name="limit">The limit parameter.</param>
-    /// <param name="pageToken">The pageToken parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<ListRunnersResponse> ListRunnersAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<ListRunnersResponse> ListRunnersAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        ListRunnersRequest request = new()
-        {
-            Limit = limit.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.CreateBuilder(workspace, limit, 30).RootElement,
-            PageToken = pageToken.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, pageToken, 30).RootElement,
-        }
-        ;
+        ListRunnersRequest request = new();
 
         request.Validate(validationMode);
 

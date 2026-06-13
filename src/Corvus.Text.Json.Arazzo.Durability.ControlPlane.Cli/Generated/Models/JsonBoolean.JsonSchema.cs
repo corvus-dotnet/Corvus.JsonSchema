@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Whether the identity is the principal&#39;s full stamped identity (true), or a best-effort single-tag mapping of a free-typed value that may not match if the deployment stamps finer (false).
+/// Whether the runner has the version loaded and ready to execute.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]

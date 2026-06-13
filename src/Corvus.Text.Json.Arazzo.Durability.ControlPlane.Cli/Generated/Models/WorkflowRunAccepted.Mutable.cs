@@ -380,7 +380,7 @@ public readonly partial struct WorkflowRunAccepted
         /// Set the <c>runId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRunId(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
+        public void SetRunId(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -411,7 +411,7 @@ public readonly partial struct WorkflowRunAccepted
         /// Set the <c>status</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStatus(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
+        public void SetStatus(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -442,7 +442,7 @@ public readonly partial struct WorkflowRunAccepted
         /// Set the <c>workflowId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetWorkflowId(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
+        public void SetWorkflowId(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -574,7 +574,7 @@ public readonly partial struct WorkflowRunAccepted
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
+        public void SetProperty(string propertyName, in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -597,7 +597,7 @@ public readonly partial struct WorkflowRunAccepted
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -644,7 +644,7 @@ public readonly partial struct WorkflowRunAccepted
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -816,7 +816,7 @@ public readonly partial struct WorkflowRunAccepted
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunAccepted.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg3)
+        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg3)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1213,7 +1213,7 @@ public readonly partial struct WorkflowRunAccepted
         /// <param name="arg2">The value of the property.</param>
         /// <param name="arg3">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg3, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg3, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3);
@@ -1257,7 +1257,7 @@ public readonly partial struct WorkflowRunAccepted
     /// <param name="status">The value of the <c>"status"</c> property.</param>
     /// <param name="workflowId">The value of the <c>"workflowId"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source status, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source workflowId)
+    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source workflowId)
     {
         return new Source(runId, status, workflowId);
     }
@@ -1271,29 +1271,6 @@ public readonly partial struct WorkflowRunAccepted
     /// <returns>An instance of a mutable document initialized with the given value.</returns>
     public static JsonDocumentBuilder<Mutable> CreateBuilder(
         JsonWorkspace workspace, scoped in Source value, int initialCapacity = 30)
-    {
-        // Create the document builder without a MetadataDb
-        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
-        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
-        value.AddAsItem(ref cvb);
-        Debug.Assert(cvb.MemberCount == 1);
-        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-        return documentBuilder;
-    }
-
-    /// <summary>
-    /// Creates and initializes a mutable document from a context-threaded value.
-    /// </summary>
-    /// <typeparam name="TContext">The type of the context carried by the value.</typeparam>
-    /// <param name="workspace">The JSON workspace.</param>
-    /// <param name="value">The context-threaded value with which to initialize the builder.</param>
-    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
-    /// <returns>An instance of a mutable document initialized with the given value.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-        JsonWorkspace workspace, scoped in Source<TContext> value, int initialCapacity = 30)
-        #if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-        #endif
     {
         // Create the document builder without a MetadataDb
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);

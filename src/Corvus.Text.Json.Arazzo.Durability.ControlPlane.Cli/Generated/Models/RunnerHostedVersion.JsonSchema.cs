@@ -63,7 +63,7 @@ public readonly partial struct RunnerHostedVersion
         private static readonly JsonSchemaPathProvider LoadedSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/loaded"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider VersionNumberSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/versionNumber"u8, buffer, out written);
 
-        private static void MatchBaseWorkflowId(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        private static void MatchBaseWorkflowId(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
@@ -85,7 +85,7 @@ public readonly partial struct RunnerHostedVersion
             requiredBitBuffer[RequiredOffsetForBaseWorkflowId] |= RequiredBitForBaseWorkflowId;
         }
 
-        private static void MatchHash(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        private static void MatchHash(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
@@ -107,7 +107,7 @@ public readonly partial struct RunnerHostedVersion
             requiredBitBuffer[RequiredOffsetForHash] |= RequiredBitForHash;
         }
 
-        private static void MatchLoaded(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        private static void MatchLoaded(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext2 =
@@ -129,7 +129,7 @@ public readonly partial struct RunnerHostedVersion
             requiredBitBuffer[RequiredOffsetForLoaded] |= RequiredBitForLoaded;
         }
 
-        private static void MatchVersionNumber(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        private static void MatchVersionNumber(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext3 =
@@ -228,7 +228,7 @@ public readonly partial struct RunnerHostedVersion
 
                     if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator? validator))
                     {
-                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
+                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
 
                         if (!context.HasCollector && !context.IsMatch)
                         {

@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A keyset page of the workflow runners currently registered with the control plane, ordered by runnerId.
+/// The workflow runners currently registered with the control plane.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -40,28 +40,12 @@ public readonly partial struct RunnerPage
 
         private const uint RequiredBitMask0 =
             RequiredBitForRunners;
-        private static readonly JsonSchemaPathProvider NextPageTokenSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/nextPageToken"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider RunnersSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/runners"u8, buffer, out written);
 
-        private static void MatchNextPageToken(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        private static void MatchRunners(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.PushChildContextUnescaped(
-                    parentDocument,
-                    parentDocumentIndex,
-                    ref context,
-                    JsonPropertyNames.NextPageTokenUtf8,
-                    evaluationPath: NextPageTokenSchemaEvaluationPath);
-
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
-            context.CommitChildContext(childContext.IsMatch, ref childContext);
-        }
-
-        private static void MatchRunners(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
-        {
-            context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext1 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerPage.RunnerArray.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -69,8 +53,8 @@ public readonly partial struct RunnerPage
                     JsonPropertyNames.RunnersUtf8,
                     evaluationPath: RunnersSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerPage.RunnerArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
-            context.CommitChildContext(childContext1.IsMatch, ref childContext1);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerPage.RunnerArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            context.CommitChildContext(childContext.IsMatch, ref childContext);
 
             if (!context.HasCollector && !context.IsMatch)
             {
@@ -80,23 +64,20 @@ public readonly partial struct RunnerPage
             requiredBitBuffer[RequiredOffsetForRunners] |= RequiredBitForRunners;
         }
 
-        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
-        {
-            return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator>([
-                (static () => JsonPropertyNames.NextPageTokenUtf8, MatchNextPageToken),
-                (static () => JsonPropertyNames.RunnersUtf8, MatchRunners),
-            ]);
-        }
-
-        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
-
         private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
 #if NET
         [NotNullWhen(true)]
 #endif
         out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator? matcher)
         {
-            return Matchers.TryGetNamedMatcher(span, out matcher);
+            if (span.SequenceEqual(JsonPropertyNames.RunnersUtf8))
+            {
+                matcher = MatchRunners;
+                return true;
+            }
+
+            matcher = default;
+            return false;
         }
 
         /// <summary>
@@ -155,7 +136,7 @@ public readonly partial struct RunnerPage
 
                     if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator? validator))
                     {
-                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
+                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
 
                         if (!context.HasCollector && !context.IsMatch)
                         {

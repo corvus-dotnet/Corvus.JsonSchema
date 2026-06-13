@@ -38,19 +38,21 @@ public sealed class ApiCatalogClient : IApiCatalogClient
     /// </remarks>
     /// <param name="q">The q parameter.</param>
     /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="workflowIdPrefix">The workflowIdPrefix parameter.</param>
     /// <param name="tag">The tag parameter.</param>
     /// <param name="status">The status parameter.</param>
     /// <param name="owner">The owner parameter.</param>
     /// <param name="limit">The limit parameter.</param>
     /// <param name="pageToken">The pageToken parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<SearchCatalogResponse> SearchCatalogAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source q = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.TagList.Source tag = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source owner = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<SearchCatalogResponse> SearchCatalogAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source q = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source workflowIdPrefix = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.TagList.Source tag = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source owner = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         SearchCatalogRequest request = new()
         {
             Q = q.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, q, 30).RootElement,
             BaseWorkflowId = baseWorkflowId.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, baseWorkflowId, 30).RootElement,
+            WorkflowIdPrefix = workflowIdPrefix.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, workflowIdPrefix, 30).RootElement,
             Tag = tag.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.TagList)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.TagList.CreateBuilder(workspace, tag, 30).RootElement,
             Status = status.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogStatus)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogStatus.CreateBuilder(workspace, status, 30).RootElement,
             Owner = owner.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, owner, 30).RootElement,
@@ -268,6 +270,141 @@ public sealed class ApiCatalogClient : IApiCatalogClient
         request.Validate(validationMode);
 
         return SendAsyncCore<GetCatalogWorkflowRequest, GetCatalogWorkflowResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Get a version's precomputed schema metadata
+    /// </summary>
+    /// <remarks>
+    /// Returns the precomputed schema-metadata document baked into the package — the typed shape of each workflow's inputs and each step's resolved outputs (and, progressively, requests and responses) — so UIs can render strongly-typed forms (a typed patch/output builder, a workflow editor) without re-parsing the OpenAPI/AsyncAPI sources. 404 if the version carries no baked metadata.
+    /// </remarks>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="versionNumber">The versionNumber parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<GetCatalogWorkflowSchemasResponse> GetCatalogWorkflowSchemasAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString BaseWorkflowIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, baseWorkflowId, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber VersionNumberValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.CreateBuilder(workspace, versionNumber, 30).RootElement;
+        GetCatalogWorkflowSchemasRequest request = new(BaseWorkflowIdValue, VersionNumberValue);
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<GetCatalogWorkflowSchemasRequest, GetCatalogWorkflowSchemasResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Download a version's compiled workflow executor assembly
+    /// </summary>
+    /// <remarks>
+    /// Streams the compiled workflow executor assembly (a .NET DLL) baked into the package as a single binary download — the artifact an execution host dynamically loads to run the workflow. 404 if the version is not runnable (carries no baked executor).
+    /// </remarks>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="versionNumber">The versionNumber parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<GetCatalogExecutorResponse> GetCatalogExecutorAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString BaseWorkflowIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, baseWorkflowId, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber VersionNumberValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.CreateBuilder(workspace, versionNumber, 30).RootElement;
+        GetCatalogExecutorRequest request = new(BaseWorkflowIdValue, VersionNumberValue);
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<GetCatalogExecutorRequest, GetCatalogExecutorResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Get a version's executor manifest
+    /// </summary>
+    /// <remarks>
+    /// Returns the executor manifest baked alongside the compiled assembly — the target framework, the assembly digest binding the DLL to this version, the entry type, and the declared sources — so a runner can verify and load the executor. 404 if the version is not runnable (carries no baked executor).
+    /// </remarks>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="versionNumber">The versionNumber parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<GetCatalogExecutorManifestResponse> GetCatalogExecutorManifestAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString BaseWorkflowIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, baseWorkflowId, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber VersionNumberValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.CreateBuilder(workspace, versionNumber, 30).RootElement;
+        GetCatalogExecutorManifestRequest request = new(BaseWorkflowIdValue, VersionNumberValue);
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<GetCatalogExecutorManifestRequest, GetCatalogExecutorManifestResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Validate a value against a schema in a version
+    /// </summary>
+    /// <remarks>
+    /// Validates a JSON value against the true JSON Schema of a target within this version's package — a workflow's `inputs`, a step's request or response body, or a step's `outputs` object — using a full JSON Schema validator (not the lossy precomputed metadata). Returns a structured result (valid plus any errors with their instance locations); a malformed value still yields `200` with `valid: false`. Returns `404` when the version or the requested target schema cannot be resolved.
+    /// </remarks>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="versionNumber">The versionNumber parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<ValidateCatalogValueResponse> ValidateCatalogValueAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ValidationRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ValidationRequest bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ValidationRequest.CreateBuilder(workspace, body, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString BaseWorkflowIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, baseWorkflowId, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber VersionNumberValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.CreateBuilder(workspace, versionNumber, 30).RootElement;
+        ValidateCatalogValueRequest request = new(BaseWorkflowIdValue, VersionNumberValue);
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<ValidateCatalogValueRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ValidationRequest, ValidateCatalogValueResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Start a run of a workflow version
+    /// </summary>
+    /// <remarks>
+    /// Triggers a new run of this runnable version: validates the supplied inputs against the version's baked inputs schema, then creates a Pending run that a hosting runner claims and executes asynchronously and durably. Returns 202 with the run id; observe the run via the runs endpoints. 404 if the version does not exist; 409 if it is not runnable (carries no executor); 422 if the inputs fail validation.
+    /// </remarks>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="versionNumber">The versionNumber parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<StartCatalogWorkflowRunResponse> StartCatalogWorkflowRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonObject.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonObject bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonObject.CreateBuilder(workspace, body, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString BaseWorkflowIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, baseWorkflowId, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber VersionNumberValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.CreateBuilder(workspace, versionNumber, 30).RootElement;
+        StartCatalogWorkflowRunRequest request = new(BaseWorkflowIdValue, VersionNumberValue);
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<StartCatalogWorkflowRunRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonObject, StartCatalogWorkflowRunResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
     }
 
     /// <summary>

@@ -386,7 +386,7 @@ public readonly partial struct ValidationResult
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ValidationError.Source value)
+            public void InsertItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ValidationError.Source value)
             {
                 CheckValidInstance();
 
@@ -412,7 +412,7 @@ public readonly partial struct ValidationResult
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ValidationError.Source value)
+            public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ValidationError.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }
@@ -1062,29 +1062,6 @@ public readonly partial struct ValidationResult
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
             JsonWorkspace workspace, scoped in Source value, int initialCapacity = 30)
-        {
-            // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
-            value.AddAsItem(ref cvb);
-            Debug.Assert(cvb.MemberCount == 1);
-            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-            return documentBuilder;
-        }
-
-        /// <summary>
-        /// Creates and initializes a mutable document from a context-threaded value.
-        /// </summary>
-        /// <typeparam name="TContext">The type of the context carried by the value.</typeparam>
-        /// <param name="workspace">The JSON workspace.</param>
-        /// <param name="value">The context-threaded value with which to initialize the builder.</param>
-        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
-        /// <returns>An instance of a mutable document initialized with the given value.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-            JsonWorkspace workspace, scoped in Source<TContext> value, int initialCapacity = 30)
-            #if NET9_0_OR_GREATER
-            where TContext : allows ref struct
-            #endif
         {
             // Create the document builder without a MetadataDb
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
