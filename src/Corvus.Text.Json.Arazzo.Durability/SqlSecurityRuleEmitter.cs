@@ -7,42 +7,32 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// <summary>
 /// A reusable <see cref="ISecurityRuleSqlEmitter"/> for relational backends (design §14.4): the
 /// <c>EXISTS</c>/<c>IN</c>/<c>AND</c>/<c>OR</c>/<c>NOT</c> fragments are standard SQL shared across SQLite,
-/// Postgres, MySQL and SQL Server, correlated to the outer query's row via a child security-tag table whose owner
-/// columns mirror the parent's key (so it works for a single-column key like <c>RunId</c> and a composite key
-/// like <c>(BaseWorkflowId, VersionNumber)</c>). Only the parameter-placeholder spelling differs per dialect,
-/// which the caller supplies through the <c>parameter</c> delegate (it binds the value and returns the
+/// Postgres, MySQL and SQL Server, correlated to the outer query's row via a child security-tag table
+/// (<c>(ownerColumn, TagKey, TagValue)</c>). Only the parameter-placeholder spelling differs per dialect, which
+/// the caller supplies through the <c>parameter</c> delegate (it binds the value to the command and returns the
 /// placeholder, e.g. <c>@s0</c> or <c>$1</c>).
 /// </summary>
 public sealed class SqlSecurityRuleEmitter : ISecurityRuleSqlEmitter
 {
     private readonly string tagTable;
-    private readonly IReadOnlyList<string> ownerColumns;
-    private readonly string keyColumn;
-    private readonly string valueColumn;
-    private readonly string outerReference;
+    private readonly string ownerColumn;
+    private readonly string outerOwnerReference;
     private readonly Func<string, string> parameter;
 
     /// <summary>Initializes a new instance of the <see cref="SqlSecurityRuleEmitter"/> class.</summary>
-    /// <param name="tagTable">The child table holding one row per security tag: the owner columns plus the key/value columns.</param>
-    /// <param name="ownerColumns">The columns (in both the tag table and the outer row) that identify the owning row — e.g. <c>["RunId"]</c> or <c>["BaseWorkflowId", "VersionNumber"]</c>.</param>
-    /// <param name="keyColumn">The tag-key column name in <paramref name="tagTable"/> (e.g. <c>TagKey</c> or <c>tag_key</c>).</param>
-    /// <param name="valueColumn">The tag-value column name in <paramref name="tagTable"/> (e.g. <c>TagValue</c> or <c>tag_value</c>).</param>
-    /// <param name="outerReference">The outer query's table name or alias to qualify the owner columns against (e.g. <c>WorkflowRuns</c>).</param>
+    /// <param name="tagTable">The child table holding one row per security tag: <c>(ownerColumn, TagKey, TagValue)</c>.</param>
+    /// <param name="ownerColumn">The column in <paramref name="tagTable"/> that references the owning row's id.</param>
+    /// <param name="outerOwnerReference">The qualified id column of the outer query's row to correlate against (e.g. <c>WorkflowRuns.RunId</c>).</param>
     /// <param name="parameter">Binds a value to the command and returns its dialect placeholder.</param>
-    public SqlSecurityRuleEmitter(string tagTable, IReadOnlyList<string> ownerColumns, string keyColumn, string valueColumn, string outerReference, Func<string, string> parameter)
+    public SqlSecurityRuleEmitter(string tagTable, string ownerColumn, string outerOwnerReference, Func<string, string> parameter)
     {
         ArgumentException.ThrowIfNullOrEmpty(tagTable);
-        ArgumentNullException.ThrowIfNull(ownerColumns);
-        ArgumentOutOfRangeException.ThrowIfZero(ownerColumns.Count);
-        ArgumentException.ThrowIfNullOrEmpty(keyColumn);
-        ArgumentException.ThrowIfNullOrEmpty(valueColumn);
-        ArgumentException.ThrowIfNullOrEmpty(outerReference);
+        ArgumentException.ThrowIfNullOrEmpty(ownerColumn);
+        ArgumentException.ThrowIfNullOrEmpty(outerOwnerReference);
         ArgumentNullException.ThrowIfNull(parameter);
         this.tagTable = tagTable;
-        this.ownerColumns = ownerColumns;
-        this.keyColumn = keyColumn;
-        this.valueColumn = valueColumn;
-        this.outerReference = outerReference;
+        this.ownerColumn = ownerColumn;
+        this.outerOwnerReference = outerOwnerReference;
         this.parameter = parameter;
     }
 
@@ -56,44 +46,17 @@ public sealed class SqlSecurityRuleEmitter : ISecurityRuleSqlEmitter
     public string Parameter(string value) => this.parameter(value);
 
     /// <inheritdoc/>
-    public string ExistsAnyTag()
-        => $"EXISTS (SELECT 1 FROM {this.tagTable} st WHERE {this.CorrelateOuter("st")})";
-
-    /// <inheritdoc/>
     public string ExistsTagKey(string keyPlaceholder)
-        => $"EXISTS (SELECT 1 FROM {this.tagTable} st WHERE {this.CorrelateOuter("st")} AND st.{this.keyColumn} = {keyPlaceholder})";
+        => $"EXISTS (SELECT 1 FROM {this.tagTable} st WHERE st.{this.ownerColumn} = {this.outerOwnerReference} AND st.TagKey = {keyPlaceholder})";
 
     /// <inheritdoc/>
     public string ExistsTagValueIn(string keyPlaceholder, IReadOnlyList<string> valuePlaceholders)
-        => $"EXISTS (SELECT 1 FROM {this.tagTable} st WHERE {this.CorrelateOuter("st")} AND st.{this.keyColumn} = {keyPlaceholder} AND st.{this.valueColumn} IN ({string.Join(", ", valuePlaceholders)}))";
-
-    /// <inheritdoc/>
-    public string ExistsTagAllValuesIn(string keyPlaceholder, IReadOnlyList<string> valuePlaceholders)
-        => $"(EXISTS (SELECT 1 FROM {this.tagTable} st WHERE {this.CorrelateOuter("st")} AND st.{this.keyColumn} = {keyPlaceholder}) " +
-           $"AND NOT EXISTS (SELECT 1 FROM {this.tagTable} st WHERE {this.CorrelateOuter("st")} AND st.{this.keyColumn} = {keyPlaceholder} AND st.{this.valueColumn} NOT IN ({string.Join(", ", valuePlaceholders)})))";
-
-    /// <inheritdoc/>
-    public string ExistsAllTagsCovered(IReadOnlyList<(string KeyPlaceholder, IReadOnlyList<string> ValuePlaceholders)> claimEntries)
-    {
-        // No claims → no tag can be covered, so "no uncovered tag" reduces to "the row has no tag at all".
-        // Emitting this (rather than a true literal) keeps the rule-level SQL equal to the in-memory evaluator
-        // on a tagged row; the filter's ExistsAnyTag guard denies the untagged row on both paths.
-        if (claimEntries.Count == 0)
-        {
-            return $"NOT EXISTS (SELECT 1 FROM {this.tagTable} st WHERE {this.CorrelateOuter("st")})";
-        }
-
-        string covered = string.Join(
-            " OR ",
-            claimEntries.Select(e => $"(st.{this.keyColumn} = {e.KeyPlaceholder} AND st.{this.valueColumn} IN ({string.Join(", ", e.ValuePlaceholders)}))"));
-
-        return $"NOT EXISTS (SELECT 1 FROM {this.tagTable} st WHERE {this.CorrelateOuter("st")} AND NOT ({covered}))";
-    }
+        => $"EXISTS (SELECT 1 FROM {this.tagTable} st WHERE st.{this.ownerColumn} = {this.outerOwnerReference} AND st.TagKey = {keyPlaceholder} AND st.TagValue IN ({string.Join(", ", valuePlaceholders)}))";
 
     /// <inheritdoc/>
     public string ExistsTagKeysShareValue(string keyPlaceholder1, string keyPlaceholder2)
-        => $"EXISTS (SELECT 1 FROM {this.tagTable} st1 JOIN {this.tagTable} st2 ON {Correlate("st1", "st2")} AND st1.{this.valueColumn} = st2.{this.valueColumn} " +
-           $"WHERE {this.CorrelateOuter("st1")} AND st1.{this.keyColumn} = {keyPlaceholder1} AND st2.{this.keyColumn} = {keyPlaceholder2})";
+        => $"EXISTS (SELECT 1 FROM {this.tagTable} st1 JOIN {this.tagTable} st2 ON st1.{this.ownerColumn} = st2.{this.ownerColumn} AND st1.TagValue = st2.TagValue " +
+           $"WHERE st1.{this.ownerColumn} = {this.outerOwnerReference} AND st1.TagKey = {keyPlaceholder1} AND st2.TagKey = {keyPlaceholder2})";
 
     /// <inheritdoc/>
     public string Negate(string predicate) => $"NOT ({predicate})";
@@ -103,13 +66,4 @@ public sealed class SqlSecurityRuleEmitter : ISecurityRuleSqlEmitter
 
     /// <inheritdoc/>
     public string OrElse(string left, string right) => $"({left} OR {right})";
-
-    private static string Correlate(string aliasA, string aliasB, IReadOnlyList<string> columns)
-        => string.Join(" AND ", columns.Select(c => $"{aliasA}.{c} = {aliasB}.{c}"));
-
-    // Correlates a tag-table alias to the outer query's row across all owner columns.
-    private string CorrelateOuter(string alias) => Correlate(alias, this.outerReference, this.ownerColumns);
-
-    // Correlates two tag-table aliases (the self-join for tag-key == tag-key) across all owner columns.
-    private string Correlate(string aliasA, string aliasB) => Correlate(aliasA, aliasB, this.ownerColumns);
 }
