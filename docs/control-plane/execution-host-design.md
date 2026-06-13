@@ -394,7 +394,17 @@ descriptions** to real endpoints + credentials:
    worker/management client so **resume** works on real loaded assemblies.
 3. **HTTP trigger + dispatcher** — the start path (`CreateNew` + dispatch), the `…/runs` POST, inputs validated
    via `/validate`. End-to-end: trigger → durable run → resume.
-4. **Message + schedule triggers**, transport binding config, signing, isolation hardening.
+4. **Message + schedule triggers**, transport binding config (incl. multi-source per-source binding),
+   signing, isolation hardening.
+5. **Control-plane operation authorization (§14.1)** — capability scopes as ASP.NET Core policies on the
+   endpoints; the auth scheme + claim→policy mapping is per-deployment, with a concrete strategy implemented
+   in the sample.
+6. **Source credentials (§13)** — `ISourceCredentialStore` (encrypted/referenced, per backend); the transport
+   binding resolves auth providers from it per run; per-version `credentialStatus` + expiry telemetry +
+   trigger gating; typed `credentials-expired` fault refreshable from the catalog and resumable.
+7. **Tag-based row security (§14.2)** — principal→tag-grants from claims (per-deployment, sample-implemented);
+   allowed-tags filter pushed into the run/catalog store as an indexed query on the already-indexed tags,
+   applied uniformly to workflows and runs; write/trigger requires a held workflow tag; runs inherit tags.
 
 The paused demo work (`samples/.../docs/live-execution.md`) becomes the *manual* prototype of Phase 1–3 (it
 hand-builds the binder + compiles in-process); this design productionises it behind the catalog.
@@ -460,7 +470,9 @@ the request.
 - Each `SourceCredential` carries `expiresAt` when knowable (cert `NotAfter`, API-key/refresh-token lifetime).
 - A catalog version derives a **`credentialStatus`** — `Valid` | `ExpiringSoon(at)` | `Expired` — as the worst
   status across the sources it binds (min `expiresAt`). It surfaces on the version's control-plane GET
-  endpoints and the UI.
+  endpoints and the UI. The catalog list endpoint accepts a `credentialStatus` filter (indexed), so the
+  **catalog UI can filter to active workflows with expiring/expired credentials** — the operator's primary
+  rotation worklist.
 - A control-plane **credential monitor** (a periodic sweep, like the runner-registry prune §5.4) evaluates
   credentials and:
   - **emits telemetry** so operators build their own alerting/rotation rules (we expose the signal, not a
