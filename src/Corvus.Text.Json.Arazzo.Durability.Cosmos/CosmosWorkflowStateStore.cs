@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
 /// <see cref="CosmosClient"/> let callers configure the client (for example a least-privileged data-plane
 /// managed identity) themselves.
 /// </remarks>
-public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, IAsyncDisposable
+public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
     private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
@@ -392,6 +392,22 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             }
         }
 
+        // Row-security reach (§14.2): translate the filter to a native EXISTS over the embedded securityTags
+        // array. Every value is bound as a query parameter (no concatenation); reached only for a store that
+        // declares ISupportsRowSecurityFilter.
+        var securityParameters = new List<(string Name, string Value)>();
+        if (query.Security is { } security)
+        {
+            int securityParam = 0;
+            var emitter = new CosmosSecurityRuleEmitter("c.securityTags", "k", "v", value =>
+            {
+                string name = "@sec" + securityParam++.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                securityParameters.Add((name, value));
+                return name;
+            });
+            conditions.Add(security.ToSqlPredicate(emitter));
+        }
+
         string? after = WorkflowContinuationToken.Decode(query.ContinuationToken);
         if (after is not null)
         {
@@ -436,6 +452,11 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         }
 
         foreach ((string name, string value) in tagParameters)
+        {
+            definition = definition.WithParameter(name, value);
+        }
+
+        foreach ((string name, string value) in securityParameters)
         {
             definition = definition.WithParameter(name, value);
         }
@@ -556,6 +577,9 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         [JsonPropertyName("tags")]
         public List<string>? Tags { get; set; }
 
+        [JsonPropertyName("securityTags")]
+        public List<SecurityTagDocument>? SecurityTags { get; set; }
+
         public static RunDocument Build(WorkflowRunId id, byte[] checkpoint, in WorkflowRunIndexEntry index) => new()
         {
             Id = id.Value,
@@ -570,6 +594,7 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             ErrorType = index.ErrorType,
             CorrelationId = index.CorrelationId,
             Tags = index.Tags is { Count: > 0 } t ? t.ToList() : null,
+            SecurityTags = index.SecurityTags is { Count: > 0 } st ? st.Select(SecurityTagDocument.From).ToList() : null,
         };
 
         public WorkflowRunIndexEntry ToIndexEntry() => new(
@@ -582,7 +607,22 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             this.AwaitingCorrelationId,
             this.ErrorType,
             CorrelationId: this.CorrelationId,
-            Tags: this.Tags);
+            Tags: this.Tags,
+            SecurityTags: this.SecurityTags is { Count: > 0 } st ? st.Select(t => t.ToSecurityTag()).ToList() : null);
+    }
+
+    /// <summary>A security tag as embedded in a document's <c>securityTags</c> array.</summary>
+    private sealed class SecurityTagDocument
+    {
+        [JsonPropertyName("k")]
+        public string Key { get; set; } = string.Empty;
+
+        [JsonPropertyName("v")]
+        public string Value { get; set; } = string.Empty;
+
+        public static SecurityTagDocument From(SecurityTag tag) => new() { Key = tag.Key, Value = tag.Value };
+
+        public SecurityTag ToSecurityTag() => new(this.Key, this.Value);
     }
 
     private sealed class LeaseDocument
