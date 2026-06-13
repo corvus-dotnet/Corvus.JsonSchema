@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RunDocument",
+  "description": "The Azure Cosmos DB document shape for a workflow run: the opaque checkpoint (base64) plus the projected, queryable index columns and the embedded row-security tags.",
+  "type": "object",
+  "required": ["id", "checkpoint", "status", "workflowId", "createdAt", "updatedAt"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "The run id (also the partition key)."
+    },
+    "checkpoint": {
+      "type": "string",
+      "contentEncoding": "base64",
+      "description": "The opaque checkpoint bytes, base64-encoded."
+    },
+    "status": {
+      "type": "string",
+      "description": "The run status."
+    },
+    "workflowId": {
+      "type": "string",
+      "description": "The workflow id."
+    },
+    "createdAt": {
+      "type": "integer",
+      "format": "int64",
+      "description": "Creation instant, Unix milliseconds."
+    },
+    "updatedAt": {
+      "type": "integer",
+      "format": "int64",
+      "description": "Last-update instant, Unix milliseconds."
+    },
+    "dueAt": {
+      "type": "integer",
+      "format": "int64",
+      "description": "When a suspended run next becomes due, Unix milliseconds."
+    },
+    "awaitingChannel": {
+      "type": "string",
+      "description": "The channel a suspended run awaits, if any."
+    },
+    "awaitingCorrelationId": {
+      "type": "string",
+      "description": "The correlation id a suspended run awaits, if any."
+    },
+    "errorType": {
+      "type": "string",
+      "description": "The terminal error type, if any."
+    },
+    "correlationId": {
+      "type": "string",
+      "description": "The run correlation id, if any."
+    },
+    "tags": {
+      "type": "array",
+      "description": "The free-form run tags.",
+      "items": { "type": "string" }
+    },
+    "securityTags": {
+      "type": "array",
+      "description": "The row-security tags embedded for native reach filtering.",
+      "items": { "$ref": "#/$defs/EmbeddedSecurityTag" }
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "EmbeddedSecurityTag": {
+      "title": "EmbeddedSecurityTag",
+      "type": "object",
+      "required": ["k", "v"],
+      "properties": {
+        "k": { "type": "string", "description": "The tag key." },
+        "v": { "type": "string", "description": "The tag value." }
+      },
+      "additionalProperties": false
+    }
+  }
+}

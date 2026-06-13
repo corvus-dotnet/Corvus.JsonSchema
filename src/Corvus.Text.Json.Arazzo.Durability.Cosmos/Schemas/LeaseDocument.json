@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "LeaseDocument",
+  "description": "The Azure Cosmos DB document shape for a single-owner workflow lease.",
+  "type": "object",
+  "required": ["id", "owner", "token", "expiresAt"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "The run id the lease guards (also the partition key)."
+    },
+    "owner": {
+      "type": "string",
+      "description": "The lease owner."
+    },
+    "token": {
+      "type": "string",
+      "description": "The lease token, proving ownership for release."
+    },
+    "expiresAt": {
+      "type": "integer",
+      "format": "int64",
+      "description": "Lease expiry, Unix milliseconds."
+    }
+  },
+  "additionalProperties": true
+}

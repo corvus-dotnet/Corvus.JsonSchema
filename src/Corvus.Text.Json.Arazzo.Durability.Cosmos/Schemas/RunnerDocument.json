@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RunnerDocument",
+  "description": "The Azure Cosmos DB document shape for a runner registration: the canonical registration JSON (base64) plus a queryable last-seen timestamp and a projected list of hosted versions for the hosting index.",
+  "type": "object",
+  "required": ["id", "lastSeenAt", "doc", "loadedVersions"],
+  "properties": {
+    "id": { "type": "string", "description": "The runner id (also the partition key)." },
+    "lastSeenAt": { "type": "integer", "format": "int64", "description": "The most recent heartbeat, Unix milliseconds." },
+    "doc": { "type": "string", "contentEncoding": "base64", "description": "The canonical registration JSON bytes, base64-encoded." },
+    "loadedVersions": {
+      "type": "array",
+      "description": "The (baseWorkflowId, versionNumber) pairs the runner hosts with the version loaded.",
+      "items": { "$ref": "#/$defs/HostedKey" }
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "HostedKey": {
+      "title": "HostedKey",
+      "type": "object",
+      "required": ["baseWorkflowId", "versionNumber"],
+      "properties": {
+        "baseWorkflowId": { "type": "string", "description": "The base workflow id." },
+        "versionNumber": { "type": "integer", "format": "int32", "description": "The hosted version number." }
+      },
+      "additionalProperties": false
+    }
+  }
+}
