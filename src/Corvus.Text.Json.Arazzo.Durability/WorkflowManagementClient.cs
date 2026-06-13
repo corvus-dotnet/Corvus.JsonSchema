@@ -104,8 +104,12 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        // Scope the listing to the caller's read reach (§14.2); the store applies the filter in its query.
-        return this.RequireIndex().QueryAsync(query with { Security = context.Reach(AccessVerb.Read) }, cancellationToken);
+        // Scope the listing to the caller's read reach (§14.2); the store applies the filter in its query. Refuse
+        // (rather than leak) if the store does not push the reach filter down.
+        SecurityFilter? reach = context.Reach(AccessVerb.Read);
+        IWorkflowWaitIndex index = this.RequireIndex();
+        RowSecurityPushdown.EnsureSupported(reach, index);
+        return index.QueryAsync(query with { Security = reach }, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -337,6 +341,9 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
     {
         ArgumentNullException.ThrowIfNull(context);
         IWorkflowWaitIndex waitIndex = this.RequireIndex();
+
+        // Refuse (rather than over-purge) if the store does not push the purge reach filter down (§14.2/§14.4).
+        RowSecurityPushdown.EnsureSupported(context.Reach(AccessVerb.Purge), waitIndex);
 
         using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity("workflow.purge");
         if (activity is { IsAllDataRequested: true })

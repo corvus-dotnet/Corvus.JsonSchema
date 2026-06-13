@@ -12,7 +12,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// <see cref="InMemoryWorkflowStateStore"/> does for runs. It is the reference the shared catalog-conformance
 /// suite runs against, and is usable for a single-process catalog that does not need to survive a restart.
 /// </summary>
-public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore
+public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISupportsRowSecurityFilter
 {
     // Keyed by sort key ("{baseWorkflowId}{versionNumber:D10}") so enumeration is stable for keyset paging.
     private readonly SortedDictionary<string, Stored> versions = new(StringComparer.Ordinal);

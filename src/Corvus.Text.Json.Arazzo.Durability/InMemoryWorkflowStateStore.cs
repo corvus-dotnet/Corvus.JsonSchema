@@ -11,7 +11,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// does for AsyncAPI. It is the reference against which the shared store-conformance suite runs, and is also
 /// usable for a real single-process run that does not need to survive a host restart.
 /// </summary>
-public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex
+public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter
 {
     private readonly Dictionary<string, Entry> entries = [];
     private readonly Dictionary<string, LeaseRecord> leases = [];

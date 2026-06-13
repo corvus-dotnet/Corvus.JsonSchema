@@ -68,8 +68,11 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        // Scope the search to the caller's read reach (§14.2); the store applies the filter in its query.
-        return this.catalog.QueryAsync(query with { Security = context.Reach(AccessVerb.Read) }, cancellationToken);
+        // Scope the search to the caller's read reach (§14.2); the store applies the filter in its query. Refuse
+        // (rather than leak) if the store does not push the reach filter down.
+        SecurityFilter? reach = context.Reach(AccessVerb.Read);
+        RowSecurityPushdown.EnsureSupported(reach, this.catalog);
+        return this.catalog.QueryAsync(query with { Security = reach }, cancellationToken);
     }
 
     /// <inheritdoc/>
