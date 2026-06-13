@@ -24,6 +24,16 @@ public interface IWorkflowCatalogClient
     /// <exception cref="ArgumentException">The package is malformed, or its workflow id already carries a <c>-vN</c> suffix.</exception>
     ValueTask<CatalogVersion> AddAsync(ReadOnlyMemory<byte> packageUtf8, CatalogOwner owner, IReadOnlyList<string>? tags, CancellationToken cancellationToken);
 
+    /// <summary>Adds a workflow version with security tags (KVP labels for row authorization, §14.2).</summary>
+    /// <param name="packageUtf8">The package envelope as UTF-8 JSON.</param>
+    /// <param name="owner">The accountable governance owner.</param>
+    /// <param name="tags">Free-form tags, if any.</param>
+    /// <param name="securityTags">Security tags (KVP labels) for row authorization, distinct from the free-form <paramref name="tags"/>, if any.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The added version's metadata.</returns>
+    /// <exception cref="ArgumentException">The package is malformed, or its workflow id already carries a <c>-vN</c> suffix.</exception>
+    ValueTask<CatalogVersion> AddAsync(ReadOnlyMemory<byte> packageUtf8, CatalogOwner owner, IReadOnlyList<string>? tags, IReadOnlyList<SecurityTag>? securityTags, CancellationToken cancellationToken);
+
     /// <summary>Searches the catalog.</summary>
     /// <param name="query">The search.</param>
     /// <param name="cancellationToken">A cancellation token.</param>

@@ -584,6 +584,47 @@ public sealed class ControlPlaneServerTests
     }
 
     [TestMethod]
+    public async Task StartCatalogWorkflowRun_inherits_the_version_security_tags()
+    {
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
+        var management = new WorkflowManagementClient(runStore, "ops", CompleteResumer, clock);
+        var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
+
+        SecurityTag[] security = [new("tenant", "acme"), new("team", "payments")];
+        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), null, security, default);
+
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        var runnerRegistry = new InMemoryRunnerRegistry();
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry);
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+        await runnerRegistry.RegisterAsync(Runner("flow", 1), default);
+
+        HttpResponseMessage accepted = await client.PostAsync(
+            "/catalog/flow/versions/1/runs",
+            new StringContent("""{ "petId": 5 }""", Encoding.UTF8, "application/json"));
+        accepted.StatusCode.ShouldBe(HttpStatusCode.Accepted);
+
+        string runId;
+        using (Stj.JsonDocument doc = await ReadJsonAsync(accepted))
+        {
+            runId = doc.RootElement.GetProperty("runId").GetString()!;
+        }
+
+        // The triggered run carries the version's security tags (KVP labels), so row authorization sees them.
+        WorkflowRunDetail? detail = await management.GetAsync(runId, default);
+        detail.ShouldNotBeNull();
+        detail.Value.SecurityTags.ShouldBe(security);
+
+        await app.StopAsync();
+    }
+
+    [TestMethod]
     public async Task StartCatalogWorkflowRun_is_409_for_a_non_runnable_version()
     {
         var clock = new MutableClock(T0);

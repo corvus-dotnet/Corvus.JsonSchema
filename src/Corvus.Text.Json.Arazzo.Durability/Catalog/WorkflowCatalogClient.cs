@@ -36,7 +36,11 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
     }
 
     /// <inheritdoc/>
-    public async ValueTask<CatalogVersion> AddAsync(ReadOnlyMemory<byte> packageUtf8, CatalogOwner owner, IReadOnlyList<string>? tags, CancellationToken cancellationToken)
+    public ValueTask<CatalogVersion> AddAsync(ReadOnlyMemory<byte> packageUtf8, CatalogOwner owner, IReadOnlyList<string>? tags, CancellationToken cancellationToken)
+        => this.AddAsync(packageUtf8, owner, tags, securityTags: null, cancellationToken);
+
+    /// <inheritdoc/>
+    public async ValueTask<CatalogVersion> AddAsync(ReadOnlyMemory<byte> packageUtf8, CatalogOwner owner, IReadOnlyList<string>? tags, IReadOnlyList<SecurityTag>? securityTags, CancellationToken cancellationToken)
     {
         using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity("catalog.add");
         activity?.SetTag(ArazzoTelemetry.ActorTag, this.actor);
@@ -52,7 +56,7 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
         }
 
         CatalogVersion version = await this.catalog.AddAsync(
-            baseWorkflowId, packageUtf8, new CatalogMetadata(owner, this.actor, tags), cancellationToken).ConfigureAwait(false);
+            baseWorkflowId, packageUtf8, new CatalogMetadata(owner, this.actor, tags, securityTags), cancellationToken).ConfigureAwait(false);
         activity?.SetTag(ArazzoTelemetry.VersionNumberTag, version.Ref.VersionNumber);
         activity?.SetTag(ArazzoTelemetry.WorkflowIdTag, version.Ref.WorkflowId);
         activity?.SetTag(ArazzoTelemetry.OutcomeTag, "added");
