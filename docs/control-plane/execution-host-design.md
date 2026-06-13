@@ -406,7 +406,9 @@ descriptions** to real endpoints + credentials:
    (separate from user tags; runs inherit the version's); tag rules in the `simple`-criterion grammar that
    claims resolve to; rules compiled to an in-memory evaluator **and** an indexed per-backend store predicate
    (reference-then-fan-out across ~18 stores); a separate security API in the control plane to manage rules,
-   seeded with bootstrap rules (tenant-scoped / ABAC label-superset / intersection).
+   seeded with bootstrap rules (tenant-scoped / ABAC label-superset / intersection); plus the deployment
+   access-control shell (§14.3) — reserved-prefix immutable, client-invisible internal tags + a mandated
+   wrapper rule ANDed into every decision for inescapable multi-tenant isolation.
 
 The paused demo work (`samples/.../docs/live-execution.md`) becomes the *manual* prototype of Phase 1–3 (it
 hand-builds the binder + compiles in-process); this design productionises it behind the catalog.
@@ -558,8 +560,35 @@ the rule grammar may need an `in (...)` set operator and null/absent-label handl
 subset; and the store-predicate translation is per backend (~18 stores) so it follows the established
 reference-then-fan-out pattern.
 
+### 14.3 Deployment access-control shell — mandated filters + internal tags
+
+A deployment can **wrap** the row-security model so its own constraints are inescapable — e.g. mandate that
+every principal is filtered to its own tenant/customer/organization. Users author their tags and rules
+*within* that shell; they cannot reach outside it. This is what keeps one shared-hosting tenant from leaking
+into another even if a user rule is misconfigured.
+
+- **Internal (deployment) security tags** are marked by a **reserved key prefix** (deployment-configurable,
+  e.g. `sys:`). They are:
+  - **immutable** — set by the deployment at row creation (e.g. the tenant resolved from the principal /
+    hosting context), never editable through the user-facing API;
+  - **invisible to clients** — stripped from catalog/run read responses so the isolation labels are not
+    disclosed;
+  - **reserved on input** — the API rejects any user attempt to create or edit a security tag (or reference a
+    rule operand) whose key carries the internal prefix. End-users own the unprefixed keyspace only.
+- **Mandated wrapper rule (defense in depth).** The effective access decision is the deployment's mandated
+  wrapper rule **AND** the principal's resolved user rule — both must hold. A user rule can therefore only
+  *narrow* within the shell, never widen past it. The wrapper references internal tags
+  (e.g. `sys:tenant == $claim.tenant`) and is **ANDed into the store predicate** alongside the user rule, so
+  tenant isolation is enforced on every query and single-row check, pushed down to the store.
+- **Hooks:** security-tag key validation (reject the reserved prefix from user input); a deployment-configured
+  access-control wrapper (the mandated rule + an internal-tag injector at row creation + a response stripper);
+  the compiled predicate becomes `wrapperPredicate AND userPredicate`. The wrapper is per-deployment
+  configuration, like the auth scheme (§14.1) — the sample demonstrates a tenant shell.
+
 **Decision (§14):** operation authz = ASP.NET Core policies named after capability scopes, with the scheme +
 claim mapping supplied per deployment (sample-implemented). Row authz = **security tags (KVP labels) + tag
 rules in the `simple`-criterion grammar**; claims resolve to a rule, rules compile to an in-memory evaluator
 **and** an indexed per-backend store predicate, and a separate security API in the control plane manages the
-rules. Applied uniformly to workflows and runs.
+rules. A deployment may **wrap** the model (§14.3) with a mandated filter + reserved-prefix internal tags
+(immutable, client-invisible) that AND into every decision, so multi-tenant isolation is inescapable. Applied
+uniformly to workflows and runs.
