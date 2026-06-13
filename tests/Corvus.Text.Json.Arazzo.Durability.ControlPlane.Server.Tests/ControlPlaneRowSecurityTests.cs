@@ -108,6 +108,25 @@ public sealed class ControlPlaneRowSecurityTests
     }
 
     [TestMethod]
+    public async Task Read_reach_and_write_reach_are_independent()
+    {
+        // A principal that may read everything but write nothing: a run is gettable, but cancelling/deleting it is
+        // reported as not found (non-disclosing; a distinct 403 would need a contract change).
+        await using Scoped host = await StartAsync(new ReadAnyWriteNonePolicy());
+        await FaultRunAsync(host.Store, "run-1", host.Clock, new SecurityTag("tenant", "acme"));
+
+        (await host.GetAsync("/runs/run-1", tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.PostAsync("/runs/run-1/cancel", """{"reason":"x"}""", tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        using var delete = new HttpRequestMessage(HttpMethod.Delete, "/runs/run-1");
+        (await host.SendAsync(delete, tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        // The run is untouched by the denied writes — still readable and still Faulted.
+        using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync("/runs/run-1", tenant: "acme"));
+        doc.RootElement.GetProperty("status").GetString().ShouldBe("Faulted");
+    }
+
+    [TestMethod]
     public async Task Searching_the_catalog_is_scoped_to_the_principals_tenant()
     {
         await using Scoped host = await StartAsync();
@@ -172,7 +191,7 @@ public sealed class ControlPlaneRowSecurityTests
         return WorkflowRunResultKind.Completed;
     }
 
-    private static async Task<Scoped> StartAsync()
+    private static async Task<Scoped> StartAsync(ControlPlaneRowSecurityPolicy? policy = null)
     {
         var clock = new FixedClock(T0);
         var store = new InMemoryWorkflowStateStore(clock);
@@ -192,7 +211,7 @@ public sealed class ControlPlaneRowSecurityTests
 
         WebApplication app = builder.Build();
         app.UseAuthentication();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), rowSecurity: new TenantRowSecurityPolicy());
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), rowSecurity: policy ?? new TenantRowSecurityPolicy());
         await app.StartAsync();
 
         return new Scoped(app, app.GetTestClient(), store, catalog, clock);
@@ -259,18 +278,29 @@ public sealed class ControlPlaneRowSecurityTests
     /// A deployment row-security policy: a principal carrying a <c>tenant</c> claim is scoped to rows tagged with
     /// that tenant (<c>tenant == $claim.tenant</c>); a principal with no tenant claim is an unrestricted operator.
     /// </summary>
+    /// <summary>Read everything, write/purge nothing — exercises independent per-verb reach (§14.2).</summary>
+    private sealed class ReadAnyWriteNonePolicy : ControlPlaneRowSecurityPolicy
+    {
+        // A rule comparing two distinct literals is never satisfied, so it denies every row.
+        private static readonly SecurityFilter DenyAll = new(
+            [SecurityRule.Compile("'x' == 'y'")],
+            new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal));
+
+        public override AccessContext Resolve(ClaimsPrincipal? principal) => new(readReach: null, writeReach: DenyAll, purgeReach: DenyAll);
+    }
+
     private sealed class TenantRowSecurityPolicy : ControlPlaneRowSecurityPolicy
     {
-        public override SecurityFilter? GetFilter(ClaimsPrincipal? principal)
+        public override AccessContext Resolve(ClaimsPrincipal? principal)
         {
             string? tenant = principal?.FindFirst("tenant")?.Value;
             if (tenant is null)
             {
-                return null;
+                return AccessContext.System;
             }
 
             var claims = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal) { ["tenant"] = [tenant] };
-            return new SecurityFilter([SecurityRule.Compile("tenant == $claim.tenant")], claims);
+            return AccessContext.Uniform(new SecurityFilter([SecurityRule.Compile("tenant == $claim.tenant")], claims));
         }
     }
 }

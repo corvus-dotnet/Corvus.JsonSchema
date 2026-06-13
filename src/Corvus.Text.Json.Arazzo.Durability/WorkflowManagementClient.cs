@@ -100,12 +100,19 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
     }
 
     /// <inheritdoc/>
-    public ValueTask<WorkflowRunPage> ListAsync(WorkflowQuery query, CancellationToken cancellationToken)
-        => this.RequireIndex().QueryAsync(query, cancellationToken);
+    public ValueTask<WorkflowRunPage> ListAsync(WorkflowQuery query, AccessContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        // Scope the listing to the caller's read reach (§14.2); the store applies the filter in its query.
+        return this.RequireIndex().QueryAsync(query with { Security = context.Reach(AccessVerb.Read) }, cancellationToken);
+    }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowRunDetail?> GetAsync(WorkflowRunId id, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowRunDetail?> GetAsync(WorkflowRunId id, AccessContext context, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(context);
+
         WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(id, cancellationToken).ConfigureAwait(false);
         if (checkpoint is not { } cp)
         {
@@ -113,15 +120,48 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
         }
 
         using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(cp.Utf8);
+
+        // A run outside the caller's read reach is reported as absent (non-disclosing, §14.2).
+        if (!context.Admits(AccessVerb.Read, state.SecurityTags))
+        {
+            return null;
+        }
+
         return new WorkflowRunDetail(state.RunId, state.WorkflowId, state.Status, state.Cursor, state.CreatedAt, state.Wait, state.Fault, cp.Etag, state.CorrelationId, state.Tags, state.SecurityTags);
     }
 
-    /// <inheritdoc/>
-    public async ValueTask<bool> ResumeAsync(WorkflowRunId id, ResumeOptions options, CancellationToken cancellationToken)
+    // Whether a run is within the caller's write reach (§14.2): unrestricted writers and a missing run pass (the
+    // operation then reports its own not-found / no-op); otherwise the run's security tags must satisfy the reach.
+    private async ValueTask<bool> IsWithinWriteReachAsync(WorkflowRunId id, AccessContext context, CancellationToken cancellationToken)
     {
+        if (context.WriteReach is null)
+        {
+            return true;
+        }
+
+        WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(id, cancellationToken).ConfigureAwait(false);
+        if (checkpoint is not { } cp)
+        {
+            return true;
+        }
+
+        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(cp.Utf8);
+        return context.Admits(AccessVerb.Write, state.SecurityTags);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<bool> ResumeAsync(WorkflowRunId id, ResumeOptions options, AccessContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
         if (this.resumer is null)
         {
             throw new InvalidOperationException("This management client was created without a resumer; ResumeAsync requires one.");
+        }
+
+        // A run outside the caller's write reach is not actionable (§14.2).
+        if (!await this.IsWithinWriteReachAsync(id, context, cancellationToken).ConfigureAwait(false))
+        {
+            return false;
         }
 
         using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity("workflow.resume");
@@ -185,9 +225,16 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
     }
 
     /// <inheritdoc/>
-    public async ValueTask<bool> CancelAsync(WorkflowRunId id, string reason, CancellationToken cancellationToken)
+    public async ValueTask<bool> CancelAsync(WorkflowRunId id, string reason, AccessContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(reason);
+        ArgumentNullException.ThrowIfNull(context);
+
+        // A run outside the caller's write reach is not actionable (§14.2).
+        if (!await this.IsWithinWriteReachAsync(id, context, cancellationToken).ConfigureAwait(false))
+        {
+            return false;
+        }
 
         using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity("workflow.cancel");
         if (activity is { IsAllDataRequested: true })
@@ -286,8 +333,9 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
     }
 
     /// <inheritdoc/>
-    public async ValueTask<int> PurgeAsync(WorkflowPurgeQuery query, CancellationToken cancellationToken)
+    public async ValueTask<int> PurgeAsync(WorkflowPurgeQuery query, AccessContext context, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(context);
         IWorkflowWaitIndex waitIndex = this.RequireIndex();
 
         using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity("workflow.purge");
@@ -304,9 +352,9 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
             string? token = null;
             do
             {
-                // Reuse the row-filtered query path so the purge reaps only rows the principal may see (§14.2):
-                // a tenant admin purges only their tenant's runs, a service operator (null filter) purges all.
-                WorkflowRunPage page = await waitIndex.QueryAsync(new WorkflowQuery(status, null, query.Limit, token, Security: query.Security), cancellationToken).ConfigureAwait(false);
+                // Reuse the row-filtered query path so the purge reaps only rows within the caller's purge reach
+                // (§14.2): a tenant admin purges only their tenant's runs, a service operator (null reach) purges all.
+                WorkflowRunPage page = await waitIndex.QueryAsync(new WorkflowQuery(status, null, query.Limit, token, Security: context.Reach(AccessVerb.Purge)), cancellationToken).ConfigureAwait(false);
                 foreach (WorkflowRunListing listing in page.Runs)
                 {
                     if (purged >= query.Limit)
@@ -340,8 +388,16 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
     }
 
     /// <inheritdoc/>
-    public async ValueTask<bool> DeleteAsync(WorkflowRunId id, CancellationToken cancellationToken)
+    public async ValueTask<bool> DeleteAsync(WorkflowRunId id, AccessContext context, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(context);
+
+        // A run outside the caller's write reach is not actionable (§14.2).
+        if (!await this.IsWithinWriteReachAsync(id, context, cancellationToken).ConfigureAwait(false))
+        {
+            return false;
+        }
+
         using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity("workflow.delete");
         if (activity is { IsAllDataRequested: true })
         {

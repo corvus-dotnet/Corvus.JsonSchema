@@ -237,13 +237,13 @@ public partial class WorkflowExecutorEndToEndTests
         var client = new WorkflowManagementClient(store, "ops", Resume);
 
         // Query: the faulted run is visible via get and the status filter.
-        (await client.GetAsync(runId, default))!.Value.Status.ShouldBe(WorkflowRunStatus.Faulted);
-        (await client.ListAsync(new WorkflowQuery(WorkflowRunStatus.Faulted), default))
+        (await client.GetAsync(runId, AccessContext.System, default))!.Value.Status.ShouldBe(WorkflowRunStatus.Faulted);
+        (await client.ListAsync(new WorkflowQuery(WorkflowRunStatus.Faulted), AccessContext.System, default))
             .Runs.Select(r => r.Id.Value).ShouldContain(runId.Value);
 
         // Resume: retry the faulted step → the run completes.
-        (await client.ResumeAsync(runId, ResumeOptions.RetryFaultedStep, default)).ShouldBeTrue();
-        (await client.GetAsync(runId, default))!.Value.Status.ShouldBe(WorkflowRunStatus.Completed);
+        (await client.ResumeAsync(runId, ResumeOptions.RetryFaultedStep, AccessContext.System, default)).ShouldBeTrue();
+        (await client.GetAsync(runId, AccessContext.System, default))!.Value.Status.ShouldBe(WorkflowRunStatus.Completed);
     }
 
     [TestMethod]

@@ -42,7 +42,7 @@ public sealed class ScheduleWorkflowTriggerTests
         (await trigger.FireDueAsync(default)).ShouldBe(1);
 
         // Four distinct Pending runs exist — one per slot, none duplicated.
-        WorkflowRunPage pending = await management.ListAsync(new WorkflowQuery(WorkflowRunStatus.Pending), default);
+        WorkflowRunPage pending = await management.ListAsync(new WorkflowQuery(WorkflowRunStatus.Pending), AccessContext.System, default);
         pending.Runs.Count.ShouldBe(4);
     }
 
@@ -66,7 +66,7 @@ public sealed class ScheduleWorkflowTriggerTests
         a1.ShouldBe(a2);
         b1.ShouldNotBe(a1);
 
-        WorkflowRunPage pending = await management.ListAsync(new WorkflowQuery(WorkflowRunStatus.Pending), default);
+        WorkflowRunPage pending = await management.ListAsync(new WorkflowQuery(WorkflowRunStatus.Pending), AccessContext.System, default);
         pending.Runs.Count.ShouldBe(2);
     }
 
