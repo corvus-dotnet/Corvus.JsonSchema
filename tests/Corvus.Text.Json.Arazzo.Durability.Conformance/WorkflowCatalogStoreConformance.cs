@@ -332,6 +332,7 @@ public abstract class WorkflowCatalogStoreConformance
         {
             ["tenant"] = ["acme"],
             ["both"] = ["acme", "globex"],
+            ["team"] = ["payments", "hr"],
         };
 
         string[] ruleShapes =
@@ -347,6 +348,12 @@ public abstract class WorkflowCatalogStoreConformance
             "'a' == 'a'",
             "team == team",
             "tenant == $claim.both",
+            "$claims.intersects",
+            "$claims.superset",
+            "!$claims.superset",
+            "$claims.intersects && tenant == $claim.tenant",
+            "$claims.superset || team == 'payments'",
+            "!($claims.intersects)",
         ];
 
         foreach (string ruleText in ruleShapes)

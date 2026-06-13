@@ -398,6 +398,7 @@ public abstract class WorkflowStateStoreConformance
         {
             ["tenant"] = ["acme"],
             ["both"] = ["acme", "globex"],
+            ["team"] = ["payments", "hr"],
         };
 
         // Every operator/operand shape the translator handles; each cross-checked against the in-memory evaluator.
@@ -414,6 +415,12 @@ public abstract class WorkflowStateStoreConformance
             "'a' == 'a'",
             "team == team",
             "tenant == $claim.both",
+            "$claims.intersects",
+            "$claims.superset",
+            "!$claims.superset",
+            "$claims.intersects && tenant == $claim.tenant",
+            "$claims.superset || team == 'payments'",
+            "!($claims.intersects)",
         ];
 
         foreach (string ruleText in ruleShapes)
