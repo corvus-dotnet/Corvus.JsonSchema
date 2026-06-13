@@ -18,7 +18,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Sqlite;
 /// operations) and all operations are serialised through it — adequate for the local/embedded use this
 /// adapter targets. Create instances with <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/>, which runs the idempotent schema.
 /// </remarks>
-public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, IAsyncDisposable
+public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
     private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
@@ -125,6 +125,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
                     throw new WorkflowConflictException(id, expected);
                 }
 
+                await this.SyncSecurityTagsAsync(id, indexCopy.SecurityTags, cancellationToken).ConfigureAwait(false);
                 return new WorkflowEtag("1");
             }
 
@@ -147,6 +148,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
                 throw new WorkflowConflictException(id, expected);
             }
 
+            await this.SyncSecurityTagsAsync(id, indexCopy.SecurityTags, cancellationToken).ConfigureAwait(false);
             return new WorkflowEtag((expectedVersion + 1).ToString(CultureInfo.InvariantCulture));
         }
         finally
@@ -239,7 +241,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         try
         {
             using SqliteCommand delete = this.connection.CreateCommand();
-            delete.CommandText = "DELETE FROM WorkflowRuns WHERE RunId = @id; DELETE FROM WorkflowLeases WHERE RunId = @id;";
+            delete.CommandText = "DELETE FROM WorkflowRuns WHERE RunId = @id; DELETE FROM WorkflowLeases WHERE RunId = @id; DELETE FROM WorkflowRunSecurityTags WHERE RunId = @id;";
             delete.Parameters.AddWithValue("@id", id.Value);
             await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -313,6 +315,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
                   AND (@updatedBefore IS NULL OR UpdatedAt < @updatedBefore)
                   AND (@correlationId IS NULL OR CorrelationId = @correlationId)
                   {{tagPredicates}}
+                  {{securityPredicate}}
                   AND (@after IS NULL OR RunId > @after)
                 ORDER BY RunId
                 LIMIT @limit;
@@ -342,6 +345,28 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             else
             {
                 select.CommandText = select.CommandText.Replace("{{tagPredicates}}", string.Empty);
+            }
+
+            // Row-security reach (§14.4): translate the filter to a correlated EXISTS predicate over the run's
+            // security tags. The client only reaches here for a store that declares ISupportsRowSecurityFilter.
+            if (query.Security is { } security)
+            {
+                int securityParam = 0;
+                var emitter = new SqlSecurityRuleEmitter(
+                    "WorkflowRunSecurityTags",
+                    "RunId",
+                    "WorkflowRuns.RunId",
+                    value =>
+                    {
+                        string name = "@sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
+                        select.Parameters.AddWithValue(name, value);
+                        return name;
+                    });
+                select.CommandText = select.CommandText.Replace("{{securityPredicate}}", "AND (" + security.ToSqlPredicate(emitter) + ")");
+            }
+            else
+            {
+                select.CommandText = select.CommandText.Replace("{{securityPredicate}}", string.Empty);
             }
 
             var runs = new List<WorkflowRunListing>();
@@ -391,6 +416,34 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         command.Parameters.AddWithValue("@errorType", (object?)index.ErrorType ?? DBNull.Value);
         command.Parameters.AddWithValue("@correlationId", (object?)index.CorrelationId ?? DBNull.Value);
         command.Parameters.AddWithValue("@tags", (object?)EncodeTags(index.Tags) ?? DBNull.Value);
+    }
+
+    // Re-syncs a run's security tags (§14.4) into the child table for indexed reach-filtering. Called under the
+    // gate after the run row is written; run security tags are immutable, but a full delete+insert is simplest
+    // and the tag count is tiny.
+    private async Task SyncSecurityTagsAsync(WorkflowRunId id, IReadOnlyList<SecurityTag>? securityTags, CancellationToken cancellationToken)
+    {
+        using (SqliteCommand delete = this.connection.CreateCommand())
+        {
+            delete.CommandText = "DELETE FROM WorkflowRunSecurityTags WHERE RunId = @id;";
+            delete.Parameters.AddWithValue("@id", id.Value);
+            await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        if (securityTags is not { Count: > 0 })
+        {
+            return;
+        }
+
+        foreach (SecurityTag tag in securityTags)
+        {
+            using SqliteCommand insert = this.connection.CreateCommand();
+            insert.CommandText = "INSERT INTO WorkflowRunSecurityTags (RunId, TagKey, TagValue) VALUES (@id, @key, @value);";
+            insert.Parameters.AddWithValue("@id", id.Value);
+            insert.Parameters.AddWithValue("@key", tag.Key);
+            insert.Parameters.AddWithValue("@value", tag.Value);
+            await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
     }
 
     private static string? EncodeTags(IReadOnlyList<string>? tags)
@@ -500,6 +553,13 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         );
         CREATE INDEX IF NOT EXISTS IX_WorkflowRuns_Due ON WorkflowRuns (Status, DueAt);
         CREATE INDEX IF NOT EXISTS IX_WorkflowRuns_Awaiting ON WorkflowRuns (Status, AwaitingChannel, AwaitingCorrelationId);
+        CREATE TABLE IF NOT EXISTS WorkflowRunSecurityTags (
+            RunId TEXT NOT NULL,
+            TagKey TEXT NOT NULL,
+            TagValue TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS IX_WorkflowRunSecurityTags_Run ON WorkflowRunSecurityTags (RunId);
+        CREATE INDEX IF NOT EXISTS IX_WorkflowRunSecurityTags_KeyValue ON WorkflowRunSecurityTags (TagKey, TagValue);
         CREATE TABLE IF NOT EXISTS WorkflowLeases (
             RunId TEXT PRIMARY KEY NOT NULL,
             Owner TEXT NOT NULL,
