@@ -29,6 +29,12 @@ public interface ISecurityRuleSqlEmitter
     /// <returns>The placeholder to use in the SQL.</returns>
     string Parameter(string value);
 
+    /// <summary>Builds "the current row has at least one security tag" — the deny-by-default guard (§14.2): an
+    /// untagged (unclassified) row is never admitted to a reach-restricted principal, mirroring
+    /// <see cref="SecurityFilter.IsSatisfiedBy"/>.</summary>
+    /// <returns>A boolean SQL fragment.</returns>
+    string ExistsAnyTag();
+
     /// <summary>Builds "the current row has a security tag whose key is <paramref name="keyPlaceholder"/>".</summary>
     /// <param name="keyPlaceholder">A placeholder bound to the tag key.</param>
     /// <returns>A boolean SQL fragment.</returns>

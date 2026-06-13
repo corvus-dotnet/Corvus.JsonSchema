@@ -29,6 +29,10 @@ public sealed class CosmosSecurityRuleEmitter(string arrayPath, string keyProper
     public string Parameter(string value) => parameter(value);
 
     /// <inheritdoc/>
+    public string ExistsAnyTag()
+        => $"EXISTS (SELECT VALUE st FROM st IN {arrayPath})";
+
+    /// <inheritdoc/>
     public string ExistsTagKey(string keyPlaceholder)
         => $"EXISTS (SELECT VALUE st FROM st IN {arrayPath} WHERE st.{keyProperty} = {keyPlaceholder})";
 
