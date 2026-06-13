@@ -23,9 +23,10 @@ public interface IWorkflowManagementClient
     /// <param name="inputs">The workflow inputs.</param>
     /// <param name="correlationId">An optional telemetry correlation id (a W3C trace id); a new one is captured when omitted.</param>
     /// <param name="tags">Optional free-form tags to attach to the run.</param>
+    /// <param name="securityTags">Optional security tags (KVP labels) for row authorization (§14.2), typically inherited from the workflow version; distinct from <paramref name="tags"/>.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The id of the newly created pending run.</returns>
-    ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, IReadOnlyList<string>? tags, CancellationToken cancellationToken);
+    ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, IReadOnlyList<string>? tags, IReadOnlyList<SecurityTag>? securityTags, CancellationToken cancellationToken);
 
     /// <summary>
     /// Starts a run idempotently: the run id is derived deterministically from
@@ -38,9 +39,10 @@ public interface IWorkflowManagementClient
     /// <param name="idempotencyKey">A stable key identifying the logical start (e.g. a message id or a scheduled-slot timestamp).</param>
     /// <param name="correlationId">An optional telemetry correlation id; a new one is captured when omitted.</param>
     /// <param name="tags">Optional free-form tags to attach to the run.</param>
+    /// <param name="securityTags">Optional security tags (KVP labels) for row authorization (§14.2), typically inherited from the workflow version; distinct from <paramref name="tags"/>.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The id of the run for this key (newly created, or the pre-existing one).</returns>
-    ValueTask<WorkflowRunId> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string? correlationId = null, IReadOnlyList<string>? tags = null, CancellationToken cancellationToken = default);
+    ValueTask<WorkflowRunId> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string? correlationId = null, IReadOnlyList<string>? tags = null, IReadOnlyList<SecurityTag>? securityTags = null, CancellationToken cancellationToken = default);
 
     /// <summary>Lists runs matching a visibility query (filter by status / workflow id, paged).</summary>
     /// <param name="query">The visibility query.</param>

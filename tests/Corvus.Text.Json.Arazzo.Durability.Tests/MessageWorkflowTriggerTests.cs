@@ -25,7 +25,7 @@ public sealed class MessageWorkflowTriggerTests
         WorkflowStartHandler start = async (request, cancellationToken) =>
         {
             WorkflowRunId id = await management.StartIdempotentAsync(
-                request.WorkflowId, request.Inputs, request.IdempotencyKey, request.CorrelationId, request.Tags, cancellationToken);
+                request.WorkflowId, request.Inputs, request.IdempotencyKey, request.CorrelationId, request.Tags, cancellationToken: cancellationToken);
             startedIds.Add(id);
             return id;
         };
