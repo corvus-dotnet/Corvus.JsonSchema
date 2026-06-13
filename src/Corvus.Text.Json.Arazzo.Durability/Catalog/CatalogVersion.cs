@@ -78,6 +78,24 @@ public readonly partial struct CatalogVersion
         }
     }
 
+    /// <summary>Gets the security tags (KVP labels) as a list, distinct from the free-form <see cref="TagsValue"/> (§14.2).</summary>
+    public IReadOnlyList<SecurityTag> SecurityTagsValue
+    {
+        get
+        {
+            var list = new List<SecurityTag>();
+            if (this.SecurityTags.IsNotUndefined())
+            {
+                foreach (SecurityTagInfo securityTag in this.SecurityTags.EnumerateArray())
+                {
+                    list.Add(new SecurityTag((string)securityTag.Key, (string)securityTag.Value));
+                }
+            }
+
+            return list;
+        }
+    }
+
     /// <summary>Gets the package source documents as a list of <see cref="CatalogSourceRef"/> records.</summary>
     public IReadOnlyList<CatalogSourceRef> SourcesValue
     {
@@ -131,7 +149,8 @@ public readonly partial struct CatalogVersion
         DateTimeOffset? lastUpdatedAt = null,
         string? obsoletedBy = null,
         DateTimeOffset? obsoletedAt = null,
-        bool runnable = false)
+        bool runnable = false,
+        IReadOnlyList<SecurityTag>? securityTags = null)
     {
         var buffer = new ArrayBufferWriter<byte>();
         using (var writer = new Utf8JsonWriter(buffer, WriterOptions))
@@ -155,6 +174,20 @@ public readonly partial struct CatalogVersion
             }
 
             writer.WriteEndArray();
+
+            if (securityTags is { Count: > 0 })
+            {
+                writer.WriteStartArray(JsonPropertyNames.SecurityTagsUtf8);
+                foreach (SecurityTag securityTag in securityTags)
+                {
+                    writer.WriteStartObject();
+                    writer.WriteString(SecurityTagInfo.JsonPropertyNames.KeyUtf8, securityTag.Key);
+                    writer.WriteString(SecurityTagInfo.JsonPropertyNames.ValueUtf8, securityTag.Value);
+                    writer.WriteEndObject();
+                }
+
+                writer.WriteEndArray();
+            }
 
             writer.WriteStartObject(JsonPropertyNames.OwnerUtf8);
             writer.WriteString(CatalogOwnerInfo.JsonPropertyNames.NameUtf8, owner.Name);
