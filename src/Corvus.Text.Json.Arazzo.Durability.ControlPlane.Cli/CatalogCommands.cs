@@ -511,7 +511,7 @@ internal sealed class CatalogSearchCommand : AsyncCommand<CatalogSearchSettings>
                 });
             }
 
-            await using SearchCatalogResponse response = await client.SearchCatalogAsync(query, baseWorkflowId, tag, status, owner, limit, pageToken, cancellationToken);
+            await using SearchCatalogResponse response = await client.SearchCatalogAsync(query, baseWorkflowId, workflowIdPrefix: default, tag, status, owner, limit, pageToken, cancellationToken);
             bool asJson = settings.Output.Equals("json", StringComparison.OrdinalIgnoreCase);
             return response.MatchResult(
                 page => asJson ? Output.Print(page.ToString()) : RenderVersions(page),
@@ -727,6 +727,7 @@ internal sealed class CatalogUpdateCommand : AsyncCommand<CatalogUpdateSettings>
                 summary => Output.Print(summary.ToString()),
                 Output.Problem,
                 Output.Problem,
+                Output.Problem,
                 Output.Unexpected);
         }
     }
@@ -754,6 +755,7 @@ internal sealed class CatalogObsoleteCommand : AsyncCommand<CatalogVersionSettin
                 summary => Output.Print(summary.ToString()),
                 Output.Problem,
                 Output.Problem,
+                Output.Problem,
                 Output.Unexpected);
         }
     }
@@ -775,6 +777,7 @@ internal sealed class CatalogDeleteCommand : AsyncCommand<CatalogVersionSettings
             }
 
             return response.MatchResult(
+                Output.Problem,
                 Output.Problem,
                 Output.Problem,
                 Output.Unexpected);

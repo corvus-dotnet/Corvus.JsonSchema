@@ -142,14 +142,14 @@ public readonly partial struct Runner
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext3 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.MaxConcurrencyUtf8,
                     evaluationPath: MaxConcurrencySchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
             context.CommitChildContext(childContext3.IsMatch, ref childContext3);
 
             if (!context.HasCollector && !context.IsMatch)

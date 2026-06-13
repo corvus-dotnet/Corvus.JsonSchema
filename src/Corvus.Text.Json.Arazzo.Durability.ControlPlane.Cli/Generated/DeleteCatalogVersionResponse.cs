@@ -29,6 +29,11 @@ public struct DeleteCatalogVersionResponse : IApiResponse<DeleteCatalogVersionRe
     public bool IsSuccess => this.StatusCode >= 200 && this.StatusCode < 300;
 
     /// <summary>
+    /// Gets the 403 response body.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails ForbiddenBody { get; private set; }
+
+    /// <summary>
     /// Gets the 404 response body.
     /// </summary>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails NotFoundBody { get; private set; }
@@ -58,6 +63,14 @@ public struct DeleteCatalogVersionResponse : IApiResponse<DeleteCatalogVersionRe
             return response;
         }
 
+        if (statusCode == 403)
+        {
+            var forbiddenDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            response.parsedDocument = forbiddenDoc;
+            response.ForbiddenBody = forbiddenDoc.RootElement;
+            return response;
+        }
+
         if (statusCode == 404)
         {
             var notFoundDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
@@ -75,6 +88,23 @@ public struct DeleteCatalogVersionResponse : IApiResponse<DeleteCatalogVersionRe
         }
 
         return response;
+    }
+
+    /// <summary>
+    /// Tries to get the 403 typed response body.
+    /// </summary>
+    /// <param name="result">The typed response body if the status matches.</param>
+    /// <returns><see langword="true"/> if the status code is 403.</returns>
+    public bool TryGetForbidden(out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails result)
+    {
+        if (this.StatusCode == 403)
+        {
+            result = this.ForbiddenBody;
+            return true;
+        }
+
+        result = default;
+        return false;
     }
 
     /// <summary>
@@ -116,15 +146,22 @@ public struct DeleteCatalogVersionResponse : IApiResponse<DeleteCatalogVersionRe
     /// and calls the corresponding handler.
     /// </summary>
     /// <typeparam name="TResult">The type of the result returned by the handler.</typeparam>
+    /// <param name="matchForbidden">Handler for the 403 response.</param>
     /// <param name="matchNotFound">Handler for the 404 response.</param>
     /// <param name="matchConflict">Handler for the 409 response.</param>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
+        ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TResult> matchForbidden,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TResult> matchNotFound,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TResult> matchConflict,
         ResponseMatcher<int, TResult> matchDefault)
     {
+        if (this.StatusCode == 403)
+        {
+            return matchForbidden(this.ForbiddenBody);
+        }
+
         if (this.StatusCode == 404)
         {
             return matchNotFound(this.NotFoundBody);
@@ -145,17 +182,24 @@ public struct DeleteCatalogVersionResponse : IApiResponse<DeleteCatalogVersionRe
     /// <typeparam name="TContext">The type of the context to pass to the handler.</typeparam>
     /// <typeparam name="TResult">The type of the result returned by the handler.</typeparam>
     /// <param name="context">The context to pass to the handler.</param>
+    /// <param name="matchForbidden">Handler for the 403 response.</param>
     /// <param name="matchNotFound">Handler for the 404 response.</param>
     /// <param name="matchConflict">Handler for the 409 response.</param>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
+        ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TContext, TResult> matchForbidden,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TContext, TResult> matchNotFound,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TContext, TResult> matchConflict,
         ResponseMatcher<int, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {
+        if (this.StatusCode == 403)
+        {
+            return matchForbidden(this.ForbiddenBody, context);
+        }
+
         if (this.StatusCode == 404)
         {
             return matchNotFound(this.NotFoundBody, context);
@@ -178,7 +222,15 @@ public struct DeleteCatalogVersionResponse : IApiResponse<DeleteCatalogVersionRe
         }
         else if (mode == ValidationMode.Detailed)
         {
-            if (this.StatusCode == 404)
+            if (this.StatusCode == 403)
+            {
+                using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!this.ForbiddenBody.EvaluateSchema(collector))
+                {
+                    ThrowHelper.ThrowResponseBodyValidationFailed(403, SchemaValidationDetail.FormatResults(collector));
+                }
+            }
+            else if (this.StatusCode == 404)
             {
                 using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
                 if (!this.NotFoundBody.EvaluateSchema(collector))
@@ -197,7 +249,14 @@ public struct DeleteCatalogVersionResponse : IApiResponse<DeleteCatalogVersionRe
         }
         else
         {
-            if (this.StatusCode == 404)
+            if (this.StatusCode == 403)
+            {
+                if (!this.ForbiddenBody.EvaluateSchema())
+                {
+                    ThrowHelper.ThrowResponseBodyValidationFailed(403);
+                }
+            }
+            else if (this.StatusCode == 404)
             {
                 if (!this.NotFoundBody.EvaluateSchema())
                 {

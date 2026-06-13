@@ -42,6 +42,14 @@ public readonly struct DeleteRunResult
     public static DeleteRunResult NoContent() => new(204, default, null);
 
     /// <summary>
+    /// Creates a 403 Forbidden result.
+    /// </summary>
+    /// <param name="body">The response body.</param>
+    /// <param name="workspace">The workspace for building the response value.</param>
+    /// <returns>A <see cref="DeleteRunResult"/> with status 403.</returns>
+    public static DeleteRunResult Forbidden(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(403, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+
+    /// <summary>
     /// Creates a 404 NotFound result.
     /// </summary>
     /// <param name="body">The response body.</param>
@@ -66,6 +74,7 @@ public readonly struct DeleteRunResult
         if (this.Body.IsUndefined()) return true;
         return this.StatusCode switch
         {
+            403 => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.From(this.Body).EvaluateSchema(),
             404 => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.From(this.Body).EvaluateSchema(),
             409 => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.From(this.Body).EvaluateSchema(),
             _ => true,

@@ -238,11 +238,11 @@ public readonly partial struct Runner
     /// The maximum number of runs the runner will execute concurrently.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger MaxConcurrency
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32 MaxConcurrency
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxConcurrencyUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxConcurrencyUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32 value))
             {
                 return value;
             }
