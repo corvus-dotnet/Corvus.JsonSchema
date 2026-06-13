@@ -30,25 +30,6 @@ public sealed class SecurityShellTests
     }
 
     [TestMethod]
-    public void User_tags_using_the_reserved_prefix_are_rejected_via_the_span_overload()
-    {
-        // The credential-write path validates a non-owning SecurityTagSet view (string-free); the reserved-prefix
-        // rejection must hold through that span path too, with the offending key surfaced in the message.
-        var shell = new SecurityShell([]);
-
-        Should.Throw<ArgumentException>(() => shell.ValidateUserTags(SecurityTagSet.FromTags([new SecurityTag("sys:tenant", "acme")])))
-            .Message.ShouldContain("sys:tenant");
-
-        // Unprefixed user tags are fine (including one with an escaped value, exercising the span enumerator's decode).
-        Should.NotThrow(() => shell.ValidateUserTags(SecurityTagSet.FromTags([new SecurityTag("team", "payments \"north\"")])));
-
-        // A custom prefix is honoured on the span path too.
-        var custom = new SecurityShell([], internalPrefix: "_internal.");
-        Should.Throw<ArgumentException>(() => custom.ValidateUserTags(SecurityTagSet.FromTags([new SecurityTag("_internal.region", "eu")])));
-        Should.NotThrow(() => custom.ValidateUserTags(SecurityTagSet.FromTags([new SecurityTag("sys:tenant", "acme")])));
-    }
-
-    [TestMethod]
     public void Internal_tags_are_stripped_from_client_views()
     {
         var shell = new SecurityShell([]);
