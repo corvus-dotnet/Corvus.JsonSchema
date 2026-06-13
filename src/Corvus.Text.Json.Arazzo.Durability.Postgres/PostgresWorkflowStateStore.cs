@@ -19,7 +19,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Postgres;
 /// Each operation opens a pooled connection, so the store is naturally concurrent. Create instances with
 /// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> after provisioning with <see cref="PrepareAsync(string, CancellationToken)"/>.
 /// </remarks>
-public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, IAsyncDisposable
+public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
     private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
@@ -154,6 +154,7 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
                 throw new WorkflowConflictException(id, expected);
             }
 
+            await SyncSecurityTagsAsync(connection, id, index.SecurityTags, cancellationToken).ConfigureAwait(false);
             return new WorkflowEtag("1");
         }
 
@@ -176,7 +177,33 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
             throw new WorkflowConflictException(id, expected);
         }
 
+        await SyncSecurityTagsAsync(connection, id, index.SecurityTags, cancellationToken).ConfigureAwait(false);
         return new WorkflowEtag((expectedVersion + 1).ToString(CultureInfo.InvariantCulture));
+    }
+
+    private static async Task SyncSecurityTagsAsync(NpgsqlConnection connection, WorkflowRunId id, IReadOnlyList<SecurityTag>? securityTags, CancellationToken cancellationToken)
+    {
+        await using (NpgsqlCommand delete = connection.CreateCommand())
+        {
+            delete.CommandText = "DELETE FROM workflow_run_security_tags WHERE run_id = @id;";
+            delete.Parameters.AddWithValue("id", id.Value);
+            await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        if (securityTags is not { Count: > 0 })
+        {
+            return;
+        }
+
+        foreach (SecurityTag tag in securityTags)
+        {
+            await using NpgsqlCommand insert = connection.CreateCommand();
+            insert.CommandText = "INSERT INTO workflow_run_security_tags (run_id, tag_key, tag_value) VALUES (@id, @key, @value);";
+            insert.Parameters.AddWithValue("id", id.Value);
+            insert.Parameters.AddWithValue("key", tag.Key);
+            insert.Parameters.AddWithValue("value", tag.Value);
+            await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
     }
 
     /// <inheritdoc/>
@@ -240,7 +267,7 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
     {
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlCommand delete = connection.CreateCommand();
-        delete.CommandText = "DELETE FROM workflow_runs WHERE run_id = @id; DELETE FROM workflow_leases WHERE run_id = @id;";
+        delete.CommandText = "DELETE FROM workflow_runs WHERE run_id = @id; DELETE FROM workflow_leases WHERE run_id = @id; DELETE FROM workflow_run_security_tags WHERE run_id = @id;";
         delete.Parameters.AddWithValue("id", id.Value);
         await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -340,6 +367,7 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
               AND (@updated_before IS NULL OR updated_at < @updated_before)
               AND (@correlation_id IS NULL OR correlation_id = @correlation_id)
               {{tagPredicates}}
+              {{securityPredicate}}
               AND (@after IS NULL OR run_id > @after)
             ORDER BY run_id
             LIMIT @limit;
@@ -369,6 +397,30 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         else
         {
             select.CommandText = select.CommandText.Replace("{{tagPredicates}}", string.Empty);
+        }
+
+        // Row-security reach (§14.4): correlated EXISTS over the run's security tags (reached only for a store
+        // declaring ISupportsRowSecurityFilter).
+        if (query.Security is { } security)
+        {
+            int securityParam = 0;
+            var emitter = new SqlSecurityRuleEmitter(
+                "workflow_run_security_tags",
+                ["run_id"],
+                "tag_key",
+                "tag_value",
+                "workflow_runs",
+                value =>
+                {
+                    string name = "sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
+                    select.Parameters.AddWithValue(name, value);
+                    return "@" + name;
+                });
+            select.CommandText = select.CommandText.Replace("{{securityPredicate}}", "AND (" + security.ToSqlPredicate(emitter) + ")");
+        }
+        else
+        {
+            select.CommandText = select.CommandText.Replace("{{securityPredicate}}", string.Empty);
         }
 
         var runs = new List<WorkflowRunListing>();
@@ -453,6 +505,13 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         );
         CREATE INDEX IF NOT EXISTS ix_workflow_runs_due ON workflow_runs (status, due_at);
         CREATE INDEX IF NOT EXISTS ix_workflow_runs_awaiting ON workflow_runs (status, awaiting_channel, awaiting_correlation_id);
+        CREATE TABLE IF NOT EXISTS workflow_run_security_tags (
+            run_id TEXT NOT NULL,
+            tag_key TEXT NOT NULL,
+            tag_value TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS ix_workflow_run_security_tags_run ON workflow_run_security_tags (run_id);
+        CREATE INDEX IF NOT EXISTS ix_workflow_run_security_tags_kv ON workflow_run_security_tags (tag_key, tag_value);
         CREATE TABLE IF NOT EXISTS workflow_leases (
             run_id TEXT PRIMARY KEY NOT NULL,
             owner TEXT NOT NULL,

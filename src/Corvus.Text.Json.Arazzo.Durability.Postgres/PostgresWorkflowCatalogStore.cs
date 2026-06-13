@@ -20,7 +20,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Postgres;
 /// Each operation opens a pooled connection, so the store is naturally concurrent. Create instances with
 /// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> after provisioning with <see cref="PrepareAsync(string, CancellationToken)"/>.
 /// </remarks>
-public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDisposable
+public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string ColumnList =
         "BaseWorkflowId, VersionNumber, WorkflowId, Title, Description, Status, Tags, OwnerName, OwnerEmail, OwnerTeam, OwnerUrl, Sources, Hash, CreatedBy, CreatedAt, LastUpdatedBy, LastUpdatedAt, ObsoletedBy, ObsoletedAt, Runnable";
@@ -182,6 +182,7 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, IAsync
               AND (@owner IS NULL OR OwnerName ILIKE @ownerLike ESCAPE '\' OR OwnerEmail ILIKE @ownerLike ESCAPE '\')
               AND (@workflowIdPrefix IS NULL OR lower(WorkflowId) LIKE @workflowIdPrefixLike ESCAPE '\')
               {{tagPredicates}}
+              {{securityPredicate}}
               AND (@after IS NULL OR (BaseWorkflowId || lpad(VersionNumber::text, 10, '0')) > @after)
             ORDER BY BaseWorkflowId, VersionNumber
             LIMIT @limit;
@@ -212,6 +213,29 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, IAsync
         else
         {
             select.CommandText = select.CommandText.Replace("{{tagPredicates}}", string.Empty);
+        }
+
+        // Row-security reach (§14.4): correlated EXISTS over the version's security tags.
+        if (query.Security is { } security)
+        {
+            int securityParam = 0;
+            var emitter = new SqlSecurityRuleEmitter(
+                "CatalogVersionSecurityTags",
+                ["BaseWorkflowId", "VersionNumber"],
+                "TagKey",
+                "TagValue",
+                "CatalogVersions",
+                value =>
+                {
+                    string name = "sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
+                    select.Parameters.AddWithValue(name, value);
+                    return "@" + name;
+                });
+            select.CommandText = select.CommandText.Replace("{{securityPredicate}}", "AND (" + security.ToSqlPredicate(emitter) + ")");
+        }
+        else
+        {
+            select.CommandText = select.CommandText.Replace("{{securityPredicate}}", string.Empty);
         }
 
         var versions = new List<CatalogVersion>();
@@ -321,7 +345,7 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, IAsync
         foreach (CatalogVersionRef reference in versions)
         {
             await using NpgsqlCommand delete = connection.CreateCommand();
-            delete.CommandText = "DELETE FROM CatalogVersions WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;";
+            delete.CommandText = "DELETE FROM CatalogVersions WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber; DELETE FROM CatalogVersionSecurityTags WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;";
             delete.Parameters.AddWithValue("baseWorkflowId", reference.BaseWorkflowId);
             delete.Parameters.AddWithValue("versionNumber", reference.VersionNumber);
             await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -498,6 +522,22 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, IAsync
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
+        // Persist the version's security tags for indexed reach-filtering (§14.4), in the same transaction.
+        if (metadata.SecurityTags is { Count: > 0 } securityTags)
+        {
+            foreach (SecurityTag tag in securityTags)
+            {
+                await using NpgsqlCommand tagInsert = connection.CreateCommand();
+                tagInsert.Transaction = transaction;
+                tagInsert.CommandText = "INSERT INTO CatalogVersionSecurityTags (BaseWorkflowId, VersionNumber, TagKey, TagValue) VALUES (@baseWorkflowId, @versionNumber, @key, @value);";
+                tagInsert.Parameters.AddWithValue("baseWorkflowId", baseWorkflowId);
+                tagInsert.Parameters.AddWithValue("versionNumber", versionNumber);
+                tagInsert.Parameters.AddWithValue("key", tag.Key);
+                tagInsert.Parameters.AddWithValue("value", tag.Value);
+                await tagInsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            }
+        }
+
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
         return CatalogVersion.Create(
@@ -558,5 +598,13 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, IAsync
         );
         CREATE INDEX IF NOT EXISTS ix_catalogversions_status ON CatalogVersions (Status);
         CREATE INDEX IF NOT EXISTS ix_catalogversions_workflowid_lower ON CatalogVersions (lower(WorkflowId) text_pattern_ops);
+        CREATE TABLE IF NOT EXISTS CatalogVersionSecurityTags (
+            BaseWorkflowId TEXT NOT NULL,
+            VersionNumber INTEGER NOT NULL,
+            TagKey TEXT NOT NULL,
+            TagValue TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS ix_catalogversionsecuritytags_version ON CatalogVersionSecurityTags (BaseWorkflowId, VersionNumber);
+        CREATE INDEX IF NOT EXISTS ix_catalogversionsecuritytags_kv ON CatalogVersionSecurityTags (TagKey, TagValue);
         """;
 }
