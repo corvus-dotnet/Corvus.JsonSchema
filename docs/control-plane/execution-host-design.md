@@ -409,8 +409,10 @@ descriptions** to real endpoints + credentials:
    seeded with bootstrap rules (tenant-scoped / ABAC label-superset / intersection); plus the deployment
    access-control shell (§14.3) — reserved-prefix immutable, client-invisible internal tags + a mandated
    wrapper rule ANDed into every decision for inescapable multi-tenant isolation. Engine + InMemory store +
-   shell + **control-plane HTTP enforcement (§14.4)** are done; remaining: the per-backend predicate pushdown
-   (with fail-loud guards until each backend honors the filter) and the security/bootstrap-rule API.
+   shell + **control-plane HTTP enforcement (§14.4)** + the **per-backend predicate pushdown** (all ~18 stores,
+   container-verified; fail-loud `ISupportsRowSecurityFilter` guard until a backend honors the filter) +
+   **deny-by-default** (empty criteria / unclassified rows admit nothing) are done; remaining: the
+   security/bootstrap-rule API.
 
 The paused demo work (`samples/.../docs/live-execution.md`) becomes the *manual* prototype of Phase 1–3 (it
 hand-builds the binder + compiles in-process); this design productionises it behind the catalog.
@@ -556,11 +558,16 @@ Row authorization decides **which** workflows (catalog versions) and runs a prin
 - The layers compose: scopes (§14.1) gate the **operation**; the resolved tag rule gates the **rows**. A
   `runs:read` principal lists runs, but only those whose security tags satisfy its rule.
 
-**Open/assumed for implementation** (revise as the security API design firms up): unlabelled rows are visible
-only to a rule that admits them (default-deny is the safer posture once a principal has a non-trivial rule);
-the rule grammar may need an `in (...)` set operator and null/absent-label handling beyond the step-criterion
-subset; and the store-predicate translation is per backend (~18 stores) so it follows the established
-reference-then-fan-out pattern.
+**Resolved during implementation:** **deny-by-default is now the posture** — a non-null `SecurityFilter` admits
+a row only if it positively grants it: an empty rule set admits nothing ("no restriction" is a `null` reach /
+`AccessContext.System`, never an empty filter), and an unclassified (untagged) row is admitted to no scoped
+principal (only the full-reach `null` credential sees untagged rows). The store-predicate translation is done
+per backend (~18 stores, container-verified) via the reference-then-fan-out pattern, with the
+`ExistsAnyTag` guard enforcing the untagged-deny at the indexed-query level.
+
+**Still open/assumed** (revise as the security API design firms up): the rule grammar may need an `in (...)` set
+operator and richer null/absent-label handling beyond the step-criterion subset; and the persistence + claim→rule
+mapping model for the security API itself (below).
 
 ### 14.3 Deployment access-control shell — mandated filters + internal tags
 
