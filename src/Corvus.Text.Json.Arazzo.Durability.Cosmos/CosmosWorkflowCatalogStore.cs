@@ -4,8 +4,7 @@
 
 using System.Globalization;
 using System.Net;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using System.Runtime.CompilerServices;
 using Microsoft.Azure.Cosmos;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
@@ -20,15 +19,21 @@ namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
 /// The document id is <c>{baseWorkflowId}-v{versionNumber}</c>, so the next version is assigned by querying the
 /// current max within the base-id partition and attempting a create-if-not-exists; a concurrent add that already
 /// took that number surfaces as a <see cref="HttpStatusCode.Conflict"/>, which is retried against the new max —
-/// the same optimistic-concurrency discipline the run store uses for its checkpoint writes. Provision the
-/// database and container once with <see cref="PrepareAsync(string, string, CancellationToken)"/>, then open the
-/// store with <see cref="ConnectAsync(string, string, TimeProvider?, CancellationToken)"/>; the overloads taking
-/// a <see cref="CosmosClient"/> let callers configure the client (for example a least-privileged data-plane
-/// managed identity) themselves.
+/// the same optimistic-concurrency discipline the run store uses for its checkpoint writes. Documents are written
+/// and read through the Cosmos <em>stream</em> APIs so persistence flows through the <see cref="CatalogDocument"/>
+/// Corvus.Text.Json schema type and never the SDK's reflection serializer. Provision the database and container
+/// once with <see cref="PrepareAsync(string, string, CancellationToken)"/>, then open the store with
+/// <see cref="ConnectAsync(string, string, TimeProvider?, IWorkflowMetadataProvider?, IWorkflowExecutorProvider?, CancellationToken)"/>;
+/// the overloads taking a <see cref="CosmosClient"/> let callers configure the client (for example a
+/// least-privileged data-plane managed identity) themselves.
 /// </remarks>
 public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string CatalogContainerId = "workflow_catalog";
+
+    private static readonly byte[] BaseWorkflowIdProperty = "baseWorkflowId"u8.ToArray();
+    private static readonly byte[] VersionNumberProperty = "versionNumber"u8.ToArray();
+    private static readonly byte[] WorkflowIdProperty = "workflowId"u8.ToArray();
 
     private readonly CosmosClient client;
     private readonly Container catalog;
@@ -68,7 +73,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
     /// Creating a database/container is a Cosmos <em>management-plane</em> operation — the data-plane RBAC roles
     /// (for example <c>Cosmos DB Built-in Data Contributor</c>) cannot do it. So provisioning needs the account
     /// key or a control-plane role and must be separated from the least-privileged data-plane credential used to
-    /// <see cref="ConnectAsync(CosmosClient, string, TimeProvider?, CancellationToken)"/> the store for operation.
+    /// <see cref="ConnectAsync(CosmosClient, string, TimeProvider?, IWorkflowMetadataProvider?, IWorkflowExecutorProvider?, CancellationToken)"/> the store for operation.
     /// Run this once at deploy/migration time.
     /// </remarks>
     /// <param name="client">A configured Cosmos client (the caller retains ownership and must dispose it).</param>
@@ -137,12 +142,13 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         return new ValueTask<CosmosWorkflowCatalogStore>(Connect(client, databaseName, timeProvider, ownsClient: false, metadataProvider, executorProvider));
     }
 
-    /// <summary>The serializer options the store relies on (camelCase property names, null properties omitted).</summary>
+    /// <summary>The Cosmos client options the store relies on.</summary>
+    /// <remarks>
+    /// The store reads and writes through the Cosmos stream APIs and serializes documents with Corvus.Text.Json, so
+    /// no SDK serializer is configured.
+    /// </remarks>
     /// <returns>The Cosmos client options used by the connection-string overloads.</returns>
-    public static CosmosClientOptions CreateClientOptions() => new()
-    {
-        UseSystemTextJsonSerializerWithOptions = SerializerOptions,
-    };
+    public static CosmosClientOptions CreateClientOptions() => new();
 
     /// <inheritdoc/>
     public ValueTask<CatalogVersion> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
@@ -154,25 +160,27 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
     /// <inheritdoc/>
     public async ValueTask<CatalogVersion?> GetAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
-        CatalogDocument? document = await this.ReadOneAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
-        return document?.ToVersion();
+        (CatalogDocument Document, string Etag)? read = await this.ReadOneAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+        return read is { } r ? r.Document.ToVersion() : null;
     }
 
     /// <inheritdoc/>
     public async ValueTask<ReadOnlyMemory<byte>?> GetPackageAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
-        CatalogDocument? document = await this.ReadOneAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
-        byte[]? bytes = document?.Package;
-        return bytes is null ? null : (ReadOnlyMemory<byte>?)bytes;
+        (CatalogDocument Document, string Etag)? read = await this.ReadOneAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+
+        // The null branch must be a genuine null Nullable: a bare `null` here would bind the conditional to byte[]
+        // and the implicit byte[]→ReadOnlyMemory<byte> conversion turns a missing version into an empty (non-null)
+        // memory rather than the expected "absent".
+        return read is { } r ? r.Document.PackageBytes() : (ReadOnlyMemory<byte>?)null;
     }
 
     /// <inheritdoc/>
     public async ValueTask<ReadOnlyMemory<byte>?> GetDocumentAsync(string baseWorkflowId, int versionNumber, string documentName, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(documentName);
-        CatalogDocument? document = await this.ReadOneAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
-        byte[]? bytes = document?.Package;
-        return bytes is null ? null : CatalogPackage.GetDocument(bytes, documentName);
+        (CatalogDocument Document, string Etag)? read = await this.ReadOneAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+        return read is { } r ? CatalogPackage.GetDocument(r.Document.PackageBytes(), documentName) : null;
     }
 
     /// <inheritdoc/>
@@ -282,22 +290,17 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
 
         var versions = new List<CatalogVersion>();
         string? continuation = null;
-        using FeedIterator<CatalogDocument> iterator = this.catalog.GetItemQueryIterator<CatalogDocument>(definition);
-        while (iterator.HasMoreResults)
+        await foreach (ReadOnlyMemory<byte> element in QueryElementsAsync(this.catalog, definition, cancellationToken).ConfigureAwait(false))
         {
-            FeedResponse<CatalogDocument> page = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
-            foreach (CatalogDocument document in page)
+            if (versions.Count == limit)
             {
-                if (versions.Count == limit)
-                {
-                    // Fetched one beyond the page — a next page exists.
-                    CatalogVersion last = versions[^1];
-                    continuation = WorkflowContinuationToken.Encode(SortKey(last.Ref.BaseWorkflowId, last.Ref.VersionNumber));
-                    return new CatalogPage(versions, continuation);
-                }
-
-                versions.Add(document.ToVersion());
+                // Fetched one beyond the page — a next page exists.
+                CatalogVersion last = versions[^1];
+                continuation = WorkflowContinuationToken.Encode(CatalogDocument.ComputeSortKey(last.Ref.BaseWorkflowId, last.Ref.VersionNumber));
+                return new CatalogPage(versions, continuation);
             }
+
+            versions.Add(CatalogDocument.FromJson(element).ToVersion());
         }
 
         return new CatalogPage(versions, continuation);
@@ -307,23 +310,15 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
     public async ValueTask<CatalogVersion?> UpdateMetadataAsync(string baseWorkflowId, int versionNumber, CatalogMetadataPatch patch, CancellationToken cancellationToken)
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
-        string id = DocumentId(baseWorkflowId, versionNumber);
         var partition = new PartitionKey(baseWorkflowId);
 
-        CatalogDocument? document;
-        string etag;
-        try
-        {
-            ItemResponse<CatalogDocument> read = await this.catalog.ReadItemAsync<CatalogDocument>(id, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
-            document = read.Resource;
-            etag = read.ETag;
-        }
-        catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        (CatalogDocument Document, string Etag)? read = await this.ReadOneAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+        if (read is not { } found)
         {
             return null;
         }
 
-        CatalogVersion current = document.ToVersion();
+        CatalogVersion current = found.Document.ToVersion();
         CatalogStatus currentStatus = current.StatusValue;
         CatalogStatus status = patch.Status ?? currentStatus;
         bool newlyObsolete = status == CatalogStatus.Obsolete && currentStatus != CatalogStatus.Obsolete;
@@ -333,19 +328,9 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         IReadOnlyList<string> tags = patch.Tags is { } t ? [.. t] : current.TagsValue;
         string? obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedByOrNull;
         DateTimeOffset? obsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAtValue;
+        IReadOnlyList<SecurityTag> securityTags = current.SecurityTagsValue;
 
-        document.Status = status.ToString();
-        document.Tags = tags is { Count: > 0 } ? [.. tags] : null;
-        document.Owner = OwnerDocument.From(ownerValue);
-        document.LastUpdatedBy = patch.UpdatedBy;
-        document.LastUpdatedAt = now.ToUnixTimeMilliseconds();
-        document.ObsoletedBy = obsoletedBy;
-        document.ObsoletedAt = obsoletedAt?.ToUnixTimeMilliseconds();
-
-        var options = new ItemRequestOptions { IfMatchEtag = etag };
-        await this.catalog.ReplaceItemAsync(document, id, partition, options, cancellationToken).ConfigureAwait(false);
-
-        return CatalogVersion.Create(
+        CatalogVersion updated = CatalogVersion.Create(
             baseWorkflowId: current.Ref.BaseWorkflowId,
             versionNumber: current.Ref.VersionNumber,
             workflowId: current.Ref.WorkflowId,
@@ -362,22 +347,35 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
             lastUpdatedAt: now,
             obsoletedBy: obsoletedBy,
             obsoletedAt: obsoletedAt,
-            runnable: (bool)current.Runnable);
+            runnable: (bool)current.Runnable,
+            securityTags: securityTags is { Count: > 0 } ? securityTags : null);
+
+        byte[] body = CatalogDocument.From(updated, found.Document.PackageBytes()).ToJsonBytes();
+        var options = new ItemRequestOptions { IfMatchEtag = found.Etag };
+        using var stream = CosmosJson.ToStream(body);
+        using ResponseMessage response = await this.catalog.ReplaceItemStreamAsync(
+            stream, CatalogDocument.DocumentId(baseWorkflowId, versionNumber), partition, options, cancellationToken).ConfigureAwait(false);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+        return updated;
     }
 
     /// <inheritdoc/>
     public async ValueTask<bool> DeleteAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
-        try
-        {
-            await this.catalog.DeleteItemAsync<CatalogDocument>(
-                DocumentId(baseWorkflowId, versionNumber), new PartitionKey(baseWorkflowId), cancellationToken: cancellationToken).ConfigureAwait(false);
-            return true;
-        }
-        catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        using ResponseMessage response = await this.catalog.DeleteItemStreamAsync(
+            CatalogDocument.DocumentId(baseWorkflowId, versionNumber), new PartitionKey(baseWorkflowId), cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return false;
         }
+
+        response.EnsureSuccessStatusCode();
+        return true;
     }
 
     /// <inheritdoc/>
@@ -387,13 +385,14 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
             .WithParameter("@status", nameof(CatalogStatus.Obsolete));
 
         var refs = new List<CatalogVersionRef>();
-        using FeedIterator<RefResult> iterator = this.catalog.GetItemQueryIterator<RefResult>(definition);
-        while (iterator.HasMoreResults)
+        await foreach (ReadOnlyMemory<byte> element in QueryElementsAsync(this.catalog, definition, cancellationToken).ConfigureAwait(false))
         {
-            FeedResponse<RefResult> page = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
-            foreach (RefResult result in page)
+            string? baseWorkflowId = CosmosJson.GetString(element, BaseWorkflowIdProperty);
+            string? workflowId = CosmosJson.GetString(element, WorkflowIdProperty);
+            long? versionNumber = CosmosJson.GetInt64(element, VersionNumberProperty);
+            if (baseWorkflowId is not null && workflowId is not null && versionNumber is { } v)
             {
-                refs.Add(new CatalogVersionRef(result.BaseWorkflowId, result.VersionNumber, result.WorkflowId));
+                refs.Add(new CatalogVersionRef(baseWorkflowId, (int)v, workflowId));
             }
         }
 
@@ -421,12 +420,6 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         return default;
     }
 
-    private static readonly JsonSerializerOptions SerializerOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-    };
-
     private static async ValueTask ProvisionAsync(CosmosClient client, string databaseName, CancellationToken cancellationToken)
     {
         Database database = await client.CreateDatabaseIfNotExistsAsync(databaseName, cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -442,11 +435,20 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         return new CosmosWorkflowCatalogStore(client, catalog, timeProvider ?? TimeProvider.System, ownsClient, metadataProvider, executorProvider);
     }
 
-    private static string DocumentId(string baseWorkflowId, int versionNumber)
-        => string.Create(CultureInfo.InvariantCulture, $"{baseWorkflowId}-v{versionNumber}");
-
-    private static string SortKey(string baseWorkflowId, int versionNumber)
-        => string.Create(CultureInfo.InvariantCulture, $"{baseWorkflowId}{versionNumber:D10}");
+    private static async IAsyncEnumerable<ReadOnlyMemory<byte>> QueryElementsAsync(Container container, QueryDefinition query, [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        using FeedIterator iterator = container.GetItemQueryStreamIterator(query);
+        while (iterator.HasMoreResults)
+        {
+            using ResponseMessage response = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+            ReadOnlyMemory<byte> page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+            foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page))
+            {
+                yield return element;
+            }
+        }
+    }
 
     private async ValueTask<CatalogVersion> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
@@ -476,17 +478,17 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
                 runnable: projection.HasExecutor,
                 securityTags: securityTags);
 
-            var document = CatalogDocument.From(version, projection.CanonicalPackage.ToArray());
-
-            try
-            {
-                await this.catalog.CreateItemAsync(document, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
-                return version;
-            }
-            catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.Conflict)
+            byte[] body = CatalogDocument.From(version, projection.CanonicalPackage.ToArray()).ToJsonBytes();
+            using var stream = CosmosJson.ToStream(body);
+            using ResponseMessage response = await this.catalog.CreateItemStreamAsync(stream, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
+            if (response.StatusCode == HttpStatusCode.Conflict)
             {
                 // A concurrent add already claimed this version number; recompute the max and retry.
+                continue;
             }
+
+            response.EnsureSuccessStatusCode();
+            return version;
         }
     }
 
@@ -494,212 +496,33 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
     {
         var definition = new QueryDefinition("SELECT VALUE MAX(c.versionNumber) FROM c WHERE c.baseWorkflowId = @baseWorkflowId")
             .WithParameter("@baseWorkflowId", baseWorkflowId);
-        using FeedIterator<int?> iterator = this.catalog.GetItemQueryIterator<int?>(
+        using FeedIterator iterator = this.catalog.GetItemQueryStreamIterator(
             definition, requestOptions: new QueryRequestOptions { PartitionKey = new PartitionKey(baseWorkflowId) });
         while (iterator.HasMoreResults)
         {
-            FeedResponse<int?> page = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
-            foreach (int? value in page)
+            using ResponseMessage response = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+            ReadOnlyMemory<byte> page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+            foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page))
             {
-                return value ?? 0;
+                return (int)(CosmosJson.AsInt64OrNull(element) ?? 0);
             }
         }
 
         return 0;
     }
 
-    private async ValueTask<CatalogDocument?> ReadOneAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    private async ValueTask<(CatalogDocument Document, string Etag)?> ReadOneAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
-        try
-        {
-            ItemResponse<CatalogDocument> response = await this.catalog.ReadItemAsync<CatalogDocument>(
-                DocumentId(baseWorkflowId, versionNumber), new PartitionKey(baseWorkflowId), cancellationToken: cancellationToken).ConfigureAwait(false);
-            return response.Resource;
-        }
-        catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        using ResponseMessage response = await this.catalog.ReadItemStreamAsync(
+            CatalogDocument.DocumentId(baseWorkflowId, versionNumber), new PartitionKey(baseWorkflowId), cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return null;
         }
-    }
 
-    private sealed class CatalogDocument
-    {
-        [JsonPropertyName("id")]
-        public string Id { get; set; } = string.Empty;
-
-        [JsonPropertyName("baseWorkflowId")]
-        public string BaseWorkflowId { get; set; } = string.Empty;
-
-        [JsonPropertyName("versionNumber")]
-        public int VersionNumber { get; set; }
-
-        [JsonPropertyName("sortKey")]
-        public string SortKey { get; set; } = string.Empty;
-
-        [JsonPropertyName("workflowId")]
-        public string WorkflowId { get; set; } = string.Empty;
-
-        // Lowercased copy of WorkflowId so the case-insensitive prefix search can use a (case-sensitive,
-        // index-using) STARTSWITH against the container's range index — STARTSWITH(.., true) does not.
-        [JsonPropertyName("workflowIdLower")]
-        public string WorkflowIdLower { get; set; } = string.Empty;
-
-        [JsonPropertyName("title")]
-        public string Title { get; set; } = string.Empty;
-
-        [JsonPropertyName("description")]
-        public string? Description { get; set; }
-
-        [JsonPropertyName("status")]
-        public string Status { get; set; } = string.Empty;
-
-        [JsonPropertyName("tags")]
-        public List<string>? Tags { get; set; }
-
-        [JsonPropertyName("securityTags")]
-        public List<SecurityTagDocument>? SecurityTags { get; set; }
-
-        [JsonPropertyName("owner")]
-        public OwnerDocument Owner { get; set; } = new();
-
-        [JsonPropertyName("sources")]
-        public List<SourceDocument>? Sources { get; set; }
-
-        [JsonPropertyName("hash")]
-        public string Hash { get; set; } = string.Empty;
-
-        [JsonPropertyName("runnable")]
-        public bool Runnable { get; set; }
-
-        [JsonPropertyName("package")]
-        public byte[] Package { get; set; } = [];
-
-        [JsonPropertyName("createdBy")]
-        public string CreatedBy { get; set; } = string.Empty;
-
-        [JsonPropertyName("createdAt")]
-        public long CreatedAt { get; set; }
-
-        [JsonPropertyName("lastUpdatedBy")]
-        public string? LastUpdatedBy { get; set; }
-
-        [JsonPropertyName("lastUpdatedAt")]
-        public long? LastUpdatedAt { get; set; }
-
-        [JsonPropertyName("obsoletedBy")]
-        public string? ObsoletedBy { get; set; }
-
-        [JsonPropertyName("obsoletedAt")]
-        public long? ObsoletedAt { get; set; }
-
-        public static CatalogDocument From(CatalogVersion version, byte[] package) => new()
-        {
-            Id = DocumentId(version.Ref.BaseWorkflowId, version.Ref.VersionNumber),
-            BaseWorkflowId = version.Ref.BaseWorkflowId,
-            VersionNumber = version.Ref.VersionNumber,
-            SortKey = SortKey(version.Ref.BaseWorkflowId, version.Ref.VersionNumber),
-            WorkflowId = version.Ref.WorkflowId,
-            WorkflowIdLower = version.Ref.WorkflowId.ToLowerInvariant(),
-            Title = (string)version.Title,
-            Description = version.DescriptionOrNull,
-            Status = version.StatusValue.ToString(),
-            Tags = version.TagsValue is { Count: > 0 } t ? [.. t] : null,
-            SecurityTags = version.SecurityTagsValue is { Count: > 0 } st ? [.. st.Select(SecurityTagDocument.From)] : null,
-            Owner = OwnerDocument.From(version.OwnerValue),
-            Sources = version.SourcesValue is { Count: > 0 } s ? [.. s.Select(SourceDocument.From)] : null,
-            Hash = (string)version.Hash,
-            Runnable = (bool)version.Runnable,
-            Package = package,
-            CreatedBy = (string)version.CreatedBy,
-            CreatedAt = version.CreatedAtValue.ToUnixTimeMilliseconds(),
-            LastUpdatedBy = version.LastUpdatedByOrNull,
-            LastUpdatedAt = version.LastUpdatedAtValue?.ToUnixTimeMilliseconds(),
-            ObsoletedBy = version.ObsoletedByOrNull,
-            ObsoletedAt = version.ObsoletedAtValue?.ToUnixTimeMilliseconds(),
-        };
-
-        public CatalogVersion ToVersion() => CatalogVersion.Create(
-            baseWorkflowId: this.BaseWorkflowId,
-            versionNumber: this.VersionNumber,
-            workflowId: this.WorkflowId,
-            title: this.Title,
-            description: this.Description,
-            status: Enum.Parse<CatalogStatus>(this.Status),
-            tags: this.Tags is { Count: > 0 } t ? [.. t] : [],
-            owner: this.Owner.ToOwner(),
-            sources: this.Sources is { Count: > 0 } s ? [.. s.Select(static d => d.ToRef())] : [],
-            hash: this.Hash,
-            createdBy: this.CreatedBy,
-            createdAt: DateTimeOffset.FromUnixTimeMilliseconds(this.CreatedAt),
-            lastUpdatedBy: this.LastUpdatedBy,
-            lastUpdatedAt: this.LastUpdatedAt is { } lua ? DateTimeOffset.FromUnixTimeMilliseconds(lua) : null,
-            obsoletedBy: this.ObsoletedBy,
-            obsoletedAt: this.ObsoletedAt is { } oa ? DateTimeOffset.FromUnixTimeMilliseconds(oa) : null,
-            runnable: this.Runnable,
-            securityTags: this.SecurityTags is { Count: > 0 } st ? [.. st.Select(static d => d.ToSecurityTag())] : null);
-    }
-
-    /// <summary>A security tag as embedded in a document's <c>securityTags</c> array.</summary>
-    private sealed class SecurityTagDocument
-    {
-        [JsonPropertyName("k")]
-        public string Key { get; set; } = string.Empty;
-
-        [JsonPropertyName("v")]
-        public string Value { get; set; } = string.Empty;
-
-        public static SecurityTagDocument From(SecurityTag tag) => new() { Key = tag.Key, Value = tag.Value };
-
-        public SecurityTag ToSecurityTag() => new(this.Key, this.Value);
-    }
-
-    private sealed class OwnerDocument
-    {
-        [JsonPropertyName("name")]
-        public string Name { get; set; } = string.Empty;
-
-        [JsonPropertyName("email")]
-        public string Email { get; set; } = string.Empty;
-
-        [JsonPropertyName("team")]
-        public string? Team { get; set; }
-
-        [JsonPropertyName("url")]
-        public string? Url { get; set; }
-
-        public static OwnerDocument From(CatalogOwner owner) => new()
-        {
-            Name = owner.Name,
-            Email = owner.Email,
-            Team = owner.Team,
-            Url = owner.Url,
-        };
-
-        public CatalogOwner ToOwner() => new(this.Name, this.Email, this.Team, this.Url);
-    }
-
-    private sealed class SourceDocument
-    {
-        [JsonPropertyName("name")]
-        public string Name { get; set; } = string.Empty;
-
-        [JsonPropertyName("type")]
-        public string? Type { get; set; }
-
-        public static SourceDocument From(CatalogSourceRef source) => new() { Name = source.Name, Type = source.Type };
-
-        public CatalogSourceRef ToRef() => new(this.Name, this.Type);
-    }
-
-    private sealed class RefResult
-    {
-        [JsonPropertyName("baseWorkflowId")]
-        public string BaseWorkflowId { get; set; } = string.Empty;
-
-        [JsonPropertyName("versionNumber")]
-        public int VersionNumber { get; set; }
-
-        [JsonPropertyName("workflowId")]
-        public string WorkflowId { get; set; } = string.Empty;
+        response.EnsureSuccessStatusCode();
+        ReadOnlyMemory<byte> payload = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+        return (CatalogDocument.FromJson(payload), response.Headers.ETag);
     }
 }

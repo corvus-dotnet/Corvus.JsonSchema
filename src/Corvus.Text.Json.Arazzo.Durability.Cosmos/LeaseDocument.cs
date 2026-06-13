@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using Corvus.Text.Json;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
@@ -13,6 +14,8 @@ namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
 [JsonSchemaTypeGenerator("Schemas/LeaseDocument.json")]
 public readonly partial struct LeaseDocument
 {
+    private static readonly JsonWriterOptions WriterOptions = new() { Indented = false, SkipValidation = true };
+
     /// <summary>Gets the lease owner.</summary>
     public string OwnerValue => (string)this.Owner;
 
@@ -22,24 +25,27 @@ public readonly partial struct LeaseDocument
     /// <summary>Gets the lease expiry in Unix milliseconds.</summary>
     public long ExpiresAtValue => (long)this.ExpiresAt;
 
-    /// <summary>
-    /// Writes a lease document's persisted JSON straight to <paramref name="writer"/> — no intermediate
-    /// <see cref="LeaseDocument"/> value and no re-serialization (the store hands this to <c>CosmosJson.WriteToStream</c>
-    /// so the lease is serialized exactly once, into a pooled stream).
-    /// </summary>
-    /// <param name="writer">The writer to write the document to.</param>
+    /// <summary>Builds a lease document, detached and ready to persist.</summary>
     /// <param name="id">The run id the lease guards.</param>
     /// <param name="owner">The lease owner.</param>
     /// <param name="token">The lease token.</param>
     /// <param name="expiresAtUnixMs">The lease expiry, Unix milliseconds.</param>
-    public static void WriteJson(Utf8JsonWriter writer, string id, string owner, string token, long expiresAtUnixMs)
+    /// <returns>The document.</returns>
+    public static LeaseDocument Create(string id, string owner, string token, long expiresAtUnixMs)
     {
-        writer.WriteStartObject();
-        writer.WriteString(JsonPropertyNames.IdUtf8, id);
-        writer.WriteString(JsonPropertyNames.OwnerUtf8, owner);
-        writer.WriteString(JsonPropertyNames.TokenUtf8, token);
-        writer.WriteNumber(JsonPropertyNames.ExpiresAtUtf8, expiresAtUnixMs);
-        writer.WriteEndObject();
+        var buffer = new ArrayBufferWriter<byte>();
+        using (var writer = new Utf8JsonWriter(buffer, WriterOptions))
+        {
+            writer.WriteStartObject();
+            writer.WriteString(JsonPropertyNames.IdUtf8, id);
+            writer.WriteString(JsonPropertyNames.OwnerUtf8, owner);
+            writer.WriteString(JsonPropertyNames.TokenUtf8, token);
+            writer.WriteNumber(JsonPropertyNames.ExpiresAtUtf8, expiresAtUnixMs);
+            writer.WriteEndObject();
+        }
+
+        using ParsedJsonDocument<LeaseDocument> doc = ParsedJsonDocument<LeaseDocument>.Parse(buffer.WrittenMemory);
+        return doc.RootElement.Clone();
     }
 
     /// <summary>Parses a lease document from its persisted JSON, detached from the parse buffer.</summary>
@@ -49,5 +55,18 @@ public readonly partial struct LeaseDocument
     {
         using ParsedJsonDocument<LeaseDocument> doc = ParsedJsonDocument<LeaseDocument>.Parse(utf8);
         return doc.RootElement.Clone();
+    }
+
+    /// <summary>Serializes this lease document to its persisted JSON form.</summary>
+    /// <returns>The UTF-8 JSON document.</returns>
+    public byte[] ToJsonBytes()
+    {
+        var buffer = new ArrayBufferWriter<byte>();
+        using (var writer = new Utf8JsonWriter(buffer, WriterOptions))
+        {
+            this.WriteTo(writer);
+        }
+
+        return buffer.WrittenSpan.ToArray();
     }
 }

@@ -2,74 +2,82 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using Corvus.Text.Json;
-using Corvus.Text.Json.Arazzo.Durability;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
 
 /// <summary>
 /// The Azure Cosmos DB document shape for a runner registration, generated from <c>Schemas/RunnerDocument.json</c>.
-/// It carries the canonical <see cref="RunnerRegistration"/> JSON as a nested <c>doc</c> object (embedded verbatim,
-/// not base64) plus a queryable last-seen timestamp and a projected hosted-version list for the hosting index. The
-/// write path streams the envelope straight to the Cosmos request
-/// (<see cref="WriteEnvelopeStream(string, RunnerRegistration)"/> on register), writing the registration's bytes
-/// verbatim as a raw nested value from a pooled buffer — it never materializes a <see cref="RunnerDocument"/>
-/// instance or copies the document out to a <see cref="byte"/> array. A heartbeat instead patches the mirrored
-/// timestamps in place. Reads go through <see cref="FromJson"/> / <see cref="ToRegistration"/>.
+/// It carries the canonical <see cref="RunnerRegistration"/> JSON (base64) plus a queryable last-seen timestamp and
+/// a projected hosted-version list for the hosting index. Round-tripped through Corvus.Text.Json — never a
+/// reflection serializer.
 /// </summary>
 [JsonSchemaTypeGenerator("Schemas/RunnerDocument.json")]
 public readonly partial struct RunnerDocument
 {
+    private static readonly JsonWriterOptions WriterOptions = new() { Indented = false, SkipValidation = true };
+
     /// <summary>Gets the runner id.</summary>
     public string IdValue => (string)this.Id;
 
-    /// <summary>Parses a runner document from its persisted JSON as a detached value (one owned copy).</summary>
-    /// <param name="utf8">The UTF-8 JSON document.</param>
-    /// <returns>The document.</returns>
-    public static RunnerDocument FromJson(ReadOnlyMemory<byte> utf8) => ParseValue(utf8.Span);
+    /// <summary>Decodes the canonical registration JSON bytes.</summary>
+    /// <returns>The registration JSON bytes.</returns>
+    public byte[] DocBytes() => Convert.FromBase64String((string)this.Doc);
 
-    /// <summary>Streams the Cosmos envelope for a registration straight to a stream (no materialized document).</summary>
+    /// <summary>Reconstructs the registration carried by this document.</summary>
+    /// <returns>The runner registration.</returns>
+    public RunnerRegistration ToRegistration() => RunnerRegistration.FromJson(this.DocBytes());
+
+    /// <summary>Builds a runner document from a registration, detached and ready to persist.</summary>
     /// <param name="runnerId">The runner id.</param>
-    /// <param name="registration">The registration to embed.</param>
-    /// <returns>A readable stream over the envelope JSON, positioned at the start.</returns>
-    /// <remarks>A heartbeat does not use this — it patches the two mirrored timestamps in place (no read, no rewrite).</remarks>
-    public static Stream WriteEnvelopeStream(string runnerId, RunnerRegistration registration)
+    /// <param name="registration">The registration.</param>
+    /// <returns>The document.</returns>
+    public static RunnerDocument From(string runnerId, RunnerRegistration registration)
     {
-        // Serialize the registration JSON once into a pooled buffer, then write the envelope — id, queryable
-        // last-seen, the registration as a raw nested value, and the loaded-version projection — into a pooled
-        // stream, embedding the same bytes verbatim. No owned byte[], no nested writer rent.
-        using CosmosJson.RentedJson docJson = CosmosJson.RentJson(
-            registration,
-            static (Utf8JsonWriter docWriter, in RunnerRegistration r) => r.WriteTo(docWriter));
-
-        return CosmosJson.WriteToStream(
-            (RunnerId: runnerId, LastSeenAt: registration.LastSeenAtValue, Doc: docJson, Registration: registration),
-            static (Utf8JsonWriter writer, in (string RunnerId, DateTimeOffset LastSeenAt, CosmosJson.RentedJson Doc, RunnerRegistration Registration) c) =>
+        var buffer = new ArrayBufferWriter<byte>();
+        using (var writer = new Utf8JsonWriter(buffer, WriterOptions))
+        {
+            writer.WriteStartObject();
+            writer.WriteString(JsonPropertyNames.IdUtf8, runnerId);
+            writer.WriteNumber(JsonPropertyNames.LastSeenAtUtf8, registration.LastSeenAtValue.ToUnixTimeMilliseconds());
+            writer.WriteString(JsonPropertyNames.DocUtf8, Convert.ToBase64String(registration.ToJsonBytes()));
+            writer.WriteStartArray(JsonPropertyNames.LoadedVersionsUtf8);
+            foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
             {
                 writer.WriteStartObject();
-                writer.WriteString(JsonPropertyNames.IdUtf8, c.RunnerId);
-                writer.WriteNumber(JsonPropertyNames.LastSeenAtUtf8, c.LastSeenAt.ToUnixTimeMilliseconds());
-
-                // The registration is itself JSON — embed it verbatim as a nested value, not base64 (which would be a
-                // spurious encode here + decode on read). It is valid JSON we produced, so skip validation.
-                writer.WritePropertyName(JsonPropertyNames.DocUtf8);
-                writer.WriteRawValue(c.Doc.Span, skipInputValidation: true);
-
-                writer.WriteStartArray(JsonPropertyNames.LoadedVersionsUtf8);
-                foreach (RunnerRegistration.RunnerHostedVersion hosted in c.Registration.HostedVersions.EnumerateArray())
-                {
-                    if ((bool)hosted.Loaded)
-                    {
-                        writer.WriteStartObject();
-                        writer.WritePropertyName(HostedKey.JsonPropertyNames.BaseWorkflowIdUtf8);
-                        hosted.BaseWorkflowId.WriteTo(writer);
-                        writer.WriteNumber(HostedKey.JsonPropertyNames.VersionNumberUtf8, hosted.VersionNumber);
-                        writer.WriteEndObject();
-                    }
-                }
-
-                writer.WriteEndArray();
+                writer.WriteString(HostedKey.JsonPropertyNames.BaseWorkflowIdUtf8, baseWorkflowId);
+                writer.WriteNumber(HostedKey.JsonPropertyNames.VersionNumberUtf8, versionNumber);
                 writer.WriteEndObject();
-            });
+            }
+
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+        }
+
+        using ParsedJsonDocument<RunnerDocument> doc = ParsedJsonDocument<RunnerDocument>.Parse(buffer.WrittenMemory);
+        return doc.RootElement.Clone();
+    }
+
+    /// <summary>Parses a runner document from its persisted JSON, detached from the parse buffer.</summary>
+    /// <param name="utf8">The UTF-8 JSON document.</param>
+    /// <returns>The document.</returns>
+    public static RunnerDocument FromJson(ReadOnlyMemory<byte> utf8)
+    {
+        using ParsedJsonDocument<RunnerDocument> doc = ParsedJsonDocument<RunnerDocument>.Parse(utf8);
+        return doc.RootElement.Clone();
+    }
+
+    /// <summary>Serializes this runner document to its persisted JSON form.</summary>
+    /// <returns>The UTF-8 JSON document.</returns>
+    public byte[] ToJsonBytes()
+    {
+        var buffer = new ArrayBufferWriter<byte>();
+        using (var writer = new Utf8JsonWriter(buffer, WriterOptions))
+        {
+            this.WriteTo(writer);
+        }
+
+        return buffer.WrittenSpan.ToArray();
     }
 }
