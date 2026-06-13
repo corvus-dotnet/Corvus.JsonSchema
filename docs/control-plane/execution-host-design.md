@@ -411,8 +411,12 @@ descriptions** to real endpoints + credentials:
    wrapper rule ANDed into every decision for inescapable multi-tenant isolation. Engine + InMemory store +
    shell + **control-plane HTTP enforcement (§14.4)** + the **per-backend predicate pushdown** (all ~18 stores,
    container-verified; fail-loud `ISupportsRowSecurityFilter` guard until a backend honors the filter) +
-   **deny-by-default** (empty criteria / unclassified rows admit nothing) are done; remaining: the
-   security/bootstrap-rule API.
+   **deny-by-default** (empty criteria / unclassified rows admit nothing) + the **security/bootstrap-rule API**
+   (the `$claims.superset`/`$claims.intersects` grammar predicates, the persistent `ISecurityPolicyStore` of
+   named rules + per-verb claim→rule bindings, the `PersistentRowSecurityPolicy` resolver, idempotent bootstrap
+   seeding, the `/security/*` control-plane endpoints under `security:read`/`security:write` scopes, and the CLI
+   `security rule`/`binding` commands) are done; remaining: the `ISecurityPolicyStore` per-backend fan-out (the
+   reference InMemory store ships; the production backends follow the established reference-then-fan-out pattern).
 
 The paused demo work (`samples/.../docs/live-execution.md`) becomes the *manual* prototype of Phase 1–3 (it
 hand-builds the binder + compiles in-process); this design productionises it behind the catalog.

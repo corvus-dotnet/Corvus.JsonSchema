@@ -68,6 +68,29 @@ public static class CliApp
                 catalog.AddCommand<CatalogPurgeCommand>("purge")
                     .WithDescription("Bulk-reap obsolete versions with no referencing runs.");
             });
+
+            c.AddBranch<CommandSettings>("security", security =>
+            {
+                security.SetDescription("Author the row-security policy: rules and claim→rule bindings (security:read / security:write).");
+                security.AddBranch<CommandSettings>("rule", rule =>
+                {
+                    rule.SetDescription("Manage named security rules.");
+                    rule.AddCommand<SecurityRuleListCommand>("list").WithDescription("List all security rules.");
+                    rule.AddCommand<SecurityRuleGetCommand>("get").WithDescription("Get a security rule by name.");
+                    rule.AddCommand<SecurityRuleCreateCommand>("create").WithDescription("Create a security rule.");
+                    rule.AddCommand<SecurityRuleUpdateCommand>("update").WithDescription("Replace a security rule's content.");
+                    rule.AddCommand<SecurityRuleDeleteCommand>("delete").WithDescription("Delete a security rule.");
+                });
+                security.AddBranch<CommandSettings>("binding", binding =>
+                {
+                    binding.SetDescription("Manage claim→rule bindings.");
+                    binding.AddCommand<SecurityBindingListCommand>("list").WithDescription("List all security bindings.");
+                    binding.AddCommand<SecurityBindingGetCommand>("get").WithDescription("Get a security binding by id.");
+                    binding.AddCommand<SecurityBindingCreateCommand>("create").WithDescription("Create a claim→rule binding.");
+                    binding.AddCommand<SecurityBindingUpdateCommand>("update").WithDescription("Replace a claim→rule binding.");
+                    binding.AddCommand<SecurityBindingDeleteCommand>("delete").WithDescription("Delete a claim→rule binding.");
+                });
+            });
         });
 
         return app;

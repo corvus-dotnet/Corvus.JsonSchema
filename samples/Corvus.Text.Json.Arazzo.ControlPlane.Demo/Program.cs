@@ -40,6 +40,11 @@ var management = new WorkflowManagementClient(stateStore, "demo", DemoData.Compl
 var catalog = new WorkflowCatalogClient(catalogStore, stateStore, "demo");
 var runners = new InMemoryRunnerRegistry();
 
+// The row-security authoring API (§14.2) is served from a security-policy store, seeded with the editable
+// bootstrap rules (tenant-scoped / ABAC superset / intersection) so /security/* is populated out of the box.
+var securityPolicy = new Corvus.Text.Json.Arazzo.Durability.Security.InMemorySecurityPolicyStore();
+await Corvus.Text.Json.Arazzo.Durability.Security.SecurityBootstrap.SeedAsync(securityPolicy);
+
 // Control-plane authorization is per-deployment (design §14.1). The demo ships a concrete strategy — a dev
 // API-key scheme mapping a key to capability scopes — gated behind config so the open demo + its build-free
 // UI still run by default. Enable enforcement with `ControlPlane__RequireAuthorization=true`, then call the
@@ -84,7 +89,7 @@ else
 }
 
 // The real control-plane API, under a conventional base path the UI points at.
-app.MapGroup("/arazzo/v1").MapArazzoControlPlane(management, catalog, runners, requireAuthorization);
+app.MapGroup("/arazzo/v1").MapArazzoControlPlane(management, catalog, runners, requireAuthorization, securityPolicyStore: securityPolicy);
 
 // The demo backend services the workflows call (generated from the same OpenAPI sources, returning sample data).
 OnboardingApi.MapApiEndpoints(app.MapGroup("/svc/onboarding"), new OnboardingService());
