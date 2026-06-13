@@ -48,6 +48,18 @@ public sealed class SecurityRule
 
         /// <summary>A quoted literal value.</summary>
         Literal,
+
+        /// <summary>A <c>$claims.*</c> key-agnostic predicate over the whole claim set (e.g. <c>$claims.superset</c>); a complete boolean atom, not a comparand.</summary>
+        ClaimsPredicate,
+    }
+
+    private enum ClaimsQuantifier
+    {
+        /// <summary><c>$claims.superset</c> — every row tag is covered by the principal's claims (ABAC clearance).</summary>
+        Superset,
+
+        /// <summary><c>$claims.intersects</c> — at least one row tag is covered by the principal's claims.</summary>
+        Intersects,
     }
 
     /// <summary>Compiles a rule expression. Parse once; evaluate many times.</summary>
@@ -199,9 +211,113 @@ public sealed class SecurityRule
                 : (operand.ResolveKnown(claims).Count > 0 ? emitter.TrueLiteral : emitter.FalseLiteral);
     }
 
+    // A key-agnostic predicate over the whole claim set vs. the row's tags (design §14.2 bootstrap archetypes).
+    // "Covered" means a row tag (k, v) has v among the principal's claim values for key k.
+    private sealed class ClaimsCoverageNode(ClaimsQuantifier quantifier) : Node
+    {
+        public override bool Evaluate(IReadOnlyList<SecurityTag> tags, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
+        {
+            if (quantifier == ClaimsQuantifier.Superset)
+            {
+                // Every row tag must be covered (vacuously true on an untagged row; the filter denies that case).
+                foreach (SecurityTag tag in tags)
+                {
+                    if (!IsCovered(tag, claims))
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            // Intersects: at least one row tag must be covered.
+            foreach (SecurityTag tag in tags)
+            {
+                if (IsCovered(tag, claims))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public override string ToSql(ISecurityRuleSqlEmitter emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
+        {
+            if (quantifier == ClaimsQuantifier.Superset)
+            {
+                var claimEntries = new List<(string KeyPlaceholder, IReadOnlyList<string> ValuePlaceholders)>();
+                foreach (KeyValuePair<string, IReadOnlyList<string>> claim in claims)
+                {
+                    if (claim.Value.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    string keyPlaceholder = emitter.Parameter(claim.Key);
+                    var valuePlaceholders = new List<string>(claim.Value.Count);
+                    foreach (string value in claim.Value)
+                    {
+                        valuePlaceholders.Add(emitter.Parameter(value));
+                    }
+
+                    claimEntries.Add((keyPlaceholder, valuePlaceholders));
+                }
+
+                return emitter.ExistsAllTagsCovered(claimEntries);
+            }
+
+            // Intersects: OR over each claim key of "the row has a tag (key, v) with v in the claim's values".
+            string? predicate = null;
+            foreach (KeyValuePair<string, IReadOnlyList<string>> claim in claims)
+            {
+                if (claim.Value.Count == 0)
+                {
+                    continue;
+                }
+
+                string keyPlaceholder = emitter.Parameter(claim.Key);
+                var valuePlaceholders = new List<string>(claim.Value.Count);
+                foreach (string value in claim.Value)
+                {
+                    valuePlaceholders.Add(emitter.Parameter(value));
+                }
+
+                string term = emitter.ExistsTagValueIn(keyPlaceholder, valuePlaceholders);
+                predicate = predicate is null ? term : emitter.OrElse(predicate, term);
+            }
+
+            // No claim can cover any tag → the principal shares nothing.
+            return predicate ?? emitter.FalseLiteral;
+        }
+
+        private static bool IsCovered(SecurityTag tag, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
+        {
+            if (!claims.TryGetValue(tag.Key, out IReadOnlyList<string>? values))
+            {
+                return false;
+            }
+
+            foreach (string value in values)
+            {
+                if (string.Equals(value, tag.Value, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
     private readonly struct Operand(OperandKind kind, string value)
     {
         public bool IsTagKey => kind == OperandKind.TagKey;
+
+        public bool IsClaimsPredicate => kind == OperandKind.ClaimsPredicate;
+
+        public ClaimsQuantifier ClaimsQuantifier => string.Equals(value, "superset", StringComparison.Ordinal) ? ClaimsQuantifier.Superset : ClaimsQuantifier.Intersects;
 
         public string Value => value;
 
@@ -307,6 +423,13 @@ public sealed class SecurityRule
             }
 
             Operand left = this.ParseOperand();
+
+            // A $claims.* predicate is a complete boolean atom, never the LHS of a comparison.
+            if (left.IsClaimsPredicate)
+            {
+                return new ClaimsCoverageNode(left.ClaimsQuantifier);
+            }
+
             if (this.TryParseOperator(out Op op))
             {
                 return new ComparisonNode(left, op, this.ParseOperand());
@@ -330,6 +453,18 @@ public sealed class SecurityRule
             }
 
             string text = token.ToString();
+
+            // $claims.* — a key-agnostic predicate over the whole claim set; reserved, so typos fail closed.
+            if (text.StartsWith("$claims", StringComparison.Ordinal))
+            {
+                return text switch
+                {
+                    "$claims.superset" => new Operand(OperandKind.ClaimsPredicate, "superset"),
+                    "$claims.intersects" => new Operand(OperandKind.ClaimsPredicate, "intersects"),
+                    _ => throw new FormatException($"Unknown $claims predicate '{text}' in security rule (expected $claims.superset or $claims.intersects)."),
+                };
+            }
+
             return text.StartsWith(ClaimPrefix, StringComparison.Ordinal)
                 ? new Operand(OperandKind.Claim, text[ClaimPrefix.Length..])
                 : new Operand(OperandKind.TagKey, text);
