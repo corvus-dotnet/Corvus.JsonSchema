@@ -22,7 +22,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.NatsJetStream;
 /// Wait/visibility queries scan the bucket's keys and filter on the index header. Create instances with
 /// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> after provisioning with <see cref="PrepareAsync(string, CancellationToken)"/>.
 /// </remarks>
-public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, IAsyncDisposable
+public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
     private const string RunsBucket = "arazzo_runs";
@@ -302,6 +302,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                 && (query.UpdatedBefore is not { } updatedBefore || index.UpdatedAt < updatedBefore)
                 && (query.CorrelationId is not { } cid || index.CorrelationId == cid)
                 && (query.Tags is not { Count: > 0 } qtags || (index.Tags is { } rt && qtags.All(rt.Contains)))
+                && (query.Security?.IsSatisfiedBy(index.SecurityTags ?? []) ?? true)
                 && (after is null || string.CompareOrdinal(runId.Value, after) > 0))
             {
                 listings.Add(new WorkflowRunListing(runId, index));
@@ -416,6 +417,20 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                     writer.WriteEndArray();
                 }
 
+                if (index.SecurityTags is { Count: > 0 } securityTags)
+                {
+                    writer.WriteStartArray("securityTags");
+                    foreach (SecurityTag t in securityTags)
+                    {
+                        writer.WriteStartObject();
+                        writer.WriteString("k", t.Key);
+                        writer.WriteString("v", t.Value);
+                        writer.WriteEndObject();
+                    }
+
+                    writer.WriteEndArray();
+                }
+
                 writer.WriteEndObject();
             }
 
@@ -448,7 +463,8 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                 root.TryGetProperty("awaitingCorrelationId", out System.Text.Json.JsonElement correlationId) ? correlationId.GetString() : null,
                 root.TryGetProperty("errorType", out System.Text.Json.JsonElement errorType) ? errorType.GetString() : null,
                 root.TryGetProperty("correlationId", out System.Text.Json.JsonElement queryCorrelationId) ? queryCorrelationId.GetString() : null,
-                DecodeTags(root));
+                DecodeTags(root),
+                DecodeSecurityTags(root));
         }
 
         private static IReadOnlyList<string>? DecodeTags(System.Text.Json.JsonElement root)
@@ -464,6 +480,26 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                 if (tag.GetString() is { } value)
                 {
                     list.Add(value);
+                }
+            }
+
+            return list.Count > 0 ? list : null;
+        }
+
+        private static IReadOnlyList<SecurityTag>? DecodeSecurityTags(System.Text.Json.JsonElement root)
+        {
+            if (!root.TryGetProperty("securityTags", out System.Text.Json.JsonElement securityTags))
+            {
+                return null;
+            }
+
+            var list = new List<SecurityTag>();
+            foreach (System.Text.Json.JsonElement tag in securityTags.EnumerateArray())
+            {
+                if (tag.TryGetProperty("k", out System.Text.Json.JsonElement k) && k.GetString() is { } key
+                    && tag.TryGetProperty("v", out System.Text.Json.JsonElement v) && v.GetString() is { } value)
+                {
+                    list.Add(new SecurityTag(key, value));
                 }
             }
 
