@@ -354,8 +354,8 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
                 int securityParam = 0;
                 var emitter = new SqlSecurityRuleEmitter(
                     "WorkflowRunSecurityTags",
-                    "RunId",
-                    "WorkflowRuns.RunId",
+                    ["RunId"],
+                    "WorkflowRuns",
                     value =>
                     {
                         string name = "@sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
