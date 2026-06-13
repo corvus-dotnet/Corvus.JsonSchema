@@ -402,9 +402,11 @@ descriptions** to real endpoints + credentials:
 6. **Source credentials (§13)** — `ISourceCredentialStore` (encrypted/referenced, per backend); the transport
    binding resolves auth providers from it per run; per-version `credentialStatus` + expiry telemetry +
    trigger gating; typed `credentials-expired` fault refreshable from the catalog and resumable.
-7. **Tag-based row security (§14.2)** — principal→tag-grants from claims (per-deployment, sample-implemented);
-   allowed-tags filter pushed into the run/catalog store as an indexed query on the already-indexed tags,
-   applied uniformly to workflows and runs; write/trigger requires a held workflow tag; runs inherit tags.
+7. **Row security — security tags + rule engine (§14.2)** — security KVP labels on runs/catalog versions
+   (separate from user tags; runs inherit the version's); tag rules in the `simple`-criterion grammar that
+   claims resolve to; rules compiled to an in-memory evaluator **and** an indexed per-backend store predicate
+   (reference-then-fan-out across ~18 stores); a separate security API in the control plane to manage rules,
+   seeded with bootstrap rules (tenant-scoped / ABAC label-superset / intersection).
 
 The paused demo work (`samples/.../docs/live-execution.md`) becomes the *manual* prototype of Phase 1–3 (it
 hand-builds the binder + compiles in-process); this design productionises it behind the catalog.
@@ -518,22 +520,46 @@ is standard and **per-deployment configurable**, with a concrete strategy shippe
 - The **sample** implements one concrete strategy (JWT bearer with a `scope` claim mapped to the policies,
   plus a dev API-key scheme) to demonstrate end to end.
 
-### 14.2 Row-level (tag-based) security
+### 14.2 Row-level security — security tags + rule engine
 
-Workflows (catalog versions) and runs already carry `tags`. Authorization is by **tag intersection**:
+Row authorization decides **which** workflows (catalog versions) and runs a principal may see or act on. It is
+**not** the free-form user `tags` (those stay as user-facing, AND-filtered metadata). It is a separate concept:
 
-- The authenticated principal resolves to a set of **tag grants** (from claims — e.g. `tag:team-a` claims, or
-  a group→tags mapping). The claim→grants mapping is deployment-configurable (sample-implemented), like §14.1.
-- **Read filtering is pushed into the store, not post-filtered.** Every list/get on runs and catalog versions
-  takes an **allowed-tags** filter that each backend translates into an **indexed** query (run/version tags
-  are already indexed — `WorkflowRunIndexEntry.Tags`), so a principal only ever materialises rows whose tags
-  intersect its grants. Never scan-then-filter (same rule as the runner-hosting index §5.4).
-- **Write/trigger** requires the principal to hold a tag the target workflow carries; a created run **inherits**
-  its workflow's tags (plus any request tags the principal is allowed to assign), so run-level filtering stays
-  consistent with the workflow it came from.
-- The two layers compose: scopes (§14.1) gate the **operation**, tags gate the **rows**. A `runs:read`
-  principal can list runs, but only those carrying a tag it has been granted.
+- **Security tags** are **key/value pairs** (labels) on a row — e.g. `tenant=acme`, `team=payments`,
+  `classification=restricted`. They are set when the row is created (a run **inherits** its workflow version's
+  security tags; a catalog version is labelled when added) and are distinct from user tags.
+- **Tag rules** are boolean expressions over those labels, written in (a reuse of) the **Arazzo `simple`
+  criterion grammar** — the same `==`/`!=`/`<`/`<=`/`>`/`>=`, `&&`/`||`/`!`/grouping engine already inlined for
+  step criteria (`SimpleConditionEvaluator` runtime + `SimpleCriterionInliner` codegen, over `Comparand`).
+  Example: `tenant == 'acme' && (team == 'payments' || team == 'billing')`. Real-world access is richer than
+  "this tag AND that tag", which is exactly why a small expression language — not a fixed KVP match — is used.
+- **A principal's claims resolve to a well-defined rule** — their effective access predicate. Rules reference
+  both **literals** and **claim values** (e.g. `tenant == $claim.tenant`), so one parameterised rule serves
+  many principals; the principal's claims supply the parameter values at evaluation time.
+- **Rules compile to emitted evaluators.** Because the grammar is the `simple` one, a rule is compiled the same
+  way step criteria are — into (a) an efficient in-memory evaluator, and (b) a per-backend **store predicate**
+  (the grammar maps cleanly to SQL/NoSQL boolean `WHERE`s over the security-tag storage). So row filtering is
+  **pushed into the store as an indexed query** (never scan-then-filter, per §5.4), and a single-row access
+  check (get-by-id, write/trigger) runs the in-memory evaluator → `403` when the rule is unsatisfied.
+- **A separate security-focused API in the control plane** authors and manages the rules and the claim→rule
+  mapping (its own capability scopes, e.g. `security:read`/`security:write`), kept apart from the run/catalog
+  operational surface. Rules are versioned state; changing a rule re-emits its evaluator/predicate.
+- **Bootstrap rules.** The system seeds a set of common, ready-to-use rules at initialization so the model is
+  usable from the start — **tenant-scoped** (one designated key must match the principal's value, e.g.
+  `tenant == $claim.tenant`), **ABAC label-superset** (the principal must satisfy every label the row carries),
+  and **intersection** (the principal shares at least one label with the row). These are ordinary rules, not
+  hard-coded behaviour: a deployment uses them as-is, edits them, or removes them via the security API.
+- The layers compose: scopes (§14.1) gate the **operation**; the resolved tag rule gates the **rows**. A
+  `runs:read` principal lists runs, but only those whose security tags satisfy its rule.
+
+**Open/assumed for implementation** (revise as the security API design firms up): unlabelled rows are visible
+only to a rule that admits them (default-deny is the safer posture once a principal has a non-trivial rule);
+the rule grammar may need an `in (...)` set operator and null/absent-label handling beyond the step-criterion
+subset; and the store-predicate translation is per backend (~18 stores) so it follows the established
+reference-then-fan-out pattern.
 
 **Decision (§14):** operation authz = ASP.NET Core policies named after capability scopes, with the scheme +
-claim mapping supplied per deployment (sample-implemented); row authz = tag-intersection filtering pushed into
-the store as an indexed query on the already-indexed tags, applied uniformly to workflows and runs.
+claim mapping supplied per deployment (sample-implemented). Row authz = **security tags (KVP labels) + tag
+rules in the `simple`-criterion grammar**; claims resolve to a rule, rules compile to an in-memory evaluator
+**and** an indexed per-backend store predicate, and a separate security API in the control plane manages the
+rules. Applied uniformly to workflows and runs.
