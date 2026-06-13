@@ -29,36 +29,12 @@ public sealed class CosmosSecurityRuleEmitter(string arrayPath, string keyProper
     public string Parameter(string value) => parameter(value);
 
     /// <inheritdoc/>
-    public string ExistsAnyTag()
-        => $"EXISTS (SELECT VALUE st FROM st IN {arrayPath})";
-
-    /// <inheritdoc/>
     public string ExistsTagKey(string keyPlaceholder)
         => $"EXISTS (SELECT VALUE st FROM st IN {arrayPath} WHERE st.{keyProperty} = {keyPlaceholder})";
 
     /// <inheritdoc/>
     public string ExistsTagValueIn(string keyPlaceholder, IReadOnlyList<string> valuePlaceholders)
         => $"EXISTS (SELECT VALUE st FROM st IN {arrayPath} WHERE st.{keyProperty} = {keyPlaceholder} AND st.{valueProperty} IN ({string.Join(", ", valuePlaceholders)}))";
-
-    /// <inheritdoc/>
-    public string ExistsTagAllValuesIn(string keyPlaceholder, IReadOnlyList<string> valuePlaceholders)
-        => $"(EXISTS (SELECT VALUE st FROM st IN {arrayPath} WHERE st.{keyProperty} = {keyPlaceholder}) " +
-           $"AND NOT EXISTS (SELECT VALUE st FROM st IN {arrayPath} WHERE st.{keyProperty} = {keyPlaceholder} AND st.{valueProperty} NOT IN ({string.Join(", ", valuePlaceholders)})))";
-
-    /// <inheritdoc/>
-    public string ExistsAllTagsCovered(IReadOnlyList<(string KeyPlaceholder, IReadOnlyList<string> ValuePlaceholders)> claimEntries)
-    {
-        if (claimEntries.Count == 0)
-        {
-            return $"NOT EXISTS (SELECT VALUE st FROM st IN {arrayPath})";
-        }
-
-        string covered = string.Join(
-            " OR ",
-            claimEntries.Select(e => $"(st.{keyProperty} = {e.KeyPlaceholder} AND st.{valueProperty} IN ({string.Join(", ", e.ValuePlaceholders)}))"));
-
-        return $"NOT EXISTS (SELECT VALUE st FROM st IN {arrayPath} WHERE NOT ({covered}))";
-    }
 
     /// <inheritdoc/>
     public string ExistsTagKeysShareValue(string keyPlaceholder1, string keyPlaceholder2)

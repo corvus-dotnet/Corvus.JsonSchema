@@ -26,7 +26,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
 /// a <see cref="CosmosClient"/> let callers configure the client (for example a least-privileged data-plane
 /// managed identity) themselves.
 /// </remarks>
-public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDisposable
+public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string CatalogContainerId = "workflow_catalog";
 
@@ -218,6 +218,21 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
             }
         }
 
+        // Row-security reach (§14.2): translate the filter to a native EXISTS over the embedded securityTags
+        // array; every value is bound as a query parameter (no concatenation).
+        var securityParameters = new List<(string Name, string Value)>();
+        if (query.Security is { } security)
+        {
+            int securityParam = 0;
+            var emitter = new CosmosSecurityRuleEmitter("c.securityTags", "k", "v", value =>
+            {
+                string name = "@sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
+                securityParameters.Add((name, value));
+                return name;
+            });
+            conditions.Add(security.ToSqlPredicate(emitter));
+        }
+
         if (after is not null)
         {
             conditions.Add("c.sortKey > @after");
@@ -251,6 +266,11 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
         }
 
         foreach ((string name, string value) in tagParameters)
+        {
+            definition = definition.WithParameter(name, value);
+        }
+
+        foreach ((string name, string value) in securityParameters)
         {
             definition = definition.WithParameter(name, value);
         }
@@ -433,6 +453,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         var partition = new PartitionKey(baseWorkflowId);
         IReadOnlyList<string> tags = metadata.Tags is { Count: > 0 } t ? [.. t] : [];
+        IReadOnlyList<SecurityTag>? securityTags = metadata.SecurityTags is { Count: > 0 } st ? [.. st] : null;
 
         while (true)
         {
@@ -452,7 +473,8 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
                 hash: projection.Hash,
                 createdBy: metadata.CreatedBy,
                 createdAt: now,
-                runnable: projection.HasExecutor);
+                runnable: projection.HasExecutor,
+                securityTags: securityTags);
 
             var document = CatalogDocument.From(version, projection.CanonicalPackage.ToArray());
 
@@ -534,6 +556,9 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
         [JsonPropertyName("tags")]
         public List<string>? Tags { get; set; }
 
+        [JsonPropertyName("securityTags")]
+        public List<SecurityTagDocument>? SecurityTags { get; set; }
+
         [JsonPropertyName("owner")]
         public OwnerDocument Owner { get; set; } = new();
 
@@ -579,6 +604,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
             Description = version.DescriptionOrNull,
             Status = version.StatusValue.ToString(),
             Tags = version.TagsValue is { Count: > 0 } t ? [.. t] : null,
+            SecurityTags = version.SecurityTagsValue is { Count: > 0 } st ? [.. st.Select(SecurityTagDocument.From)] : null,
             Owner = OwnerDocument.From(version.OwnerValue),
             Sources = version.SourcesValue is { Count: > 0 } s ? [.. s.Select(SourceDocument.From)] : null,
             Hash = (string)version.Hash,
@@ -609,7 +635,22 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDi
             lastUpdatedAt: this.LastUpdatedAt is { } lua ? DateTimeOffset.FromUnixTimeMilliseconds(lua) : null,
             obsoletedBy: this.ObsoletedBy,
             obsoletedAt: this.ObsoletedAt is { } oa ? DateTimeOffset.FromUnixTimeMilliseconds(oa) : null,
-            runnable: this.Runnable);
+            runnable: this.Runnable,
+            securityTags: this.SecurityTags is { Count: > 0 } st ? [.. st.Select(static d => d.ToSecurityTag())] : null);
+    }
+
+    /// <summary>A security tag as embedded in a document's <c>securityTags</c> array.</summary>
+    private sealed class SecurityTagDocument
+    {
+        [JsonPropertyName("k")]
+        public string Key { get; set; } = string.Empty;
+
+        [JsonPropertyName("v")]
+        public string Value { get; set; } = string.Empty;
+
+        public static SecurityTagDocument From(SecurityTag tag) => new() { Key = tag.Key, Value = tag.Value };
+
+        public SecurityTag ToSecurityTag() => new(this.Key, this.Value);
     }
 
     private sealed class OwnerDocument

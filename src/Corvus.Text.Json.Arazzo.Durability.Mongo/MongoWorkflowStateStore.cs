@@ -18,7 +18,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Mongo;
 /// The driver pools connections internally, so the store is naturally concurrent. Create instances with
 /// <see cref="ConnectAsync(string, string, TimeProvider?, CancellationToken)"/> after provisioning with <see cref="PrepareAsync(string, string, CancellationToken)"/>.
 /// </remarks>
-public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, IAsyncDisposable
+public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
     private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
@@ -377,27 +377,47 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             filter = b.And(filter, b.Gt("_id", after));
         }
 
-        List<BsonDocument> documents = await this.runs.Find(filter)
-            .Sort(Builders<BsonDocument>.Sort.Ascending("_id"))
-            .Limit(query.Limit + 1)
-            .ToListAsync(cancellationToken).ConfigureAwait(false);
-        var listings = new List<WorkflowRunListing>(documents.Count);
-        foreach (BsonDocument document in documents)
+        // Row-security reach (§14.2) is applied in process over the embedded securityTags array (see the class
+        // remarks), so the server-side Limit is dropped when a reach filter is present: stream the _id-ordered
+        // cursor and take Limit+1 *matching* rows, preserving keyset paging.
+        var listings = new List<WorkflowRunListing>(query.Limit + 1);
+        IFindFluent<BsonDocument, BsonDocument> find = this.runs.Find(filter).Sort(Builders<BsonDocument>.Sort.Ascending("_id"));
+        if (query.Security is null)
         {
-            string? correlationId = document["correlationId"].IsBsonNull ? null : document["correlationId"].AsString;
-            IReadOnlyList<string>? tags = document.TryGetValue("tags", out var tagsVal) && !tagsVal.IsBsonNull ? tagsVal.AsBsonArray.Select(t => t.AsString).ToList() : null;
-            var entry = new WorkflowRunIndexEntry(
-                document["workflowId"].AsString,
-                Enum.Parse<WorkflowRunStatus>(document["status"].AsString),
-                DateTimeOffset.FromUnixTimeMilliseconds(document["createdAt"].AsInt64),
-                DateTimeOffset.FromUnixTimeMilliseconds(document["updatedAt"].AsInt64),
-                document["dueAt"].IsBsonNull ? null : DateTimeOffset.FromUnixTimeMilliseconds(document["dueAt"].AsInt64),
-                document["awaitingChannel"].IsBsonNull ? null : document["awaitingChannel"].AsString,
-                document["awaitingCorrelationId"].IsBsonNull ? null : document["awaitingCorrelationId"].AsString,
-                document["errorType"].IsBsonNull ? null : document["errorType"].AsString,
-                CorrelationId: correlationId,
-                Tags: tags);
-            listings.Add(new WorkflowRunListing(new WorkflowRunId(document["_id"].AsString), entry));
+            find = find.Limit(query.Limit + 1);
+        }
+
+        using IAsyncCursor<BsonDocument> cursor = await find.ToCursorAsync(cancellationToken).ConfigureAwait(false);
+        while (await cursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
+        {
+            foreach (BsonDocument document in cursor.Current)
+            {
+                IReadOnlyList<SecurityTag>? securityTags = ReadSecurityTags(document);
+                if (query.Security is { } security && !security.IsSatisfiedBy(securityTags ?? []))
+                {
+                    continue;
+                }
+
+                string? correlationId = document["correlationId"].IsBsonNull ? null : document["correlationId"].AsString;
+                IReadOnlyList<string>? tags = document.TryGetValue("tags", out var tagsVal) && !tagsVal.IsBsonNull ? tagsVal.AsBsonArray.Select(t => t.AsString).ToList() : null;
+                var entry = new WorkflowRunIndexEntry(
+                    document["workflowId"].AsString,
+                    Enum.Parse<WorkflowRunStatus>(document["status"].AsString),
+                    DateTimeOffset.FromUnixTimeMilliseconds(document["createdAt"].AsInt64),
+                    DateTimeOffset.FromUnixTimeMilliseconds(document["updatedAt"].AsInt64),
+                    document["dueAt"].IsBsonNull ? null : DateTimeOffset.FromUnixTimeMilliseconds(document["dueAt"].AsInt64),
+                    document["awaitingChannel"].IsBsonNull ? null : document["awaitingChannel"].AsString,
+                    document["awaitingCorrelationId"].IsBsonNull ? null : document["awaitingCorrelationId"].AsString,
+                    document["errorType"].IsBsonNull ? null : document["errorType"].AsString,
+                    CorrelationId: correlationId,
+                    Tags: tags,
+                    SecurityTags: securityTags);
+                listings.Add(new WorkflowRunListing(new WorkflowRunId(document["_id"].AsString), entry));
+                if (listings.Count > query.Limit)
+                {
+                    return WorkflowContinuationToken.Paginate(listings, query.Limit);
+                }
+            }
         }
 
         return WorkflowContinuationToken.Paginate(listings, query.Limit);
@@ -412,6 +432,24 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         }
 
         return default;
+    }
+
+    private static IReadOnlyList<SecurityTag>? ReadSecurityTags(BsonDocument document)
+    {
+        if (!document.TryGetValue("securityTags", out BsonValue value) || value.IsBsonNull)
+        {
+            return null;
+        }
+
+        BsonArray array = value.AsBsonArray;
+        var list = new List<SecurityTag>(array.Count);
+        foreach (BsonValue element in array)
+        {
+            BsonDocument tag = element.AsBsonDocument;
+            list.Add(new SecurityTag(tag["k"].AsString, tag["v"].AsString));
+        }
+
+        return list.Count > 0 ? list : null;
     }
 
     private static readonly ProjectionDefinition<BsonDocument> IdOnly = Builders<BsonDocument>.Projection.Include("_id");
@@ -433,6 +471,9 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         ["errorType"] = (BsonValue?)index.ErrorType ?? BsonNull.Value,
         ["correlationId"] = (BsonValue?)index.CorrelationId ?? BsonNull.Value,
         ["tags"] = index.Tags is { Count: > 0 } t ? new BsonArray(t) : BsonNull.Value,
+        ["securityTags"] = index.SecurityTags is { Count: > 0 } st
+            ? new BsonArray(st.Select(s => new BsonDocument { ["k"] = s.Key, ["v"] = s.Value }))
+            : BsonNull.Value,
     };
 
     private async ValueTask EnsureIndexesAsync(CancellationToken cancellationToken)
