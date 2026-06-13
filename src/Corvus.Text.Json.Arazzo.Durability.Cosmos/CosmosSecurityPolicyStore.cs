@@ -1,0 +1,400 @@
+// <copyright file="CosmosSecurityPolicyStore.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+using System.Buffers;
+using System.Globalization;
+using System.Net;
+using System.Runtime.CompilerServices;
+using Corvus.Text.Json;
+using Corvus.Text.Json.Arazzo.Durability.Security;
+using Microsoft.Azure.Cosmos;
+
+namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
+
+/// <summary>
+/// An Azure Cosmos DB-backed <see cref="ISecurityPolicyStore"/> — the row-authorization policy (named rules +
+/// claim→rule bindings, design §14.2). Each record is one document in a small <c>workflow_security</c> container,
+/// partitioned by record kind, holding its Corvus.Text.Json schema document
+/// (<see cref="SecurityRuleDocument"/> / <see cref="SecurityBindingDocument"/>) as a base64 field; a single meta
+/// document holds the monotonic generation a resolver caches against. Documents are written and read through the
+/// Cosmos <em>stream</em> APIs (no SDK serializer); the etag travels inside the document, so optimistic concurrency
+/// is a read-compare-write.
+/// </summary>
+public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisposable
+{
+    private const string ContainerId = "workflow_security";
+    private const string RulePartition = "rule";
+    private const string BindingPartition = "binding";
+    private const string MetaPartition = "meta";
+    private const string MetaId = "meta";
+
+    private static readonly byte[] DocProperty = "doc"u8.ToArray();
+    private static readonly byte[] GenerationProperty = "generation"u8.ToArray();
+    private static readonly JsonWriterOptions WriterOptions = new() { Indented = false, SkipValidation = true };
+
+    private readonly CosmosClient client;
+    private readonly Container container;
+    private readonly TimeProvider timeProvider;
+    private readonly bool ownsClient;
+
+    private CosmosSecurityPolicyStore(CosmosClient client, Container container, TimeProvider timeProvider, bool ownsClient)
+    {
+        this.client = client;
+        this.container = container;
+        this.timeProvider = timeProvider;
+        this.ownsClient = ownsClient;
+    }
+
+    /// <summary>The Cosmos client options the store relies on (none; it uses the stream APIs + Corvus.Text.Json).</summary>
+    /// <returns>The Cosmos client options used by the connection-string overloads.</returns>
+    public static CosmosClientOptions CreateClientOptions() => new();
+
+    /// <summary>Provisions the store's database and container over the given connection string.</summary>
+    /// <param name="connectionString">An Azure Cosmos DB connection string.</param>
+    /// <param name="databaseName">The database to use; defaults to <c>arazzo</c>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes once the database and container exist (idempotent).</returns>
+    public static async ValueTask PrepareAsync(string connectionString, string databaseName = "arazzo", CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(connectionString);
+        using var client = new CosmosClient(connectionString, CreateClientOptions());
+        await ProvisionAsync(client, databaseName, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Provisions the store's database and container over a caller-supplied client.</summary>
+    /// <param name="client">A configured Cosmos client (the caller retains ownership and must dispose it).</param>
+    /// <param name="databaseName">The database to use; defaults to <c>arazzo</c>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes once the database and container exist (idempotent).</returns>
+    public static ValueTask PrepareAsync(CosmosClient client, string databaseName = "arazzo", CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        return ProvisionAsync(client, databaseName, cancellationToken);
+    }
+
+    /// <summary>Opens the store for operation against an already-provisioned database and container.</summary>
+    /// <param name="connectionString">An Azure Cosmos DB connection string.</param>
+    /// <param name="databaseName">The database to use; defaults to <c>arazzo</c>.</param>
+    /// <param name="timeProvider">The time source for audit timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The opened store (it owns and disposes the client).</returns>
+    public static ValueTask<CosmosSecurityPolicyStore> ConnectAsync(string connectionString, string databaseName = "arazzo", TimeProvider? timeProvider = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(connectionString);
+        cancellationToken.ThrowIfCancellationRequested();
+        var client = new CosmosClient(connectionString, CreateClientOptions());
+        return new ValueTask<CosmosSecurityPolicyStore>(Connect(client, databaseName, timeProvider, ownsClient: true));
+    }
+
+    /// <summary>Opens the store for operation over a caller-supplied client (the caller retains ownership).</summary>
+    /// <param name="client">A configured Cosmos client.</param>
+    /// <param name="databaseName">The database to use; defaults to <c>arazzo</c>.</param>
+    /// <param name="timeProvider">The time source for audit timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The opened store (it does not dispose the supplied client).</returns>
+    public static ValueTask<CosmosSecurityPolicyStore> ConnectAsync(CosmosClient client, string databaseName = "arazzo", TimeProvider? timeProvider = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        cancellationToken.ThrowIfCancellationRequested();
+        return new ValueTask<CosmosSecurityPolicyStore>(Connect(client, databaseName, timeProvider, ownsClient: false));
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<SecurityRuleRecord> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(name);
+        ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
+        ArgumentNullException.ThrowIfNull(actor);
+        var record = new SecurityRuleRecord(name, definition.Expression, definition.Description, actor, this.timeProvider.GetUtcNow(), null, null, NewEtag());
+        byte[] body = Envelope(name, RulePartition, SecurityRuleDocument.From(record).ToJsonBytes());
+        using var stream = CosmosJson.ToStream(body);
+        using ResponseMessage response = await this.container.CreateItemStreamAsync(stream, new PartitionKey(RulePartition), cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (response.StatusCode == HttpStatusCode.Conflict)
+        {
+            throw new InvalidOperationException($"A security rule named '{name}' already exists.");
+        }
+
+        response.EnsureSuccessStatusCode();
+        await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
+        return record;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<SecurityRuleRecord?> GetRuleAsync(string name, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        byte[]? doc = await this.DocumentAsync(name, RulePartition, cancellationToken).ConfigureAwait(false);
+        return doc is null ? null : SecurityRuleDocument.FromJson(doc).ToRecord();
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<IReadOnlyList<SecurityRuleRecord>> ListRulesAsync(CancellationToken cancellationToken)
+        => await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
+
+    /// <inheritdoc/>
+    public async ValueTask<SecurityRuleRecord?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
+        ArgumentNullException.ThrowIfNull(actor);
+        byte[]? doc = await this.DocumentAsync(name, RulePartition, cancellationToken).ConfigureAwait(false);
+        if (doc is null)
+        {
+            return null;
+        }
+
+        SecurityRuleRecord current = SecurityRuleDocument.FromJson(doc).ToRecord();
+        EnsureEtag("rule", name, expectedEtag, current.Etag);
+        var updated = current with
+        {
+            Expression = definition.Expression,
+            Description = definition.Description,
+            UpdatedBy = actor,
+            UpdatedAt = this.timeProvider.GetUtcNow(),
+            Etag = NewEtag(),
+        };
+        byte[] body = Envelope(name, RulePartition, SecurityRuleDocument.From(updated).ToJsonBytes());
+        using var stream = CosmosJson.ToStream(body);
+        using ResponseMessage response = await this.container.ReplaceItemStreamAsync(stream, name, new PartitionKey(RulePartition), cancellationToken: cancellationToken).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
+        await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
+        return updated;
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<bool> DeleteRuleAsync(string name, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
+        => this.DeleteAsync(name, RulePartition, "rule", expectedEtag, doc => SecurityRuleDocument.FromJson(doc).ToRecord().Etag, cancellationToken);
+
+    /// <inheritdoc/>
+    public async ValueTask<SecurityBinding> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
+        ArgumentNullException.ThrowIfNull(actor);
+        string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
+        var record = new SecurityBinding(id, definition.ClaimType, definition.ClaimValue, definition.Read, definition.Write, definition.Purge, definition.Order, definition.Description, actor, this.timeProvider.GetUtcNow(), null, null, NewEtag());
+        byte[] body = Envelope(id, BindingPartition, SecurityBindingDocument.From(record).ToJsonBytes());
+        using var stream = CosmosJson.ToStream(body);
+        using ResponseMessage response = await this.container.CreateItemStreamAsync(stream, new PartitionKey(BindingPartition), cancellationToken: cancellationToken).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
+        await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
+        return record;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<SecurityBinding?> GetBindingAsync(string id, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+        byte[]? doc = await this.DocumentAsync(id, BindingPartition, cancellationToken).ConfigureAwait(false);
+        return doc is null ? null : SecurityBindingDocument.FromJson(doc).ToRecord();
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<IReadOnlyList<SecurityBinding>> ListBindingsAsync(CancellationToken cancellationToken)
+        => await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
+
+    /// <inheritdoc/>
+    public async ValueTask<SecurityBinding?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+        ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
+        ArgumentNullException.ThrowIfNull(actor);
+        byte[]? doc = await this.DocumentAsync(id, BindingPartition, cancellationToken).ConfigureAwait(false);
+        if (doc is null)
+        {
+            return null;
+        }
+
+        SecurityBinding current = SecurityBindingDocument.FromJson(doc).ToRecord();
+        EnsureEtag("binding", id, expectedEtag, current.Etag);
+        var updated = current with
+        {
+            ClaimType = definition.ClaimType,
+            ClaimValue = definition.ClaimValue,
+            Read = definition.Read,
+            Write = definition.Write,
+            Purge = definition.Purge,
+            Order = definition.Order,
+            Description = definition.Description,
+            UpdatedBy = actor,
+            UpdatedAt = this.timeProvider.GetUtcNow(),
+            Etag = NewEtag(),
+        };
+        byte[] body = Envelope(id, BindingPartition, SecurityBindingDocument.From(updated).ToJsonBytes());
+        using var stream = CosmosJson.ToStream(body);
+        using ResponseMessage response = await this.container.ReplaceItemStreamAsync(stream, id, new PartitionKey(BindingPartition), cancellationToken: cancellationToken).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
+        await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
+        return updated;
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<bool> DeleteBindingAsync(string id, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
+        => this.DeleteAsync(id, BindingPartition, "binding", expectedEtag, doc => SecurityBindingDocument.FromJson(doc).ToRecord().Etag, cancellationToken);
+
+    /// <inheritdoc/>
+    public async ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
+    {
+        IReadOnlyList<SecurityRuleRecord> rules = await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<SecurityBinding> bindings = await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
+        long generation = await this.ReadGenerationAsync(cancellationToken).ConfigureAwait(false);
+        return new SecurityPolicySnapshot(rules, bindings, generation);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask DisposeAsync()
+    {
+        if (this.ownsClient)
+        {
+            this.client.Dispose();
+        }
+
+        return default;
+    }
+
+    private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
+
+    private static void EnsureEtag(string kind, string id, WorkflowEtag expected, WorkflowEtag actual)
+    {
+        if (!expected.IsNone && expected != actual)
+        {
+            throw new SecurityPolicyConflictException(kind, id, expected);
+        }
+    }
+
+    private static byte[] Envelope(string id, string partition, byte[] docBytes)
+    {
+        var buffer = new ArrayBufferWriter<byte>();
+        using (var writer = new Utf8JsonWriter(buffer, WriterOptions))
+        {
+            writer.WriteStartObject();
+            writer.WriteString("id"u8, id);
+            writer.WriteString("pk"u8, partition);
+            writer.WriteString("doc"u8, Convert.ToBase64String(docBytes));
+            writer.WriteEndObject();
+        }
+
+        return buffer.WrittenSpan.ToArray();
+    }
+
+    private static async ValueTask ProvisionAsync(CosmosClient client, string databaseName, CancellationToken cancellationToken)
+    {
+        Database database = await client.CreateDatabaseIfNotExistsAsync(databaseName, cancellationToken: cancellationToken).ConfigureAwait(false);
+        await database.CreateContainerIfNotExistsAsync(new ContainerProperties(ContainerId, "/pk"), cancellationToken: cancellationToken).ConfigureAwait(false);
+    }
+
+    private static CosmosSecurityPolicyStore Connect(CosmosClient client, string databaseName, TimeProvider? timeProvider, bool ownsClient)
+    {
+        Database database = client.GetDatabase(databaseName);
+        Container container = database.GetContainer(ContainerId);
+        return new CosmosSecurityPolicyStore(client, container, timeProvider ?? TimeProvider.System, ownsClient);
+    }
+
+    private async ValueTask<byte[]?> DocumentAsync(string id, string partition, CancellationToken cancellationToken)
+    {
+        using ResponseMessage response = await this.container.ReadItemStreamAsync(id, new PartitionKey(partition), cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+        ReadOnlyMemory<byte> payload = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+        return CosmosJson.GetString(payload, DocProperty) is { } base64 ? Convert.FromBase64String(base64) : null;
+    }
+
+    private async ValueTask<IReadOnlyList<SecurityRuleRecord>> ReadRulesAsync(CancellationToken cancellationToken)
+    {
+        var list = new List<SecurityRuleRecord>();
+        await foreach (byte[] doc in this.QueryDocumentsAsync(RulePartition, cancellationToken).ConfigureAwait(false))
+        {
+            list.Add(SecurityRuleDocument.FromJson(doc).ToRecord());
+        }
+
+        list.Sort(static (a, b) => string.CompareOrdinal(a.Name, b.Name));
+        return list;
+    }
+
+    private async ValueTask<IReadOnlyList<SecurityBinding>> ReadBindingsAsync(CancellationToken cancellationToken)
+    {
+        var list = new List<SecurityBinding>();
+        await foreach (byte[] doc in this.QueryDocumentsAsync(BindingPartition, cancellationToken).ConfigureAwait(false))
+        {
+            list.Add(SecurityBindingDocument.FromJson(doc).ToRecord());
+        }
+
+        list.Sort(static (a, b) => a.Order != b.Order ? a.Order.CompareTo(b.Order) : string.CompareOrdinal(a.Id, b.Id));
+        return list;
+    }
+
+    private async IAsyncEnumerable<byte[]> QueryDocumentsAsync(string partition, [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var query = new QueryDefinition("SELECT c.doc FROM c WHERE c.pk = @pk").WithParameter("@pk", partition);
+        using FeedIterator iterator = this.container.GetItemQueryStreamIterator(
+            query, requestOptions: new QueryRequestOptions { PartitionKey = new PartitionKey(partition) });
+        while (iterator.HasMoreResults)
+        {
+            using ResponseMessage response = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+            ReadOnlyMemory<byte> page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+            foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page))
+            {
+                if (CosmosJson.GetString(element, DocProperty) is { } base64)
+                {
+                    yield return Convert.FromBase64String(base64);
+                }
+            }
+        }
+    }
+
+    private async ValueTask<long> ReadGenerationAsync(CancellationToken cancellationToken)
+    {
+        using ResponseMessage response = await this.container.ReadItemStreamAsync(MetaId, new PartitionKey(MetaPartition), cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return 0;
+        }
+
+        response.EnsureSuccessStatusCode();
+        ReadOnlyMemory<byte> payload = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+        return CosmosJson.GetInt64(payload, GenerationProperty) ?? 0;
+    }
+
+    private async ValueTask BumpGenerationAsync(CancellationToken cancellationToken)
+    {
+        long next = await this.ReadGenerationAsync(cancellationToken).ConfigureAwait(false) + 1;
+        var buffer = new ArrayBufferWriter<byte>();
+        using (var writer = new Utf8JsonWriter(buffer, WriterOptions))
+        {
+            writer.WriteStartObject();
+            writer.WriteString("id"u8, MetaId);
+            writer.WriteString("pk"u8, MetaPartition);
+            writer.WriteNumber("generation"u8, next);
+            writer.WriteEndObject();
+        }
+
+        using var stream = CosmosJson.ToStream(buffer.WrittenSpan.ToArray());
+        using ResponseMessage response = await this.container.UpsertItemStreamAsync(stream, new PartitionKey(MetaPartition), cancellationToken: cancellationToken).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
+    }
+
+    private async ValueTask<bool> DeleteAsync(string id, string partition, string kind, WorkflowEtag expectedEtag, Func<byte[], WorkflowEtag> etagOf, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+        byte[]? doc = await this.DocumentAsync(id, partition, cancellationToken).ConfigureAwait(false);
+        if (doc is null)
+        {
+            return false;
+        }
+
+        EnsureEtag(kind, id, expectedEtag, etagOf(doc));
+        using ResponseMessage response = await this.container.DeleteItemStreamAsync(id, new PartitionKey(partition), cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (response.StatusCode != HttpStatusCode.NotFound)
+        {
+            response.EnsureSuccessStatusCode();
+        }
+
+        await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
+        return true;
+    }
+}
