@@ -184,8 +184,9 @@ public struct SearchCatalogResponse : IApiResponse<SearchCatalogResponse>
         /// <summary>
         /// Fetch the next page of catalog versions; absent in effect when nextPageToken is null.
         /// </summary>
-        public ValueTask<SearchCatalogResponse> NextCatalogPageAsync(CancellationToken cancellationToken = default)
+        public ValueTask<SearchCatalogResponse> NextCatalogPageAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source workflowIdPrefix = default, CancellationToken cancellationToken = default)
         {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             SearchCatalogRequest request = new()
             {
                 PageToken = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.From(this.response.OkBody.NextPageToken),
@@ -195,6 +196,7 @@ public struct SearchCatalogResponse : IApiResponse<SearchCatalogResponse>
                 Status = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogStatus.From(this.response.sourceRequest.Status),
                 Owner = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.From(this.response.sourceRequest.Owner),
                 Limit = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.From(this.response.sourceRequest.Limit),
+                WorkflowIdPrefix = workflowIdPrefix.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, workflowIdPrefix, 30).RootElement,
             };
 
             return this.response.transport!.SendAsync<SearchCatalogRequest, SearchCatalogResponse>(in request, cancellationToken);

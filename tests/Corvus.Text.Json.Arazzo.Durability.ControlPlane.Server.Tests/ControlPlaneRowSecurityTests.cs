@@ -110,20 +110,29 @@ public sealed class ControlPlaneRowSecurityTests
     [TestMethod]
     public async Task Read_reach_and_write_reach_are_independent()
     {
-        // A principal that may read everything but write nothing: a run is gettable, but cancelling/deleting it is
-        // reported as not found (non-disclosing; a distinct 403 would need a contract change).
+        // A principal that may read everything but write nothing: a run is gettable (200), but cancelling/deleting
+        // it is forbidden (403) — the existence was already disclosed by the read, so it is not masked as 404.
         await using Scoped host = await StartAsync(new ReadAnyWriteNonePolicy());
         await FaultRunAsync(host.Store, "run-1", host.Clock, new SecurityTag("tenant", "acme"));
 
         (await host.GetAsync("/runs/run-1", tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await host.PostAsync("/runs/run-1/cancel", """{"reason":"x"}""", tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await host.PostAsync("/runs/run-1/cancel", """{"reason":"x"}""", tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
         using var delete = new HttpRequestMessage(HttpMethod.Delete, "/runs/run-1");
-        (await host.SendAsync(delete, tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await host.SendAsync(delete, tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
         // The run is untouched by the denied writes — still readable and still Faulted.
         using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync("/runs/run-1", tenant: "acme"));
         doc.RootElement.GetProperty("status").GetString().ShouldBe("Faulted");
+
+        // Catalog writes are gated the same way: the version is readable (200) but not updatable (403).
+        await host.Catalog.AddAsync(Package("flow"), Owner, null, [new SecurityTag("tenant", "acme")], default);
+        (await host.GetAsync("/catalog/flow/versions/1", tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        using var patch = new HttpRequestMessage(HttpMethod.Patch, "/catalog/flow/versions/1")
+        {
+            Content = new StringContent("""{ "status": "Obsolete" }""", Encoding.UTF8, "application/json"),
+        };
+        (await host.SendAsync(patch, tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
     [TestMethod]

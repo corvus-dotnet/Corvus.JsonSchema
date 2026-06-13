@@ -100,12 +100,17 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         string runId = (string)parameters.RunId;
         AccessContext ctx = this.access.Current();
 
-        // Gate before mutating: a run outside read reach, or readable but outside write reach, is reported as not
-        // found (non-disclosing, §14.2). (Surfacing a distinct 403 for read-but-not-write needs a contract change.)
+        // Gate before mutating (§14.2): a run outside read reach is 404 (non-disclosing); readable but outside
+        // write reach is 403 (existence already disclosed by read).
         WorkflowRunDetail? detail = await this.management.GetAsync(runId, ctx, cancellationToken).ConfigureAwait(false);
-        if (detail is not { } d || !ctx.Admits(AccessVerb.Write, d.SecurityTags))
+        if (detail is not { } d)
         {
             return DeleteRunResult.NotFound(NotFoundProblem(runId), workspace);
+        }
+
+        if (!ctx.Admits(AccessVerb.Write, d.SecurityTags))
+        {
+            return DeleteRunResult.Forbidden(ForbiddenProblem(runId), workspace);
         }
 
         return await this.management.DeleteAsync(runId, ctx, cancellationToken).ConfigureAwait(false)
@@ -119,12 +124,17 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         string runId = (string)parameters.RunId;
         AccessContext ctx = this.access.Current();
 
-        // Gate before mutating (§14.2): a run outside read reach, or readable but outside write reach, is reported
-        // as not found (non-disclosing).
+        // Gate before mutating (§14.2): outside read reach → 404 (non-disclosing); readable but outside write
+        // reach → 403.
         WorkflowRunDetail? before = await this.management.GetAsync(runId, ctx, cancellationToken).ConfigureAwait(false);
-        if (before is not { } pre || !ctx.Admits(AccessVerb.Write, pre.SecurityTags))
+        if (before is not { } pre)
         {
             return ResumeRunResult.NotFound(NotFoundProblem(runId), workspace);
+        }
+
+        if (!ctx.Admits(AccessVerb.Write, pre.SecurityTags))
+        {
+            return ResumeRunResult.Forbidden(ForbiddenProblem(runId), workspace);
         }
 
         ResumeOptions options = ToResumeOptions(parameters.Body);
@@ -148,11 +158,17 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         string runId = (string)parameters.RunId;
         AccessContext ctx = this.access.Current();
 
-        // Gate before mutating (§14.2, see HandleResumeRunAsync): outside read or write reach → not found.
+        // Gate before mutating (§14.2, see HandleResumeRunAsync): outside read reach → 404; readable but outside
+        // write reach → 403.
         WorkflowRunDetail? before = await this.management.GetAsync(runId, ctx, cancellationToken).ConfigureAwait(false);
-        if (before is not { } pre || !ctx.Admits(AccessVerb.Write, pre.SecurityTags))
+        if (before is not { } pre)
         {
             return CancelRunResult.NotFound(NotFoundProblem(runId), workspace);
+        }
+
+        if (!ctx.Admits(AccessVerb.Write, pre.SecurityTags))
+        {
+            return CancelRunResult.Forbidden(ForbiddenProblem(runId), workspace);
         }
 
         string reason = (string)parameters.Body.Reason;
@@ -361,6 +377,9 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
 
     private static Models.ProblemDetails.Source NotFoundProblem(string runId)
         => Problem("run-not-found", "Run not found", 404, $"No run with id '{runId}' exists.");
+
+    private static Models.ProblemDetails.Source ForbiddenProblem(string runId)
+        => Problem("forbidden", "Action not permitted", 403, $"You do not have permission to modify run '{runId}'.");
 
     private static Models.ProblemDetails.Source Problem(string type, string title, int status, string detail)
         => new((ref Models.ProblemDetails.Builder b) => b.Create(

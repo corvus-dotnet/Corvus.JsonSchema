@@ -425,14 +425,14 @@ public readonly partial struct CatalogVersionSummary
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext15 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.VersionNumberUtf8,
                     evaluationPath: VersionNumberSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext15);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext15);
             context.CommitChildContext(childContext15.IsMatch, ref childContext15);
 
             if (!context.HasCollector && !context.IsMatch)
