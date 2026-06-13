@@ -21,7 +21,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 /// <see cref="PrepareAsync(string, CancellationToken)"/>, then open the store with
 /// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/>.
 /// </remarks>
-public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex
+public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
     private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
@@ -393,6 +393,13 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
                 continue;
             }
 
+            // Row-security reach (§14.2): Table OData cannot match inside the serialized security tags, so apply
+            // the reach filter in process over the persisted tags — the only correct option for this backend.
+            if (query.Security is { } security && !security.IsSatisfiedBy(entry.SecurityTags ?? []))
+            {
+                continue;
+            }
+
             runs.Add(new WorkflowRunListing(new WorkflowRunId(entity.RowKey), entry));
             if (runs.Count > query.Limit)
             {
@@ -443,6 +450,11 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             entity["TagsJson"] = System.Text.Json.JsonSerializer.Serialize(t);
         }
 
+        if (index.SecurityTags is { Count: > 0 } st)
+        {
+            entity["SecurityTagsJson"] = System.Text.Json.JsonSerializer.Serialize(st);
+        }
+
         return entity;
     }
 
@@ -459,6 +471,7 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             entity.GetString("AwaitingCorrelationId"),
             entity.GetString("ErrorType"),
             CorrelationId: entity.GetString("CorrelationId"),
-            Tags: entity.GetString("TagsJson") is { } tagsJson ? System.Text.Json.JsonSerializer.Deserialize<List<string>>(tagsJson) : null);
+            Tags: entity.GetString("TagsJson") is { } tagsJson ? System.Text.Json.JsonSerializer.Deserialize<List<string>>(tagsJson) : null,
+            SecurityTags: entity.GetString("SecurityTagsJson") is { } secJson ? System.Text.Json.JsonSerializer.Deserialize<List<SecurityTag>>(secJson) : null);
     }
 }

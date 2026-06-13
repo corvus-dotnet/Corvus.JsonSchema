@@ -21,7 +21,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Redis;
 /// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> (or
 /// <see cref="Connect(IConnectionMultiplexer, TimeProvider?)"/>).
 /// </remarks>
-public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDisposable
+public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string Prefix = "arazzo:catalog:";
     private const string IndexKey = Prefix + "index";
@@ -344,6 +344,13 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
             return false;
         }
 
+        // Row-security reach (§14.2): Redis has no server-side filtering, so apply the reach filter in process
+        // over the version's persisted security tags — the only correct option for a key/value backend.
+        if (query.Security is { } security && !security.IsSatisfiedBy(version.SecurityTagsValue))
+        {
+            return false;
+        }
+
         return true;
     }
 
@@ -371,6 +378,7 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
 
         CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
         IReadOnlyList<string> tags = metadata.Tags is { Count: > 0 } t ? [.. t] : [];
+        IReadOnlyList<SecurityTag>? securityTags = metadata.SecurityTags is { Count: > 0 } st ? [.. st] : null;
 
         CatalogVersion version = CatalogVersion.Create(
             baseWorkflowId: baseWorkflowId,
@@ -385,7 +393,8 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, IAsyncDis
             hash: projection.Hash,
             createdBy: metadata.CreatedBy,
             createdAt: now,
-            runnable: projection.HasExecutor);
+            runnable: projection.HasExecutor,
+            securityTags: securityTags);
 
         // Store the CatalogVersion JSON document verbatim in the "doc" field and the package alongside; the
         // sorted-set index orders by sortKey for keyset paging.
