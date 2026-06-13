@@ -40,7 +40,8 @@ public readonly record struct CatalogVersionRef(string BaseWorkflowId, int Versi
 /// <param name="Owner">The accountable governance owner.</param>
 /// <param name="CreatedBy">The authenticated actor adding the version (recorded for governance + audit).</param>
 /// <param name="Tags">Free-form tags for display and filtering (AND-matched on search), if any.</param>
-public readonly record struct CatalogMetadata(CatalogOwner Owner, string CreatedBy, IReadOnlyList<string>? Tags = null);
+/// <param name="SecurityTags">Security tags (KVP labels) — the input to tag-based row authorization (§14.2), distinct from the free-form <paramref name="Tags"/> — if any.</param>
+public readonly record struct CatalogMetadata(CatalogOwner Owner, string CreatedBy, IReadOnlyList<string>? Tags = null, IReadOnlyList<SecurityTag>? SecurityTags = null);
 
 /// <summary>A partial update of a version's mutable governance metadata; an unset field is left unchanged. Setting
 /// <see cref="Status"/> to <see cref="CatalogStatus.Obsolete"/> records the obsoletion as a distinct governance event.</summary>

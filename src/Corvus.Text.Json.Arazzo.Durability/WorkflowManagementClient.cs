@@ -50,18 +50,18 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, IReadOnlyList<string>? tags, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, IReadOnlyList<string>? tags, IReadOnlyList<SecurityTag>? securityTags, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(workflowId);
 
         var id = new WorkflowRunId(Guid.NewGuid().ToString("n", System.Globalization.CultureInfo.InvariantCulture));
-        using WorkflowRun run = WorkflowRun.CreateNew(this.store, id, workflowId, inputs, this.timeProvider, correlationId, tags);
+        using WorkflowRun run = WorkflowRun.CreateNew(this.store, id, workflowId, inputs, this.timeProvider, correlationId, tags, securityTags);
         await run.EnqueueAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowRunId> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string? correlationId = null, IReadOnlyList<string>? tags = null, CancellationToken cancellationToken = default)
+    public async ValueTask<WorkflowRunId> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string? correlationId = null, IReadOnlyList<string>? tags = null, IReadOnlyList<SecurityTag>? securityTags = null, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(workflowId);
         ArgumentException.ThrowIfNullOrEmpty(idempotencyKey);
@@ -69,7 +69,7 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
         var id = new WorkflowRunId(DeterministicRunId(workflowId, idempotencyKey));
         try
         {
-            using WorkflowRun run = WorkflowRun.CreateNew(this.store, id, workflowId, inputs, this.timeProvider, correlationId, tags);
+            using WorkflowRun run = WorkflowRun.CreateNew(this.store, id, workflowId, inputs, this.timeProvider, correlationId, tags, securityTags);
             await run.EnqueueAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (WorkflowConflictException)

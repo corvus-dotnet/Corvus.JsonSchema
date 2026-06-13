@@ -325,8 +325,9 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
                 Problem("no-runner", "No hosting runner", 409, $"No registered runner currently hosts version {versionNumber} of '{baseWorkflowId}'; start a runner that hosts it and retry."), workspace);
         }
 
-        // A version with no inputs schema (SchemaMissing) accepts any inputs.
-        WorkflowRunId runId = await this.management.StartAsync(workflowId, inputs, correlationId: null, tags: null, cancellationToken).ConfigureAwait(false);
+        // A version with no inputs schema (SchemaMissing) accepts any inputs. The run inherits the version's
+        // security tags (KVP labels) so row authorization (§14.2) sees the same labels the workflow carries.
+        WorkflowRunId runId = await this.management.StartAsync(workflowId, inputs, correlationId: null, tags: null, securityTags: catalogVersion.SecurityTagsValue, cancellationToken).ConfigureAwait(false);
 
         return StartCatalogWorkflowRunResult.Accepted(
             new Models.WorkflowRunAccepted.Source((ref Models.WorkflowRunAccepted.Builder b) => b.Create(

@@ -59,7 +59,8 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore
                 hash: projection.Hash,
                 createdBy: metadata.CreatedBy,
                 createdAt: now,
-                runnable: projection.HasExecutor);
+                runnable: projection.HasExecutor,
+                securityTags: metadata.SecurityTags is { Count: > 0 } securityTags ? [.. securityTags] : null);
 
             this.versions[SortKey(baseWorkflowId, versionNumber)] = new Stored(version, projection.CanonicalPackage.ToArray());
             return ValueTask.FromResult(version);
