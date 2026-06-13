@@ -3,6 +3,7 @@
 // </copyright>
 
 using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,13 +37,20 @@ public static class ControlPlaneEndpointExtensions
     /// register <c>IHttpContextAccessor</c> (<c>services.AddHttpContextAccessor()</c>) so the current principal can
     /// be read. When <see langword="null"/> (the default) the control plane is unscoped — every row is visible.
     /// </param>
+    /// <param name="securityPolicyStore">
+    /// The persistent store backing the row-security authoring API (<c>/security/rules</c>, <c>/security/bindings</c>,
+    /// gated by the <c>security:read</c>/<c>security:write</c> scopes, §14.2). When <see langword="null"/> (the
+    /// default) an empty in-memory store is used so the endpoints function in development. If <paramref name="rowSecurity"/>
+    /// is a <see cref="PersistentRowSecurityPolicy"/>, it is refreshed after each successful write so authoring
+    /// changes take effect in-process.
+    /// </param>
     /// <returns>The same endpoint route builder, for chaining.</returns>
     /// <remarks>
     /// Authentication is always the host's concern: the control plane depends only on a <c>ClaimsPrincipal</c>
     /// and the named scope policies, so a deployment supplies any ASP.NET Core scheme (JWT bearer, OIDC, mTLS,
     /// a dev key) and how a principal acquires scopes.
     /// </remarks>
-    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, IWorkflowManagementClient management, IWorkflowCatalogClient catalog, IRunnerRegistry runners, bool requireAuthorization = false, ControlPlaneRowSecurityPolicy? rowSecurity = null)
+    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, IWorkflowManagementClient management, IWorkflowCatalogClient catalog, IRunnerRegistry runners, bool requireAuthorization = false, ControlPlaneRowSecurityPolicy? rowSecurity = null, ISecurityPolicyStore? securityPolicyStore = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
@@ -58,10 +66,16 @@ public static class ControlPlaneEndpointExtensions
             ? new ControlPlaneAccess()
             : new ControlPlaneAccess(endpoints.ServiceProvider.GetRequiredService<IHttpContextAccessor>(), rowSecurity);
 
+        // The security-authoring API persists rules/bindings; if the deployment's policy is the persistent one,
+        // refresh it after writes so authoring changes take effect for subsequent authorization decisions.
+        ISecurityPolicyStore policyStore = securityPolicyStore ?? new InMemorySecurityPolicyStore();
+        var securityHandler = new ArazzoControlPlaneSecurityHandler(policyStore, rowSecurity as PersistentRowSecurityPolicy);
+
         return endpoints.MapApiEndpoints(
             new ArazzoControlPlaneHandler(management, access),
             new ArazzoControlPlaneRunnersHandler(runners),
             new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access),
+            securityHandler,
             requireAuthorization ? ControlPlaneAuthorization.RequireDeclaredScopes : null);
     }
 }

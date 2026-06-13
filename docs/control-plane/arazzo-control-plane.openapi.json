@@ -28,7 +28,11 @@
       "name": "runs",
       "summary": "Workflow runs",
       "description": "Visibility and remediation for durable workflow runs."
-    }
+    },
+  {
+    "name": "security",
+    "description": "Author the row-security policy: rules and claim→rule bindings (capability scopes security:read / security:write)."
+  }
   ],
   "paths": {
     "/runs": {
@@ -635,6 +639,483 @@
             "content": { "application/json": { "schema": { "type": "object" } } }
           },
           "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/security/rules": {
+      "get": {
+        "operationId": "listSecurityRules",
+        "security": [
+          {
+            "oauth2": [
+              "security:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "security:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "security"
+        ],
+        "summary": "List security rules",
+        "responses": {
+          "200": {
+            "description": "The rules.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityRuleList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createSecurityRule",
+        "security": [
+          {
+            "oauth2": [
+              "security:write"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "security:write"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "security"
+        ],
+        "summary": "Create a security rule",
+        "description": "Creates a named rule; the expression is validated against the security-rule grammar.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SecurityRuleCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The created rule.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityRuleSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/security/rules/{ruleName}": {
+      "get": {
+        "operationId": "getSecurityRule",
+        "security": [
+          {
+            "oauth2": [
+              "security:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "security:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "security"
+        ],
+        "summary": "Get a security rule",
+        "parameters": [
+          {
+            "name": "ruleName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The security rule name."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The rule.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityRuleSummary"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateSecurityRule",
+        "security": [
+          {
+            "oauth2": [
+              "security:write"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "security:write"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "security"
+        ],
+        "summary": "Update a security rule",
+        "description": "Replaces the rule's content; the expression is validated against the security-rule grammar.",
+        "parameters": [
+          {
+            "name": "ruleName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The security rule name."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SecurityRuleUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated rule.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityRuleSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteSecurityRule",
+        "security": [
+          {
+            "oauth2": [
+              "security:write"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "security:write"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "security"
+        ],
+        "summary": "Delete a security rule",
+        "parameters": [
+          {
+            "name": "ruleName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The security rule name."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The rule was deleted."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/security/bindings": {
+      "get": {
+        "operationId": "listSecurityBindings",
+        "security": [
+          {
+            "oauth2": [
+              "security:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "security:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "security"
+        ],
+        "summary": "List security bindings",
+        "description": "Returns all claim→rule bindings, ordered by Order then id.",
+        "responses": {
+          "200": {
+            "description": "The bindings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityBindingList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createSecurityBinding",
+        "security": [
+          {
+            "oauth2": [
+              "security:write"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "security:write"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "security"
+        ],
+        "summary": "Create a security binding",
+        "description": "Creates a claim→rule binding; the store assigns its id.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SecurityBindingWrite"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The created binding.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityBindingSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      }
+    },
+    "/security/bindings/{bindingId}": {
+      "get": {
+        "operationId": "getSecurityBinding",
+        "security": [
+          {
+            "oauth2": [
+              "security:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "security:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "security"
+        ],
+        "summary": "Get a security binding",
+        "parameters": [
+          {
+            "name": "bindingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The security binding id."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The binding.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityBindingSummary"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateSecurityBinding",
+        "security": [
+          {
+            "oauth2": [
+              "security:write"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "security:write"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "security"
+        ],
+        "summary": "Update a security binding",
+        "parameters": [
+          {
+            "name": "bindingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The security binding id."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SecurityBindingWrite"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated binding.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityBindingSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteSecurityBinding",
+        "security": [
+          {
+            "oauth2": [
+              "security:write"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "security:write"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "security"
+        ],
+        "summary": "Delete a security binding",
+        "parameters": [
+          {
+            "name": "bindingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The security binding id."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The binding was deleted."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
         }
       }
     }
@@ -1374,6 +1855,225 @@
           "detail": { "type": "string" },
           "instance": { "type": "string" }
         }
+      },
+      "VerbGrant": {
+        "type": "object",
+        "description": "A per-verb grant in a binding: either unrestricted (full reach — the operator escape) or the conjunction of the named rules. The default (unrestricted false, empty ruleNames) grants nothing for the verb.",
+        "properties": {
+          "unrestricted": {
+            "type": "boolean",
+            "default": false,
+            "description": "When true the verb is unrestricted (full reach); ruleNames is ignored."
+          },
+          "ruleNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The rule names ANDed for the verb."
+          }
+        }
+      },
+      "SecurityRuleCreate": {
+        "type": "object",
+        "description": "A new security rule.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The rule's unique name."
+          },
+          "expression": {
+            "type": "string",
+            "description": "The rule text in the security-rule grammar."
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "expression"
+        ]
+      },
+      "SecurityRuleUpdate": {
+        "type": "object",
+        "description": "Replacement content for an existing security rule.",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "The rule text in the security-rule grammar."
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "expression"
+        ]
+      },
+      "SecurityRuleSummary": {
+        "type": "object",
+        "description": "A persisted security rule.",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "expression": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastUpdatedBy": {
+            "type": "string"
+          },
+          "lastUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "etag": {
+            "type": "string",
+            "description": "The optimistic-concurrency token."
+          }
+        },
+        "required": [
+          "name",
+          "expression",
+          "createdBy",
+          "createdAt",
+          "etag"
+        ]
+      },
+      "SecurityRuleList": {
+        "type": "object",
+        "description": "All security rules.",
+        "properties": {
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SecurityRuleSummary"
+            }
+          }
+        },
+        "required": [
+          "rules"
+        ]
+      },
+      "SecurityBindingWrite": {
+        "type": "object",
+        "description": "The content of a claim→rule binding (create or replace).",
+        "properties": {
+          "claimType": {
+            "type": "string",
+            "description": "The principal claim type this binding keys on ('*' matches any authenticated principal)."
+          },
+          "claimValue": {
+            "type": "string",
+            "description": "The required claim value; omit to match any value of claimType."
+          },
+          "read": {
+            "$ref": "#/components/schemas/VerbGrant"
+          },
+          "write": {
+            "$ref": "#/components/schemas/VerbGrant"
+          },
+          "purge": {
+            "$ref": "#/components/schemas/VerbGrant"
+          },
+          "order": {
+            "type": "integer",
+            "format": "int32",
+            "default": 0,
+            "description": "Resolution order (ascending)."
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "claimType"
+        ]
+      },
+      "SecurityBindingSummary": {
+        "type": "object",
+        "description": "A persisted claim→rule binding.",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "claimType": {
+            "type": "string"
+          },
+          "claimValue": {
+            "type": "string"
+          },
+          "read": {
+            "$ref": "#/components/schemas/VerbGrant"
+          },
+          "write": {
+            "$ref": "#/components/schemas/VerbGrant"
+          },
+          "purge": {
+            "$ref": "#/components/schemas/VerbGrant"
+          },
+          "order": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "description": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastUpdatedBy": {
+            "type": "string"
+          },
+          "lastUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "etag": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "claimType",
+          "read",
+          "write",
+          "purge",
+          "order",
+          "createdBy",
+          "createdAt",
+          "etag"
+        ]
+      },
+      "SecurityBindingList": {
+        "type": "object",
+        "description": "All claim→rule bindings.",
+        "properties": {
+          "bindings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SecurityBindingSummary"
+            }
+          }
+        },
+        "required": [
+          "bindings"
+        ]
       }
     }
   }
