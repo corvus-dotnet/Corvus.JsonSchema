@@ -56,6 +56,10 @@ public sealed class SqlSecurityRuleEmitter : ISecurityRuleSqlEmitter
     public string Parameter(string value) => this.parameter(value);
 
     /// <inheritdoc/>
+    public string ExistsAnyTag()
+        => $"EXISTS (SELECT 1 FROM {this.tagTable} st WHERE {this.CorrelateOuter("st")})";
+
+    /// <inheritdoc/>
     public string ExistsTagKey(string keyPlaceholder)
         => $"EXISTS (SELECT 1 FROM {this.tagTable} st WHERE {this.CorrelateOuter("st")} AND st.{this.keyColumn} = {keyPlaceholder})";
 
