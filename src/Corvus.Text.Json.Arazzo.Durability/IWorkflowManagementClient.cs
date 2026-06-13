@@ -93,6 +93,7 @@ public interface IWorkflowManagementClient
 /// <param name="Etag">The etag the checkpoint was read at.</param>
 /// <param name="CorrelationId">The run-wide telemetry correlation id (the W3C trace id) set at creation, if any.</param>
 /// <param name="Tags">The free-form tags applied to the run at creation, if any.</param>
+/// <param name="SecurityTags">The security tags (KVP labels) applied to the run at creation, if any (§14.2), distinct from the free-form <paramref name="Tags"/>.</param>
 public readonly record struct WorkflowRunDetail(
     WorkflowRunId Id,
     string WorkflowId,
@@ -103,7 +104,8 @@ public readonly record struct WorkflowRunDetail(
     WorkflowFault? Fault,
     WorkflowEtag Etag,
     string? CorrelationId = null,
-    IReadOnlyList<string>? Tags = null);
+    IReadOnlyList<string>? Tags = null,
+    IReadOnlyList<SecurityTag>? SecurityTags = null);
 
 /// <summary>How to resume a faulted run (plan §11). Each mode loads the checkpoint, mutates status/cursor/state
 /// under optimistic concurrency, then re-enters the executor.</summary>

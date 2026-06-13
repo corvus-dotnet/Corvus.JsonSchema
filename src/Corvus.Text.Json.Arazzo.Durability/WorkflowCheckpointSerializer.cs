@@ -55,7 +55,8 @@ public static class WorkflowCheckpointSerializer
         WorkflowWait? wait = null,
         WorkflowFault? fault = null,
         string? correlationId = null,
-        IReadOnlyList<string>? tags = null)
+        IReadOnlyList<string>? tags = null,
+        IReadOnlyList<SecurityTag>? securityTags = null)
     {
         ArgumentNullException.ThrowIfNull(workflowId);
         ArgumentNullException.ThrowIfNull(retryCounters);
@@ -84,6 +85,20 @@ public static class WorkflowCheckpointSerializer
                 foreach (string tag in tags)
                 {
                     writer.WriteStringValue(tag);
+                }
+
+                writer.WriteEndArray();
+            }
+
+            if (securityTags is { Count: > 0 })
+            {
+                writer.WriteStartArray("securityTags"u8);
+                foreach (SecurityTag securityTag in securityTags)
+                {
+                    writer.WriteStartObject();
+                    writer.WriteString("key"u8, securityTag.Key);
+                    writer.WriteString("value"u8, securityTag.Value);
+                    writer.WriteEndObject();
                 }
 
                 writer.WriteEndArray();
@@ -204,6 +219,20 @@ public static class WorkflowCheckpointSerializer
                 }
             }
 
+            List<SecurityTag>? securityTags = null;
+            if (root.TryGetProperty("securityTags"u8, out JsonElement securityTagsElement) && securityTagsElement.ValueKind == JsonValueKind.Array)
+            {
+                securityTags = [];
+                foreach (JsonElement securityTag in securityTagsElement.EnumerateArray())
+                {
+                    if (securityTag.TryGetProperty("key"u8, out JsonElement keyElement) && keyElement.GetString() is { } key
+                        && securityTag.TryGetProperty("value"u8, out JsonElement valueElement) && valueElement.GetString() is { } value)
+                    {
+                        securityTags.Add(new SecurityTag(key, value));
+                    }
+                }
+            }
+
             Dictionary<string, int> retryCounters = [];
             if (root.TryGetProperty("retryCounters"u8, out JsonElement retryCountersElement))
             {
@@ -256,7 +285,7 @@ public static class WorkflowCheckpointSerializer
                     faultElement.GetProperty("at"u8).GetDateTimeOffset());
             }
 
-            return new WorkflowCheckpointState(document, runId, workflowId, status, cursor, createdAt, retryCounters, correlationTokens, inputs, stepOutputs, outputs, wait, fault, correlationId, tags);
+            return new WorkflowCheckpointState(document, runId, workflowId, status, cursor, createdAt, retryCounters, correlationTokens, inputs, stepOutputs, outputs, wait, fault, correlationId, tags, securityTags);
         }
         catch
         {
