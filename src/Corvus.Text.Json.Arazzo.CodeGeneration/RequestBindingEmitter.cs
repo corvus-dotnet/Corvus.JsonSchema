@@ -125,7 +125,10 @@ public static class RequestBindingEmitter
         string propertyName,
         string typeName)
     {
-        string local = $"{EmitText.ToCamelCase(propertyName)}Value";
+        // Derive the value local from the step-unique field name (which embeds the step id), not the bare
+        // property name — otherwise two straight-line steps that bind the same request property (e.g. both
+        // call an operation with a 'petId' path parameter) would declare colliding locals in one method body.
+        string local = $"{EmitText.ToCamelCase(fieldName)}Value";
 
         switch (kind)
         {
