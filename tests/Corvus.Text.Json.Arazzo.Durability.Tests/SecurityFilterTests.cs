@@ -51,6 +51,19 @@ public sealed class SecurityFilterTests
     }
 
     [TestMethod]
+    public void A_store_that_does_not_push_the_reach_filter_down_fails_loud()
+    {
+        var filter = new SecurityFilter([SecurityRule.Compile("tenant == 'acme'")], Claims());
+
+        // A store without ISupportsRowSecurityFilter must refuse a filtered query rather than silently ignore it.
+        Should.Throw<NotSupportedException>(() => RowSecurityPushdown.EnsureSupported(filter, new object()));
+
+        // …but a null filter is always fine, and a store that implements the marker is accepted.
+        Should.NotThrow(() => RowSecurityPushdown.EnsureSupported(null, new object()));
+        Should.NotThrow(() => RowSecurityPushdown.EnsureSupported(filter, new InMemoryWorkflowStateStore()));
+    }
+
+    [TestMethod]
     public async Task A_null_filter_is_unrestricted()
     {
         var store = new InMemoryWorkflowStateStore();
