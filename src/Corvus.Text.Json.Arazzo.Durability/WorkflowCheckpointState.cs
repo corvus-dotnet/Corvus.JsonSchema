@@ -30,7 +30,8 @@ public sealed class WorkflowCheckpointState : IDisposable
         WorkflowWait? wait,
         WorkflowFault? fault,
         string? correlationId = null,
-        IReadOnlyList<string>? tags = null)
+        IReadOnlyList<string>? tags = null,
+        IReadOnlyList<SecurityTag>? securityTags = null)
     {
         this.document = document;
         this.RunId = runId;
@@ -47,6 +48,7 @@ public sealed class WorkflowCheckpointState : IDisposable
         this.Fault = fault;
         this.CorrelationId = correlationId;
         this.Tags = tags;
+        this.SecurityTags = securityTags;
     }
 
     /// <summary>Gets the run id.</summary>
@@ -90,6 +92,9 @@ public sealed class WorkflowCheckpointState : IDisposable
 
     /// <summary>Gets the free-form tags applied to the run at creation, if any.</summary>
     public IReadOnlyList<string>? Tags { get; }
+
+    /// <summary>Gets the security tags (KVP labels) applied to the run at creation, if any (design §14.2).</summary>
+    public IReadOnlyList<SecurityTag>? SecurityTags { get; }
 
     /// <inheritdoc/>
     public void Dispose() => this.document.Dispose();

@@ -29,6 +29,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     private readonly DateTimeOffset createdAt;
     private readonly string? correlationId;
     private readonly IReadOnlyList<string>? tags;
+    private readonly IReadOnlyList<SecurityTag>? securityTags;
     private readonly WorkflowCheckpointState? resumedState;
     private readonly JsonElement inputs;
     private WorkflowEtag etag;
@@ -52,6 +53,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         DateTimeOffset createdAt,
         string? correlationId,
         IReadOnlyList<string>? tags,
+        IReadOnlyList<SecurityTag>? securityTags,
         WorkflowWait? wait,
         WorkflowFault? fault,
         WorkflowCheckpointState? resumedState)
@@ -70,6 +72,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         this.createdAt = createdAt;
         this.correlationId = correlationId;
         this.tags = tags;
+        this.securityTags = securityTags;
         this.wait = wait;
         this.fault = fault;
         this.resumedState = resumedState;
@@ -108,6 +111,9 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     /// <summary>Gets the free-form tags applied to the run at creation, if any.</summary>
     public IReadOnlyList<string>? Tags => this.tags;
 
+    /// <summary>Gets the security tags (KVP labels) applied to the run at creation, if any (design §14.2).</summary>
+    public IReadOnlyList<SecurityTag>? SecurityTags => this.securityTags;
+
     /// <summary>Creates a fresh run that starts at cursor <c>0</c> with empty state.</summary>
     /// <param name="store">The state store to persist checkpoints to.</param>
     /// <param name="id">The run id.</param>
@@ -117,6 +123,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     /// <param name="correlationId">The run-wide telemetry correlation id; defaults to the ambient
     /// <see cref="Activity.Current"/> trace id, so the run correlates to the trace that created it.</param>
     /// <param name="tags">Free-form tags to apply to the run (for visibility/filtering); set once at creation.</param>
+    /// <param name="securityTags">Security tags (KVP labels) to apply to the run (for row authorization, §14.2); set once at creation, typically inherited from the workflow version.</param>
     /// <returns>The new run.</returns>
     public static WorkflowRun CreateNew(
         IWorkflowStateStore store,
@@ -125,7 +132,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         JsonElement inputs,
         TimeProvider? timeProvider = null,
         string? correlationId = null,
-        IReadOnlyList<string>? tags = null)
+        IReadOnlyList<string>? tags = null,
+        IReadOnlyList<SecurityTag>? securityTags = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(workflowId);
@@ -146,6 +154,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             createdAt: time.GetUtcNow(),
             correlationId: correlationId ?? Activity.Current?.TraceId.ToString(),
             tags: tags is { Count: > 0 } ? tags : null,
+            securityTags: securityTags is { Count: > 0 } ? securityTags : null,
             wait: null,
             fault: null,
             resumedState: null);
@@ -181,6 +190,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             createdAt: state.CreatedAt,
             correlationId: state.CorrelationId,
             tags: state.Tags,
+            securityTags: state.SecurityTags,
             wait: state.Wait,
             fault: state.Fault,
             resumedState: state);
@@ -355,7 +365,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             this.wait,
             this.fault,
             this.correlationId,
-            this.tags);
+            this.tags,
+            this.securityTags);
 
         var index = new WorkflowRunIndexEntry(
             this.WorkflowId,
@@ -367,7 +378,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             AwaitingCorrelationId: this.wait is { Kind: WorkflowWaitKind.Message } messageCorrelation ? messageCorrelation.CorrelationId : null,
             ErrorType: this.fault?.Error,
             CorrelationId: this.correlationId,
-            Tags: this.tags);
+            Tags: this.tags,
+            SecurityTags: this.securityTags);
 
         long startedAt = Stopwatch.GetTimestamp();
         this.etag = await this.store.SaveAsync(this.Id, checkpoint, index, this.etag, cancellationToken).ConfigureAwait(false);

@@ -113,7 +113,7 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
         }
 
         using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(cp.Utf8);
-        return new WorkflowRunDetail(state.RunId, state.WorkflowId, state.Status, state.Cursor, state.CreatedAt, state.Wait, state.Fault, cp.Etag, state.CorrelationId, state.Tags);
+        return new WorkflowRunDetail(state.RunId, state.WorkflowId, state.Status, state.Cursor, state.CreatedAt, state.Wait, state.Fault, cp.Etag, state.CorrelationId, state.Tags, state.SecurityTags);
     }
 
     /// <inheritdoc/>
@@ -243,7 +243,8 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
                     wait: null,
                     fault: state.Fault,
                     correlationId: state.CorrelationId,
-                    tags: state.Tags);
+                    tags: state.Tags,
+                    securityTags: state.SecurityTags);
 
                 indexEntry = new WorkflowRunIndexEntry(
                     state.WorkflowId,
@@ -252,7 +253,8 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
                     this.timeProvider.GetUtcNow(),
                     ErrorType: state.Fault?.Error,
                     CorrelationId: state.CorrelationId,
-                    Tags: state.Tags);
+                    Tags: state.Tags,
+                    SecurityTags: state.SecurityTags);
 
                 if (activity is { IsAllDataRequested: true } && state.CorrelationId is { } cid)
                 {
@@ -452,7 +454,8 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
                     wait: null,
                     fault: state.Fault,
                     correlationId: state.CorrelationId,
-                    tags: state.Tags);
+                    tags: state.Tags,
+                    securityTags: state.SecurityTags);
 
                 indexEntry = new WorkflowRunIndexEntry(
                     state.WorkflowId,
@@ -461,7 +464,8 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
                     this.timeProvider.GetUtcNow(),
                     ErrorType: state.Fault?.Error,
                     CorrelationId: state.CorrelationId,
-                    Tags: state.Tags);
+                    Tags: state.Tags,
+                    SecurityTags: state.SecurityTags);
             }
         }
         finally
