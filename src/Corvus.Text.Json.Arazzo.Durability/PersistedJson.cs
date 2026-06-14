@@ -2,7 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using Corvus.Text.Json;
+using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Arazzo.Durability;
 
@@ -70,6 +72,31 @@ public static class PersistedJson
         finally
         {
             workspace.ReturnWriterAndBuffer(writer, buffer);
+        }
+    }
+
+    /// <summary>
+    /// Materializes a disposable document over an <see cref="ArrayPool{T}"/>-rented copy of <paramref name="utf8"/> —
+    /// the only allocation is the small document wrapper; its backing buffer and metadata return to the pool on
+    /// <see cref="IDisposable.Dispose"/>. The caller owns the returned document's lifetime: dispose it when done, or
+    /// <see cref="JsonDocument"/>-clone the value out first if it must outlive the dispose.
+    /// </summary>
+    /// <typeparam name="T">The Corvus.Text.Json document type.</typeparam>
+    /// <param name="utf8">The UTF-8 JSON to copy into the pooled document.</param>
+    /// <returns>The pooled, disposable document.</returns>
+    public static ParsedJsonDocument<T> ToPooledDocument<T>(ReadOnlySpan<byte> utf8)
+        where T : struct, IJsonElement<T>
+    {
+        byte[] rented = ArrayPool<byte>.Shared.Rent(utf8.Length);
+        try
+        {
+            utf8.CopyTo(rented);
+            return ParsedJsonDocument<T>.Parse(rented.AsMemory(0, utf8.Length), rented);
+        }
+        catch
+        {
+            ArrayPool<byte>.Shared.Return(rented);
+            throw;
         }
     }
 }

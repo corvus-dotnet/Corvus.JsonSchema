@@ -19,11 +19,13 @@ public class PooledDocumentPatternTests
 {
     private static byte[] SampleRuleJson()
     {
-        using ParsedJsonDocument<SecurityRuleDocument> draft = SecurityRuleDocument.Draft("sys:tenant == $claim.tenant", "Tenant isolation.");
-        return PersistedJson.ToArray(
-            ("tenant-scoped", draft.RootElement, "alice", DateTimeOffset.UnixEpoch, new WorkflowEtag("etag-1")),
-            static (Utf8JsonWriter writer, in (string Name, SecurityRuleDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
-                => SecurityRuleDocument.WriteNew(writer, c.Name, c.Draft, c.Actor, c.At, c.Tag));
+        SecurityRuleDocument rule = SecurityRuleDocument.CreateRule(
+            "tenant-scoped",
+            new SecurityRuleDefinition("sys:tenant == $claim.tenant", "Tenant isolation."),
+            "alice",
+            DateTimeOffset.UnixEpoch,
+            new WorkflowEtag("etag-1"));
+        return PersistedJson.ToArray(rule, static (Utf8JsonWriter writer, in SecurityRuleDocument r) => r.WriteTo(writer));
     }
 
     [TestMethod]
