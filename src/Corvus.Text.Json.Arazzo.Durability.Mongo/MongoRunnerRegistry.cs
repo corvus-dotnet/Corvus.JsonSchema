@@ -2,7 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
+using System.Text.Json;
+using Corvus.Text.Json;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
@@ -81,9 +82,7 @@ public sealed class MongoRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     {
         string runnerId = registration.RunnerIdValue;
 
-        var buffer = new ArrayBufferWriter<byte>();
-        registration.WriteTo(buffer);
-        byte[] doc = buffer.WrittenSpan.ToArray();
+        byte[] doc = PersistedJson.ToArray(registration, static (Utf8JsonWriter writer, in RunnerRegistration r) => r.WriteTo(writer));
 
         BsonDocument document = BuildDocument(registration, doc, registration.LastSeenAtValue.ToUnixTimeMilliseconds());
 
@@ -140,11 +139,14 @@ public sealed class MongoRunnerRegistry : IRunnerRegistry, IAsyncDisposable
             return false;
         }
 
-        RunnerRegistration current = RunnerRegistration.FromJson(existing["doc"].AsBsonBinaryData.Bytes);
+        byte[] existingDoc = existing["doc"].AsBsonBinaryData.Bytes;
+        RunnerRegistration current = RunnerRegistration.FromJson(existingDoc);
 
-        var buffer = new ArrayBufferWriter<byte>();
-        current.WriteWithLastSeenAt(buffer, at);
-        byte[] doc = buffer.WrittenSpan.ToArray();
+        byte[] doc = PersistedJson.ToArray((existingDoc, at), static (Utf8JsonWriter writer, in (byte[] Existing, DateTimeOffset At) ctx) =>
+        {
+            using ParsedJsonDocument<RunnerRegistration> parsed = ParsedJsonDocument<RunnerRegistration>.Parse(ctx.Existing);
+            parsed.RootElement.WriteWithLastSeenAt(writer, ctx.At);
+        });
 
         BsonDocument document = BuildDocument(current, doc, at.ToUnixTimeMilliseconds());
         await this.registrations.ReplaceOneAsync(filter, document, new ReplaceOptions { IsUpsert = true }, cancellationToken).ConfigureAwait(false);

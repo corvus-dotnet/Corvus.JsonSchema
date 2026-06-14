@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using Corvus.Text.Json;
 
 namespace Corvus.Text.Json.Arazzo.Durability;
@@ -13,10 +12,10 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// </summary>
 /// <remarks>
 /// This is the persisted registry entity. Every backend stores it as its JSON document verbatim, keyed by
-/// <see cref="RunnerId"/>, with a queryable <see cref="LastSeenAtValue"/> for pruning. A store writes it straight
-/// into the buffer (or stream) it owns (<see cref="WriteTo(IBufferWriter{byte})"/> on register,
-/// <see cref="WriteWithLastSeenAt"/> on heartbeat) and reads it back with <see cref="FromJson"/> — no detached
-/// clone, no second serialization.
+/// <see cref="RunnerId"/>, with a queryable <see cref="LastSeenAtValue"/> for pruning. A store serializes it through
+/// a pooled writer (the generated <see cref="WriteTo(Utf8JsonWriter)"/> on register; <see cref="WriteWithLastSeenAt"/>
+/// on heartbeat) and reads it back with <see cref="FromJson"/> — no detached clone, no second serialization, no
+/// unpooled scratch buffer.
 /// </remarks>
 [JsonSchemaTypeGenerator("Schemas/RunnerRegistration.json")]
 public readonly partial struct RunnerRegistration
@@ -67,60 +66,15 @@ public readonly partial struct RunnerRegistration
     /// <returns>The runner registration.</returns>
     public static RunnerRegistration FromJson(ReadOnlyMemory<byte> utf8) => ParseValue(utf8.Span);
 
-    /// <summary>Writes this registration's JSON straight into the caller's buffer (or stream) in a single pass.</summary>
-    /// <param name="buffer">The destination the caller owns (a rented buffer, or a writer over a stream).</param>
-    public void WriteTo(IBufferWriter<byte> buffer)
-    {
-        using JsonWorkspace workspace = JsonWorkspace.Create();
-        Utf8JsonWriter writer = workspace.RentWriter(buffer);
-        try
-        {
-            this.WriteTo(writer);
-            writer.Flush();
-        }
-        finally
-        {
-            workspace.ReturnWriter(writer);
-        }
-    }
-
-    /// <summary>Writes a heartbeated copy of this registration (its <see cref="LastSeenAt"/> advanced) into the caller's
-    /// buffer, modifying only that field — no field-by-field rebuild.</summary>
-    /// <param name="buffer">The destination the caller owns (a rented buffer, or a writer over a stream).</param>
+    /// <summary>Writes a heartbeated copy of this registration (its <see cref="LastSeenAt"/> advanced) to the writer,
+    /// modifying only that field — no field-by-field rebuild. The caller owns (and flushes) the writer.</summary>
+    /// <param name="writer">The writer to serialize into (typically rented from a workspace).</param>
     /// <param name="at">The instant of the heartbeat.</param>
-    public void WriteWithLastSeenAt(IBufferWriter<byte> buffer, DateTimeOffset at)
+    public void WriteWithLastSeenAt(Utf8JsonWriter writer, DateTimeOffset at)
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        using JsonDocumentBuilder<Mutable> builder = this.HeartbeatBuilder(workspace, at);
-        Utf8JsonWriter writer = workspace.RentWriter(buffer);
-        try
-        {
-            builder.RootElement.WriteTo(writer);
-            writer.Flush();
-        }
-        finally
-        {
-            workspace.ReturnWriter(writer);
-        }
-    }
-
-    /// <summary>Returns a heartbeated copy of this registration (its <see cref="LastSeenAt"/> advanced) as a detached
-    /// value — for a store that must reshape it (e.g. re-embed it in a backend envelope). Modifies only that field and
-    /// detaches once; no scratch buffer, no re-parse. Byte-oriented stores use <see cref="WriteWithLastSeenAt"/>.</summary>
-    /// <param name="at">The instant of the heartbeat.</param>
-    /// <returns>The detached, heartbeated registration.</returns>
-    public RunnerRegistration WithLastSeenAt(DateTimeOffset at)
-    {
-        using JsonWorkspace workspace = JsonWorkspace.Create();
-        using JsonDocumentBuilder<Mutable> builder = this.HeartbeatBuilder(workspace, at);
-        return builder.RootElement.Clone();
-    }
-
-    // Realises a mutable builder over this registration with its LastSeenAt advanced (modifies only that field).
-    private JsonDocumentBuilder<Mutable> HeartbeatBuilder(JsonWorkspace workspace, DateTimeOffset at)
-    {
-        JsonDocumentBuilder<Mutable> builder = this.CreateBuilder(workspace);
+        using JsonDocumentBuilder<Mutable> builder = this.CreateBuilder(workspace);
         builder.RootElement.SetLastSeenAt(at);
-        return builder;
+        builder.RootElement.WriteTo(writer);
     }
 }

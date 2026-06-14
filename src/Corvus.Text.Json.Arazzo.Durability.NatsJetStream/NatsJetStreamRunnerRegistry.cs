@@ -2,10 +2,10 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using System.Buffers.Text;
 using System.Globalization;
 using System.Text;
+using Corvus.Text.Json;
 using NATS.Client.Core;
 using NATS.Client.JetStream;
 using NATS.Client.KeyValueStore;
@@ -143,9 +143,7 @@ public sealed class NatsJetStreamRunnerRegistry : IRunnerRegistry, IAsyncDisposa
             }
         }
 
-        var buffer = new ArrayBufferWriter<byte>();
-        registration.WriteTo(buffer);
-        byte[] doc = buffer.WrittenSpan.ToArray();
+        byte[] doc = PersistedJson.ToArray(registration, static (Utf8JsonWriter writer, in RunnerRegistration r) => r.WriteTo(writer));
         await this.registry.PutAsync(key, doc, cancellationToken: cancellationToken).ConfigureAwait(false);
 
         foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
@@ -166,10 +164,11 @@ public sealed class NatsJetStreamRunnerRegistry : IRunnerRegistry, IAsyncDisposa
         }
 
         // A heartbeat only advances liveness; the hosted versions are unchanged, so the hosting index is left as-is.
-        RunnerRegistration current = RunnerRegistration.FromJson(value);
-        var buffer = new ArrayBufferWriter<byte>();
-        current.WriteWithLastSeenAt(buffer, at);
-        byte[] doc = buffer.WrittenSpan.ToArray();
+        byte[] doc = PersistedJson.ToArray((value, at), static (Utf8JsonWriter writer, in (byte[] Existing, DateTimeOffset At) ctx) =>
+        {
+            using ParsedJsonDocument<RunnerRegistration> parsed = ParsedJsonDocument<RunnerRegistration>.Parse(ctx.Existing);
+            parsed.RootElement.WriteWithLastSeenAt(writer, ctx.At);
+        });
         await this.registry.PutAsync(key, doc, cancellationToken: cancellationToken).ConfigureAwait(false);
         return true;
     }

@@ -2,8 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using System.Text;
+using System.Text.Json;
+using Corvus.Text.Json;
 using StackExchange.Redis;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Redis;
@@ -93,9 +94,7 @@ public sealed class RedisRunnerRegistry : IRunnerRegistry, IAsyncDisposable
             }
         }
 
-        var buffer = new ArrayBufferWriter<byte>();
-        registration.WriteTo(buffer);
-        byte[] doc = buffer.WrittenSpan.ToArray();
+        byte[] doc = PersistedJson.ToArray(registration, static (Utf8JsonWriter writer, in RunnerRegistration r) => r.WriteTo(writer));
 
         await this.database.StringSetAsync(RunnerKey(runnerId), doc).ConfigureAwait(false);
         await this.database.SetAddAsync(IndexKey, runnerId).ConfigureAwait(false);
@@ -126,10 +125,12 @@ public sealed class RedisRunnerRegistry : IRunnerRegistry, IAsyncDisposable
             return false;
         }
 
-        RunnerRegistration current = RunnerRegistration.FromJson((byte[])value!);
-        var buffer = new ArrayBufferWriter<byte>();
-        current.WriteWithLastSeenAt(buffer, at);
-        byte[] doc = buffer.WrittenSpan.ToArray();
+        byte[] existing = (byte[])value!;
+        byte[] doc = PersistedJson.ToArray((existing, at), static (Utf8JsonWriter writer, in (byte[] Existing, DateTimeOffset At) ctx) =>
+        {
+            using ParsedJsonDocument<RunnerRegistration> parsed = ParsedJsonDocument<RunnerRegistration>.Parse(ctx.Existing);
+            parsed.RootElement.WriteWithLastSeenAt(writer, ctx.At);
+        });
 
         await this.database.StringSetAsync(RunnerKey(runnerId), doc).ConfigureAwait(false);
         return true;
