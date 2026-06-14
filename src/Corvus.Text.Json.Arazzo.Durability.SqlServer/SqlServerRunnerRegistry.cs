@@ -2,8 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Text.Json;
-
 using Corvus.Text.Json;
 
 using Microsoft.Data.SqlClient;
