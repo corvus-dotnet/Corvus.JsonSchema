@@ -21,11 +21,11 @@ public sealed class SecurityBootstrapTests
         IReadOnlyList<string> firstSeed = await SecurityBootstrap.SeedAsync(store);
         firstSeed.OrderBy(x => x, StringComparer.Ordinal).ShouldBe(["abac-superset", "intersection", "tenant-scoped"]);
 
-        IReadOnlyList<SecurityRuleRecord> rules = await store.ListRulesAsync(default);
+        IReadOnlyList<SecurityRuleDocument> rules = await store.ListRulesAsync(default);
         rules.Count.ShouldBe(3);
-        foreach (SecurityRuleRecord rule in rules)
+        foreach (SecurityRuleDocument rule in rules)
         {
-            Should.NotThrow(() => SecurityRule.Compile(rule.Expression)); // every seeded rule is valid grammar
+            Should.NotThrow(() => SecurityRule.Compile(rule.ExpressionValue)); // every seeded rule is valid grammar
         }
 
         // Idempotent: a second seed adds nothing.
@@ -38,11 +38,11 @@ public sealed class SecurityBootstrapTests
         var store = new InMemorySecurityPolicyStore();
         await SecurityBootstrap.SeedAsync(store);
 
-        SecurityRuleRecord tenant = (await store.GetRuleAsync(SecurityBootstrap.TenantScopedRuleName, default))!.Value;
-        await store.UpdateRuleAsync(SecurityBootstrap.TenantScopedRuleName, new SecurityRuleDefinition("sys:tenant == $claim.tenant"), tenant.Etag, "alice", default);
+        SecurityRuleDocument tenant = (await store.GetRuleAsync(SecurityBootstrap.TenantScopedRuleName, default))!.Value;
+        await store.UpdateRuleAsync(SecurityBootstrap.TenantScopedRuleName, new SecurityRuleDefinition("sys:tenant == $claim.tenant"), tenant.EtagValue, "alice", default);
 
         // Re-seeding must not clobber the edit.
         (await SecurityBootstrap.SeedAsync(store)).ShouldBeEmpty();
-        (await store.GetRuleAsync(SecurityBootstrap.TenantScopedRuleName, default))!.Value.Expression.ShouldBe("sys:tenant == $claim.tenant");
+        (await store.GetRuleAsync(SecurityBootstrap.TenantScopedRuleName, default))!.Value.ExpressionValue.ShouldBe("sys:tenant == $claim.tenant");
     }
 }

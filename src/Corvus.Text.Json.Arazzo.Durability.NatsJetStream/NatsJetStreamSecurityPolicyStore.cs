@@ -96,7 +96,7 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleRecord> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityRuleDocument> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
@@ -106,26 +106,26 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
             throw new InvalidOperationException($"A security rule named '{name}' already exists.");
         }
 
-        var record = new SecurityRuleRecord(name, definition.Expression, definition.Description, actor, this.timeProvider.GetUtcNow(), null, null, NewEtag());
-        await this.store.PutAsync(RulePrefix + Enc(name), SecurityRuleDocument.From(record).ToJsonBytes(), cancellationToken: cancellationToken).ConfigureAwait(false);
+        var record = SecurityRuleDocument.CreateRule(name, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        await this.store.PutAsync(RulePrefix + Enc(name), record.ToJsonBytes(), cancellationToken: cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
         return record;
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleRecord?> GetRuleAsync(string name, CancellationToken cancellationToken)
+    public async ValueTask<SecurityRuleDocument?> GetRuleAsync(string name, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
         NatsKVEntry<byte[]>? entry = await this.TryGetAsync(RulePrefix + Enc(name), cancellationToken).ConfigureAwait(false);
-        return entry is { Value: { } bytes } ? SecurityRuleDocument.FromJson(bytes).ToRecord() : null;
+        return entry is { Value: { } bytes } ? SecurityRuleDocument.FromJson(bytes) : null;
     }
 
     /// <inheritdoc/>
-    public async ValueTask<IReadOnlyList<SecurityRuleRecord>> ListRulesAsync(CancellationToken cancellationToken)
+    public async ValueTask<IReadOnlyList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
         => await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleRecord?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityRuleDocument?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
@@ -136,24 +136,17 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
             return null;
         }
 
-        SecurityRuleRecord current = SecurityRuleDocument.FromJson(bytes).ToRecord();
-        EnsureEtag("rule", name, expectedEtag, current.Etag);
-        var updated = current with
-        {
-            Expression = definition.Expression,
-            Description = definition.Description,
-            UpdatedBy = actor,
-            UpdatedAt = this.timeProvider.GetUtcNow(),
-            Etag = NewEtag(),
-        };
-        await this.store.PutAsync(RulePrefix + Enc(name), SecurityRuleDocument.From(updated).ToJsonBytes(), cancellationToken: cancellationToken).ConfigureAwait(false);
+        SecurityRuleDocument current = SecurityRuleDocument.FromJson(bytes);
+        EnsureEtag("rule", name, expectedEtag, current.EtagValue);
+        SecurityRuleDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        await this.store.PutAsync(RulePrefix + Enc(name), updated.ToJsonBytes(), cancellationToken: cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
         return updated;
     }
 
     /// <inheritdoc/>
     public ValueTask<bool> DeleteRuleAsync(string name, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
-        => this.DeleteAsync(RulePrefix, "rule", name, expectedEtag, doc => SecurityRuleDocument.FromJson(doc).ToRecord().Etag, cancellationToken);
+        => this.DeleteAsync(RulePrefix, "rule", name, expectedEtag, doc => SecurityRuleDocument.FromJson(doc).EtagValue, cancellationToken);
 
     /// <inheritdoc/>
     public async ValueTask<SecurityBinding> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
@@ -218,7 +211,7 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
     /// <inheritdoc/>
     public async ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
     {
-        IReadOnlyList<SecurityRuleRecord> rules = await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<SecurityRuleDocument> rules = await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
         IReadOnlyList<SecurityBinding> bindings = await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
         NatsKVEntry<byte[]>? gen = await this.TryGetAsync(GenerationKey, cancellationToken).ConfigureAwait(false);
         long generation = gen is { Value: { } bytes } && long.TryParse(Encoding.UTF8.GetString(bytes), NumberStyles.Integer, CultureInfo.InvariantCulture, out long g) ? g : 0;
@@ -246,9 +239,9 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
         }
     }
 
-    private async ValueTask<IReadOnlyList<SecurityRuleRecord>> ReadRulesAsync(CancellationToken cancellationToken)
+    private async ValueTask<IReadOnlyList<SecurityRuleDocument>> ReadRulesAsync(CancellationToken cancellationToken)
     {
-        var list = new List<SecurityRuleRecord>();
+        var list = new List<SecurityRuleDocument>();
         await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
         {
             if (!key.StartsWith(RulePrefix, StringComparison.Ordinal))
@@ -259,11 +252,11 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
             NatsKVEntry<byte[]>? entry = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
             if (entry is { Value: { } bytes })
             {
-                list.Add(SecurityRuleDocument.FromJson(bytes).ToRecord());
+                list.Add(SecurityRuleDocument.FromJson(bytes));
             }
         }
 
-        list.Sort(static (a, b) => string.CompareOrdinal(a.Name, b.Name));
+        list.Sort(static (a, b) => string.CompareOrdinal(a.NameValue, b.NameValue));
         return list;
     }
 
