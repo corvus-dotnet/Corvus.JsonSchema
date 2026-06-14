@@ -5,6 +5,7 @@
 using System.Buffers;
 using System.Diagnostics;
 using Corvus.Text.Json;
+using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.Patch;
 
 namespace Corvus.Text.Json.Arazzo.Durability;
@@ -19,6 +20,8 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// </summary>
 public sealed class WorkflowManagementClient : IWorkflowManagementClient
 {
+    private const int DefaultBufferSize = 512;
+
     private readonly IWorkflowStateStore store;
     private readonly IWorkflowWaitIndex? index;
     private readonly WorkflowResumer? resumer;
@@ -575,48 +578,51 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
             return false;
         }
 
-        var buffer = new ArrayBufferWriter<byte>();
-        using (var writer = new Utf8JsonWriter(buffer))
+        // Serialize the patched root through the pooled writer cache (reusing this method's workspace), then hand back a
+        // pooled document the caller owns (ToPooledDocument copies into its own pooled buffer, so the scratch returns here).
+        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(DefaultBufferSize, out IByteBufferWriter buffer);
+        try
         {
             root.WriteTo(writer);
+            writer.Flush();
+            patched = PersistedJson.ToPooledDocument<JsonElement>(buffer.WrittenSpan);
+            return true;
         }
-
-        patched = ParsedJsonDocument<JsonElement>.Parse(buffer.WrittenMemory);
-        return true;
+        finally
+        {
+            workspace.ReturnWriterAndBuffer(writer, buffer);
+        }
     }
 
     private static byte[] ComposeContext(in JsonElement inputs, Dictionary<string, JsonElement> stepOutputs)
-    {
-        var buffer = new ArrayBufferWriter<byte>();
-        using (var writer = new Utf8JsonWriter(buffer))
-        {
-            writer.WriteStartObject();
-
-            // Omit undefined values rather than writing null: "not present" is Undefined.
-            if (inputs.ValueKind != JsonValueKind.Undefined)
+        => PersistedJson.ToArray(
+            (Inputs: inputs, StepOutputs: stepOutputs),
+            static (Utf8JsonWriter writer, in (JsonElement Inputs, Dictionary<string, JsonElement> StepOutputs) c) =>
             {
-                writer.WritePropertyName("inputs"u8);
-                inputs.WriteTo(writer);
-            }
+                writer.WriteStartObject();
 
-            writer.WriteStartObject("stepOutputs"u8);
-            foreach (KeyValuePair<string, JsonElement> step in stepOutputs)
-            {
-                if (step.Value.ValueKind == JsonValueKind.Undefined)
+                // Omit undefined values rather than writing null: "not present" is Undefined.
+                if (c.Inputs.ValueKind != JsonValueKind.Undefined)
                 {
-                    continue;
+                    writer.WritePropertyName("inputs"u8);
+                    c.Inputs.WriteTo(writer);
                 }
 
-                writer.WritePropertyName(step.Key);
-                step.Value.WriteTo(writer);
-            }
+                writer.WriteStartObject("stepOutputs"u8);
+                foreach (KeyValuePair<string, JsonElement> step in c.StepOutputs)
+                {
+                    if (step.Value.ValueKind == JsonValueKind.Undefined)
+                    {
+                        continue;
+                    }
 
-            writer.WriteEndObject();
-            writer.WriteEndObject();
-        }
+                    writer.WritePropertyName(step.Key);
+                    step.Value.WriteTo(writer);
+                }
 
-        return buffer.WrittenSpan.ToArray();
-    }
+                writer.WriteEndObject();
+                writer.WriteEndObject();
+            });
 
     private static Dictionary<string, JsonElement> ReadStepOutputs(in JsonElement context)
     {
