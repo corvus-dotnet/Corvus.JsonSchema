@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
@@ -79,7 +80,12 @@ public sealed class MongoRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     public async ValueTask RegisterAsync(RunnerRegistration registration, CancellationToken cancellationToken)
     {
         string runnerId = registration.RunnerIdValue;
-        BsonDocument document = BuildDocument(registration);
+
+        var buffer = new ArrayBufferWriter<byte>();
+        registration.WriteTo(buffer);
+        byte[] doc = buffer.WrittenSpan.ToArray();
+
+        BsonDocument document = BuildDocument(registration, doc, registration.LastSeenAtValue.ToUnixTimeMilliseconds());
 
         FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Eq("_id", runnerId);
         await this.registrations.ReplaceOneAsync(filter, document, new ReplaceOptions { IsUpsert = true }, cancellationToken).ConfigureAwait(false);
@@ -102,7 +108,7 @@ public sealed class MongoRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     /// <c>lastSeenAt</c> field and the multikey <c>loadedVersions</c> projection used by
     /// <see cref="IsVersionHostedAsync"/>.
     /// </summary>
-    private static BsonDocument BuildDocument(RunnerRegistration registration)
+    private static BsonDocument BuildDocument(RunnerRegistration registration, byte[] doc, long lastSeenAtUnixMilliseconds)
     {
         var loadedVersions = new BsonArray();
         foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
@@ -117,8 +123,8 @@ public sealed class MongoRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         return new BsonDocument
         {
             ["_id"] = registration.RunnerIdValue,
-            ["lastSeenAt"] = registration.LastSeenAtValue.ToUnixTimeMilliseconds(),
-            ["doc"] = new BsonBinaryData(registration.ToJsonBytes()),
+            ["lastSeenAt"] = lastSeenAtUnixMilliseconds,
+            ["doc"] = new BsonBinaryData(doc),
             ["loadedVersions"] = loadedVersions,
         };
     }
@@ -134,8 +140,13 @@ public sealed class MongoRunnerRegistry : IRunnerRegistry, IAsyncDisposable
             return false;
         }
 
-        RunnerRegistration updated = RunnerRegistration.FromJson(existing["doc"].AsBsonBinaryData.Bytes).WithLastSeenAt(at);
-        BsonDocument document = BuildDocument(updated);
+        RunnerRegistration current = RunnerRegistration.FromJson(existing["doc"].AsBsonBinaryData.Bytes);
+
+        var buffer = new ArrayBufferWriter<byte>();
+        current.WriteWithLastSeenAt(buffer, at);
+        byte[] doc = buffer.WrittenSpan.ToArray();
+
+        BsonDocument document = BuildDocument(current, doc, at.ToUnixTimeMilliseconds());
         await this.registrations.ReplaceOneAsync(filter, document, new ReplaceOptions { IsUpsert = true }, cancellationToken).ConfigureAwait(false);
         return true;
     }

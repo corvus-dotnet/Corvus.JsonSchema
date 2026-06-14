@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
+
 using MySqlConnector;
 
 namespace Corvus.Text.Json.Arazzo.Durability.MySql;
@@ -120,9 +122,11 @@ public sealed class MySqlRunnerRegistry : IRunnerRegistry, IAsyncDisposable
                 VALUES (@runnerId, @lastSeenAt, @doc)
                 ON DUPLICATE KEY UPDATE last_seen_at = VALUES(last_seen_at), doc = VALUES(doc);
                 """;
+            var buffer = new ArrayBufferWriter<byte>();
+            registration.WriteTo(buffer);
             upsert.Parameters.AddWithValue("@runnerId", runnerId);
             upsert.Parameters.AddWithValue("@lastSeenAt", registration.LastSeenAtValue.ToUnixTimeMilliseconds());
-            upsert.Parameters.AddWithValue("@doc", registration.ToJsonBytes());
+            upsert.Parameters.AddWithValue("@doc", buffer.WrittenSpan.ToArray());
             await upsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
@@ -180,12 +184,14 @@ public sealed class MySqlRunnerRegistry : IRunnerRegistry, IAsyncDisposable
             return false;
         }
 
-        RunnerRegistration updated = RunnerRegistration.FromJson(existing).WithLastSeenAt(at);
+        RunnerRegistration current = RunnerRegistration.FromJson(existing);
+        var buffer = new ArrayBufferWriter<byte>();
+        current.WriteWithLastSeenAt(buffer, at);
         await using MySqlCommand update = connection.CreateCommand();
         update.CommandText = "UPDATE runner_registrations SET last_seen_at = @lastSeenAt, doc = @doc WHERE runner_id = @runnerId;";
         update.Parameters.AddWithValue("@runnerId", runnerId);
         update.Parameters.AddWithValue("@lastSeenAt", at.ToUnixTimeMilliseconds());
-        update.Parameters.AddWithValue("@doc", updated.ToJsonBytes());
+        update.Parameters.AddWithValue("@doc", buffer.WrittenSpan.ToArray());
         await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         return true;
     }

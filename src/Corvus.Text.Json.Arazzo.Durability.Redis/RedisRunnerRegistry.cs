@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Text;
 using StackExchange.Redis;
 
@@ -92,7 +93,11 @@ public sealed class RedisRunnerRegistry : IRunnerRegistry, IAsyncDisposable
             }
         }
 
-        await this.database.StringSetAsync(RunnerKey(runnerId), registration.ToJsonBytes()).ConfigureAwait(false);
+        var buffer = new ArrayBufferWriter<byte>();
+        registration.WriteTo(buffer);
+        byte[] doc = buffer.WrittenSpan.ToArray();
+
+        await this.database.StringSetAsync(RunnerKey(runnerId), doc).ConfigureAwait(false);
         await this.database.SetAddAsync(IndexKey, runnerId).ConfigureAwait(false);
 
         foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
@@ -121,8 +126,12 @@ public sealed class RedisRunnerRegistry : IRunnerRegistry, IAsyncDisposable
             return false;
         }
 
-        RunnerRegistration updated = RunnerRegistration.FromJson((byte[])value!).WithLastSeenAt(at);
-        await this.database.StringSetAsync(RunnerKey(runnerId), updated.ToJsonBytes()).ConfigureAwait(false);
+        RunnerRegistration current = RunnerRegistration.FromJson((byte[])value!);
+        var buffer = new ArrayBufferWriter<byte>();
+        current.WriteWithLastSeenAt(buffer, at);
+        byte[] doc = buffer.WrittenSpan.ToArray();
+
+        await this.database.StringSetAsync(RunnerKey(runnerId), doc).ConfigureAwait(false);
         return true;
     }
 

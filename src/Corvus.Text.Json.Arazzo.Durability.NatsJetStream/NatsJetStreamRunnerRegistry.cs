@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Buffers.Text;
 using System.Globalization;
 using System.Text;
@@ -142,7 +143,10 @@ public sealed class NatsJetStreamRunnerRegistry : IRunnerRegistry, IAsyncDisposa
             }
         }
 
-        await this.registry.PutAsync(key, registration.ToJsonBytes(), cancellationToken: cancellationToken).ConfigureAwait(false);
+        var buffer = new ArrayBufferWriter<byte>();
+        registration.WriteTo(buffer);
+        byte[] doc = buffer.WrittenSpan.ToArray();
+        await this.registry.PutAsync(key, doc, cancellationToken: cancellationToken).ConfigureAwait(false);
 
         foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
         {
@@ -162,8 +166,11 @@ public sealed class NatsJetStreamRunnerRegistry : IRunnerRegistry, IAsyncDisposa
         }
 
         // A heartbeat only advances liveness; the hosted versions are unchanged, so the hosting index is left as-is.
-        RunnerRegistration updated = RunnerRegistration.FromJson(value).WithLastSeenAt(at);
-        await this.registry.PutAsync(key, updated.ToJsonBytes(), cancellationToken: cancellationToken).ConfigureAwait(false);
+        RunnerRegistration current = RunnerRegistration.FromJson(value);
+        var buffer = new ArrayBufferWriter<byte>();
+        current.WriteWithLastSeenAt(buffer, at);
+        byte[] doc = buffer.WrittenSpan.ToArray();
+        await this.registry.PutAsync(key, doc, cancellationToken: cancellationToken).ConfigureAwait(false);
         return true;
     }
 
