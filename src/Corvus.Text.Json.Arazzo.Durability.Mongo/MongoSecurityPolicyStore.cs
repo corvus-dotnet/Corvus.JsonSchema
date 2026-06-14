@@ -66,13 +66,13 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleRecord> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityRuleDocument> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
         ArgumentNullException.ThrowIfNull(actor);
-        var record = new SecurityRuleRecord(name, definition.Expression, definition.Description, actor, this.timeProvider.GetUtcNow(), null, null, NewEtag());
-        var document = new BsonDocument { ["_id"] = name, ["doc"] = new BsonBinaryData(SecurityRuleDocument.From(record).ToJsonBytes()) };
+        var record = SecurityRuleDocument.CreateRule(name, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        var document = new BsonDocument { ["_id"] = name, ["doc"] = new BsonBinaryData(record.ToJsonBytes()) };
         try
         {
             await this.rules.InsertOneAsync(document, options: null, cancellationToken).ConfigureAwait(false);
@@ -87,19 +87,19 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleRecord?> GetRuleAsync(string name, CancellationToken cancellationToken)
+    public async ValueTask<SecurityRuleDocument?> GetRuleAsync(string name, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
         byte[]? doc = await DocumentAsync(this.rules, name, cancellationToken).ConfigureAwait(false);
-        return doc is null ? null : SecurityRuleDocument.FromJson(doc).ToRecord();
+        return doc is null ? null : SecurityRuleDocument.FromJson(doc);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<IReadOnlyList<SecurityRuleRecord>> ListRulesAsync(CancellationToken cancellationToken)
+    public async ValueTask<IReadOnlyList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
         => await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleRecord?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityRuleDocument?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
@@ -110,17 +110,10 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
             return null;
         }
 
-        SecurityRuleRecord current = SecurityRuleDocument.FromJson(doc).ToRecord();
-        EnsureEtag("rule", name, expectedEtag, current.Etag);
-        var updated = current with
-        {
-            Expression = definition.Expression,
-            Description = definition.Description,
-            UpdatedBy = actor,
-            UpdatedAt = this.timeProvider.GetUtcNow(),
-            Etag = NewEtag(),
-        };
-        var replacement = new BsonDocument { ["_id"] = name, ["doc"] = new BsonBinaryData(SecurityRuleDocument.From(updated).ToJsonBytes()) };
+        SecurityRuleDocument current = SecurityRuleDocument.FromJson(doc);
+        EnsureEtag("rule", name, expectedEtag, current.EtagValue);
+        SecurityRuleDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        var replacement = new BsonDocument { ["_id"] = name, ["doc"] = new BsonBinaryData(updated.ToJsonBytes()) };
         await this.rules.ReplaceOneAsync(Builders<BsonDocument>.Filter.Eq("_id", name), replacement, cancellationToken: cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
         return updated;
@@ -128,7 +121,7 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
 
     /// <inheritdoc/>
     public ValueTask<bool> DeleteRuleAsync(string name, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
-        => this.DeleteAsync(this.rules, "rule", name, expectedEtag, doc => SecurityRuleDocument.FromJson(doc).ToRecord().Etag, cancellationToken);
+        => this.DeleteAsync(this.rules, "rule", name, expectedEtag, doc => SecurityRuleDocument.FromJson(doc).EtagValue, cancellationToken);
 
     /// <inheritdoc/>
     public async ValueTask<SecurityBinding> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
@@ -195,7 +188,7 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     /// <inheritdoc/>
     public async ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
     {
-        IReadOnlyList<SecurityRuleRecord> ruleList = await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<SecurityRuleDocument> ruleList = await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
         IReadOnlyList<SecurityBinding> bindingList = await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
         BsonDocument? metaDoc = await this.meta.Find(Builders<BsonDocument>.Filter.Eq("_id", MetaId)).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
         long generation = metaDoc is not null && metaDoc.TryGetValue("generation", out BsonValue value) ? value.ToInt64() : 0;
@@ -229,16 +222,16 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         return document?["doc"].AsBsonBinaryData.Bytes;
     }
 
-    private async ValueTask<IReadOnlyList<SecurityRuleRecord>> ReadRulesAsync(CancellationToken cancellationToken)
+    private async ValueTask<IReadOnlyList<SecurityRuleDocument>> ReadRulesAsync(CancellationToken cancellationToken)
     {
-        var list = new List<SecurityRuleRecord>();
+        var list = new List<SecurityRuleDocument>();
         List<BsonDocument> documents = await this.rules.Find(Builders<BsonDocument>.Filter.Empty).ToListAsync(cancellationToken).ConfigureAwait(false);
         foreach (BsonDocument document in documents)
         {
-            list.Add(SecurityRuleDocument.FromJson(document["doc"].AsBsonBinaryData.Bytes).ToRecord());
+            list.Add(SecurityRuleDocument.FromJson(document["doc"].AsBsonBinaryData.Bytes));
         }
 
-        list.Sort(static (a, b) => string.CompareOrdinal(a.Name, b.Name));
+        list.Sort(static (a, b) => string.CompareOrdinal(a.NameValue, b.NameValue));
         return list;
     }
 

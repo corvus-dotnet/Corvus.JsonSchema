@@ -4,31 +4,7 @@
 
 namespace Corvus.Text.Json.Arazzo.Durability.Security;
 
-/// <summary>
-/// A persisted, named row-authorization rule (design §14.2): the rule <paramref name="Expression"/> in the
-/// security-rule grammar (see <see cref="SecurityRule"/>) plus audit/concurrency metadata. Rules are referenced
-/// by <paramref name="Name"/> from a <see cref="SecurityBinding"/>'s per-verb grants; changing a rule re-emits
-/// its evaluator/predicate the next time a principal resolves.
-/// </summary>
-/// <param name="Name">The rule's stable identifier (unique within the store).</param>
-/// <param name="Expression">The rule text in the security-rule grammar (compiles via <see cref="SecurityRule.Compile"/>).</param>
-/// <param name="Description">An optional human description.</param>
-/// <param name="CreatedBy">The actor that created the rule.</param>
-/// <param name="CreatedAt">When the rule was created.</param>
-/// <param name="UpdatedBy">The actor that last updated the rule, if it has been updated.</param>
-/// <param name="UpdatedAt">When the rule was last updated, if it has been updated.</param>
-/// <param name="Etag">The optimistic-concurrency token for update/delete.</param>
-public readonly record struct SecurityRuleRecord(
-    string Name,
-    string Expression,
-    string? Description,
-    string CreatedBy,
-    DateTimeOffset CreatedAt,
-    string? UpdatedBy,
-    DateTimeOffset? UpdatedAt,
-    WorkflowEtag Etag);
-
-/// <summary>The mutable content of a <see cref="SecurityRuleRecord"/> supplied on add/update.</summary>
+/// <summary>The mutable content of a security rule (see <see cref="SecurityRuleDocument"/>) supplied on add/update.</summary>
 /// <param name="Expression">The rule text in the security-rule grammar.</param>
 /// <param name="Description">An optional human description.</param>
 public readonly record struct SecurityRuleDefinition(string Expression, string? Description = null);
@@ -116,6 +92,6 @@ public readonly record struct SecurityBindingDefinition(
 /// <param name="Bindings">All persisted bindings.</param>
 /// <param name="Generation">A monotonically increasing token bumped on every mutation.</param>
 public readonly record struct SecurityPolicySnapshot(
-    IReadOnlyList<SecurityRuleRecord> Rules,
+    IReadOnlyList<SecurityRuleDocument> Rules,
     IReadOnlyList<SecurityBinding> Bindings,
     long Generation);
