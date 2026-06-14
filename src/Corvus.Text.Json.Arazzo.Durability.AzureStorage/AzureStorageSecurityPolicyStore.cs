@@ -2,11 +2,11 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using System.Globalization;
 using System.Text;
 using Azure;
 using Azure.Data.Tables;
+using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 
 namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
@@ -96,9 +96,9 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
         ArgumentException.ThrowIfNullOrEmpty(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
         ArgumentNullException.ThrowIfNull(actor);
-        var buffer = new ArrayBufferWriter<byte>();
-        SecurityRuleDocument.WriteNewRule(buffer, name, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        byte[] doc = buffer.WrittenSpan.ToArray();
+        WorkflowEtag etag = NewEtag();
+        SecurityRuleDocument created = SecurityRuleDocument.CreateRule(name, definition, actor, this.timeProvider.GetUtcNow(), etag);
+        byte[] doc = PersistedJson.ToArray(created, static (Utf8JsonWriter writer, in SecurityRuleDocument r) => r.WriteTo(writer));
         var entity = new TableEntity(RulePartition, Enc(name)) { ["Doc"] = doc };
         try
         {
@@ -110,7 +110,7 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
         }
 
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return SecurityRuleDocument.FromJson(doc);
+        return created;
     }
 
     /// <inheritdoc/>
@@ -139,13 +139,13 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
 
         SecurityRuleDocument current = SecurityRuleDocument.FromJson(doc);
         EnsureEtag("rule", name, expectedEtag, current.EtagValue);
-        var buffer = new ArrayBufferWriter<byte>();
-        current.WriteUpdatedRule(buffer, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        byte[] json = buffer.WrittenSpan.ToArray();
+        WorkflowEtag etag = NewEtag();
+        SecurityRuleDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), etag);
+        byte[] json = PersistedJson.ToArray(updated, static (Utf8JsonWriter writer, in SecurityRuleDocument r) => r.WriteTo(writer));
         var entity = new TableEntity(RulePartition, Enc(name)) { ["Doc"] = json };
         await this.rules.UpsertEntityAsync(entity, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return SecurityRuleDocument.FromJson(json);
+        return updated;
     }
 
     /// <inheritdoc/>
@@ -158,13 +158,13 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
-        var buffer = new ArrayBufferWriter<byte>();
-        SecurityBindingDocument.WriteNewBinding(buffer, id, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        byte[] doc = buffer.WrittenSpan.ToArray();
+        WorkflowEtag etag = NewEtag();
+        SecurityBindingDocument created = SecurityBindingDocument.CreateBinding(id, definition, actor, this.timeProvider.GetUtcNow(), etag);
+        byte[] doc = PersistedJson.ToArray(created, static (Utf8JsonWriter writer, in SecurityBindingDocument b) => b.WriteTo(writer));
         var entity = new TableEntity(BindingPartition, Enc(id)) { ["Doc"] = doc };
         await this.bindings.AddEntityAsync(entity, cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return SecurityBindingDocument.FromJson(doc);
+        return created;
     }
 
     /// <inheritdoc/>
@@ -193,13 +193,13 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
 
         SecurityBindingDocument current = SecurityBindingDocument.FromJson(doc);
         EnsureEtag("binding", id, expectedEtag, current.EtagValue);
-        var buffer = new ArrayBufferWriter<byte>();
-        current.WriteUpdatedBinding(buffer, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        byte[] json = buffer.WrittenSpan.ToArray();
+        WorkflowEtag etag = NewEtag();
+        SecurityBindingDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), etag);
+        byte[] json = PersistedJson.ToArray(updated, static (Utf8JsonWriter writer, in SecurityBindingDocument b) => b.WriteTo(writer));
         var entity = new TableEntity(BindingPartition, Enc(id)) { ["Doc"] = json };
         await this.bindings.UpsertEntityAsync(entity, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return SecurityBindingDocument.FromJson(json);
+        return updated;
     }
 
     /// <inheritdoc/>
