@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using Microsoft.Data.Sqlite;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Sqlite;
@@ -101,9 +102,11 @@ public sealed class SqliteRunnerRegistry : IRunnerRegistry, IAsyncDisposable
                     VALUES (@runnerId, @lastSeenAt, @doc)
                     ON CONFLICT(runner_id) DO UPDATE SET last_seen_at = excluded.last_seen_at, doc = excluded.doc;
                     """;
+                var buffer = new ArrayBufferWriter<byte>();
+                registration.WriteTo(buffer);
                 upsert.Parameters.AddWithValue("@runnerId", runnerId);
                 upsert.Parameters.AddWithValue("@lastSeenAt", registration.LastSeenAtValue.ToUnixTimeMilliseconds());
-                upsert.Parameters.AddWithValue("@doc", registration.ToJsonBytes());
+                upsert.Parameters.AddWithValue("@doc", buffer.WrittenSpan.ToArray());
                 await upsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
             }
 
@@ -174,12 +177,14 @@ public sealed class SqliteRunnerRegistry : IRunnerRegistry, IAsyncDisposable
                 return false;
             }
 
-            RunnerRegistration updated = RunnerRegistration.FromJson(existing).WithLastSeenAt(at);
+            RunnerRegistration current = RunnerRegistration.FromJson(existing);
+            var buffer = new ArrayBufferWriter<byte>();
+            current.WriteWithLastSeenAt(buffer, at);
             using SqliteCommand update = this.connection.CreateCommand();
             update.CommandText = "UPDATE runner_registrations SET last_seen_at = @lastSeenAt, doc = @doc WHERE runner_id = @runnerId;";
             update.Parameters.AddWithValue("@runnerId", runnerId);
             update.Parameters.AddWithValue("@lastSeenAt", at.ToUnixTimeMilliseconds());
-            update.Parameters.AddWithValue("@doc", updated.ToJsonBytes());
+            update.Parameters.AddWithValue("@doc", buffer.WrittenSpan.ToArray());
             await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
             return true;
         }

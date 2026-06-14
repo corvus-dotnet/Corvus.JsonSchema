@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Threading;
 using Corvus.Text.Json;
 
@@ -26,7 +27,9 @@ public sealed class InMemoryRunnerRegistry : IRunnerRegistry
         cancellationToken.ThrowIfCancellationRequested();
 
         string runnerId = registration.RunnerIdValue;
-        byte[] document = registration.ToJsonBytes();
+        var buffer = new ArrayBufferWriter<byte>();
+        registration.WriteTo(buffer);
+        byte[] document = buffer.WrittenSpan.ToArray();
 
         lock (this.gate)
         {
@@ -49,7 +52,9 @@ public sealed class InMemoryRunnerRegistry : IRunnerRegistry
                 return ValueTask.FromResult(false);
             }
 
-            this.entries[runnerId] = RunnerRegistration.FromJson(bytes).WithLastSeenAt(at).ToJsonBytes();
+            var buffer = new ArrayBufferWriter<byte>();
+            RunnerRegistration.FromJson(bytes).WriteWithLastSeenAt(buffer, at);
+            this.entries[runnerId] = buffer.WrittenSpan.ToArray();
             return ValueTask.FromResult(true);
         }
     }
