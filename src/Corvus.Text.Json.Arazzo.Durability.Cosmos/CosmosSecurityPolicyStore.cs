@@ -100,13 +100,13 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleDocument> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
         ArgumentNullException.ThrowIfNull(actor);
-        SecurityRuleDocument created = SecurityRuleDocument.CreateRule(name, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        using var stream = EnvelopeStream(name, RulePartition, created, static (Utf8JsonWriter writer, in SecurityRuleDocument r) => r.WriteTo(writer));
+        byte[] json = SecurityPolicySerialization.SerializeNewRule(name, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        using var stream = EnvelopeStream(name, RulePartition, json);
         using ResponseMessage response = await this.container.CreateItemStreamAsync(stream, new PartitionKey(RulePartition), cancellationToken: cancellationToken).ConfigureAwait(false);
         if (response.StatusCode == HttpStatusCode.Conflict)
         {
@@ -115,23 +115,23 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
 
         response.EnsureSuccessStatusCode();
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return created;
+        return PersistedJson.ToPooledDocument<SecurityRuleDocument>(json);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleDocument?> GetRuleAsync(string name, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> GetRuleAsync(string name, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
         byte[]? doc = await this.DocumentAsync(name, RulePartition, cancellationToken).ConfigureAwait(false);
-        return doc is null ? null : SecurityRuleDocument.FromJson(doc);
+        return doc is null ? null : PersistedJson.ToPooledDocument<SecurityRuleDocument>(doc);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<IReadOnlyList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
-        => await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
+    public async ValueTask<PooledDocumentList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
+        => new(await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false));
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleDocument?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
@@ -142,48 +142,46 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
             return null;
         }
 
-        SecurityRuleDocument current = SecurityRuleDocument.FromJson(doc);
-        EnsureEtag("rule", name, expectedEtag, current.EtagValue);
-        SecurityRuleDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        using var stream = EnvelopeStream(name, RulePartition, updated, static (Utf8JsonWriter writer, in SecurityRuleDocument r) => r.WriteTo(writer));
+        byte[] json = SecurityPolicySerialization.SerializeUpdatedRule(doc, "rule", name, expectedEtag, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        using var stream = EnvelopeStream(name, RulePartition, json);
         using ResponseMessage response = await this.container.ReplaceItemStreamAsync(stream, name, new PartitionKey(RulePartition), cancellationToken: cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return updated;
+        return PersistedJson.ToPooledDocument<SecurityRuleDocument>(json);
     }
 
     /// <inheritdoc/>
     public ValueTask<bool> DeleteRuleAsync(string name, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
-        => this.DeleteAsync(name, RulePartition, "rule", expectedEtag, doc => SecurityRuleDocument.FromJson(doc).EtagValue, cancellationToken);
+        => this.DeleteAsync(name, RulePartition, "rule", expectedEtag, SecurityPolicySerialization.RuleEtagOf, cancellationToken);
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBindingDocument> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
-        SecurityBindingDocument created = SecurityBindingDocument.CreateBinding(id, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        using var stream = EnvelopeStream(id, BindingPartition, created, static (Utf8JsonWriter writer, in SecurityBindingDocument b) => b.WriteTo(writer));
+        byte[] json = SecurityPolicySerialization.SerializeNewBinding(id, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        using var stream = EnvelopeStream(id, BindingPartition, json);
         using ResponseMessage response = await this.container.CreateItemStreamAsync(stream, new PartitionKey(BindingPartition), cancellationToken: cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return created;
+        return PersistedJson.ToPooledDocument<SecurityBindingDocument>(json);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBindingDocument?> GetBindingAsync(string id, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> GetBindingAsync(string id, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         byte[]? doc = await this.DocumentAsync(id, BindingPartition, cancellationToken).ConfigureAwait(false);
-        return doc is null ? null : SecurityBindingDocument.FromJson(doc);
+        return doc is null ? null : PersistedJson.ToPooledDocument<SecurityBindingDocument>(doc);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<IReadOnlyList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
-        => await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
+    public async ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
+        => new(await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false));
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBindingDocument?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
@@ -194,25 +192,23 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
             return null;
         }
 
-        SecurityBindingDocument current = SecurityBindingDocument.FromJson(doc);
-        EnsureEtag("binding", id, expectedEtag, current.EtagValue);
-        SecurityBindingDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        using var stream = EnvelopeStream(id, BindingPartition, updated, static (Utf8JsonWriter writer, in SecurityBindingDocument b) => b.WriteTo(writer));
+        byte[] json = SecurityPolicySerialization.SerializeUpdatedBinding(doc, "binding", id, expectedEtag, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        using var stream = EnvelopeStream(id, BindingPartition, json);
         using ResponseMessage response = await this.container.ReplaceItemStreamAsync(stream, id, new PartitionKey(BindingPartition), cancellationToken: cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return updated;
+        return PersistedJson.ToPooledDocument<SecurityBindingDocument>(json);
     }
 
     /// <inheritdoc/>
     public ValueTask<bool> DeleteBindingAsync(string id, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
-        => this.DeleteAsync(id, BindingPartition, "binding", expectedEtag, doc => SecurityBindingDocument.FromJson(doc).EtagValue, cancellationToken);
+        => this.DeleteAsync(id, BindingPartition, "binding", expectedEtag, SecurityPolicySerialization.BindingEtagOf, cancellationToken);
 
     /// <inheritdoc/>
     public async ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
     {
-        IReadOnlyList<SecurityRuleDocument> rules = await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
-        IReadOnlyList<SecurityBindingDocument> bindings = await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
+        var rules = new PooledDocumentList<SecurityRuleDocument>(await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false));
+        var bindings = new PooledDocumentList<SecurityBindingDocument>(await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false));
         long generation = await this.ReadGenerationAsync(cancellationToken).ConfigureAwait(false);
         return new SecurityPolicySnapshot(rules, bindings, generation);
     }
@@ -230,15 +226,7 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
-    private static void EnsureEtag(string kind, string id, WorkflowEtag expected, WorkflowEtag actual)
-    {
-        if (!expected.IsNone && expected != actual)
-        {
-            throw new SecurityPolicyConflictException(kind, id, expected);
-        }
-    }
-
-    private static MemoryStream EnvelopeStream<TContext>(string id, string partition, in TContext document, PersistedJson.WriteCallback<TContext> writeDocument)
+    private static MemoryStream EnvelopeStream(string id, string partition, ReadOnlySpan<byte> document)
     {
         var stream = new MemoryStream();
         using (var writer = new Utf8JsonWriter(stream, WriterOptions))
@@ -247,9 +235,9 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
             writer.WriteString("id"u8, id);
             writer.WriteString("pk"u8, partition);
 
-            // Serialize the document into a pooled buffer and base64-encode it straight into the envelope — no interim
-            // base64 string and no owned byte[].
-            PersistedJson.WriteBase64(writer, "doc"u8, document, writeDocument);
+            // Base64-encode the already-serialized document bytes straight into the envelope — no interim base64 string
+            // and no re-serialization.
+            writer.WriteBase64String("doc"u8, document);
             writer.WriteEndObject();
         }
 
@@ -283,27 +271,27 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         return CosmosJson.GetString(payload, DocProperty) is { } base64 ? Convert.FromBase64String(base64) : null;
     }
 
-    private async ValueTask<IReadOnlyList<SecurityRuleDocument>> ReadRulesAsync(CancellationToken cancellationToken)
+    private async ValueTask<List<ParsedJsonDocument<SecurityRuleDocument>>> ReadRulesAsync(CancellationToken cancellationToken)
     {
-        var list = new List<SecurityRuleDocument>();
+        var list = new List<ParsedJsonDocument<SecurityRuleDocument>>();
         await foreach (byte[] doc in this.QueryDocumentsAsync(RulePartition, cancellationToken).ConfigureAwait(false))
         {
-            list.Add(SecurityRuleDocument.FromJson(doc));
+            list.Add(PersistedJson.ToPooledDocument<SecurityRuleDocument>(doc));
         }
 
-        list.Sort(static (a, b) => string.CompareOrdinal(a.NameValue, b.NameValue));
+        list.Sort(static (a, b) => string.CompareOrdinal(a.RootElement.NameValue, b.RootElement.NameValue));
         return list;
     }
 
-    private async ValueTask<IReadOnlyList<SecurityBindingDocument>> ReadBindingsAsync(CancellationToken cancellationToken)
+    private async ValueTask<List<ParsedJsonDocument<SecurityBindingDocument>>> ReadBindingsAsync(CancellationToken cancellationToken)
     {
-        var list = new List<SecurityBindingDocument>();
+        var list = new List<ParsedJsonDocument<SecurityBindingDocument>>();
         await foreach (byte[] doc in this.QueryDocumentsAsync(BindingPartition, cancellationToken).ConfigureAwait(false))
         {
-            list.Add(SecurityBindingDocument.FromJson(doc));
+            list.Add(PersistedJson.ToPooledDocument<SecurityBindingDocument>(doc));
         }
 
-        list.Sort(static (a, b) => a.OrderValue != b.OrderValue ? a.OrderValue.CompareTo(b.OrderValue) : string.CompareOrdinal(a.IdValue, b.IdValue));
+        list.Sort(static (a, b) => a.RootElement.OrderValue != b.RootElement.OrderValue ? a.RootElement.OrderValue.CompareTo(b.RootElement.OrderValue) : string.CompareOrdinal(a.RootElement.IdValue, b.RootElement.IdValue));
         return list;
     }
 
@@ -367,7 +355,7 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
             return false;
         }
 
-        EnsureEtag(kind, id, expectedEtag, etagOf(doc));
+        SecurityPolicySerialization.EnsureEtag(kind, id, expectedEtag, etagOf(doc));
         using ResponseMessage response = await this.container.DeleteItemStreamAsync(id, new PartitionKey(partition), cancellationToken: cancellationToken).ConfigureAwait(false);
         if (response.StatusCode != HttpStatusCode.NotFound)
         {

@@ -18,15 +18,10 @@ namespace Corvus.Text.Json.Arazzo.Durability.Tests;
 public class PooledDocumentPatternTests
 {
     private static byte[] SampleRuleJson()
-    {
-        SecurityRuleDocument rule = SecurityRuleDocument.CreateRule(
-            "tenant-scoped",
-            new SecurityRuleDefinition("sys:tenant == $claim.tenant", "Tenant isolation."),
-            "alice",
-            DateTimeOffset.UnixEpoch,
-            new WorkflowEtag("etag-1"));
-        return PersistedJson.ToArray(rule, static (Utf8JsonWriter writer, in SecurityRuleDocument r) => r.WriteTo(writer));
-    }
+        => PersistedJson.ToArray(
+            ("tenant-scoped", new SecurityRuleDefinition("sys:tenant == $claim.tenant", "Tenant isolation."), "alice", DateTimeOffset.UnixEpoch, new WorkflowEtag("etag-1")),
+            static (Utf8JsonWriter writer, in (string Name, SecurityRuleDefinition Def, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
+                => SecurityRuleDocument.WriteNew(writer, c.Name, c.Def, c.Actor, c.At, c.Tag));
 
     [TestMethod]
     public void A_pooled_document_round_trips_and_a_clone_outlives_its_dispose()

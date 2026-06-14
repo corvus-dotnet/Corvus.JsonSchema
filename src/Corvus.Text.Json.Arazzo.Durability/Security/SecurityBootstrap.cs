@@ -40,14 +40,17 @@ public static class SecurityBootstrap
         var seeded = new List<string>();
         foreach ((string name, string expression, string description) in Rules)
         {
-            if (await store.GetRuleAsync(name, cancellationToken).ConfigureAwait(false) is not null)
+            ParsedJsonDocument<SecurityRuleDocument>? existing = await store.GetRuleAsync(name, cancellationToken).ConfigureAwait(false);
+            if (existing is not null)
             {
+                existing.Dispose();
                 continue;
             }
 
             try
             {
-                await store.AddRuleAsync(name, new SecurityRuleDefinition(expression, description), actor, cancellationToken).ConfigureAwait(false);
+                // The created document is not needed here; dispose it so its pooled buffer is returned.
+                (await store.AddRuleAsync(name, new SecurityRuleDefinition(expression, description), actor, cancellationToken).ConfigureAwait(false)).Dispose();
                 seeded.Add(name);
             }
             catch (InvalidOperationException)
