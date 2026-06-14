@@ -62,7 +62,61 @@ public readonly partial struct SecurityBindingDocument
     public static void WriteNewBinding(IBufferWriter<byte> buffer, string id, SecurityBindingDefinition definition, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        using JsonDocumentBuilder<Mutable> builder = CreateBuilder(
+        using JsonDocumentBuilder<Mutable> builder = BuildNew(workspace, id, definition, actor, createdAt, etag);
+        WriteBuilderTo(workspace, builder, buffer);
+    }
+
+    /// <summary>Builds a new binding as a detached value — for an in-memory store whose stored value <em>is</em> the
+    /// document. Builds into the pooled workspace arena and detaches once; no scratch buffer, no re-parse. Persisting
+    /// stores thread their own buffer through <see cref="WriteNewBinding"/> instead.</summary>
+    /// <param name="id">The binding id.</param>
+    /// <param name="definition">The binding content (claim match + per-verb grants).</param>
+    /// <param name="actor">The actor creating the binding (audit).</param>
+    /// <param name="createdAt">The creation instant.</param>
+    /// <param name="etag">The optimistic-concurrency token to assign.</param>
+    /// <returns>The detached binding.</returns>
+    public static SecurityBindingDocument CreateBinding(string id, SecurityBindingDefinition definition, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<Mutable> builder = BuildNew(workspace, id, definition, actor, createdAt, etag);
+        return builder.RootElement.Clone();
+    }
+
+    /// <summary>Realises an updated copy of this binding (preserving id/created metadata) into the caller's buffer.</summary>
+    /// <param name="buffer">The destination the caller owns (a rented buffer, or a writer over a stream).</param>
+    /// <param name="definition">The new binding content.</param>
+    /// <param name="actor">The actor performing the update (audit).</param>
+    /// <param name="updatedAt">The update instant.</param>
+    /// <param name="etag">The new optimistic-concurrency token to assign.</param>
+    public void WriteUpdatedBinding(IBufferWriter<byte> buffer, SecurityBindingDefinition definition, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<Mutable> builder = this.ApplyUpdate(workspace, definition, actor, updatedAt, etag);
+        WriteBuilderTo(workspace, builder, buffer);
+    }
+
+    /// <summary>Builds an updated copy of this binding as a detached value (for an in-memory store), modifying only the
+    /// fields the update touches and detaching once — no scratch buffer, no re-parse.</summary>
+    /// <param name="definition">The new binding content.</param>
+    /// <param name="actor">The actor performing the update (audit).</param>
+    /// <param name="updatedAt">The update instant.</param>
+    /// <param name="etag">The new optimistic-concurrency token to assign.</param>
+    /// <returns>The detached, updated binding.</returns>
+    public SecurityBindingDocument WithUpdate(SecurityBindingDefinition definition, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<Mutable> builder = this.ApplyUpdate(workspace, definition, actor, updatedAt, etag);
+        return builder.RootElement.Clone();
+    }
+
+    /// <summary>Parses a binding from its persisted JSON as a detached value (one owned copy).</summary>
+    /// <param name="utf8">The UTF-8 JSON document.</param>
+    /// <returns>The binding.</returns>
+    public static SecurityBindingDocument FromJson(ReadOnlyMemory<byte> utf8) => ParseValue(utf8.Span);
+
+    // Realises a new binding into the pooled workspace arena (shared by the buffer-writing and detached-value paths).
+    private static JsonDocumentBuilder<Mutable> BuildNew(JsonWorkspace workspace, string id, SecurityBindingDefinition definition, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+        => CreateBuilder(
             workspace,
             claimType: definition.ClaimType,
             createdAt: createdAt,
@@ -75,31 +129,12 @@ public readonly partial struct SecurityBindingDocument
             write: definition.Write,
             claimValue: definition.ClaimValue is { } claimValue ? (JsonString.Source)claimValue : default,
             description: definition.Description is { } description ? (JsonString.Source)description : default);
-        Utf8JsonWriter writer = workspace.RentWriter(buffer);
-        try
-        {
-            builder.RootElement.WriteTo(writer);
-            writer.Flush();
-        }
-        finally
-        {
-            workspace.ReturnWriter(writer);
-        }
-    }
 
-    /// <summary>Realises an updated copy of this binding (preserving id/created metadata) into the caller's buffer.</summary>
-    /// <param name="buffer">The destination the caller owns (a rented buffer, or a writer over a stream).</param>
-    /// <param name="definition">The new binding content.</param>
-    /// <param name="actor">The actor performing the update (audit).</param>
-    /// <param name="updatedAt">The update instant.</param>
-    /// <param name="etag">The new optimistic-concurrency token to assign.</param>
-    public void WriteUpdatedBinding(IBufferWriter<byte> buffer, SecurityBindingDefinition definition, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
+    // Realises a mutable builder over this document and modifies only the fields an update touches; id and the
+    // created-* metadata are carried through unchanged (no field-by-field rebuild).
+    private JsonDocumentBuilder<Mutable> ApplyUpdate(JsonWorkspace workspace, SecurityBindingDefinition definition, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
     {
-        using JsonWorkspace workspace = JsonWorkspace.Create();
-
-        // Realise a mutable builder over this document and modify only the fields the update touches; id and the
-        // created-* metadata are carried through unchanged (no field-by-field rebuild).
-        using JsonDocumentBuilder<Mutable> builder = this.CreateBuilder(workspace);
+        JsonDocumentBuilder<Mutable> builder = this.CreateBuilder(workspace);
         builder.RootElement.SetClaimType(definition.ClaimType);
         builder.RootElement.SetOrder(definition.Order);
         builder.RootElement.SetRead(definition.Read);
@@ -126,6 +161,11 @@ public readonly partial struct SecurityBindingDocument
             builder.RootElement.RemoveDescription();
         }
 
+        return builder;
+    }
+
+    private static void WriteBuilderTo(JsonWorkspace workspace, JsonDocumentBuilder<Mutable> builder, IBufferWriter<byte> buffer)
+    {
         Utf8JsonWriter writer = workspace.RentWriter(buffer);
         try
         {
@@ -137,11 +177,6 @@ public readonly partial struct SecurityBindingDocument
             workspace.ReturnWriter(writer);
         }
     }
-
-    /// <summary>Parses a binding from its persisted JSON as a detached value (one owned copy).</summary>
-    /// <param name="utf8">The UTF-8 JSON document.</param>
-    /// <returns>The binding.</returns>
-    public static SecurityBindingDocument FromJson(ReadOnlyMemory<byte> utf8) => ParseValue(utf8.Span);
 
     /// <summary>
     /// A per-verb grant: either <see cref="IsUnrestrictedValue"/> access (a <see langword="null"/> reach — the

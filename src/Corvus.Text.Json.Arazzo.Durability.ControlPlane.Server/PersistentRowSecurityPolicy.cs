@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Collections.Concurrent;
 using System.Security.Claims;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using VerbGrant = Corvus.Text.Json.Arazzo.Durability.Security.SecurityBindingDocument.VerbGrantInfo;
@@ -29,7 +30,7 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
     private readonly ISecurityPolicyStore store;
     private readonly SecurityShell shell;
     private readonly Func<ClaimsPrincipal?, IReadOnlyList<SecurityTag>>? internalTagResolver;
-    private volatile Compiled compiled = new(-1, [], new Dictionary<string, string>(StringComparer.Ordinal));
+    private volatile Compiled compiled = new(-1, []);
 
     /// <summary>Initializes a new instance of the <see cref="PersistentRowSecurityPolicy"/> class.</summary>
     /// <param name="store">The persistent rule/binding store.</param>
@@ -60,7 +61,20 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
             expressions[rule.NameValue] = rule.ExpressionValue;
         }
 
-        this.compiled = new Compiled(snapshot.Generation, snapshot.Bindings, expressions);
+        // Pre-resolve each binding's claim match and per-verb clause string ONCE per generation, so Resolve does no
+        // rule-name lookups or clause-string building on the hot path.
+        var bindings = new List<BindingClauses>(snapshot.Bindings.Count);
+        foreach (SecurityBindingDocument binding in snapshot.Bindings)
+        {
+            bindings.Add(new BindingClauses(
+                binding.ClaimTypeValue,
+                binding.ClaimValueOrNull,
+                VerbClauseFor(binding.Read, expressions),
+                VerbClauseFor(binding.Write, expressions),
+                VerbClauseFor(binding.Purge, expressions)));
+        }
+
+        this.compiled = new Compiled(snapshot.Generation, bindings);
     }
 
     /// <inheritdoc/>
@@ -70,10 +84,10 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
         IReadOnlyDictionary<string, IReadOnlyList<string>> claims = CollectClaims(principal);
 
         // Bindings matching this principal, in resolution order.
-        var matched = new List<SecurityBindingDocument>();
+        var matched = new List<BindingClauses>();
         if (principal?.Identity?.IsAuthenticated == true)
         {
-            foreach (SecurityBindingDocument binding in current.Bindings)
+            foreach (BindingClauses binding in current.Bindings)
             {
                 if (Matches(binding, principal))
                 {
@@ -97,36 +111,36 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
 
     private static IReadOnlyDictionary<string, IReadOnlyList<string>> CollectClaims(ClaimsPrincipal? principal)
     {
-        var map = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+        // Build the claim map in a single dictionary (the List values already satisfy IReadOnlyList<string>).
+        var map = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
         if (principal is not null)
         {
             foreach (Claim claim in principal.Claims)
             {
-                if (!map.TryGetValue(claim.Type, out List<string>? values))
+                if (!map.TryGetValue(claim.Type, out IReadOnlyList<string>? values))
                 {
-                    values = [];
+                    values = new List<string>();
                     map[claim.Type] = values;
                 }
 
-                values.Add(claim.Value);
+                ((List<string>)values).Add(claim.Value);
             }
         }
 
-        return map.ToDictionary(static e => e.Key, static e => (IReadOnlyList<string>)e.Value, StringComparer.Ordinal);
+        return map;
     }
 
-    private static bool Matches(SecurityBindingDocument binding, ClaimsPrincipal principal)
+    private static bool Matches(BindingClauses binding, ClaimsPrincipal principal)
     {
-        if (string.Equals(binding.ClaimTypeValue, "*", StringComparison.Ordinal))
+        if (string.Equals(binding.ClaimType, "*", StringComparison.Ordinal))
         {
             return true;
         }
 
-        string? claimValue = binding.ClaimValueOrNull;
         foreach (Claim claim in principal.Claims)
         {
-            if (string.Equals(claim.Type, binding.ClaimTypeValue, StringComparison.Ordinal)
-                && (claimValue is null || string.Equals(claim.Value, claimValue, StringComparison.Ordinal)))
+            if (string.Equals(claim.Type, binding.ClaimType, StringComparison.Ordinal)
+                && (binding.ClaimValue is null || string.Equals(claim.Value, binding.ClaimValue, StringComparison.Ordinal)))
             {
                 return true;
             }
@@ -135,61 +149,79 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
         return false;
     }
 
-    // Builds "((expr1) && (expr2) ...)" for a binding's verb grant, or null if the grant is empty or references an
-    // unknown rule (fail-closed: a broken grant contributes nothing).
-    private static string? ClauseFor(VerbGrant grant, Compiled current)
+    // Pre-resolves a binding's verb grant (at snapshot time) to "((expr1) && (expr2) ...)", or to a null clause if the
+    // grant is empty or references an unknown rule (fail-closed: a broken grant contributes nothing).
+    private static VerbClause VerbClauseFor(VerbGrant grant, IReadOnlyDictionary<string, string> expressions)
     {
-        if (grant.IsUnrestrictedValue || !grant.HasRuleNames)
+        if (grant.IsUnrestrictedValue)
         {
-            return null;
+            return new VerbClause(true, null);
+        }
+
+        if (!grant.HasRuleNames)
+        {
+            return new VerbClause(false, null);
         }
 
         var parts = new List<string>(grant.RuleNameCount);
         foreach (JsonString ruleNameJson in grant.RuleNames.EnumerateArray())
         {
-            // (string) realises a key only at this leaf, where the rule-expression lookup needs one.
-            if (!current.RuleExpressions.TryGetValue((string)ruleNameJson, out string? expression))
+            if (!expressions.TryGetValue((string)ruleNameJson, out string? expression))
             {
-                return null;
+                return new VerbClause(false, null);
             }
 
             parts.Add("(" + expression + ")");
         }
 
-        return parts.Count == 1 ? parts[0] : "(" + string.Join(" && ", parts) + ")";
+        return new VerbClause(false, parts.Count == 1 ? parts[0] : "(" + string.Join(" && ", parts) + ")");
     }
 
     private SecurityFilter? ResolveReach(
-        List<SecurityBindingDocument> matched,
+        List<BindingClauses> matched,
         IReadOnlyDictionary<string, IReadOnlyList<string>> claims,
         Compiled current,
-        Func<SecurityBindingDocument, VerbGrant> selectGrant)
+        Func<BindingClauses, VerbClause> selectVerb)
     {
-        var clauses = new List<string>();
-        foreach (SecurityBindingDocument binding in matched)
+        List<string>? clauses = null;
+        foreach (BindingClauses binding in matched)
         {
-            VerbGrant grant = selectGrant(binding);
-            if (grant.IsUnrestrictedValue)
+            VerbClause verb = selectVerb(binding);
+            if (verb.Unrestricted)
             {
                 // Any matched Unrestricted grant for the verb → full reach (the operator path).
                 return null;
             }
 
-            if (ClauseFor(grant, current) is { } clause)
+            if (verb.Clause is { } clause)
             {
-                clauses.Add(clause);
+                (clauses ??= []).Add(clause);
             }
         }
 
         // No grant for this verb → empty filter → deny-by-default.
-        if (clauses.Count == 0)
+        if (clauses is null)
         {
             return new SecurityFilter([], claims);
         }
 
         string combined = clauses.Count == 1 ? clauses[0] : string.Join(" || ", clauses);
-        return this.shell.BuildFilter([SecurityRule.Compile(combined)], claims);
+
+        // Compiling the grammar is the expensive step; memoize per combined expression for this generation so repeat
+        // principals/claim-sets reuse the parsed rule. (The filter itself is per-call — it binds the principal's claims.)
+        SecurityRule[] rules = current.CompiledCombos.GetOrAdd(combined, static c => [SecurityRule.Compile(c)]);
+        return this.shell.BuildFilter(rules, claims);
     }
 
-    private sealed record Compiled(long Generation, IReadOnlyList<SecurityBindingDocument> Bindings, IReadOnlyDictionary<string, string> RuleExpressions);
+    // A binding's per-verb grant, pre-resolved at snapshot time: unrestricted (operator) or a (possibly null) clause.
+    private readonly record struct VerbClause(bool Unrestricted, string? Clause);
+
+    // A binding pre-resolved at snapshot time: its claim match plus the three per-verb clauses.
+    private sealed record BindingClauses(string ClaimType, string? ClaimValue, VerbClause Read, VerbClause Write, VerbClause Purge);
+
+    private sealed record Compiled(long Generation, IReadOnlyList<BindingClauses> Bindings)
+    {
+        // Combined-expression -> compiled rule, scoped to this generation (discarded when the snapshot advances).
+        public ConcurrentDictionary<string, SecurityRule[]> CompiledCombos { get; } = new(StringComparer.Ordinal);
+    }
 }
