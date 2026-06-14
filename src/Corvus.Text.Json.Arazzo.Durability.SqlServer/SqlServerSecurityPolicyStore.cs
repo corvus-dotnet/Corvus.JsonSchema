@@ -126,42 +126,42 @@ public sealed class SqlServerSecurityPolicyStore : ISecurityPolicyStore, IAsyncD
         => this.DeleteAsync("SecurityRules", "Name", "rule", name, expectedEtag, cancellationToken);
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBinding> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityBindingDocument> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
-        var record = new SecurityBinding(id, definition.ClaimType, definition.ClaimValue, definition.Read, definition.Write, definition.Purge, definition.Order, definition.Description, actor, this.timeProvider.GetUtcNow(), null, null, NewEtag());
+        var record = SecurityBindingDocument.CreateBinding(id, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using SqlCommand insert = connection.CreateCommand();
         insert.CommandText = "INSERT INTO SecurityBindings (Id, SortOrder, Etag, Document) VALUES (@id, @order, @etag, @doc);";
         insert.Parameters.AddWithValue("@id", id);
         insert.Parameters.AddWithValue("@order", definition.Order);
-        insert.Parameters.AddWithValue("@etag", record.Etag.Value!);
-        insert.Parameters.AddWithValue("@doc", SecurityBindingDocument.From(record).ToJsonBytes());
+        insert.Parameters.AddWithValue("@etag", record.EtagValue.Value!);
+        insert.Parameters.AddWithValue("@doc", record.ToJsonBytes());
         await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         await BumpGenerationAsync(connection, cancellationToken).ConfigureAwait(false);
         return record;
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBinding?> GetBindingAsync(string id, CancellationToken cancellationToken)
+    public async ValueTask<SecurityBindingDocument?> GetBindingAsync(string id, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         byte[]? doc = await DocumentAsync(connection, "SecurityBindings", "Id", id, cancellationToken).ConfigureAwait(false);
-        return doc is null ? null : SecurityBindingDocument.FromJson(doc).ToRecord();
+        return doc is null ? null : SecurityBindingDocument.FromJson(doc);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<IReadOnlyList<SecurityBinding>> ListBindingsAsync(CancellationToken cancellationToken)
+    public async ValueTask<IReadOnlyList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
     {
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         return await ReadBindingsAsync(connection, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBinding?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityBindingDocument?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
@@ -173,26 +173,14 @@ public sealed class SqlServerSecurityPolicyStore : ISecurityPolicyStore, IAsyncD
             return null;
         }
 
-        SecurityBinding current = SecurityBindingDocument.FromJson(doc).ToRecord();
-        EnsureEtag("binding", id, expectedEtag, current.Etag);
-        var updated = current with
-        {
-            ClaimType = definition.ClaimType,
-            ClaimValue = definition.ClaimValue,
-            Read = definition.Read,
-            Write = definition.Write,
-            Purge = definition.Purge,
-            Order = definition.Order,
-            Description = definition.Description,
-            UpdatedBy = actor,
-            UpdatedAt = this.timeProvider.GetUtcNow(),
-            Etag = NewEtag(),
-        };
+        SecurityBindingDocument current = SecurityBindingDocument.FromJson(doc);
+        EnsureEtag("binding", id, expectedEtag, current.EtagValue);
+        SecurityBindingDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
         await using SqlCommand update = connection.CreateCommand();
         update.CommandText = "UPDATE SecurityBindings SET SortOrder = @order, Etag = @etag, Document = @doc WHERE Id = @k;";
         update.Parameters.AddWithValue("@order", definition.Order);
-        update.Parameters.AddWithValue("@etag", updated.Etag.Value!);
-        update.Parameters.AddWithValue("@doc", SecurityBindingDocument.From(updated).ToJsonBytes());
+        update.Parameters.AddWithValue("@etag", updated.EtagValue.Value!);
+        update.Parameters.AddWithValue("@doc", updated.ToJsonBytes());
         update.Parameters.AddWithValue("@k", id);
         await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         await BumpGenerationAsync(connection, cancellationToken).ConfigureAwait(false);
@@ -208,7 +196,7 @@ public sealed class SqlServerSecurityPolicyStore : ISecurityPolicyStore, IAsyncD
     {
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         IReadOnlyList<SecurityRuleDocument> rules = await ReadRulesAsync(connection, cancellationToken).ConfigureAwait(false);
-        IReadOnlyList<SecurityBinding> bindings = await ReadBindingsAsync(connection, cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<SecurityBindingDocument> bindings = await ReadBindingsAsync(connection, cancellationToken).ConfigureAwait(false);
         await using SqlCommand select = connection.CreateCommand();
         select.CommandText = "SELECT Generation FROM SecurityPolicyMeta WHERE Id = 0;";
         object? gen = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
@@ -251,15 +239,15 @@ public sealed class SqlServerSecurityPolicyStore : ISecurityPolicyStore, IAsyncD
         return list;
     }
 
-    private static async ValueTask<IReadOnlyList<SecurityBinding>> ReadBindingsAsync(SqlConnection connection, CancellationToken cancellationToken)
+    private static async ValueTask<IReadOnlyList<SecurityBindingDocument>> ReadBindingsAsync(SqlConnection connection, CancellationToken cancellationToken)
     {
-        var list = new List<SecurityBinding>();
+        var list = new List<SecurityBindingDocument>();
         await using SqlCommand select = connection.CreateCommand();
         select.CommandText = "SELECT Document FROM SecurityBindings ORDER BY SortOrder, Id;";
         await using SqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
-            list.Add(SecurityBindingDocument.FromJson(reader.GetFieldValue<byte[]>(0)).ToRecord());
+            list.Add(SecurityBindingDocument.FromJson(reader.GetFieldValue<byte[]>(0)));
         }
 
         return list;

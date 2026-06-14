@@ -128,36 +128,36 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         => this.DeleteAsync(RulePrefix, RuleIndexKey, "rule", name, expectedEtag, doc => SecurityRuleDocument.FromJson(doc).EtagValue);
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBinding> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityBindingDocument> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
-        var record = new SecurityBinding(id, definition.ClaimType, definition.ClaimValue, definition.Read, definition.Write, definition.Purge, definition.Order, definition.Description, actor, this.timeProvider.GetUtcNow(), null, null, NewEtag());
-        await this.database.StringSetAsync(BindingPrefix + id, SecurityBindingDocument.From(record).ToJsonBytes()).ConfigureAwait(false);
+        var record = SecurityBindingDocument.CreateBinding(id, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        await this.database.StringSetAsync(BindingPrefix + id, record.ToJsonBytes()).ConfigureAwait(false);
         await this.database.SetAddAsync(BindingIndexKey, id).ConfigureAwait(false);
         await this.BumpGenerationAsync().ConfigureAwait(false);
         return record;
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBinding?> GetBindingAsync(string id, CancellationToken cancellationToken)
+    public async ValueTask<SecurityBindingDocument?> GetBindingAsync(string id, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         cancellationToken.ThrowIfCancellationRequested();
         RedisValue value = await this.database.StringGetAsync(BindingPrefix + id).ConfigureAwait(false);
-        return value.IsNullOrEmpty ? null : SecurityBindingDocument.FromJson((byte[])value!).ToRecord();
+        return value.IsNullOrEmpty ? null : SecurityBindingDocument.FromJson((byte[])value!);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<IReadOnlyList<SecurityBinding>> ListBindingsAsync(CancellationToken cancellationToken)
+    public async ValueTask<IReadOnlyList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         return await this.ReadBindingsAsync().ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBinding?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityBindingDocument?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
@@ -168,36 +168,24 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
             return null;
         }
 
-        SecurityBinding current = SecurityBindingDocument.FromJson((byte[])value!).ToRecord();
-        EnsureEtag("binding", id, expectedEtag, current.Etag);
-        var updated = current with
-        {
-            ClaimType = definition.ClaimType,
-            ClaimValue = definition.ClaimValue,
-            Read = definition.Read,
-            Write = definition.Write,
-            Purge = definition.Purge,
-            Order = definition.Order,
-            Description = definition.Description,
-            UpdatedBy = actor,
-            UpdatedAt = this.timeProvider.GetUtcNow(),
-            Etag = NewEtag(),
-        };
-        await this.database.StringSetAsync(BindingPrefix + id, SecurityBindingDocument.From(updated).ToJsonBytes()).ConfigureAwait(false);
+        SecurityBindingDocument current = SecurityBindingDocument.FromJson((byte[])value!);
+        EnsureEtag("binding", id, expectedEtag, current.EtagValue);
+        SecurityBindingDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        await this.database.StringSetAsync(BindingPrefix + id, updated.ToJsonBytes()).ConfigureAwait(false);
         await this.BumpGenerationAsync().ConfigureAwait(false);
         return updated;
     }
 
     /// <inheritdoc/>
     public ValueTask<bool> DeleteBindingAsync(string id, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
-        => this.DeleteAsync(BindingPrefix, BindingIndexKey, "binding", id, expectedEtag, doc => SecurityBindingDocument.FromJson(doc).ToRecord().Etag);
+        => this.DeleteAsync(BindingPrefix, BindingIndexKey, "binding", id, expectedEtag, doc => SecurityBindingDocument.FromJson(doc).EtagValue);
 
     /// <inheritdoc/>
     public async ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         IReadOnlyList<SecurityRuleDocument> rules = await this.ReadRulesAsync().ConfigureAwait(false);
-        IReadOnlyList<SecurityBinding> bindings = await this.ReadBindingsAsync().ConfigureAwait(false);
+        IReadOnlyList<SecurityBindingDocument> bindings = await this.ReadBindingsAsync().ConfigureAwait(false);
         RedisValue gen = await this.database.StringGetAsync(GenerationKey).ConfigureAwait(false);
         return new SecurityPolicySnapshot(rules, bindings, gen.IsNullOrEmpty ? 0 : (long)gen);
     }
@@ -237,19 +225,19 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         return list;
     }
 
-    private async ValueTask<IReadOnlyList<SecurityBinding>> ReadBindingsAsync()
+    private async ValueTask<IReadOnlyList<SecurityBindingDocument>> ReadBindingsAsync()
     {
-        var list = new List<SecurityBinding>();
+        var list = new List<SecurityBindingDocument>();
         foreach (RedisValue member in await this.database.SetMembersAsync(BindingIndexKey).ConfigureAwait(false))
         {
             RedisValue value = await this.database.StringGetAsync(BindingPrefix + (string)member!).ConfigureAwait(false);
             if (!value.IsNullOrEmpty)
             {
-                list.Add(SecurityBindingDocument.FromJson((byte[])value!).ToRecord());
+                list.Add(SecurityBindingDocument.FromJson((byte[])value!));
             }
         }
 
-        list.Sort(static (a, b) => a.Order != b.Order ? a.Order.CompareTo(b.Order) : string.CompareOrdinal(a.Id, b.Id));
+        list.Sort(static (a, b) => a.OrderValue != b.OrderValue ? a.OrderValue.CompareTo(b.OrderValue) : string.CompareOrdinal(a.IdValue, b.IdValue));
         return list;
     }
 

@@ -149,31 +149,31 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
         => this.DeleteAsync(RulePrefix, "rule", name, expectedEtag, doc => SecurityRuleDocument.FromJson(doc).EtagValue, cancellationToken);
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBinding> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityBindingDocument> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
-        var record = new SecurityBinding(id, definition.ClaimType, definition.ClaimValue, definition.Read, definition.Write, definition.Purge, definition.Order, definition.Description, actor, this.timeProvider.GetUtcNow(), null, null, NewEtag());
-        await this.store.PutAsync(BindingPrefix + Enc(id), SecurityBindingDocument.From(record).ToJsonBytes(), cancellationToken: cancellationToken).ConfigureAwait(false);
+        var record = SecurityBindingDocument.CreateBinding(id, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        await this.store.PutAsync(BindingPrefix + Enc(id), record.ToJsonBytes(), cancellationToken: cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
         return record;
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBinding?> GetBindingAsync(string id, CancellationToken cancellationToken)
+    public async ValueTask<SecurityBindingDocument?> GetBindingAsync(string id, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         NatsKVEntry<byte[]>? entry = await this.TryGetAsync(BindingPrefix + Enc(id), cancellationToken).ConfigureAwait(false);
-        return entry is { Value: { } bytes } ? SecurityBindingDocument.FromJson(bytes).ToRecord() : null;
+        return entry is { Value: { } bytes } ? SecurityBindingDocument.FromJson(bytes) : null;
     }
 
     /// <inheritdoc/>
-    public async ValueTask<IReadOnlyList<SecurityBinding>> ListBindingsAsync(CancellationToken cancellationToken)
+    public async ValueTask<IReadOnlyList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
         => await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBinding?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityBindingDocument?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
@@ -184,35 +184,23 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
             return null;
         }
 
-        SecurityBinding current = SecurityBindingDocument.FromJson(bytes).ToRecord();
-        EnsureEtag("binding", id, expectedEtag, current.Etag);
-        var updated = current with
-        {
-            ClaimType = definition.ClaimType,
-            ClaimValue = definition.ClaimValue,
-            Read = definition.Read,
-            Write = definition.Write,
-            Purge = definition.Purge,
-            Order = definition.Order,
-            Description = definition.Description,
-            UpdatedBy = actor,
-            UpdatedAt = this.timeProvider.GetUtcNow(),
-            Etag = NewEtag(),
-        };
-        await this.store.PutAsync(BindingPrefix + Enc(id), SecurityBindingDocument.From(updated).ToJsonBytes(), cancellationToken: cancellationToken).ConfigureAwait(false);
+        SecurityBindingDocument current = SecurityBindingDocument.FromJson(bytes);
+        EnsureEtag("binding", id, expectedEtag, current.EtagValue);
+        SecurityBindingDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        await this.store.PutAsync(BindingPrefix + Enc(id), updated.ToJsonBytes(), cancellationToken: cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
         return updated;
     }
 
     /// <inheritdoc/>
     public ValueTask<bool> DeleteBindingAsync(string id, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
-        => this.DeleteAsync(BindingPrefix, "binding", id, expectedEtag, doc => SecurityBindingDocument.FromJson(doc).ToRecord().Etag, cancellationToken);
+        => this.DeleteAsync(BindingPrefix, "binding", id, expectedEtag, doc => SecurityBindingDocument.FromJson(doc).EtagValue, cancellationToken);
 
     /// <inheritdoc/>
     public async ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
     {
         IReadOnlyList<SecurityRuleDocument> rules = await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
-        IReadOnlyList<SecurityBinding> bindings = await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<SecurityBindingDocument> bindings = await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
         NatsKVEntry<byte[]>? gen = await this.TryGetAsync(GenerationKey, cancellationToken).ConfigureAwait(false);
         long generation = gen is { Value: { } bytes } && long.TryParse(Encoding.UTF8.GetString(bytes), NumberStyles.Integer, CultureInfo.InvariantCulture, out long g) ? g : 0;
         return new SecurityPolicySnapshot(rules, bindings, generation);
@@ -260,9 +248,9 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
         return list;
     }
 
-    private async ValueTask<IReadOnlyList<SecurityBinding>> ReadBindingsAsync(CancellationToken cancellationToken)
+    private async ValueTask<IReadOnlyList<SecurityBindingDocument>> ReadBindingsAsync(CancellationToken cancellationToken)
     {
-        var list = new List<SecurityBinding>();
+        var list = new List<SecurityBindingDocument>();
         await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
         {
             if (!key.StartsWith(BindingPrefix, StringComparison.Ordinal))
@@ -273,11 +261,11 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
             NatsKVEntry<byte[]>? entry = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
             if (entry is { Value: { } bytes })
             {
-                list.Add(SecurityBindingDocument.FromJson(bytes).ToRecord());
+                list.Add(SecurityBindingDocument.FromJson(bytes));
             }
         }
 
-        list.Sort(static (a, b) => a.Order != b.Order ? a.Order.CompareTo(b.Order) : string.CompareOrdinal(a.Id, b.Id));
+        list.Sort(static (a, b) => a.OrderValue != b.OrderValue ? a.OrderValue.CompareTo(b.OrderValue) : string.CompareOrdinal(a.IdValue, b.IdValue));
         return list;
     }
 

@@ -167,7 +167,7 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         => this.DeleteAsync("SecurityRules", "Name", "rule", name, expectedEtag, cancellationToken);
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBinding> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityBindingDocument> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
@@ -175,13 +175,13 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         try
         {
             string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
-            var record = new SecurityBinding(id, definition.ClaimType, definition.ClaimValue, definition.Read, definition.Write, definition.Purge, definition.Order, definition.Description, actor, this.timeProvider.GetUtcNow(), null, null, NewEtag());
+            var record = SecurityBindingDocument.CreateBinding(id, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
             using SqliteCommand insert = this.connection.CreateCommand();
             insert.CommandText = "INSERT INTO SecurityBindings (Id, SortOrder, Etag, Document) VALUES (@id, @order, @etag, @doc);";
             insert.Parameters.AddWithValue("@id", id);
             insert.Parameters.AddWithValue("@order", definition.Order);
-            insert.Parameters.AddWithValue("@etag", record.Etag.Value!);
-            insert.Parameters.AddWithValue("@doc", SecurityBindingDocument.From(record).ToJsonBytes());
+            insert.Parameters.AddWithValue("@etag", record.EtagValue.Value!);
+            insert.Parameters.AddWithValue("@doc", record.ToJsonBytes());
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
             await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
             return record;
@@ -193,14 +193,14 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBinding?> GetBindingAsync(string id, CancellationToken cancellationToken)
+    public async ValueTask<SecurityBindingDocument?> GetBindingAsync(string id, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             byte[]? doc = await this.DocumentAsync("SecurityBindings", "Id", id, cancellationToken).ConfigureAwait(false);
-            return doc is null ? null : SecurityBindingDocument.FromJson(doc).ToRecord();
+            return doc is null ? null : SecurityBindingDocument.FromJson(doc);
         }
         finally
         {
@@ -209,7 +209,7 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
-    public async ValueTask<IReadOnlyList<SecurityBinding>> ListBindingsAsync(CancellationToken cancellationToken)
+    public async ValueTask<IReadOnlyList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
     {
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
@@ -223,7 +223,7 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBinding?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityBindingDocument?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
@@ -237,26 +237,14 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
                 return null;
             }
 
-            SecurityBinding current = SecurityBindingDocument.FromJson(doc).ToRecord();
-            EnsureEtag("binding", id, expectedEtag, current.Etag);
-            var updated = current with
-            {
-                ClaimType = definition.ClaimType,
-                ClaimValue = definition.ClaimValue,
-                Read = definition.Read,
-                Write = definition.Write,
-                Purge = definition.Purge,
-                Order = definition.Order,
-                Description = definition.Description,
-                UpdatedBy = actor,
-                UpdatedAt = this.timeProvider.GetUtcNow(),
-                Etag = NewEtag(),
-            };
+            SecurityBindingDocument current = SecurityBindingDocument.FromJson(doc);
+            EnsureEtag("binding", id, expectedEtag, current.EtagValue);
+            SecurityBindingDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
             using SqliteCommand update = this.connection.CreateCommand();
             update.CommandText = "UPDATE SecurityBindings SET SortOrder = @order, Etag = @etag, Document = @doc WHERE Id = @k;";
             update.Parameters.AddWithValue("@order", definition.Order);
-            update.Parameters.AddWithValue("@etag", updated.Etag.Value!);
-            update.Parameters.AddWithValue("@doc", SecurityBindingDocument.From(updated).ToJsonBytes());
+            update.Parameters.AddWithValue("@etag", updated.EtagValue.Value!);
+            update.Parameters.AddWithValue("@doc", updated.ToJsonBytes());
             update.Parameters.AddWithValue("@k", id);
             await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
             await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
@@ -279,7 +267,7 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         try
         {
             IReadOnlyList<SecurityRuleDocument> rules = await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
-            IReadOnlyList<SecurityBinding> bindings = await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
+            IReadOnlyList<SecurityBindingDocument> bindings = await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
             using SqliteCommand select = this.connection.CreateCommand();
             select.CommandText = "SELECT Generation FROM SecurityPolicyMeta WHERE Id = 0;";
             object? gen = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
@@ -331,15 +319,15 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         return list;
     }
 
-    private async ValueTask<IReadOnlyList<SecurityBinding>> ReadBindingsAsync(CancellationToken cancellationToken)
+    private async ValueTask<IReadOnlyList<SecurityBindingDocument>> ReadBindingsAsync(CancellationToken cancellationToken)
     {
-        var list = new List<SecurityBinding>();
+        var list = new List<SecurityBindingDocument>();
         using SqliteCommand select = this.connection.CreateCommand();
         select.CommandText = "SELECT Document FROM SecurityBindings ORDER BY SortOrder, Id;";
         using SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
-            list.Add(SecurityBindingDocument.FromJson(reader.GetFieldValue<byte[]>(0)).ToRecord());
+            list.Add(SecurityBindingDocument.FromJson(reader.GetFieldValue<byte[]>(0)));
         }
 
         return list;
