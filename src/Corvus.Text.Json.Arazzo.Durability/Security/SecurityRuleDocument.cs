@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using Corvus.Text.Json;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Security;
@@ -48,23 +47,9 @@ public readonly partial struct SecurityRuleDocument
     /// <summary>Gets the optimistic-concurrency token.</summary>
     public WorkflowEtag EtagValue => new((string)this.Etag);
 
-    /// <summary>Realises a new rule and writes its canonical JSON into the caller's buffer in a single pass.</summary>
-    /// <param name="buffer">The destination the caller owns (a rented buffer, or a writer over a stream).</param>
-    /// <param name="name">The rule's unique name.</param>
-    /// <param name="definition">The rule content (expression + optional description).</param>
-    /// <param name="actor">The actor creating the rule (audit).</param>
-    /// <param name="createdAt">The creation instant.</param>
-    /// <param name="etag">The optimistic-concurrency token to assign.</param>
-    public static void WriteNewRule(IBufferWriter<byte> buffer, string name, SecurityRuleDefinition definition, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
-    {
-        using JsonWorkspace workspace = JsonWorkspace.Create();
-        using JsonDocumentBuilder<Mutable> builder = BuildNew(workspace, name, definition, actor, createdAt, etag);
-        WriteBuilderTo(workspace, builder, buffer);
-    }
-
-    /// <summary>Builds a new rule as a detached value — for an in-memory store whose stored value <em>is</em> the
-    /// document. Builds into the pooled workspace arena and detaches once; no scratch buffer, no re-parse. Persisting
-    /// stores thread their own buffer through <see cref="WriteNewRule"/> instead.</summary>
+    /// <summary>Builds a new rule as a detached value: built into the pooled workspace arena and detached once (no
+    /// scratch buffer, no re-parse). A persisting store serializes it through <see cref="PersistedJson.ToArray"/> for
+    /// its driver and returns this same value; an in-memory store stores it directly.</summary>
     /// <param name="name">The rule's unique name.</param>
     /// <param name="definition">The rule content (expression + optional description).</param>
     /// <param name="actor">The actor creating the rule (audit).</param>
@@ -78,21 +63,9 @@ public readonly partial struct SecurityRuleDocument
         return builder.RootElement.Clone();
     }
 
-    /// <summary>Realises an updated copy of this rule (preserving name/created metadata) into the caller's buffer.</summary>
-    /// <param name="buffer">The destination the caller owns (a rented buffer, or a writer over a stream).</param>
-    /// <param name="definition">The new rule content.</param>
-    /// <param name="actor">The actor performing the update (audit).</param>
-    /// <param name="updatedAt">The update instant.</param>
-    /// <param name="etag">The new optimistic-concurrency token to assign.</param>
-    public void WriteUpdatedRule(IBufferWriter<byte> buffer, SecurityRuleDefinition definition, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
-    {
-        using JsonWorkspace workspace = JsonWorkspace.Create();
-        using JsonDocumentBuilder<Mutable> builder = this.ApplyUpdate(workspace, definition, actor, updatedAt, etag);
-        WriteBuilderTo(workspace, builder, buffer);
-    }
-
-    /// <summary>Builds an updated copy of this rule as a detached value (for an in-memory store), modifying only the
-    /// fields the update touches and detaching once — no scratch buffer, no re-parse.</summary>
+    /// <summary>Builds an updated copy of this rule as a detached value, modifying only the fields the update touches
+    /// and detaching once (no scratch buffer, no re-parse). Serialize it through <see cref="PersistedJson.ToArray"/>
+    /// to persist.</summary>
     /// <param name="definition">The new rule content.</param>
     /// <param name="actor">The actor performing the update (audit).</param>
     /// <param name="updatedAt">The update instant.</param>
@@ -140,19 +113,5 @@ public readonly partial struct SecurityRuleDocument
         }
 
         return builder;
-    }
-
-    private static void WriteBuilderTo(JsonWorkspace workspace, JsonDocumentBuilder<Mutable> builder, IBufferWriter<byte> buffer)
-    {
-        Utf8JsonWriter writer = workspace.RentWriter(buffer);
-        try
-        {
-            builder.RootElement.WriteTo(writer);
-            writer.Flush();
-        }
-        finally
-        {
-            workspace.ReturnWriter(writer);
-        }
     }
 }
