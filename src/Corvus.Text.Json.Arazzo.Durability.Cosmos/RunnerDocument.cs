@@ -18,8 +18,6 @@ namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
 [JsonSchemaTypeGenerator("Schemas/RunnerDocument.json")]
 public readonly partial struct RunnerDocument
 {
-    private static readonly JsonWriterOptions WriterOptions = new() { Indented = false, SkipValidation = true };
-
     /// <summary>Gets the runner id.</summary>
     public string IdValue => (string)this.Id;
 
@@ -53,49 +51,41 @@ public readonly partial struct RunnerDocument
 
     private static MemoryStream BuildEnvelope(string runnerId, RunnerRegistration registration, DateTimeOffset lastSeenAt, bool advanceLastSeen)
     {
-        var stream = new MemoryStream();
-        using (var writer = new Utf8JsonWriter(stream, WriterOptions))
-        {
-            writer.WriteStartObject();
-            writer.WriteString(JsonPropertyNames.IdUtf8, runnerId);
-            writer.WriteNumber(JsonPropertyNames.LastSeenAtUtf8, lastSeenAt.ToUnixTimeMilliseconds());
+        // Serialize the registration JSON once into a pooled buffer (a heartbeat advances its last-seen), then write the
+        // envelope — id, queryable last-seen, base64 of the registration, and the loaded-version projection — into a
+        // pooled stream, base64-ing the same bytes. No owned byte[], no nested writer rent.
+        using CosmosJson.RentedJson docJson = advanceLastSeen
+            ? CosmosJson.RentJson(
+                (registration, lastSeenAt),
+                static (Utf8JsonWriter docWriter, in (RunnerRegistration Registration, DateTimeOffset At) ctx) => ctx.Registration.WriteWithLastSeenAt(docWriter, ctx.At))
+            : CosmosJson.RentJson(
+                registration,
+                static (Utf8JsonWriter docWriter, in RunnerRegistration r) => r.WriteTo(docWriter));
 
-            // Base64-encode the registration's JSON straight from a pooled buffer (no interim base64 string / byte[]).
-            if (advanceLastSeen)
+        return CosmosJson.WriteToStream(
+            (RunnerId: runnerId, LastSeenAt: lastSeenAt, Doc: docJson, Registration: registration),
+            static (Utf8JsonWriter writer, in (string RunnerId, DateTimeOffset LastSeenAt, CosmosJson.RentedJson Doc, RunnerRegistration Registration) c) =>
             {
-                PersistedJson.WriteBase64(
-                    writer,
-                    JsonPropertyNames.DocUtf8,
-                    (registration, lastSeenAt),
-                    static (Utf8JsonWriter docWriter, in (RunnerRegistration Registration, DateTimeOffset At) ctx) => ctx.Registration.WriteWithLastSeenAt(docWriter, ctx.At));
-            }
-            else
-            {
-                PersistedJson.WriteBase64(
-                    writer,
-                    JsonPropertyNames.DocUtf8,
-                    registration,
-                    static (Utf8JsonWriter docWriter, in RunnerRegistration r) => r.WriteTo(docWriter));
-            }
+                writer.WriteStartObject();
+                writer.WriteString(JsonPropertyNames.IdUtf8, c.RunnerId);
+                writer.WriteNumber(JsonPropertyNames.LastSeenAtUtf8, c.LastSeenAt.ToUnixTimeMilliseconds());
+                writer.WriteBase64String(JsonPropertyNames.DocUtf8, c.Doc.Span);
 
-            writer.WriteStartArray(JsonPropertyNames.LoadedVersionsUtf8);
-            foreach (RunnerRegistration.RunnerHostedVersion hosted in registration.HostedVersions.EnumerateArray())
-            {
-                if ((bool)hosted.Loaded)
+                writer.WriteStartArray(JsonPropertyNames.LoadedVersionsUtf8);
+                foreach (RunnerRegistration.RunnerHostedVersion hosted in c.Registration.HostedVersions.EnumerateArray())
                 {
-                    writer.WriteStartObject();
-                    writer.WritePropertyName(HostedKey.JsonPropertyNames.BaseWorkflowIdUtf8);
-                    hosted.BaseWorkflowId.WriteTo(writer);
-                    writer.WriteNumber(HostedKey.JsonPropertyNames.VersionNumberUtf8, hosted.VersionNumber);
-                    writer.WriteEndObject();
+                    if ((bool)hosted.Loaded)
+                    {
+                        writer.WriteStartObject();
+                        writer.WritePropertyName(HostedKey.JsonPropertyNames.BaseWorkflowIdUtf8);
+                        hosted.BaseWorkflowId.WriteTo(writer);
+                        writer.WriteNumber(HostedKey.JsonPropertyNames.VersionNumberUtf8, hosted.VersionNumber);
+                        writer.WriteEndObject();
+                    }
                 }
-            }
 
-            writer.WriteEndArray();
-            writer.WriteEndObject();
-        }
-
-        stream.Position = 0;
-        return stream;
+                writer.WriteEndArray();
+                writer.WriteEndObject();
+            });
     }
 }

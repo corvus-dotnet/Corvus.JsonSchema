@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using System.Globalization;
 using Corvus.Text.Json;
 
@@ -10,15 +9,13 @@ namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
 
 /// <summary>
 /// The Azure Cosmos DB document shape for a workflow catalog version, generated from
-/// <c>Schemas/CatalogDocument.json</c>. The store builds it from a <see cref="CatalogVersion"/> + package
-/// (<see cref="From"/> → <see cref="ToJsonBytes"/>) and reads it back through a stream response or query page
-/// (<see cref="FromJson"/> → <see cref="ToVersion"/>) entirely through Corvus.Text.Json — no reflection serializer.
+/// <c>Schemas/CatalogDocument.json</c>. The store writes it straight to a Cosmos stream from a
+/// <see cref="CatalogVersion"/> + package (<see cref="WriteJson"/>) and reads it back through a stream response or
+/// query page (<see cref="FromJson"/> → <see cref="ToVersion"/>) entirely through Corvus.Text.Json — no reflection serializer.
 /// </summary>
 [JsonSchemaTypeGenerator("Schemas/CatalogDocument.json")]
 public readonly partial struct CatalogDocument
 {
-    private static readonly JsonWriterOptions WriterOptions = new() { Indented = false, SkipValidation = true };
-
     /// <summary>Gets the document id.</summary>
     public string IdValue => (string)this.Id;
 
@@ -40,121 +37,121 @@ public readonly partial struct CatalogDocument
     /// <returns>The package bytes.</returns>
     public byte[] PackageBytes() => Convert.FromBase64String((string)this.Package);
 
-    /// <summary>Builds the document from a catalog version and its package, detached and ready to persist.</summary>
+    /// <summary>
+    /// Writes the catalog document's persisted JSON straight to <paramref name="writer"/> from a catalog version and its
+    /// package — no intermediate <see cref="CatalogDocument"/> value and no re-serialization (the store hands this to
+    /// <c>CosmosJson.WriteToStream</c> so the document is serialized exactly once, into a pooled stream).
+    /// </summary>
+    /// <param name="writer">The writer to write the document to.</param>
     /// <param name="version">The catalog version.</param>
     /// <param name="package">The canonical package bytes.</param>
-    /// <returns>The document.</returns>
-    public static CatalogDocument From(CatalogVersion version, byte[] package)
+    public static void WriteJson(Utf8JsonWriter writer, CatalogVersion version, byte[] package)
     {
         CatalogVersionRef reference = version.Ref;
         CatalogOwner owner = version.OwnerValue;
 
-        var buffer = new ArrayBufferWriter<byte>();
-        using (var writer = new Utf8JsonWriter(buffer, WriterOptions))
+        writer.WriteStartObject();
+        writer.WriteString(JsonPropertyNames.IdUtf8, DocumentId(reference.BaseWorkflowId, reference.VersionNumber));
+        writer.WriteString(JsonPropertyNames.BaseWorkflowIdUtf8, reference.BaseWorkflowId);
+        writer.WriteNumber(JsonPropertyNames.VersionNumberUtf8, reference.VersionNumber);
+        writer.WriteString(JsonPropertyNames.SortKeyUtf8, ComputeSortKey(reference.BaseWorkflowId, reference.VersionNumber));
+        writer.WriteString(JsonPropertyNames.WorkflowIdUtf8, reference.WorkflowId);
+        writer.WriteString(JsonPropertyNames.WorkflowIdLowerUtf8, reference.WorkflowId.ToLowerInvariant());
+        writer.WriteString(JsonPropertyNames.TitleUtf8, (string)version.Title);
+        if (version.DescriptionOrNull is { } description)
         {
-            writer.WriteStartObject();
-            writer.WriteString(JsonPropertyNames.IdUtf8, DocumentId(reference.BaseWorkflowId, reference.VersionNumber));
-            writer.WriteString(JsonPropertyNames.BaseWorkflowIdUtf8, reference.BaseWorkflowId);
-            writer.WriteNumber(JsonPropertyNames.VersionNumberUtf8, reference.VersionNumber);
-            writer.WriteString(JsonPropertyNames.SortKeyUtf8, ComputeSortKey(reference.BaseWorkflowId, reference.VersionNumber));
-            writer.WriteString(JsonPropertyNames.WorkflowIdUtf8, reference.WorkflowId);
-            writer.WriteString(JsonPropertyNames.WorkflowIdLowerUtf8, reference.WorkflowId.ToLowerInvariant());
-            writer.WriteString(JsonPropertyNames.TitleUtf8, (string)version.Title);
-            if (version.DescriptionOrNull is { } description)
-            {
-                writer.WriteString(JsonPropertyNames.DescriptionUtf8, description);
-            }
-
-            writer.WriteString(JsonPropertyNames.StatusUtf8, version.StatusValue.ToString());
-
-            if (version.TagsValue is { Count: > 0 } tags)
-            {
-                writer.WriteStartArray(JsonPropertyNames.TagsUtf8);
-                foreach (string tag in tags)
-                {
-                    writer.WriteStringValue(tag);
-                }
-
-                writer.WriteEndArray();
-            }
-
-            if (version.SecurityTagsValue is { Count: > 0 } securityTags)
-            {
-                writer.WriteStartArray(JsonPropertyNames.SecurityTagsUtf8);
-                foreach (SecurityTag tag in securityTags)
-                {
-                    writer.WriteStartObject();
-                    writer.WriteString(EmbeddedSecurityTag.JsonPropertyNames.KUtf8, tag.Key);
-                    writer.WriteString(EmbeddedSecurityTag.JsonPropertyNames.VUtf8, tag.Value);
-                    writer.WriteEndObject();
-                }
-
-                writer.WriteEndArray();
-            }
-
-            writer.WriteStartObject(JsonPropertyNames.OwnerUtf8);
-            writer.WriteString(OwnerInfo.JsonPropertyNames.NameUtf8, owner.Name);
-            writer.WriteString(OwnerInfo.JsonPropertyNames.EmailUtf8, owner.Email);
-            if (owner.Team is { } team)
-            {
-                writer.WriteString(OwnerInfo.JsonPropertyNames.TeamUtf8, team);
-            }
-
-            if (owner.Url is { } url)
-            {
-                writer.WriteString(OwnerInfo.JsonPropertyNames.UrlUtf8, url);
-            }
-
-            writer.WriteEndObject();
-
-            if (version.SourcesValue is { Count: > 0 } sources)
-            {
-                writer.WriteStartArray(JsonPropertyNames.SourcesUtf8);
-                foreach (CatalogSourceRef source in sources)
-                {
-                    writer.WriteStartObject();
-                    writer.WriteString(SourceInfo.JsonPropertyNames.NameUtf8, source.Name);
-                    if (source.Type is { } type)
-                    {
-                        writer.WriteString(SourceInfo.JsonPropertyNames.TypeUtf8, type);
-                    }
-
-                    writer.WriteEndObject();
-                }
-
-                writer.WriteEndArray();
-            }
-
-            writer.WriteString(JsonPropertyNames.HashUtf8, (string)version.Hash);
-            writer.WriteBoolean(JsonPropertyNames.RunnableUtf8, (bool)version.Runnable);
-            writer.WriteString(JsonPropertyNames.PackageUtf8, Convert.ToBase64String(package));
-            writer.WriteString(JsonPropertyNames.CreatedByUtf8, (string)version.CreatedBy);
-            writer.WriteNumber(JsonPropertyNames.CreatedAtUtf8, version.CreatedAtValue.ToUnixTimeMilliseconds());
-            if (version.LastUpdatedByOrNull is { } lastUpdatedBy)
-            {
-                writer.WriteString(JsonPropertyNames.LastUpdatedByUtf8, lastUpdatedBy);
-            }
-
-            if (version.LastUpdatedAtValue is { } lastUpdatedAt)
-            {
-                writer.WriteNumber(JsonPropertyNames.LastUpdatedAtUtf8, lastUpdatedAt.ToUnixTimeMilliseconds());
-            }
-
-            if (version.ObsoletedByOrNull is { } obsoletedBy)
-            {
-                writer.WriteString(JsonPropertyNames.ObsoletedByUtf8, obsoletedBy);
-            }
-
-            if (version.ObsoletedAtValue is { } obsoletedAt)
-            {
-                writer.WriteNumber(JsonPropertyNames.ObsoletedAtUtf8, obsoletedAt.ToUnixTimeMilliseconds());
-            }
-
-            writer.WriteEndObject();
+            writer.WriteString(JsonPropertyNames.DescriptionUtf8, description);
         }
 
-        using ParsedJsonDocument<CatalogDocument> doc = ParsedJsonDocument<CatalogDocument>.Parse(buffer.WrittenMemory);
-        return doc.RootElement.Clone();
+        writer.WriteString(JsonPropertyNames.StatusUtf8, version.StatusValue.ToString());
+
+        if (version.TagsValue is { Count: > 0 } tags)
+        {
+            writer.WriteStartArray(JsonPropertyNames.TagsUtf8);
+            foreach (string tag in tags)
+            {
+                writer.WriteStringValue(tag);
+            }
+
+            writer.WriteEndArray();
+        }
+
+        if (version.SecurityTagsValue is { Count: > 0 } securityTags)
+        {
+            writer.WriteStartArray(JsonPropertyNames.SecurityTagsUtf8);
+            foreach (SecurityTag tag in securityTags)
+            {
+                writer.WriteStartObject();
+                writer.WriteString(EmbeddedSecurityTag.JsonPropertyNames.KUtf8, tag.Key);
+                writer.WriteString(EmbeddedSecurityTag.JsonPropertyNames.VUtf8, tag.Value);
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
+        }
+
+        writer.WriteStartObject(JsonPropertyNames.OwnerUtf8);
+        writer.WriteString(OwnerInfo.JsonPropertyNames.NameUtf8, owner.Name);
+        writer.WriteString(OwnerInfo.JsonPropertyNames.EmailUtf8, owner.Email);
+        if (owner.Team is { } team)
+        {
+            writer.WriteString(OwnerInfo.JsonPropertyNames.TeamUtf8, team);
+        }
+
+        if (owner.Url is { } url)
+        {
+            writer.WriteString(OwnerInfo.JsonPropertyNames.UrlUtf8, url);
+        }
+
+        writer.WriteEndObject();
+
+        if (version.SourcesValue is { Count: > 0 } sources)
+        {
+            writer.WriteStartArray(JsonPropertyNames.SourcesUtf8);
+            foreach (CatalogSourceRef source in sources)
+            {
+                writer.WriteStartObject();
+                writer.WriteString(SourceInfo.JsonPropertyNames.NameUtf8, source.Name);
+                if (source.Type is { } type)
+                {
+                    writer.WriteString(SourceInfo.JsonPropertyNames.TypeUtf8, type);
+                }
+
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
+        }
+
+        writer.WriteString(JsonPropertyNames.HashUtf8, (string)version.Hash);
+        writer.WriteBoolean(JsonPropertyNames.RunnableUtf8, (bool)version.Runnable);
+
+        // Base64-encode the package straight into the writer — no intermediate base64 string (which would scale with
+        // package size on every write). Read back by CatalogDocument.PackageBytes via Convert.FromBase64String.
+        writer.WriteBase64String(JsonPropertyNames.PackageUtf8, package);
+        writer.WriteString(JsonPropertyNames.CreatedByUtf8, (string)version.CreatedBy);
+        writer.WriteNumber(JsonPropertyNames.CreatedAtUtf8, version.CreatedAtValue.ToUnixTimeMilliseconds());
+        if (version.LastUpdatedByOrNull is { } lastUpdatedBy)
+        {
+            writer.WriteString(JsonPropertyNames.LastUpdatedByUtf8, lastUpdatedBy);
+        }
+
+        if (version.LastUpdatedAtValue is { } lastUpdatedAt)
+        {
+            writer.WriteNumber(JsonPropertyNames.LastUpdatedAtUtf8, lastUpdatedAt.ToUnixTimeMilliseconds());
+        }
+
+        if (version.ObsoletedByOrNull is { } obsoletedBy)
+        {
+            writer.WriteString(JsonPropertyNames.ObsoletedByUtf8, obsoletedBy);
+        }
+
+        if (version.ObsoletedAtValue is { } obsoletedAt)
+        {
+            writer.WriteNumber(JsonPropertyNames.ObsoletedAtUtf8, obsoletedAt.ToUnixTimeMilliseconds());
+        }
+
+        writer.WriteEndObject();
     }
 
     /// <summary>Parses a document from its persisted JSON, detached from the parse buffer.</summary>
@@ -164,19 +161,6 @@ public readonly partial struct CatalogDocument
     {
         using ParsedJsonDocument<CatalogDocument> doc = ParsedJsonDocument<CatalogDocument>.Parse(utf8);
         return doc.RootElement.Clone();
-    }
-
-    /// <summary>Serializes this document to its persisted JSON form.</summary>
-    /// <returns>The UTF-8 JSON document.</returns>
-    public byte[] ToJsonBytes()
-    {
-        var buffer = new ArrayBufferWriter<byte>();
-        using (var writer = new Utf8JsonWriter(buffer, WriterOptions))
-        {
-            this.WriteTo(writer);
-        }
-
-        return buffer.WrittenSpan.ToArray();
     }
 
     /// <summary>Projects this document back to a <see cref="CatalogVersion"/>.</summary>

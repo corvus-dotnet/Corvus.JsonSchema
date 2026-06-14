@@ -351,7 +351,9 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
             securityTags: securityTags is { Count: > 0 } ? securityTags : null);
 
         var options = new ItemRequestOptions { IfMatchEtag = found.Etag };
-        using var stream = CosmosJson.WriteToStream(CatalogDocument.From(updated, found.Document.PackageBytes()));
+        using var stream = CosmosJson.WriteToStream(
+            (Version: updated, Package: found.Document.PackageBytes()),
+            static (Utf8JsonWriter writer, in (CatalogVersion Version, byte[] Package) c) => CatalogDocument.WriteJson(writer, c.Version, c.Package));
         using ResponseMessage response = await this.catalog.ReplaceItemStreamAsync(
             stream, CatalogDocument.DocumentId(baseWorkflowId, versionNumber), partition, options, cancellationToken).ConfigureAwait(false);
         if (response.StatusCode == HttpStatusCode.NotFound)
@@ -477,7 +479,9 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
                 runnable: projection.HasExecutor,
                 securityTags: securityTags);
 
-            using var stream = CosmosJson.WriteToStream(CatalogDocument.From(version, projection.CanonicalPackage.ToArray()));
+            using var stream = CosmosJson.WriteToStream(
+                (Version: version, Package: projection.CanonicalPackage.ToArray()),
+                static (Utf8JsonWriter writer, in (CatalogVersion Version, byte[] Package) c) => CatalogDocument.WriteJson(writer, c.Version, c.Package));
             using ResponseMessage response = await this.catalog.CreateItemStreamAsync(stream, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (response.StatusCode == HttpStatusCode.Conflict)
             {
