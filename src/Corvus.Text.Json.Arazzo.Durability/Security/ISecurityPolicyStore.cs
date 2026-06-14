@@ -61,18 +61,18 @@ public interface ISecurityPolicyStore
     /// <param name="actor">The authenticated identity creating the binding (for audit).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The created record (with its assigned id).</returns>
-    ValueTask<SecurityBinding> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken);
+    ValueTask<SecurityBindingDocument> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken);
 
     /// <summary>Gets a binding by id, or <see langword="null"/> if absent.</summary>
     /// <param name="id">The binding id.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The record or <see langword="null"/>.</returns>
-    ValueTask<SecurityBinding?> GetBindingAsync(string id, CancellationToken cancellationToken);
+    ValueTask<SecurityBindingDocument?> GetBindingAsync(string id, CancellationToken cancellationToken);
 
-    /// <summary>Lists all bindings (ascending by <see cref="SecurityBinding.Order"/> then id).</summary>
+    /// <summary>Lists all bindings (ascending by <see cref="SecurityBindingDocument.OrderValue"/> then id).</summary>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>All bindings.</returns>
-    ValueTask<IReadOnlyList<SecurityBinding>> ListBindingsAsync(CancellationToken cancellationToken);
+    ValueTask<IReadOnlyList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken);
 
     /// <summary>Updates a binding's content under optimistic concurrency.</summary>
     /// <param name="id">The binding id.</param>
@@ -82,7 +82,7 @@ public interface ISecurityPolicyStore
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The updated record, or <see langword="null"/> if no binding with that id exists.</returns>
     /// <exception cref="SecurityPolicyConflictException">The expected etag no longer matches.</exception>
-    ValueTask<SecurityBinding?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken);
+    ValueTask<SecurityBindingDocument?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken);
 
     /// <summary>Deletes a binding under optimistic concurrency.</summary>
     /// <param name="id">The binding id.</param>
