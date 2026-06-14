@@ -2,8 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
-
 using MySqlConnector;
 
 namespace Corvus.Text.Json.Arazzo.Durability.MySql;
@@ -122,11 +120,9 @@ public sealed class MySqlRunnerRegistry : IRunnerRegistry, IAsyncDisposable
                 VALUES (@runnerId, @lastSeenAt, @doc)
                 ON DUPLICATE KEY UPDATE last_seen_at = VALUES(last_seen_at), doc = VALUES(doc);
                 """;
-            var buffer = new ArrayBufferWriter<byte>();
-            registration.WriteTo(buffer);
             upsert.Parameters.AddWithValue("@runnerId", runnerId);
             upsert.Parameters.AddWithValue("@lastSeenAt", registration.LastSeenAtValue.ToUnixTimeMilliseconds());
-            upsert.Parameters.AddWithValue("@doc", buffer.WrittenSpan.ToArray());
+            upsert.Parameters.AddWithValue("@doc", PersistedJson.ToArray(registration, static (Utf8JsonWriter writer, in RunnerRegistration r) => r.WriteTo(writer)));
             await upsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
@@ -184,14 +180,16 @@ public sealed class MySqlRunnerRegistry : IRunnerRegistry, IAsyncDisposable
             return false;
         }
 
-        RunnerRegistration current = RunnerRegistration.FromJson(existing);
-        var buffer = new ArrayBufferWriter<byte>();
-        current.WriteWithLastSeenAt(buffer, at);
+        byte[] doc = PersistedJson.ToArray((existing, at), static (Utf8JsonWriter writer, in (byte[] Existing, DateTimeOffset At) ctx) =>
+        {
+            using ParsedJsonDocument<RunnerRegistration> parsed = ParsedJsonDocument<RunnerRegistration>.Parse(ctx.Existing);
+            parsed.RootElement.WriteWithLastSeenAt(writer, ctx.At);
+        });
         await using MySqlCommand update = connection.CreateCommand();
         update.CommandText = "UPDATE runner_registrations SET last_seen_at = @lastSeenAt, doc = @doc WHERE runner_id = @runnerId;";
         update.Parameters.AddWithValue("@runnerId", runnerId);
         update.Parameters.AddWithValue("@lastSeenAt", at.ToUnixTimeMilliseconds());
-        update.Parameters.AddWithValue("@doc", buffer.WrittenSpan.ToArray());
+        update.Parameters.AddWithValue("@doc", doc);
         await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         return true;
     }
