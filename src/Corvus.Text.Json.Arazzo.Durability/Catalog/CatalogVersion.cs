@@ -2,10 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using System.Globalization;
-using System.Text.Json;
 using Corvus.Text.Json;
+using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Arazzo.Durability;
 
@@ -23,6 +22,8 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 [JsonSchemaTypeGenerator("../Schemas/CatalogVersion.json")]
 public readonly partial struct CatalogVersion
 {
+    private const int DefaultBufferSize = 1024;
+
     private static readonly JsonWriterOptions WriterOptions = new() { Indented = false, SkipValidation = true };
 
     /// <summary>Gets the minimal identity reference for this version.</summary>
@@ -152,8 +153,9 @@ public readonly partial struct CatalogVersion
         bool runnable = false,
         IReadOnlyList<SecurityTag>? securityTags = null)
     {
-        var buffer = new ArrayBufferWriter<byte>();
-        using (var writer = new Utf8JsonWriter(buffer, WriterOptions))
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter buffer);
+        try
         {
             writer.WriteStartObject();
             writer.WriteString(JsonPropertyNames.BaseWorkflowIdUtf8, baseWorkflowId);
@@ -244,10 +246,13 @@ public readonly partial struct CatalogVersion
 
             writer.WriteBoolean(JsonPropertyNames.RunnableUtf8, runnable);
             writer.WriteEndObject();
+            writer.Flush();
+            return ParseValue(buffer.WrittenSpan);
         }
-
-        using ParsedJsonDocument<CatalogVersion> doc = ParsedJsonDocument<CatalogVersion>.Parse(buffer.WrittenMemory);
-        return doc.RootElement.Clone();
+        finally
+        {
+            workspace.ReturnWriterAndBuffer(writer, buffer);
+        }
     }
 
     /// <summary>Parses a <see cref="CatalogVersion"/> from its persisted JSON document, detached from the parse buffer.</summary>
@@ -262,15 +267,7 @@ public readonly partial struct CatalogVersion
     /// <summary>Serializes this version to its persisted JSON document.</summary>
     /// <returns>The UTF-8 JSON document.</returns>
     public byte[] ToJsonBytes()
-    {
-        var buffer = new ArrayBufferWriter<byte>();
-        using (var writer = new Utf8JsonWriter(buffer, WriterOptions))
-        {
-            this.WriteTo(writer);
-        }
-
-        return buffer.WrittenSpan.ToArray();
-    }
+        => PersistedJson.ToArray(this, static (Utf8JsonWriter writer, in CatalogVersion v) => v.WriteTo(writer));
 
     private static DateTimeOffset ParseDate(in JsonDateTime value)
         => DateTimeOffset.Parse((string)value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
