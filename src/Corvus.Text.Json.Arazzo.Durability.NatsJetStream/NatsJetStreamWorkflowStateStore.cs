@@ -2,10 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using System.Buffers.Binary;
 using System.Globalization;
-using System.Text.Json;
+using Corvus.Text.Json.Internal;
 using NATS.Client.Core;
 using NATS.Client.JetStream;
 using NATS.Client.KeyValueStore;
@@ -371,10 +370,16 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
 
     private static class Envelope
     {
+        private const int HeaderBufferSize = 512;
+
         public static byte[] Encode(in WorkflowRunIndexEntry index, ReadOnlySpan<byte> checkpoint)
         {
-            var headerBuffer = new ArrayBufferWriter<byte>();
-            using (var writer = new Utf8JsonWriter(headerBuffer))
+            // Serialize the index header through the pooled writer cache (not a fresh ArrayBufferWriter) — this is the
+            // run-state write hotpath. The owned `result` (length-prefixed header + checkpoint) is the form the KV
+            // driver demands; the header scratch is pooled.
+            using JsonWorkspace workspace = JsonWorkspace.Create();
+            Utf8JsonWriter writer = workspace.RentWriterAndBuffer(HeaderBufferSize, out IByteBufferWriter headerBuffer);
+            try
             {
                 writer.WriteStartObject();
                 writer.WriteString("status", index.Status.ToString());
@@ -432,14 +437,19 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                 }
 
                 writer.WriteEndObject();
-            }
+                writer.Flush();
 
-            ReadOnlySpan<byte> header = headerBuffer.WrittenSpan;
-            var result = new byte[4 + header.Length + checkpoint.Length];
-            BinaryPrimitives.WriteInt32LittleEndian(result, header.Length);
-            header.CopyTo(result.AsSpan(4));
-            checkpoint.CopyTo(result.AsSpan(4 + header.Length));
-            return result;
+                ReadOnlySpan<byte> header = headerBuffer.WrittenSpan;
+                var result = new byte[4 + header.Length + checkpoint.Length];
+                BinaryPrimitives.WriteInt32LittleEndian(result, header.Length);
+                header.CopyTo(result.AsSpan(4));
+                checkpoint.CopyTo(result.AsSpan(4 + header.Length));
+                return result;
+            }
+            finally
+            {
+                workspace.ReturnWriterAndBuffer(writer, headerBuffer);
+            }
         }
 
         public static byte[] DecodeCheckpoint(byte[] value)
@@ -451,31 +461,31 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         public static WorkflowRunIndexEntry DecodeIndex(byte[] value)
         {
             int headerLength = BinaryPrimitives.ReadInt32LittleEndian(value);
-            using var document = JsonDocument.Parse(value.AsMemory(4, headerLength));
-            System.Text.Json.JsonElement root = document.RootElement;
+            using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(value.AsMemory(4, headerLength));
+            JsonElement root = document.RootElement;
             return new WorkflowRunIndexEntry(
-                root.GetProperty("workflowId").GetString()!,
-                Enum.Parse<WorkflowRunStatus>(root.GetProperty("status").GetString()!),
-                DateTimeOffset.FromUnixTimeMilliseconds(root.GetProperty("createdAt").GetInt64()),
-                DateTimeOffset.FromUnixTimeMilliseconds(root.GetProperty("updatedAt").GetInt64()),
-                root.TryGetProperty("dueAt", out System.Text.Json.JsonElement dueAt) ? DateTimeOffset.FromUnixTimeMilliseconds(dueAt.GetInt64()) : null,
-                root.TryGetProperty("awaitingChannel", out System.Text.Json.JsonElement channel) ? channel.GetString() : null,
-                root.TryGetProperty("awaitingCorrelationId", out System.Text.Json.JsonElement correlationId) ? correlationId.GetString() : null,
-                root.TryGetProperty("errorType", out System.Text.Json.JsonElement errorType) ? errorType.GetString() : null,
-                root.TryGetProperty("correlationId", out System.Text.Json.JsonElement queryCorrelationId) ? queryCorrelationId.GetString() : null,
+                root.GetProperty("workflowId"u8).GetString()!,
+                Enum.Parse<WorkflowRunStatus>(root.GetProperty("status"u8).GetString()!),
+                DateTimeOffset.FromUnixTimeMilliseconds(root.GetProperty("createdAt"u8).GetInt64()),
+                DateTimeOffset.FromUnixTimeMilliseconds(root.GetProperty("updatedAt"u8).GetInt64()),
+                root.TryGetProperty("dueAt"u8, out JsonElement dueAt) ? DateTimeOffset.FromUnixTimeMilliseconds(dueAt.GetInt64()) : null,
+                root.TryGetProperty("awaitingChannel"u8, out JsonElement channel) ? channel.GetString() : null,
+                root.TryGetProperty("awaitingCorrelationId"u8, out JsonElement correlationId) ? correlationId.GetString() : null,
+                root.TryGetProperty("errorType"u8, out JsonElement errorType) ? errorType.GetString() : null,
+                root.TryGetProperty("correlationId"u8, out JsonElement queryCorrelationId) ? queryCorrelationId.GetString() : null,
                 DecodeTags(root),
                 DecodeSecurityTags(root));
         }
 
-        private static IReadOnlyList<string>? DecodeTags(System.Text.Json.JsonElement root)
+        private static IReadOnlyList<string>? DecodeTags(JsonElement root)
         {
-            if (!root.TryGetProperty("tags", out System.Text.Json.JsonElement tags))
+            if (!root.TryGetProperty("tags"u8, out JsonElement tags))
             {
                 return null;
             }
 
             var list = new List<string>();
-            foreach (System.Text.Json.JsonElement tag in tags.EnumerateArray())
+            foreach (JsonElement tag in tags.EnumerateArray())
             {
                 if (tag.GetString() is { } value)
                 {
@@ -486,18 +496,18 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
             return list.Count > 0 ? list : null;
         }
 
-        private static IReadOnlyList<SecurityTag>? DecodeSecurityTags(System.Text.Json.JsonElement root)
+        private static IReadOnlyList<SecurityTag>? DecodeSecurityTags(JsonElement root)
         {
-            if (!root.TryGetProperty("securityTags", out System.Text.Json.JsonElement securityTags))
+            if (!root.TryGetProperty("securityTags"u8, out JsonElement securityTags))
             {
                 return null;
             }
 
             var list = new List<SecurityTag>();
-            foreach (System.Text.Json.JsonElement tag in securityTags.EnumerateArray())
+            foreach (JsonElement tag in securityTags.EnumerateArray())
             {
-                if (tag.TryGetProperty("k", out System.Text.Json.JsonElement k) && k.GetString() is { } key
-                    && tag.TryGetProperty("v", out System.Text.Json.JsonElement v) && v.GetString() is { } value)
+                if (tag.TryGetProperty("k"u8, out JsonElement k) && k.GetString() is { } key
+                    && tag.TryGetProperty("v"u8, out JsonElement v) && v.GetString() is { } value)
                 {
                     list.Add(new SecurityTag(key, value));
                 }
@@ -510,28 +520,25 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
     private static class LeaseCodec
     {
         public static byte[] Encode(string owner, string token, long expiresAt)
-        {
-            var buffer = new ArrayBufferWriter<byte>();
-            using (var writer = new Utf8JsonWriter(buffer))
-            {
-                writer.WriteStartObject();
-                writer.WriteString("owner", owner);
-                writer.WriteString("token", token);
-                writer.WriteNumber("expiresAt", expiresAt);
-                writer.WriteEndObject();
-            }
-
-            return buffer.WrittenSpan.ToArray();
-        }
+            => PersistedJson.ToArray(
+                (owner, token, expiresAt),
+                static (Utf8JsonWriter writer, in (string Owner, string Token, long ExpiresAt) c) =>
+                {
+                    writer.WriteStartObject();
+                    writer.WriteString("owner", c.Owner);
+                    writer.WriteString("token", c.Token);
+                    writer.WriteNumber("expiresAt", c.ExpiresAt);
+                    writer.WriteEndObject();
+                });
 
         public static (string Owner, string Token, long ExpiresAt) Decode(byte[] value)
         {
-            using var document = JsonDocument.Parse(value);
-            System.Text.Json.JsonElement root = document.RootElement;
+            using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(value);
+            JsonElement root = document.RootElement;
             return (
-                root.GetProperty("owner").GetString()!,
-                root.GetProperty("token").GetString()!,
-                root.GetProperty("expiresAt").GetInt64());
+                root.GetProperty("owner"u8).GetString()!,
+                root.GetProperty("token"u8).GetString()!,
+                root.GetProperty("expiresAt"u8).GetInt64());
         }
     }
 }
