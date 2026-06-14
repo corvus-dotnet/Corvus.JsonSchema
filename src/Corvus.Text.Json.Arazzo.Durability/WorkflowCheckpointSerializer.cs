@@ -2,8 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using Corvus.Text.Json;
+using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Arazzo.Durability;
 
@@ -25,6 +25,8 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// </remarks>
 public static class WorkflowCheckpointSerializer
 {
+    private const int DefaultBufferSize = 1024;
+
     private static readonly JsonWriterOptions WriterOptions = new() { Indented = false, SkipValidation = true };
 
     /// <summary>Serializes a run's state to the checkpoint document.</summary>
@@ -63,8 +65,13 @@ public static class WorkflowCheckpointSerializer
         ArgumentNullException.ThrowIfNull(correlationTokens);
         ArgumentNullException.ThrowIfNull(stepOutputs);
 
-        var buffer = new ArrayBufferWriter<byte>();
-        using (var writer = new Utf8JsonWriter(buffer, WriterOptions))
+        // Serialize through the pooled writer cache (the same primitive PersistedJson.ToArray uses) rather than a fresh
+        // ArrayBufferWriter + Utf8JsonWriter — this is the run-state checkpoint write hotpath for every backend. Inlined
+        // (not via PersistedJson.ToArray's callback) because the parameter set is too large for a context tuple. The only
+        // retained allocation is the owned byte[] the stores' drivers demand.
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter buffer);
+        try
         {
             writer.WriteStartObject();
             writer.WriteString("runId"u8, runId.Value);
@@ -178,9 +185,13 @@ public static class WorkflowCheckpointSerializer
             }
 
             writer.WriteEndObject();
+            writer.Flush();
+            return buffer.WrittenSpan.ToArray();
         }
-
-        return buffer.WrittenSpan.ToArray();
+        finally
+        {
+            workspace.ReturnWriterAndBuffer(writer, buffer);
+        }
     }
 
     /// <summary>Deserializes a checkpoint document into the run's resumable state.</summary>
