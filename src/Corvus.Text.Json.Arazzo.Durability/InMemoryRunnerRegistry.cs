@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using System.Threading;
 using Corvus.Text.Json;
 
@@ -27,9 +26,7 @@ public sealed class InMemoryRunnerRegistry : IRunnerRegistry
         cancellationToken.ThrowIfCancellationRequested();
 
         string runnerId = registration.RunnerIdValue;
-        var buffer = new ArrayBufferWriter<byte>();
-        registration.WriteTo(buffer);
-        byte[] document = buffer.WrittenSpan.ToArray();
+        byte[] document = PersistedJson.ToArray(registration, static (Utf8JsonWriter writer, in RunnerRegistration r) => r.WriteTo(writer));
 
         lock (this.gate)
         {
@@ -52,9 +49,11 @@ public sealed class InMemoryRunnerRegistry : IRunnerRegistry
                 return ValueTask.FromResult(false);
             }
 
-            var buffer = new ArrayBufferWriter<byte>();
-            RunnerRegistration.FromJson(bytes).WriteWithLastSeenAt(buffer, at);
-            this.entries[runnerId] = buffer.WrittenSpan.ToArray();
+            this.entries[runnerId] = PersistedJson.ToArray((bytes, at), static (Utf8JsonWriter writer, in (byte[] Existing, DateTimeOffset At) ctx) =>
+            {
+                using ParsedJsonDocument<RunnerRegistration> doc = ParsedJsonDocument<RunnerRegistration>.Parse(ctx.Existing);
+                doc.RootElement.WriteWithLastSeenAt(writer, ctx.At);
+            });
             return ValueTask.FromResult(true);
         }
     }

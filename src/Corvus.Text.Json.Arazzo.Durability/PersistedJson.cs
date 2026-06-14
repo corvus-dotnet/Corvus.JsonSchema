@@ -2,9 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using Corvus.Text.Json;
-using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Arazzo.Durability;
 
@@ -21,11 +19,10 @@ public static class PersistedJson
     private const int DefaultBufferSize = 512;
 
     /// <summary>A callback that writes JSON into a rented writer, taking its state by <see langword="in"/> context.</summary>
-    /// <typeparam name="TContext">The state type (may be a <see langword="ref"/> struct, so the state can carry <see cref="ReadOnlySpan{T}"/>s).</typeparam>
+    /// <typeparam name="TContext">The state type.</typeparam>
     /// <param name="writer">The rented writer to write into.</param>
     /// <param name="context">The caller's state.</param>
-    public delegate void WriteCallback<TContext>(Utf8JsonWriter writer, in TContext context)
-        where TContext : allows ref struct;
+    public delegate void WriteCallback<TContext>(Utf8JsonWriter writer, in TContext context);
 
     /// <summary>
     /// Serializes JSON into a pooled buffer and copies it into a single owned <see cref="byte"/> array — the one
@@ -36,7 +33,6 @@ public static class PersistedJson
     /// <param name="write">Writes the JSON (pass a <see langword="static"/> lambda to avoid a closure).</param>
     /// <returns>The owned UTF-8 JSON bytes.</returns>
     public static byte[] ToArray<TContext>(in TContext context, WriteCallback<TContext> write)
-        where TContext : allows ref struct
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         Utf8JsonWriter writer = workspace.RentWriterAndBuffer(DefaultBufferSize, out IByteBufferWriter buffer);
@@ -45,38 +41,6 @@ public static class PersistedJson
             write(writer, in context);
             writer.Flush();
             return buffer.WrittenSpan.ToArray();
-        }
-        finally
-        {
-            workspace.ReturnWriterAndBuffer(writer, buffer);
-        }
-    }
-
-    /// <summary>
-    /// Serializes JSON into an <see cref="ArrayPool{T}"/>-rented buffer and returns it as a disposable <see cref="PooledUtf8"/>
-    /// — <b>no GC document array</b>. The same shape as <see cref="ToArray{TContext}"/>, but the result is pooled: a backend
-    /// whose driver accepts a <see cref="ReadOnlyMemory{T}"/> / span parameter binds <see cref="PooledUtf8.Memory"/> and
-    /// <c>using</c>s the value across the (awaited) write, returning the buffer to the pool when the command completes. The
-    /// transient writer scratch is thread-affine, so the written bytes are copied into the pooled result here (synchronously,
-    /// before any caller <c>await</c>) exactly as <see cref="ToArray{TContext}"/> copies into its owned array.
-    /// </summary>
-    /// <typeparam name="TContext">The write-callback state type.</typeparam>
-    /// <param name="context">The state passed to <paramref name="write"/>.</param>
-    /// <param name="write">Writes the JSON (pass a <see langword="static"/> lambda to avoid a closure).</param>
-    /// <returns>The pooled UTF-8 JSON; dispose it (after the write completes) to return the buffer.</returns>
-    public static PooledUtf8 RentDocument<TContext>(in TContext context, WriteCallback<TContext> write)
-        where TContext : allows ref struct
-    {
-        using JsonWorkspace workspace = JsonWorkspace.Create();
-        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(DefaultBufferSize, out IByteBufferWriter buffer);
-        try
-        {
-            write(writer, in context);
-            writer.Flush();
-            ReadOnlySpan<byte> written = buffer.WrittenSpan;
-            byte[] rented = ArrayPool<byte>.Shared.Rent(written.Length);
-            written.CopyTo(rented);
-            return new PooledUtf8(rented, written.Length);
         }
         finally
         {
@@ -94,7 +58,6 @@ public static class PersistedJson
     /// <param name="context">The state passed to <paramref name="write"/>.</param>
     /// <param name="write">Writes the JSON to be base64-encoded (pass a <see langword="static"/> lambda).</param>
     public static void WriteBase64<TContext>(Utf8JsonWriter destination, ReadOnlySpan<byte> propertyName, in TContext context, WriteCallback<TContext> write)
-        where TContext : allows ref struct
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         Utf8JsonWriter writer = workspace.RentWriterAndBuffer(DefaultBufferSize, out IByteBufferWriter buffer);
@@ -107,61 +70,6 @@ public static class PersistedJson
         finally
         {
             workspace.ReturnWriterAndBuffer(writer, buffer);
-        }
-    }
-
-    /// <summary>
-    /// Serializes JSON into a pooled scratch buffer and materializes it as a disposable, pooled document — the
-    /// callback-driven counterpart of <see cref="ToPooledDocument{T}(ReadOnlySpan{byte})"/> with no intermediate owned
-    /// <see cref="byte"/> array. The scratch writer/buffer and the document's backing buffer are all pooled; the only
-    /// allocation is the small document wrapper, returned to the pool on <see cref="IDisposable.Dispose"/>. Use this to
-    /// build a draft document from in-memory values (e.g. a programmatic store caller) that the caller disposes.
-    /// </summary>
-    /// <typeparam name="T">The Corvus.Text.Json document type.</typeparam>
-    /// <typeparam name="TContext">The write-callback state type.</typeparam>
-    /// <param name="context">The state passed to <paramref name="write"/>.</param>
-    /// <param name="write">Writes the JSON (pass a <see langword="static"/> lambda to avoid a closure).</param>
-    /// <returns>The pooled, disposable document.</returns>
-    public static ParsedJsonDocument<T> ToPooledDocument<T, TContext>(in TContext context, WriteCallback<TContext> write)
-        where T : struct, IJsonElement<T>
-        where TContext : allows ref struct
-    {
-        using JsonWorkspace workspace = JsonWorkspace.Create();
-        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(DefaultBufferSize, out IByteBufferWriter buffer);
-        try
-        {
-            write(writer, in context);
-            writer.Flush();
-            return ToPooledDocument<T>(buffer.WrittenSpan);
-        }
-        finally
-        {
-            workspace.ReturnWriterAndBuffer(writer, buffer);
-        }
-    }
-
-    /// <summary>
-    /// Materializes a disposable document over an <see cref="ArrayPool{T}"/>-rented copy of <paramref name="utf8"/> —
-    /// the only allocation is the small document wrapper; its backing buffer and metadata return to the pool on
-    /// <see cref="IDisposable.Dispose"/>. The caller owns the returned document's lifetime: dispose it when done, or
-    /// <see cref="JsonDocument"/>-clone the value out first if it must outlive the dispose.
-    /// </summary>
-    /// <typeparam name="T">The Corvus.Text.Json document type.</typeparam>
-    /// <param name="utf8">The UTF-8 JSON to copy into the pooled document.</param>
-    /// <returns>The pooled, disposable document.</returns>
-    public static ParsedJsonDocument<T> ToPooledDocument<T>(ReadOnlySpan<byte> utf8)
-        where T : struct, IJsonElement<T>
-    {
-        byte[] rented = ArrayPool<byte>.Shared.Rent(utf8.Length);
-        try
-        {
-            utf8.CopyTo(rented);
-            return ParsedJsonDocument<T>.Parse(rented.AsMemory(0, utf8.Length), rented);
-        }
-        catch
-        {
-            ArrayPool<byte>.Shared.Return(rented);
-            throw;
         }
     }
 }

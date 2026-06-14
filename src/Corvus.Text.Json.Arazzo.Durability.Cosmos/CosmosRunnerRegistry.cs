@@ -129,7 +129,7 @@ public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     public async ValueTask RegisterAsync(RunnerRegistration registration, CancellationToken cancellationToken)
     {
         string runnerId = registration.RunnerIdValue;
-        using var stream = CosmosJson.WriteToStream(RunnerDocument.From(runnerId, registration));
+        using var stream = RunnerDocument.WriteEnvelopeStream(runnerId, registration);
         using ResponseMessage response = await this.runners.UpsertItemStreamAsync(stream, new PartitionKey(runnerId), cancellationToken: cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
     }
@@ -168,9 +168,9 @@ public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
 
         read.EnsureSuccessStatusCode();
         ReadOnlyMemory<byte> payload = await CosmosJson.ReadAllAsync(read.Content, cancellationToken).ConfigureAwait(false);
-        RunnerRegistration updated = RunnerDocument.FromJson(payload).ToRegistration().WithLastSeenAt(at);
+        RunnerRegistration current = RunnerDocument.FromJson(payload).ToRegistration();
 
-        using var stream = CosmosJson.WriteToStream(RunnerDocument.From(runnerId, updated));
+        using var stream = RunnerDocument.WriteEnvelopeStream(runnerId, current, at);
         using ResponseMessage response = await this.runners.UpsertItemStreamAsync(stream, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         return true;

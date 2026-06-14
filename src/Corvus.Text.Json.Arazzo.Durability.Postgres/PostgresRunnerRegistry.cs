@@ -2,7 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
+using Corvus.Text.Json;
 
 using Npgsql;
 
@@ -94,8 +94,6 @@ public sealed class PostgresRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     public async ValueTask RegisterAsync(RunnerRegistration registration, CancellationToken cancellationToken)
     {
         string runnerId = registration.RunnerIdValue;
-        var buffer = new ArrayBufferWriter<byte>();
-        registration.WriteTo(buffer);
         await using NpgsqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
 
@@ -110,7 +108,7 @@ public sealed class PostgresRunnerRegistry : IRunnerRegistry, IAsyncDisposable
                 """;
             upsert.Parameters.AddWithValue("@runnerId", runnerId);
             upsert.Parameters.AddWithValue("@lastSeenAt", registration.LastSeenAtValue.ToUnixTimeMilliseconds());
-            upsert.Parameters.AddWithValue("@doc", buffer.WrittenSpan.ToArray());
+            upsert.Parameters.AddWithValue("@doc", PersistedJson.ToArray(registration, static (Utf8JsonWriter writer, in RunnerRegistration r) => r.WriteTo(writer)));
             await upsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
@@ -168,14 +166,16 @@ public sealed class PostgresRunnerRegistry : IRunnerRegistry, IAsyncDisposable
             return false;
         }
 
-        RunnerRegistration current = RunnerRegistration.FromJson(existing);
-        var buffer = new ArrayBufferWriter<byte>();
-        current.WriteWithLastSeenAt(buffer, at);
+        byte[] doc = PersistedJson.ToArray((existing, at), static (Utf8JsonWriter writer, in (byte[] Existing, DateTimeOffset At) ctx) =>
+        {
+            using ParsedJsonDocument<RunnerRegistration> parsed = ParsedJsonDocument<RunnerRegistration>.Parse(ctx.Existing);
+            parsed.RootElement.WriteWithLastSeenAt(writer, ctx.At);
+        });
         await using NpgsqlCommand update = connection.CreateCommand();
         update.CommandText = "UPDATE runner_registrations SET last_seen_at = @lastSeenAt, doc = @doc WHERE runner_id = @runnerId;";
         update.Parameters.AddWithValue("@runnerId", runnerId);
         update.Parameters.AddWithValue("@lastSeenAt", at.ToUnixTimeMilliseconds());
-        update.Parameters.AddWithValue("@doc", buffer.WrittenSpan.ToArray());
+        update.Parameters.AddWithValue("@doc", doc);
         await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         return true;
     }
