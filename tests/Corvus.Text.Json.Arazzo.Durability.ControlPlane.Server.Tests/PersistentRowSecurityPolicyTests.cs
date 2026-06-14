@@ -7,6 +7,7 @@ using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
+using VerbGrant = Corvus.Text.Json.Arazzo.Durability.Security.SecurityBindingDocument.VerbGrantInfo;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests;
 

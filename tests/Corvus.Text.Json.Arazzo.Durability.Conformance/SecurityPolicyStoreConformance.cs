@@ -6,6 +6,7 @@ using System.Linq;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
+using VerbGrant = Corvus.Text.Json.Arazzo.Durability.Security.SecurityBindingDocument.VerbGrantInfo;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Conformance;
 
@@ -103,53 +104,53 @@ public abstract class SecurityPolicyStoreConformance
     public async Task A_binding_round_trips_and_lists_in_order()
     {
         ISecurityPolicyStore store = await this.NewStoreAsync();
-        SecurityBinding a = await store.AddBindingAsync(
+        SecurityBindingDocument a = await store.AddBindingAsync(
             new SecurityBindingDefinition("role", "tenant-admin", VerbGrant.Rules("tenant-scoped"), VerbGrant.Rules("tenant-scoped"), VerbGrant.None, Order: 10),
             "alice",
             default);
-        SecurityBinding b = await store.AddBindingAsync(
+        SecurityBindingDocument b = await store.AddBindingAsync(
             new SecurityBindingDefinition("role", "operator", VerbGrant.Full, VerbGrant.Full, VerbGrant.Full, Order: 5),
             "alice",
             default);
 
-        a.Id.ShouldNotBe(b.Id);
-        SecurityBinding? fetched = await store.GetBindingAsync(a.Id, default);
+        a.IdValue.ShouldNotBe(b.IdValue);
+        SecurityBindingDocument? fetched = await store.GetBindingAsync(a.IdValue, default);
         fetched.ShouldNotBeNull();
-        fetched.Value.ClaimValue.ShouldBe("tenant-admin");
-        fetched.Value.Read.RuleNames.ShouldBe(["tenant-scoped"]);
-        fetched.Value.Write.RuleNames.ShouldBe(["tenant-scoped"]);
-        fetched.Value.Purge.IsEmpty.ShouldBeTrue();
+        fetched.Value.ClaimValueOrNull.ShouldBe("tenant-admin");
+        fetched.Value.Read.RuleNameList.ShouldBe(["tenant-scoped"]);
+        fetched.Value.Write.RuleNameList.ShouldBe(["tenant-scoped"]);
+        fetched.Value.Purge.IsEmptyValue.ShouldBeTrue();
 
         // Ordered by Order ascending: operator (5) before tenant-admin (10).
-        (await store.ListBindingsAsync(default)).Select(x => x.Id).ShouldBe([b.Id, a.Id]);
+        (await store.ListBindingsAsync(default)).Select(x => x.IdValue).ShouldBe([b.IdValue, a.IdValue]);
 
-        SecurityBinding? operatorBinding = await store.GetBindingAsync(b.Id, default);
-        operatorBinding!.Value.Read.Unrestricted.ShouldBeTrue();
+        SecurityBindingDocument? operatorBinding = await store.GetBindingAsync(b.IdValue, default);
+        operatorBinding!.Value.Read.IsUnrestrictedValue.ShouldBeTrue();
     }
 
     [TestMethod]
     public async Task A_binding_updates_and_deletes_under_optimistic_concurrency()
     {
         ISecurityPolicyStore store = await this.NewStoreAsync();
-        SecurityBinding added = await store.AddBindingAsync(
+        SecurityBindingDocument added = await store.AddBindingAsync(
             new SecurityBindingDefinition("role", "viewer", VerbGrant.Rules("r1"), VerbGrant.None, VerbGrant.None),
             "alice",
             default);
 
-        SecurityBinding? updated = await store.UpdateBindingAsync(
-            added.Id,
+        SecurityBindingDocument? updated = await store.UpdateBindingAsync(
+            added.IdValue,
             new SecurityBindingDefinition("role", "viewer", VerbGrant.Rules("r1", "r2"), VerbGrant.None, VerbGrant.None, Description: "two rules"),
-            added.Etag,
+            added.EtagValue,
             "bob",
             default);
         updated.ShouldNotBeNull();
-        updated.Value.Read.RuleNames.ShouldBe(["r1", "r2"]);
+        updated.Value.Read.RuleNameList.ShouldBe(["r1", "r2"]);
 
         await Should.ThrowAsync<SecurityPolicyConflictException>(async () =>
-            await store.UpdateBindingAsync(added.Id, new SecurityBindingDefinition("role", "viewer", VerbGrant.None, VerbGrant.None, VerbGrant.None), added.Etag, "carol", default));
+            await store.UpdateBindingAsync(added.IdValue, new SecurityBindingDefinition("role", "viewer", VerbGrant.None, VerbGrant.None, VerbGrant.None), added.EtagValue, "carol", default));
 
-        (await store.DeleteBindingAsync(added.Id, updated.Value.Etag, default)).ShouldBeTrue();
-        (await store.GetBindingAsync(added.Id, default)).ShouldBeNull();
+        (await store.DeleteBindingAsync(added.IdValue, updated.Value.EtagValue, default)).ShouldBeTrue();
+        (await store.GetBindingAsync(added.IdValue, default)).ShouldBeNull();
     }
 
     [TestMethod]

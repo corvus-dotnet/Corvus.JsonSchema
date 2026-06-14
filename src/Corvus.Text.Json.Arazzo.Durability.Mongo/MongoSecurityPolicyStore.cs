@@ -124,32 +124,32 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         => this.DeleteAsync(this.rules, "rule", name, expectedEtag, doc => SecurityRuleDocument.FromJson(doc).EtagValue, cancellationToken);
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBinding> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityBindingDocument> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
-        var record = new SecurityBinding(id, definition.ClaimType, definition.ClaimValue, definition.Read, definition.Write, definition.Purge, definition.Order, definition.Description, actor, this.timeProvider.GetUtcNow(), null, null, NewEtag());
-        var document = new BsonDocument { ["_id"] = id, ["doc"] = new BsonBinaryData(SecurityBindingDocument.From(record).ToJsonBytes()) };
+        var record = SecurityBindingDocument.CreateBinding(id, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        var document = new BsonDocument { ["_id"] = id, ["doc"] = new BsonBinaryData(record.ToJsonBytes()) };
         await this.bindings.InsertOneAsync(document, options: null, cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
         return record;
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBinding?> GetBindingAsync(string id, CancellationToken cancellationToken)
+    public async ValueTask<SecurityBindingDocument?> GetBindingAsync(string id, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         byte[]? doc = await DocumentAsync(this.bindings, id, cancellationToken).ConfigureAwait(false);
-        return doc is null ? null : SecurityBindingDocument.FromJson(doc).ToRecord();
+        return doc is null ? null : SecurityBindingDocument.FromJson(doc);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<IReadOnlyList<SecurityBinding>> ListBindingsAsync(CancellationToken cancellationToken)
+    public async ValueTask<IReadOnlyList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
         => await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBinding?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityBindingDocument?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
@@ -160,22 +160,10 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
             return null;
         }
 
-        SecurityBinding current = SecurityBindingDocument.FromJson(doc).ToRecord();
-        EnsureEtag("binding", id, expectedEtag, current.Etag);
-        var updated = current with
-        {
-            ClaimType = definition.ClaimType,
-            ClaimValue = definition.ClaimValue,
-            Read = definition.Read,
-            Write = definition.Write,
-            Purge = definition.Purge,
-            Order = definition.Order,
-            Description = definition.Description,
-            UpdatedBy = actor,
-            UpdatedAt = this.timeProvider.GetUtcNow(),
-            Etag = NewEtag(),
-        };
-        var replacement = new BsonDocument { ["_id"] = id, ["doc"] = new BsonBinaryData(SecurityBindingDocument.From(updated).ToJsonBytes()) };
+        SecurityBindingDocument current = SecurityBindingDocument.FromJson(doc);
+        EnsureEtag("binding", id, expectedEtag, current.EtagValue);
+        SecurityBindingDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        var replacement = new BsonDocument { ["_id"] = id, ["doc"] = new BsonBinaryData(updated.ToJsonBytes()) };
         await this.bindings.ReplaceOneAsync(Builders<BsonDocument>.Filter.Eq("_id", id), replacement, cancellationToken: cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
         return updated;
@@ -183,13 +171,13 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
 
     /// <inheritdoc/>
     public ValueTask<bool> DeleteBindingAsync(string id, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
-        => this.DeleteAsync(this.bindings, "binding", id, expectedEtag, doc => SecurityBindingDocument.FromJson(doc).ToRecord().Etag, cancellationToken);
+        => this.DeleteAsync(this.bindings, "binding", id, expectedEtag, doc => SecurityBindingDocument.FromJson(doc).EtagValue, cancellationToken);
 
     /// <inheritdoc/>
     public async ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
     {
         IReadOnlyList<SecurityRuleDocument> ruleList = await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
-        IReadOnlyList<SecurityBinding> bindingList = await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<SecurityBindingDocument> bindingList = await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
         BsonDocument? metaDoc = await this.meta.Find(Builders<BsonDocument>.Filter.Eq("_id", MetaId)).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
         long generation = metaDoc is not null && metaDoc.TryGetValue("generation", out BsonValue value) ? value.ToInt64() : 0;
         return new SecurityPolicySnapshot(ruleList, bindingList, generation);
@@ -235,16 +223,16 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         return list;
     }
 
-    private async ValueTask<IReadOnlyList<SecurityBinding>> ReadBindingsAsync(CancellationToken cancellationToken)
+    private async ValueTask<IReadOnlyList<SecurityBindingDocument>> ReadBindingsAsync(CancellationToken cancellationToken)
     {
-        var list = new List<SecurityBinding>();
+        var list = new List<SecurityBindingDocument>();
         List<BsonDocument> documents = await this.bindings.Find(Builders<BsonDocument>.Filter.Empty).ToListAsync(cancellationToken).ConfigureAwait(false);
         foreach (BsonDocument document in documents)
         {
-            list.Add(SecurityBindingDocument.FromJson(document["doc"].AsBsonBinaryData.Bytes).ToRecord());
+            list.Add(SecurityBindingDocument.FromJson(document["doc"].AsBsonBinaryData.Bytes));
         }
 
-        list.Sort(static (a, b) => a.Order != b.Order ? a.Order.CompareTo(b.Order) : string.CompareOrdinal(a.Id, b.Id));
+        list.Sort(static (a, b) => a.OrderValue != b.OrderValue ? a.OrderValue.CompareTo(b.OrderValue) : string.CompareOrdinal(a.IdValue, b.IdValue));
         return list;
     }
 
