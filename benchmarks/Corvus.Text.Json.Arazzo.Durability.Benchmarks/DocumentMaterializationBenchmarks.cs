@@ -22,13 +22,13 @@ public class DocumentMaterializationBenchmarks
     [GlobalSetup]
     public void Setup()
     {
-        using ParsedJsonDocument<SecurityRuleDocument> draft = SecurityRuleDocument.Draft("sys:tenant == $claim.tenant", "Tenant isolation.");
-        this.ruleJson = SecurityPolicySerialization.SerializeNewRule(
+        SecurityRuleDocument rule = SecurityRuleDocument.CreateRule(
             "tenant-scoped",
-            draft.RootElement,
+            new SecurityRuleDefinition("sys:tenant == $claim.tenant", "Tenant isolation."),
             "alice",
             DateTimeOffset.UnixEpoch,
             new WorkflowEtag("etag-1"));
+        this.ruleJson = PersistedJson.ToArray(rule, static (Utf8JsonWriter writer, in SecurityRuleDocument r) => r.WriteTo(writer));
     }
 
     /// <summary>Pure materialization, detached: owns a fresh byte[] + metadata each call.</summary>
