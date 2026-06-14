@@ -25,15 +25,12 @@ public class EnvelopeWriteBenchmarks
 
     [GlobalSetup]
     public void Setup()
-    {
-        using ParsedJsonDocument<SecurityRuleDocument> draft = SecurityRuleDocument.Draft("sys:tenant == $claim.tenant", "Tenant isolation.");
-        this.docBytes = SecurityPolicySerialization.SerializeNewRule(
+        => this.docBytes = SecurityPolicySerialization.SerializeNewRule(
             "tenant-scoped",
-            draft.RootElement,
+            new SecurityRuleDefinition("sys:tenant == $claim.tenant", "Tenant isolation."),
             "alice",
             DateTimeOffset.UnixEpoch,
             new WorkflowEtag("etag-1"));
-    }
 
     /// <summary>Old: fresh growing MemoryStream + fresh Utf8JsonWriter for the envelope, plus the pooled return doc.</summary>
     /// <returns>A value derived from the artifacts (prevents dead-code elimination).</returns>
@@ -59,7 +56,7 @@ public class EnvelopeWriteBenchmarks
     [Benchmark]
     public int New_WriteToStream()
     {
-        using Stream stream = CosmosJson.WriteToStream(
+        using MemoryStream stream = CosmosJson.WriteToStream(
             this.docBytes,
             static (Utf8JsonWriter writer, in byte[] doc) =>
             {
