@@ -49,7 +49,9 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
     /// <returns>A task that completes when the cache is current.</returns>
     public async ValueTask RefreshAsync(CancellationToken cancellationToken = default)
     {
-        SecurityPolicySnapshot snapshot = await this.store.LoadSnapshotAsync(cancellationToken).ConfigureAwait(false);
+        // The snapshot is a pooled batch; dispose it once we have extracted the (owned) compiled state. We retain no
+        // document references — only rule-expression strings and pre-resolved binding clauses.
+        using SecurityPolicySnapshot snapshot = await this.store.LoadSnapshotAsync(cancellationToken).ConfigureAwait(false);
         if (snapshot.Generation == this.compiled.Generation)
         {
             return;

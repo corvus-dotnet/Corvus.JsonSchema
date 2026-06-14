@@ -97,7 +97,7 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleDocument> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
@@ -108,27 +108,26 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
         }
 
         WorkflowEtag etag = NewEtag();
-        SecurityRuleDocument created = SecurityRuleDocument.CreateRule(name, definition, actor, this.timeProvider.GetUtcNow(), etag);
-        byte[] doc = PersistedJson.ToArray(created, static (Utf8JsonWriter writer, in SecurityRuleDocument r) => r.WriteTo(writer));
-        await this.store.PutAsync(RulePrefix + Enc(name), doc, cancellationToken: cancellationToken).ConfigureAwait(false);
+        byte[] json = SecurityPolicySerialization.SerializeNewRule(name, definition, actor, this.timeProvider.GetUtcNow(), etag);
+        await this.store.PutAsync(RulePrefix + Enc(name), json, cancellationToken: cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return created;
+        return PersistedJson.ToPooledDocument<SecurityRuleDocument>(json);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleDocument?> GetRuleAsync(string name, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> GetRuleAsync(string name, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
         NatsKVEntry<byte[]>? entry = await this.TryGetAsync(RulePrefix + Enc(name), cancellationToken).ConfigureAwait(false);
-        return entry is { Value: { } bytes } ? SecurityRuleDocument.FromJson(bytes) : null;
+        return entry is { Value: { } bytes } ? PersistedJson.ToPooledDocument<SecurityRuleDocument>(bytes) : null;
     }
 
     /// <inheritdoc/>
-    public async ValueTask<IReadOnlyList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
-        => await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
+    public async ValueTask<PooledDocumentList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
+        => new PooledDocumentList<SecurityRuleDocument>(await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false));
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleDocument?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
@@ -139,48 +138,44 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
             return null;
         }
 
-        SecurityRuleDocument current = SecurityRuleDocument.FromJson(bytes);
-        EnsureEtag("rule", name, expectedEtag, current.EtagValue);
         WorkflowEtag etag = NewEtag();
-        SecurityRuleDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), etag);
-        byte[] doc = PersistedJson.ToArray(updated, static (Utf8JsonWriter writer, in SecurityRuleDocument r) => r.WriteTo(writer));
-        await this.store.PutAsync(RulePrefix + Enc(name), doc, cancellationToken: cancellationToken).ConfigureAwait(false);
+        byte[] json = SecurityPolicySerialization.SerializeUpdatedRule(bytes, "rule", name, expectedEtag, definition, actor, this.timeProvider.GetUtcNow(), etag);
+        await this.store.PutAsync(RulePrefix + Enc(name), json, cancellationToken: cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return updated;
+        return PersistedJson.ToPooledDocument<SecurityRuleDocument>(json);
     }
 
     /// <inheritdoc/>
     public ValueTask<bool> DeleteRuleAsync(string name, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
-        => this.DeleteAsync(RulePrefix, "rule", name, expectedEtag, doc => SecurityRuleDocument.FromJson(doc).EtagValue, cancellationToken);
+        => this.DeleteAsync(RulePrefix, "rule", name, expectedEtag, SecurityPolicySerialization.RuleEtagOf, cancellationToken);
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBindingDocument> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
         WorkflowEtag etag = NewEtag();
-        SecurityBindingDocument created = SecurityBindingDocument.CreateBinding(id, definition, actor, this.timeProvider.GetUtcNow(), etag);
-        byte[] doc = PersistedJson.ToArray(created, static (Utf8JsonWriter writer, in SecurityBindingDocument b) => b.WriteTo(writer));
-        await this.store.PutAsync(BindingPrefix + Enc(id), doc, cancellationToken: cancellationToken).ConfigureAwait(false);
+        byte[] json = SecurityPolicySerialization.SerializeNewBinding(id, definition, actor, this.timeProvider.GetUtcNow(), etag);
+        await this.store.PutAsync(BindingPrefix + Enc(id), json, cancellationToken: cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return created;
+        return PersistedJson.ToPooledDocument<SecurityBindingDocument>(json);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBindingDocument?> GetBindingAsync(string id, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> GetBindingAsync(string id, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         NatsKVEntry<byte[]>? entry = await this.TryGetAsync(BindingPrefix + Enc(id), cancellationToken).ConfigureAwait(false);
-        return entry is { Value: { } bytes } ? SecurityBindingDocument.FromJson(bytes) : null;
+        return entry is { Value: { } bytes } ? PersistedJson.ToPooledDocument<SecurityBindingDocument>(bytes) : null;
     }
 
     /// <inheritdoc/>
-    public async ValueTask<IReadOnlyList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
-        => await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
+    public async ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
+        => new PooledDocumentList<SecurityBindingDocument>(await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false));
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBindingDocument?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
@@ -191,25 +186,22 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
             return null;
         }
 
-        SecurityBindingDocument current = SecurityBindingDocument.FromJson(bytes);
-        EnsureEtag("binding", id, expectedEtag, current.EtagValue);
         WorkflowEtag etag = NewEtag();
-        SecurityBindingDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), etag);
-        byte[] doc = PersistedJson.ToArray(updated, static (Utf8JsonWriter writer, in SecurityBindingDocument b) => b.WriteTo(writer));
-        await this.store.PutAsync(BindingPrefix + Enc(id), doc, cancellationToken: cancellationToken).ConfigureAwait(false);
+        byte[] json = SecurityPolicySerialization.SerializeUpdatedBinding(bytes, "binding", id, expectedEtag, definition, actor, this.timeProvider.GetUtcNow(), etag);
+        await this.store.PutAsync(BindingPrefix + Enc(id), json, cancellationToken: cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return updated;
+        return PersistedJson.ToPooledDocument<SecurityBindingDocument>(json);
     }
 
     /// <inheritdoc/>
     public ValueTask<bool> DeleteBindingAsync(string id, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
-        => this.DeleteAsync(BindingPrefix, "binding", id, expectedEtag, doc => SecurityBindingDocument.FromJson(doc).EtagValue, cancellationToken);
+        => this.DeleteAsync(BindingPrefix, "binding", id, expectedEtag, SecurityPolicySerialization.BindingEtagOf, cancellationToken);
 
     /// <inheritdoc/>
     public async ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
     {
-        IReadOnlyList<SecurityRuleDocument> rules = await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
-        IReadOnlyList<SecurityBindingDocument> bindings = await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
+        var rules = new PooledDocumentList<SecurityRuleDocument>(await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false));
+        var bindings = new PooledDocumentList<SecurityBindingDocument>(await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false));
         NatsKVEntry<byte[]>? gen = await this.TryGetAsync(GenerationKey, cancellationToken).ConfigureAwait(false);
         long generation = gen is { Value: { } bytes } && long.TryParse(Encoding.UTF8.GetString(bytes), NumberStyles.Integer, CultureInfo.InvariantCulture, out long g) ? g : 0;
         return new SecurityPolicySnapshot(rules, bindings, generation);
@@ -228,17 +220,9 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
 
     private static string Enc(string value) => Base64Url.EncodeToString(Encoding.UTF8.GetBytes(value));
 
-    private static void EnsureEtag(string kind, string id, WorkflowEtag expected, WorkflowEtag actual)
+    private async ValueTask<List<ParsedJsonDocument<SecurityRuleDocument>>> ReadRulesAsync(CancellationToken cancellationToken)
     {
-        if (!expected.IsNone && expected != actual)
-        {
-            throw new SecurityPolicyConflictException(kind, id, expected);
-        }
-    }
-
-    private async ValueTask<IReadOnlyList<SecurityRuleDocument>> ReadRulesAsync(CancellationToken cancellationToken)
-    {
-        var list = new List<SecurityRuleDocument>();
+        var list = new List<ParsedJsonDocument<SecurityRuleDocument>>();
         await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
         {
             if (!key.StartsWith(RulePrefix, StringComparison.Ordinal))
@@ -249,17 +233,17 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
             NatsKVEntry<byte[]>? entry = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
             if (entry is { Value: { } bytes })
             {
-                list.Add(SecurityRuleDocument.FromJson(bytes));
+                list.Add(PersistedJson.ToPooledDocument<SecurityRuleDocument>(bytes));
             }
         }
 
-        list.Sort(static (a, b) => string.CompareOrdinal(a.NameValue, b.NameValue));
+        list.Sort(static (a, b) => string.CompareOrdinal(a.RootElement.NameValue, b.RootElement.NameValue));
         return list;
     }
 
-    private async ValueTask<IReadOnlyList<SecurityBindingDocument>> ReadBindingsAsync(CancellationToken cancellationToken)
+    private async ValueTask<List<ParsedJsonDocument<SecurityBindingDocument>>> ReadBindingsAsync(CancellationToken cancellationToken)
     {
-        var list = new List<SecurityBindingDocument>();
+        var list = new List<ParsedJsonDocument<SecurityBindingDocument>>();
         await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
         {
             if (!key.StartsWith(BindingPrefix, StringComparison.Ordinal))
@@ -270,11 +254,11 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
             NatsKVEntry<byte[]>? entry = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
             if (entry is { Value: { } bytes })
             {
-                list.Add(SecurityBindingDocument.FromJson(bytes));
+                list.Add(PersistedJson.ToPooledDocument<SecurityBindingDocument>(bytes));
             }
         }
 
-        list.Sort(static (a, b) => a.OrderValue != b.OrderValue ? a.OrderValue.CompareTo(b.OrderValue) : string.CompareOrdinal(a.IdValue, b.IdValue));
+        list.Sort(static (a, b) => a.RootElement.OrderValue != b.RootElement.OrderValue ? a.RootElement.OrderValue.CompareTo(b.RootElement.OrderValue) : string.CompareOrdinal(a.RootElement.IdValue, b.RootElement.IdValue));
         return list;
     }
 
@@ -310,7 +294,7 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
             return false;
         }
 
-        EnsureEtag(kind, key, expectedEtag, etagOf(bytes));
+        SecurityPolicySerialization.EnsureEtag(kind, key, expectedEtag, etagOf(bytes));
         await this.store.DeleteAsync(prefix + Enc(key), cancellationToken: cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
         return true;

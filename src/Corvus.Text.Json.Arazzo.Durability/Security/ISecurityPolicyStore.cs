@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text.Json;
+
 namespace Corvus.Text.Json.Arazzo.Durability.Security;
 
 /// <summary>
@@ -11,11 +13,15 @@ namespace Corvus.Text.Json.Arazzo.Durability.Security;
 /// principal's <see cref="AccessContext"/> from it.
 /// </summary>
 /// <remarks>
-/// Access to this store is gated by the control-plane's <c>security:read</c>/<c>security:write</c> capability
+/// <para>Access to this store is gated by the control-plane's <c>security:read</c>/<c>security:write</c> capability
 /// scopes (operation authorization), not by row-level reach — so, unlike the run/catalog stores, it takes no
 /// <see cref="AccessContext"/>. Update/delete take an expected <see cref="WorkflowEtag"/> for optimistic
 /// concurrency (pass <see cref="WorkflowEtag.None"/> to overwrite unconditionally); a stale etag throws
-/// <see cref="SecurityPolicyConflictException"/>.
+/// <see cref="SecurityPolicyConflictException"/>.</para>
+/// <para>Read/return methods hand back <strong>pooled documents whose lifetime the caller owns</strong>: dispose the
+/// returned <see cref="ParsedJsonDocument{T}"/> / <see cref="PooledDocumentList{T}"/> / <see cref="SecurityPolicySnapshot"/>
+/// once read (clone any value that must outlive the dispose). This keeps the document's backing buffer on the pool
+/// rather than the GC heap.</para>
 /// </remarks>
 public interface ISecurityPolicyStore
 {
@@ -24,19 +30,19 @@ public interface ISecurityPolicyStore
     /// <param name="definition">The rule content.</param>
     /// <param name="actor">The authenticated identity creating the rule (for audit).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The created rule.</returns>
-    ValueTask<SecurityRuleDocument> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken);
+    /// <returns>The created rule, as a pooled document the caller must dispose.</returns>
+    ValueTask<ParsedJsonDocument<SecurityRuleDocument>> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken);
 
     /// <summary>Gets a rule by name, or <see langword="null"/> if absent.</summary>
     /// <param name="name">The rule name.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The record or <see langword="null"/>.</returns>
-    ValueTask<SecurityRuleDocument?> GetRuleAsync(string name, CancellationToken cancellationToken);
+    /// <returns>The rule as a pooled document the caller must dispose, or <see langword="null"/>.</returns>
+    ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> GetRuleAsync(string name, CancellationToken cancellationToken);
 
     /// <summary>Lists all rules.</summary>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>All rules.</returns>
-    ValueTask<IReadOnlyList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken);
+    /// <returns>All rules, as a pooled batch the caller must dispose.</returns>
+    ValueTask<PooledDocumentList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken);
 
     /// <summary>Updates a rule's content under optimistic concurrency.</summary>
     /// <param name="name">The rule name.</param>
@@ -44,9 +50,9 @@ public interface ISecurityPolicyStore
     /// <param name="expectedEtag">The expected current etag (<see cref="WorkflowEtag.None"/> to overwrite unconditionally).</param>
     /// <param name="actor">The authenticated identity updating the rule (for audit).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The updated record, or <see langword="null"/> if no rule with that name exists.</returns>
+    /// <returns>The updated rule as a pooled document the caller must dispose, or <see langword="null"/> if no rule with that name exists.</returns>
     /// <exception cref="SecurityPolicyConflictException">The expected etag no longer matches.</exception>
-    ValueTask<SecurityRuleDocument?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken);
+    ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken);
 
     /// <summary>Deletes a rule under optimistic concurrency.</summary>
     /// <param name="name">The rule name.</param>
@@ -60,19 +66,19 @@ public interface ISecurityPolicyStore
     /// <param name="definition">The binding content.</param>
     /// <param name="actor">The authenticated identity creating the binding (for audit).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The created record (with its assigned id).</returns>
-    ValueTask<SecurityBindingDocument> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken);
+    /// <returns>The created binding (with its assigned id), as a pooled document the caller must dispose.</returns>
+    ValueTask<ParsedJsonDocument<SecurityBindingDocument>> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken);
 
     /// <summary>Gets a binding by id, or <see langword="null"/> if absent.</summary>
     /// <param name="id">The binding id.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The record or <see langword="null"/>.</returns>
-    ValueTask<SecurityBindingDocument?> GetBindingAsync(string id, CancellationToken cancellationToken);
+    /// <returns>The binding as a pooled document the caller must dispose, or <see langword="null"/>.</returns>
+    ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> GetBindingAsync(string id, CancellationToken cancellationToken);
 
     /// <summary>Lists all bindings (ascending by <see cref="SecurityBindingDocument.OrderValue"/> then id).</summary>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>All bindings.</returns>
-    ValueTask<IReadOnlyList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken);
+    /// <returns>All bindings, as a pooled batch the caller must dispose.</returns>
+    ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken);
 
     /// <summary>Updates a binding's content under optimistic concurrency.</summary>
     /// <param name="id">The binding id.</param>
@@ -80,9 +86,9 @@ public interface ISecurityPolicyStore
     /// <param name="expectedEtag">The expected current etag (<see cref="WorkflowEtag.None"/> to overwrite unconditionally).</param>
     /// <param name="actor">The authenticated identity updating the binding (for audit).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The updated record, or <see langword="null"/> if no binding with that id exists.</returns>
+    /// <returns>The updated binding as a pooled document the caller must dispose, or <see langword="null"/> if no binding with that id exists.</returns>
     /// <exception cref="SecurityPolicyConflictException">The expected etag no longer matches.</exception>
-    ValueTask<SecurityBindingDocument?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken);
+    ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken);
 
     /// <summary>Deletes a binding under optimistic concurrency.</summary>
     /// <param name="id">The binding id.</param>
@@ -94,6 +100,6 @@ public interface ISecurityPolicyStore
 
     /// <summary>Loads a consistent snapshot of all rules and bindings plus the store's current generation token.</summary>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The snapshot.</returns>
+    /// <returns>The snapshot (a disposable batch the caller must dispose).</returns>
     ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken);
 }
