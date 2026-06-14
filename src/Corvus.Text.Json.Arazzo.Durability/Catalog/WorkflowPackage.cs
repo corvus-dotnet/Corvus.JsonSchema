@@ -2,11 +2,11 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using System.IO.Compression;
 using System.Security.Cryptography;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Canonicalization;
+using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Arazzo.Durability;
 
@@ -36,6 +36,10 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// </remarks>
 public static class WorkflowPackage
 {
+    private const int DefaultBufferSize = 1024;
+
+    private static readonly JsonWriterOptions WriterOptions = new() { Indented = false, SkipValidation = true };
+
     /// <summary>The package format version written into the manifest.</summary>
     public const int FormatVersion = 1;
 
@@ -177,53 +181,61 @@ public static class WorkflowPackage
     /// <returns>The canonical content bytes.</returns>
     internal static byte[] CanonicalContent(ReadOnlyMemory<byte> workflowUtf8, IReadOnlyList<KeyValuePair<string, byte[]>> sources)
     {
-        var buffer = new ArrayBufferWriter<byte>();
-        using (var writer = new Utf8JsonWriter(buffer, new JsonWriterOptions { Indented = false, SkipValidation = true }))
-        using (ParsedJsonDocument<JsonElement> workflow = ParsedJsonDocument<JsonElement>.Parse(workflowUtf8))
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter buffer);
+        try
         {
-            writer.WriteStartObject();
-            writer.WritePropertyName("sources"u8);
-            writer.WriteStartObject();
-            foreach (KeyValuePair<string, byte[]> source in sources.OrderBy(s => s.Key, StringComparer.Ordinal))
-            {
-                using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(source.Value);
-                writer.WritePropertyName(source.Key);
-                document.RootElement.WriteTo(writer);
-            }
-
-            writer.WriteEndObject();
-            writer.WritePropertyName("workflow"u8);
-            workflow.RootElement.WriteTo(writer);
-            writer.WriteEndObject();
-        }
-
-        using ParsedJsonDocument<JsonElement> assembled = ParsedJsonDocument<JsonElement>.Parse(buffer.WrittenMemory);
-        return JsonCanonicalizer.Canonicalize(assembled.RootElement);
-    }
-
-    private static byte[] BuildManifest(IReadOnlyList<KeyValuePair<string, byte[]>> orderedSources)
-    {
-        var buffer = new ArrayBufferWriter<byte>();
-        using (var writer = new Utf8JsonWriter(buffer, new JsonWriterOptions { Indented = false, SkipValidation = true }))
-        {
-            writer.WriteStartObject();
-            writer.WriteNumber("formatVersion"u8, FormatVersion);
-            writer.WriteString("workflow"u8, WorkflowEntryName);
-            writer.WriteStartArray("sources"u8);
-            foreach (KeyValuePair<string, byte[]> source in orderedSources)
+            using (ParsedJsonDocument<JsonElement> workflow = ParsedJsonDocument<JsonElement>.Parse(workflowUtf8))
             {
                 writer.WriteStartObject();
-                writer.WriteString("name"u8, source.Key);
-                writer.WriteString("path"u8, SourcesPrefix + source.Key + ".json");
+                writer.WritePropertyName("sources"u8);
+                writer.WriteStartObject();
+                foreach (KeyValuePair<string, byte[]> source in sources.OrderBy(s => s.Key, StringComparer.Ordinal))
+                {
+                    using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(source.Value);
+                    writer.WritePropertyName(source.Key);
+                    document.RootElement.WriteTo(writer);
+                }
+
+                writer.WriteEndObject();
+                writer.WritePropertyName("workflow"u8);
+                workflow.RootElement.WriteTo(writer);
                 writer.WriteEndObject();
             }
 
-            writer.WriteEndArray();
-            writer.WriteEndObject();
-        }
+            writer.Flush();
 
-        return buffer.WrittenSpan.ToArray();
+            // Canonicalize the assembled content over a pooled document of the written span. Same written bytes as
+            // before, so the content hash is unchanged.
+            using ParsedJsonDocument<JsonElement> assembled = PersistedJson.ToPooledDocument<JsonElement>(buffer.WrittenSpan);
+            return JsonCanonicalizer.Canonicalize(assembled.RootElement);
+        }
+        finally
+        {
+            workspace.ReturnWriterAndBuffer(writer, buffer);
+        }
     }
+
+    private static byte[] BuildManifest(IReadOnlyList<KeyValuePair<string, byte[]>> orderedSources)
+        => PersistedJson.ToArray(
+            orderedSources,
+            static (Utf8JsonWriter writer, in IReadOnlyList<KeyValuePair<string, byte[]>> sources) =>
+            {
+                writer.WriteStartObject();
+                writer.WriteNumber("formatVersion"u8, FormatVersion);
+                writer.WriteString("workflow"u8, WorkflowEntryName);
+                writer.WriteStartArray("sources"u8);
+                foreach (KeyValuePair<string, byte[]> source in sources)
+                {
+                    writer.WriteStartObject();
+                    writer.WriteString("name"u8, source.Key);
+                    writer.WriteString("path"u8, SourcesPrefix + source.Key + ".json");
+                    writer.WriteEndObject();
+                }
+
+                writer.WriteEndArray();
+                writer.WriteEndObject();
+            });
 
     private static void WriteEntry(ZipArchive archive, string name, ReadOnlySpan<byte> content)
     {
