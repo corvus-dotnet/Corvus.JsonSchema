@@ -54,9 +54,9 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
         }
 
         var expressions = new Dictionary<string, string>(StringComparer.Ordinal);
-        foreach (SecurityRuleRecord rule in snapshot.Rules)
+        foreach (SecurityRuleDocument rule in snapshot.Rules)
         {
-            expressions[rule.Name] = rule.Expression;
+            expressions[rule.NameValue] = rule.ExpressionValue;
         }
 
         this.compiled = new Compiled(snapshot.Generation, snapshot.Bindings, expressions);

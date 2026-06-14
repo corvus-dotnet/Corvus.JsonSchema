@@ -71,13 +71,13 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleRecord> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityRuleDocument> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
         ArgumentNullException.ThrowIfNull(actor);
-        var record = new SecurityRuleRecord(name, definition.Expression, definition.Description, actor, this.timeProvider.GetUtcNow(), null, null, NewEtag());
-        if (!await this.database.StringSetAsync(RulePrefix + name, SecurityRuleDocument.From(record).ToJsonBytes(), when: When.NotExists).ConfigureAwait(false))
+        var record = SecurityRuleDocument.CreateRule(name, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        if (!await this.database.StringSetAsync(RulePrefix + name, record.ToJsonBytes(), when: When.NotExists).ConfigureAwait(false))
         {
             throw new InvalidOperationException($"A security rule named '{name}' already exists.");
         }
@@ -88,23 +88,23 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleRecord?> GetRuleAsync(string name, CancellationToken cancellationToken)
+    public async ValueTask<SecurityRuleDocument?> GetRuleAsync(string name, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
         cancellationToken.ThrowIfCancellationRequested();
         RedisValue value = await this.database.StringGetAsync(RulePrefix + name).ConfigureAwait(false);
-        return value.IsNullOrEmpty ? null : SecurityRuleDocument.FromJson((byte[])value!).ToRecord();
+        return value.IsNullOrEmpty ? null : SecurityRuleDocument.FromJson((byte[])value!);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<IReadOnlyList<SecurityRuleRecord>> ListRulesAsync(CancellationToken cancellationToken)
+    public async ValueTask<IReadOnlyList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         return await this.ReadRulesAsync().ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleRecord?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityRuleDocument?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
@@ -115,24 +115,17 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
             return null;
         }
 
-        SecurityRuleRecord current = SecurityRuleDocument.FromJson((byte[])value!).ToRecord();
-        EnsureEtag("rule", name, expectedEtag, current.Etag);
-        var updated = current with
-        {
-            Expression = definition.Expression,
-            Description = definition.Description,
-            UpdatedBy = actor,
-            UpdatedAt = this.timeProvider.GetUtcNow(),
-            Etag = NewEtag(),
-        };
-        await this.database.StringSetAsync(RulePrefix + name, SecurityRuleDocument.From(updated).ToJsonBytes()).ConfigureAwait(false);
+        SecurityRuleDocument current = SecurityRuleDocument.FromJson((byte[])value!);
+        EnsureEtag("rule", name, expectedEtag, current.EtagValue);
+        SecurityRuleDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        await this.database.StringSetAsync(RulePrefix + name, updated.ToJsonBytes()).ConfigureAwait(false);
         await this.BumpGenerationAsync().ConfigureAwait(false);
         return updated;
     }
 
     /// <inheritdoc/>
     public ValueTask<bool> DeleteRuleAsync(string name, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
-        => this.DeleteAsync(RulePrefix, RuleIndexKey, "rule", name, expectedEtag, doc => SecurityRuleDocument.FromJson(doc).ToRecord().Etag);
+        => this.DeleteAsync(RulePrefix, RuleIndexKey, "rule", name, expectedEtag, doc => SecurityRuleDocument.FromJson(doc).EtagValue);
 
     /// <inheritdoc/>
     public async ValueTask<SecurityBinding> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
@@ -203,7 +196,7 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     public async ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        IReadOnlyList<SecurityRuleRecord> rules = await this.ReadRulesAsync().ConfigureAwait(false);
+        IReadOnlyList<SecurityRuleDocument> rules = await this.ReadRulesAsync().ConfigureAwait(false);
         IReadOnlyList<SecurityBinding> bindings = await this.ReadBindingsAsync().ConfigureAwait(false);
         RedisValue gen = await this.database.StringGetAsync(GenerationKey).ConfigureAwait(false);
         return new SecurityPolicySnapshot(rules, bindings, gen.IsNullOrEmpty ? 0 : (long)gen);
@@ -228,19 +221,19 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         }
     }
 
-    private async ValueTask<IReadOnlyList<SecurityRuleRecord>> ReadRulesAsync()
+    private async ValueTask<IReadOnlyList<SecurityRuleDocument>> ReadRulesAsync()
     {
-        var list = new List<SecurityRuleRecord>();
+        var list = new List<SecurityRuleDocument>();
         foreach (RedisValue member in await this.database.SetMembersAsync(RuleIndexKey).ConfigureAwait(false))
         {
             RedisValue value = await this.database.StringGetAsync(RulePrefix + (string)member!).ConfigureAwait(false);
             if (!value.IsNullOrEmpty)
             {
-                list.Add(SecurityRuleDocument.FromJson((byte[])value!).ToRecord());
+                list.Add(SecurityRuleDocument.FromJson((byte[])value!));
             }
         }
 
-        list.Sort(static (a, b) => string.CompareOrdinal(a.Name, b.Name));
+        list.Sort(static (a, b) => string.CompareOrdinal(a.NameValue, b.NameValue));
         return list;
     }
 

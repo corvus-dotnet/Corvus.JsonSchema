@@ -14,7 +14,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Security;
 public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
 {
     private readonly Lock gate = new();
-    private readonly Dictionary<string, SecurityRuleRecord> rules = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, SecurityRuleDocument> rules = new(StringComparer.Ordinal);
     private readonly Dictionary<string, SecurityBinding> bindings = new(StringComparer.Ordinal);
     private readonly TimeProvider timeProvider;
     private long generation;
@@ -27,7 +27,7 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
         => this.timeProvider = timeProvider ?? TimeProvider.System;
 
     /// <inheritdoc/>
-    public ValueTask<SecurityRuleRecord> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken)
+    public ValueTask<SecurityRuleDocument> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
@@ -41,36 +41,36 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
             }
 
             DateTimeOffset now = this.timeProvider.GetUtcNow();
-            var record = new SecurityRuleRecord(name, definition.Expression, definition.Description, actor, now, null, null, this.NextEtag());
-            this.rules[name] = record;
+            SecurityRuleDocument rule = SecurityRuleDocument.CreateRule(name, definition, actor, now, this.NextEtag());
+            this.rules[name] = rule;
             this.generation++;
-            return new ValueTask<SecurityRuleRecord>(record);
+            return new ValueTask<SecurityRuleDocument>(rule);
         }
     }
 
     /// <inheritdoc/>
-    public ValueTask<SecurityRuleRecord?> GetRuleAsync(string name, CancellationToken cancellationToken)
+    public ValueTask<SecurityRuleDocument?> GetRuleAsync(string name, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
         lock (this.gate)
         {
-            return new ValueTask<SecurityRuleRecord?>(this.rules.TryGetValue(name, out SecurityRuleRecord record) ? record : null);
+            return new ValueTask<SecurityRuleDocument?>(this.rules.TryGetValue(name, out SecurityRuleDocument rule) ? rule : null);
         }
     }
 
     /// <inheritdoc/>
-    public ValueTask<IReadOnlyList<SecurityRuleRecord>> ListRulesAsync(CancellationToken cancellationToken)
+    public ValueTask<IReadOnlyList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
     {
         lock (this.gate)
         {
-            var list = new List<SecurityRuleRecord>(this.rules.Values);
-            list.Sort(static (a, b) => string.CompareOrdinal(a.Name, b.Name));
-            return new ValueTask<IReadOnlyList<SecurityRuleRecord>>(list);
+            var list = new List<SecurityRuleDocument>(this.rules.Values);
+            list.Sort(static (a, b) => string.CompareOrdinal(a.NameValue, b.NameValue));
+            return new ValueTask<IReadOnlyList<SecurityRuleDocument>>(list);
         }
     }
 
     /// <inheritdoc/>
-    public ValueTask<SecurityRuleRecord?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public ValueTask<SecurityRuleDocument?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
@@ -78,23 +78,16 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
 
         lock (this.gate)
         {
-            if (!this.rules.TryGetValue(name, out SecurityRuleRecord current))
+            if (!this.rules.TryGetValue(name, out SecurityRuleDocument current))
             {
-                return new ValueTask<SecurityRuleRecord?>((SecurityRuleRecord?)null);
+                return new ValueTask<SecurityRuleDocument?>((SecurityRuleDocument?)null);
             }
 
-            EnsureEtag("rule", name, expectedEtag, current.Etag);
-            var updated = current with
-            {
-                Expression = definition.Expression,
-                Description = definition.Description,
-                UpdatedBy = actor,
-                UpdatedAt = this.timeProvider.GetUtcNow(),
-                Etag = this.NextEtag(),
-            };
+            EnsureEtag("rule", name, expectedEtag, current.EtagValue);
+            SecurityRuleDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
             this.rules[name] = updated;
             this.generation++;
-            return new ValueTask<SecurityRuleRecord?>(updated);
+            return new ValueTask<SecurityRuleDocument?>(updated);
         }
     }
 
@@ -104,12 +97,12 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
         ArgumentNullException.ThrowIfNull(name);
         lock (this.gate)
         {
-            if (!this.rules.TryGetValue(name, out SecurityRuleRecord current))
+            if (!this.rules.TryGetValue(name, out SecurityRuleDocument current))
             {
                 return new ValueTask<bool>(false);
             }
 
-            EnsureEtag("rule", name, expectedEtag, current.Etag);
+            EnsureEtag("rule", name, expectedEtag, current.EtagValue);
             this.rules.Remove(name);
             this.generation++;
             return new ValueTask<bool>(true);
@@ -222,8 +215,8 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
     {
         lock (this.gate)
         {
-            var ruleList = new List<SecurityRuleRecord>(this.rules.Values);
-            ruleList.Sort(static (a, b) => string.CompareOrdinal(a.Name, b.Name));
+            var ruleList = new List<SecurityRuleDocument>(this.rules.Values);
+            ruleList.Sort(static (a, b) => string.CompareOrdinal(a.NameValue, b.NameValue));
             return new ValueTask<SecurityPolicySnapshot>(new SecurityPolicySnapshot(ruleList, SortBindings(this.bindings.Values), this.generation));
         }
     }
