@@ -41,7 +41,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     /// <inheritdoc/>
     public async ValueTask<ListSecurityRulesResult> HandleListSecurityRulesAsync(ListSecurityRulesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<SecurityRuleRecord> rules = await this.store.ListRulesAsync(cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<SecurityRuleDocument> rules = await this.store.ListRulesAsync(cancellationToken).ConfigureAwait(false);
         return ListSecurityRulesResult.Ok(ToRuleList(rules), workspace);
     }
 
@@ -58,7 +58,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
 
         try
         {
-            SecurityRuleRecord created = await this.store.AddRuleAsync(name, new SecurityRuleDefinition(expression, OptionalString(body.Description)), this.actor, cancellationToken).ConfigureAwait(false);
+            SecurityRuleDocument created = await this.store.AddRuleAsync(name, new SecurityRuleDefinition(expression, OptionalString(body.Description)), this.actor, cancellationToken).ConfigureAwait(false);
             await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
             return CreateSecurityRuleResult.Created(ToRuleSource(created), workspace);
         }
@@ -73,7 +73,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     public async ValueTask<GetSecurityRuleResult> HandleGetSecurityRuleAsync(GetSecurityRuleParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string name = (string)parameters.RuleName;
-        SecurityRuleRecord? rule = await this.store.GetRuleAsync(name, cancellationToken).ConfigureAwait(false);
+        SecurityRuleDocument? rule = await this.store.GetRuleAsync(name, cancellationToken).ConfigureAwait(false);
         return rule is { } r
             ? GetSecurityRuleResult.Ok(ToRuleSource(r), workspace)
             : GetSecurityRuleResult.NotFound(NotFoundProblem("rule", name), workspace);
@@ -90,7 +90,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             return UpdateSecurityRuleResult.BadRequest(problem, workspace);
         }
 
-        SecurityRuleRecord? updated = await this.store.UpdateRuleAsync(name, new SecurityRuleDefinition(expression, OptionalString(body.Description)), WorkflowEtag.None, this.actor, cancellationToken).ConfigureAwait(false);
+        SecurityRuleDocument? updated = await this.store.UpdateRuleAsync(name, new SecurityRuleDefinition(expression, OptionalString(body.Description)), WorkflowEtag.None, this.actor, cancellationToken).ConfigureAwait(false);
         if (updated is not { } r)
         {
             return UpdateSecurityRuleResult.NotFound(NotFoundProblem("rule", name), workspace);
@@ -257,43 +257,43 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             b.Create(ruleNames: ruleNames, unrestricted: grant.Unrestricted);
         });
 
-    private static Models.SecurityRuleSummary.Source ToRuleSource(SecurityRuleRecord r)
+    private static Models.SecurityRuleSummary.Source ToRuleSource(SecurityRuleDocument r)
         => new((ref Models.SecurityRuleSummary.Builder b) =>
         {
             Models.JsonString.Source description = default;
-            if (r.Description is { } d)
+            if (r.DescriptionOrNull is { } d)
             {
                 description = d;
             }
 
             Models.JsonString.Source lastUpdatedBy = default;
-            if (r.UpdatedBy is { } u)
+            if (r.UpdatedByOrNull is { } u)
             {
                 lastUpdatedBy = u;
             }
 
             Models.JsonDateTime.Source lastUpdatedAt = default;
-            if (r.UpdatedAt is { } ua)
+            if (r.UpdatedAtValue is { } ua)
             {
                 lastUpdatedAt = ua;
             }
 
             b.Create(
-                createdAt: r.CreatedAt,
-                createdBy: r.CreatedBy,
-                etag: r.Etag.Value ?? string.Empty,
-                expression: r.Expression,
-                name: r.Name,
+                createdAt: r.CreatedAtValue,
+                createdBy: r.CreatedByValue,
+                etag: r.EtagValue.Value ?? string.Empty,
+                expression: r.ExpressionValue,
+                name: r.NameValue,
                 description: description,
                 lastUpdatedAt: lastUpdatedAt,
                 lastUpdatedBy: lastUpdatedBy);
         });
 
-    private static Models.SecurityRuleList.Source ToRuleList(IReadOnlyList<SecurityRuleRecord> rules)
+    private static Models.SecurityRuleList.Source ToRuleList(IReadOnlyList<SecurityRuleDocument> rules)
         => new((ref Models.SecurityRuleList.Builder b) => b.Create(
             rules: new Models.SecurityRuleList.SecurityRuleSummaryArray.Source((ref Models.SecurityRuleList.SecurityRuleSummaryArray.Builder ab) =>
             {
-                foreach (SecurityRuleRecord r in rules)
+                foreach (SecurityRuleDocument r in rules)
                 {
                     ab.AddItem(ToRuleSource(r));
                 }

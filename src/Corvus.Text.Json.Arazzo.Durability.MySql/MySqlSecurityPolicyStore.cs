@@ -79,18 +79,18 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleRecord> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityRuleDocument> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
         ArgumentNullException.ThrowIfNull(actor);
-        var record = new SecurityRuleRecord(name, definition.Expression, definition.Description, actor, this.timeProvider.GetUtcNow(), null, null, NewEtag());
+        var record = SecurityRuleDocument.CreateRule(name, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using MySqlCommand insert = connection.CreateCommand();
         insert.CommandText = "INSERT INTO SecurityRules (Name, Etag, Document) VALUES (@name, @etag, @doc);";
         insert.Parameters.AddWithValue("@name", name);
-        insert.Parameters.AddWithValue("@etag", record.Etag.Value!);
-        insert.Parameters.AddWithValue("@doc", SecurityRuleDocument.From(record).ToJsonBytes());
+        insert.Parameters.AddWithValue("@etag", record.EtagValue.Value!);
+        insert.Parameters.AddWithValue("@doc", record.ToJsonBytes());
         try
         {
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -105,23 +105,23 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleRecord?> GetRuleAsync(string name, CancellationToken cancellationToken)
+    public async ValueTask<SecurityRuleDocument?> GetRuleAsync(string name, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         byte[]? doc = await DocumentAsync(connection, "SecurityRules", "Name", name, cancellationToken).ConfigureAwait(false);
-        return doc is null ? null : SecurityRuleDocument.FromJson(doc).ToRecord();
+        return doc is null ? null : SecurityRuleDocument.FromJson(doc);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<IReadOnlyList<SecurityRuleRecord>> ListRulesAsync(CancellationToken cancellationToken)
+    public async ValueTask<IReadOnlyList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
     {
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         return await ReadRulesAsync(connection, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleRecord?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityRuleDocument?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
@@ -133,20 +133,13 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
             return null;
         }
 
-        SecurityRuleRecord current = SecurityRuleDocument.FromJson(doc).ToRecord();
-        EnsureEtag("rule", name, expectedEtag, current.Etag);
-        var updated = current with
-        {
-            Expression = definition.Expression,
-            Description = definition.Description,
-            UpdatedBy = actor,
-            UpdatedAt = this.timeProvider.GetUtcNow(),
-            Etag = NewEtag(),
-        };
+        SecurityRuleDocument current = SecurityRuleDocument.FromJson(doc);
+        EnsureEtag("rule", name, expectedEtag, current.EtagValue);
+        SecurityRuleDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
         await using MySqlCommand update = connection.CreateCommand();
         update.CommandText = "UPDATE SecurityRules SET Etag = @etag, Document = @doc WHERE Name = @k;";
-        update.Parameters.AddWithValue("@etag", updated.Etag.Value!);
-        update.Parameters.AddWithValue("@doc", SecurityRuleDocument.From(updated).ToJsonBytes());
+        update.Parameters.AddWithValue("@etag", updated.EtagValue.Value!);
+        update.Parameters.AddWithValue("@doc", updated.ToJsonBytes());
         update.Parameters.AddWithValue("@k", name);
         await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         await BumpGenerationAsync(connection, cancellationToken).ConfigureAwait(false);
@@ -239,7 +232,7 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     public async ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
     {
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-        IReadOnlyList<SecurityRuleRecord> rules = await ReadRulesAsync(connection, cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<SecurityRuleDocument> rules = await ReadRulesAsync(connection, cancellationToken).ConfigureAwait(false);
         IReadOnlyList<SecurityBinding> bindings = await ReadBindingsAsync(connection, cancellationToken).ConfigureAwait(false);
         await using MySqlCommand select = connection.CreateCommand();
         select.CommandText = "SELECT Generation FROM SecurityPolicyMeta WHERE Id = 0;";
@@ -282,15 +275,15 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         return result is byte[] bytes ? bytes : null;
     }
 
-    private static async ValueTask<IReadOnlyList<SecurityRuleRecord>> ReadRulesAsync(MySqlConnection connection, CancellationToken cancellationToken)
+    private static async ValueTask<IReadOnlyList<SecurityRuleDocument>> ReadRulesAsync(MySqlConnection connection, CancellationToken cancellationToken)
     {
-        var list = new List<SecurityRuleRecord>();
+        var list = new List<SecurityRuleDocument>();
         await using MySqlCommand select = connection.CreateCommand();
         select.CommandText = "SELECT Document FROM SecurityRules ORDER BY Name;";
         await using MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
-            list.Add(SecurityRuleDocument.FromJson(reader.GetFieldValue<byte[]>(0)).ToRecord());
+            list.Add(SecurityRuleDocument.FromJson(reader.GetFieldValue<byte[]>(0)));
         }
 
         return list;

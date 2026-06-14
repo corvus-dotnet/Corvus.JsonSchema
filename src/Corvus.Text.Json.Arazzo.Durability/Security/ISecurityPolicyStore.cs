@@ -24,19 +24,19 @@ public interface ISecurityPolicyStore
     /// <param name="definition">The rule content.</param>
     /// <param name="actor">The authenticated identity creating the rule (for audit).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The created record.</returns>
-    ValueTask<SecurityRuleRecord> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken);
+    /// <returns>The created rule.</returns>
+    ValueTask<SecurityRuleDocument> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken);
 
     /// <summary>Gets a rule by name, or <see langword="null"/> if absent.</summary>
     /// <param name="name">The rule name.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The record or <see langword="null"/>.</returns>
-    ValueTask<SecurityRuleRecord?> GetRuleAsync(string name, CancellationToken cancellationToken);
+    ValueTask<SecurityRuleDocument?> GetRuleAsync(string name, CancellationToken cancellationToken);
 
     /// <summary>Lists all rules.</summary>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>All rules.</returns>
-    ValueTask<IReadOnlyList<SecurityRuleRecord>> ListRulesAsync(CancellationToken cancellationToken);
+    ValueTask<IReadOnlyList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken);
 
     /// <summary>Updates a rule's content under optimistic concurrency.</summary>
     /// <param name="name">The rule name.</param>
@@ -46,7 +46,7 @@ public interface ISecurityPolicyStore
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The updated record, or <see langword="null"/> if no rule with that name exists.</returns>
     /// <exception cref="SecurityPolicyConflictException">The expected etag no longer matches.</exception>
-    ValueTask<SecurityRuleRecord?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken);
+    ValueTask<SecurityRuleDocument?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken);
 
     /// <summary>Deletes a rule under optimistic concurrency.</summary>
     /// <param name="name">The rule name.</param>

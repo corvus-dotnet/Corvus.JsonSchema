@@ -90,13 +90,13 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleRecord> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityRuleDocument> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
         ArgumentNullException.ThrowIfNull(actor);
-        var record = new SecurityRuleRecord(name, definition.Expression, definition.Description, actor, this.timeProvider.GetUtcNow(), null, null, NewEtag());
-        var entity = new TableEntity(RulePartition, Enc(name)) { ["Doc"] = SecurityRuleDocument.From(record).ToJsonBytes() };
+        var record = SecurityRuleDocument.CreateRule(name, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        var entity = new TableEntity(RulePartition, Enc(name)) { ["Doc"] = record.ToJsonBytes() };
         try
         {
             await this.rules.AddEntityAsync(entity, cancellationToken).ConfigureAwait(false);
@@ -111,19 +111,19 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleRecord?> GetRuleAsync(string name, CancellationToken cancellationToken)
+    public async ValueTask<SecurityRuleDocument?> GetRuleAsync(string name, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
         byte[]? doc = await DocumentAsync(this.rules, RulePartition, Enc(name), cancellationToken).ConfigureAwait(false);
-        return doc is null ? null : SecurityRuleDocument.FromJson(doc).ToRecord();
+        return doc is null ? null : SecurityRuleDocument.FromJson(doc);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<IReadOnlyList<SecurityRuleRecord>> ListRulesAsync(CancellationToken cancellationToken)
+    public async ValueTask<IReadOnlyList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
         => await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleRecord?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityRuleDocument?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
@@ -134,17 +134,10 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
             return null;
         }
 
-        SecurityRuleRecord current = SecurityRuleDocument.FromJson(doc).ToRecord();
-        EnsureEtag("rule", name, expectedEtag, current.Etag);
-        var updated = current with
-        {
-            Expression = definition.Expression,
-            Description = definition.Description,
-            UpdatedBy = actor,
-            UpdatedAt = this.timeProvider.GetUtcNow(),
-            Etag = NewEtag(),
-        };
-        var entity = new TableEntity(RulePartition, Enc(name)) { ["Doc"] = SecurityRuleDocument.From(updated).ToJsonBytes() };
+        SecurityRuleDocument current = SecurityRuleDocument.FromJson(doc);
+        EnsureEtag("rule", name, expectedEtag, current.EtagValue);
+        SecurityRuleDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        var entity = new TableEntity(RulePartition, Enc(name)) { ["Doc"] = updated.ToJsonBytes() };
         await this.rules.UpsertEntityAsync(entity, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
         return updated;
@@ -152,7 +145,7 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
 
     /// <inheritdoc/>
     public ValueTask<bool> DeleteRuleAsync(string name, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
-        => this.DeleteAsync(this.rules, RulePartition, "rule", name, expectedEtag, doc => SecurityRuleDocument.FromJson(doc).ToRecord().Etag, cancellationToken);
+        => this.DeleteAsync(this.rules, RulePartition, "rule", name, expectedEtag, doc => SecurityRuleDocument.FromJson(doc).EtagValue, cancellationToken);
 
     /// <inheritdoc/>
     public async ValueTask<SecurityBinding> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
@@ -219,7 +212,7 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
     /// <inheritdoc/>
     public async ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
     {
-        IReadOnlyList<SecurityRuleRecord> ruleList = await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<SecurityRuleDocument> ruleList = await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
         IReadOnlyList<SecurityBinding> bindingList = await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
         NullableResponse<TableEntity> metaEntity = await this.meta.GetEntityIfExistsAsync<TableEntity>(MetaPartition, GenerationRowKey, cancellationToken: cancellationToken).ConfigureAwait(false);
         long generation = metaEntity.HasValue ? metaEntity.Value!.GetInt64("Generation") ?? 0 : 0;
@@ -245,18 +238,18 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
         return entity.HasValue ? entity.Value!.GetBinary("Doc") : null;
     }
 
-    private async ValueTask<IReadOnlyList<SecurityRuleRecord>> ReadRulesAsync(CancellationToken cancellationToken)
+    private async ValueTask<IReadOnlyList<SecurityRuleDocument>> ReadRulesAsync(CancellationToken cancellationToken)
     {
-        var list = new List<SecurityRuleRecord>();
+        var list = new List<SecurityRuleDocument>();
         await foreach (TableEntity entity in this.rules.QueryAsync<TableEntity>(cancellationToken: cancellationToken).ConfigureAwait(false))
         {
             if (entity.GetBinary("Doc") is { } bytes)
             {
-                list.Add(SecurityRuleDocument.FromJson(bytes).ToRecord());
+                list.Add(SecurityRuleDocument.FromJson(bytes));
             }
         }
 
-        list.Sort(static (a, b) => string.CompareOrdinal(a.Name, b.Name));
+        list.Sort(static (a, b) => string.CompareOrdinal(a.NameValue, b.NameValue));
         return list;
     }
 

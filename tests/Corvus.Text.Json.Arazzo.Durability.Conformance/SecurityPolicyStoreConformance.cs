@@ -41,19 +41,19 @@ public abstract class SecurityPolicyStoreConformance
     public async Task A_rule_round_trips_through_add_get_and_list()
     {
         ISecurityPolicyStore store = await this.NewStoreAsync();
-        SecurityRuleRecord added = await store.AddRuleAsync("tenant-scoped", new SecurityRuleDefinition("tenant == $claim.tenant", "Tenant isolation."), "alice", default);
+        SecurityRuleDocument added = await store.AddRuleAsync("tenant-scoped", new SecurityRuleDefinition("tenant == $claim.tenant", "Tenant isolation."), "alice", default);
 
-        added.Name.ShouldBe("tenant-scoped");
-        added.Expression.ShouldBe("tenant == $claim.tenant");
-        added.Description.ShouldBe("Tenant isolation.");
-        ((string)added.CreatedBy).ShouldBe("alice");
-        added.Etag.IsNone.ShouldBeFalse();
+        added.NameValue.ShouldBe("tenant-scoped");
+        added.ExpressionValue.ShouldBe("tenant == $claim.tenant");
+        added.DescriptionOrNull.ShouldBe("Tenant isolation.");
+        added.CreatedByValue.ShouldBe("alice");
+        added.EtagValue.IsNone.ShouldBeFalse();
 
-        SecurityRuleRecord? fetched = await store.GetRuleAsync("tenant-scoped", default);
+        SecurityRuleDocument? fetched = await store.GetRuleAsync("tenant-scoped", default);
         fetched.ShouldNotBeNull();
-        fetched.Value.Expression.ShouldBe("tenant == $claim.tenant");
+        fetched.Value.ExpressionValue.ShouldBe("tenant == $claim.tenant");
 
-        (await store.ListRulesAsync(default)).Select(r => r.Name).ShouldBe(["tenant-scoped"]);
+        (await store.ListRulesAsync(default)).Select(r => r.NameValue).ShouldBe(["tenant-scoped"]);
         (await store.GetRuleAsync("missing", default)).ShouldBeNull();
     }
 
@@ -70,14 +70,14 @@ public abstract class SecurityPolicyStoreConformance
     public async Task Updating_a_rule_bumps_the_etag_and_records_the_actor()
     {
         ISecurityPolicyStore store = await this.NewStoreAsync();
-        SecurityRuleRecord added = await store.AddRuleAsync("r", new SecurityRuleDefinition("tenant"), "alice", default);
+        SecurityRuleDocument added = await store.AddRuleAsync("r", new SecurityRuleDefinition("tenant"), "alice", default);
 
-        SecurityRuleRecord? updated = await store.UpdateRuleAsync("r", new SecurityRuleDefinition("team", "now team"), added.Etag, "bob", default);
+        SecurityRuleDocument? updated = await store.UpdateRuleAsync("r", new SecurityRuleDefinition("team", "now team"), added.EtagValue, "bob", default);
         updated.ShouldNotBeNull();
-        updated.Value.Expression.ShouldBe("team");
-        updated.Value.Description.ShouldBe("now team");
-        ((string?)updated.Value.UpdatedBy).ShouldBe("bob");
-        (updated.Value.Etag == added.Etag).ShouldBeFalse();
+        updated.Value.ExpressionValue.ShouldBe("team");
+        updated.Value.DescriptionOrNull.ShouldBe("now team");
+        updated.Value.UpdatedByOrNull.ShouldBe("bob");
+        (updated.Value.EtagValue == added.EtagValue).ShouldBeFalse();
 
         (await store.UpdateRuleAsync("missing", new SecurityRuleDefinition("x"), WorkflowEtag.None, "bob", default)).ShouldBeNull();
     }
@@ -86,13 +86,13 @@ public abstract class SecurityPolicyStoreConformance
     public async Task A_stale_etag_on_rule_update_or_delete_conflicts()
     {
         ISecurityPolicyStore store = await this.NewStoreAsync();
-        SecurityRuleRecord added = await store.AddRuleAsync("r", new SecurityRuleDefinition("tenant"), "alice", default);
-        await store.UpdateRuleAsync("r", new SecurityRuleDefinition("team"), added.Etag, "bob", default); // etag now advanced
+        SecurityRuleDocument added = await store.AddRuleAsync("r", new SecurityRuleDefinition("tenant"), "alice", default);
+        await store.UpdateRuleAsync("r", new SecurityRuleDefinition("team"), added.EtagValue, "bob", default); // etag now advanced
 
         await Should.ThrowAsync<SecurityPolicyConflictException>(async () =>
-            await store.UpdateRuleAsync("r", new SecurityRuleDefinition("x"), added.Etag, "carol", default));
+            await store.UpdateRuleAsync("r", new SecurityRuleDefinition("x"), added.EtagValue, "carol", default));
         await Should.ThrowAsync<SecurityPolicyConflictException>(async () =>
-            await store.DeleteRuleAsync("r", added.Etag, default));
+            await store.DeleteRuleAsync("r", added.EtagValue, default));
 
         // WorkflowEtag.None overwrites/deletes unconditionally.
         (await store.DeleteRuleAsync("r", WorkflowEtag.None, default)).ShouldBeTrue();
@@ -164,7 +164,7 @@ public abstract class SecurityPolicyStoreConformance
 
         SecurityPolicySnapshot snapshot = await store.LoadSnapshotAsync(default);
         snapshot.Generation.ShouldBe(g1); // a read does not advance the generation
-        snapshot.Rules.Select(r => r.Name).ShouldBe(["r"]);
+        snapshot.Rules.Select(r => r.NameValue).ShouldBe(["r"]);
 
         await store.AddBindingAsync(new SecurityBindingDefinition("*", null, VerbGrant.Full, VerbGrant.Full, VerbGrant.Full), "alice", default);
         ((await store.LoadSnapshotAsync(default)).Generation > g1).ShouldBeTrue();
