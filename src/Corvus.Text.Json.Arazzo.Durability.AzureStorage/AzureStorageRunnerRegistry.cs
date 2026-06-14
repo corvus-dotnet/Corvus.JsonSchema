@@ -2,10 +2,11 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using System.Text;
+using System.Text.Json;
 using Azure;
 using Azure.Data.Tables;
+using Corvus.Text.Json;
 
 namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 
@@ -126,9 +127,7 @@ public sealed class AzureStorageRunnerRegistry : IRunnerRegistry
             }
         }
 
-        var buffer = new ArrayBufferWriter<byte>();
-        registration.WriteTo(buffer);
-        byte[] doc = buffer.WrittenSpan.ToArray();
+        byte[] doc = PersistedJson.ToArray(registration, static (Utf8JsonWriter writer, in RunnerRegistration r) => r.WriteTo(writer));
         var entity = new TableEntity(PartitionKey, runnerId)
         {
             ["LastSeenAt"] = registration.LastSeenAtValue.ToUnixTimeMilliseconds(),
@@ -175,10 +174,11 @@ public sealed class AzureStorageRunnerRegistry : IRunnerRegistry
         }
 
         byte[] doc = existing.Value!.GetBinary("Doc") ?? [];
-        RunnerRegistration current = RunnerRegistration.FromJson(doc);
-        var buffer = new ArrayBufferWriter<byte>();
-        current.WriteWithLastSeenAt(buffer, at);
-        byte[] json = buffer.WrittenSpan.ToArray();
+        byte[] json = PersistedJson.ToArray((doc, at), static (Utf8JsonWriter writer, in (byte[] Existing, DateTimeOffset At) ctx) =>
+        {
+            using ParsedJsonDocument<RunnerRegistration> parsed = ParsedJsonDocument<RunnerRegistration>.Parse(ctx.Existing);
+            parsed.RootElement.WriteWithLastSeenAt(writer, ctx.At);
+        });
         var entity = new TableEntity(PartitionKey, runnerId)
         {
             ["LastSeenAt"] = at.ToUnixTimeMilliseconds(),
