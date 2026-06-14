@@ -67,7 +67,7 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleDocument> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
@@ -76,12 +76,12 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         try
         {
             WorkflowEtag etag = NewEtag();
-            SecurityRuleDocument created = SecurityRuleDocument.CreateRule(name, definition, actor, this.timeProvider.GetUtcNow(), etag);
+            byte[] json = SecurityPolicySerialization.SerializeNewRule(name, definition, actor, this.timeProvider.GetUtcNow(), etag);
             using SqliteCommand insert = this.connection.CreateCommand();
             insert.CommandText = "INSERT INTO SecurityRules (Name, Etag, Document) VALUES (@name, @etag, @doc);";
             insert.Parameters.AddWithValue("@name", name);
             insert.Parameters.AddWithValue("@etag", etag.Value!);
-            insert.Parameters.AddWithValue("@doc", PersistedJson.ToArray(created, static (Utf8JsonWriter writer, in SecurityRuleDocument r) => r.WriteTo(writer)));
+            insert.Parameters.AddWithValue("@doc", json);
             try
             {
                 await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -92,7 +92,7 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
             }
 
             await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-            return created;
+            return PersistedJson.ToPooledDocument<SecurityRuleDocument>(json);
         }
         finally
         {
@@ -101,14 +101,14 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleDocument?> GetRuleAsync(string name, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> GetRuleAsync(string name, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             byte[]? doc = await this.DocumentAsync("SecurityRules", "Name", name, cancellationToken).ConfigureAwait(false);
-            return doc is null ? null : SecurityRuleDocument.FromJson(doc);
+            return doc is null ? null : PersistedJson.ToPooledDocument<SecurityRuleDocument>(doc);
         }
         finally
         {
@@ -117,12 +117,12 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
-    public async ValueTask<IReadOnlyList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
+    public async ValueTask<PooledDocumentList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
     {
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            return await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
+            return new PooledDocumentList<SecurityRuleDocument>(await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false));
         }
         finally
         {
@@ -131,7 +131,7 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleDocument?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
@@ -145,18 +145,16 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
                 return null;
             }
 
-            SecurityRuleDocument current = SecurityRuleDocument.FromJson(doc);
-            EnsureEtag("rule", name, expectedEtag, current.EtagValue);
             WorkflowEtag etag = NewEtag();
-            SecurityRuleDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), etag);
+            byte[] json = SecurityPolicySerialization.SerializeUpdatedRule(doc, "rule", name, expectedEtag, definition, actor, this.timeProvider.GetUtcNow(), etag);
             using SqliteCommand update = this.connection.CreateCommand();
             update.CommandText = "UPDATE SecurityRules SET Etag = @etag, Document = @doc WHERE Name = @k;";
             update.Parameters.AddWithValue("@etag", etag.Value!);
-            update.Parameters.AddWithValue("@doc", PersistedJson.ToArray(updated, static (Utf8JsonWriter writer, in SecurityRuleDocument r) => r.WriteTo(writer)));
+            update.Parameters.AddWithValue("@doc", json);
             update.Parameters.AddWithValue("@k", name);
             await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
             await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-            return updated;
+            return PersistedJson.ToPooledDocument<SecurityRuleDocument>(json);
         }
         finally
         {
@@ -169,7 +167,7 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         => this.DeleteAsync("SecurityRules", "Name", "rule", name, expectedEtag, cancellationToken);
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBindingDocument> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
@@ -178,16 +176,16 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         {
             string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
             WorkflowEtag etag = NewEtag();
-            SecurityBindingDocument created = SecurityBindingDocument.CreateBinding(id, definition, actor, this.timeProvider.GetUtcNow(), etag);
+            byte[] json = SecurityPolicySerialization.SerializeNewBinding(id, definition, actor, this.timeProvider.GetUtcNow(), etag);
             using SqliteCommand insert = this.connection.CreateCommand();
             insert.CommandText = "INSERT INTO SecurityBindings (Id, SortOrder, Etag, Document) VALUES (@id, @order, @etag, @doc);";
             insert.Parameters.AddWithValue("@id", id);
             insert.Parameters.AddWithValue("@order", definition.Order);
             insert.Parameters.AddWithValue("@etag", etag.Value!);
-            insert.Parameters.AddWithValue("@doc", PersistedJson.ToArray(created, static (Utf8JsonWriter writer, in SecurityBindingDocument b) => b.WriteTo(writer)));
+            insert.Parameters.AddWithValue("@doc", json);
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
             await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-            return created;
+            return PersistedJson.ToPooledDocument<SecurityBindingDocument>(json);
         }
         finally
         {
@@ -196,14 +194,14 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBindingDocument?> GetBindingAsync(string id, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> GetBindingAsync(string id, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             byte[]? doc = await this.DocumentAsync("SecurityBindings", "Id", id, cancellationToken).ConfigureAwait(false);
-            return doc is null ? null : SecurityBindingDocument.FromJson(doc);
+            return doc is null ? null : PersistedJson.ToPooledDocument<SecurityBindingDocument>(doc);
         }
         finally
         {
@@ -212,12 +210,12 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
-    public async ValueTask<IReadOnlyList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
+    public async ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
     {
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            return await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
+            return new PooledDocumentList<SecurityBindingDocument>(await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false));
         }
         finally
         {
@@ -226,7 +224,7 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBindingDocument?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
@@ -240,19 +238,17 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
                 return null;
             }
 
-            SecurityBindingDocument current = SecurityBindingDocument.FromJson(doc);
-            EnsureEtag("binding", id, expectedEtag, current.EtagValue);
             WorkflowEtag etag = NewEtag();
-            SecurityBindingDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), etag);
+            byte[] json = SecurityPolicySerialization.SerializeUpdatedBinding(doc, "binding", id, expectedEtag, definition, actor, this.timeProvider.GetUtcNow(), etag);
             using SqliteCommand update = this.connection.CreateCommand();
             update.CommandText = "UPDATE SecurityBindings SET SortOrder = @order, Etag = @etag, Document = @doc WHERE Id = @k;";
             update.Parameters.AddWithValue("@order", definition.Order);
             update.Parameters.AddWithValue("@etag", etag.Value!);
-            update.Parameters.AddWithValue("@doc", PersistedJson.ToArray(updated, static (Utf8JsonWriter writer, in SecurityBindingDocument b) => b.WriteTo(writer)));
+            update.Parameters.AddWithValue("@doc", json);
             update.Parameters.AddWithValue("@k", id);
             await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
             await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-            return updated;
+            return PersistedJson.ToPooledDocument<SecurityBindingDocument>(json);
         }
         finally
         {
@@ -270,8 +266,8 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            IReadOnlyList<SecurityRuleDocument> rules = await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
-            IReadOnlyList<SecurityBindingDocument> bindings = await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
+            var rules = new PooledDocumentList<SecurityRuleDocument>(await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false));
+            var bindings = new PooledDocumentList<SecurityBindingDocument>(await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false));
             using SqliteCommand select = this.connection.CreateCommand();
             select.CommandText = "SELECT Generation FROM SecurityPolicyMeta WHERE Id = 0;";
             object? gen = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
@@ -292,14 +288,6 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
-    private static void EnsureEtag(string kind, string id, WorkflowEtag expected, WorkflowEtag actual)
-    {
-        if (!expected.IsNone && expected != actual)
-        {
-            throw new SecurityPolicyConflictException(kind, id, expected);
-        }
-    }
-
     private async ValueTask<byte[]?> DocumentAsync(string table, string column, string key, CancellationToken cancellationToken)
     {
         using SqliteCommand select = this.connection.CreateCommand();
@@ -309,29 +297,29 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         return result is byte[] bytes ? bytes : null;
     }
 
-    private async ValueTask<IReadOnlyList<SecurityRuleDocument>> ReadRulesAsync(CancellationToken cancellationToken)
+    private async ValueTask<List<ParsedJsonDocument<SecurityRuleDocument>>> ReadRulesAsync(CancellationToken cancellationToken)
     {
-        var list = new List<SecurityRuleDocument>();
+        var list = new List<ParsedJsonDocument<SecurityRuleDocument>>();
         using SqliteCommand select = this.connection.CreateCommand();
         select.CommandText = "SELECT Document FROM SecurityRules ORDER BY Name;";
         using SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
-            list.Add(SecurityRuleDocument.FromJson(reader.GetFieldValue<byte[]>(0)));
+            list.Add(PersistedJson.ToPooledDocument<SecurityRuleDocument>(reader.GetFieldValue<byte[]>(0)));
         }
 
         return list;
     }
 
-    private async ValueTask<IReadOnlyList<SecurityBindingDocument>> ReadBindingsAsync(CancellationToken cancellationToken)
+    private async ValueTask<List<ParsedJsonDocument<SecurityBindingDocument>>> ReadBindingsAsync(CancellationToken cancellationToken)
     {
-        var list = new List<SecurityBindingDocument>();
+        var list = new List<ParsedJsonDocument<SecurityBindingDocument>>();
         using SqliteCommand select = this.connection.CreateCommand();
         select.CommandText = "SELECT Document FROM SecurityBindings ORDER BY SortOrder, Id;";
         using SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
-            list.Add(SecurityBindingDocument.FromJson(reader.GetFieldValue<byte[]>(0)));
+            list.Add(PersistedJson.ToPooledDocument<SecurityBindingDocument>(reader.GetFieldValue<byte[]>(0)));
         }
 
         return list;
@@ -352,7 +340,7 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
                 return false;
             }
 
-            EnsureEtag(kind, key, expectedEtag, new WorkflowEtag(current));
+            SecurityPolicySerialization.EnsureEtag(kind, key, expectedEtag, new WorkflowEtag(current));
             using SqliteCommand delete = this.connection.CreateCommand();
             delete.CommandText = $"DELETE FROM {table} WHERE {column} = @k;";
             delete.Parameters.AddWithValue("@k", key);

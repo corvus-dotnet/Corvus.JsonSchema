@@ -41,7 +41,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     /// <inheritdoc/>
     public async ValueTask<ListSecurityRulesResult> HandleListSecurityRulesAsync(ListSecurityRulesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<SecurityRuleDocument> rules = await this.store.ListRulesAsync(cancellationToken).ConfigureAwait(false);
+        using PooledDocumentList<SecurityRuleDocument> rules = await this.store.ListRulesAsync(cancellationToken).ConfigureAwait(false);
         return ListSecurityRulesResult.Ok(ToRuleList(rules), workspace);
     }
 
@@ -58,9 +58,9 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
 
         try
         {
-            SecurityRuleDocument created = await this.store.AddRuleAsync(name, new SecurityRuleDefinition(expression, OptionalString(body.Description)), this.actor, cancellationToken).ConfigureAwait(false);
+            using ParsedJsonDocument<SecurityRuleDocument> created = await this.store.AddRuleAsync(name, new SecurityRuleDefinition(expression, OptionalString(body.Description)), this.actor, cancellationToken).ConfigureAwait(false);
             await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
-            return CreateSecurityRuleResult.Created(ToRuleSource(created), workspace);
+            return CreateSecurityRuleResult.Created(ToRuleSource(created.RootElement), workspace);
         }
         catch (InvalidOperationException)
         {
@@ -73,9 +73,9 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     public async ValueTask<GetSecurityRuleResult> HandleGetSecurityRuleAsync(GetSecurityRuleParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string name = (string)parameters.RuleName;
-        SecurityRuleDocument? rule = await this.store.GetRuleAsync(name, cancellationToken).ConfigureAwait(false);
+        using ParsedJsonDocument<SecurityRuleDocument>? rule = await this.store.GetRuleAsync(name, cancellationToken).ConfigureAwait(false);
         return rule is { } r
-            ? GetSecurityRuleResult.Ok(ToRuleSource(r), workspace)
+            ? GetSecurityRuleResult.Ok(ToRuleSource(r.RootElement), workspace)
             : GetSecurityRuleResult.NotFound(NotFoundProblem("rule", name), workspace);
     }
 
@@ -90,14 +90,14 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             return UpdateSecurityRuleResult.BadRequest(problem, workspace);
         }
 
-        SecurityRuleDocument? updated = await this.store.UpdateRuleAsync(name, new SecurityRuleDefinition(expression, OptionalString(body.Description)), WorkflowEtag.None, this.actor, cancellationToken).ConfigureAwait(false);
+        using ParsedJsonDocument<SecurityRuleDocument>? updated = await this.store.UpdateRuleAsync(name, new SecurityRuleDefinition(expression, OptionalString(body.Description)), WorkflowEtag.None, this.actor, cancellationToken).ConfigureAwait(false);
         if (updated is not { } r)
         {
             return UpdateSecurityRuleResult.NotFound(NotFoundProblem("rule", name), workspace);
         }
 
         await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
-        return UpdateSecurityRuleResult.Ok(ToRuleSource(r), workspace);
+        return UpdateSecurityRuleResult.Ok(ToRuleSource(r.RootElement), workspace);
     }
 
     /// <inheritdoc/>
@@ -117,7 +117,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     /// <inheritdoc/>
     public async ValueTask<ListSecurityBindingsResult> HandleListSecurityBindingsAsync(ListSecurityBindingsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<SecurityBindingDocument> bindings = await this.store.ListBindingsAsync(cancellationToken).ConfigureAwait(false);
+        using PooledDocumentList<SecurityBindingDocument> bindings = await this.store.ListBindingsAsync(cancellationToken).ConfigureAwait(false);
         return ListSecurityBindingsResult.Ok(ToBindingList(bindings), workspace);
     }
 
@@ -126,9 +126,9 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     {
         if (ReadBinding(parameters.Body, out SecurityBindingDefinition definition, out Models.ProblemDetails.Source problem))
         {
-            SecurityBindingDocument created = await this.store.AddBindingAsync(definition, this.actor, cancellationToken).ConfigureAwait(false);
+            using ParsedJsonDocument<SecurityBindingDocument> created = await this.store.AddBindingAsync(definition, this.actor, cancellationToken).ConfigureAwait(false);
             await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
-            return CreateSecurityBindingResult.Created(ToBindingSource(created), workspace);
+            return CreateSecurityBindingResult.Created(ToBindingSource(created.RootElement), workspace);
         }
 
         return CreateSecurityBindingResult.BadRequest(problem, workspace);
@@ -138,9 +138,9 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     public async ValueTask<GetSecurityBindingResult> HandleGetSecurityBindingAsync(GetSecurityBindingParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string id = (string)parameters.BindingId;
-        SecurityBindingDocument? binding = await this.store.GetBindingAsync(id, cancellationToken).ConfigureAwait(false);
+        using ParsedJsonDocument<SecurityBindingDocument>? binding = await this.store.GetBindingAsync(id, cancellationToken).ConfigureAwait(false);
         return binding is { } b
-            ? GetSecurityBindingResult.Ok(ToBindingSource(b), workspace)
+            ? GetSecurityBindingResult.Ok(ToBindingSource(b.RootElement), workspace)
             : GetSecurityBindingResult.NotFound(NotFoundProblem("binding", id), workspace);
     }
 
@@ -153,14 +153,14 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             return UpdateSecurityBindingResult.BadRequest(problem, workspace);
         }
 
-        SecurityBindingDocument? updated = await this.store.UpdateBindingAsync(id, definition, WorkflowEtag.None, this.actor, cancellationToken).ConfigureAwait(false);
+        using ParsedJsonDocument<SecurityBindingDocument>? updated = await this.store.UpdateBindingAsync(id, definition, WorkflowEtag.None, this.actor, cancellationToken).ConfigureAwait(false);
         if (updated is not { } b)
         {
             return UpdateSecurityBindingResult.NotFound(NotFoundProblem("binding", id), workspace);
         }
 
         await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
-        return UpdateSecurityBindingResult.Ok(ToBindingSource(b), workspace);
+        return UpdateSecurityBindingResult.Ok(ToBindingSource(b.RootElement), workspace);
     }
 
     /// <inheritdoc/>
