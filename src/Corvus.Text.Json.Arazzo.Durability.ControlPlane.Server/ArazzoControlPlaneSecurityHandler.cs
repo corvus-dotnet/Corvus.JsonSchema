@@ -5,7 +5,7 @@
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
-using DurabilityVerbGrant = Corvus.Text.Json.Arazzo.Durability.Security.VerbGrant;
+using DurabilityVerbGrant = Corvus.Text.Json.Arazzo.Durability.Security.SecurityBindingDocument.VerbGrantInfo;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
@@ -117,7 +117,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     /// <inheritdoc/>
     public async ValueTask<ListSecurityBindingsResult> HandleListSecurityBindingsAsync(ListSecurityBindingsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<SecurityBinding> bindings = await this.store.ListBindingsAsync(cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<SecurityBindingDocument> bindings = await this.store.ListBindingsAsync(cancellationToken).ConfigureAwait(false);
         return ListSecurityBindingsResult.Ok(ToBindingList(bindings), workspace);
     }
 
@@ -126,7 +126,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     {
         if (ReadBinding(parameters.Body, out SecurityBindingDefinition definition, out Models.ProblemDetails.Source problem))
         {
-            SecurityBinding created = await this.store.AddBindingAsync(definition, this.actor, cancellationToken).ConfigureAwait(false);
+            SecurityBindingDocument created = await this.store.AddBindingAsync(definition, this.actor, cancellationToken).ConfigureAwait(false);
             await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
             return CreateSecurityBindingResult.Created(ToBindingSource(created), workspace);
         }
@@ -138,7 +138,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     public async ValueTask<GetSecurityBindingResult> HandleGetSecurityBindingAsync(GetSecurityBindingParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string id = (string)parameters.BindingId;
-        SecurityBinding? binding = await this.store.GetBindingAsync(id, cancellationToken).ConfigureAwait(false);
+        SecurityBindingDocument? binding = await this.store.GetBindingAsync(id, cancellationToken).ConfigureAwait(false);
         return binding is { } b
             ? GetSecurityBindingResult.Ok(ToBindingSource(b), workspace)
             : GetSecurityBindingResult.NotFound(NotFoundProblem("binding", id), workspace);
@@ -153,7 +153,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             return UpdateSecurityBindingResult.BadRequest(problem, workspace);
         }
 
-        SecurityBinding? updated = await this.store.UpdateBindingAsync(id, definition, WorkflowEtag.None, this.actor, cancellationToken).ConfigureAwait(false);
+        SecurityBindingDocument? updated = await this.store.UpdateBindingAsync(id, definition, WorkflowEtag.None, this.actor, cancellationToken).ConfigureAwait(false);
         if (updated is not { } b)
         {
             return UpdateSecurityBindingResult.NotFound(NotFoundProblem("binding", id), workspace);
@@ -236,26 +236,30 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             }
         }
 
-        return new DurabilityVerbGrant(false, names);
+        return names.Count == 0 ? DurabilityVerbGrant.None : DurabilityVerbGrant.Rules([.. names]);
     }
 
     private static Models.VerbGrant.Source ToGrantSource(DurabilityVerbGrant grant)
-        => new((ref Models.VerbGrant.Builder b) =>
+    {
+        bool unrestricted = grant.IsUnrestrictedValue;
+        IReadOnlyList<string> ruleNameList = grant.RuleNameList;
+        return new((ref Models.VerbGrant.Builder b) =>
         {
             Models.VerbGrant.JsonStringArray.Source ruleNames = default;
-            if (!grant.Unrestricted && grant.RuleNames.Count > 0)
+            if (!unrestricted && ruleNameList.Count > 0)
             {
                 ruleNames = new Models.VerbGrant.JsonStringArray.Source((ref Models.VerbGrant.JsonStringArray.Builder ab) =>
                 {
-                    foreach (string name in grant.RuleNames)
+                    foreach (string name in ruleNameList)
                     {
                         ab.AddItem(name);
                     }
                 });
             }
 
-            b.Create(ruleNames: ruleNames, unrestricted: grant.Unrestricted);
+            b.Create(ruleNames: ruleNames, unrestricted: unrestricted);
         });
+    }
 
     private static Models.SecurityRuleSummary.Source ToRuleSource(SecurityRuleDocument r)
         => new((ref Models.SecurityRuleSummary.Builder b) =>
@@ -299,40 +303,40 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
                 }
             })));
 
-    private static Models.SecurityBindingSummary.Source ToBindingSource(SecurityBinding binding)
+    private static Models.SecurityBindingSummary.Source ToBindingSource(SecurityBindingDocument binding)
         => new((ref Models.SecurityBindingSummary.Builder b) =>
         {
             Models.JsonString.Source claimValue = default;
-            if (binding.ClaimValue is { } cv)
+            if (binding.ClaimValueOrNull is { } cv)
             {
                 claimValue = cv;
             }
 
             Models.JsonString.Source description = default;
-            if (binding.Description is { } d)
+            if (binding.DescriptionOrNull is { } d)
             {
                 description = d;
             }
 
             Models.JsonString.Source lastUpdatedBy = default;
-            if (binding.UpdatedBy is { } u)
+            if (binding.UpdatedByOrNull is { } u)
             {
                 lastUpdatedBy = u;
             }
 
             Models.JsonDateTime.Source lastUpdatedAt = default;
-            if (binding.UpdatedAt is { } ua)
+            if (binding.UpdatedAtValue is { } ua)
             {
                 lastUpdatedAt = ua;
             }
 
             b.Create(
-                claimType: binding.ClaimType,
-                createdAt: binding.CreatedAt,
-                createdBy: binding.CreatedBy,
-                etag: binding.Etag.Value ?? string.Empty,
-                id: binding.Id,
-                order: binding.Order,
+                claimType: binding.ClaimTypeValue,
+                createdAt: binding.CreatedAtValue,
+                createdBy: binding.CreatedByValue,
+                etag: binding.EtagValue.Value ?? string.Empty,
+                id: binding.IdValue,
+                order: binding.OrderValue,
                 purge: ToGrantSource(binding.Purge),
                 read: ToGrantSource(binding.Read),
                 write: ToGrantSource(binding.Write),
@@ -342,11 +346,11 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
                 lastUpdatedBy: lastUpdatedBy);
         });
 
-    private static Models.SecurityBindingList.Source ToBindingList(IReadOnlyList<SecurityBinding> bindings)
+    private static Models.SecurityBindingList.Source ToBindingList(IReadOnlyList<SecurityBindingDocument> bindings)
         => new((ref Models.SecurityBindingList.Builder b) => b.Create(
             bindings: new Models.SecurityBindingList.SecurityBindingSummaryArray.Source((ref Models.SecurityBindingList.SecurityBindingSummaryArray.Builder ab) =>
             {
-                foreach (SecurityBinding binding in bindings)
+                foreach (SecurityBindingDocument binding in bindings)
                 {
                     ab.AddItem(ToBindingSource(binding));
                 }

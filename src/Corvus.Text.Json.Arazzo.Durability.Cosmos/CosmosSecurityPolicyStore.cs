@@ -160,13 +160,13 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         => this.DeleteAsync(name, RulePartition, "rule", expectedEtag, doc => SecurityRuleDocument.FromJson(doc).EtagValue, cancellationToken);
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBinding> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityBindingDocument> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
-        var record = new SecurityBinding(id, definition.ClaimType, definition.ClaimValue, definition.Read, definition.Write, definition.Purge, definition.Order, definition.Description, actor, this.timeProvider.GetUtcNow(), null, null, NewEtag());
-        byte[] body = Envelope(id, BindingPartition, SecurityBindingDocument.From(record).ToJsonBytes());
+        var record = SecurityBindingDocument.CreateBinding(id, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] body = Envelope(id, BindingPartition, record.ToJsonBytes());
         using var stream = CosmosJson.ToStream(body);
         using ResponseMessage response = await this.container.CreateItemStreamAsync(stream, new PartitionKey(BindingPartition), cancellationToken: cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
@@ -175,19 +175,19 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBinding?> GetBindingAsync(string id, CancellationToken cancellationToken)
+    public async ValueTask<SecurityBindingDocument?> GetBindingAsync(string id, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         byte[]? doc = await this.DocumentAsync(id, BindingPartition, cancellationToken).ConfigureAwait(false);
-        return doc is null ? null : SecurityBindingDocument.FromJson(doc).ToRecord();
+        return doc is null ? null : SecurityBindingDocument.FromJson(doc);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<IReadOnlyList<SecurityBinding>> ListBindingsAsync(CancellationToken cancellationToken)
+    public async ValueTask<IReadOnlyList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
         => await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBinding?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<SecurityBindingDocument?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
@@ -198,22 +198,10 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
             return null;
         }
 
-        SecurityBinding current = SecurityBindingDocument.FromJson(doc).ToRecord();
-        EnsureEtag("binding", id, expectedEtag, current.Etag);
-        var updated = current with
-        {
-            ClaimType = definition.ClaimType,
-            ClaimValue = definition.ClaimValue,
-            Read = definition.Read,
-            Write = definition.Write,
-            Purge = definition.Purge,
-            Order = definition.Order,
-            Description = definition.Description,
-            UpdatedBy = actor,
-            UpdatedAt = this.timeProvider.GetUtcNow(),
-            Etag = NewEtag(),
-        };
-        byte[] body = Envelope(id, BindingPartition, SecurityBindingDocument.From(updated).ToJsonBytes());
+        SecurityBindingDocument current = SecurityBindingDocument.FromJson(doc);
+        EnsureEtag("binding", id, expectedEtag, current.EtagValue);
+        SecurityBindingDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] body = Envelope(id, BindingPartition, updated.ToJsonBytes());
         using var stream = CosmosJson.ToStream(body);
         using ResponseMessage response = await this.container.ReplaceItemStreamAsync(stream, id, new PartitionKey(BindingPartition), cancellationToken: cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
@@ -223,13 +211,13 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
 
     /// <inheritdoc/>
     public ValueTask<bool> DeleteBindingAsync(string id, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
-        => this.DeleteAsync(id, BindingPartition, "binding", expectedEtag, doc => SecurityBindingDocument.FromJson(doc).ToRecord().Etag, cancellationToken);
+        => this.DeleteAsync(id, BindingPartition, "binding", expectedEtag, doc => SecurityBindingDocument.FromJson(doc).EtagValue, cancellationToken);
 
     /// <inheritdoc/>
     public async ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
     {
         IReadOnlyList<SecurityRuleDocument> rules = await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
-        IReadOnlyList<SecurityBinding> bindings = await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<SecurityBindingDocument> bindings = await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
         long generation = await this.ReadGenerationAsync(cancellationToken).ConfigureAwait(false);
         return new SecurityPolicySnapshot(rules, bindings, generation);
     }
@@ -308,15 +296,15 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         return list;
     }
 
-    private async ValueTask<IReadOnlyList<SecurityBinding>> ReadBindingsAsync(CancellationToken cancellationToken)
+    private async ValueTask<IReadOnlyList<SecurityBindingDocument>> ReadBindingsAsync(CancellationToken cancellationToken)
     {
-        var list = new List<SecurityBinding>();
+        var list = new List<SecurityBindingDocument>();
         await foreach (byte[] doc in this.QueryDocumentsAsync(BindingPartition, cancellationToken).ConfigureAwait(false))
         {
-            list.Add(SecurityBindingDocument.FromJson(doc).ToRecord());
+            list.Add(SecurityBindingDocument.FromJson(doc));
         }
 
-        list.Sort(static (a, b) => a.Order != b.Order ? a.Order.CompareTo(b.Order) : string.CompareOrdinal(a.Id, b.Id));
+        list.Sort(static (a, b) => a.OrderValue != b.OrderValue ? a.OrderValue.CompareTo(b.OrderValue) : string.CompareOrdinal(a.IdValue, b.IdValue));
         return list;
     }
 

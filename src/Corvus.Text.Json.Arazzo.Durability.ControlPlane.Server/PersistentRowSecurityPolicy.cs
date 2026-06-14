@@ -4,6 +4,7 @@
 
 using System.Security.Claims;
 using Corvus.Text.Json.Arazzo.Durability.Security;
+using VerbGrant = Corvus.Text.Json.Arazzo.Durability.Security.SecurityBindingDocument.VerbGrantInfo;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
@@ -69,10 +70,10 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
         IReadOnlyDictionary<string, IReadOnlyList<string>> claims = CollectClaims(principal);
 
         // Bindings matching this principal, in resolution order.
-        var matched = new List<SecurityBinding>();
+        var matched = new List<SecurityBindingDocument>();
         if (principal?.Identity?.IsAuthenticated == true)
         {
-            foreach (SecurityBinding binding in current.Bindings)
+            foreach (SecurityBindingDocument binding in current.Bindings)
             {
                 if (Matches(binding, principal))
                 {
@@ -114,17 +115,18 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
         return map.ToDictionary(static e => e.Key, static e => (IReadOnlyList<string>)e.Value, StringComparer.Ordinal);
     }
 
-    private static bool Matches(SecurityBinding binding, ClaimsPrincipal principal)
+    private static bool Matches(SecurityBindingDocument binding, ClaimsPrincipal principal)
     {
-        if (string.Equals(binding.ClaimType, "*", StringComparison.Ordinal))
+        if (string.Equals(binding.ClaimTypeValue, "*", StringComparison.Ordinal))
         {
             return true;
         }
 
+        string? claimValue = binding.ClaimValueOrNull;
         foreach (Claim claim in principal.Claims)
         {
-            if (string.Equals(claim.Type, binding.ClaimType, StringComparison.Ordinal)
-                && (binding.ClaimValue is null || string.Equals(claim.Value, binding.ClaimValue, StringComparison.Ordinal)))
+            if (string.Equals(claim.Type, binding.ClaimTypeValue, StringComparison.Ordinal)
+                && (claimValue is null || string.Equals(claim.Value, claimValue, StringComparison.Ordinal)))
             {
                 return true;
             }
@@ -137,13 +139,14 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
     // unknown rule (fail-closed: a broken grant contributes nothing).
     private static string? ClauseFor(VerbGrant grant, Compiled current)
     {
-        if (grant.Unrestricted || grant.RuleNames.Count == 0)
+        IReadOnlyList<string> ruleNames = grant.RuleNameList;
+        if (grant.IsUnrestrictedValue || ruleNames.Count == 0)
         {
             return null;
         }
 
-        var parts = new List<string>(grant.RuleNames.Count);
-        foreach (string ruleName in grant.RuleNames)
+        var parts = new List<string>(ruleNames.Count);
+        foreach (string ruleName in ruleNames)
         {
             if (!current.RuleExpressions.TryGetValue(ruleName, out string? expression))
             {
@@ -157,16 +160,16 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
     }
 
     private SecurityFilter? ResolveReach(
-        List<SecurityBinding> matched,
+        List<SecurityBindingDocument> matched,
         IReadOnlyDictionary<string, IReadOnlyList<string>> claims,
         Compiled current,
-        Func<SecurityBinding, VerbGrant> selectGrant)
+        Func<SecurityBindingDocument, VerbGrant> selectGrant)
     {
         var clauses = new List<string>();
-        foreach (SecurityBinding binding in matched)
+        foreach (SecurityBindingDocument binding in matched)
         {
             VerbGrant grant = selectGrant(binding);
-            if (grant.Unrestricted)
+            if (grant.IsUnrestrictedValue)
             {
                 // Any matched Unrestricted grant for the verb → full reach (the operator path).
                 return null;
@@ -188,5 +191,5 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
         return this.shell.BuildFilter([SecurityRule.Compile(combined)], claims);
     }
 
-    private sealed record Compiled(long Generation, IReadOnlyList<SecurityBinding> Bindings, IReadOnlyDictionary<string, string> RuleExpressions);
+    private sealed record Compiled(long Generation, IReadOnlyList<SecurityBindingDocument> Bindings, IReadOnlyDictionary<string, string> RuleExpressions);
 }

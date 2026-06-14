@@ -15,7 +15,7 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
 {
     private readonly Lock gate = new();
     private readonly Dictionary<string, SecurityRuleDocument> rules = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, SecurityBinding> bindings = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, SecurityBindingDocument> bindings = new(StringComparer.Ordinal);
     private readonly TimeProvider timeProvider;
     private long generation;
     private long etagSequence;
@@ -110,7 +110,7 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
     }
 
     /// <inheritdoc/>
-    public ValueTask<SecurityBinding> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
+    public ValueTask<SecurityBindingDocument> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
@@ -118,48 +118,34 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
         lock (this.gate)
         {
             string id = "bnd-" + (++this.bindingSequence).ToString(CultureInfo.InvariantCulture);
-            DateTimeOffset now = this.timeProvider.GetUtcNow();
-            var record = new SecurityBinding(
-                id,
-                definition.ClaimType,
-                definition.ClaimValue,
-                definition.Read,
-                definition.Write,
-                definition.Purge,
-                definition.Order,
-                definition.Description,
-                actor,
-                now,
-                null,
-                null,
-                this.NextEtag());
-            this.bindings[id] = record;
+            SecurityBindingDocument binding = SecurityBindingDocument.CreateBinding(id, definition, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
+            this.bindings[id] = binding;
             this.generation++;
-            return new ValueTask<SecurityBinding>(record);
+            return new ValueTask<SecurityBindingDocument>(binding);
         }
     }
 
     /// <inheritdoc/>
-    public ValueTask<SecurityBinding?> GetBindingAsync(string id, CancellationToken cancellationToken)
+    public ValueTask<SecurityBindingDocument?> GetBindingAsync(string id, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         lock (this.gate)
         {
-            return new ValueTask<SecurityBinding?>(this.bindings.TryGetValue(id, out SecurityBinding record) ? record : null);
+            return new ValueTask<SecurityBindingDocument?>(this.bindings.TryGetValue(id, out SecurityBindingDocument binding) ? binding : null);
         }
     }
 
     /// <inheritdoc/>
-    public ValueTask<IReadOnlyList<SecurityBinding>> ListBindingsAsync(CancellationToken cancellationToken)
+    public ValueTask<IReadOnlyList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
     {
         lock (this.gate)
         {
-            return new ValueTask<IReadOnlyList<SecurityBinding>>(SortBindings(this.bindings.Values));
+            return new ValueTask<IReadOnlyList<SecurityBindingDocument>>(SortBindings(this.bindings.Values));
         }
     }
 
     /// <inheritdoc/>
-    public ValueTask<SecurityBinding?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public ValueTask<SecurityBindingDocument?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
@@ -167,28 +153,16 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
 
         lock (this.gate)
         {
-            if (!this.bindings.TryGetValue(id, out SecurityBinding current))
+            if (!this.bindings.TryGetValue(id, out SecurityBindingDocument current))
             {
-                return new ValueTask<SecurityBinding?>((SecurityBinding?)null);
+                return new ValueTask<SecurityBindingDocument?>((SecurityBindingDocument?)null);
             }
 
-            EnsureEtag("binding", id, expectedEtag, current.Etag);
-            var updated = current with
-            {
-                ClaimType = definition.ClaimType,
-                ClaimValue = definition.ClaimValue,
-                Read = definition.Read,
-                Write = definition.Write,
-                Purge = definition.Purge,
-                Order = definition.Order,
-                Description = definition.Description,
-                UpdatedBy = actor,
-                UpdatedAt = this.timeProvider.GetUtcNow(),
-                Etag = this.NextEtag(),
-            };
+            EnsureEtag("binding", id, expectedEtag, current.EtagValue);
+            SecurityBindingDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
             this.bindings[id] = updated;
             this.generation++;
-            return new ValueTask<SecurityBinding?>(updated);
+            return new ValueTask<SecurityBindingDocument?>(updated);
         }
     }
 
@@ -198,12 +172,12 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
         ArgumentNullException.ThrowIfNull(id);
         lock (this.gate)
         {
-            if (!this.bindings.TryGetValue(id, out SecurityBinding current))
+            if (!this.bindings.TryGetValue(id, out SecurityBindingDocument current))
             {
                 return new ValueTask<bool>(false);
             }
 
-            EnsureEtag("binding", id, expectedEtag, current.Etag);
+            EnsureEtag("binding", id, expectedEtag, current.EtagValue);
             this.bindings.Remove(id);
             this.generation++;
             return new ValueTask<bool>(true);
@@ -221,13 +195,13 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
         }
     }
 
-    private static List<SecurityBinding> SortBindings(IEnumerable<SecurityBinding> source)
+    private static List<SecurityBindingDocument> SortBindings(IEnumerable<SecurityBindingDocument> source)
     {
-        var list = new List<SecurityBinding>(source);
+        var list = new List<SecurityBindingDocument>(source);
         list.Sort(static (a, b) =>
         {
-            int byOrder = a.Order.CompareTo(b.Order);
-            return byOrder != 0 ? byOrder : string.CompareOrdinal(a.Id, b.Id);
+            int byOrder = a.OrderValue.CompareTo(b.OrderValue);
+            return byOrder != 0 ? byOrder : string.CompareOrdinal(a.IdValue, b.IdValue);
         });
         return list;
     }
