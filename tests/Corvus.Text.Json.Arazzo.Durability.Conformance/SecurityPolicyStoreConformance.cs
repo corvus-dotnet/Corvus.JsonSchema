@@ -20,6 +20,23 @@ public abstract class SecurityPolicyStoreConformance
 {
     private readonly List<IAsyncDisposable> disposables = [];
 
+    /// <summary>Materializes a grant's rule names for assertions (the grant exposes them as a JSON array, not a list).</summary>
+    /// <param name="grant">The verb grant.</param>
+    /// <returns>The rule names in order.</returns>
+    private static List<string> RuleNames(VerbGrant grant)
+    {
+        var names = new List<string>();
+        if (grant.RuleNames.IsNotUndefined())
+        {
+            foreach (Corvus.Text.Json.Arazzo.Durability.JsonString name in grant.RuleNames.EnumerateArray())
+            {
+                names.Add((string)name);
+            }
+        }
+
+        return names;
+    }
+
     /// <summary>Creates a fresh, empty store backed by the implementation under test.</summary>
     /// <param name="timeProvider">The time source the store must use for audit timestamps.</param>
     /// <returns>The store.</returns>
@@ -117,8 +134,8 @@ public abstract class SecurityPolicyStoreConformance
         SecurityBindingDocument? fetched = await store.GetBindingAsync(a.IdValue, default);
         fetched.ShouldNotBeNull();
         fetched.Value.ClaimValueOrNull.ShouldBe("tenant-admin");
-        fetched.Value.Read.RuleNameList.ShouldBe(["tenant-scoped"]);
-        fetched.Value.Write.RuleNameList.ShouldBe(["tenant-scoped"]);
+        RuleNames(fetched.Value.Read).ShouldBe(["tenant-scoped"]);
+        RuleNames(fetched.Value.Write).ShouldBe(["tenant-scoped"]);
         fetched.Value.Purge.IsEmptyValue.ShouldBeTrue();
 
         // Ordered by Order ascending: operator (5) before tenant-admin (10).
@@ -144,7 +161,7 @@ public abstract class SecurityPolicyStoreConformance
             "bob",
             default);
         updated.ShouldNotBeNull();
-        updated.Value.Read.RuleNameList.ShouldBe(["r1", "r2"]);
+        RuleNames(updated.Value.Read).ShouldBe(["r1", "r2"]);
 
         await Should.ThrowAsync<SecurityPolicyConflictException>(async () =>
             await store.UpdateBindingAsync(added.IdValue, new SecurityBindingDefinition("role", "viewer", VerbGrant.None, VerbGrant.None, VerbGrant.None), added.EtagValue, "carol", default));

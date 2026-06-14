@@ -106,9 +106,9 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         ArgumentException.ThrowIfNullOrEmpty(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
         ArgumentNullException.ThrowIfNull(actor);
-        var record = SecurityRuleDocument.CreateRule(name, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        byte[] body = Envelope(name, RulePartition, record.ToJsonBytes());
-        using var stream = CosmosJson.ToStream(body);
+        var buffer = new ArrayBufferWriter<byte>();
+        SecurityRuleDocument.WriteNewRule(buffer, name, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        using var stream = EnvelopeStream(name, RulePartition, buffer.WrittenSpan);
         using ResponseMessage response = await this.container.CreateItemStreamAsync(stream, new PartitionKey(RulePartition), cancellationToken: cancellationToken).ConfigureAwait(false);
         if (response.StatusCode == HttpStatusCode.Conflict)
         {
@@ -117,7 +117,7 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
 
         response.EnsureSuccessStatusCode();
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return record;
+        return SecurityRuleDocument.FromJson(buffer.WrittenMemory);
     }
 
     /// <inheritdoc/>
@@ -146,13 +146,13 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
 
         SecurityRuleDocument current = SecurityRuleDocument.FromJson(doc);
         EnsureEtag("rule", name, expectedEtag, current.EtagValue);
-        SecurityRuleDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        byte[] body = Envelope(name, RulePartition, updated.ToJsonBytes());
-        using var stream = CosmosJson.ToStream(body);
+        var buffer = new ArrayBufferWriter<byte>();
+        current.WriteUpdatedRule(buffer, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        using var stream = EnvelopeStream(name, RulePartition, buffer.WrittenSpan);
         using ResponseMessage response = await this.container.ReplaceItemStreamAsync(stream, name, new PartitionKey(RulePartition), cancellationToken: cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return updated;
+        return SecurityRuleDocument.FromJson(buffer.WrittenMemory);
     }
 
     /// <inheritdoc/>
@@ -165,13 +165,13 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
-        var record = SecurityBindingDocument.CreateBinding(id, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        byte[] body = Envelope(id, BindingPartition, record.ToJsonBytes());
-        using var stream = CosmosJson.ToStream(body);
+        var buffer = new ArrayBufferWriter<byte>();
+        SecurityBindingDocument.WriteNewBinding(buffer, id, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        using var stream = EnvelopeStream(id, BindingPartition, buffer.WrittenSpan);
         using ResponseMessage response = await this.container.CreateItemStreamAsync(stream, new PartitionKey(BindingPartition), cancellationToken: cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return record;
+        return SecurityBindingDocument.FromJson(buffer.WrittenMemory);
     }
 
     /// <inheritdoc/>
@@ -200,13 +200,13 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
 
         SecurityBindingDocument current = SecurityBindingDocument.FromJson(doc);
         EnsureEtag("binding", id, expectedEtag, current.EtagValue);
-        SecurityBindingDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        byte[] body = Envelope(id, BindingPartition, updated.ToJsonBytes());
-        using var stream = CosmosJson.ToStream(body);
+        var buffer = new ArrayBufferWriter<byte>();
+        current.WriteUpdatedBinding(buffer, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        using var stream = EnvelopeStream(id, BindingPartition, buffer.WrittenSpan);
         using ResponseMessage response = await this.container.ReplaceItemStreamAsync(stream, id, new PartitionKey(BindingPartition), cancellationToken: cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return updated;
+        return SecurityBindingDocument.FromJson(buffer.WrittenMemory);
     }
 
     /// <inheritdoc/>
@@ -243,19 +243,22 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         }
     }
 
-    private static byte[] Envelope(string id, string partition, byte[] docBytes)
+    private static MemoryStream EnvelopeStream(string id, string partition, ReadOnlySpan<byte> docJson)
     {
-        var buffer = new ArrayBufferWriter<byte>();
-        using (var writer = new Utf8JsonWriter(buffer, WriterOptions))
+        var stream = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream, WriterOptions))
         {
             writer.WriteStartObject();
             writer.WriteString("id"u8, id);
             writer.WriteString("pk"u8, partition);
-            writer.WriteString("doc"u8, Convert.ToBase64String(docBytes));
+
+            // Base64-encode the document's JSON straight from the caller's buffer into the envelope — no interim string.
+            writer.WriteBase64String("doc"u8, docJson);
             writer.WriteEndObject();
         }
 
-        return buffer.WrittenSpan.ToArray();
+        stream.Position = 0;
+        return stream;
     }
 
     private static async ValueTask ProvisionAsync(CosmosClient client, string databaseName, CancellationToken cancellationToken)
@@ -344,8 +347,8 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     private async ValueTask BumpGenerationAsync(CancellationToken cancellationToken)
     {
         long next = await this.ReadGenerationAsync(cancellationToken).ConfigureAwait(false) + 1;
-        var buffer = new ArrayBufferWriter<byte>();
-        using (var writer = new Utf8JsonWriter(buffer, WriterOptions))
+        using var stream = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream, WriterOptions))
         {
             writer.WriteStartObject();
             writer.WriteString("id"u8, MetaId);
@@ -354,7 +357,7 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
             writer.WriteEndObject();
         }
 
-        using var stream = CosmosJson.ToStream(buffer.WrittenSpan.ToArray());
+        stream.Position = 0;
         using ResponseMessage response = await this.container.UpsertItemStreamAsync(stream, new PartitionKey(MetaPartition), cancellationToken: cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
     }

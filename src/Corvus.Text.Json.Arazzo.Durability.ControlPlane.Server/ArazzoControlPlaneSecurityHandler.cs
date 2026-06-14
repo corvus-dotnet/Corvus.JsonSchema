@@ -242,17 +242,18 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     private static Models.VerbGrant.Source ToGrantSource(DurabilityVerbGrant grant)
     {
         bool unrestricted = grant.IsUnrestrictedValue;
-        IReadOnlyList<string> ruleNameList = grant.RuleNameList;
+        bool hasRules = !unrestricted && grant.HasRuleNames;
         return new((ref Models.VerbGrant.Builder b) =>
         {
             Models.VerbGrant.JsonStringArray.Source ruleNames = default;
-            if (!unrestricted && ruleNameList.Count > 0)
+            if (hasRules)
             {
                 ruleNames = new Models.VerbGrant.JsonStringArray.Source((ref Models.VerbGrant.JsonStringArray.Builder ab) =>
                 {
-                    foreach (string name in ruleNameList)
+                    // Enumerate the grant's rule-name array directly; (string) realises each name only at the AddItem leaf.
+                    foreach (JsonString name in grant.RuleNames.EnumerateArray())
                     {
-                        ab.AddItem(name);
+                        ab.AddItem((string)name);
                     }
                 });
             }

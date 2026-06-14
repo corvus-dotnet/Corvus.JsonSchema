@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Globalization;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using MongoDB.Bson;
@@ -71,8 +72,10 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         ArgumentException.ThrowIfNullOrEmpty(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
         ArgumentNullException.ThrowIfNull(actor);
-        var record = SecurityRuleDocument.CreateRule(name, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        var document = new BsonDocument { ["_id"] = name, ["doc"] = new BsonBinaryData(record.ToJsonBytes()) };
+        var buffer = new ArrayBufferWriter<byte>();
+        SecurityRuleDocument.WriteNewRule(buffer, name, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] doc = buffer.WrittenSpan.ToArray();
+        var document = new BsonDocument { ["_id"] = name, ["doc"] = new BsonBinaryData(doc) };
         try
         {
             await this.rules.InsertOneAsync(document, options: null, cancellationToken).ConfigureAwait(false);
@@ -83,7 +86,7 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         }
 
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return record;
+        return SecurityRuleDocument.FromJson(doc);
     }
 
     /// <inheritdoc/>
@@ -112,11 +115,13 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
 
         SecurityRuleDocument current = SecurityRuleDocument.FromJson(doc);
         EnsureEtag("rule", name, expectedEtag, current.EtagValue);
-        SecurityRuleDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        var replacement = new BsonDocument { ["_id"] = name, ["doc"] = new BsonBinaryData(updated.ToJsonBytes()) };
+        var buffer = new ArrayBufferWriter<byte>();
+        current.WriteUpdatedRule(buffer, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] updatedDoc = buffer.WrittenSpan.ToArray();
+        var replacement = new BsonDocument { ["_id"] = name, ["doc"] = new BsonBinaryData(updatedDoc) };
         await this.rules.ReplaceOneAsync(Builders<BsonDocument>.Filter.Eq("_id", name), replacement, cancellationToken: cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return updated;
+        return SecurityRuleDocument.FromJson(updatedDoc);
     }
 
     /// <inheritdoc/>
@@ -129,11 +134,13 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
-        var record = SecurityBindingDocument.CreateBinding(id, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        var document = new BsonDocument { ["_id"] = id, ["doc"] = new BsonBinaryData(record.ToJsonBytes()) };
+        var buffer = new ArrayBufferWriter<byte>();
+        SecurityBindingDocument.WriteNewBinding(buffer, id, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] doc = buffer.WrittenSpan.ToArray();
+        var document = new BsonDocument { ["_id"] = id, ["doc"] = new BsonBinaryData(doc) };
         await this.bindings.InsertOneAsync(document, options: null, cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return record;
+        return SecurityBindingDocument.FromJson(doc);
     }
 
     /// <inheritdoc/>
@@ -162,11 +169,13 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
 
         SecurityBindingDocument current = SecurityBindingDocument.FromJson(doc);
         EnsureEtag("binding", id, expectedEtag, current.EtagValue);
-        SecurityBindingDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        var replacement = new BsonDocument { ["_id"] = id, ["doc"] = new BsonBinaryData(updated.ToJsonBytes()) };
+        var buffer = new ArrayBufferWriter<byte>();
+        current.WriteUpdatedBinding(buffer, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] updatedDoc = buffer.WrittenSpan.ToArray();
+        var replacement = new BsonDocument { ["_id"] = id, ["doc"] = new BsonBinaryData(updatedDoc) };
         await this.bindings.ReplaceOneAsync(Builders<BsonDocument>.Filter.Eq("_id", id), replacement, cancellationToken: cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return updated;
+        return SecurityBindingDocument.FromJson(updatedDoc);
     }
 
     /// <inheritdoc/>

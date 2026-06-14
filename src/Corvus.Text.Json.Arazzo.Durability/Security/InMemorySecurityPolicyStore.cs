@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Globalization;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Security;
@@ -41,7 +42,9 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
             }
 
             DateTimeOffset now = this.timeProvider.GetUtcNow();
-            SecurityRuleDocument rule = SecurityRuleDocument.CreateRule(name, definition, actor, now, this.NextEtag());
+            var buffer = new ArrayBufferWriter<byte>();
+            SecurityRuleDocument.WriteNewRule(buffer, name, definition, actor, now, this.NextEtag());
+            SecurityRuleDocument rule = SecurityRuleDocument.FromJson(buffer.WrittenMemory);
             this.rules[name] = rule;
             this.generation++;
             return new ValueTask<SecurityRuleDocument>(rule);
@@ -84,7 +87,9 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
             }
 
             EnsureEtag("rule", name, expectedEtag, current.EtagValue);
-            SecurityRuleDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
+            var buffer = new ArrayBufferWriter<byte>();
+            current.WriteUpdatedRule(buffer, definition, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
+            SecurityRuleDocument updated = SecurityRuleDocument.FromJson(buffer.WrittenMemory);
             this.rules[name] = updated;
             this.generation++;
             return new ValueTask<SecurityRuleDocument?>(updated);
@@ -118,7 +123,9 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
         lock (this.gate)
         {
             string id = "bnd-" + (++this.bindingSequence).ToString(CultureInfo.InvariantCulture);
-            SecurityBindingDocument binding = SecurityBindingDocument.CreateBinding(id, definition, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
+            var buffer = new ArrayBufferWriter<byte>();
+            SecurityBindingDocument.WriteNewBinding(buffer, id, definition, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
+            SecurityBindingDocument binding = SecurityBindingDocument.FromJson(buffer.WrittenMemory);
             this.bindings[id] = binding;
             this.generation++;
             return new ValueTask<SecurityBindingDocument>(binding);
@@ -159,7 +166,9 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
             }
 
             EnsureEtag("binding", id, expectedEtag, current.EtagValue);
-            SecurityBindingDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
+            var buffer = new ArrayBufferWriter<byte>();
+            current.WriteUpdatedBinding(buffer, definition, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
+            SecurityBindingDocument updated = SecurityBindingDocument.FromJson(buffer.WrittenMemory);
             this.bindings[id] = updated;
             this.generation++;
             return new ValueTask<SecurityBindingDocument?>(updated);

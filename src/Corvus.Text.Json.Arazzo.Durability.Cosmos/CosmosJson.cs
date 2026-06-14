@@ -17,6 +17,27 @@ namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
 internal static class CosmosJson
 {
     private static readonly byte[] DocumentsPropertyUtf8 = Encoding.UTF8.GetBytes("Documents");
+    private static readonly JsonWriterOptions WriterOptions = new() { Indented = false, SkipValidation = true };
+
+    /// <summary>
+    /// Writes a generated document's JSON straight into a fresh stream for a Cosmos stream write — no intermediate
+    /// <c>byte[]</c>. The caller owns and disposes the stream; it is positioned at the start.
+    /// </summary>
+    /// <typeparam name="T">The Corvus.Text.Json document type.</typeparam>
+    /// <param name="value">The document to serialize.</param>
+    /// <returns>A readable stream over the document's UTF-8 JSON, positioned at the start.</returns>
+    public static MemoryStream WriteToStream<T>(in T value)
+        where T : IJsonElement
+    {
+        var stream = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream, WriterOptions))
+        {
+            value.WriteTo(writer);
+        }
+
+        stream.Position = 0;
+        return stream;
+    }
 
     /// <summary>Reads a Cosmos response content stream fully into an owned UTF-8 buffer.</summary>
     /// <param name="stream">The response content stream (may be <see langword="null"/>).</param>
@@ -33,11 +54,6 @@ internal static class CosmosJson
         await stream.CopyToAsync(buffer, cancellationToken).ConfigureAwait(false);
         return buffer.ToArray();
     }
-
-    /// <summary>Wraps a document's JSON bytes in a stream for a Cosmos stream write.</summary>
-    /// <param name="utf8">The UTF-8 JSON document.</param>
-    /// <returns>A readable stream positioned at the start.</returns>
-    public static MemoryStream ToStream(byte[] utf8) => new(utf8, writable: false);
 
     /// <summary>
     /// Returns the raw JSON of each element of a Cosmos query page's top-level <c>Documents</c> array. Each slice is

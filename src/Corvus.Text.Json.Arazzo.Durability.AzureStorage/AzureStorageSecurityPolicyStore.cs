@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Globalization;
 using System.Text;
 using Azure;
@@ -95,8 +96,10 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
         ArgumentException.ThrowIfNullOrEmpty(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
         ArgumentNullException.ThrowIfNull(actor);
-        var record = SecurityRuleDocument.CreateRule(name, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        var entity = new TableEntity(RulePartition, Enc(name)) { ["Doc"] = record.ToJsonBytes() };
+        var buffer = new ArrayBufferWriter<byte>();
+        SecurityRuleDocument.WriteNewRule(buffer, name, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] doc = buffer.WrittenSpan.ToArray();
+        var entity = new TableEntity(RulePartition, Enc(name)) { ["Doc"] = doc };
         try
         {
             await this.rules.AddEntityAsync(entity, cancellationToken).ConfigureAwait(false);
@@ -107,7 +110,7 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
         }
 
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return record;
+        return SecurityRuleDocument.FromJson(doc);
     }
 
     /// <inheritdoc/>
@@ -136,11 +139,13 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
 
         SecurityRuleDocument current = SecurityRuleDocument.FromJson(doc);
         EnsureEtag("rule", name, expectedEtag, current.EtagValue);
-        SecurityRuleDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        var entity = new TableEntity(RulePartition, Enc(name)) { ["Doc"] = updated.ToJsonBytes() };
+        var buffer = new ArrayBufferWriter<byte>();
+        current.WriteUpdatedRule(buffer, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] json = buffer.WrittenSpan.ToArray();
+        var entity = new TableEntity(RulePartition, Enc(name)) { ["Doc"] = json };
         await this.rules.UpsertEntityAsync(entity, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return updated;
+        return SecurityRuleDocument.FromJson(json);
     }
 
     /// <inheritdoc/>
@@ -153,11 +158,13 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
-        var record = SecurityBindingDocument.CreateBinding(id, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        var entity = new TableEntity(BindingPartition, Enc(id)) { ["Doc"] = record.ToJsonBytes() };
+        var buffer = new ArrayBufferWriter<byte>();
+        SecurityBindingDocument.WriteNewBinding(buffer, id, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] doc = buffer.WrittenSpan.ToArray();
+        var entity = new TableEntity(BindingPartition, Enc(id)) { ["Doc"] = doc };
         await this.bindings.AddEntityAsync(entity, cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return record;
+        return SecurityBindingDocument.FromJson(doc);
     }
 
     /// <inheritdoc/>
@@ -186,11 +193,13 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
 
         SecurityBindingDocument current = SecurityBindingDocument.FromJson(doc);
         EnsureEtag("binding", id, expectedEtag, current.EtagValue);
-        SecurityBindingDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        var entity = new TableEntity(BindingPartition, Enc(id)) { ["Doc"] = updated.ToJsonBytes() };
+        var buffer = new ArrayBufferWriter<byte>();
+        current.WriteUpdatedBinding(buffer, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] json = buffer.WrittenSpan.ToArray();
+        var entity = new TableEntity(BindingPartition, Enc(id)) { ["Doc"] = json };
         await this.bindings.UpsertEntityAsync(entity, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return updated;
+        return SecurityBindingDocument.FromJson(json);
     }
 
     /// <inheritdoc/>
