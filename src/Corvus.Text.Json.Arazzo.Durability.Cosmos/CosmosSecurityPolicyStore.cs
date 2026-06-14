@@ -28,11 +28,9 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     private const string BindingPartition = "binding";
     private const string MetaPartition = "meta";
     private const string MetaId = "meta";
-    private const int DocBufferSize = 512;
 
     private static readonly byte[] DocProperty = "doc"u8.ToArray();
     private static readonly byte[] GenerationProperty = "generation"u8.ToArray();
-    private static readonly JsonWriterOptions WriterOptions = new() { Indented = false, SkipValidation = true };
 
     private readonly CosmosClient client;
     private readonly Container container;
@@ -288,11 +286,11 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
-    // Serializes the document ONCE into a pooled scratch buffer (rented writer+buffer, returned in finally), base64-encodes
-    // it straight into a freshly built {id, pk, doc} envelope stream, and hands back a pooled document over the same bytes
-    // for the caller to read and dispose. No owned byte[] is materialized: the doc UTF-8 lives only in the pooled scratch
-    // (transient) and the returned document's pooled array (caller-disposed); the MemoryStream is the form the Cosmos
-    // stream API demands. On any failure building the stream, the return document is disposed before the exception escapes.
+    // Serializes the rule/binding ONCE into a pooled buffer (CosmosJson.RentJson), builds the caller's pooled return
+    // document from it, then writes the {id, pk, doc:base64} envelope into a pooled stream (CosmosJson.WriteToStream),
+    // base64-ing the same bytes. No owned byte[] and no nested writer rent: the doc lives only in the pooled rent
+    // (transient) and the returned document's pooled array (caller-disposed); the envelope stream is pooled too. On any
+    // failure building the stream, the return document is disposed before the exception escapes.
     private static MemoryStream EnvelopeStream<T, TContext>(
         string id,
         string partition,
@@ -301,41 +299,25 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         out ParsedJsonDocument<T> document)
         where T : struct, IJsonElement<T>
     {
-        using JsonWorkspace workspace = JsonWorkspace.Create();
-        Utf8JsonWriter docWriter = workspace.RentWriterAndBuffer(DocBufferSize, out IByteBufferWriter docBuffer);
+        using CosmosJson.RentedJson docJson = CosmosJson.RentJson(in context, writeDocument);
+        document = PersistedJson.ToPooledDocument<T>(docJson.Span);
         try
         {
-            writeDocument(docWriter, in context);
-            docWriter.Flush();
-            ReadOnlySpan<byte> docBytes = docBuffer.WrittenSpan;
-            document = PersistedJson.ToPooledDocument<T>(docBytes);
-            try
-            {
-                var stream = new MemoryStream();
-                using (var writer = new Utf8JsonWriter(stream, WriterOptions))
+            return CosmosJson.WriteToStream(
+                (Id: id, Partition: partition, Doc: docJson),
+                static (Utf8JsonWriter writer, in (string Id, string Partition, CosmosJson.RentedJson Doc) c) =>
                 {
                     writer.WriteStartObject();
-                    writer.WriteString("id"u8, id);
-                    writer.WriteString("pk"u8, partition);
-
-                    // Base64-encode the freshly serialized document straight from the pooled scratch span — no interim
-                    // base64 string and no owned byte[].
-                    writer.WriteBase64String("doc"u8, docBytes);
+                    writer.WriteString("id"u8, c.Id);
+                    writer.WriteString("pk"u8, c.Partition);
+                    writer.WriteBase64String("doc"u8, c.Doc.Span);
                     writer.WriteEndObject();
-                }
-
-                stream.Position = 0;
-                return stream;
-            }
-            catch
-            {
-                document.Dispose();
-                throw;
-            }
+                });
         }
-        finally
+        catch
         {
-            workspace.ReturnWriterAndBuffer(docWriter, docBuffer);
+            document.Dispose();
+            throw;
         }
     }
 
@@ -425,17 +407,16 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     private async ValueTask BumpGenerationAsync(CancellationToken cancellationToken)
     {
         long next = await this.ReadGenerationAsync(cancellationToken).ConfigureAwait(false) + 1;
-        using var stream = new MemoryStream();
-        using (var writer = new Utf8JsonWriter(stream, WriterOptions))
-        {
-            writer.WriteStartObject();
-            writer.WriteString("id"u8, MetaId);
-            writer.WriteString("pk"u8, MetaPartition);
-            writer.WriteNumber("generation"u8, next);
-            writer.WriteEndObject();
-        }
-
-        stream.Position = 0;
+        using MemoryStream stream = CosmosJson.WriteToStream(
+            next,
+            static (Utf8JsonWriter writer, in long generation) =>
+            {
+                writer.WriteStartObject();
+                writer.WriteString("id"u8, MetaId);
+                writer.WriteString("pk"u8, MetaPartition);
+                writer.WriteNumber("generation"u8, generation);
+                writer.WriteEndObject();
+            });
         using ResponseMessage response = await this.container.UpsertItemStreamAsync(stream, new PartitionKey(MetaPartition), cancellationToken: cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
     }

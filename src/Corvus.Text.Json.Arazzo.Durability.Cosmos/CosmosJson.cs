@@ -81,6 +81,37 @@ internal static class CosmosJson
         }
     }
 
+    /// <summary>
+    /// Serializes JSON (written by <paramref name="write"/>) into an <see cref="ArrayPool{T}"/>-rented buffer, returned
+    /// as a disposable <see cref="RentedJson"/>. Use it to embed a sub-document as base64 inside an envelope without a
+    /// nested writer rent or an owned <see cref="byte"/> array: serialize it once here, then <c>WriteBase64String</c> its
+    /// <see cref="RentedJson.Span"/> inside a <see cref="WriteToStream{TContext}(in TContext, PersistedJson.WriteCallback{TContext})"/>
+    /// envelope callback, and dispose it once the envelope stream has been built. The pooled writer cache is rented and
+    /// returned synchronously here, so it never crosses an <c>await</c>.
+    /// </summary>
+    /// <typeparam name="TContext">The write-callback state type.</typeparam>
+    /// <param name="context">The state passed to <paramref name="write"/>.</param>
+    /// <param name="write">Writes the JSON (pass a <see langword="static"/> lambda to avoid a closure).</param>
+    /// <returns>The serialized JSON over a pooled buffer; dispose to return the buffer to the pool.</returns>
+    public static RentedJson RentJson<TContext>(in TContext context, PersistedJson.WriteCallback<TContext> write)
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter buffer);
+        try
+        {
+            write(writer, in context);
+            writer.Flush();
+            ReadOnlySpan<byte> written = buffer.WrittenSpan;
+            byte[] rented = ArrayPool<byte>.Shared.Rent(written.Length);
+            written.CopyTo(rented);
+            return new RentedJson(rented, written.Length);
+        }
+        finally
+        {
+            workspace.ReturnWriterAndBuffer(writer, buffer);
+        }
+    }
+
     /// <summary>Reads a Cosmos response content stream fully into an owned UTF-8 buffer.</summary>
     /// <param name="stream">The response content stream (may be <see langword="null"/>).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
@@ -205,6 +236,32 @@ internal static class CosmosJson
     {
         var reader = new Utf8JsonReader(element.Span);
         return reader.Read() && reader.TokenType == JsonTokenType.Number ? reader.GetInt64() : null;
+    }
+
+    /// <summary>
+    /// JSON serialized into an <see cref="ArrayPool{T}"/>-rented buffer (see <see cref="RentJson{TContext}"/>). The only
+    /// allocation is the rented buffer, which <see cref="Dispose"/> returns to the pool; the struct itself is a thin
+    /// view. Read the bytes via <see cref="Span"/>; do not use after disposal.
+    /// </summary>
+    public readonly struct RentedJson : IDisposable
+    {
+        private readonly byte[] rented;
+        private readonly int length;
+
+        /// <summary>Initializes a new instance of the <see cref="RentedJson"/> struct, taking ownership of the rented buffer.</summary>
+        /// <param name="rented">The <see cref="ArrayPool{T}"/>-rented buffer (may be larger than <paramref name="length"/>).</param>
+        /// <param name="length">The number of written bytes.</param>
+        public RentedJson(byte[] rented, int length)
+        {
+            this.rented = rented;
+            this.length = length;
+        }
+
+        /// <summary>Gets the written UTF-8 JSON; valid only until <see cref="Dispose"/>.</summary>
+        public ReadOnlySpan<byte> Span => this.rented.AsSpan(0, this.length);
+
+        /// <summary>Returns the rented buffer to the pool.</summary>
+        public void Dispose() => ArrayPool<byte>.Shared.Return(this.rented);
     }
 
     // A read-only, non-growing MemoryStream over an ArrayPool-rented buffer that returns the buffer to the pool on
