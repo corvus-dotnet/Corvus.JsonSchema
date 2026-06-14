@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Globalization;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using StackExchange.Redis;
@@ -76,15 +77,17 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         ArgumentException.ThrowIfNullOrEmpty(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
         ArgumentNullException.ThrowIfNull(actor);
-        var record = SecurityRuleDocument.CreateRule(name, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        if (!await this.database.StringSetAsync(RulePrefix + name, record.ToJsonBytes(), when: When.NotExists).ConfigureAwait(false))
+        var buffer = new ArrayBufferWriter<byte>();
+        SecurityRuleDocument.WriteNewRule(buffer, name, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] doc = buffer.WrittenSpan.ToArray();
+        if (!await this.database.StringSetAsync(RulePrefix + name, doc, when: When.NotExists).ConfigureAwait(false))
         {
             throw new InvalidOperationException($"A security rule named '{name}' already exists.");
         }
 
         await this.database.SetAddAsync(RuleIndexKey, name).ConfigureAwait(false);
         await this.BumpGenerationAsync().ConfigureAwait(false);
-        return record;
+        return SecurityRuleDocument.FromJson(doc);
     }
 
     /// <inheritdoc/>
@@ -117,10 +120,12 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
 
         SecurityRuleDocument current = SecurityRuleDocument.FromJson((byte[])value!);
         EnsureEtag("rule", name, expectedEtag, current.EtagValue);
-        SecurityRuleDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        await this.database.StringSetAsync(RulePrefix + name, updated.ToJsonBytes()).ConfigureAwait(false);
+        var buffer = new ArrayBufferWriter<byte>();
+        current.WriteUpdatedRule(buffer, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] doc = buffer.WrittenSpan.ToArray();
+        await this.database.StringSetAsync(RulePrefix + name, doc).ConfigureAwait(false);
         await this.BumpGenerationAsync().ConfigureAwait(false);
-        return updated;
+        return SecurityRuleDocument.FromJson(doc);
     }
 
     /// <inheritdoc/>
@@ -133,11 +138,13 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
-        var record = SecurityBindingDocument.CreateBinding(id, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        await this.database.StringSetAsync(BindingPrefix + id, record.ToJsonBytes()).ConfigureAwait(false);
+        var buffer = new ArrayBufferWriter<byte>();
+        SecurityBindingDocument.WriteNewBinding(buffer, id, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] doc = buffer.WrittenSpan.ToArray();
+        await this.database.StringSetAsync(BindingPrefix + id, doc).ConfigureAwait(false);
         await this.database.SetAddAsync(BindingIndexKey, id).ConfigureAwait(false);
         await this.BumpGenerationAsync().ConfigureAwait(false);
-        return record;
+        return SecurityBindingDocument.FromJson(doc);
     }
 
     /// <inheritdoc/>
@@ -170,10 +177,12 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
 
         SecurityBindingDocument current = SecurityBindingDocument.FromJson((byte[])value!);
         EnsureEtag("binding", id, expectedEtag, current.EtagValue);
-        SecurityBindingDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        await this.database.StringSetAsync(BindingPrefix + id, updated.ToJsonBytes()).ConfigureAwait(false);
+        var buffer = new ArrayBufferWriter<byte>();
+        current.WriteUpdatedBinding(buffer, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] doc = buffer.WrittenSpan.ToArray();
+        await this.database.StringSetAsync(BindingPrefix + id, doc).ConfigureAwait(false);
         await this.BumpGenerationAsync().ConfigureAwait(false);
-        return updated;
+        return SecurityBindingDocument.FromJson(doc);
     }
 
     /// <inheritdoc/>

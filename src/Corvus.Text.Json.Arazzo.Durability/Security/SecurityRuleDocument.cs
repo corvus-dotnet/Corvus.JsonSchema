@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Buffers;
-using System.Globalization;
 using Corvus.Text.Json;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Security;
@@ -11,16 +10,20 @@ namespace Corvus.Text.Json.Arazzo.Durability.Security;
 /// <summary>
 /// A persisted, named row-authorization rule (design §14.2): the rule expression in the security-rule grammar (see
 /// <see cref="SecurityRule"/>) plus audit/concurrency metadata. This is the single rule type — generated from
-/// <c>Schemas/SecurityRuleDocument.json</c> — used as the domain value <em>and</em> the persisted form, so a store
-/// constructs it once (<see cref="CreateRule"/>/<see cref="WithUpdate"/>, allocation-free) and writes its JSON
-/// directly (<see cref="ToJsonBytes"/>/<see cref="IJsonValue.WriteTo"/>); there is no separate record and no
-/// reflection serializer.
+/// <c>Schemas/SecurityRuleDocument.json</c> — used as the domain value <em>and</em> the persisted form.
 /// </summary>
+/// <remarks>
+/// Construction threads the destination through: a store passes the buffer (or stream) it already owns and the rule
+/// is realised and written into it in one pass (<see cref="WriteNewRule"/>/<see cref="WriteUpdatedRule"/>) — no
+/// interim detached clone, no second serialization, and no array copied out of a hidden buffer. The backend then
+/// consumes that span directly (Cosmos base64-encodes it; a SQL driver materialises a <see cref="byte"/> array only
+/// at the ADO leaf that demands one), and where the value is needed back it is parsed once (<see cref="FromJson"/>).
+/// The leaf accessors realise a <see cref="string"/> only where a string is actually required (a SQL parameter, a
+/// rule to compile, an HTTP response field).
+/// </remarks>
 [JsonSchemaTypeGenerator("../Schemas/SecurityRuleDocument.json")]
 public readonly partial struct SecurityRuleDocument
 {
-    private static readonly JsonWriterOptions WriterOptions = new() { Indented = false, SkipValidation = true };
-
     /// <summary>Gets the rule's unique name.</summary>
     public string NameValue => (string)this.Name;
 
@@ -34,25 +37,25 @@ public readonly partial struct SecurityRuleDocument
     public string CreatedByValue => (string)this.CreatedBy;
 
     /// <summary>Gets when the rule was created.</summary>
-    public DateTimeOffset CreatedAtValue => DateTimeOffset.Parse((string)this.CreatedAt, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+    public DateTimeOffset CreatedAtValue => ((NodaTime.OffsetDateTime)this.CreatedAt).ToDateTimeOffset();
 
     /// <summary>Gets the actor that last updated the rule, or <see langword="null"/> if never updated.</summary>
     public string? UpdatedByOrNull => this.LastUpdatedBy.IsNotUndefined() ? (string)this.LastUpdatedBy : null;
 
     /// <summary>Gets when the rule was last updated, or <see langword="null"/> if never updated.</summary>
-    public DateTimeOffset? UpdatedAtValue => this.LastUpdatedAt.IsNotUndefined() ? DateTimeOffset.Parse((string)this.LastUpdatedAt, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind) : null;
+    public DateTimeOffset? UpdatedAtValue => this.LastUpdatedAt.IsNotUndefined() ? ((NodaTime.OffsetDateTime)this.LastUpdatedAt).ToDateTimeOffset() : null;
 
     /// <summary>Gets the optimistic-concurrency token.</summary>
     public WorkflowEtag EtagValue => new((string)this.Etag);
 
-    /// <summary>Builds a new rule, allocation-free, detached and ready to persist.</summary>
+    /// <summary>Realises a new rule and writes its canonical JSON into the caller's buffer in a single pass.</summary>
+    /// <param name="buffer">The destination the caller owns (a rented buffer, or a writer over a stream).</param>
     /// <param name="name">The rule's unique name.</param>
     /// <param name="definition">The rule content (expression + optional description).</param>
     /// <param name="actor">The actor creating the rule (audit).</param>
     /// <param name="createdAt">The creation instant.</param>
     /// <param name="etag">The optimistic-concurrency token to assign.</param>
-    /// <returns>The rule.</returns>
-    public static SecurityRuleDocument CreateRule(string name, SecurityRuleDefinition definition, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+    public static void WriteNewRule(IBufferWriter<byte> buffer, string name, SecurityRuleDefinition definition, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<Mutable> builder = CreateBuilder(
@@ -63,50 +66,58 @@ public readonly partial struct SecurityRuleDocument
             expression: definition.Expression,
             name: name,
             description: definition.Description is { } description ? (JsonString.Source)description : default);
-        return builder.RootElement.Clone();
+        Utf8JsonWriter writer = workspace.RentWriter(buffer);
+        try
+        {
+            builder.RootElement.WriteTo(writer);
+            writer.Flush();
+        }
+        finally
+        {
+            workspace.ReturnWriter(writer);
+        }
     }
 
-    /// <summary>Builds an updated copy of this rule, allocation-free (preserving name/created metadata).</summary>
+    /// <summary>Realises an updated copy of this rule (preserving name/created metadata) into the caller's buffer.</summary>
+    /// <param name="buffer">The destination the caller owns (a rented buffer, or a writer over a stream).</param>
     /// <param name="definition">The new rule content.</param>
     /// <param name="actor">The actor performing the update (audit).</param>
     /// <param name="updatedAt">The update instant.</param>
     /// <param name="etag">The new optimistic-concurrency token to assign.</param>
-    /// <returns>The updated rule.</returns>
-    public SecurityRuleDocument WithUpdate(SecurityRuleDefinition definition, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
+    public void WriteUpdatedRule(IBufferWriter<byte> buffer, SecurityRuleDefinition definition, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        using JsonDocumentBuilder<Mutable> builder = CreateBuilder(
-            workspace,
-            createdAt: this.CreatedAt,
-            createdBy: this.CreatedBy,
-            etag: etag.Value ?? string.Empty,
-            expression: definition.Expression,
-            name: this.Name,
-            description: definition.Description is { } description ? (JsonString.Source)description : default,
-            lastUpdatedAt: updatedAt,
-            lastUpdatedBy: actor);
-        return builder.RootElement.Clone();
-    }
 
-    /// <summary>Parses a rule from its persisted JSON, detached from the parse buffer.</summary>
-    /// <param name="utf8">The UTF-8 JSON document.</param>
-    /// <returns>The rule.</returns>
-    public static SecurityRuleDocument FromJson(ReadOnlyMemory<byte> utf8)
-    {
-        using ParsedJsonDocument<SecurityRuleDocument> doc = ParsedJsonDocument<SecurityRuleDocument>.Parse(utf8);
-        return doc.RootElement.Clone();
-    }
-
-    /// <summary>Serializes this rule to its persisted JSON form.</summary>
-    /// <returns>The UTF-8 JSON document.</returns>
-    public byte[] ToJsonBytes()
-    {
-        var buffer = new ArrayBufferWriter<byte>();
-        using (var writer = new Utf8JsonWriter(buffer, WriterOptions))
+        // Realise a mutable builder over this document and modify only the fields the update touches; name and the
+        // created-* metadata are carried through unchanged (no field-by-field rebuild).
+        using JsonDocumentBuilder<Mutable> builder = this.CreateBuilder(workspace);
+        builder.RootElement.SetExpression(definition.Expression);
+        builder.RootElement.SetEtag(etag.Value ?? string.Empty);
+        builder.RootElement.SetLastUpdatedAt(updatedAt);
+        builder.RootElement.SetLastUpdatedBy(actor);
+        if (definition.Description is { } description)
         {
-            this.WriteTo(writer);
+            builder.RootElement.SetDescription(description);
+        }
+        else
+        {
+            builder.RootElement.RemoveDescription();
         }
 
-        return buffer.WrittenSpan.ToArray();
+        Utf8JsonWriter writer = workspace.RentWriter(buffer);
+        try
+        {
+            builder.RootElement.WriteTo(writer);
+            writer.Flush();
+        }
+        finally
+        {
+            workspace.ReturnWriter(writer);
+        }
     }
+
+    /// <summary>Parses a rule from its persisted JSON as a detached value (one owned copy).</summary>
+    /// <param name="utf8">The UTF-8 JSON document.</param>
+    /// <returns>The rule.</returns>
+    public static SecurityRuleDocument FromJson(ReadOnlyMemory<byte> utf8) => ParseValue(utf8.Span);
 }

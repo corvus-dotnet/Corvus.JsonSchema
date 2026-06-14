@@ -139,16 +139,16 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
     // unknown rule (fail-closed: a broken grant contributes nothing).
     private static string? ClauseFor(VerbGrant grant, Compiled current)
     {
-        IReadOnlyList<string> ruleNames = grant.RuleNameList;
-        if (grant.IsUnrestrictedValue || ruleNames.Count == 0)
+        if (grant.IsUnrestrictedValue || !grant.HasRuleNames)
         {
             return null;
         }
 
-        var parts = new List<string>(ruleNames.Count);
-        foreach (string ruleName in ruleNames)
+        var parts = new List<string>(grant.RuleNameCount);
+        foreach (JsonString ruleNameJson in grant.RuleNames.EnumerateArray())
         {
-            if (!current.RuleExpressions.TryGetValue(ruleName, out string? expression))
+            // (string) realises a key only at this leaf, where the rule-expression lookup needs one.
+            if (!current.RuleExpressions.TryGetValue((string)ruleNameJson, out string? expression))
             {
                 return null;
             }
