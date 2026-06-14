@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Globalization;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Npgsql;
@@ -84,13 +85,15 @@ public sealed class PostgresSecurityPolicyStore : ISecurityPolicyStore, IAsyncDi
         ArgumentException.ThrowIfNullOrEmpty(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
         ArgumentNullException.ThrowIfNull(actor);
-        var record = SecurityRuleDocument.CreateRule(name, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        WorkflowEtag etag = NewEtag();
+        var buffer = new ArrayBufferWriter<byte>();
+        SecurityRuleDocument.WriteNewRule(buffer, name, definition, actor, this.timeProvider.GetUtcNow(), etag);
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlCommand insert = connection.CreateCommand();
         insert.CommandText = "INSERT INTO SecurityRules (Name, Etag, Document) VALUES (@name, @etag, @doc);";
         insert.Parameters.AddWithValue("name", name);
-        insert.Parameters.AddWithValue("etag", record.EtagValue.Value!);
-        insert.Parameters.AddWithValue("doc", record.ToJsonBytes());
+        insert.Parameters.AddWithValue("etag", etag.Value!);
+        insert.Parameters.AddWithValue("doc", buffer.WrittenSpan.ToArray());
         try
         {
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -101,7 +104,7 @@ public sealed class PostgresSecurityPolicyStore : ISecurityPolicyStore, IAsyncDi
         }
 
         await BumpGenerationAsync(connection, cancellationToken).ConfigureAwait(false);
-        return record;
+        return SecurityRuleDocument.FromJson(buffer.WrittenMemory);
     }
 
     /// <inheritdoc/>
@@ -135,15 +138,17 @@ public sealed class PostgresSecurityPolicyStore : ISecurityPolicyStore, IAsyncDi
 
         SecurityRuleDocument current = SecurityRuleDocument.FromJson(doc);
         EnsureEtag("rule", name, expectedEtag, current.EtagValue);
-        SecurityRuleDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        WorkflowEtag etag = NewEtag();
+        var buffer = new ArrayBufferWriter<byte>();
+        current.WriteUpdatedRule(buffer, definition, actor, this.timeProvider.GetUtcNow(), etag);
         await using NpgsqlCommand update = connection.CreateCommand();
         update.CommandText = "UPDATE SecurityRules SET Etag = @etag, Document = @doc WHERE Name = @k;";
-        update.Parameters.AddWithValue("etag", updated.EtagValue.Value!);
-        update.Parameters.AddWithValue("doc", updated.ToJsonBytes());
+        update.Parameters.AddWithValue("etag", etag.Value!);
+        update.Parameters.AddWithValue("doc", buffer.WrittenSpan.ToArray());
         update.Parameters.AddWithValue("k", name);
         await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         await BumpGenerationAsync(connection, cancellationToken).ConfigureAwait(false);
-        return updated;
+        return SecurityRuleDocument.FromJson(buffer.WrittenMemory);
     }
 
     /// <inheritdoc/>
@@ -156,17 +161,19 @@ public sealed class PostgresSecurityPolicyStore : ISecurityPolicyStore, IAsyncDi
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
-        var record = SecurityBindingDocument.CreateBinding(id, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        WorkflowEtag etag = NewEtag();
+        var buffer = new ArrayBufferWriter<byte>();
+        SecurityBindingDocument.WriteNewBinding(buffer, id, definition, actor, this.timeProvider.GetUtcNow(), etag);
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlCommand insert = connection.CreateCommand();
         insert.CommandText = "INSERT INTO SecurityBindings (Id, SortOrder, Etag, Document) VALUES (@id, @order, @etag, @doc);";
         insert.Parameters.AddWithValue("id", id);
         insert.Parameters.AddWithValue("order", definition.Order);
-        insert.Parameters.AddWithValue("etag", record.EtagValue.Value!);
-        insert.Parameters.AddWithValue("doc", record.ToJsonBytes());
+        insert.Parameters.AddWithValue("etag", etag.Value!);
+        insert.Parameters.AddWithValue("doc", buffer.WrittenSpan.ToArray());
         await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         await BumpGenerationAsync(connection, cancellationToken).ConfigureAwait(false);
-        return record;
+        return SecurityBindingDocument.FromJson(buffer.WrittenMemory);
     }
 
     /// <inheritdoc/>
@@ -200,16 +207,18 @@ public sealed class PostgresSecurityPolicyStore : ISecurityPolicyStore, IAsyncDi
 
         SecurityBindingDocument current = SecurityBindingDocument.FromJson(doc);
         EnsureEtag("binding", id, expectedEtag, current.EtagValue);
-        SecurityBindingDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        WorkflowEtag etag = NewEtag();
+        var buffer = new ArrayBufferWriter<byte>();
+        current.WriteUpdatedBinding(buffer, definition, actor, this.timeProvider.GetUtcNow(), etag);
         await using NpgsqlCommand update = connection.CreateCommand();
         update.CommandText = "UPDATE SecurityBindings SET SortOrder = @order, Etag = @etag, Document = @doc WHERE Id = @k;";
         update.Parameters.AddWithValue("order", definition.Order);
-        update.Parameters.AddWithValue("etag", updated.EtagValue.Value!);
-        update.Parameters.AddWithValue("doc", updated.ToJsonBytes());
+        update.Parameters.AddWithValue("etag", etag.Value!);
+        update.Parameters.AddWithValue("doc", buffer.WrittenSpan.ToArray());
         update.Parameters.AddWithValue("k", id);
         await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         await BumpGenerationAsync(connection, cancellationToken).ConfigureAwait(false);
-        return updated;
+        return SecurityBindingDocument.FromJson(buffer.WrittenMemory);
     }
 
     /// <inheritdoc/>
