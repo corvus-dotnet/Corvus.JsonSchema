@@ -350,9 +350,8 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
             runnable: (bool)current.Runnable,
             securityTags: securityTags is { Count: > 0 } ? securityTags : null);
 
-        byte[] body = CatalogDocument.From(updated, found.Document.PackageBytes()).ToJsonBytes();
         var options = new ItemRequestOptions { IfMatchEtag = found.Etag };
-        using var stream = CosmosJson.ToStream(body);
+        using var stream = CosmosJson.WriteToStream(CatalogDocument.From(updated, found.Document.PackageBytes()));
         using ResponseMessage response = await this.catalog.ReplaceItemStreamAsync(
             stream, CatalogDocument.DocumentId(baseWorkflowId, versionNumber), partition, options, cancellationToken).ConfigureAwait(false);
         if (response.StatusCode == HttpStatusCode.NotFound)
@@ -478,8 +477,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
                 runnable: projection.HasExecutor,
                 securityTags: securityTags);
 
-            byte[] body = CatalogDocument.From(version, projection.CanonicalPackage.ToArray()).ToJsonBytes();
-            using var stream = CosmosJson.ToStream(body);
+            using var stream = CosmosJson.WriteToStream(CatalogDocument.From(version, projection.CanonicalPackage.ToArray()));
             using ResponseMessage response = await this.catalog.CreateItemStreamAsync(stream, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (response.StatusCode == HttpStatusCode.Conflict)
             {
