@@ -17,6 +17,7 @@
   </PropertyGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Corvus.Text.Json.Arazzo.Durability.Cosmos.Tests" />
+    <InternalsVisibleTo Include="Corvus.Text.Json.Arazzo.Durability.Benchmarks" />
   </ItemGroup>
   <ItemGroup>
     <AdditionalFiles Include="Schemas\**\*.json" />
