@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Text;
-using System.Text.Json;
 using Azure;
 using Azure.Data.Tables;
 using Corvus.Text.Json;

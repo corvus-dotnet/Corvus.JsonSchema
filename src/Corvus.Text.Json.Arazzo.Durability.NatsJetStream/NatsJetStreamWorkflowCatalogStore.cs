@@ -7,7 +7,6 @@ using System.Buffers.Binary;
 using System.Buffers.Text;
 using System.Globalization;
 using System.Text;
-using System.Text.Json;
 using NATS.Client.Core;
 using NATS.Client.JetStream;
 using NATS.Client.KeyValueStore;
