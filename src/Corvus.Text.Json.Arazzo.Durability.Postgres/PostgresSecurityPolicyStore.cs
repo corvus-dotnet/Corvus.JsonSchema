@@ -80,19 +80,19 @@ public sealed class PostgresSecurityPolicyStore : ISecurityPolicyStore, IAsyncDi
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleDocument> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
         ArgumentNullException.ThrowIfNull(actor);
         WorkflowEtag etag = NewEtag();
-        SecurityRuleDocument created = SecurityRuleDocument.CreateRule(name, definition, actor, this.timeProvider.GetUtcNow(), etag);
+        byte[] json = SecurityPolicySerialization.SerializeNewRule(name, definition, actor, this.timeProvider.GetUtcNow(), etag);
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlCommand insert = connection.CreateCommand();
         insert.CommandText = "INSERT INTO SecurityRules (Name, Etag, Document) VALUES (@name, @etag, @doc);";
         insert.Parameters.AddWithValue("name", name);
         insert.Parameters.AddWithValue("etag", etag.Value!);
-        insert.Parameters.AddWithValue("doc", PersistedJson.ToArray(created, static (Utf8JsonWriter writer, in SecurityRuleDocument r) => r.WriteTo(writer)));
+        insert.Parameters.AddWithValue("doc", json);
         try
         {
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -103,27 +103,27 @@ public sealed class PostgresSecurityPolicyStore : ISecurityPolicyStore, IAsyncDi
         }
 
         await BumpGenerationAsync(connection, cancellationToken).ConfigureAwait(false);
-        return created;
+        return PersistedJson.ToPooledDocument<SecurityRuleDocument>(json);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleDocument?> GetRuleAsync(string name, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> GetRuleAsync(string name, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         byte[]? doc = await DocumentAsync(connection, "SecurityRules", "Name", name, cancellationToken).ConfigureAwait(false);
-        return doc is null ? null : SecurityRuleDocument.FromJson(doc);
+        return doc is null ? null : PersistedJson.ToPooledDocument<SecurityRuleDocument>(doc);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<IReadOnlyList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
+    public async ValueTask<PooledDocumentList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
     {
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-        return await ReadRulesAsync(connection, cancellationToken).ConfigureAwait(false);
+        return new PooledDocumentList<SecurityRuleDocument>(await ReadRulesAsync(connection, cancellationToken).ConfigureAwait(false));
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityRuleDocument?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
@@ -135,18 +135,16 @@ public sealed class PostgresSecurityPolicyStore : ISecurityPolicyStore, IAsyncDi
             return null;
         }
 
-        SecurityRuleDocument current = SecurityRuleDocument.FromJson(doc);
-        EnsureEtag("rule", name, expectedEtag, current.EtagValue);
         WorkflowEtag etag = NewEtag();
-        SecurityRuleDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), etag);
+        byte[] json = SecurityPolicySerialization.SerializeUpdatedRule(doc, "rule", name, expectedEtag, definition, actor, this.timeProvider.GetUtcNow(), etag);
         await using NpgsqlCommand update = connection.CreateCommand();
         update.CommandText = "UPDATE SecurityRules SET Etag = @etag, Document = @doc WHERE Name = @k;";
         update.Parameters.AddWithValue("etag", etag.Value!);
-        update.Parameters.AddWithValue("doc", PersistedJson.ToArray(updated, static (Utf8JsonWriter writer, in SecurityRuleDocument r) => r.WriteTo(writer)));
+        update.Parameters.AddWithValue("doc", json);
         update.Parameters.AddWithValue("k", name);
         await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         await BumpGenerationAsync(connection, cancellationToken).ConfigureAwait(false);
-        return updated;
+        return PersistedJson.ToPooledDocument<SecurityRuleDocument>(json);
     }
 
     /// <inheritdoc/>
@@ -154,43 +152,43 @@ public sealed class PostgresSecurityPolicyStore : ISecurityPolicyStore, IAsyncDi
         => this.DeleteAsync("SecurityRules", "Name", "rule", name, expectedEtag, cancellationToken);
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBindingDocument> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
         WorkflowEtag etag = NewEtag();
-        SecurityBindingDocument created = SecurityBindingDocument.CreateBinding(id, definition, actor, this.timeProvider.GetUtcNow(), etag);
+        byte[] json = SecurityPolicySerialization.SerializeNewBinding(id, definition, actor, this.timeProvider.GetUtcNow(), etag);
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlCommand insert = connection.CreateCommand();
         insert.CommandText = "INSERT INTO SecurityBindings (Id, SortOrder, Etag, Document) VALUES (@id, @order, @etag, @doc);";
         insert.Parameters.AddWithValue("id", id);
         insert.Parameters.AddWithValue("order", definition.Order);
         insert.Parameters.AddWithValue("etag", etag.Value!);
-        insert.Parameters.AddWithValue("doc", PersistedJson.ToArray(created, static (Utf8JsonWriter writer, in SecurityBindingDocument b) => b.WriteTo(writer)));
+        insert.Parameters.AddWithValue("doc", json);
         await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         await BumpGenerationAsync(connection, cancellationToken).ConfigureAwait(false);
-        return created;
+        return PersistedJson.ToPooledDocument<SecurityBindingDocument>(json);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBindingDocument?> GetBindingAsync(string id, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> GetBindingAsync(string id, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         byte[]? doc = await DocumentAsync(connection, "SecurityBindings", "Id", id, cancellationToken).ConfigureAwait(false);
-        return doc is null ? null : SecurityBindingDocument.FromJson(doc);
+        return doc is null ? null : PersistedJson.ToPooledDocument<SecurityBindingDocument>(doc);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<IReadOnlyList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
+    public async ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
     {
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-        return await ReadBindingsAsync(connection, cancellationToken).ConfigureAwait(false);
+        return new PooledDocumentList<SecurityBindingDocument>(await ReadBindingsAsync(connection, cancellationToken).ConfigureAwait(false));
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SecurityBindingDocument?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
@@ -202,19 +200,17 @@ public sealed class PostgresSecurityPolicyStore : ISecurityPolicyStore, IAsyncDi
             return null;
         }
 
-        SecurityBindingDocument current = SecurityBindingDocument.FromJson(doc);
-        EnsureEtag("binding", id, expectedEtag, current.EtagValue);
         WorkflowEtag etag = NewEtag();
-        SecurityBindingDocument updated = current.WithUpdate(definition, actor, this.timeProvider.GetUtcNow(), etag);
+        byte[] json = SecurityPolicySerialization.SerializeUpdatedBinding(doc, "binding", id, expectedEtag, definition, actor, this.timeProvider.GetUtcNow(), etag);
         await using NpgsqlCommand update = connection.CreateCommand();
         update.CommandText = "UPDATE SecurityBindings SET SortOrder = @order, Etag = @etag, Document = @doc WHERE Id = @k;";
         update.Parameters.AddWithValue("order", definition.Order);
         update.Parameters.AddWithValue("etag", etag.Value!);
-        update.Parameters.AddWithValue("doc", PersistedJson.ToArray(updated, static (Utf8JsonWriter writer, in SecurityBindingDocument b) => b.WriteTo(writer)));
+        update.Parameters.AddWithValue("doc", json);
         update.Parameters.AddWithValue("k", id);
         await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         await BumpGenerationAsync(connection, cancellationToken).ConfigureAwait(false);
-        return updated;
+        return PersistedJson.ToPooledDocument<SecurityBindingDocument>(json);
     }
 
     /// <inheritdoc/>
@@ -225,8 +221,8 @@ public sealed class PostgresSecurityPolicyStore : ISecurityPolicyStore, IAsyncDi
     public async ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
     {
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-        IReadOnlyList<SecurityRuleDocument> rules = await ReadRulesAsync(connection, cancellationToken).ConfigureAwait(false);
-        IReadOnlyList<SecurityBindingDocument> bindings = await ReadBindingsAsync(connection, cancellationToken).ConfigureAwait(false);
+        var rules = new PooledDocumentList<SecurityRuleDocument>(await ReadRulesAsync(connection, cancellationToken).ConfigureAwait(false));
+        var bindings = new PooledDocumentList<SecurityBindingDocument>(await ReadBindingsAsync(connection, cancellationToken).ConfigureAwait(false));
         await using NpgsqlCommand select = connection.CreateCommand();
         select.CommandText = "SELECT Generation FROM SecurityPolicyMeta WHERE Id = 0;";
         object? gen = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
@@ -251,14 +247,6 @@ public sealed class PostgresSecurityPolicyStore : ISecurityPolicyStore, IAsyncDi
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
-    private static void EnsureEtag(string kind, string id, WorkflowEtag expected, WorkflowEtag actual)
-    {
-        if (!expected.IsNone && expected != actual)
-        {
-            throw new SecurityPolicyConflictException(kind, id, expected);
-        }
-    }
-
     private static async ValueTask<byte[]?> DocumentAsync(NpgsqlConnection connection, string table, string column, string key, CancellationToken cancellationToken)
     {
         await using NpgsqlCommand select = connection.CreateCommand();
@@ -268,29 +256,29 @@ public sealed class PostgresSecurityPolicyStore : ISecurityPolicyStore, IAsyncDi
         return result is byte[] bytes ? bytes : null;
     }
 
-    private static async ValueTask<IReadOnlyList<SecurityRuleDocument>> ReadRulesAsync(NpgsqlConnection connection, CancellationToken cancellationToken)
+    private static async ValueTask<List<ParsedJsonDocument<SecurityRuleDocument>>> ReadRulesAsync(NpgsqlConnection connection, CancellationToken cancellationToken)
     {
-        var list = new List<SecurityRuleDocument>();
+        var list = new List<ParsedJsonDocument<SecurityRuleDocument>>();
         await using NpgsqlCommand select = connection.CreateCommand();
         select.CommandText = "SELECT Document FROM SecurityRules ORDER BY Name;";
         await using NpgsqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
-            list.Add(SecurityRuleDocument.FromJson(reader.GetFieldValue<byte[]>(0)));
+            list.Add(PersistedJson.ToPooledDocument<SecurityRuleDocument>(reader.GetFieldValue<byte[]>(0)));
         }
 
         return list;
     }
 
-    private static async ValueTask<IReadOnlyList<SecurityBindingDocument>> ReadBindingsAsync(NpgsqlConnection connection, CancellationToken cancellationToken)
+    private static async ValueTask<List<ParsedJsonDocument<SecurityBindingDocument>>> ReadBindingsAsync(NpgsqlConnection connection, CancellationToken cancellationToken)
     {
-        var list = new List<SecurityBindingDocument>();
+        var list = new List<ParsedJsonDocument<SecurityBindingDocument>>();
         await using NpgsqlCommand select = connection.CreateCommand();
         select.CommandText = "SELECT Document FROM SecurityBindings ORDER BY SortOrder, Id;";
         await using NpgsqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
-            list.Add(SecurityBindingDocument.FromJson(reader.GetFieldValue<byte[]>(0)));
+            list.Add(PersistedJson.ToPooledDocument<SecurityBindingDocument>(reader.GetFieldValue<byte[]>(0)));
         }
 
         return list;
@@ -319,7 +307,7 @@ public sealed class PostgresSecurityPolicyStore : ISecurityPolicyStore, IAsyncDi
             return false;
         }
 
-        EnsureEtag(kind, key, expectedEtag, new WorkflowEtag(current));
+        SecurityPolicySerialization.EnsureEtag(kind, key, expectedEtag, new WorkflowEtag(current));
         await using NpgsqlCommand delete = connection.CreateCommand();
         delete.CommandText = $"DELETE FROM {table} WHERE {column} = @k;";
         delete.Parameters.AddWithValue("k", key);

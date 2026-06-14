@@ -51,38 +51,38 @@ public readonly partial struct SecurityBindingDocument
     /// <summary>Gets the optimistic-concurrency token.</summary>
     public WorkflowEtag EtagValue => new((string)this.Etag);
 
-    /// <summary>Builds a new binding as a detached value: built into the pooled workspace arena and detached once (no
-    /// scratch buffer, no re-parse). A persisting store serializes it through <see cref="PersistedJson.ToArray"/> for
-    /// its driver and returns this same value; an in-memory store stores it directly.</summary>
+    /// <summary>Realises a new binding into a workspace and writes its JSON to the caller's (pooled) writer in one pass —
+    /// a store serializes the result to its driver bytes via <see cref="PersistedJson.ToArray"/> and returns a pooled
+    /// document over those bytes.</summary>
+    /// <param name="writer">The writer to serialize into (typically the pooled writer from <see cref="PersistedJson"/>).</param>
     /// <param name="id">The binding id.</param>
     /// <param name="definition">The binding content (claim match + per-verb grants).</param>
     /// <param name="actor">The actor creating the binding (audit).</param>
     /// <param name="createdAt">The creation instant.</param>
     /// <param name="etag">The optimistic-concurrency token to assign.</param>
-    /// <returns>The detached binding.</returns>
-    public static SecurityBindingDocument CreateBinding(string id, SecurityBindingDefinition definition, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+    public static void WriteNew(Utf8JsonWriter writer, string id, SecurityBindingDefinition definition, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<Mutable> builder = BuildNew(workspace, id, definition, actor, createdAt, etag);
-        return builder.RootElement.Clone();
+        builder.RootElement.WriteTo(writer);
     }
 
-    /// <summary>Builds an updated copy of this binding as a detached value, modifying only the fields the update touches
-    /// and detaching once (no scratch buffer, no re-parse). Serialize it through <see cref="PersistedJson.ToArray"/>
-    /// to persist.</summary>
+    /// <summary>Realises an updated copy of this binding (modifying only the fields the update touches; id/created
+    /// metadata carried through) and writes its JSON to the caller's (pooled) writer.</summary>
+    /// <param name="writer">The writer to serialize into.</param>
     /// <param name="definition">The new binding content.</param>
     /// <param name="actor">The actor performing the update (audit).</param>
     /// <param name="updatedAt">The update instant.</param>
     /// <param name="etag">The new optimistic-concurrency token to assign.</param>
-    /// <returns>The detached, updated binding.</returns>
-    public SecurityBindingDocument WithUpdate(SecurityBindingDefinition definition, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
+    public void WriteUpdated(Utf8JsonWriter writer, SecurityBindingDefinition definition, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<Mutable> builder = this.ApplyUpdate(workspace, definition, actor, updatedAt, etag);
-        return builder.RootElement.Clone();
+        builder.RootElement.WriteTo(writer);
     }
 
-    /// <summary>Parses a binding from its persisted JSON as a detached value (one owned copy).</summary>
+    /// <summary>Parses a binding from its persisted JSON as a detached value (one owned copy). Prefer
+    /// <see cref="PersistedJson.ToPooledDocument{T}"/> on read paths to keep the buffer pooled.</summary>
     /// <param name="utf8">The UTF-8 JSON document.</param>
     /// <returns>The binding.</returns>
     public static SecurityBindingDocument FromJson(ReadOnlyMemory<byte> utf8) => ParseValue(utf8.Span);
