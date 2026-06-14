@@ -32,10 +32,9 @@ public class WriteToStreamBenchmarks
     [GlobalSetup]
     public void Setup()
     {
-        using ParsedJsonDocument<SecurityRuleDocument> draft = SecurityRuleDocument.Draft("sys:tenant == $claim.tenant", "Tenant isolation.");
         byte[] json = SecurityPolicySerialization.SerializeNewRule(
             "tenant-scoped",
-            draft.RootElement,
+            new SecurityRuleDefinition("sys:tenant == $claim.tenant", "Tenant isolation."),
             "alice",
             DateTimeOffset.UnixEpoch,
             new WorkflowEtag("etag-1"));
@@ -61,7 +60,7 @@ public class WriteToStreamBenchmarks
     [Benchmark]
     public int Pooled_WriteToStream()
     {
-        using Stream stream = CosmosJson.WriteToStream(this.ruleDoc);
+        using MemoryStream stream = CosmosJson.WriteToStream(this.ruleDoc);
         return (int)stream.Length;
     }
 }
