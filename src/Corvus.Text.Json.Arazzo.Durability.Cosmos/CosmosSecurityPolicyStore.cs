@@ -7,6 +7,7 @@ using System.Net;
 using System.Runtime.CompilerServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
+using Corvus.Text.Json.Internal;
 using Microsoft.Azure.Cosmos;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
@@ -27,6 +28,7 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     private const string BindingPartition = "binding";
     private const string MetaPartition = "meta";
     private const string MetaId = "meta";
+    private const int DocBufferSize = 512;
 
     private static readonly byte[] DocProperty = "doc"u8.ToArray();
     private static readonly byte[] GenerationProperty = "generation"u8.ToArray();
@@ -105,17 +107,30 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         ArgumentException.ThrowIfNullOrEmpty(name);
         ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
         ArgumentNullException.ThrowIfNull(actor);
-        byte[] json = SecurityPolicySerialization.SerializeNewRule(name, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        using var stream = EnvelopeStream(name, RulePartition, json);
-        using ResponseMessage response = await this.container.CreateItemStreamAsync(stream, new PartitionKey(RulePartition), cancellationToken: cancellationToken).ConfigureAwait(false);
-        if (response.StatusCode == HttpStatusCode.Conflict)
+        using MemoryStream stream = EnvelopeStream<SecurityRuleDocument, (string Name, SecurityRuleDefinition Def, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
+            name,
+            RulePartition,
+            (name, definition, actor, this.timeProvider.GetUtcNow(), NewEtag()),
+            static (Utf8JsonWriter writer, in (string Name, SecurityRuleDefinition Def, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
+                => SecurityRuleDocument.WriteNew(writer, c.Name, c.Def, c.Actor, c.At, c.Tag),
+            out ParsedJsonDocument<SecurityRuleDocument> document);
+        try
         {
-            throw new InvalidOperationException($"A security rule named '{name}' already exists.");
-        }
+            using ResponseMessage response = await this.container.CreateItemStreamAsync(stream, new PartitionKey(RulePartition), cancellationToken: cancellationToken).ConfigureAwait(false);
+            if (response.StatusCode == HttpStatusCode.Conflict)
+            {
+                throw new InvalidOperationException($"A security rule named '{name}' already exists.");
+            }
 
-        response.EnsureSuccessStatusCode();
-        await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return PersistedJson.ToPooledDocument<SecurityRuleDocument>(json);
+            response.EnsureSuccessStatusCode();
+            await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
+            return document;
+        }
+        catch
+        {
+            document.Dispose();
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -142,12 +157,29 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
             return null;
         }
 
-        byte[] json = SecurityPolicySerialization.SerializeUpdatedRule(doc, "rule", name, expectedEtag, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        using var stream = EnvelopeStream(name, RulePartition, json);
-        using ResponseMessage response = await this.container.ReplaceItemStreamAsync(stream, name, new PartitionKey(RulePartition), cancellationToken: cancellationToken).ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
-        await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return PersistedJson.ToPooledDocument<SecurityRuleDocument>(json);
+        // Parse the existing document once (pooled) to check the etag and carry its immutable audit fields forward; the
+        // updated document is serialized straight into the envelope (no owned byte[]).
+        using ParsedJsonDocument<SecurityRuleDocument> current = PersistedJson.ToPooledDocument<SecurityRuleDocument>(doc);
+        SecurityPolicySerialization.EnsureEtag("rule", name, expectedEtag, current.RootElement.EtagValue);
+        using MemoryStream stream = EnvelopeStream<SecurityRuleDocument, (SecurityRuleDocument Cur, SecurityRuleDefinition Def, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
+            name,
+            RulePartition,
+            (current.RootElement, definition, actor, this.timeProvider.GetUtcNow(), NewEtag()),
+            static (Utf8JsonWriter writer, in (SecurityRuleDocument Cur, SecurityRuleDefinition Def, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
+                => c.Cur.WriteUpdated(writer, c.Def, c.Actor, c.At, c.Tag),
+            out ParsedJsonDocument<SecurityRuleDocument> document);
+        try
+        {
+            using ResponseMessage response = await this.container.ReplaceItemStreamAsync(stream, name, new PartitionKey(RulePartition), cancellationToken: cancellationToken).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+            await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
+            return document;
+        }
+        catch
+        {
+            document.Dispose();
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -160,12 +192,25 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
-        byte[] json = SecurityPolicySerialization.SerializeNewBinding(id, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        using var stream = EnvelopeStream(id, BindingPartition, json);
-        using ResponseMessage response = await this.container.CreateItemStreamAsync(stream, new PartitionKey(BindingPartition), cancellationToken: cancellationToken).ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
-        await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return PersistedJson.ToPooledDocument<SecurityBindingDocument>(json);
+        using MemoryStream stream = EnvelopeStream<SecurityBindingDocument, (string Id, SecurityBindingDefinition Def, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
+            id,
+            BindingPartition,
+            (id, definition, actor, this.timeProvider.GetUtcNow(), NewEtag()),
+            static (Utf8JsonWriter writer, in (string Id, SecurityBindingDefinition Def, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
+                => SecurityBindingDocument.WriteNew(writer, c.Id, c.Def, c.Actor, c.At, c.Tag),
+            out ParsedJsonDocument<SecurityBindingDocument> document);
+        try
+        {
+            using ResponseMessage response = await this.container.CreateItemStreamAsync(stream, new PartitionKey(BindingPartition), cancellationToken: cancellationToken).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+            await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
+            return document;
+        }
+        catch
+        {
+            document.Dispose();
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -192,12 +237,29 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
             return null;
         }
 
-        byte[] json = SecurityPolicySerialization.SerializeUpdatedBinding(doc, "binding", id, expectedEtag, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        using var stream = EnvelopeStream(id, BindingPartition, json);
-        using ResponseMessage response = await this.container.ReplaceItemStreamAsync(stream, id, new PartitionKey(BindingPartition), cancellationToken: cancellationToken).ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
-        await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-        return PersistedJson.ToPooledDocument<SecurityBindingDocument>(json);
+        // Parse the existing document once (pooled) to check the etag and carry its immutable audit fields forward; the
+        // updated document is serialized straight into the envelope (no owned byte[]).
+        using ParsedJsonDocument<SecurityBindingDocument> current = PersistedJson.ToPooledDocument<SecurityBindingDocument>(doc);
+        SecurityPolicySerialization.EnsureEtag("binding", id, expectedEtag, current.RootElement.EtagValue);
+        using MemoryStream stream = EnvelopeStream<SecurityBindingDocument, (SecurityBindingDocument Cur, SecurityBindingDefinition Def, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
+            id,
+            BindingPartition,
+            (current.RootElement, definition, actor, this.timeProvider.GetUtcNow(), NewEtag()),
+            static (Utf8JsonWriter writer, in (SecurityBindingDocument Cur, SecurityBindingDefinition Def, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
+                => c.Cur.WriteUpdated(writer, c.Def, c.Actor, c.At, c.Tag),
+            out ParsedJsonDocument<SecurityBindingDocument> document);
+        try
+        {
+            using ResponseMessage response = await this.container.ReplaceItemStreamAsync(stream, id, new PartitionKey(BindingPartition), cancellationToken: cancellationToken).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+            await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
+            return document;
+        }
+        catch
+        {
+            document.Dispose();
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -226,23 +288,55 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
-    private static MemoryStream EnvelopeStream(string id, string partition, ReadOnlySpan<byte> document)
+    // Serializes the document ONCE into a pooled scratch buffer (rented writer+buffer, returned in finally), base64-encodes
+    // it straight into a freshly built {id, pk, doc} envelope stream, and hands back a pooled document over the same bytes
+    // for the caller to read and dispose. No owned byte[] is materialized: the doc UTF-8 lives only in the pooled scratch
+    // (transient) and the returned document's pooled array (caller-disposed); the MemoryStream is the form the Cosmos
+    // stream API demands. On any failure building the stream, the return document is disposed before the exception escapes.
+    private static MemoryStream EnvelopeStream<T, TContext>(
+        string id,
+        string partition,
+        in TContext context,
+        PersistedJson.WriteCallback<TContext> writeDocument,
+        out ParsedJsonDocument<T> document)
+        where T : struct, IJsonElement<T>
     {
-        var stream = new MemoryStream();
-        using (var writer = new Utf8JsonWriter(stream, WriterOptions))
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        Utf8JsonWriter docWriter = workspace.RentWriterAndBuffer(DocBufferSize, out IByteBufferWriter docBuffer);
+        try
         {
-            writer.WriteStartObject();
-            writer.WriteString("id"u8, id);
-            writer.WriteString("pk"u8, partition);
+            writeDocument(docWriter, in context);
+            docWriter.Flush();
+            ReadOnlySpan<byte> docBytes = docBuffer.WrittenSpan;
+            document = PersistedJson.ToPooledDocument<T>(docBytes);
+            try
+            {
+                var stream = new MemoryStream();
+                using (var writer = new Utf8JsonWriter(stream, WriterOptions))
+                {
+                    writer.WriteStartObject();
+                    writer.WriteString("id"u8, id);
+                    writer.WriteString("pk"u8, partition);
 
-            // Base64-encode the already-serialized document bytes straight into the envelope — no interim base64 string
-            // and no re-serialization.
-            writer.WriteBase64String("doc"u8, document);
-            writer.WriteEndObject();
+                    // Base64-encode the freshly serialized document straight from the pooled scratch span — no interim
+                    // base64 string and no owned byte[].
+                    writer.WriteBase64String("doc"u8, docBytes);
+                    writer.WriteEndObject();
+                }
+
+                stream.Position = 0;
+                return stream;
+            }
+            catch
+            {
+                document.Dispose();
+                throw;
+            }
         }
-
-        stream.Position = 0;
-        return stream;
+        finally
+        {
+            workspace.ReturnWriterAndBuffer(docWriter, docBuffer);
+        }
     }
 
     private static async ValueTask ProvisionAsync(CosmosClient client, string databaseName, CancellationToken cancellationToken)

@@ -13,4 +13,4 @@ ManualConfig config = ManualConfig.CreateMinimumViable()
     .AddJob(Job.ShortRun.WithToolchain(InProcessEmitToolchain.Instance))
     .AddDiagnoser(MemoryDiagnoser.Default);
 
-BenchmarkRunner.Run<DocumentMaterializationBenchmarks>(config);
+BenchmarkRunner.Run([typeof(DocumentMaterializationBenchmarks), typeof(EnvelopeBuildBenchmarks)], config);
