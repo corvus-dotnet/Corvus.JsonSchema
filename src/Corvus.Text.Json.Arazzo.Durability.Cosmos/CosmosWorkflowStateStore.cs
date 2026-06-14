@@ -152,12 +152,16 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
 
     private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunId id, byte[] checkpoint, WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
     {
-        RunDocument document = RunDocument.Create(id, checkpoint, index);
         var partition = new PartitionKey(id.Value);
+
+        // Serialize the run straight into the pooled write stream — no intermediate RunDocument value, no re-serialization.
+        using var stream = CosmosJson.WriteToStream(
+            (Id: id, Checkpoint: checkpoint, Index: index),
+            static (Utf8JsonWriter writer, in (WorkflowRunId Id, byte[] Checkpoint, WorkflowRunIndexEntry Index) ctx)
+                => RunDocument.WriteJson(writer, ctx.Id, ctx.Checkpoint, ctx.Index));
 
         if (expected.IsNone)
         {
-            using var stream = CosmosJson.WriteToStream(document);
             using ResponseMessage response = await this.runs.CreateItemStreamAsync(stream, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (response.StatusCode is HttpStatusCode.Conflict)
             {
@@ -170,7 +174,6 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         else
         {
             var options = new ItemRequestOptions { IfMatchEtag = expected.Value };
-            using var stream = CosmosJson.WriteToStream(document);
             using ResponseMessage response = await this.runs.ReplaceItemStreamAsync(stream, id.Value, partition, options, cancellationToken).ConfigureAwait(false);
             if (response.StatusCode is HttpStatusCode.Conflict or HttpStatusCode.PreconditionFailed or HttpStatusCode.NotFound)
             {
@@ -205,13 +208,18 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         DateTimeOffset expiresAt = now + ttl;
         string token = Guid.NewGuid().ToString("N");
-        LeaseDocument document = LeaseDocument.Create(id.Value, owner, token, expiresAt.ToUnixTimeMilliseconds());
         var partition = new PartitionKey(id.Value);
+
+        // Serialize the lease straight into the pooled write stream — no intermediate LeaseDocument value.
+        MemoryStream BuildLeaseStream() => CosmosJson.WriteToStream(
+            (Id: id.Value, Owner: owner, Token: token, ExpiresAt: expiresAt.ToUnixTimeMilliseconds()),
+            static (Utf8JsonWriter writer, in (string Id, string Owner, string Token, long ExpiresAt) ctx)
+                => LeaseDocument.WriteJson(writer, ctx.Id, ctx.Owner, ctx.Token, ctx.ExpiresAt));
 
         using ResponseMessage read = await this.leases.ReadItemStreamAsync(id.Value, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
         if (read.StatusCode == HttpStatusCode.NotFound)
         {
-            using var createStream = CosmosJson.WriteToStream(document);
+            using var createStream = BuildLeaseStream();
             using ResponseMessage created = await this.leases.CreateItemStreamAsync(createStream, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (created.StatusCode is HttpStatusCode.Conflict)
             {
@@ -232,7 +240,7 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         }
 
         var options = new ItemRequestOptions { IfMatchEtag = read.Headers.ETag };
-        using var replaceStream = CosmosJson.WriteToStream(document);
+        using var replaceStream = BuildLeaseStream();
         using ResponseMessage replaced = await this.leases.ReplaceItemStreamAsync(replaceStream, id.Value, partition, options, cancellationToken).ConfigureAwait(false);
         if (replaced.StatusCode is HttpStatusCode.Conflict or HttpStatusCode.PreconditionFailed)
         {

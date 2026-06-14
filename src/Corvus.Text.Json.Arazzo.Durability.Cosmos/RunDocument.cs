@@ -2,22 +2,19 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using Corvus.Text.Json;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
 
 /// <summary>
 /// The Azure Cosmos DB document shape for a workflow run, generated from <c>Schemas/RunDocument.json</c>. The store
-/// builds it from a checkpoint + index entry (<see cref="Create"/> → <see cref="ToJsonBytes"/>) and reads it back
+/// writes it straight to a Cosmos stream from a checkpoint + index entry (<see cref="WriteJson"/>) and reads it back
 /// from a stream response or query page (<see cref="FromJson"/> → <see cref="ToIndexEntry"/>) entirely through
 /// Corvus.Text.Json — no reflection serializer.
 /// </summary>
 [JsonSchemaTypeGenerator("Schemas/RunDocument.json")]
 public readonly partial struct RunDocument
 {
-    private static readonly JsonWriterOptions WriterOptions = new() { Indented = false, SkipValidation = true };
-
     /// <summary>Gets the run id.</summary>
     public string IdValue => (string)this.Id;
 
@@ -31,78 +28,78 @@ public readonly partial struct RunDocument
     /// <returns>The checkpoint bytes.</returns>
     public byte[] CheckpointBytes() => Convert.FromBase64String((string)this.Checkpoint);
 
-    /// <summary>Builds the document from a checkpoint and its index entry, detached and ready to persist.</summary>
+    /// <summary>
+    /// Writes the run document's persisted JSON straight to <paramref name="writer"/> from a checkpoint and its index
+    /// entry — no intermediate <see cref="RunDocument"/> value and no re-serialization (the store hands this to
+    /// <c>CosmosJson.WriteToStream</c> so the run is serialized exactly once, into a pooled stream).
+    /// </summary>
+    /// <param name="writer">The writer to write the document to.</param>
     /// <param name="id">The run id.</param>
     /// <param name="checkpoint">The opaque checkpoint bytes.</param>
     /// <param name="index">The projected index entry.</param>
-    /// <returns>The document.</returns>
-    public static RunDocument Create(WorkflowRunId id, byte[] checkpoint, in WorkflowRunIndexEntry index)
+    public static void WriteJson(Utf8JsonWriter writer, WorkflowRunId id, byte[] checkpoint, in WorkflowRunIndexEntry index)
     {
-        var buffer = new ArrayBufferWriter<byte>();
-        using (var writer = new Utf8JsonWriter(buffer, WriterOptions))
+        writer.WriteStartObject();
+        writer.WriteString(JsonPropertyNames.IdUtf8, id.Value);
+
+        // Base64-encode the checkpoint straight into the writer — no intermediate base64 string (which would scale with
+        // checkpoint size on every write). Read back by RunDocument.CheckpointBytes via Convert.FromBase64String.
+        writer.WriteBase64String(JsonPropertyNames.CheckpointUtf8, checkpoint);
+        writer.WriteString(JsonPropertyNames.StatusUtf8, index.Status.ToString());
+        writer.WriteString(JsonPropertyNames.WorkflowIdUtf8, index.WorkflowId);
+        writer.WriteNumber(JsonPropertyNames.CreatedAtUtf8, index.CreatedAt.ToUnixTimeMilliseconds());
+        writer.WriteNumber(JsonPropertyNames.UpdatedAtUtf8, index.UpdatedAt.ToUnixTimeMilliseconds());
+        if (index.DueAt is { } dueAt)
         {
-            writer.WriteStartObject();
-            writer.WriteString(JsonPropertyNames.IdUtf8, id.Value);
-            writer.WriteString(JsonPropertyNames.CheckpointUtf8, Convert.ToBase64String(checkpoint));
-            writer.WriteString(JsonPropertyNames.StatusUtf8, index.Status.ToString());
-            writer.WriteString(JsonPropertyNames.WorkflowIdUtf8, index.WorkflowId);
-            writer.WriteNumber(JsonPropertyNames.CreatedAtUtf8, index.CreatedAt.ToUnixTimeMilliseconds());
-            writer.WriteNumber(JsonPropertyNames.UpdatedAtUtf8, index.UpdatedAt.ToUnixTimeMilliseconds());
-            if (index.DueAt is { } dueAt)
-            {
-                writer.WriteNumber(JsonPropertyNames.DueAtUtf8, dueAt.ToUnixTimeMilliseconds());
-            }
-
-            if (index.AwaitingChannel is { } awaitingChannel)
-            {
-                writer.WriteString(JsonPropertyNames.AwaitingChannelUtf8, awaitingChannel);
-            }
-
-            if (index.AwaitingCorrelationId is { } awaitingCorrelationId)
-            {
-                writer.WriteString(JsonPropertyNames.AwaitingCorrelationIdUtf8, awaitingCorrelationId);
-            }
-
-            if (index.ErrorType is { } errorType)
-            {
-                writer.WriteString(JsonPropertyNames.ErrorTypeUtf8, errorType);
-            }
-
-            if (index.CorrelationId is { } correlationId)
-            {
-                writer.WriteString(JsonPropertyNames.CorrelationIdUtf8, correlationId);
-            }
-
-            if (index.Tags is { Count: > 0 } tags)
-            {
-                writer.WriteStartArray(JsonPropertyNames.TagsUtf8);
-                foreach (string tag in tags)
-                {
-                    writer.WriteStringValue(tag);
-                }
-
-                writer.WriteEndArray();
-            }
-
-            if (index.SecurityTags is { Count: > 0 } securityTags)
-            {
-                writer.WriteStartArray(JsonPropertyNames.SecurityTagsUtf8);
-                foreach (SecurityTag tag in securityTags)
-                {
-                    writer.WriteStartObject();
-                    writer.WriteString(EmbeddedSecurityTag.JsonPropertyNames.KUtf8, tag.Key);
-                    writer.WriteString(EmbeddedSecurityTag.JsonPropertyNames.VUtf8, tag.Value);
-                    writer.WriteEndObject();
-                }
-
-                writer.WriteEndArray();
-            }
-
-            writer.WriteEndObject();
+            writer.WriteNumber(JsonPropertyNames.DueAtUtf8, dueAt.ToUnixTimeMilliseconds());
         }
 
-        using ParsedJsonDocument<RunDocument> doc = ParsedJsonDocument<RunDocument>.Parse(buffer.WrittenMemory);
-        return doc.RootElement.Clone();
+        if (index.AwaitingChannel is { } awaitingChannel)
+        {
+            writer.WriteString(JsonPropertyNames.AwaitingChannelUtf8, awaitingChannel);
+        }
+
+        if (index.AwaitingCorrelationId is { } awaitingCorrelationId)
+        {
+            writer.WriteString(JsonPropertyNames.AwaitingCorrelationIdUtf8, awaitingCorrelationId);
+        }
+
+        if (index.ErrorType is { } errorType)
+        {
+            writer.WriteString(JsonPropertyNames.ErrorTypeUtf8, errorType);
+        }
+
+        if (index.CorrelationId is { } correlationId)
+        {
+            writer.WriteString(JsonPropertyNames.CorrelationIdUtf8, correlationId);
+        }
+
+        if (index.Tags is { Count: > 0 } tags)
+        {
+            writer.WriteStartArray(JsonPropertyNames.TagsUtf8);
+            foreach (string tag in tags)
+            {
+                writer.WriteStringValue(tag);
+            }
+
+            writer.WriteEndArray();
+        }
+
+        if (index.SecurityTags is { Count: > 0 } securityTags)
+        {
+            writer.WriteStartArray(JsonPropertyNames.SecurityTagsUtf8);
+            foreach (SecurityTag tag in securityTags)
+            {
+                writer.WriteStartObject();
+                writer.WriteString(EmbeddedSecurityTag.JsonPropertyNames.KUtf8, tag.Key);
+                writer.WriteString(EmbeddedSecurityTag.JsonPropertyNames.VUtf8, tag.Value);
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
+        }
+
+        writer.WriteEndObject();
     }
 
     /// <summary>Parses a document from its persisted JSON, detached from the parse buffer.</summary>
@@ -112,19 +109,6 @@ public readonly partial struct RunDocument
     {
         using ParsedJsonDocument<RunDocument> doc = ParsedJsonDocument<RunDocument>.Parse(utf8);
         return doc.RootElement.Clone();
-    }
-
-    /// <summary>Serializes this document to its persisted JSON form.</summary>
-    /// <returns>The UTF-8 JSON document.</returns>
-    public byte[] ToJsonBytes()
-    {
-        var buffer = new ArrayBufferWriter<byte>();
-        using (var writer = new Utf8JsonWriter(buffer, WriterOptions))
-        {
-            this.WriteTo(writer);
-        }
-
-        return buffer.WrittenSpan.ToArray();
     }
 
     /// <summary>Projects this document back to its index entry.</summary>

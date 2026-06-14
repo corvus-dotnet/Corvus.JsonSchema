@@ -68,7 +68,7 @@ public class RunWriteBenchmarks
     [Benchmark]
     public int Direct_WriteToStream()
     {
-        using Stream stream = CosmosJson.WriteToStream(
+        using MemoryStream stream = CosmosJson.WriteToStream(
             (Id: this.id, Checkpoint: this.checkpoint, Index: this.index),
             static (Utf8JsonWriter writer, in (WorkflowRunId Id, byte[] Checkpoint, WorkflowRunIndexEntry Index) ctx)
                 => RunDocument.WriteJson(writer, ctx.Id, ctx.Checkpoint, ctx.Index));
