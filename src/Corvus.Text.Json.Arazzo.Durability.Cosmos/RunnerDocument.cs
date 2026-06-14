@@ -41,7 +41,11 @@ public readonly partial struct RunnerDocument
             writer.WriteStartObject();
             writer.WriteString(JsonPropertyNames.IdUtf8, runnerId);
             writer.WriteNumber(JsonPropertyNames.LastSeenAtUtf8, registration.LastSeenAtValue.ToUnixTimeMilliseconds());
-            writer.WriteString(JsonPropertyNames.DocUtf8, Convert.ToBase64String(registration.ToJsonBytes()));
+
+            // Base64-encode the registration's JSON straight from a buffer into the doc field — no interim base64 string.
+            var registrationBuffer = new ArrayBufferWriter<byte>();
+            registration.WriteTo(registrationBuffer);
+            writer.WriteBase64String(JsonPropertyNames.DocUtf8, registrationBuffer.WrittenSpan);
             writer.WriteStartArray(JsonPropertyNames.LoadedVersionsUtf8);
             foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
             {

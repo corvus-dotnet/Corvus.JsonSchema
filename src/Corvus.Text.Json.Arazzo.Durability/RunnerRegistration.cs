@@ -3,8 +3,6 @@
 // </copyright>
 
 using System.Buffers;
-using System.Globalization;
-using System.Text.Json;
 using Corvus.Text.Json;
 
 namespace Corvus.Text.Json.Arazzo.Durability;
@@ -14,21 +12,20 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// timestamps, capacity, supported transports, and the catalog versions it hosts.
 /// </summary>
 /// <remarks>
-/// This is the persisted registry entity. Every backend stores it as its JSON document verbatim
-/// (see <see cref="ToJsonBytes"/> / <see cref="FromJson"/>), keyed by <see cref="RunnerId"/>, with a
-/// queryable <see cref="LastSeenAtValue"/> for pruning.
+/// This is the persisted registry entity. Every backend stores it as its JSON document verbatim, keyed by
+/// <see cref="RunnerId"/>, with a queryable <see cref="LastSeenAtValue"/> for pruning. A store writes it straight
+/// into the buffer (or stream) it owns (<see cref="WriteTo(IBufferWriter{byte})"/> on register,
+/// <see cref="WriteWithLastSeenAt"/> on heartbeat) and reads it back with <see cref="FromJson"/> — no detached
+/// clone, no second serialization.
 /// </remarks>
 [JsonSchemaTypeGenerator("Schemas/RunnerRegistration.json")]
 public readonly partial struct RunnerRegistration
 {
-    private static readonly JsonWriterOptions WriterOptions = new() { Indented = false, SkipValidation = true };
-
     /// <summary>Gets the runner id as a string.</summary>
     public string RunnerIdValue => (string)this.RunnerId;
 
     /// <summary>Gets the instant of the runner's most recent heartbeat.</summary>
-    public DateTimeOffset LastSeenAtValue
-        => DateTimeOffset.Parse((string)this.LastSeenAt, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+    public DateTimeOffset LastSeenAtValue => ((NodaTime.OffsetDateTime)this.LastSeenAt).ToDateTimeOffset();
 
     /// <summary>Determines whether this runner hosts the given catalog version with it loaded and ready to run.</summary>
     /// <param name="baseWorkflowId">The base workflow id of the version.</param>
@@ -65,44 +62,65 @@ public readonly partial struct RunnerRegistration
         return list;
     }
 
-    /// <summary>Parses a <see cref="RunnerRegistration"/> from its persisted JSON document, detached from the parse buffer.</summary>
+    /// <summary>Parses a <see cref="RunnerRegistration"/> from its persisted JSON document as a detached value (one owned copy).</summary>
     /// <param name="utf8">The UTF-8 JSON document.</param>
     /// <returns>The runner registration.</returns>
-    public static RunnerRegistration FromJson(ReadOnlyMemory<byte> utf8)
-    {
-        using ParsedJsonDocument<RunnerRegistration> doc = ParsedJsonDocument<RunnerRegistration>.Parse(utf8);
-        return doc.RootElement.Clone();
-    }
+    public static RunnerRegistration FromJson(ReadOnlyMemory<byte> utf8) => ParseValue(utf8.Span);
 
-    /// <summary>Serializes this registration to its persisted JSON document.</summary>
-    /// <returns>The UTF-8 JSON document.</returns>
-    public byte[] ToJsonBytes()
+    /// <summary>Writes this registration's JSON straight into the caller's buffer (or stream) in a single pass.</summary>
+    /// <param name="buffer">The destination the caller owns (a rented buffer, or a writer over a stream).</param>
+    public void WriteTo(IBufferWriter<byte> buffer)
     {
-        var buffer = new ArrayBufferWriter<byte>();
-        using (var writer = new Utf8JsonWriter(buffer, WriterOptions))
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        Utf8JsonWriter writer = workspace.RentWriter(buffer);
+        try
         {
             this.WriteTo(writer);
+            writer.Flush();
         }
-
-        return buffer.WrittenSpan.ToArray();
+        finally
+        {
+            workspace.ReturnWriter(writer);
+        }
     }
 
-    /// <summary>Returns a copy of this registration with its <see cref="LastSeenAt"/> advanced.</summary>
+    /// <summary>Writes a heartbeated copy of this registration (its <see cref="LastSeenAt"/> advanced) into the caller's
+    /// buffer, modifying only that field — no field-by-field rebuild.</summary>
+    /// <param name="buffer">The destination the caller owns (a rented buffer, or a writer over a stream).</param>
     /// <param name="at">The instant of the heartbeat.</param>
-    /// <returns>The updated registration, detached and ready to persist.</returns>
+    public void WriteWithLastSeenAt(IBufferWriter<byte> buffer, DateTimeOffset at)
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<Mutable> builder = this.HeartbeatBuilder(workspace, at);
+        Utf8JsonWriter writer = workspace.RentWriter(buffer);
+        try
+        {
+            builder.RootElement.WriteTo(writer);
+            writer.Flush();
+        }
+        finally
+        {
+            workspace.ReturnWriter(writer);
+        }
+    }
+
+    /// <summary>Returns a heartbeated copy of this registration (its <see cref="LastSeenAt"/> advanced) as a detached
+    /// value — for a store that must reshape it (e.g. re-embed it in a backend envelope). Modifies only that field and
+    /// detaches once; no scratch buffer, no re-parse. Byte-oriented stores use <see cref="WriteWithLastSeenAt"/>.</summary>
+    /// <param name="at">The instant of the heartbeat.</param>
+    /// <returns>The detached, heartbeated registration.</returns>
     public RunnerRegistration WithLastSeenAt(DateTimeOffset at)
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        using JsonDocumentBuilder<Mutable> builder = CreateBuilder(
-            workspace,
-            hostedVersions: this.HostedVersions,
-            lastSeenAt: (JsonDateTime.Source)at.ToString("O", CultureInfo.InvariantCulture),
-            maxConcurrency: this.MaxConcurrency,
-            runnerId: this.RunnerId,
-            startedAt: this.StartedAt,
-            transports: this.Transports,
-            address: this.Address.ValueKind == JsonValueKind.Undefined ? default : (JsonString.Source)this.Address);
-
+        using JsonDocumentBuilder<Mutable> builder = this.HeartbeatBuilder(workspace, at);
         return builder.RootElement.Clone();
+    }
+
+    // Realises a mutable builder over this registration with its LastSeenAt advanced (modifies only that field).
+    private JsonDocumentBuilder<Mutable> HeartbeatBuilder(JsonWorkspace workspace, DateTimeOffset at)
+    {
+        JsonDocumentBuilder<Mutable> builder = this.CreateBuilder(workspace);
+        builder.RootElement.SetLastSeenAt(at);
+        return builder;
     }
 }

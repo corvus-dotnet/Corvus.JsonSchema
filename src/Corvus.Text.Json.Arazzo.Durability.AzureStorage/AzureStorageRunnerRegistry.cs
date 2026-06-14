@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Text;
 using Azure;
 using Azure.Data.Tables;
@@ -125,7 +126,15 @@ public sealed class AzureStorageRunnerRegistry : IRunnerRegistry
             }
         }
 
-        await this.runners.UpsertEntityAsync(BuildEntity(registration), TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+        var buffer = new ArrayBufferWriter<byte>();
+        registration.WriteTo(buffer);
+        byte[] doc = buffer.WrittenSpan.ToArray();
+        var entity = new TableEntity(PartitionKey, runnerId)
+        {
+            ["LastSeenAt"] = registration.LastSeenAtValue.ToUnixTimeMilliseconds(),
+            ["Doc"] = doc,
+        };
+        await this.runners.UpsertEntityAsync(entity, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
 
         foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
         {
@@ -166,8 +175,16 @@ public sealed class AzureStorageRunnerRegistry : IRunnerRegistry
         }
 
         byte[] doc = existing.Value!.GetBinary("Doc") ?? [];
-        RunnerRegistration updated = RunnerRegistration.FromJson(doc).WithLastSeenAt(at);
-        await this.runners.UpsertEntityAsync(BuildEntity(updated), TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+        RunnerRegistration current = RunnerRegistration.FromJson(doc);
+        var buffer = new ArrayBufferWriter<byte>();
+        current.WriteWithLastSeenAt(buffer, at);
+        byte[] json = buffer.WrittenSpan.ToArray();
+        var entity = new TableEntity(PartitionKey, runnerId)
+        {
+            ["LastSeenAt"] = at.ToUnixTimeMilliseconds(),
+            ["Doc"] = json,
+        };
+        await this.runners.UpsertEntityAsync(entity, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
         return true;
     }
 
@@ -205,13 +222,6 @@ public sealed class AzureStorageRunnerRegistry : IRunnerRegistry
 
         return removed;
     }
-
-    private static TableEntity BuildEntity(RunnerRegistration registration)
-        => new(PartitionKey, registration.RunnerIdValue)
-        {
-            ["LastSeenAt"] = registration.LastSeenAtValue.ToUnixTimeMilliseconds(),
-            ["Doc"] = registration.ToJsonBytes(),
-        };
 
     /// <summary>
     /// Builds the hosting-index PartitionKey for a (base workflow id, version) pair. The base id is Base64Url-encoded
