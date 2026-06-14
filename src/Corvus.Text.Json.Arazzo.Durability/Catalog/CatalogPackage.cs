@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using System.IO.Compression;
 using System.Text.RegularExpressions;
 using Corvus.Text.Json;
@@ -259,13 +258,9 @@ public static partial class CatalogPackage
     private static byte[] RewriteWorkflowId(ReadOnlyMemory<byte> workflowUtf8, string newWorkflowId)
     {
         using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(workflowUtf8);
-        var buffer = new ArrayBufferWriter<byte>();
-        using (var writer = new Utf8JsonWriter(buffer, new JsonWriterOptions { Indented = false, SkipValidation = true }))
-        {
-            WriteWorkflowWithId(document.RootElement, writer, newWorkflowId);
-        }
-
-        return buffer.WrittenSpan.ToArray();
+        return PersistedJson.ToArray(
+            (Root: document.RootElement, NewWorkflowId: newWorkflowId),
+            static (Utf8JsonWriter writer, in (JsonElement Root, string NewWorkflowId) c) => WriteWorkflowWithId(c.Root, writer, c.NewWorkflowId));
     }
 
     private static void WriteWorkflowWithId(JsonElement workflow, Utf8JsonWriter writer, string newWorkflowId)
