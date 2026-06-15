@@ -41,8 +41,14 @@ public static class ControlPlaneScopes
     /// <summary>Author the row-security policy (create/update/delete rules and bindings).</summary>
     public const string SecurityWrite = "security:write";
 
+    /// <summary>Read source credential bindings (references and metadata only — never secret material).</summary>
+    public const string CredentialsRead = "credentials:read";
+
+    /// <summary>Manage source credential bindings (references and metadata only — never secret material).</summary>
+    public const string CredentialsWrite = "credentials:write";
+
     /// <summary>Gets all control-plane capability scopes.</summary>
-    public static IReadOnlyList<string> All { get; } = [CatalogRead, CatalogWrite, CatalogPurge, RunsRead, RunsWrite, RunsPurge, SecurityRead, SecurityWrite];
+    public static IReadOnlyList<string> All { get; } = [CatalogRead, CatalogWrite, CatalogPurge, RunsRead, RunsWrite, RunsPurge, SecurityRead, SecurityWrite, CredentialsRead, CredentialsWrite];
 }
 
 /// <summary>
