@@ -355,6 +355,27 @@ public readonly partial struct CredentialBindingSummary
     }
 
     /// <summary>
+    /// Gets the (optional) <c>managementTags</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Security tags scoping who may MANAGE this binding (&#167;14.2), independent of usageTags.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingSummary.CredentialSecurityTagArray ManagementTags
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ManagementTagsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingSummary.CredentialSecurityTagArray value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the <c>secretRefs</c> property.
     /// </summary>
     /// <remarks>
@@ -388,6 +409,27 @@ public readonly partial struct CredentialBindingSummary
         get
         {
             if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SourceNameUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>usageTags</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Security tags scoping which runs may USE this binding (&#167;13), independent of managementTags.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingSummary.UsageTagsCredentialSeArray UsageTags
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UsageTagsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingSummary.UsageTagsCredentialSeArray value))
             {
                 return value;
             }
@@ -890,6 +932,11 @@ public readonly partial struct CredentialBindingSummary
         public const string LastUpdatedBy = "lastUpdatedBy";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="ManagementTags"/>.
+        /// </summary>
+        public const string ManagementTags = "managementTags";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="SecretRefs"/>.
         /// </summary>
         public const string SecretRefs = "secretRefs";
@@ -898,6 +945,11 @@ public readonly partial struct CredentialBindingSummary
         /// Gets the JSON property name for <see cref="SourceName"/>.
         /// </summary>
         public const string SourceName = "sourceName";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="UsageTags"/>.
+        /// </summary>
+        public const string UsageTags = "usageTags";
 
         /// <summary>
         /// Gets the JSON property name for <see cref="AuthKind"/>.
@@ -950,6 +1002,11 @@ public readonly partial struct CredentialBindingSummary
         public static ReadOnlySpan<byte> LastUpdatedByUtf8 => "lastUpdatedBy"u8;
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="ManagementTags"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ManagementTagsUtf8 => "managementTags"u8;
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="SecretRefs"/>.
         /// </summary>
         public static ReadOnlySpan<byte> SecretRefsUtf8 => "secretRefs"u8;
@@ -958,6 +1015,11 @@ public readonly partial struct CredentialBindingSummary
         /// Gets the JSON property name for <see cref="SourceName"/>.
         /// </summary>
         public static ReadOnlySpan<byte> SourceNameUtf8 => "sourceName"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="UsageTags"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> UsageTagsUtf8 => "usageTags"u8;
     }
 
     /// <summary>
@@ -1016,6 +1078,11 @@ public readonly partial struct CredentialBindingSummary
         public static ReadOnlySpan<byte> LastUpdatedBy => "lastUpdatedBy"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="ManagementTags"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ManagementTags => "managementTags"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="SecretRefs"/>.
         /// </summary>
         public static ReadOnlySpan<byte> SecretRefs => "secretRefs"u8;
@@ -1024,6 +1091,11 @@ public readonly partial struct CredentialBindingSummary
         /// Gets the escaped UTF-8 JSON property name for <see cref="SourceName"/>.
         /// </summary>
         public static ReadOnlySpan<byte> SourceName => "sourceName"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="UsageTags"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> UsageTags => "usageTags"u8;
     }
 
     /// <summary>
@@ -1083,6 +1155,11 @@ public readonly partial struct CredentialBindingSummary
         public static ReadOnlySpan<byte> LastUpdatedBy => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x61, 0x73, 0x74, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x64, 0x42, 0x79, 0x22];
 
         /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="ManagementTags"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ManagementTags => [0x05, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x6E, 0x61, 0x67, 0x65, 0x6D, 0x65, 0x6E, 0x74, 0x54, 0x61, 0x67, 0x73, 0x22];
+
+        /// <summary>
         /// Gets the pre-baked property name blob for <see cref="SecretRefs"/>.
         /// </summary>
         public static ReadOnlySpan<byte> SecretRefs => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x65, 0x63, 0x72, 0x65, 0x74, 0x52, 0x65, 0x66, 0x73, 0x22];
@@ -1091,5 +1168,10 @@ public readonly partial struct CredentialBindingSummary
         /// Gets the pre-baked property name blob for <see cref="SourceName"/>.
         /// </summary>
         public static ReadOnlySpan<byte> SourceName => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x4E, 0x61, 0x6D, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="UsageTags"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> UsageTags => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x75, 0x73, 0x61, 0x67, 0x65, 0x54, 0x61, 0x67, 0x73, 0x22];
     }
 }
