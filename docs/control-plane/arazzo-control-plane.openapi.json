@@ -2266,6 +2266,15 @@
         },
         "required": ["key", "value"]
       },
+      "CredentialSecurityTag": {
+        "type": "object",
+        "description": "A security label (KVP) scoping a binding for row authorization (§14.2) — e.g. tenant=acme, team=ops.",
+        "properties": {
+          "key": { "type": "string", "description": "The label key (e.g. tenant, team)." },
+          "value": { "type": "string", "description": "The label value (e.g. acme, ops)." }
+        },
+        "required": ["key", "value"]
+      },
       "CredentialBindingWrite": {
         "type": "object",
         "description": "A source credential binding to create — references and non-secret metadata only. Secret material must never appear here; each secretRefs entry is a SecretRef pointer the runner dereferences.",
@@ -2289,6 +2298,16 @@
             "type": "array",
             "description": "Non-secret auth configuration. Secret material must never appear here.",
             "items": { "$ref": "#/components/schemas/CredentialConfigEntry" }
+          },
+          "managementTags": {
+            "type": "array",
+            "description": "Security tags scoping who may MANAGE this binding (§14.2), independent of usageTags. The deployment additionally stamps the creating principal's internal tenant tag, and rejects a set the creator's own reach does not admit (no privilege escalation). The reserved internal-tag prefix is not allowed here.",
+            "items": { "$ref": "#/components/schemas/CredentialSecurityTag" }
+          },
+          "usageTags": {
+            "type": "array",
+            "description": "Security tags scoping which RUNS may USE this binding (§13), independent of managementTags. A run may use the binding only if its own tags satisfy every tag here (label-superset). Omit to default to the creating principal's tenant (the owner's runs). The reserved internal-tag prefix is not allowed here.",
+            "items": { "$ref": "#/components/schemas/CredentialSecurityTag" }
           },
           "description": {
             "type": "string"
@@ -2331,6 +2350,16 @@
           "config": {
             "type": "array",
             "items": { "$ref": "#/components/schemas/CredentialConfigEntry" }
+          },
+          "managementTags": {
+            "type": "array",
+            "description": "Security tags scoping who may MANAGE this binding (§14.2), independent of usageTags.",
+            "items": { "$ref": "#/components/schemas/CredentialSecurityTag" }
+          },
+          "usageTags": {
+            "type": "array",
+            "description": "Security tags scoping which runs may USE this binding (§13), independent of managementTags.",
+            "items": { "$ref": "#/components/schemas/CredentialSecurityTag" }
           },
           "description": { "type": "string" },
           "createdBy": { "type": "string" },

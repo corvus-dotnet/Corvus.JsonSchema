@@ -93,8 +93,10 @@ public readonly partial struct CredentialBindingSummary
         private static readonly JsonSchemaPathProvider IdSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/id"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider LastUpdatedAtSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/lastUpdatedAt"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider LastUpdatedBySchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/lastUpdatedBy"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider ManagementTagsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/managementTags"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider SecretRefsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/secretRefs"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider SourceNameSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/sourceName"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider UsageTagsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/usageTags"u8, buffer, out written);
 
         private static void MatchAuthKind(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
         {
@@ -288,10 +290,25 @@ public readonly partial struct CredentialBindingSummary
             context.CommitChildContext(childContext9.IsMatch, ref childContext9);
         }
 
-        private static void MatchSecretRefs(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchManagementTags(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext10 =
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingSummary.CredentialSecurityTagArray.JsonSchema.PushChildContextUnescaped(
+                    parentDocument,
+                    parentDocumentIndex,
+                    ref context,
+                    JsonPropertyNames.ManagementTagsUtf8,
+                    evaluationPath: ManagementTagsSchemaEvaluationPath);
+
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingSummary.CredentialSecurityTagArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext10);
+            context.CommitChildContext(childContext10.IsMatch, ref childContext10);
+        }
+
+        private static void MatchSecretRefs(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        {
+            context.AddLocalEvaluatedProperty(propertyCount);
+            JsonSchemaContext childContext11 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingSummary.SecretReferenceArray.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -299,8 +316,8 @@ public readonly partial struct CredentialBindingSummary
                     JsonPropertyNames.SecretRefsUtf8,
                     evaluationPath: SecretRefsSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingSummary.SecretReferenceArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext10);
-            context.CommitChildContext(childContext10.IsMatch, ref childContext10);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingSummary.SecretReferenceArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext11);
+            context.CommitChildContext(childContext11.IsMatch, ref childContext11);
 
             if (!context.HasCollector && !context.IsMatch)
             {
@@ -313,7 +330,7 @@ public readonly partial struct CredentialBindingSummary
         private static void MatchSourceName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext11 =
+            JsonSchemaContext childContext12 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -321,8 +338,8 @@ public readonly partial struct CredentialBindingSummary
                     JsonPropertyNames.SourceNameUtf8,
                     evaluationPath: SourceNameSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext11);
-            context.CommitChildContext(childContext11.IsMatch, ref childContext11);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext12);
+            context.CommitChildContext(childContext12.IsMatch, ref childContext12);
 
             if (!context.HasCollector && !context.IsMatch)
             {
@@ -330,6 +347,21 @@ public readonly partial struct CredentialBindingSummary
             }
 
             requiredBitBuffer[RequiredOffsetForSourceName] |= RequiredBitForSourceName;
+        }
+
+        private static void MatchUsageTags(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        {
+            context.AddLocalEvaluatedProperty(propertyCount);
+            JsonSchemaContext childContext13 =
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingSummary.UsageTagsCredentialSeArray.JsonSchema.PushChildContextUnescaped(
+                    parentDocument,
+                    parentDocumentIndex,
+                    ref context,
+                    JsonPropertyNames.UsageTagsUtf8,
+                    evaluationPath: UsageTagsSchemaEvaluationPath);
+
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingSummary.UsageTagsCredentialSeArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext13);
+            context.CommitChildContext(childContext13.IsMatch, ref childContext13);
         }
 
         private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
@@ -345,8 +377,10 @@ public readonly partial struct CredentialBindingSummary
                 (static () => JsonPropertyNames.IdUtf8, MatchId),
                 (static () => JsonPropertyNames.LastUpdatedAtUtf8, MatchLastUpdatedAt),
                 (static () => JsonPropertyNames.LastUpdatedByUtf8, MatchLastUpdatedBy),
+                (static () => JsonPropertyNames.ManagementTagsUtf8, MatchManagementTags),
                 (static () => JsonPropertyNames.SecretRefsUtf8, MatchSecretRefs),
                 (static () => JsonPropertyNames.SourceNameUtf8, MatchSourceName),
+                (static () => JsonPropertyNames.UsageTagsUtf8, MatchUsageTags),
             ]);
         }
 

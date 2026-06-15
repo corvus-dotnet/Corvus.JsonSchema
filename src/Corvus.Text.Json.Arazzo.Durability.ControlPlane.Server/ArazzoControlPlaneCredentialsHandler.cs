@@ -65,17 +65,35 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     public async ValueTask<CreateCredentialResult> HandleCreateCredentialAsync(CreateCredentialParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         SourceCredentialDefinition definition;
+        SecurityTagSet managementTags;
         try
         {
-            // Stamp the principal's deployment-internal tenant tags (e.g. sys:tenant=acme) onto both scopes so the new
-            // binding is owned and used by the creator's slice of the security shell (§14.2) by default — operator-supplied
-            // management/usage tags layer on in HandleCreate (Phase 4.5c).
-            SecurityTagSet internalTags = SecurityTagSet.FromTags(this.access.InternalTags());
-            definition = ReadWrite(parameters.Body) with { ManagementTags = internalTags, UsageTags = internalTags };
+            // managementTags = the principal's deployment-internal tenant tag (always stamped, so the owner keeps
+            // management) PLUS any operator-supplied management labels. usageTags = the operator's supplied usage labels,
+            // or the internal tenant tag when none is given (so by default the owning tenant's runs use it). The two
+            // scopes are independent (§13/§14.2). User-supplied tags are validated against the reserved internal prefix.
+            IReadOnlyList<SecurityTag> userManagement = ReadTags(parameters.Body.ManagementTags);
+            IReadOnlyList<SecurityTag> userUsage = ReadTags(parameters.Body.UsageTags);
+            this.access.ValidateUserTags(userManagement);
+            this.access.ValidateUserTags(userUsage);
+
+            var management = new List<SecurityTag>(this.access.InternalTags());
+            management.AddRange(userManagement);
+            managementTags = SecurityTagSet.FromTags(management);
+            SecurityTagSet usageTags = SecurityTagSet.FromTags(userUsage.Count > 0 ? userUsage : this.access.InternalTags());
+
+            definition = ReadWrite(parameters.Body) with { ManagementTags = managementTags, UsageTags = usageTags };
         }
         catch (ArgumentException ex)
         {
             return CreateCredentialResult.BadRequest(Problem("invalid-credential", "Invalid credential binding", 400, ex.Message), workspace);
+        }
+
+        // Guard against privilege escalation: a principal may not create a binding it could not itself manage.
+        if (!this.access.Current().Admits(AccessVerb.Write, managementTags))
+        {
+            return CreateCredentialResult.BadRequest(
+                Problem("management-out-of-reach", "Management scope out of reach", 400, "The binding's management tags are outside your own management reach."), workspace);
         }
 
         try
@@ -232,6 +250,37 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
 
     private static string? OptionalString(Models.JsonString value) => value.IsNotUndefined() ? (string)value : null;
 
+    private static List<SecurityTag> ReadTags(Models.CredentialBindingWrite.CredentialSecurityTagArray tags)
+    {
+        var list = new List<SecurityTag>();
+        if (tags.IsNotUndefined())
+        {
+            foreach (Models.CredentialSecurityTag tag in tags.EnumerateArray())
+            {
+                list.Add(new SecurityTag((string)tag.Key, (string)tag.Value));
+            }
+        }
+
+        return list;
+    }
+
+    private static List<SecurityTag> ReadTags(Models.CredentialBindingWrite.UsageTagsCredentialSeArray tags)
+    {
+        var list = new List<SecurityTag>();
+        if (tags.IsNotUndefined())
+        {
+            foreach (Models.CredentialSecurityTag tag in tags.EnumerateArray())
+            {
+                list.Add(new SecurityTag((string)tag.Key, (string)tag.Value));
+            }
+        }
+
+        return list;
+    }
+
+    private static Models.CredentialSecurityTag.Source ToSecurityTag(SecurityTag tag)
+        => new((ref Models.CredentialSecurityTag.Builder b) => b.Create(tag.Key, tag.Value));
+
     private static Models.CredentialBindingSummary.Source ToSummary(SourceCredentialBinding binding)
         => new((ref Models.CredentialBindingSummary.Builder b) =>
         {
@@ -265,6 +314,30 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
                 });
             }
 
+            Models.CredentialBindingSummary.CredentialSecurityTagArray.Source managementTags = default;
+            if (!binding.ManagementTagsValue.IsEmpty)
+            {
+                managementTags = new Models.CredentialBindingSummary.CredentialSecurityTagArray.Source((ref Models.CredentialBindingSummary.CredentialSecurityTagArray.Builder ab) =>
+                {
+                    foreach (SecurityTag tag in binding.ManagementTagsValue.ToList())
+                    {
+                        ab.AddItem(ToSecurityTag(tag));
+                    }
+                });
+            }
+
+            Models.CredentialBindingSummary.UsageTagsCredentialSeArray.Source usageTags = default;
+            if (!binding.UsageTagsValue.IsEmpty)
+            {
+                usageTags = new Models.CredentialBindingSummary.UsageTagsCredentialSeArray.Source((ref Models.CredentialBindingSummary.UsageTagsCredentialSeArray.Builder ab) =>
+                {
+                    foreach (SecurityTag tag in binding.UsageTagsValue.ToList())
+                    {
+                        ab.AddItem(ToSecurityTag(tag));
+                    }
+                });
+            }
+
             b.Create(
                 authKind: binding.AuthKindValue.ToJsonToken(),
                 createdAt: binding.CreatedAtValue,
@@ -277,7 +350,9 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
                 config: config,
                 description: description,
                 lastUpdatedAt: lastUpdatedAt,
-                lastUpdatedBy: lastUpdatedBy);
+                lastUpdatedBy: lastUpdatedBy,
+                managementTags: managementTags,
+                usageTags: usageTags);
         });
 
     private static Models.CredentialBindingSummary.SecretReferenceArray.Source ToSecretRefs(SourceCredentialBinding binding)
