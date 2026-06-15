@@ -310,6 +310,83 @@ public static class WorkflowCheckpointSerializer
         }
     }
 
+    /// <summary>
+    /// Rewrites a checkpoint's <c>status</c> (and optionally drops its <c>wait</c>) by copying every other property's
+    /// raw bytes verbatim — the working state (retry counters, correlation tokens, step outputs, inputs, outputs) is
+    /// passed straight through with no dictionary materialized. For status-only transitions such as cancel, this
+    /// replaces a full <see cref="Deserialize"/> + <see cref="Serialize"/> round-trip.
+    /// </summary>
+    /// <param name="source">The current checkpoint document (UTF-8 JSON).</param>
+    /// <param name="newStatus">The status to write.</param>
+    /// <param name="dropWait">Whether to omit the <c>wait</c> property (clearing a suspended run's wait).</param>
+    /// <returns>The rewritten checkpoint document.</returns>
+    public static byte[] RewriteStatus(ReadOnlySpan<byte> source, WorkflowRunStatus newStatus, bool dropWait)
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter buffer);
+        try
+        {
+            var reader = new Utf8JsonReader(source);
+            reader.Read(); // the root StartObject
+            writer.WriteStartObject();
+            while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+            {
+                if (reader.ValueTextEquals("status"u8))
+                {
+                    reader.Read();
+                    writer.WriteString("status"u8, StatusName(newStatus));
+                }
+                else if (dropWait && reader.ValueTextEquals("wait"u8))
+                {
+                    reader.Read();
+                    reader.Skip();
+                }
+                else
+                {
+                    // Checkpoint property names are simple ASCII (never escaped), so the raw name span round-trips;
+                    // the value (scalar or whole subtree) is copied verbatim, so no working dictionary is built.
+                    ReadOnlySpan<byte> name = reader.ValueSpan;
+                    reader.Read();
+                    int valueStart = (int)reader.TokenStartIndex;
+                    reader.Skip();
+                    writer.WritePropertyName(name);
+                    writer.WriteRawValue(source[valueStart..(int)reader.BytesConsumed], skipInputValidation: true);
+                }
+            }
+
+            writer.WriteEndObject();
+            writer.Flush();
+            return buffer.WrittenSpan.ToArray();
+        }
+        finally
+        {
+            workspace.ReturnWriterAndBuffer(writer, buffer);
+        }
+    }
+
+    /// <summary>Reads just the security tags from a parsed checkpoint (for the index projection), without materializing the working dictionaries.</summary>
+    /// <param name="root">The parsed checkpoint root.</param>
+    /// <returns>The security tags, or <see langword="null"/> if absent/empty.</returns>
+    public static IReadOnlyList<SecurityTag>? ReadSecurityTags(in JsonElement root)
+    {
+        if (!root.TryGetProperty("securityTags"u8, out JsonElement element) || element.ValueKind != JsonValueKind.Array)
+        {
+            return null;
+        }
+
+        List<SecurityTag>? list = null;
+        foreach (JsonElement securityTag in element.EnumerateArray())
+        {
+            if (securityTag.TryGetProperty("key"u8, out JsonElement keyElement) && keyElement.GetString() is { } key
+                && securityTag.TryGetProperty("value"u8, out JsonElement valueElement) && valueElement.GetString() is { } value)
+            {
+                (list ??= []).Add(new SecurityTag(key, value));
+            }
+        }
+
+        return list is { Count: > 0 } ? list : null;
+    }
+
     // Map the enums to their names via constant strings, so serialising a checkpoint does not allocate a
     // string per call the way Enum.ToString() does. Names match the enum members so Enum.Parse round-trips.
     private static string StatusName(WorkflowRunStatus status) => status switch
