@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Concurrent;
+using System.Linq;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.OpenApi.HttpTransport;
@@ -31,8 +32,8 @@ public sealed class SourceCredentialCache : IDisposable
     private readonly SourceCredentialProviderFactory factory;
     private readonly TimeProvider timeProvider;
     private readonly TimeSpan ttl;
-    private readonly ConcurrentDictionary<(string SourceName, string Environment), Entry> entries = new();
-    private readonly ConcurrentDictionary<(string SourceName, string Environment), SemaphoreSlim> buildGates = new();
+    private readonly ConcurrentDictionary<(string SourceName, string Environment, string RunTags), Entry> entries = new();
+    private readonly ConcurrentDictionary<(string SourceName, string Environment, string RunTags), SemaphoreSlim> buildGates = new();
     private bool disposed;
 
     /// <summary>Initializes a new instance of the <see cref="SourceCredentialCache"/> class.</summary>
@@ -50,35 +51,44 @@ public sealed class SourceCredentialCache : IDisposable
         this.ttl = ttl ?? TimeSpan.FromMinutes(5);
     }
 
-    /// <summary>Gets the HTTP authentication provider for a source/environment, or <see langword="null"/> when no
-    /// binding exists (the source is unauthenticated). The warm path is synchronous and allocation-free.</summary>
+    /// <summary>Gets the HTTP authentication provider a run carrying <paramref name="runTags"/> is entitled to use for
+    /// the source/environment, or <see langword="null"/> when the run is entitled to no binding (the source is left
+    /// unauthenticated). The warm path is synchronous and allocation-free; the entry is keyed by the run's tags too, so
+    /// different tenants cache (and resolve) independently.</summary>
     /// <param name="sourceName">The Arazzo source description name.</param>
     /// <param name="environment">The deployment environment.</param>
+    /// <param name="runTags">The run's own security tags (§14.2), used to entitle the binding (label-superset).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The cached provider, or <see langword="null"/> if the source has no credential binding.</returns>
-    public ValueTask<IHttpAuthenticationProvider?> GetAsync(string sourceName, string environment, CancellationToken cancellationToken = default)
+    /// <returns>The cached provider, or <see langword="null"/> if the run is entitled to no credential binding.</returns>
+    public ValueTask<IHttpAuthenticationProvider?> GetAsync(string sourceName, string environment, SecurityTagSet runTags, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(sourceName);
         ArgumentNullException.ThrowIfNull(environment);
 
-        (string, string) key = (sourceName, environment);
+        (string, string, string) key = (sourceName, environment, CanonicalTags(runTags));
         if (this.entries.TryGetValue(key, out Entry? warm) && this.timeProvider.GetUtcNow() < warm.ExpiresAt)
         {
             // Warm path: a reference read of the published, immutable entry. No store I/O, no allocation.
             return new ValueTask<IHttpAuthenticationProvider?>(warm.Provider);
         }
 
-        return this.GetSlowAsync(key, cancellationToken);
+        return this.GetSlowAsync(key, runTags, cancellationToken);
     }
 
-    /// <summary>Explicitly invalidates a cached entry (e.g. on a control-plane rotation), disposing its provider.</summary>
+    /// <summary>Explicitly invalidates the cached entries for a source/environment (e.g. on a control-plane rotation),
+    /// disposing their providers — across every run-tag scope, since a rotation in the store affects them all.</summary>
     /// <param name="sourceName">The Arazzo source description name.</param>
     /// <param name="environment">The deployment environment.</param>
     public void Invalidate(string sourceName, string environment)
     {
-        if (this.entries.TryRemove((sourceName, environment), out Entry? removed))
+        foreach ((string SourceName, string Environment, string RunTags) key in this.entries.Keys)
         {
-            DisposeProvider(removed.Provider);
+            if (string.Equals(key.SourceName, sourceName, StringComparison.Ordinal) &&
+                string.Equals(key.Environment, environment, StringComparison.Ordinal) &&
+                this.entries.TryRemove(key, out Entry? removed))
+            {
+                DisposeProvider(removed.Provider);
+            }
         }
     }
 
@@ -113,7 +123,25 @@ public sealed class SourceCredentialCache : IDisposable
         }
     }
 
-    private async ValueTask<IHttpAuthenticationProvider?> GetSlowAsync((string SourceName, string Environment) key, CancellationToken cancellationToken)
+    // Canonical, order-independent string form of a run's tags, used as the cache-key discriminator so two tenants
+    // cache and resolve independently.
+    private static string CanonicalTags(SecurityTagSet runTags)
+    {
+        if (runTags.IsEmpty)
+        {
+            return string.Empty;
+        }
+
+        List<Corvus.Text.Json.Arazzo.Durability.SecurityTag> list = runTags.ToList();
+        list.Sort(static (a, b) =>
+        {
+            int byKey = string.CompareOrdinal(a.Key, b.Key);
+            return byKey != 0 ? byKey : string.CompareOrdinal(a.Value, b.Value);
+        });
+        return string.Join(";", list.Select(t => $"{t.Key}={t.Value}"));
+    }
+
+    private async ValueTask<IHttpAuthenticationProvider?> GetSlowAsync((string SourceName, string Environment, string RunTags) key, SecurityTagSet runTags, CancellationToken cancellationToken)
     {
         SemaphoreSlim gate = this.buildGates.GetOrAdd(key, static _ => new SemaphoreSlim(1, 1));
         await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -125,7 +153,7 @@ public sealed class SourceCredentialCache : IDisposable
                 return current.Provider;
             }
 
-            using ParsedJsonDocument<SourceCredentialBinding>? document = await this.store.ResolveForUsageAsync(key.SourceName, key.Environment, default, cancellationToken).ConfigureAwait(false);
+            using ParsedJsonDocument<SourceCredentialBinding>? document = await this.store.ResolveForUsageAsync(key.SourceName, key.Environment, runTags, cancellationToken).ConfigureAwait(false);
             DateTimeOffset expiresAt = this.timeProvider.GetUtcNow() + this.ttl;
 
             if (document is null)
@@ -153,7 +181,7 @@ public sealed class SourceCredentialCache : IDisposable
         }
     }
 
-    private void Publish((string SourceName, string Environment) key, Entry? previous, Entry next, bool disposePrevious = true)
+    private void Publish((string SourceName, string Environment, string RunTags) key, Entry? previous, Entry next, bool disposePrevious = true)
     {
         this.entries[key] = next;
         if (disposePrevious && previous is not null && !ReferenceEquals(previous.Provider, next.Provider))

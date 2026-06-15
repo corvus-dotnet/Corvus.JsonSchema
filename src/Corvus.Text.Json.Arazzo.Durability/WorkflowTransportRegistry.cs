@@ -61,10 +61,13 @@ public sealed class WorkflowTransportRegistry
 
     /// <summary>Resolves the transports a run of <paramref name="descriptor"/> needs.</summary>
     /// <param name="descriptor">The loaded workflow's descriptor.</param>
+    /// <param name="runTags">The run's security tags — unused here (this registry's factories carry static auth); a
+    /// credential-aware binder consumes them. Accepted so the registry satisfies <see cref="WorkflowTransportBinder"/>.</param>
     /// <returns>One fresh, caller-disposed API transport per declared source, plus the shared message transport if needed.</returns>
     /// <exception cref="WorkflowTransportBindingException">A required binding is missing.</exception>
-    public WorkflowTransports Bind(WorkflowDescriptor descriptor)
+    public WorkflowTransports Bind(WorkflowDescriptor descriptor, SecurityTagSet runTags = default)
     {
+        _ = runTags;
         this.EnsureMessageTransport(descriptor);
 
         var apiTransports = new Dictionary<string, IApiTransport>(descriptor.Sources.Count, StringComparer.Ordinal);
