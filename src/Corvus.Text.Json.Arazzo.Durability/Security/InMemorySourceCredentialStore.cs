@@ -42,7 +42,7 @@ public sealed class InMemorySourceCredentialStore : ISourceCredentialStore
 
         lock (this.gate)
         {
-            (string, string, string) key = (definition.SourceName, definition.Environment, DiscriminatorOf(definition.ManagementTags, definition.UsageTags));
+            (string, string, string) key = (definition.SourceName, definition.Environment, SourceCredentialKey.Discriminator(definition.ManagementTags, definition.UsageTags));
             if (this.bindings.ContainsKey(key))
             {
                 throw new InvalidOperationException($"A source credential binding for '{KeyOf(definition.SourceName, definition.Environment)}' with those security tags already exists.");
@@ -196,28 +196,6 @@ public sealed class InMemorySourceCredentialStore : ISourceCredentialStore
     }
 
     private static string KeyOf(string sourceName, string environment) => $"{sourceName}@{environment}";
-
-    // The binding's uniqueness discriminator over (sourceName, environment): the canonical form of BOTH its management
-    // and usage tag sets, so two bindings that differ in either coexist while an exact duplicate is rejected.
-    private static string DiscriminatorOf(SecurityTagSet managementTags, SecurityTagSet usageTags)
-        => $"{CanonicalTags(managementTags)}{CanonicalTags(usageTags)}";
-
-    // Canonical, order-independent string form of a tag set.
-    private static string CanonicalTags(SecurityTagSet tags)
-    {
-        if (tags.IsEmpty)
-        {
-            return string.Empty;
-        }
-
-        List<SecurityTag> list = tags.ToList();
-        list.Sort(static (a, b) =>
-        {
-            int byKey = string.CompareOrdinal(a.Key, b.Key);
-            return byKey != 0 ? byKey : string.CompareOrdinal(a.Value, b.Value);
-        });
-        return string.Join(";", list.Select(t => $"{t.Key}={t.Value}"));
-    }
 
     // Finds the single binding for (sourceName, environment) the caller's reach for the verb admits, returning its bytes
     // and key. A binding outside reach is invisible (non-disclosing). Deployments keep bindings for one (sourceName,
