@@ -42,7 +42,7 @@ public sealed class InMemorySourceCredentialStore : ISourceCredentialStore
 
         lock (this.gate)
         {
-            (string, string, string) key = (definition.SourceName, definition.Environment, CanonicalTags(definition.SecurityTags));
+            (string, string, string) key = (definition.SourceName, definition.Environment, DiscriminatorOf(definition.ManagementTags, definition.UsageTags));
             if (this.bindings.ContainsKey(key))
             {
                 throw new InvalidOperationException($"A source credential binding for '{KeyOf(definition.SourceName, definition.Environment)}' with those security tags already exists.");
@@ -80,7 +80,7 @@ public sealed class InMemorySourceCredentialStore : ISourceCredentialStore
                 foreach (byte[] json in this.bindings.Values)
                 {
                     using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
-                    if (context.Admits(AccessVerb.Read, candidate.RootElement.SecurityTagsValue))
+                    if (context.Admits(AccessVerb.Read, candidate.RootElement.ManagementTagsValue))
                     {
                         docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(json));
                     }
@@ -171,8 +171,12 @@ public sealed class InMemorySourceCredentialStore : ISourceCredentialStore
 
     private static string KeyOf(string sourceName, string environment) => $"{sourceName}@{environment}";
 
-    // Canonical, order-independent string form of a tag set, used as the binding's uniqueness discriminator so two
-    // tenant-scoped bindings for the same (sourceName, environment) coexist while a duplicate is rejected.
+    // The binding's uniqueness discriminator over (sourceName, environment): the canonical form of BOTH its management
+    // and usage tag sets, so two bindings that differ in either coexist while an exact duplicate is rejected.
+    private static string DiscriminatorOf(SecurityTagSet managementTags, SecurityTagSet usageTags)
+        => $"{CanonicalTags(managementTags)}{CanonicalTags(usageTags)}";
+
+    // Canonical, order-independent string form of a tag set.
     private static string CanonicalTags(SecurityTagSet tags)
     {
         if (tags.IsEmpty)
@@ -202,7 +206,7 @@ public sealed class InMemorySourceCredentialStore : ISourceCredentialStore
             }
 
             using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(entry.Value);
-            if (context.Admits(verb, candidate.RootElement.SecurityTagsValue))
+            if (context.Admits(verb, candidate.RootElement.ManagementTagsValue))
             {
                 key = entry.Key;
                 return entry.Value;

@@ -231,7 +231,7 @@ public abstract class SourceCredentialStoreConformance
         WorkflowEtag etag;
         using (ParsedJsonDocument<SourceCredentialBinding> added = await store.AddAsync(Tagged("petstore", "production", "acme"), "alice", default))
         {
-            added.RootElement.SecurityTagsValue.ToList().Single().ShouldBe(new SecurityTag("tenant", "acme"));
+            added.RootElement.ManagementTagsValue.ToList().Single().ShouldBe(new SecurityTag("tenant", "acme"));
             etag = added.RootElement.EtagValue;
         }
 
@@ -242,7 +242,7 @@ public abstract class SourceCredentialStoreConformance
         };
         using ParsedJsonDocument<SourceCredentialBinding>? updated = await store.UpdateAsync("petstore", "production", rotatedWithDifferentTags, etag, "bob", AccessContext.System, default);
         updated.ShouldNotBeNull();
-        updated!.RootElement.SecurityTagsValue.ToList().Single().ShouldBe(new SecurityTag("tenant", "acme"));
+        updated!.RootElement.ManagementTagsValue.ToList().Single().ShouldBe(new SecurityTag("tenant", "acme"));
     }
 
     [TestMethod]
@@ -265,12 +265,12 @@ public abstract class SourceCredentialStoreConformance
         using (ParsedJsonDocument<SourceCredentialBinding>? fetched = await store.GetAsync("petstore", "production", acme, default))
         {
             fetched.ShouldNotBeNull();
-            fetched!.RootElement.SecurityTagsValue.ToList().Single().ShouldBe(new SecurityTag("tenant", "acme"));
+            fetched!.RootElement.ManagementTagsValue.ToList().Single().ShouldBe(new SecurityTag("tenant", "acme"));
         }
 
         using (PooledDocumentList<SourceCredentialBinding> list = await store.ListAsync(acme, default))
         {
-            list.Select(b => b.SecurityTagsValue.ToList().Single().Value).ShouldBe(["acme"]);
+            list.Select(b => b.ManagementTagsValue.ToList().Single().Value).ShouldBe(["acme"]);
         }
 
         // acme cannot delete globex's binding (out of write reach) — reported as absent.
@@ -295,7 +295,7 @@ public abstract class SourceCredentialStoreConformance
         using (ParsedJsonDocument<SourceCredentialBinding>? forAcme = await store.ResolveForUsageAsync("petstore", "production", SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default))
         {
             forAcme.ShouldNotBeNull();
-            forAcme!.RootElement.SecurityTagsValue.ToList().Single().Value.ShouldBe("acme");
+            forAcme!.RootElement.UsageTagsValue.ToList().Single().Value.ShouldBe("acme");
         }
 
         // A run in neither tenant is entitled to nothing — fail closed (no credential, not another tenant's).
@@ -309,6 +309,32 @@ public abstract class SourceCredentialStoreConformance
         (await store.ResolveForUsageAsync("billing", "production", default, default)).ShouldNotBeNull();
     }
 
+    [TestMethod]
+    public async Task Management_scope_and_usage_scope_are_independent()
+    {
+        ISourceCredentialStore store = await this.NewStoreAsync();
+
+        // A binding the OPS team manages but ACME's runs use — the two scopes are unrelated.
+        SourceCredentialDefinition definition = new(
+            "petstore",
+            "production",
+            SourceCredentialKind.ApiKey,
+            [new SecretReferenceDefinition("value", "keyvault://petstore-apikey")],
+            ManagementTags: SecurityTagSet.FromTags([new SecurityTag("team", "ops")]),
+            UsageTags: SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]));
+        using (await store.AddAsync(definition, "system", default))
+        {
+        }
+
+        // Management: the ops team can manage it; an acme-tenant admin cannot (its reach is over management tags).
+        (await store.GetAsync("petstore", "production", ScopeBy("team", "ops"), default)).ShouldNotBeNull();
+        (await store.GetAsync("petstore", "production", ScopeBy("tenant", "acme"), default)).ShouldBeNull();
+
+        // Usage: an acme run may use it; an ops-team run may not (entitlement is over usage tags).
+        (await store.ResolveForUsageAsync("petstore", "production", SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default)).ShouldNotBeNull();
+        (await store.ResolveForUsageAsync("petstore", "production", SecurityTagSet.FromTags([new SecurityTag("team", "ops")]), default)).ShouldBeNull();
+    }
+
     private static SourceCredentialDefinition ApiKey(string sourceName, string environment) => new(
         sourceName,
         environment,
@@ -320,12 +346,17 @@ public abstract class SourceCredentialStoreConformance
         environment,
         SourceCredentialKind.ApiKey,
         [new SecretReferenceDefinition("value", $"keyvault://{sourceName}-{environment}-{tenant}-apikey")],
-        SecurityTags: SecurityTagSet.FromTags([new SecurityTag("tenant", tenant)]));
+        ManagementTags: SecurityTagSet.FromTags([new SecurityTag("tenant", tenant)]),
+        UsageTags: SecurityTagSet.FromTags([new SecurityTag("tenant", tenant)]));
 
     // A read/write/purge reach that admits exactly the rows tagged tenant=<tenant> (the rule tenant == $claim.tenant
     // resolved against a single-tenant claim).
-    private static AccessContext Scope(string tenant) => AccessContext.Uniform(
-        new SecurityFilter([SecurityRule.Compile("tenant == $claim.tenant")], new Dictionary<string, IReadOnlyList<string>> { ["tenant"] = [tenant] }));
+    private static AccessContext Scope(string tenant) => ScopeBy("tenant", tenant);
+
+    // A read/write/purge reach that admits exactly the rows tagged <key>=<value> (the rule key == $claim.key resolved
+    // against a single-value claim).
+    private static AccessContext ScopeBy(string key, string value) => AccessContext.Uniform(
+        new SecurityFilter([SecurityRule.Compile($"{key} == $claim.{key}")], new Dictionary<string, IReadOnlyList<string>> { [key] = [value] }));
 
     private async ValueTask<ISourceCredentialStore> NewStoreAsync(TimeProvider? timeProvider = null)
     {

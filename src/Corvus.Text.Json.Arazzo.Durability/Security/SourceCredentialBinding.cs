@@ -56,25 +56,31 @@ public readonly partial struct SourceCredentialBinding
     /// <summary>Gets the optimistic-concurrency token.</summary>
     public WorkflowEtag EtagValue => new((string)this.Etag);
 
-    /// <summary>Gets the security tags (KVP labels) scoping this binding for row authorization (§14.2) as a deferred
-    /// holder over the persisted bytes — empty on an unscoped (shared) binding.</summary>
-    public SecurityTagSet SecurityTagsValue => SecurityTagSet.CopyFrom(this.SecurityTags);
+    /// <summary>Gets the security tags (KVP labels) scoping who may <strong>manage</strong> this binding (§14.2) as a
+    /// deferred holder over the persisted bytes — empty on an unscoped binding. Drives the management reach check;
+    /// independent of <see cref="UsageTagsValue"/>.</summary>
+    public SecurityTagSet ManagementTagsValue => SecurityTagSet.CopyFrom(this.ManagementTags);
+
+    /// <summary>Gets the security tags (KVP labels) scoping which runs may <strong>use</strong> this binding (§13) as a
+    /// deferred holder over the persisted bytes — empty (shared) on an unscoped binding. Drives the usage entitlement
+    /// check (<see cref="IsUsableBy"/>); independent of <see cref="ManagementTagsValue"/>.</summary>
+    public SecurityTagSet UsageTagsValue => SecurityTagSet.CopyFrom(this.UsageTags);
 
     /// <summary>Whether a run carrying <paramref name="runTags"/> is entitled to use this binding (design §13/§14.2):
-    /// it is, iff the run satisfies <em>every</em> security tag the binding carries (label-superset). An unscoped
-    /// (untagged) binding is shared and usable by any run; a tagged binding is usable only by a run that carries all
-    /// of its tags.</summary>
+    /// it is, iff the run satisfies <em>every</em> <c>usageTags</c> entry the binding carries (label-superset). An
+    /// untagged-for-usage binding is shared and usable by any run; a usage-tagged binding is usable only by a run that
+    /// carries all of its usage tags.</summary>
     /// <param name="runTags">The run's own security tags.</param>
     /// <returns><see langword="true"/> if the run is entitled to use this binding.</returns>
     public bool IsUsableBy(SecurityTagSet runTags)
     {
-        if (this.SecurityTags.IsUndefined() || this.SecurityTags.GetArrayLength() == 0)
+        if (this.UsageTags.IsUndefined() || this.UsageTags.GetArrayLength() == 0)
         {
             return true;
         }
 
         List<SecurityTag> runTagList = runTags.ToList();
-        foreach (SecurityTagInfo required in this.SecurityTags.EnumerateArray())
+        foreach (SecurityTagInfo required in this.UsageTags.EnumerateArray())
         {
             string key = (string)required.Key;
             string value = (string)required.Value;
@@ -175,10 +181,16 @@ public readonly partial struct SourceCredentialBinding
             writer.WriteString(JsonPropertyNames.DescriptionUtf8, description);
         }
 
-        if (!definition.SecurityTags.IsEmpty)
+        if (!definition.ManagementTags.IsEmpty)
         {
-            writer.WritePropertyName(JsonPropertyNames.SecurityTagsUtf8);
-            definition.SecurityTags.WriteTo(writer);
+            writer.WritePropertyName(JsonPropertyNames.ManagementTagsUtf8);
+            definition.ManagementTags.WriteTo(writer);
+        }
+
+        if (!definition.UsageTags.IsEmpty)
+        {
+            writer.WritePropertyName(JsonPropertyNames.UsageTagsUtf8);
+            definition.UsageTags.WriteTo(writer);
         }
 
         writer.WriteString(JsonPropertyNames.CreatedByUtf8, actor);
@@ -209,12 +221,18 @@ public readonly partial struct SourceCredentialBinding
             writer.WriteString(JsonPropertyNames.DescriptionUtf8, description);
         }
 
-        // Security tags are immutable identity (the binding's row-authorization scope) — carried forward from the
-        // existing binding, never taken from the update definition.
-        if (!this.SecurityTagsValue.IsEmpty)
+        // Management and usage tags are immutable identity (the binding's row-authorization scope) — carried forward
+        // from the existing binding, never taken from the update definition.
+        if (!this.ManagementTagsValue.IsEmpty)
         {
-            writer.WritePropertyName(JsonPropertyNames.SecurityTagsUtf8);
-            this.SecurityTagsValue.WriteTo(writer);
+            writer.WritePropertyName(JsonPropertyNames.ManagementTagsUtf8);
+            this.ManagementTagsValue.WriteTo(writer);
+        }
+
+        if (!this.UsageTagsValue.IsEmpty)
+        {
+            writer.WritePropertyName(JsonPropertyNames.UsageTagsUtf8);
+            this.UsageTagsValue.WriteTo(writer);
         }
 
         writer.WriteString(JsonPropertyNames.CreatedByUtf8, this.CreatedByValue);
