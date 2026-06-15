@@ -42,10 +42,10 @@ public class CheckpointDeserializeBenchmarks
             new() { ["orders"] = [1, 2, 3, 4], ["shipping"] = [5, 6, 7, 8] },
             stepOutputs,
             inputsDoc.RootElement,
-            [new SecurityTag("tenant", "acme"), new SecurityTag("team", "payments")]);
+            SecurityTagSet.FromTags([new SecurityTag("tenant", "acme"), new SecurityTag("team", "payments")]));
 
-        this.typical = Build([], [], stepOutputs, inputsDoc.RootElement, null);
-        this.empty = Build([], [], noOutputs, inputsDoc.RootElement, null);
+        this.typical = Build([], [], stepOutputs, inputsDoc.RootElement, default);
+        this.empty = Build([], [], noOutputs, inputsDoc.RootElement, default);
 
         var manyRetries = new Dictionary<string, int>();
         var manyOutputBuilder = new System.Text.StringBuilder("{");
@@ -63,7 +63,7 @@ public class CheckpointDeserializeBenchmarks
             manyOutputs[property.Name] = property.Value;
         }
 
-        this.large = Build(manyRetries, [], manyOutputs, inputsDoc.RootElement, null);
+        this.large = Build(manyRetries, [], manyOutputs, inputsDoc.RootElement, default);
     }
 
     /// <summary>The unavoidable floor: parse the full checkpoint document (what any read must do).</summary>
@@ -116,7 +116,7 @@ public class CheckpointDeserializeBenchmarks
         Dictionary<string, byte[]> correlationTokens,
         Dictionary<string, JsonElement> stepOutputs,
         JsonElement inputs,
-        IReadOnlyList<SecurityTag>? securityTags)
+        SecurityTagSet securityTags)
         => WorkflowCheckpointSerializer.Serialize(
             new WorkflowRunId("run-0001"),
             "wf-orders",

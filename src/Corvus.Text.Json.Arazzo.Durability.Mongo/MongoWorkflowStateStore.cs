@@ -394,8 +394,8 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         {
             foreach (BsonDocument document in cursor.Current)
             {
-                IReadOnlyList<SecurityTag>? securityTags = ReadSecurityTags(document);
-                if (query.Security is { } security && !security.IsSatisfiedBy(securityTags ?? []))
+                SecurityTagSet securityTags = ReadSecurityTags(document);
+                if (query.Security is { } security && !security.IsSatisfiedBy(securityTags.ToList()))
                 {
                     continue;
                 }
@@ -436,23 +436,8 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         return default;
     }
 
-    private static IReadOnlyList<SecurityTag>? ReadSecurityTags(BsonDocument document)
-    {
-        if (!document.TryGetValue("securityTags", out BsonValue value) || value.IsBsonNull)
-        {
-            return null;
-        }
-
-        BsonArray array = value.AsBsonArray;
-        var list = new List<SecurityTag>(array.Count);
-        foreach (BsonValue element in array)
-        {
-            BsonDocument tag = element.AsBsonDocument;
-            list.Add(new SecurityTag(tag["k"].AsString, tag["v"].AsString));
-        }
-
-        return list.Count > 0 ? list : null;
-    }
+    private static SecurityTagSet ReadSecurityTags(BsonDocument document)
+        => MongoSecurityTags.Read(document);
 
     private static readonly ProjectionDefinition<BsonDocument> IdOnly = Builders<BsonDocument>.Projection.Include("_id");
 
@@ -473,9 +458,7 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         ["errorType"] = (BsonValue?)index.ErrorType ?? BsonNull.Value,
         ["correlationId"] = (BsonValue?)index.CorrelationId ?? BsonNull.Value,
         ["tags"] = index.Tags.IsEmpty ? BsonNull.Value : new BsonArray(index.Tags.ToList()),
-        ["securityTags"] = index.SecurityTags is { Count: > 0 } st
-            ? new BsonArray(st.Select(s => new BsonDocument { ["k"] = s.Key, ["v"] = s.Value }))
-            : BsonNull.Value,
+        ["securityTags"] = MongoSecurityTags.ToBson(index.SecurityTags),
     };
 
     private async ValueTask EnsureIndexesAsync(CancellationToken cancellationToken)

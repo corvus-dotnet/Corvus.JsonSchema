@@ -4,6 +4,7 @@
 
 using System.Globalization;
 using Corvus.Text.Json;
+using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
 
@@ -72,10 +73,11 @@ public readonly partial struct CatalogDocument
             tags.WriteTo(writer);
         }
 
-        if (version.SecurityTagsValue is { Count: > 0 } securityTags)
+        SecurityTagSet securityTagsValue = version.SecurityTagsValue;
+        if (!securityTagsValue.IsEmpty)
         {
             writer.WriteStartArray(JsonPropertyNames.SecurityTagsUtf8);
-            foreach (SecurityTag tag in securityTags)
+            foreach (SecurityTag tag in securityTagsValue)
             {
                 writer.WriteStartObject();
                 writer.WriteString(EmbeddedSecurityTag.JsonPropertyNames.KUtf8, tag.Key);
@@ -152,15 +154,7 @@ public readonly partial struct CatalogDocument
     /// <returns>The catalog version.</returns>
     public CatalogVersion ToVersion()
     {
-        List<SecurityTag>? securityTags = null;
-        if (this.SecurityTags.IsNotUndefined())
-        {
-            securityTags = [];
-            foreach (EmbeddedSecurityTag tag in this.SecurityTags.EnumerateArray())
-            {
-                securityTags.Add(new SecurityTag((string)tag.K, (string)tag.V));
-            }
-        }
+        SecurityTagSet securityTags = this.ReadSecurityTags();
 
         OwnerInfo owner = this.Owner;
         var ownerValue = new CatalogOwner(
@@ -187,6 +181,42 @@ public readonly partial struct CatalogDocument
             obsoletedBy: this.ObsoletedBy.IsNotUndefined() ? (string)this.ObsoletedBy : null,
             obsoletedAt: this.ObsoletedAt.IsNotUndefined() ? DateTimeOffset.FromUnixTimeMilliseconds((long)this.ObsoletedAt) : null,
             runnable: (bool)this.Runnable,
-            securityTags: securityTags is { Count: > 0 } ? securityTags : null);
+            securityTags: securityTags);
+    }
+
+    // Normalize the embedded { k, v } tags into the holder's canonical { key, value } bytes (Cosmos keeps the
+    // short property names so the indexed reach-filter predicate over c.securityTags stays unchanged).
+    private SecurityTagSet ReadSecurityTags()
+    {
+        if (!this.SecurityTags.IsNotUndefined())
+        {
+            return default;
+        }
+
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(256, out IByteBufferWriter buffer);
+        try
+        {
+            writer.WriteStartArray();
+            bool any = false;
+            foreach (EmbeddedSecurityTag tag in this.SecurityTags.EnumerateArray())
+            {
+                writer.WriteStartObject();
+                writer.WritePropertyName("key"u8);
+                tag.K.WriteTo(writer);
+                writer.WritePropertyName("value"u8);
+                tag.V.WriteTo(writer);
+                writer.WriteEndObject();
+                any = true;
+            }
+
+            writer.WriteEndArray();
+            writer.Flush();
+            return any ? SecurityTagSet.CopyFromJsonArray(buffer.WrittenSpan) : default;
+        }
+        finally
+        {
+            workspace.ReturnWriterAndBuffer(writer, buffer);
+        }
     }
 }

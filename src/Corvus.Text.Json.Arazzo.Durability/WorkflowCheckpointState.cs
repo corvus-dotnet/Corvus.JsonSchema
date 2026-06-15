@@ -31,7 +31,7 @@ public sealed class WorkflowCheckpointState : IDisposable
         WorkflowFault? fault,
         string? correlationId = null,
         TagSet tags = default,
-        IReadOnlyList<SecurityTag>? securityTags = null)
+        SecurityTagSet securityTags = default)
     {
         this.document = document;
         this.RunId = runId;
@@ -94,7 +94,7 @@ public sealed class WorkflowCheckpointState : IDisposable
     public TagSet Tags { get; }
 
     /// <summary>Gets the security tags (KVP labels) applied to the run at creation, if any (design §14.2).</summary>
-    public IReadOnlyList<SecurityTag>? SecurityTags { get; }
+    public SecurityTagSet SecurityTags { get; }
 
     /// <inheritdoc/>
     public void Dispose() => this.document.Dispose();

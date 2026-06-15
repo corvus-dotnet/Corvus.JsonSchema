@@ -26,7 +26,7 @@ public interface IWorkflowManagementClient
     /// <param name="securityTags">Optional security tags (KVP labels) for row authorization (§14.2), typically inherited from the workflow version; distinct from <paramref name="tags"/>.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The id of the newly created pending run.</returns>
-    ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, IReadOnlyList<SecurityTag>? securityTags, CancellationToken cancellationToken);
+    ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, SecurityTagSet securityTags, CancellationToken cancellationToken);
 
     /// <summary>
     /// Starts a run idempotently: the run id is derived deterministically from
@@ -42,7 +42,7 @@ public interface IWorkflowManagementClient
     /// <param name="securityTags">Optional security tags (KVP labels) for row authorization (§14.2), typically inherited from the workflow version; distinct from <paramref name="tags"/>.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The id of the run for this key (newly created, or the pre-existing one).</returns>
-    ValueTask<WorkflowRunId> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string? correlationId = null, TagSet tags = default, IReadOnlyList<SecurityTag>? securityTags = null, CancellationToken cancellationToken = default);
+    ValueTask<WorkflowRunId> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default);
 
     /// <summary>Lists runs matching a visibility query (filter by status / workflow id, paged), scoped to the
     /// caller's read reach (§14.2).</summary>
@@ -119,7 +119,7 @@ public readonly record struct WorkflowRunDetail(
     WorkflowEtag Etag,
     string? CorrelationId = null,
     TagSet Tags = default,
-    IReadOnlyList<SecurityTag>? SecurityTags = null);
+    SecurityTagSet SecurityTags = default);
 
 /// <summary>How to resume a faulted run (plan §11). Each mode loads the checkpoint, mutates status/cursor/state
 /// under optimistic concurrency, then re-enters the executor.</summary>

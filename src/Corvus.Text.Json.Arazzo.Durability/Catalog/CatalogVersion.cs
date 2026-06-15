@@ -67,23 +67,8 @@ public readonly partial struct CatalogVersion
     /// <summary>Gets the free-form tags as a deferred holder over the persisted bytes.</summary>
     public TagSet TagsValue => TagSet.CopyFrom(this.Tags);
 
-    /// <summary>Gets the security tags (KVP labels) as a list, distinct from the free-form <see cref="TagsValue"/> (§14.2).</summary>
-    public IReadOnlyList<SecurityTag> SecurityTagsValue
-    {
-        get
-        {
-            var list = new List<SecurityTag>();
-            if (this.SecurityTags.IsNotUndefined())
-            {
-                foreach (SecurityTagInfo securityTag in this.SecurityTags.EnumerateArray())
-                {
-                    list.Add(new SecurityTag((string)securityTag.Key, (string)securityTag.Value));
-                }
-            }
-
-            return list;
-        }
-    }
+    /// <summary>Gets the security tags (KVP labels) as a deferred holder over the persisted bytes, distinct from the free-form <see cref="TagsValue"/> (§14.2).</summary>
+    public SecurityTagSet SecurityTagsValue => SecurityTagSet.CopyFrom(this.SecurityTags);
 
     /// <summary>Gets the package source documents as a deferred holder over the persisted bytes.</summary>
     public SourceSet SourcesValue => SourceSet.CopyFrom(this.Sources);
@@ -125,7 +110,7 @@ public readonly partial struct CatalogVersion
         string? obsoletedBy = null,
         DateTimeOffset? obsoletedAt = null,
         bool runnable = false,
-        IReadOnlyList<SecurityTag>? securityTags = null)
+        SecurityTagSet securityTags = default)
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter buffer);
@@ -146,18 +131,10 @@ public readonly partial struct CatalogVersion
             writer.WritePropertyName(JsonPropertyNames.TagsUtf8);
             tags.WriteTo(writer);
 
-            if (securityTags is { Count: > 0 })
+            if (!securityTags.IsEmpty)
             {
-                writer.WriteStartArray(JsonPropertyNames.SecurityTagsUtf8);
-                foreach (SecurityTag securityTag in securityTags)
-                {
-                    writer.WriteStartObject();
-                    writer.WriteString(SecurityTagInfo.JsonPropertyNames.KeyUtf8, securityTag.Key);
-                    writer.WriteString(SecurityTagInfo.JsonPropertyNames.ValueUtf8, securityTag.Value);
-                    writer.WriteEndObject();
-                }
-
-                writer.WriteEndArray();
+                writer.WritePropertyName(JsonPropertyNames.SecurityTagsUtf8);
+                securityTags.WriteTo(writer);
             }
 
             writer.WriteStartObject(JsonPropertyNames.OwnerUtf8);

@@ -353,7 +353,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
 
         // Row-security reach (§14.2): Table OData cannot match inside the serialized security tags, so apply the
         // reach filter in process over the version's persisted tags — the only correct option for this backend.
-        return query.Security is not { } security || security.IsSatisfiedBy(version.SecurityTagsValue);
+        return query.Security is not { } security || security.IsSatisfiedBy(version.SecurityTagsValue.ToList());
     }
 
     private static TableEntity BuildEntity(CatalogVersion version)
@@ -437,17 +437,17 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
 
     // Security tags round-trip as a JSON property so a single-row read carries them for the control-plane's
     // authorization check (§14.2); the in-process reach filter below reads the same persisted tags.
-    private static string EncodeSecurityTags(IReadOnlyList<SecurityTag> tags)
-        => Security.SecurityTagSet.From(tags).ToJsonString();
+    private static string? EncodeSecurityTags(SecurityTagSet tags)
+        => tags.ToJsonStringOrNull();
 
-    private static IReadOnlyList<SecurityTag>? DecodeSecurityTags(string? encoded)
-        => Security.SecurityTagSet.FromJsonStringOrNull(encoded);
+    private static SecurityTagSet DecodeSecurityTags(string? encoded)
+        => SecurityTagSet.FromJsonStringOrEmpty(encoded);
 
     private async ValueTask<CatalogVersion> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         TagSet tags = metadata.Tags;
-        IReadOnlyList<SecurityTag>? securityTags = metadata.SecurityTags is { Count: > 0 } st ? [.. st] : null;
+        SecurityTagSet securityTags = metadata.SecurityTags;
 
         // Assign the next version number safely: find the partition's current max, project + insert with
         // create-if-not-exists (AddEntityAsync) so a racing add cannot reuse a number, and retry on the 409 a

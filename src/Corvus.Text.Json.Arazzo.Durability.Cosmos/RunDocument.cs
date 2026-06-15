@@ -3,6 +3,7 @@
 // </copyright>
 
 using Corvus.Text.Json;
+using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
 
@@ -80,10 +81,10 @@ public readonly partial struct RunDocument
             index.Tags.WriteTo(writer);
         }
 
-        if (index.SecurityTags is { Count: > 0 } securityTags)
+        if (!index.SecurityTags.IsEmpty)
         {
             writer.WriteStartArray(JsonPropertyNames.SecurityTagsUtf8);
-            foreach (SecurityTag tag in securityTags)
+            foreach (SecurityTag tag in index.SecurityTags)
             {
                 writer.WriteStartObject();
                 writer.WriteString(EmbeddedSecurityTag.JsonPropertyNames.KUtf8, tag.Key);
@@ -110,15 +111,7 @@ public readonly partial struct RunDocument
     /// <returns>The index entry.</returns>
     public WorkflowRunIndexEntry ToIndexEntry()
     {
-        List<SecurityTag>? securityTags = null;
-        if (this.SecurityTags.IsNotUndefined())
-        {
-            securityTags = [];
-            foreach (EmbeddedSecurityTag tag in this.SecurityTags.EnumerateArray())
-            {
-                securityTags.Add(new SecurityTag((string)tag.K, (string)tag.V));
-            }
-        }
+        SecurityTagSet securityTags = this.ReadSecurityTags();
 
         return new WorkflowRunIndexEntry(
             (string)this.WorkflowId,
@@ -131,6 +124,42 @@ public readonly partial struct RunDocument
             this.ErrorType.IsNotUndefined() ? (string)this.ErrorType : null,
             CorrelationId: this.CorrelationId.IsNotUndefined() ? (string)this.CorrelationId : null,
             Tags: TagSet.CopyFrom(this.Tags),
-            SecurityTags: securityTags is { Count: > 0 } ? securityTags : null);
+            SecurityTags: securityTags);
+    }
+
+    // Normalize the embedded { k, v } tags into the holder's canonical { key, value } bytes (Cosmos keeps the
+    // short property names so the indexed reach-filter predicate over c.securityTags stays unchanged).
+    private SecurityTagSet ReadSecurityTags()
+    {
+        if (!this.SecurityTags.IsNotUndefined())
+        {
+            return default;
+        }
+
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(256, out IByteBufferWriter buffer);
+        try
+        {
+            writer.WriteStartArray();
+            bool any = false;
+            foreach (EmbeddedSecurityTag tag in this.SecurityTags.EnumerateArray())
+            {
+                writer.WriteStartObject();
+                writer.WritePropertyName("key"u8);
+                tag.K.WriteTo(writer);
+                writer.WritePropertyName("value"u8);
+                tag.V.WriteTo(writer);
+                writer.WriteEndObject();
+                any = true;
+            }
+
+            writer.WriteEndArray();
+            writer.Flush();
+            return any ? SecurityTagSet.CopyFromJsonArray(buffer.WrittenSpan) : default;
+        }
+        finally
+        {
+            workspace.ReturnWriterAndBuffer(writer, buffer);
+        }
     }
 }

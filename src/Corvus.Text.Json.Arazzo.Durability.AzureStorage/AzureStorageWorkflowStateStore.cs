@@ -393,7 +393,7 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
 
             // Row-security reach (§14.2): Table OData cannot match inside the serialized security tags, so apply
             // the reach filter in process over the persisted tags — the only correct option for this backend.
-            if (query.Security is { } security && !security.IsSatisfiedBy(entry.SecurityTags ?? []))
+            if (query.Security is { } security && !security.IsSatisfiedBy(entry.SecurityTags.ToList()))
             {
                 continue;
             }
@@ -448,9 +448,9 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             entity["TagsJson"] = tagsJson;
         }
 
-        if (index.SecurityTags is { Count: > 0 } st)
+        if (!index.SecurityTags.IsEmpty)
         {
-            entity["SecurityTagsJson"] = Security.SecurityTagSet.From(st).ToJsonString();
+            entity["SecurityTagsJson"] = index.SecurityTags.ToJsonStringOrNull();
         }
 
         return entity;
@@ -470,6 +470,6 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             entity.GetString("ErrorType"),
             CorrelationId: entity.GetString("CorrelationId"),
             Tags: TagSet.FromJsonStringOrEmpty(entity.GetString("TagsJson")),
-            SecurityTags: Security.SecurityTagSet.FromJsonStringOrNull(entity.GetString("SecurityTagsJson")));
+            SecurityTags: SecurityTagSet.FromJsonStringOrEmpty(entity.GetString("SecurityTagsJson")));
     }
 }

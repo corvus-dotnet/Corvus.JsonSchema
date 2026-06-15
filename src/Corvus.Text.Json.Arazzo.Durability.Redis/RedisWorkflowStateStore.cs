@@ -162,7 +162,7 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             index.ErrorType ?? string.Empty,
             index.CorrelationId ?? string.Empty,
             index.Tags.ToJsonStringOrNull() ?? string.Empty,
-            Security.SecurityTagSet.ToJsonStringOrNull(index.SecurityTags) ?? string.Empty,
+            index.SecurityTags.ToJsonStringOrNull() ?? string.Empty,
         ];
 
         RedisResult result = await this.database.ScriptEvaluateAsync(SaveScript, [RunKey(id.Value), AllKey, DueKey], argv).ConfigureAwait(false);
@@ -376,11 +376,11 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
                 continue;
             }
 
-            IReadOnlyList<SecurityTag>? securityTags = fields.TryGetValue("security_tags_json", out RedisValue secV) && !secV.IsNull ? Security.SecurityTagSet.FromJsonStringOrNull((string)secV!) : null;
+            SecurityTagSet securityTags = fields.TryGetValue("security_tags_json", out RedisValue secV) && !secV.IsNull ? SecurityTagSet.FromJsonStringOrEmpty((string)secV!) : default;
 
             // Row-security reach (§14.2): Redis has no server-side filtering over the run set, so apply the reach
             // filter in process over the persisted security tags — the only correct option for a key/value backend.
-            if (query.Security is { } security && !security.IsSatisfiedBy(securityTags ?? []))
+            if (query.Security is { } security && !security.IsSatisfiedBy(securityTags.ToList()))
             {
                 continue;
             }

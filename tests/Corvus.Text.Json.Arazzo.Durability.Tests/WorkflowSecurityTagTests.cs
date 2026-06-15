@@ -24,16 +24,16 @@ public sealed class WorkflowSecurityTagTests
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{ "petId": 1 }"""u8.ToArray());
 
         SecurityTag[] security = [new("tenant", "acme"), new("team", "payments"), new("team", "billing")];
-        using (WorkflowRun run = WorkflowRun.CreateNew(store, "run-1", "wf", doc.RootElement, Time, tags: TagSet.FromTags(["nightly"]), securityTags: security))
+        using (WorkflowRun run = WorkflowRun.CreateNew(store, "run-1", "wf", doc.RootElement, Time, tags: TagSet.FromTags(["nightly"]), securityTags: SecurityTagSet.FromTags(security)))
         {
-            run.SecurityTags.ShouldBe(security);
+            run.SecurityTags.ToList().ShouldBe(security);
             await run.EnqueueAsync(default);
         }
 
         // Re-enter from the persisted checkpoint: the security tags (and the separate user tags) are restored.
         using WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, "run-1", Time, default);
         resumed.ShouldNotBeNull();
-        resumed.SecurityTags.ShouldBe(security);
+        resumed.SecurityTags.ToList().ShouldBe(security);
         resumed.Tags.ToList().ShouldBe(["nightly"]);
     }
 
@@ -44,7 +44,7 @@ public sealed class WorkflowSecurityTagTests
         var management = new WorkflowManagementClient(store, owner: "ops");
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{ "petId": 1 }"""u8.ToArray());
 
-        using (WorkflowRun run = WorkflowRun.CreateNew(store, "run-1", "wf", doc.RootElement, Time, securityTags: [new("tenant", "acme")]))
+        using (WorkflowRun run = WorkflowRun.CreateNew(store, "run-1", "wf", doc.RootElement, Time, securityTags: SecurityTagSet.FromTags([new("tenant", "acme")])))
         {
             await run.EnqueueAsync(default);
         }
@@ -52,7 +52,7 @@ public sealed class WorkflowSecurityTagTests
         WorkflowRunDetail? detail = await management.GetAsync("run-1", AccessContext.System, default);
 
         detail.ShouldNotBeNull();
-        detail.Value.SecurityTags.ShouldBe([new SecurityTag("tenant", "acme")]);
+        detail.Value.SecurityTags.ToList().ShouldBe([new SecurityTag("tenant", "acme")]);
     }
 
     [TestMethod]
@@ -63,6 +63,6 @@ public sealed class WorkflowSecurityTagTests
 
         using WorkflowRun run = WorkflowRun.CreateNew(store, "run-1", "wf", doc.RootElement, Time);
 
-        run.SecurityTags.ShouldBeNull();
+        run.SecurityTags.IsEmpty.ShouldBeTrue();
     }
 }
