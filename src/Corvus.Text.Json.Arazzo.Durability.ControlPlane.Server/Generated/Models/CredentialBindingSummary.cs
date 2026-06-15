@@ -418,18 +418,18 @@ public readonly partial struct CredentialBindingSummary
     }
 
     /// <summary>
-    /// Gets the (optional) <c>usageTags</c> property.
+    /// Gets the (optional) <c>usageGrants</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Security tags scoping which runs may USE this binding (&#167;13), independent of managementTags.
+    /// Identity grants scoping which runs may USE this binding (&#167;13), independent of managementTags.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingSummary.UsageTagsCredentialSeArray UsageTags
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingSummary.CredentialUsageGrantArray UsageGrants
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UsageTagsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingSummary.UsageTagsCredentialSeArray value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UsageGrantsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingSummary.CredentialUsageGrantArray value))
             {
                 return value;
             }
@@ -947,9 +947,9 @@ public readonly partial struct CredentialBindingSummary
         public const string SourceName = "sourceName";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="UsageTags"/>.
+        /// Gets the JSON property name for <see cref="UsageGrants"/>.
         /// </summary>
-        public const string UsageTags = "usageTags";
+        public const string UsageGrants = "usageGrants";
 
         /// <summary>
         /// Gets the JSON property name for <see cref="AuthKind"/>.
@@ -1017,9 +1017,9 @@ public readonly partial struct CredentialBindingSummary
         public static ReadOnlySpan<byte> SourceNameUtf8 => "sourceName"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="UsageTags"/>.
+        /// Gets the JSON property name for <see cref="UsageGrants"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> UsageTagsUtf8 => "usageTags"u8;
+        public static ReadOnlySpan<byte> UsageGrantsUtf8 => "usageGrants"u8;
     }
 
     /// <summary>
@@ -1093,9 +1093,9 @@ public readonly partial struct CredentialBindingSummary
         public static ReadOnlySpan<byte> SourceName => "sourceName"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="UsageTags"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="UsageGrants"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> UsageTags => "usageTags"u8;
+        public static ReadOnlySpan<byte> UsageGrants => "usageGrants"u8;
     }
 
     /// <summary>
@@ -1170,8 +1170,8 @@ public readonly partial struct CredentialBindingSummary
         public static ReadOnlySpan<byte> SourceName => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x4E, 0x61, 0x6D, 0x65, 0x22];
 
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="UsageTags"/>.
+        /// Gets the pre-baked property name blob for <see cref="UsageGrants"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> UsageTags => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x75, 0x73, 0x61, 0x67, 0x65, 0x54, 0x61, 0x67, 0x73, 0x22];
+        public static ReadOnlySpan<byte> UsageGrants => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x75, 0x73, 0x61, 0x67, 0x65, 0x47, 0x72, 0x61, 0x6E, 0x74, 0x73, 0x22];
     }
 }
