@@ -30,7 +30,7 @@ public class TagSetBenchmarks
     private TagSet haystack;
     private TagSet needleSet;
     private List<string> tagList = null!;
-    private ParsedJsonDocument<JsonElement> document = null!;
+    private ParsedJsonDocument<JsonElement> document;
     private JsonElement tagsElement;
 
     [GlobalSetup]

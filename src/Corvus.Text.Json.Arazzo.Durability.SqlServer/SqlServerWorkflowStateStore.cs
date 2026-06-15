@@ -335,8 +335,9 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
         select.Parameters.Add(NullableText("@after", after));
         select.Parameters.AddWithValue("@limit", query.Limit + 1);
 
-        if (query.Tags is { Count: > 0 } tags)
+        if (!query.Tags.IsEmpty)
         {
+            List<string> tags = query.Tags.ToList();
             var predicates = new System.Text.StringBuilder();
             for (int i = 0; i < tags.Count; i++)
             {
@@ -389,7 +390,7 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
                 reader.IsDBNull(7) ? null : reader.GetString(7),
                 reader.IsDBNull(8) ? null : reader.GetString(8),
                 CorrelationId: reader.IsDBNull(9) ? null : reader.GetString(9),
-                Tags: DecodeTags(reader.IsDBNull(10) ? null : reader.GetString(10)));
+                Tags: TagSet.FromDelimited(reader.IsDBNull(10) ? null : reader.GetString(10), '\u001F'));
             runs.Add(new WorkflowRunListing(new WorkflowRunId(reader.GetString(0)), entry));
         }
 
@@ -409,21 +410,7 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
         command.Parameters.Add(NullableText("@awaiting_correlation_id", index.AwaitingCorrelationId));
         command.Parameters.Add(NullableText("@error_type", index.ErrorType));
         command.Parameters.Add(NullableText("@correlation_id", index.CorrelationId));
-        command.Parameters.Add(NullableText("@tags", EncodeTags(index.Tags)));
-    }
-
-    private static string? EncodeTags(IReadOnlyList<string>? tags)
-        => tags is { Count: > 0 } ? "\u001F" + string.Join('\u001F', tags) + "\u001F" : null;
-
-    private static IReadOnlyList<string>? DecodeTags(string? encoded)
-    {
-        if (string.IsNullOrEmpty(encoded))
-        {
-            return null;
-        }
-
-        string[] parts = encoded.Trim('\u001F').Split('\u001F', StringSplitOptions.RemoveEmptyEntries);
-        return parts.Length == 0 ? null : parts;
+        command.Parameters.Add(NullableText("@tags", index.Tags.ToDelimitedOrNull('\u001F')));
     }
 
     private static string EscapeLike(string value)

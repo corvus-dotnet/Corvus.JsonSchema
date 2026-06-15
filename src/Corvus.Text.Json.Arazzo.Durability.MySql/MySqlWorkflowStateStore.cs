@@ -406,8 +406,9 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         select.Parameters.AddWithValue("@after", (object?)after ?? DBNull.Value);
         select.Parameters.AddWithValue("@limit", query.Limit + 1);
 
-        if (query.Tags is { Count: > 0 } tags)
+        if (!query.Tags.IsEmpty)
         {
+            List<string> tags = query.Tags.ToList();
             var predicates = new System.Text.StringBuilder();
             for (int i = 0; i < tags.Count; i++)
             {
@@ -460,7 +461,7 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
                 reader.IsDBNull(7) ? null : reader.GetString(7),
                 reader.IsDBNull(8) ? null : reader.GetString(8),
                 CorrelationId: reader.IsDBNull(9) ? null : reader.GetString(9),
-                Tags: DecodeTags(reader.IsDBNull(10) ? null : reader.GetString(10)));
+                Tags: TagSet.FromDelimited(reader.IsDBNull(10) ? null : reader.GetString(10), '\u001F'));
             runs.Add(new WorkflowRunListing(new WorkflowRunId(reader.GetString(0)), entry));
         }
 
@@ -480,21 +481,7 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         command.Parameters.AddWithValue("@awaiting_correlation_id", (object?)index.AwaitingCorrelationId ?? DBNull.Value);
         command.Parameters.AddWithValue("@error_type", (object?)index.ErrorType ?? DBNull.Value);
         command.Parameters.AddWithValue("@correlation_id", (object?)index.CorrelationId ?? DBNull.Value);
-        command.Parameters.AddWithValue("@tags", (object?)EncodeTags(index.Tags) ?? DBNull.Value);
-    }
-
-    private static string? EncodeTags(IReadOnlyList<string>? tags)
-        => tags is { Count: > 0 } ? "\u001F" + string.Join('\u001F', tags) + "\u001F" : null;
-
-    private static IReadOnlyList<string>? DecodeTags(string? encoded)
-    {
-        if (string.IsNullOrEmpty(encoded))
-        {
-            return null;
-        }
-
-        string[] parts = encoded.Trim('\u001F').Split('\u001F', StringSplitOptions.RemoveEmptyEntries);
-        return parts.Length == 0 ? null : parts;
+        command.Parameters.AddWithValue("@tags", (object?)index.Tags.ToDelimitedOrNull('\u001F') ?? DBNull.Value);
     }
 
     private static string EscapeLike(string value)

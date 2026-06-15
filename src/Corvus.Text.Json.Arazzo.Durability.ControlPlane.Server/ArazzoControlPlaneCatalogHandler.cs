@@ -72,7 +72,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         }
 
         CatalogOwner owner = ToOwner(body.Owner);
-        IReadOnlyList<string>? tags = ToTags(body.Tags);
+        TagSet tags = ToTags(body.Tags);
 
         // Stamp the deployment's internal tags (e.g. the principal's tenant, §14.3) onto the new version so runs
         // triggered from it inherit them. User-supplied security tags would be validated here once the contract
@@ -97,7 +97,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         string? text = parameters.Q.IsNotUndefined() ? (string)parameters.Q : null;
         string? baseWorkflowId = parameters.BaseWorkflowId.IsNotUndefined() ? (string)parameters.BaseWorkflowId : null;
         string? workflowIdPrefix = parameters.WorkflowIdPrefix.IsNotUndefined() ? (string)parameters.WorkflowIdPrefix : null;
-        IReadOnlyList<string>? tags = ToTags(parameters.Tag);
+        TagSet tags = ToTags(parameters.Tag);
         CatalogStatus? status = parameters.Status.IsNotUndefined() ? Enum.Parse<CatalogStatus>((string)parameters.Status) : null;
         string? owner = parameters.Owner.IsNotUndefined() ? (string)parameters.Owner : null;
         int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 100;
@@ -141,7 +141,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         Models.CatalogMetadataPatch patch = parameters.Body;
 
         CatalogOwner? owner = patch.Owner.IsNotUndefined() ? ToOwner(patch.Owner) : null;
-        IReadOnlyList<string>? tags = ToTags(patch.Tags);
+        TagSet? tags = ToTags(patch.Tags);
         CatalogStatus? status = patch.Status.IsNotUndefined() ? Enum.Parse<CatalogStatus>((string)patch.Status) : null;
         AccessContext ctx = this.access.Current();
 
@@ -392,7 +392,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
 
         // A version with no inputs schema (SchemaMissing) accepts any inputs. The run inherits the version's
         // security tags (KVP labels) so row authorization (§14.2) sees the same labels the workflow carries.
-        WorkflowRunId runId = await this.management.StartAsync(workflowId, inputs, correlationId: null, tags: null, securityTags: catalogVersion.SecurityTagsValue, cancellationToken).ConfigureAwait(false);
+        WorkflowRunId runId = await this.management.StartAsync(workflowId, inputs, correlationId: null, tags: default, securityTags: catalogVersion.SecurityTagsValue, cancellationToken).ConfigureAwait(false);
 
         return StartCatalogWorkflowRunResult.Accepted(
             new Models.WorkflowRunAccepted.Source((ref Models.WorkflowRunAccepted.Builder b) => b.Create(
@@ -516,53 +516,13 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
             Team: owner.Team.IsNotUndefined() ? (string)owner.Team : null,
             Url: owner.Url.IsNotUndefined() ? (string)owner.Url : null);
 
-    private static IReadOnlyList<string>? ToTags(Models.PostCatalogBody.JsonStringArray tags)
-    {
-        if (tags.IsUndefined())
-        {
-            return null;
-        }
+    // Copy the parsed tag-list parameter's canonical bytes into the holder (per request, not per row). An add or a
+    // search needle yields an empty holder when absent; a patch yields null (= "leave tags unchanged").
+    private static TagSet ToTags(Models.PostCatalogBody.JsonStringArray tags) => TagSet.CopyFrom(tags);
 
-        var list = new List<string>();
-        foreach (Models.JsonString item in tags.EnumerateArray())
-        {
-            list.Add((string)item);
-        }
+    private static TagSet? ToTags(Models.CatalogMetadataPatch.JsonStringArray tags) => tags.IsUndefined() ? null : TagSet.CopyFrom(tags);
 
-        return list.Count > 0 ? list : null;
-    }
-
-    private static IReadOnlyList<string>? ToTags(Models.CatalogMetadataPatch.JsonStringArray tags)
-    {
-        if (tags.IsUndefined())
-        {
-            return null;
-        }
-
-        var list = new List<string>();
-        foreach (Models.JsonString item in tags.EnumerateArray())
-        {
-            list.Add((string)item);
-        }
-
-        return list.Count > 0 ? list : null;
-    }
-
-    private static IReadOnlyList<string>? ToTags(Models.TagList tags)
-    {
-        if (tags.IsUndefined())
-        {
-            return null;
-        }
-
-        var list = new List<string>();
-        foreach (Models.JsonString item in tags.EnumerateArray())
-        {
-            list.Add((string)item);
-        }
-
-        return list.Count > 0 ? list : null;
-    }
+    private static TagSet ToTags(Models.TagList tags) => TagSet.CopyFrom(tags);
 
     private static Models.CatalogPage.Source BuildPage(CatalogPage page)
         => new((ref Models.CatalogPage.Builder b) =>

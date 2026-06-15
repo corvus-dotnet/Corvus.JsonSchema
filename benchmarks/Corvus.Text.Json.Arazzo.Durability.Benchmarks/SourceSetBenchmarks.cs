@@ -18,7 +18,7 @@ public class SourceSetBenchmarks
     private string jsonString = null!;
     private SourceSet sourceSet;
     private List<SourceDto> dtoList = null!;
-    private ParsedJsonDocument<JsonElement> document = null!;
+    private ParsedJsonDocument<JsonElement> document;
     private JsonElement sourcesElement;
 
     [GlobalSetup]

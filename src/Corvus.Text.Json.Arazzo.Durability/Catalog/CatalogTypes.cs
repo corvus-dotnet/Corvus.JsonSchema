@@ -41,7 +41,7 @@ public readonly record struct CatalogVersionRef(string BaseWorkflowId, int Versi
 /// <param name="CreatedBy">The authenticated actor adding the version (recorded for governance + audit).</param>
 /// <param name="Tags">Free-form tags for display and filtering (AND-matched on search), if any.</param>
 /// <param name="SecurityTags">Security tags (KVP labels) — the input to tag-based row authorization (§14.2), distinct from the free-form <paramref name="Tags"/> — if any.</param>
-public readonly record struct CatalogMetadata(CatalogOwner Owner, string CreatedBy, IReadOnlyList<string>? Tags = null, IReadOnlyList<SecurityTag>? SecurityTags = null);
+public readonly record struct CatalogMetadata(CatalogOwner Owner, string CreatedBy, TagSet Tags = default, IReadOnlyList<SecurityTag>? SecurityTags = null);
 
 /// <summary>A partial update of a version's mutable governance metadata; an unset field is left unchanged. Setting
 /// <see cref="Status"/> to <see cref="CatalogStatus.Obsolete"/> records the obsoletion as a distinct governance event.</summary>
@@ -53,7 +53,7 @@ public readonly record struct CatalogMetadata(CatalogOwner Owner, string Created
 public readonly record struct CatalogMetadataPatch(
     string UpdatedBy,
     CatalogOwner? Owner = null,
-    IReadOnlyList<string>? Tags = null,
+    TagSet? Tags = null,
     CatalogStatus? Status = null);
 
 // The catalog version's persisted metadata is the generated Corvus.Text.Json type CatalogVersion

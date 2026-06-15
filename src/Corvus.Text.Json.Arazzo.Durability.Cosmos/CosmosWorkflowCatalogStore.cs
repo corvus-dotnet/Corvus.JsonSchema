@@ -216,8 +216,9 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         }
 
         var tagParameters = new List<(string Name, string Value)>();
-        if (query.Tags is { Count: > 0 } queryTags)
+        if (!query.Tags.IsEmpty)
         {
+            List<string> queryTags = query.Tags.ToList();
             for (int i = 0; i < queryTags.Count; i++)
             {
                 string name = $"@tag{i.ToString(CultureInfo.InvariantCulture)}";
@@ -325,7 +326,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         bool reactivated = status == CatalogStatus.Active && currentStatus == CatalogStatus.Obsolete;
 
         CatalogOwner ownerValue = patch.Owner ?? current.OwnerValue;
-        IReadOnlyList<string> tags = patch.Tags is { } t ? [.. t] : current.TagsValue;
+        TagSet tags = patch.Tags ?? current.TagsValue;
         string? obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedByOrNull;
         DateTimeOffset? obsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAtValue;
         IReadOnlyList<SecurityTag> securityTags = current.SecurityTagsValue;
@@ -455,7 +456,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         var partition = new PartitionKey(baseWorkflowId);
-        IReadOnlyList<string> tags = metadata.Tags is { Count: > 0 } t ? [.. t] : [];
+        TagSet tags = metadata.Tags;
         IReadOnlyList<SecurityTag>? securityTags = metadata.SecurityTags is { Count: > 0 } st ? [.. st] : null;
 
         while (true)
@@ -472,7 +473,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
                 status: CatalogStatus.Active,
                 tags: tags,
                 owner: metadata.Owner,
-                sources: projection.Sources,
+                sources: SourceSet.FromSources(projection.Sources),
                 hash: projection.Hash,
                 createdBy: metadata.CreatedBy,
                 createdAt: now,

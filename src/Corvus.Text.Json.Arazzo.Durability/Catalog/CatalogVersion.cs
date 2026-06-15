@@ -64,20 +64,8 @@ public readonly partial struct CatalogVersion
         }
     }
 
-    /// <summary>Gets the tags as a list of strings.</summary>
-    public IReadOnlyList<string> TagsValue
-    {
-        get
-        {
-            var list = new List<string>();
-            foreach (JsonString tag in this.Tags.EnumerateArray())
-            {
-                list.Add((string)tag);
-            }
-
-            return list;
-        }
-    }
+    /// <summary>Gets the free-form tags as a deferred holder over the persisted bytes.</summary>
+    public TagSet TagsValue => TagSet.CopyFrom(this.Tags);
 
     /// <summary>Gets the security tags (KVP labels) as a list, distinct from the free-form <see cref="TagsValue"/> (§14.2).</summary>
     public IReadOnlyList<SecurityTag> SecurityTagsValue
@@ -97,22 +85,8 @@ public readonly partial struct CatalogVersion
         }
     }
 
-    /// <summary>Gets the package source documents as a list of <see cref="CatalogSourceRef"/> records.</summary>
-    public IReadOnlyList<CatalogSourceRef> SourcesValue
-    {
-        get
-        {
-            var list = new List<CatalogSourceRef>();
-            foreach (CatalogSourceInfo source in this.Sources.EnumerateArray())
-            {
-                list.Add(new CatalogSourceRef(
-                    (string)source.Name,
-                    source.Type.IsNotUndefined() ? (string)source.Type : null));
-            }
-
-            return list;
-        }
-    }
+    /// <summary>Gets the package source documents as a deferred holder over the persisted bytes.</summary>
+    public SourceSet SourcesValue => SourceSet.CopyFrom(this.Sources);
 
     /// <summary>Builds a <see cref="CatalogVersion"/> from its constituent fields, detached and ready to persist or return.</summary>
     /// <param name="baseWorkflowId">The base workflow id.</param>
@@ -140,9 +114,9 @@ public readonly partial struct CatalogVersion
         string title,
         string? description,
         CatalogStatus status,
-        IReadOnlyList<string> tags,
+        TagSet tags,
         CatalogOwner owner,
-        IReadOnlyList<CatalogSourceRef> sources,
+        SourceSet sources,
         string hash,
         string createdBy,
         DateTimeOffset createdAt,
@@ -169,13 +143,8 @@ public readonly partial struct CatalogVersion
 
             writer.WriteString(JsonPropertyNames.StatusUtf8, status.ToString());
 
-            writer.WriteStartArray(JsonPropertyNames.TagsUtf8);
-            foreach (string tag in tags)
-            {
-                writer.WriteStringValue(tag);
-            }
-
-            writer.WriteEndArray();
+            writer.WritePropertyName(JsonPropertyNames.TagsUtf8);
+            tags.WriteTo(writer);
 
             if (securityTags is { Count: > 0 })
             {
@@ -206,20 +175,8 @@ public readonly partial struct CatalogVersion
 
             writer.WriteEndObject();
 
-            writer.WriteStartArray(JsonPropertyNames.SourcesUtf8);
-            foreach (CatalogSourceRef source in sources)
-            {
-                writer.WriteStartObject();
-                writer.WriteString(CatalogSourceInfo.JsonPropertyNames.NameUtf8, source.Name);
-                if (source.Type is not null)
-                {
-                    writer.WriteString(CatalogSourceInfo.JsonPropertyNames.TypeUtf8, source.Type);
-                }
-
-                writer.WriteEndObject();
-            }
-
-            writer.WriteEndArray();
+            writer.WritePropertyName(JsonPropertyNames.SourcesUtf8);
+            sources.WriteTo(writer);
 
             writer.WriteString(JsonPropertyNames.HashUtf8, hash);
             writer.WriteString(JsonPropertyNames.CreatedByUtf8, createdBy);
