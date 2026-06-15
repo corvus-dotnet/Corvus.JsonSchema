@@ -24,7 +24,7 @@ public readonly record struct CatalogQuery(
     string? Text = null,
     string? BaseWorkflowId = null,
     string? WorkflowIdPrefix = null,
-    IReadOnlyList<string>? Tags = null,
+    TagSet Tags = default,
     CatalogStatus? Status = null,
     string? Owner = null,
     int Limit = 100,

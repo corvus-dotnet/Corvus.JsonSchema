@@ -59,7 +59,7 @@ public static class DemoData
 
     private static async ValueTask Faulted(IWorkflowStateStore store, TimeProvider time, string id, string workflowId, int cursor, string stepId, string error, string[] tags)
     {
-        using WorkflowRun run = WorkflowRun.CreateNew(store, id, workflowId, default, time, correlationId: id.Replace("run-", string.Empty, StringComparison.Ordinal), tags: tags);
+        using WorkflowRun run = WorkflowRun.CreateNew(store, id, workflowId, default, time, correlationId: id.Replace("run-", string.Empty, StringComparison.Ordinal), tags: TagSet.FromTags(tags));
         if (cursor > 0)
         {
             await run.CheckpointAsync(cursor, default).ConfigureAwait(false);
@@ -70,27 +70,27 @@ public static class DemoData
 
     private static async ValueTask Completed(IWorkflowStateStore store, TimeProvider time, string id, string workflowId, int cursor, string[] tags)
     {
-        using WorkflowRun run = WorkflowRun.CreateNew(store, id, workflowId, default, time, tags: tags);
+        using WorkflowRun run = WorkflowRun.CreateNew(store, id, workflowId, default, time, tags: TagSet.FromTags(tags));
         await run.CheckpointAsync(cursor, default).ConfigureAwait(false);
         await run.CompleteAsync(default, default).ConfigureAwait(false);
     }
 
     private static async ValueTask Running(IWorkflowStateStore store, TimeProvider time, string id, string workflowId, int cursor, string[] tags)
     {
-        using WorkflowRun run = WorkflowRun.CreateNew(store, id, workflowId, default, time, tags: tags);
+        using WorkflowRun run = WorkflowRun.CreateNew(store, id, workflowId, default, time, tags: TagSet.FromTags(tags));
         await run.CheckpointAsync(cursor, default).ConfigureAwait(false);
     }
 
     private static async ValueTask SuspendedForMessage(IWorkflowStateStore store, TimeProvider time, string id, string workflowId, int cursor, string channel, string correlationId, string[] tags)
     {
-        using WorkflowRun run = WorkflowRun.CreateNew(store, id, workflowId, default, time, tags: tags);
+        using WorkflowRun run = WorkflowRun.CreateNew(store, id, workflowId, default, time, tags: TagSet.FromTags(tags));
         await run.CheckpointAsync(cursor, default).ConfigureAwait(false);
         await run.SuspendForMessageAsync(cursor, channel, correlationId, default).ConfigureAwait(false);
     }
 
     private static async ValueTask SuspendedForTimer(IWorkflowStateStore store, TimeProvider time, string id, string workflowId, int cursor, TimeSpan delay, string[] tags)
     {
-        using WorkflowRun run = WorkflowRun.CreateNew(store, id, workflowId, default, time, tags: tags);
+        using WorkflowRun run = WorkflowRun.CreateNew(store, id, workflowId, default, time, tags: TagSet.FromTags(tags));
         await run.CheckpointAsync(cursor, default).ConfigureAwait(false);
         await run.SuspendForTimerAsync(cursor, delay, default).ConfigureAwait(false);
     }

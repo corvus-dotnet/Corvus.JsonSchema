@@ -57,7 +57,7 @@ public static class WorkflowCheckpointSerializer
         WorkflowWait? wait = null,
         WorkflowFault? fault = null,
         string? correlationId = null,
-        IReadOnlyList<string>? tags = null,
+        TagSet tags = default,
         IReadOnlyList<SecurityTag>? securityTags = null)
     {
         ArgumentNullException.ThrowIfNull(workflowId);
@@ -86,15 +86,10 @@ public static class WorkflowCheckpointSerializer
                 writer.WriteString("correlationId"u8, cid);
             }
 
-            if (tags is { Count: > 0 })
+            if (!tags.IsEmpty)
             {
-                writer.WriteStartArray("tags"u8);
-                foreach (string tag in tags)
-                {
-                    writer.WriteStringValue(tag);
-                }
-
-                writer.WriteEndArray();
+                writer.WritePropertyName("tags"u8);
+                tags.WriteTo(writer);
             }
 
             if (securityTags is { Count: > 0 })
@@ -217,17 +212,10 @@ public static class WorkflowCheckpointSerializer
 
             string? correlationId = root.TryGetProperty("correlationId"u8, out JsonElement correlationIdMeta) ? correlationIdMeta.GetString() : null;
 
-            List<string>? tags = null;
+            TagSet tags = default;
             if (root.TryGetProperty("tags"u8, out JsonElement tagsElement) && tagsElement.ValueKind == JsonValueKind.Array)
             {
-                tags = [];
-                foreach (JsonElement tag in tagsElement.EnumerateArray())
-                {
-                    if (tag.GetString() is { } t)
-                    {
-                        tags.Add(t);
-                    }
-                }
+                tags = TagSet.CopyFrom(tagsElement);
             }
 
             List<SecurityTag>? securityTags = null;

@@ -53,9 +53,9 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
                 title: projection.Title,
                 description: projection.Description,
                 status: CatalogStatus.Active,
-                tags: metadata.Tags is { Count: > 0 } tags ? [.. tags] : [],
+                tags: metadata.Tags,
                 owner: metadata.Owner,
-                sources: projection.Sources,
+                sources: SourceSet.FromSources(projection.Sources),
                 hash: projection.Hash,
                 createdBy: metadata.CreatedBy,
                 createdAt: now,
@@ -166,7 +166,7 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
                 title: (string)current.Title,
                 description: current.DescriptionOrNull,
                 status: status,
-                tags: patch.Tags is { } tags ? [.. tags] : current.TagsValue,
+                tags: patch.Tags ?? current.TagsValue,
                 owner: patch.Owner ?? current.OwnerValue,
                 sources: current.SourcesValue,
                 hash: (string)current.Hash,
@@ -265,13 +265,9 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
             }
         }
 
-        if (query.Tags is { Count: > 0 } queryTags)
+        if (!query.Tags.AllContainedIn(version.TagsValue))
         {
-            IReadOnlyList<string> tags = version.TagsValue;
-            if (!queryTags.All(tags.Contains))
-            {
-                return false;
-            }
+            return false;
         }
 
         return query.Security?.IsSatisfiedBy(version.SecurityTagsValue) ?? true;

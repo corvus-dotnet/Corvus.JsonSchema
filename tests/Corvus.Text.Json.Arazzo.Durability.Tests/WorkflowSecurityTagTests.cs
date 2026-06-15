@@ -24,7 +24,7 @@ public sealed class WorkflowSecurityTagTests
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{ "petId": 1 }"""u8.ToArray());
 
         SecurityTag[] security = [new("tenant", "acme"), new("team", "payments"), new("team", "billing")];
-        using (WorkflowRun run = WorkflowRun.CreateNew(store, "run-1", "wf", doc.RootElement, Time, tags: ["nightly"], securityTags: security))
+        using (WorkflowRun run = WorkflowRun.CreateNew(store, "run-1", "wf", doc.RootElement, Time, tags: TagSet.FromTags(["nightly"]), securityTags: security))
         {
             run.SecurityTags.ShouldBe(security);
             await run.EnqueueAsync(default);
@@ -34,7 +34,7 @@ public sealed class WorkflowSecurityTagTests
         using WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, "run-1", Time, default);
         resumed.ShouldNotBeNull();
         resumed.SecurityTags.ShouldBe(security);
-        resumed.Tags.ShouldBe(["nightly"]);
+        resumed.Tags.ToList().ShouldBe(["nightly"]);
     }
 
     [TestMethod]

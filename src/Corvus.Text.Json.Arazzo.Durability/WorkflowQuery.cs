@@ -34,7 +34,7 @@ public readonly record struct WorkflowQuery(
     DateTimeOffset? UpdatedAfter = null,
     DateTimeOffset? UpdatedBefore = null,
     string? CorrelationId = null,
-    IReadOnlyList<string>? Tags = null,
+    TagSet Tags = default,
     SecurityFilter? Security = null);
 
 /// <summary>One run in a <see cref="WorkflowRunPage"/>: its id and the indexed projection.</summary>

@@ -233,7 +233,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
             title: (string)cur.Title,
             description: cur.DescriptionOrNull,
             status: status,
-            tags: patch.Tags is { } tags ? [.. tags] : cur.TagsValue,
+            tags: patch.Tags ?? cur.TagsValue,
             owner: patch.Owner ?? cur.OwnerValue,
             sources: cur.SourcesValue,
             hash: (string)cur.Hash,
@@ -338,7 +338,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
             return false;
         }
 
-        if (query.Tags is { Count: > 0 } queryTags && !queryTags.All(version.TagsValue.Contains))
+        if (!query.Tags.AllContainedIn(version.TagsValue))
         {
             return false;
         }
@@ -356,7 +356,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
     private async ValueTask<CatalogVersion> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
-        IReadOnlyList<string> tags = metadata.Tags is { Count: > 0 } t ? [.. t] : [];
+        TagSet tags = metadata.Tags;
         IReadOnlyList<SecurityTag>? securityTags = metadata.SecurityTags is { Count: > 0 } st ? [.. st] : null;
 
         // Assign the next version number safely: compute the current max for the base id by scanning the bucket,
@@ -377,7 +377,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
                 status: CatalogStatus.Active,
                 tags: tags,
                 owner: metadata.Owner,
-                sources: projection.Sources,
+                sources: SourceSet.FromSources(projection.Sources),
                 hash: projection.Hash,
                 createdBy: metadata.CreatedBy,
                 createdAt: now,

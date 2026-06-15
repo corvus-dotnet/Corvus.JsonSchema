@@ -249,7 +249,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
         bool reactivated = status == CatalogStatus.Active && currentStatus == CatalogStatus.Obsolete;
 
         CatalogOwner owner = patch.Owner ?? current.OwnerValue;
-        IReadOnlyList<string> tags = patch.Tags is { } t ? [.. t] : current.TagsValue;
+        TagSet tags = patch.Tags ?? current.TagsValue;
         string? obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedByOrNull;
         DateTimeOffset? obsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAtValue;
 
@@ -346,13 +346,9 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
             }
         }
 
-        if (query.Tags is { Count: > 0 } queryTags)
+        if (!query.Tags.AllContainedIn(version.TagsValue))
         {
-            IReadOnlyList<string> versionTags = version.TagsValue;
-            if (!queryTags.All(versionTags.Contains))
-            {
-                return false;
-            }
+            return false;
         }
 
         // Row-security reach (§14.2): Table OData cannot match inside the serialized security tags, so apply the
@@ -371,7 +367,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
             ["Runnable"] = (bool)version.Runnable,
             ["CreatedBy"] = (string)version.CreatedBy,
             ["CreatedAt"] = version.CreatedAtValue.ToUnixTimeMilliseconds(),
-            ["Sources"] = EncodeSources(version.SourcesValue),
+            ["Sources"] = version.SourcesValue.ToJsonStringOrNull() ?? "[]",
             ["SecurityTags"] = EncodeSecurityTags(version.SecurityTagsValue),
         };
 
@@ -395,7 +391,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
     private static void WriteGovernance(
         TableEntity entity,
         CatalogStatus status,
-        IReadOnlyList<string> tags,
+        TagSet tags,
         CatalogOwner owner,
         string? lastUpdatedBy,
         DateTimeOffset? lastUpdatedAt,
@@ -403,7 +399,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
         DateTimeOffset? obsoletedAt)
     {
         entity["Status"] = status.ToString();
-        entity["Tags"] = EncodeTags(tags);
+        entity["Tags"] = tags.ToJsonStringOrNull() ?? "[]";
         entity["OwnerName"] = owner.Name;
         entity["OwnerEmail"] = owner.Email;
         entity["OwnerTeam"] = owner.Team;
@@ -422,13 +418,13 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
             title: entity.GetString("Title") ?? string.Empty,
             description: entity.GetString("Description"),
             status: Enum.Parse<CatalogStatus>(entity.GetString("Status") ?? nameof(CatalogStatus.Active)),
-            tags: DecodeTags(entity.GetString("Tags")),
+            tags: TagSet.FromJsonStringOrEmpty(entity.GetString("Tags")),
             owner: new CatalogOwner(
                 entity.GetString("OwnerName") ?? string.Empty,
                 entity.GetString("OwnerEmail") ?? string.Empty,
                 entity.GetString("OwnerTeam"),
                 entity.GetString("OwnerUrl")),
-            sources: DecodeSources(entity.GetString("Sources")),
+            sources: SourceSet.FromJsonStringOrEmpty(entity.GetString("Sources")),
             hash: entity.GetString("Hash") ?? string.Empty,
             createdBy: entity.GetString("CreatedBy") ?? string.Empty,
             createdAt: DateTimeOffset.FromUnixTimeMilliseconds(entity.GetInt64("CreatedAt") ?? 0),
@@ -439,14 +435,6 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
             runnable: entity.GetBoolean("Runnable") ?? false,
             securityTags: DecodeSecurityTags(entity.GetString("SecurityTags")));
 
-    private static string EncodeTags(IReadOnlyList<string> tags)
-        => System.Text.Json.JsonSerializer.Serialize(tags);
-
-    private static IReadOnlyList<string> DecodeTags(string? encoded)
-        => string.IsNullOrEmpty(encoded)
-            ? []
-            : System.Text.Json.JsonSerializer.Deserialize<List<string>>(encoded) ?? [];
-
     // Security tags round-trip as a JSON property so a single-row read carries them for the control-plane's
     // authorization check (§14.2); the in-process reach filter below reads the same persisted tags.
     private static string EncodeSecurityTags(IReadOnlyList<SecurityTag> tags)
@@ -455,24 +443,10 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
     private static IReadOnlyList<SecurityTag>? DecodeSecurityTags(string? encoded)
         => Security.SecurityTagSet.FromJsonStringOrNull(encoded);
 
-    private static string EncodeSources(IReadOnlyList<CatalogSourceRef> sources)
-        => System.Text.Json.JsonSerializer.Serialize(sources.Select(s => new SourceDto(s.Name, s.Type)).ToList());
-
-    private static IReadOnlyList<CatalogSourceRef> DecodeSources(string? encoded)
-    {
-        if (string.IsNullOrEmpty(encoded))
-        {
-            return [];
-        }
-
-        List<SourceDto>? dtos = System.Text.Json.JsonSerializer.Deserialize<List<SourceDto>>(encoded);
-        return dtos is null ? [] : dtos.Select(d => new CatalogSourceRef(d.Name, d.Type)).ToList();
-    }
-
     private async ValueTask<CatalogVersion> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
-        IReadOnlyList<string> tags = metadata.Tags is { Count: > 0 } t ? [.. t] : [];
+        TagSet tags = metadata.Tags;
         IReadOnlyList<SecurityTag>? securityTags = metadata.SecurityTags is { Count: > 0 } st ? [.. st] : null;
 
         // Assign the next version number safely: find the partition's current max, project + insert with
@@ -492,7 +466,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
                 status: CatalogStatus.Active,
                 tags: tags,
                 owner: metadata.Owner,
-                sources: projection.Sources,
+                sources: SourceSet.FromSources(projection.Sources),
                 hash: projection.Hash,
                 createdBy: metadata.CreatedBy,
                 createdAt: now,
@@ -551,6 +525,4 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
             return null;
         }
     }
-
-    private readonly record struct SourceDto(string Name, string? Type);
 }
