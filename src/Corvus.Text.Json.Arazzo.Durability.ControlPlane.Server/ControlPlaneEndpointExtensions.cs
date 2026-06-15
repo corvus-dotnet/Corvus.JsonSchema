@@ -79,7 +79,7 @@ public static class ControlPlaneEndpointExtensions
 
         // The source-credential management API persists references + metadata only — it never touches secret material.
         ISourceCredentialStore credentialStore = sourceCredentialStore ?? new InMemorySourceCredentialStore();
-        var credentialsHandler = new ArazzoControlPlaneCredentialsHandler(credentialStore);
+        var credentialsHandler = new ArazzoControlPlaneCredentialsHandler(credentialStore, access);
 
         return endpoints.MapApiEndpoints(
             new ArazzoControlPlaneHandler(management, access),

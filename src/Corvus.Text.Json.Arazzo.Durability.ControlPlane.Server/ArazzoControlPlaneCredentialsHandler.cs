@@ -27,23 +27,37 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     private const string ProblemBase = "https://corvus-oss.org/arazzo/control-plane/problems/";
 
     private readonly ISourceCredentialStore store;
+    private readonly ControlPlaneAccess access;
     private readonly string actor;
 
-    /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneCredentialsHandler"/> class.</summary>
+    /// <summary>Initializes a new, unscoped instance (every request runs with <see cref="AccessContext.System"/> — no
+    /// row security).</summary>
     /// <param name="store">The persistent source credential store the endpoints delegate to.</param>
     /// <param name="actor">The audit actor recorded on writes (a deployment may resolve this from the principal).</param>
     public ArazzoControlPlaneCredentialsHandler(ISourceCredentialStore store, string actor = "control-plane")
+        : this(store, new ControlPlaneAccess(), actor)
+    {
+    }
+
+    /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneCredentialsHandler"/> class.</summary>
+    /// <param name="store">The persistent source credential store the endpoints delegate to.</param>
+    /// <param name="access">Resolves the caller's <see cref="AccessContext"/> per request and the internal tenant tags
+    /// stamped onto created bindings (§14.2). Unscoped (<see cref="AccessContext.System"/>) when no row security is configured.</param>
+    /// <param name="actor">The audit actor recorded on writes (a deployment may resolve this from the principal).</param>
+    internal ArazzoControlPlaneCredentialsHandler(ISourceCredentialStore store, ControlPlaneAccess access, string actor = "control-plane")
     {
         ArgumentNullException.ThrowIfNull(store);
+        ArgumentNullException.ThrowIfNull(access);
         ArgumentNullException.ThrowIfNull(actor);
         this.store = store;
+        this.access = access;
         this.actor = actor;
     }
 
     /// <inheritdoc/>
     public async ValueTask<ListCredentialsResult> HandleListCredentialsAsync(ListCredentialsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        using PooledDocumentList<SourceCredentialBinding> bindings = await this.store.ListAsync(cancellationToken).ConfigureAwait(false);
+        using PooledDocumentList<SourceCredentialBinding> bindings = await this.store.ListAsync(this.access.Current(), cancellationToken).ConfigureAwait(false);
         return ListCredentialsResult.Ok(ToList(bindings), workspace);
     }
 
@@ -53,7 +67,9 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         SourceCredentialDefinition definition;
         try
         {
-            definition = ReadWrite(parameters.Body);
+            // Stamp the principal's deployment-internal tenant tags (e.g. sys:tenant=acme) so the new binding is owned by
+            // the creator's slice of the security shell (§14.2) — the binding's row-authorization scope.
+            definition = ReadWrite(parameters.Body) with { SecurityTags = SecurityTagSet.FromTags(this.access.InternalTags()) };
         }
         catch (ArgumentException ex)
         {
@@ -80,7 +96,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     {
         string sourceName = (string)parameters.SourceName;
         string environment = (string)parameters.Environment;
-        using ParsedJsonDocument<SourceCredentialBinding>? binding = await this.store.GetAsync(sourceName, environment, cancellationToken).ConfigureAwait(false);
+        using ParsedJsonDocument<SourceCredentialBinding>? binding = await this.store.GetAsync(sourceName, environment, this.access.Current(), cancellationToken).ConfigureAwait(false);
         return binding is { } b
             ? GetCredentialResult.Ok(ToSummary(b.RootElement), workspace)
             : GetCredentialResult.NotFound(NotFoundProblem(sourceName, environment), workspace);
@@ -103,7 +119,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
 
         try
         {
-            using ParsedJsonDocument<SourceCredentialBinding>? updated = await this.store.UpdateAsync(sourceName, environment, definition, WorkflowEtag.None, this.actor, cancellationToken).ConfigureAwait(false);
+            using ParsedJsonDocument<SourceCredentialBinding>? updated = await this.store.UpdateAsync(sourceName, environment, definition, WorkflowEtag.None, this.actor, this.access.Current(), cancellationToken).ConfigureAwait(false);
             return updated is { } b
                 ? UpdateCredentialResult.Ok(ToSummary(b.RootElement), workspace)
                 : UpdateCredentialResult.NotFound(NotFoundProblem(sourceName, environment), workspace);
@@ -119,7 +135,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     {
         string sourceName = (string)parameters.SourceName;
         string environment = (string)parameters.Environment;
-        bool deleted = await this.store.DeleteAsync(sourceName, environment, WorkflowEtag.None, cancellationToken).ConfigureAwait(false);
+        bool deleted = await this.store.DeleteAsync(sourceName, environment, WorkflowEtag.None, this.access.Current(), cancellationToken).ConfigureAwait(false);
         return deleted
             ? DeleteCredentialResult.NoContent()
             : DeleteCredentialResult.NotFound(NotFoundProblem(sourceName, environment), workspace);
