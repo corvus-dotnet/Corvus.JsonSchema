@@ -18,13 +18,6 @@ public sealed class InMemoryWorkflowAdministratorStore : IWorkflowAdministratorS
 {
     private readonly Lock gate = new();
     private readonly Dictionary<string, byte[]> records = new(StringComparer.Ordinal);
-
-    // The reverse administration index (design §15.4): administrator-identity digest → the base ids it administers,
-    // ordered by base id for keyset paging — the in-memory analogue of a backend's indexed digest column (the
-    // InMemoryObservedIdentityStore.byDigest pattern). administeredDigests holds each base id's current administrator
-    // digests so a PutAsync that changes the administrator set can retract the stale digests before indexing the new ones.
-    private readonly Dictionary<string, SortedSet<string>> byDigest = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, string[]> administeredDigests = new(StringComparer.Ordinal);
     private readonly TimeProvider timeProvider;
     private long etagSequence;
 
@@ -47,7 +40,7 @@ public sealed class InMemoryWorkflowAdministratorStore : IWorkflowAdministratorS
     }
 
     /// <inheritdoc/>
-    public ValueTask<ParsedJsonDocument<WorkflowAdministrators>> PutAsync(string baseWorkflowId, IReadOnlyList<WorkflowAdministrators.AdministratorIdentity> administrators, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<WorkflowAdministrators>> PutAsync(string baseWorkflowId, IReadOnlyList<SecurityTagSet> administrators, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         ArgumentNullException.ThrowIfNull(administrators);
@@ -62,17 +55,13 @@ public sealed class InMemoryWorkflowAdministratorStore : IWorkflowAdministratorS
             byte[] json;
             if (this.records.TryGetValue(baseWorkflowId, out byte[]? existing))
             {
-                // Parse the existing document ONCE, NON-COPYING over the stored array (alive in the dictionary through this
-                // synchronous update under the lock) — used for both the etag check and the carried-forward merge.
-                using ParsedJsonDocument<WorkflowAdministrators> current = ParsedJsonDocument<WorkflowAdministrators>.Parse(existing.AsMemory());
-
                 // A record already exists: the caller must hold its current etag (None means "I expected no record").
-                if (expectedEtag.IsNone || expectedEtag != current.RootElement.EtagValue)
+                if (expectedEtag.IsNone || expectedEtag != WorkflowAdministratorsSerialization.EtagOf(existing))
                 {
                     throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
                 }
 
-                json = WorkflowAdministratorsSerialization.SerializeUpdated(current.RootElement, administrators, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
+                json = WorkflowAdministratorsSerialization.SerializeUpdated(existing, administrators, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
             }
             else
             {
@@ -86,81 +75,8 @@ public sealed class InMemoryWorkflowAdministratorStore : IWorkflowAdministratorS
             }
 
             this.records[baseWorkflowId] = json;
-            this.ReindexAdministered(baseWorkflowId, administrators);
             return new ValueTask<ParsedJsonDocument<WorkflowAdministrators>>(PersistedJson.ToPooledDocument<WorkflowAdministrators>(json));
         }
-    }
-
-    /// <inheritdoc/>
-    public ValueTask<WorkflowAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, JsonString pageToken, CancellationToken cancellationToken)
-    {
-        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
-        int pageSize = limit > 0 ? limit : WorkflowAdministeredPage.DefaultPageSize;
-
-        // Decode the keyset cursor (the base id to page strictly after) from the request's token; the in-memory storage
-        // leaf is a string key, so the cursor reifies once here (never per row) — like InMemoryObservedIdentityStore.
-        string? cursor = WorkflowAdministeredContinuationToken.DecodeCursorToString(pageToken);
-
-        lock (this.gate)
-        {
-            // The SortedSet enumerates base ids in ordinal order — the keyset order every backend pages by. Take the
-            // pageSize+1 smallest past the cursor into a flat list; ToPage trims the lookahead and seeds the next token.
-            var rows = new List<string>(pageSize + 1);
-            if (this.byDigest.TryGetValue(adminDigest, out SortedSet<string>? ids))
-            {
-                foreach (string id in ids)
-                {
-                    if (cursor is not null && string.CompareOrdinal(id, cursor) <= 0)
-                    {
-                        continue; // at or before the cursor — already returned on an earlier page
-                    }
-
-                    rows.Add(id);
-                    if (rows.Count > pageSize)
-                    {
-                        break;
-                    }
-                }
-            }
-
-            return new ValueTask<WorkflowAdministeredPage>(WorkflowAdministeredPaging.ToPage(rows, pageSize));
-        }
-    }
-
-    // Refreshes the reverse administration index for a base id whose administrator set was just written (§15.4): retract
-    // its previous administrator digests, then index its current ones (the shared DistinctDigests skips the empty
-    // identity). Called under the gate, right after the record is stored. Two identities are set-equal iff their digests
-    // are equal, so the same digest the forward IsAdministeredBy compares is the index key the inbox queries.
-    private void ReindexAdministered(string baseWorkflowId, IReadOnlyList<WorkflowAdministrators.AdministratorIdentity> administrators)
-    {
-        if (this.administeredDigests.Remove(baseWorkflowId, out string[]? previous))
-        {
-            foreach (string digest in previous)
-            {
-                if (this.byDigest.TryGetValue(digest, out SortedSet<string>? holders))
-                {
-                    holders.Remove(baseWorkflowId);
-                    if (holders.Count == 0)
-                    {
-                        this.byDigest.Remove(digest);
-                    }
-                }
-            }
-        }
-
-        IReadOnlyList<string> current = WorkflowAdministeredPaging.DistinctDigests(administrators);
-        foreach (string digest in current)
-        {
-            if (!this.byDigest.TryGetValue(digest, out SortedSet<string>? holders))
-            {
-                holders = new SortedSet<string>(StringComparer.Ordinal);
-                this.byDigest[digest] = holders;
-            }
-
-            holders.Add(baseWorkflowId);
-        }
-
-        this.administeredDigests[baseWorkflowId] = [.. current];
     }
 
     private WorkflowEtag NextEtag() => new((++this.etagSequence).ToString(CultureInfo.InvariantCulture));

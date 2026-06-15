@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Globalization;
 using Corvus.Text.Json;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Security;
@@ -90,74 +91,6 @@ public readonly partial struct WorkflowAdministrators
     /// <returns>The record.</returns>
     public static WorkflowAdministrators FromJson(ReadOnlyMemory<byte> utf8) => ParseValue(utf8.Span);
 
-    /// <summary>Builds an <see cref="AdministratorIdentity"/> from a resolved identity (its tags) plus the optional resolved
-    /// grantee <paramref name="kind"/> / <paramref name="label"/>, materialized in <paramref name="workspace"/>. The tags
-    /// are written straight from the set's UTF-8 (<see cref="SecurityTagSet.EnumerateUtf8"/>) — no per-tag string, no
-    /// <c>ParseValue</c>; kind/label are CTJ values written bytes-to-bytes (omitted when absent).</summary>
-    /// <param name="workspace">The workspace that owns the materialized identity (keep it alive until persisted/read).</param>
-    /// <param name="tags">The resolved <c>sys:</c> identity tags.</param>
-    /// <param name="kind">The resolved grantee kind (written when <paramref name="hasKind"/>).</param>
-    /// <param name="hasKind">Whether <paramref name="kind"/> is present.</param>
-    /// <param name="label">The display label (written when <paramref name="hasLabel"/>).</param>
-    /// <param name="hasLabel">Whether <paramref name="label"/> is present.</param>
-    /// <returns>The materialized administrator identity (workspace-backed).</returns>
-    public static AdministratorIdentity BuildIdentity(JsonWorkspace workspace, SecurityTagSet tags, in AdministratorIdentity.KindEntity kind, bool hasKind, in JsonString label, bool hasLabel)
-    {
-        var state = new IdentityBuildState(tags, kind, hasKind, label, hasLabel);
-        return AdministratorIdentity.CreateBuilder(
-            workspace,
-            AdministratorIdentity.Build(
-                in state,
-                tags: AdministratorIdentity.SecurityTagInfoArray.Build(
-                    in state,
-                    static (in IdentityBuildState s, ref AdministratorIdentity.SecurityTagInfoArray.Builder array) =>
-                    {
-                        SecurityTagSet.Utf8Enumerator e = s.Tags.EnumerateUtf8();
-                        try
-                        {
-                            while (e.MoveNext())
-                            {
-                                var spans = new TagInfoSpans(e.CurrentKey, e.CurrentValue);
-                                array.AddItem(SecurityTagInfo.Build(in spans, BuildTagInfo));
-                            }
-                        }
-                        finally
-                        {
-                            e.Dispose();
-                        }
-                    }),
-                kind: hasKind ? kind : default,
-                label: hasLabel ? label : default))
-            .RootElement;
-    }
-
-    // Writes one {key, value} security tag from its unescaped UTF-8 spans into the tag-info array, threading the spans
-    // through a ref-struct context so the builder consumes them in place (the span→JsonString.Source conversion copies).
-    private static void BuildTagInfo(in TagInfoSpans spans, ref SecurityTagInfo.Builder builder)
-        => builder.Create((JsonString.Source)spans.Key, (JsonString.Source)spans.Value);
-
-    // Carries the resolved identity tags + optional kind/label through the closure-free AdministratorIdentity build.
-    private readonly struct IdentityBuildState(SecurityTagSet tags, AdministratorIdentity.KindEntity kind, bool hasKind, JsonString label, bool hasLabel)
-    {
-        public SecurityTagSet Tags { get; } = tags;
-
-        public AdministratorIdentity.KindEntity Kind { get; } = kind;
-
-        public bool HasKind { get; } = hasKind;
-
-        public JsonString Label { get; } = label;
-
-        public bool HasLabel { get; } = hasLabel;
-    }
-
-    // Carries one tag's (key, value) as unescaped UTF-8 spans through the closure-free SecurityTagInfo build.
-    private readonly ref struct TagInfoSpans(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value)
-    {
-        public ReadOnlySpan<byte> Key { get; } = key;
-
-        public ReadOnlySpan<byte> Value { get; } = value;
-    }
-
     /// <summary>Serializes this record to its persisted JSON document.</summary>
     /// <returns>The UTF-8 JSON document.</returns>
     public byte[] ToJsonBytes()
@@ -166,56 +99,55 @@ public readonly partial struct WorkflowAdministrators
     /// <summary>Writes a brand-new administration record into the caller's (pooled) writer in one pass.</summary>
     /// <param name="writer">The writer to serialize into.</param>
     /// <param name="baseWorkflowId">The base workflow id.</param>
-    /// <param name="administrators">The administrator identities (at least one); each carries its own tags and optional kind/label.</param>
+    /// <param name="administrators">The administrator identities (at least one).</param>
     /// <param name="actor">The actor materializing the record (audit).</param>
     /// <param name="createdAt">The creation instant.</param>
     /// <param name="etag">The optimistic-concurrency token to assign.</param>
-    public static void WriteNew(Utf8JsonWriter writer, string baseWorkflowId, IReadOnlyList<AdministratorIdentity> administrators, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+    public static void WriteNew(Utf8JsonWriter writer, string baseWorkflowId, IReadOnlyList<SecurityTagSet> administrators, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
     {
         writer.WriteStartObject();
         writer.WriteString(JsonPropertyNames.BaseWorkflowIdUtf8, baseWorkflowId);
         WriteAdministrators(writer, administrators);
         writer.WriteString(JsonPropertyNames.CreatedByUtf8, actor);
-        writer.WriteString(JsonPropertyNames.CreatedAtUtf8, createdAt);
+        writer.WriteString(JsonPropertyNames.CreatedAtUtf8, createdAt.ToString("O", CultureInfo.InvariantCulture));
         writer.WriteString(JsonPropertyNames.EtagUtf8, etag.Value ?? string.Empty);
         writer.WriteEndObject();
     }
 
     /// <summary>Writes an updated administration record, preserving the original creation audit and bumping the etag.</summary>
     /// <param name="writer">The writer to serialize into.</param>
-    /// <param name="administrators">The new administrator identities (at least one); each carries its own tags and optional kind/label.</param>
+    /// <param name="administrators">The new administrator identities (at least one).</param>
     /// <param name="actor">The actor changing the administrator set (audit).</param>
     /// <param name="updatedAt">The update instant.</param>
     /// <param name="etag">The new optimistic-concurrency token.</param>
-    public void WriteUpdated(Utf8JsonWriter writer, IReadOnlyList<AdministratorIdentity> administrators, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
+    public void WriteUpdated(Utf8JsonWriter writer, IReadOnlyList<SecurityTagSet> administrators, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
     {
         writer.WriteStartObject();
         writer.WriteString(JsonPropertyNames.BaseWorkflowIdUtf8, this.BaseWorkflowIdValue);
         WriteAdministrators(writer, administrators);
         writer.WriteString(JsonPropertyNames.CreatedByUtf8, this.CreatedByValue);
-        writer.WriteString(JsonPropertyNames.CreatedAtUtf8, this.CreatedAtValue);
+        writer.WriteString(JsonPropertyNames.CreatedAtUtf8, (string)this.CreatedAt);
         writer.WriteString(JsonPropertyNames.LastUpdatedByUtf8, actor);
-        writer.WriteString(JsonPropertyNames.LastUpdatedAtUtf8, updatedAt);
+        writer.WriteString(JsonPropertyNames.LastUpdatedAtUtf8, updatedAt.ToString("O", CultureInfo.InvariantCulture));
         writer.WriteString(JsonPropertyNames.EtagUtf8, etag.Value ?? string.Empty);
         writer.WriteEndObject();
     }
 
-    // Each administrator is written verbatim bytes-to-bytes (tags + optional kind/label): carried-forward existing
-    // identities copy through, and a newly built identity (BuildIdentity) serializes its parts. No per-admin reshape.
-    private static void WriteAdministrators(Utf8JsonWriter writer, IReadOnlyList<AdministratorIdentity> administrators)
+    private static void WriteAdministrators(Utf8JsonWriter writer, IReadOnlyList<SecurityTagSet> administrators)
     {
         writer.WritePropertyName(JsonPropertyNames.AdministratorsUtf8);
         writer.WriteStartArray();
-        foreach (AdministratorIdentity administrator in administrators)
+        foreach (SecurityTagSet administrator in administrators)
         {
+            writer.WriteStartObject();
+            writer.WritePropertyName(AdministratorIdentity.JsonPropertyNames.TagsUtf8);
             administrator.WriteTo(writer);
+            writer.WriteEndObject();
         }
 
         writer.WriteEndArray();
     }
 
-    // Read the instant from the strongly-typed date-time element via its native NodaTime value — no managed-string
-    // realization and no JsonElement hop (the house idiom, e.g. RunnerRegistration, SecurityRuleDocument).
     private static DateTimeOffset ParseDate(in JsonDateTime value)
-        => ((NodaTime.OffsetDateTime)value).ToDateTimeOffset();
+        => DateTimeOffset.Parse((string)value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
 }

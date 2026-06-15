@@ -20,10 +20,6 @@ public abstract class WorkflowAdministratorStoreConformance
 {
     private readonly List<IAsyncDisposable> disposables = [];
 
-    // Backs the durable AdministratorIdentity values passed to PutAsync; held for the whole test (across awaits) and
-    // disposed in CleanupAsync, which may run on a different thread — so it must be the unrented, thread-affinity-free form.
-    private readonly JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-
     /// <summary>Creates a fresh, empty store backed by the implementation under test.</summary>
     /// <param name="timeProvider">The time source the store must use for audit timestamps.</param>
     /// <returns>The store.</returns>
@@ -40,7 +36,6 @@ public abstract class WorkflowAdministratorStoreConformance
         }
 
         this.disposables.Clear();
-        this.workspace.Dispose();
     }
 
     [TestMethod]
@@ -57,7 +52,7 @@ public abstract class WorkflowAdministratorStoreConformance
         IWorkflowAdministratorStore store = await this.NewStoreAsync();
         SecurityTagSet acme = Administrator("acme");
 
-        using (ParsedJsonDocument<WorkflowAdministrators> put = await store.PutAsync("nightly-reconcile", [this.Identity(acme)], WorkflowEtag.None, "alice", default))
+        using (ParsedJsonDocument<WorkflowAdministrators> put = await store.PutAsync("nightly-reconcile", [acme], WorkflowEtag.None, "alice", default))
         {
             put.RootElement.BaseWorkflowIdValue.ShouldBe("nightly-reconcile");
             put.RootElement.CreatedByValue.ShouldBe("alice");
@@ -76,11 +71,11 @@ public abstract class WorkflowAdministratorStoreConformance
     public async Task Materializing_over_an_existing_record_conflicts()
     {
         IWorkflowAdministratorStore store = await this.NewStoreAsync();
-        await store.PutAsync("nightly-reconcile", [this.Identity(Administrator("acme"))], WorkflowEtag.None, "alice", default);
+        await store.PutAsync("nightly-reconcile", [Administrator("acme")], WorkflowEtag.None, "alice", default);
 
         // A second None-etag put (the caller believing no record exists) must be rejected — the record now exists.
         await Should.ThrowAsync<WorkflowAdministrationConflictException>(
-            async () => await store.PutAsync("nightly-reconcile", [this.Identity(Administrator("globex"))], WorkflowEtag.None, "mallory", default));
+            async () => await store.PutAsync("nightly-reconcile", [Administrator("globex")], WorkflowEtag.None, "mallory", default));
     }
 
     [TestMethod]
@@ -93,13 +88,13 @@ public abstract class WorkflowAdministratorStoreConformance
         SecurityTagSet globex = Administrator("globex");
 
         WorkflowEtag firstEtag;
-        using (ParsedJsonDocument<WorkflowAdministrators> created = await store.PutAsync("nightly-reconcile", [this.Identity(acme)], WorkflowEtag.None, "alice", default))
+        using (ParsedJsonDocument<WorkflowAdministrators> created = await store.PutAsync("nightly-reconcile", [acme], WorkflowEtag.None, "alice", default))
         {
             firstEtag = created.RootElement.EtagValue;
             created.RootElement.LastUpdatedByOrNull.ShouldBeNull();
         }
 
-        using ParsedJsonDocument<WorkflowAdministrators> replaced = await store.PutAsync("nightly-reconcile", [this.Identity(acme), this.Identity(globex)], firstEtag, "bob", default);
+        using ParsedJsonDocument<WorkflowAdministrators> replaced = await store.PutAsync("nightly-reconcile", [acme, globex], firstEtag, "bob", default);
 
         replaced.RootElement.AdministratorCount.ShouldBe(2);
         replaced.RootElement.IsAdministeredBy(acme).ShouldBeTrue();
@@ -113,10 +108,10 @@ public abstract class WorkflowAdministratorStoreConformance
     public async Task A_replace_under_a_stale_etag_conflicts()
     {
         IWorkflowAdministratorStore store = await this.NewStoreAsync();
-        await store.PutAsync("nightly-reconcile", [this.Identity(Administrator("acme"))], WorkflowEtag.None, "alice", default);
+        await store.PutAsync("nightly-reconcile", [Administrator("acme")], WorkflowEtag.None, "alice", default);
 
         await Should.ThrowAsync<WorkflowAdministrationConflictException>(
-            async () => await store.PutAsync("nightly-reconcile", [this.Identity(Administrator("globex"))], new WorkflowEtag("stale"), "bob", default));
+            async () => await store.PutAsync("nightly-reconcile", [Administrator("globex")], new WorkflowEtag("stale"), "bob", default));
     }
 
     [TestMethod]
@@ -126,7 +121,7 @@ public abstract class WorkflowAdministratorStoreConformance
 
         // No record exists, yet the caller presents an etag (it believed one did) — a conflict, not a silent create.
         await Should.ThrowAsync<WorkflowAdministrationConflictException>(
-            async () => await store.PutAsync("nightly-reconcile", [this.Identity(Administrator("acme"))], new WorkflowEtag("ghost"), "alice", default));
+            async () => await store.PutAsync("nightly-reconcile", [Administrator("acme")], new WorkflowEtag("ghost"), "alice", default));
     }
 
     [TestMethod]
@@ -136,7 +131,7 @@ public abstract class WorkflowAdministratorStoreConformance
         SecurityTagSet acme = AdministratorWith(("sys:tenant", "acme"), ("team", "payments"));
         SecurityTagSet globex = Administrator("globex");
 
-        await store.PutAsync("nightly-reconcile", [this.Identity(acme), this.Identity(globex)], WorkflowEtag.None, "alice", default);
+        await store.PutAsync("nightly-reconcile", [acme, globex], WorkflowEtag.None, "alice", default);
 
         using ParsedJsonDocument<WorkflowAdministrators>? fetched = await store.GetAsync("nightly-reconcile", default);
         fetched.ShouldNotBeNull();
@@ -151,8 +146,8 @@ public abstract class WorkflowAdministratorStoreConformance
     public async Task Records_for_distinct_base_ids_are_isolated()
     {
         IWorkflowAdministratorStore store = await this.NewStoreAsync();
-        await store.PutAsync("nightly-reconcile", [this.Identity(Administrator("acme"))], WorkflowEtag.None, "alice", default);
-        await store.PutAsync("daily-export", [this.Identity(Administrator("globex"))], WorkflowEtag.None, "bob", default);
+        await store.PutAsync("nightly-reconcile", [Administrator("acme")], WorkflowEtag.None, "alice", default);
+        await store.PutAsync("daily-export", [Administrator("globex")], WorkflowEtag.None, "bob", default);
 
         using ParsedJsonDocument<WorkflowAdministrators>? a = await store.GetAsync("nightly-reconcile", default);
         using ParsedJsonDocument<WorkflowAdministrators>? b = await store.GetAsync("daily-export", default);
@@ -170,100 +165,10 @@ public abstract class WorkflowAdministratorStoreConformance
             async () => await store.PutAsync("nightly-reconcile", [], WorkflowEtag.None, "alice", default));
     }
 
-    [TestMethod]
-    public async Task The_reverse_index_lists_the_base_ids_an_identity_administers()
-    {
-        IWorkflowAdministratorStore store = await this.NewStoreAsync();
-        SecurityTagSet acme = Administrator("acme");
-        SecurityTagSet globex = Administrator("globex");
-
-        // acme administers two workflows (one shared with globex); globex administers one.
-        await store.PutAsync("nightly-reconcile", [this.Identity(acme)], WorkflowEtag.None, "alice", default);
-        await store.PutAsync("daily-export", [this.Identity(acme), this.Identity(globex)], WorkflowEtag.None, "alice", default);
-
-        (await this.AdministeredByAsync(store, acme)).ShouldBe(["daily-export", "nightly-reconcile"]);
-        (await this.AdministeredByAsync(store, globex)).ShouldBe(["daily-export"]);
-    }
-
-    [TestMethod]
-    public async Task The_reverse_index_is_refreshed_when_the_administrator_set_changes()
-    {
-        IWorkflowAdministratorStore store = await this.NewStoreAsync();
-        SecurityTagSet acme = Administrator("acme");
-        SecurityTagSet globex = Administrator("globex");
-
-        WorkflowEtag etag;
-        using (ParsedJsonDocument<WorkflowAdministrators> created = await store.PutAsync("nightly-reconcile", [this.Identity(acme)], WorkflowEtag.None, "alice", default))
-        {
-            etag = created.RootElement.EtagValue;
-        }
-
-        (await this.AdministeredByAsync(store, acme)).ShouldBe(["nightly-reconcile"]);
-
-        // Transfer administration from acme to globex: acme drops out of the reverse index, globex appears.
-        await store.PutAsync("nightly-reconcile", [this.Identity(globex)], etag, "bob", default);
-        (await this.AdministeredByAsync(store, acme)).ShouldBeEmpty();
-        (await this.AdministeredByAsync(store, globex)).ShouldBe(["nightly-reconcile"]);
-    }
-
-    [TestMethod]
-    public async Task An_identity_administering_nothing_returns_an_empty_page()
-    {
-        IWorkflowAdministratorStore store = await this.NewStoreAsync();
-        await store.PutAsync("nightly-reconcile", [this.Identity(Administrator("acme"))], WorkflowEtag.None, "alice", default);
-
-        (await this.AdministeredByAsync(store, Administrator("nobody"))).ShouldBeEmpty();
-    }
-
-    [TestMethod]
-    public async Task The_reverse_index_keyset_pages_by_base_id_without_gaps_or_duplicates()
-    {
-        IWorkflowAdministratorStore store = await this.NewStoreAsync();
-        SecurityTagSet acme = Administrator("acme");
-        string[] ids = ["flow-3", "flow-1", "flow-5", "flow-2", "flow-0", "flow-4"];
-        foreach (string id in ids)
-        {
-            await store.PutAsync(id, [this.Identity(acme)], WorkflowEtag.None, "alice", default);
-        }
-
-        // Walk every page via the continuation token with a small limit, round-tripped through the JsonString seam
-        // exactly as the HTTP layer does; collect base ids in page order.
-        string digest = SecurityIdentityDigest.Compute(acme)!;
-        var seen = new List<string>();
-        byte[]? token = null;
-        int pages = 0;
-        do
-        {
-            using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString>? tokenDoc = token is null ? null : AsJsonString(token);
-            using WorkflowAdministeredPage page = await store.ListAdministeredAsync(digest, 2, tokenDoc?.RootElement ?? default, default);
-            page.BaseWorkflowIds.Count.ShouldBeLessThanOrEqualTo(2);
-            seen.AddRange(page.BaseWorkflowIds);
-            token = page.NextPageToken.IsEmpty ? null : page.NextPageToken.ToArray();
-            pages++;
-        }
-        while (token is not null);
-
-        // 6 base ids, 2 per page → 3 pages; no duplicates or gaps; contractual baseWorkflowId (ordinal) order.
-        pages.ShouldBe(3);
-        seen.ShouldBe(ids.OrderBy(x => x, StringComparer.Ordinal).ToArray());
-
-        // A malformed token is rejected rather than silently restarting from the first page.
-        await Should.ThrowAsync<FormatException>(async () =>
-        {
-            using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> badToken = AsJsonString("this~is~not~a~token"u8);
-            using WorkflowAdministeredPage bad = await store.ListAdministeredAsync(digest, 2, badToken.RootElement, default);
-        });
-    }
-
     private static SecurityTagSet Administrator(string tenant) => SecurityTagSet.FromTags([new SecurityTag("sys:tenant", tenant)]);
 
     private static SecurityTagSet AdministratorWith(params (string Key, string Value)[] tags)
         => SecurityTagSet.FromTags([.. tags.Select(t => new SecurityTag(t.Key, t.Value))]);
-
-    // Materializes a resolved identity (tags only — the persisted administrator form) for PutAsync; backed by the
-    // test-lived workspace so it survives the store's synchronous serialization.
-    private WorkflowAdministrators.AdministratorIdentity Identity(SecurityTagSet tags)
-        => WorkflowAdministrators.BuildIdentity(this.workspace, tags, default, hasKind: false, default, hasLabel: false);
 
     private async ValueTask<IWorkflowAdministratorStore> NewStoreAsync(TimeProvider? timeProvider = null)
     {
@@ -274,35 +179,5 @@ public abstract class WorkflowAdministratorStoreConformance
         }
 
         return store;
-    }
-
-    // Pages the reverse administration index fully for an identity, returning the administered base ids in keyset order —
-    // the token round-tripped through the JsonString seam exactly as the HTTP layer does.
-    private async ValueTask<List<string>> AdministeredByAsync(IWorkflowAdministratorStore store, SecurityTagSet identity)
-    {
-        string digest = SecurityIdentityDigest.Compute(identity)!;
-        var result = new List<string>();
-        byte[]? token = null;
-        do
-        {
-            using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString>? tokenDoc = token is null ? null : AsJsonString(token);
-            using WorkflowAdministeredPage page = await store.ListAdministeredAsync(digest, 0, tokenDoc?.RootElement ?? default, default);
-            result.AddRange(page.BaseWorkflowIds);
-            token = page.NextPageToken.IsEmpty ? null : page.NextPageToken.ToArray();
-        }
-        while (token is not null);
-
-        return result;
-    }
-
-    // Wraps a value's UTF-8 as the JSON string a request carries it as — the conformance feeds a previous page's
-    // NextPageToken (the store's emitted bytes) back through the JsonString pageToken seam, mirroring HTTP.
-    private static ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> AsJsonString(ReadOnlySpan<byte> valueUtf8)
-    {
-        byte[] quoted = new byte[valueUtf8.Length + 2];
-        quoted[0] = (byte)'"';
-        valueUtf8.CopyTo(quoted.AsSpan(1));
-        quoted[^1] = (byte)'"';
-        return ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString>.Parse(quoted);
     }
 }

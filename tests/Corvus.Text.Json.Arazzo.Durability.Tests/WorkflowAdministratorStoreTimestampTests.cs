@@ -22,8 +22,7 @@ public sealed class WorkflowAdministratorStoreTimestampTests
     {
         var time = new TestTimeProvider(new DateTimeOffset(2026, 6, 15, 9, 0, 0, TimeSpan.Zero));
         var store = new InMemoryWorkflowAdministratorStore(time);
-        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        WorkflowAdministrators.AdministratorIdentity acme = Identity(workspace, "acme");
+        SecurityTagSet acme = SecurityTagSet.FromTags([new SecurityTag("sys:tenant", "acme")]);
 
         WorkflowEtag firstEtag;
         using (ParsedJsonDocument<WorkflowAdministrators> created = await store.PutAsync("nightly-reconcile", [acme], WorkflowEtag.None, "alice", default))
@@ -36,7 +35,7 @@ public sealed class WorkflowAdministratorStoreTimestampTests
         time.Advance(TimeSpan.FromMinutes(90));
         using ParsedJsonDocument<WorkflowAdministrators> replaced = await store.PutAsync(
             "nightly-reconcile",
-            [acme, Identity(workspace, "globex")],
+            [acme, SecurityTagSet.FromTags([new SecurityTag("sys:tenant", "globex")])],
             firstEtag,
             "bob",
             default);
@@ -44,8 +43,4 @@ public sealed class WorkflowAdministratorStoreTimestampTests
         replaced.RootElement.CreatedAtValue.ShouldBe(new DateTimeOffset(2026, 6, 15, 9, 0, 0, TimeSpan.Zero));
         replaced.RootElement.LastUpdatedAtValue.ShouldBe(new DateTimeOffset(2026, 6, 15, 10, 30, 0, TimeSpan.Zero));
     }
-
-    // Materializes a single-tenant administrator identity (tags only) in the workspace for the store's PutAsync.
-    private static WorkflowAdministrators.AdministratorIdentity Identity(JsonWorkspace workspace, string tenant)
-        => WorkflowAdministrators.BuildIdentity(workspace, SecurityTagSet.FromTags([new SecurityTag("sys:tenant", tenant)]), default, hasKind: false, default, hasLabel: false);
 }
