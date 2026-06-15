@@ -25,8 +25,10 @@ public readonly record struct CredentialConfigDefinition(string Key, string Valu
 /// <param name="SecretRefs">The named references to secret material in the external store (at least one).</param>
 /// <param name="Config">The non-secret auth configuration, if any.</param>
 /// <param name="Description">An optional human description.</param>
-/// <param name="SecurityTags">The security tags (KVP labels) scoping the binding for row authorization (§14.2),
-/// stamped at create and immutable thereafter; default (empty) for an unscoped (shared) binding.</param>
+/// <param name="ManagementTags">The security tags (KVP labels) scoping who may MANAGE the binding (§14.2), set at
+/// create and immutable thereafter; default (empty) for an unscoped binding. Independent of <paramref name="UsageTags"/>.</param>
+/// <param name="UsageTags">The security tags (KVP labels) scoping which runs may USE the binding (§13), set at create
+/// and immutable thereafter; default (empty/shared). Independent of <paramref name="ManagementTags"/>.</param>
 public readonly record struct SourceCredentialDefinition(
     string SourceName,
     string Environment,
@@ -34,4 +36,5 @@ public readonly record struct SourceCredentialDefinition(
     IReadOnlyList<SecretReferenceDefinition> SecretRefs,
     IReadOnlyList<CredentialConfigDefinition>? Config = null,
     string? Description = null,
-    SecurityTagSet SecurityTags = default);
+    SecurityTagSet ManagementTags = default,
+    SecurityTagSet UsageTags = default);
