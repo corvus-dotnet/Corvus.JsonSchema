@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.Data.Sqlite;
 
@@ -73,21 +72,21 @@ public sealed class SqliteSourceCredentialStore : ISourceCredentialStore, IAsync
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialBinding draft, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialDefinition definition, string actor, CancellationToken cancellationToken)
     {
-        SourceCredentialBinding.ValidateDraft(draft);
+        SourceCredentialBinding.ValidateDefinition(definition);
         ArgumentNullException.ThrowIfNull(actor);
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             string id = $"scred-{++this.idSequence}";
             WorkflowEtag etag = NewEtag();
-            byte[] json = SourceCredentialSerialization.SerializeNew(id, draft, actor, this.timeProvider.GetUtcNow(), etag);
+            byte[] json = SourceCredentialSerialization.SerializeNew(id, definition, actor, this.timeProvider.GetUtcNow(), etag);
             using SqliteCommand insert = this.connection.CreateCommand();
             insert.CommandText = "INSERT INTO SourceCredentials (SourceName, Environment, Tags, Etag, Document) VALUES (@s, @e, @t, @etag, @doc);";
-            insert.Parameters.AddWithValue("@s", draft.SourceNameValue);
-            insert.Parameters.AddWithValue("@e", draft.EnvironmentValue);
-            insert.Parameters.AddWithValue("@t", SourceCredentialKey.Discriminator(draft.ManagementTagsValue, draft.UsageTagsValue));
+            insert.Parameters.AddWithValue("@s", definition.SourceName);
+            insert.Parameters.AddWithValue("@e", definition.Environment);
+            insert.Parameters.AddWithValue("@t", SourceCredentialKey.Discriminator(definition.ManagementTags, definition.UsageTags));
             insert.Parameters.AddWithValue("@etag", etag.Value!);
             insert.Parameters.AddWithValue("@doc", json);
             try
@@ -96,7 +95,7 @@ public sealed class SqliteSourceCredentialStore : ISourceCredentialStore, IAsync
             }
             catch (SqliteException ex) when (ex.SqliteErrorCode == 19)
             {
-                throw new InvalidOperationException($"A source credential binding for '{draft.SourceNameValue}@{draft.EnvironmentValue}' with those security tags already exists.");
+                throw new InvalidOperationException($"A source credential binding for '{definition.SourceName}@{definition.Environment}' with those security tags already exists.");
             }
 
             return PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
@@ -126,88 +125,29 @@ public sealed class SqliteSourceCredentialStore : ISourceCredentialStore, IAsync
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    public async ValueTask<PooledDocumentList<SourceCredentialBinding>> ListAsync(AccessContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        int pageSize = limit > 0 ? limit : 1;
-        (string SourceName, string Environment, string TieBreaker) cursor = (string.Empty, string.Empty, string.Empty);
-        bool hasCursor = false;
-        if (pageToken.IsNotUndefined())
-        {
-            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
-            hasCursor = SourceCredentialContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
-        }
-
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            var docs = new PooledDocumentList<SourceCredentialBinding>(pageSize);
-            bool hasMore = false;
+            var docs = new PooledDocumentList<SourceCredentialBinding>();
             try
             {
-                // Keyset seek past the cursor in (SourceName, Environment, Tags) order — an indexed range scan, not a
-                // table load. Reach is a per-row predicate applied in memory as we stream; the reader is consumed only
-                // until the page fills, so we read ≈ pageSize / selectivity rows, never the whole table.
                 using SqliteCommand select = this.connection.CreateCommand();
-                if (hasCursor)
-                {
-                    select.CommandText =
-                        "SELECT SourceName, Environment, Tags, Document FROM SourceCredentials " +
-                        "WHERE SourceName > @s OR (SourceName = @s AND Environment > @e) OR (SourceName = @s AND Environment = @e AND Tags > @t) " +
-                        "ORDER BY SourceName, Environment, Tags;";
-                    select.Parameters.AddWithValue("@s", cursor.SourceName);
-                    select.Parameters.AddWithValue("@e", cursor.Environment);
-                    select.Parameters.AddWithValue("@t", cursor.TieBreaker);
-                }
-                else
-                {
-                    select.CommandText = "SELECT SourceName, Environment, Tags, Document FROM SourceCredentials ORDER BY SourceName, Environment, Tags;";
-                }
-
+                select.CommandText = "SELECT Document FROM SourceCredentials ORDER BY SourceName, Environment;";
                 using SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-                string lastSource = string.Empty, lastEnv = string.Empty, lastTags = string.Empty;
                 while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                 {
-                    string source = reader.GetString(0);
-                    string environment = reader.GetString(1);
-                    string tags = reader.GetString(2);
-                    byte[] json = reader.GetFieldValue<byte[]>(3);
-                    ParsedJsonDocument<SourceCredentialBinding> cand = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
-                    bool kept = false;
-                    try
+                    byte[] json = reader.GetFieldValue<byte[]>(0);
+                    using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
+                    if (context.Admits(AccessVerb.Read, candidate.RootElement.ManagementTagsValue))
                     {
-                        SecurityTagSet tagSet = cand.RootElement.ManagementTags.IsNotUndefined()
-                            ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(cand.RootElement.ManagementTags).Memory)
-                            : SecurityTagSet.Empty;
-                        if (!context.Admits(AccessVerb.Read, tagSet))
-                        {
-                            continue;
-                        }
-
-                        if (docs.Count == pageSize)
-                        {
-                            hasMore = true;
-                            break;
-                        }
-
-                        docs.Add(cand);
-                        kept = true;
-                        lastSource = source;
-                        lastEnv = environment;
-                        lastTags = tags;
-                    }
-                    finally
-                    {
-                        if (!kept)
-                        {
-                            cand.Dispose();
-                        }
+                        docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(json));
                     }
                 }
 
-                return hasMore
-                    ? SourceCredentialPage.Create(docs, lastSource, lastEnv, lastTags)
-                    : SourceCredentialPage.Create(docs);
+                return docs;
             }
             catch
             {
@@ -222,9 +162,9 @@ public sealed class SqliteSourceCredentialStore : ISourceCredentialStore, IAsync
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialBinding draft, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialDefinition definition, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken)
     {
-        SourceCredentialBinding.ValidateDraft(draft);
+        SourceCredentialBinding.ValidateDefinition(definition);
         ArgumentNullException.ThrowIfNull(actor);
         ArgumentNullException.ThrowIfNull(context);
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -236,7 +176,7 @@ public sealed class SqliteSourceCredentialStore : ISourceCredentialStore, IAsync
                 return null;
             }
 
-            byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, $"{sourceName}@{environment}", expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), NewEtag());
+            byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, $"{sourceName}@{environment}", expectedEtag, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
             using SqliteCommand update = this.connection.CreateCommand();
             update.CommandText = "UPDATE SourceCredentials SET Etag = @etag, Document = @doc WHERE SourceName = @s AND Environment = @e AND Tags = @t;";
             update.Parameters.AddWithValue("@etag", SourceCredentialSerialization.EtagOf(json).Value!);
