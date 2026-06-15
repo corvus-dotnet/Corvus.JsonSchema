@@ -73,8 +73,10 @@ public sealed class AccessContext
 
     /// <summary>Whether a row carrying the given security tags is within reach for a verb.</summary>
     /// <param name="verb">The access verb.</param>
-    /// <param name="securityTags">The row's security tags (<see langword="null"/> treated as none).</param>
+    /// <param name="securityTags">The row's security tags.</param>
     /// <returns><see langword="true"/> if the verb is permitted on the row (or its reach is unrestricted).</returns>
-    public bool Admits(AccessVerb verb, IReadOnlyList<SecurityTag>? securityTags)
-        => this.Reach(verb)?.IsSatisfiedBy(securityTags ?? []) ?? true;
+    /// <remarks>An unrestricted reach short-circuits before the holder is materialized; a scoped reach feeds the
+    /// evaluator the materialized list at the leaf (the per-row filter cost retained by the design's Q0 decision).</remarks>
+    public bool Admits(AccessVerb verb, SecurityTagSet securityTags)
+        => this.Reach(verb)?.IsSatisfiedBy(securityTags.ToList()) ?? true;
 }

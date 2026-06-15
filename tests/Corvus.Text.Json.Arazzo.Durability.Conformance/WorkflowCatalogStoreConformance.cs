@@ -293,15 +293,15 @@ public abstract class WorkflowCatalogStoreConformance
         CatalogVersion added = await store.AddAsync(
             "secure-flow",
             Package("secure-flow"),
-            new CatalogMetadata(new CatalogOwner("Team A", "team-a@example.com"), "alice", default, tags),
+            new CatalogMetadata(new CatalogOwner("Team A", "team-a@example.com"), "alice", default, SecurityTagSet.FromTags(tags)),
             default);
 
-        added.SecurityTagsValue.OrderBy(t => t.Key).ThenBy(t => t.Value).ShouldBe(
+        added.SecurityTagsValue.ToList().OrderBy(t => t.Key).ThenBy(t => t.Value).ShouldBe(
             tags.OrderBy(t => t.Key).ThenBy(t => t.Value));
 
         CatalogVersion? fetched = await store.GetAsync("secure-flow", added.Ref.VersionNumber, default);
         fetched.ShouldNotBeNull();
-        fetched.Value.SecurityTagsValue.OrderBy(t => t.Key).ThenBy(t => t.Value).ShouldBe(
+        fetched.Value.SecurityTagsValue.ToList().OrderBy(t => t.Key).ThenBy(t => t.Value).ShouldBe(
             tags.OrderBy(t => t.Key).ThenBy(t => t.Value));
     }
 
@@ -326,7 +326,7 @@ public abstract class WorkflowCatalogStoreConformance
         ];
         foreach ((string baseId, SecurityTag[] tags) in rows)
         {
-            await store.AddAsync(baseId, Package(baseId), new CatalogMetadata(new CatalogOwner("Team A", "team-a@example.com"), "alice", default, tags), default);
+            await store.AddAsync(baseId, Package(baseId), new CatalogMetadata(new CatalogOwner("Team A", "team-a@example.com"), "alice", default, SecurityTagSet.FromTags(tags)), default);
         }
 
         var claims = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal)

@@ -60,7 +60,7 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
                 createdBy: metadata.CreatedBy,
                 createdAt: now,
                 runnable: projection.HasExecutor,
-                securityTags: metadata.SecurityTags is { Count: > 0 } securityTags ? [.. securityTags] : null);
+                securityTags: metadata.SecurityTags);
 
             this.versions[SortKey(baseWorkflowId, versionNumber)] = new Stored(version, projection.CanonicalPackage.ToArray());
             return ValueTask.FromResult(version);
@@ -270,7 +270,7 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
             return false;
         }
 
-        return query.Security?.IsSatisfiedBy(version.SecurityTagsValue) ?? true;
+        return query.Security?.IsSatisfiedBy(version.SecurityTagsValue.ToList()) ?? true;
     }
 
     private int MaxVersion(string baseWorkflowId)

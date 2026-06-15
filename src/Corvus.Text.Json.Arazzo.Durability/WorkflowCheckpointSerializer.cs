@@ -58,7 +58,7 @@ public static class WorkflowCheckpointSerializer
         WorkflowFault? fault = null,
         string? correlationId = null,
         TagSet tags = default,
-        IReadOnlyList<SecurityTag>? securityTags = null)
+        SecurityTagSet securityTags = default)
     {
         ArgumentNullException.ThrowIfNull(workflowId);
         ArgumentNullException.ThrowIfNull(retryCounters);
@@ -92,18 +92,10 @@ public static class WorkflowCheckpointSerializer
                 tags.WriteTo(writer);
             }
 
-            if (securityTags is { Count: > 0 })
+            if (!securityTags.IsEmpty)
             {
-                writer.WriteStartArray("securityTags"u8);
-                foreach (SecurityTag securityTag in securityTags)
-                {
-                    writer.WriteStartObject();
-                    writer.WriteString("key"u8, securityTag.Key);
-                    writer.WriteString("value"u8, securityTag.Value);
-                    writer.WriteEndObject();
-                }
-
-                writer.WriteEndArray();
+                writer.WritePropertyName("securityTags"u8);
+                securityTags.WriteTo(writer);
             }
 
             writer.WriteStartObject("retryCounters"u8);
@@ -218,18 +210,10 @@ public static class WorkflowCheckpointSerializer
                 tags = TagSet.CopyFrom(tagsElement);
             }
 
-            List<SecurityTag>? securityTags = null;
+            SecurityTagSet securityTags = default;
             if (root.TryGetProperty("securityTags"u8, out JsonElement securityTagsElement) && securityTagsElement.ValueKind == JsonValueKind.Array)
             {
-                securityTags = [];
-                foreach (JsonElement securityTag in securityTagsElement.EnumerateArray())
-                {
-                    if (securityTag.TryGetProperty("key"u8, out JsonElement keyElement) && keyElement.GetString() is { } key
-                        && securityTag.TryGetProperty("value"u8, out JsonElement valueElement) && valueElement.GetString() is { } value)
-                    {
-                        securityTags.Add(new SecurityTag(key, value));
-                    }
-                }
+                securityTags = SecurityTagSet.CopyFrom(securityTagsElement);
             }
 
             // Pre-size each working dictionary to its persisted element count so a long workflow's restore does not
@@ -366,25 +350,15 @@ public static class WorkflowCheckpointSerializer
 
     /// <summary>Reads just the security tags from a parsed checkpoint (for the index projection), without materializing the working dictionaries.</summary>
     /// <param name="root">The parsed checkpoint root.</param>
-    /// <returns>The security tags, or <see langword="null"/> if absent/empty.</returns>
-    public static IReadOnlyList<SecurityTag>? ReadSecurityTags(in JsonElement root)
+    /// <returns>The security tags as a deferred holder over the persisted bytes (empty if absent).</returns>
+    public static SecurityTagSet ReadSecurityTags(in JsonElement root)
     {
         if (!root.TryGetProperty("securityTags"u8, out JsonElement element) || element.ValueKind != JsonValueKind.Array)
         {
-            return null;
+            return default;
         }
 
-        List<SecurityTag>? list = null;
-        foreach (JsonElement securityTag in element.EnumerateArray())
-        {
-            if (securityTag.TryGetProperty("key"u8, out JsonElement keyElement) && keyElement.GetString() is { } key
-                && securityTag.TryGetProperty("value"u8, out JsonElement valueElement) && valueElement.GetString() is { } value)
-            {
-                (list ??= []).Add(new SecurityTag(key, value));
-            }
-        }
-
-        return list is { Count: > 0 } ? list : null;
+        return SecurityTagSet.CopyFrom(element);
     }
 
     // Map the enums to their names via constant strings, so serialising a checkpoint does not allocate a

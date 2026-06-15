@@ -32,7 +32,7 @@ public interface IWorkflowCatalogClient
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The added version's metadata.</returns>
     /// <exception cref="ArgumentException">The package is malformed, or its workflow id already carries a <c>-vN</c> suffix.</exception>
-    ValueTask<CatalogVersion> AddAsync(ReadOnlyMemory<byte> packageUtf8, CatalogOwner owner, TagSet tags, IReadOnlyList<SecurityTag>? securityTags, CancellationToken cancellationToken);
+    ValueTask<CatalogVersion> AddAsync(ReadOnlyMemory<byte> packageUtf8, CatalogOwner owner, TagSet tags, SecurityTagSet securityTags, CancellationToken cancellationToken);
 
     /// <summary>Searches the catalog, scoped to the caller's read reach (§14.2).</summary>
     /// <param name="query">The search.</param>

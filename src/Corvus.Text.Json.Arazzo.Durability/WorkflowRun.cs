@@ -29,7 +29,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     private readonly DateTimeOffset createdAt;
     private readonly string? correlationId;
     private readonly TagSet tags;
-    private readonly IReadOnlyList<SecurityTag>? securityTags;
+    private readonly SecurityTagSet securityTags;
     private readonly WorkflowCheckpointState? resumedState;
     private readonly JsonElement inputs;
     private WorkflowEtag etag;
@@ -53,7 +53,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         DateTimeOffset createdAt,
         string? correlationId,
         TagSet tags,
-        IReadOnlyList<SecurityTag>? securityTags,
+        SecurityTagSet securityTags,
         WorkflowWait? wait,
         WorkflowFault? fault,
         WorkflowCheckpointState? resumedState)
@@ -112,7 +112,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     public TagSet Tags => this.tags;
 
     /// <summary>Gets the security tags (KVP labels) applied to the run at creation, if any (design §14.2).</summary>
-    public IReadOnlyList<SecurityTag>? SecurityTags => this.securityTags;
+    public SecurityTagSet SecurityTags => this.securityTags;
 
     /// <summary>Creates a fresh run that starts at cursor <c>0</c> with empty state.</summary>
     /// <param name="store">The state store to persist checkpoints to.</param>
@@ -133,7 +133,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         TimeProvider? timeProvider = null,
         string? correlationId = null,
         TagSet tags = default,
-        IReadOnlyList<SecurityTag>? securityTags = null)
+        SecurityTagSet securityTags = default)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(workflowId);
@@ -154,7 +154,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             createdAt: time.GetUtcNow(),
             correlationId: correlationId ?? Activity.Current?.TraceId.ToString(),
             tags: tags,
-            securityTags: securityTags is { Count: > 0 } ? securityTags : null,
+            securityTags: securityTags,
             wait: null,
             fault: null,
             resumedState: null);

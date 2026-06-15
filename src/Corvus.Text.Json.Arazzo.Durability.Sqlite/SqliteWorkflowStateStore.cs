@@ -426,7 +426,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     // Re-syncs a run's security tags (§14.4) into the child table for indexed reach-filtering. Called under the
     // gate after the run row is written; run security tags are immutable, but a full delete+insert is simplest
     // and the tag count is tiny.
-    private async Task SyncSecurityTagsAsync(WorkflowRunId id, IReadOnlyList<SecurityTag>? securityTags, CancellationToken cancellationToken)
+    private async Task SyncSecurityTagsAsync(WorkflowRunId id, SecurityTagSet securityTags, CancellationToken cancellationToken)
     {
         using (SqliteCommand delete = this.connection.CreateCommand())
         {
@@ -435,12 +435,13 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        if (securityTags is not { Count: > 0 })
+        if (securityTags.IsEmpty)
         {
             return;
         }
 
-        foreach (SecurityTag tag in securityTags)
+        // Materialize at this write leaf: the ref-struct enumerator cannot cross the per-row await below.
+        foreach (SecurityTag tag in securityTags.ToList())
         {
             using SqliteCommand insert = this.connection.CreateCommand();
             insert.CommandText = "INSERT INTO WorkflowRunSecurityTags (RunId, TagKey, TagValue) VALUES (@id, @key, @value);";
