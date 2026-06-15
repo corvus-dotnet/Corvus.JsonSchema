@@ -346,7 +346,7 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
 
         // Row-security reach (§14.2): Redis has no server-side filtering, so apply the reach filter in process
         // over the version's persisted security tags — the only correct option for a key/value backend.
-        if (query.Security is { } security && !security.IsSatisfiedBy(version.SecurityTagsValue))
+        if (query.Security is { } security && !security.IsSatisfiedBy(version.SecurityTagsValue.ToList()))
         {
             return false;
         }
@@ -378,7 +378,7 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
 
         CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
         TagSet tags = metadata.Tags;
-        IReadOnlyList<SecurityTag>? securityTags = metadata.SecurityTags is { Count: > 0 } st ? [.. st] : null;
+        SecurityTagSet securityTags = metadata.SecurityTags;
 
         CatalogVersion version = CatalogVersion.Create(
             baseWorkflowId: baseWorkflowId,

@@ -458,7 +458,7 @@ public abstract class WorkflowStateStoreConformance
     }
 
     private static WorkflowRunIndexEntry Secured(SecurityTag[] securityTags)
-        => new("wf", WorkflowRunStatus.Running, T0, T0, SecurityTags: securityTags);
+        => new("wf", WorkflowRunStatus.Running, T0, T0, SecurityTags: SecurityTagSet.FromTags(securityTags));
 
     private static WorkflowRunIndexEntry Index(WorkflowRunStatus status = WorkflowRunStatus.Running)
         => new("wf", status, T0, T0);

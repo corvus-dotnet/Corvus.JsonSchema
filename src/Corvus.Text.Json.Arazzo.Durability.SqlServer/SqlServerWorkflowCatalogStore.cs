@@ -336,51 +336,10 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore, ISupp
             obsoletedBy: reader.IsDBNull(17) ? null : reader.GetString(17),
             obsoletedAt: reader.IsDBNull(18) ? null : DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(18)),
             runnable: reader.GetBoolean(19),
-            securityTags: DecodeSecurityTags(reader.IsDBNull(20) ? null : reader.GetString(20)));
+            securityTags: SecurityTagSet.FromSecurityDelimited(reader.IsDBNull(20) ? null : reader.GetString(20), SecurityTagPairSeparator, SecurityTagKeyValueSeparator));
 
     private static string SortKey(string baseWorkflowId, int versionNumber)
         => string.Create(CultureInfo.InvariantCulture, $"{baseWorkflowId}{versionNumber:D10}");
-
-    // Security tags are denormalized into the parent row (key/value pairs, pair-joined by 0x1F, key/value
-    // split by 0x1E) so a single-row read round-trips them for the control-plane's authorization check
-    // (§14.2); the child CatalogVersionSecurityTags table mirrors them for the indexed reach filter.
-    private static string? EncodeSecurityTags(IReadOnlyList<SecurityTag>? tags)
-    {
-        if (tags is not { Count: > 0 })
-        {
-            return null;
-        }
-
-        var builder = new System.Text.StringBuilder();
-        builder.Append(SecurityTagPairSeparator);
-        foreach (SecurityTag tag in tags)
-        {
-            builder.Append(tag.Key).Append(SecurityTagKeyValueSeparator).Append(tag.Value).Append(SecurityTagPairSeparator);
-        }
-
-        return builder.ToString();
-    }
-
-    private static IReadOnlyList<SecurityTag>? DecodeSecurityTags(string? encoded)
-    {
-        if (string.IsNullOrEmpty(encoded))
-        {
-            return null;
-        }
-
-        string[] parts = encoded.Trim(SecurityTagPairSeparator).Split(SecurityTagPairSeparator, StringSplitOptions.RemoveEmptyEntries);
-        var list = new List<SecurityTag>(parts.Length);
-        foreach (string part in parts)
-        {
-            int split = part.IndexOf(SecurityTagKeyValueSeparator);
-            if (split >= 0)
-            {
-                list.Add(new SecurityTag(part[..split], part[(split + 1)..]));
-            }
-        }
-
-        return list.Count > 0 ? list : null;
-    }
 
     private static string EscapeLike(string value)
         => value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
@@ -406,7 +365,7 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore, ISupp
 
         CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
         TagSet tags = metadata.Tags;
-        IReadOnlyList<SecurityTag>? securityTags = metadata.SecurityTags is { Count: > 0 } st ? [.. st] : null;
+        SecurityTagSet securityTags = metadata.SecurityTags;
 
         // Bind the columns directly from the projected/governance source values (no round-trip through the
         // CatalogVersion document); the document is built once, for the return value.
@@ -436,14 +395,15 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore, ISupp
         insert.Parameters.Add(NullableText("@obsoletedBy", null));
         insert.Parameters.Add(NullableBigint("@obsoletedAt", null));
         insert.Parameters.AddWithValue("@runnable", projection.HasExecutor);
-        insert.Parameters.Add(NullableText("@securityTags", EncodeSecurityTags(securityTags)));
+        insert.Parameters.Add(NullableText("@securityTags", securityTags.ToSecurityDelimitedOrNull(SecurityTagPairSeparator, SecurityTagKeyValueSeparator)));
         insert.Parameters.AddWithValue("@package", projection.CanonicalPackage.ToArray());
         await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
 
         // Persist the version's security tags for indexed reach-filtering (§14.4); versions are immutable.
-        if (securityTags is { Count: > 0 })
+        if (!securityTags.IsEmpty)
         {
-            foreach (SecurityTag tag in securityTags)
+            // Materialize at this write leaf: the ref-struct enumerator cannot cross the per-row await below.
+            foreach (SecurityTag tag in securityTags.ToList())
             {
                 await using SqlCommand tagInsert = connection.CreateCommand();
                 tagInsert.CommandText = "INSERT INTO CatalogVersionSecurityTags (BaseWorkflowId, VersionNumber, TagKey, TagValue) VALUES (@baseWorkflowId, @versionNumber, @key, @value);";

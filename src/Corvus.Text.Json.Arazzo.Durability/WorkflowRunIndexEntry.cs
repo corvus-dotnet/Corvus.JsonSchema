@@ -37,4 +37,4 @@ public readonly record struct WorkflowRunIndexEntry(
     string? ErrorType = null,
     string? CorrelationId = null,
     TagSet Tags = default,
-    IReadOnlyList<SecurityTag>? SecurityTags = null);
+    SecurityTagSet SecurityTags = default);

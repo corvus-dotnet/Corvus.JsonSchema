@@ -230,7 +230,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
                 foreach (BsonDocument document in cursor.Current)
                 {
                     CatalogVersion candidate = ReadVersion(document);
-                    if (query.Security is { } security && !security.IsSatisfiedBy(candidate.SecurityTagsValue))
+                    if (query.Security is { } security && !security.IsSatisfiedBy(candidate.SecurityTagsValue.ToList()))
                     {
                         continue;
                     }
@@ -406,23 +406,8 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         return TagSet.FromTags(value.AsBsonArray.Select(static t => t.AsString));
     }
 
-    private static IReadOnlyList<SecurityTag>? ReadSecurityTags(BsonDocument document)
-    {
-        if (!document.TryGetValue("securityTags", out BsonValue value) || value.IsBsonNull)
-        {
-            return null;
-        }
-
-        BsonArray array = value.AsBsonArray;
-        var list = new List<SecurityTag>(array.Count);
-        foreach (BsonValue element in array)
-        {
-            BsonDocument tag = element.AsBsonDocument;
-            list.Add(new SecurityTag(tag["k"].AsString, tag["v"].AsString));
-        }
-
-        return list.Count > 0 ? list : null;
-    }
+    private static SecurityTagSet ReadSecurityTags(BsonDocument document)
+        => MongoSecurityTags.Read(document);
 
     private static SourceSet ReadSources(BsonDocument document)
     {
@@ -448,7 +433,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         TagSet tags = metadata.Tags;
-        IReadOnlyList<SecurityTag>? securityTags = metadata.SecurityTags is { Count: > 0 } st ? [.. st] : null;
+        SecurityTagSet securityTags = metadata.SecurityTags;
 
         // Assign the next version number atomically: read the current max for the base id, project + insert under a
         // unique _id ({base}:{version}). A concurrent add racing on the same base id collides on the duplicate _id,
@@ -536,9 +521,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             ["description"] = (BsonValue?)version.DescriptionOrNull ?? BsonNull.Value,
             ["status"] = version.StatusValue.ToString(),
             ["tags"] = new BsonArray(version.TagsValue.ToList()),
-            ["securityTags"] = version.SecurityTagsValue is { Count: > 0 } securityTags
-                ? new BsonArray(securityTags.Select(s => new BsonDocument { ["k"] = s.Key, ["v"] = s.Value }))
-                : BsonNull.Value,
+            ["securityTags"] = MongoSecurityTags.ToBson(version.SecurityTagsValue),
             ["ownerName"] = owner.Name,
             ["ownerEmail"] = owner.Email,
             ["ownerTeam"] = (BsonValue?)owner.Team ?? BsonNull.Value,
