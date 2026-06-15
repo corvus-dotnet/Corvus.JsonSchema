@@ -27,6 +27,14 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
     private const string BindingPrefix = "binding.";
     private const string GenerationKey = "generation";
 
+    // Singleton comparers (created once) for the client-side snapshot ordering, since the KV key listing is unordered:
+    // rules by their name and bindings by Order then id.
+    private static readonly IComparer<ParsedJsonDocument<SecurityRuleDocument>> ByRuleName =
+        Comparer<ParsedJsonDocument<SecurityRuleDocument>>.Create(static (a, b) => string.CompareOrdinal(a.RootElement.NameValue, b.RootElement.NameValue));
+
+    private static readonly IComparer<ParsedJsonDocument<SecurityBindingDocument>> ByBindingOrder =
+        Comparer<ParsedJsonDocument<SecurityBindingDocument>>.Create(static (a, b) => a.RootElement.OrderValue != b.RootElement.OrderValue ? a.RootElement.OrderValue.CompareTo(b.RootElement.OrderValue) : string.CompareOrdinal(a.RootElement.IdValue, b.RootElement.IdValue));
+
     private readonly NatsConnection? ownedConnection;
     private readonly INatsKVStore store;
     private readonly TimeProvider timeProvider;
@@ -123,8 +131,8 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
     }
 
     /// <inheritdoc/>
-    public async ValueTask<PooledDocumentList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
-        => new PooledDocumentList<SecurityRuleDocument>(await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false));
+    public ValueTask<PooledDocumentList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
+        => this.ReadRulesAsync(cancellationToken);
 
     /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
@@ -171,8 +179,8 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
     }
 
     /// <inheritdoc/>
-    public async ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
-        => new PooledDocumentList<SecurityBindingDocument>(await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false));
+    public ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
+        => this.ReadBindingsAsync(cancellationToken);
 
     /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
@@ -200,8 +208,8 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
     /// <inheritdoc/>
     public async ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
     {
-        var rules = new PooledDocumentList<SecurityRuleDocument>(await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false));
-        var bindings = new PooledDocumentList<SecurityBindingDocument>(await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false));
+        PooledDocumentList<SecurityRuleDocument> rules = await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
+        PooledDocumentList<SecurityBindingDocument> bindings = await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
         NatsKVEntry<byte[]>? gen = await this.TryGetAsync(GenerationKey, cancellationToken).ConfigureAwait(false);
         long generation = gen is { Value: { } bytes } && long.TryParse(Encoding.UTF8.GetString(bytes), NumberStyles.Integer, CultureInfo.InvariantCulture, out long g) ? g : 0;
         return new SecurityPolicySnapshot(rules, bindings, generation);
@@ -220,9 +228,9 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
 
     private static string Enc(string value) => Base64Url.EncodeToString(Encoding.UTF8.GetBytes(value));
 
-    private async ValueTask<List<ParsedJsonDocument<SecurityRuleDocument>>> ReadRulesAsync(CancellationToken cancellationToken)
+    private async ValueTask<PooledDocumentList<SecurityRuleDocument>> ReadRulesAsync(CancellationToken cancellationToken)
     {
-        var list = new List<ParsedJsonDocument<SecurityRuleDocument>>();
+        var list = new PooledDocumentList<SecurityRuleDocument>();
         await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
         {
             if (!key.StartsWith(RulePrefix, StringComparison.Ordinal))
@@ -237,13 +245,13 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
             }
         }
 
-        list.Sort(static (a, b) => string.CompareOrdinal(a.RootElement.NameValue, b.RootElement.NameValue));
+        list.Sort(ByRuleName);
         return list;
     }
 
-    private async ValueTask<List<ParsedJsonDocument<SecurityBindingDocument>>> ReadBindingsAsync(CancellationToken cancellationToken)
+    private async ValueTask<PooledDocumentList<SecurityBindingDocument>> ReadBindingsAsync(CancellationToken cancellationToken)
     {
-        var list = new List<ParsedJsonDocument<SecurityBindingDocument>>();
+        var list = new PooledDocumentList<SecurityBindingDocument>();
         await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
         {
             if (!key.StartsWith(BindingPrefix, StringComparison.Ordinal))
@@ -258,7 +266,7 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
             }
         }
 
-        list.Sort(static (a, b) => a.RootElement.OrderValue != b.RootElement.OrderValue ? a.RootElement.OrderValue.CompareTo(b.RootElement.OrderValue) : string.CompareOrdinal(a.RootElement.IdValue, b.RootElement.IdValue));
+        list.Sort(ByBindingOrder);
         return list;
     }
 

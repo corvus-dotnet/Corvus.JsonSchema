@@ -24,6 +24,14 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     private const string BindingIndexKey = "arazzo:secbindings";
     private const string GenerationKey = "arazzo:secgen";
 
+    // Singleton comparers (created once) for the client-side snapshot ordering, since the index sets are unordered: rules
+    // by their name and bindings by Order then id.
+    private static readonly IComparer<ParsedJsonDocument<SecurityRuleDocument>> ByRuleName =
+        Comparer<ParsedJsonDocument<SecurityRuleDocument>>.Create(static (a, b) => string.CompareOrdinal(a.RootElement.NameValue, b.RootElement.NameValue));
+
+    private static readonly IComparer<ParsedJsonDocument<SecurityBindingDocument>> ByBindingOrder =
+        Comparer<ParsedJsonDocument<SecurityBindingDocument>>.Create(static (a, b) => a.RootElement.OrderValue != b.RootElement.OrderValue ? a.RootElement.OrderValue.CompareTo(b.RootElement.OrderValue) : string.CompareOrdinal(a.RootElement.IdValue, b.RootElement.IdValue));
+
     private readonly IConnectionMultiplexer connection;
     private readonly IDatabase database;
     private readonly TimeProvider timeProvider;
@@ -102,7 +110,7 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     public async ValueTask<PooledDocumentList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return new PooledDocumentList<SecurityRuleDocument>(await this.ReadRulesAsync().ConfigureAwait(false));
+        return await this.ReadRulesAsync().ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -155,7 +163,7 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     public async ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return new PooledDocumentList<SecurityBindingDocument>(await this.ReadBindingsAsync().ConfigureAwait(false));
+        return await this.ReadBindingsAsync().ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -185,8 +193,8 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     public async ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var rules = new PooledDocumentList<SecurityRuleDocument>(await this.ReadRulesAsync().ConfigureAwait(false));
-        var bindings = new PooledDocumentList<SecurityBindingDocument>(await this.ReadBindingsAsync().ConfigureAwait(false));
+        PooledDocumentList<SecurityRuleDocument> rules = await this.ReadRulesAsync().ConfigureAwait(false);
+        PooledDocumentList<SecurityBindingDocument> bindings = await this.ReadBindingsAsync().ConfigureAwait(false);
         RedisValue gen = await this.database.StringGetAsync(GenerationKey).ConfigureAwait(false);
         return new SecurityPolicySnapshot(rules, bindings, gen.IsNullOrEmpty ? 0 : (long)gen);
     }
@@ -202,9 +210,9 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
-    private async ValueTask<List<ParsedJsonDocument<SecurityRuleDocument>>> ReadRulesAsync()
+    private async ValueTask<PooledDocumentList<SecurityRuleDocument>> ReadRulesAsync()
     {
-        var list = new List<ParsedJsonDocument<SecurityRuleDocument>>();
+        var list = new PooledDocumentList<SecurityRuleDocument>();
         foreach (RedisValue member in await this.database.SetMembersAsync(RuleIndexKey).ConfigureAwait(false))
         {
             RedisValue value = await this.database.StringGetAsync(RulePrefix + (string)member!).ConfigureAwait(false);
@@ -214,13 +222,13 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
             }
         }
 
-        list.Sort(static (a, b) => string.CompareOrdinal(a.RootElement.NameValue, b.RootElement.NameValue));
+        list.Sort(ByRuleName);
         return list;
     }
 
-    private async ValueTask<List<ParsedJsonDocument<SecurityBindingDocument>>> ReadBindingsAsync()
+    private async ValueTask<PooledDocumentList<SecurityBindingDocument>> ReadBindingsAsync()
     {
-        var list = new List<ParsedJsonDocument<SecurityBindingDocument>>();
+        var list = new PooledDocumentList<SecurityBindingDocument>();
         foreach (RedisValue member in await this.database.SetMembersAsync(BindingIndexKey).ConfigureAwait(false))
         {
             RedisValue value = await this.database.StringGetAsync(BindingPrefix + (string)member!).ConfigureAwait(false);
@@ -230,7 +238,7 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
             }
         }
 
-        list.Sort(static (a, b) => a.RootElement.OrderValue != b.RootElement.OrderValue ? a.RootElement.OrderValue.CompareTo(b.RootElement.OrderValue) : string.CompareOrdinal(a.RootElement.IdValue, b.RootElement.IdValue));
+        list.Sort(ByBindingOrder);
         return list;
     }
 

@@ -94,7 +94,7 @@ public sealed class SqlServerSecurityPolicyStore : ISecurityPolicyStore, IAsyncD
     public async ValueTask<PooledDocumentList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
     {
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-        return new PooledDocumentList<SecurityRuleDocument>(await ReadRulesAsync(connection, cancellationToken).ConfigureAwait(false));
+        return await ReadRulesAsync(connection, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -159,7 +159,7 @@ public sealed class SqlServerSecurityPolicyStore : ISecurityPolicyStore, IAsyncD
     public async ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
     {
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-        return new PooledDocumentList<SecurityBindingDocument>(await ReadBindingsAsync(connection, cancellationToken).ConfigureAwait(false));
+        return await ReadBindingsAsync(connection, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -196,8 +196,8 @@ public sealed class SqlServerSecurityPolicyStore : ISecurityPolicyStore, IAsyncD
     public async ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
     {
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-        var rules = new PooledDocumentList<SecurityRuleDocument>(await ReadRulesAsync(connection, cancellationToken).ConfigureAwait(false));
-        var bindings = new PooledDocumentList<SecurityBindingDocument>(await ReadBindingsAsync(connection, cancellationToken).ConfigureAwait(false));
+        PooledDocumentList<SecurityRuleDocument> rules = await ReadRulesAsync(connection, cancellationToken).ConfigureAwait(false);
+        PooledDocumentList<SecurityBindingDocument> bindings = await ReadBindingsAsync(connection, cancellationToken).ConfigureAwait(false);
         await using SqlCommand select = connection.CreateCommand();
         select.CommandText = "SELECT Generation FROM SecurityPolicyMeta WHERE Id = 0;";
         object? gen = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
@@ -218,9 +218,9 @@ public sealed class SqlServerSecurityPolicyStore : ISecurityPolicyStore, IAsyncD
         return result is byte[] bytes ? bytes : null;
     }
 
-    private static async ValueTask<List<ParsedJsonDocument<SecurityRuleDocument>>> ReadRulesAsync(SqlConnection connection, CancellationToken cancellationToken)
+    private static async ValueTask<PooledDocumentList<SecurityRuleDocument>> ReadRulesAsync(SqlConnection connection, CancellationToken cancellationToken)
     {
-        var list = new List<ParsedJsonDocument<SecurityRuleDocument>>();
+        var list = new PooledDocumentList<SecurityRuleDocument>();
         await using SqlCommand select = connection.CreateCommand();
         select.CommandText = "SELECT Document FROM SecurityRules ORDER BY Name;";
         await using SqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
@@ -232,9 +232,9 @@ public sealed class SqlServerSecurityPolicyStore : ISecurityPolicyStore, IAsyncD
         return list;
     }
 
-    private static async ValueTask<List<ParsedJsonDocument<SecurityBindingDocument>>> ReadBindingsAsync(SqlConnection connection, CancellationToken cancellationToken)
+    private static async ValueTask<PooledDocumentList<SecurityBindingDocument>> ReadBindingsAsync(SqlConnection connection, CancellationToken cancellationToken)
     {
-        var list = new List<ParsedJsonDocument<SecurityBindingDocument>>();
+        var list = new PooledDocumentList<SecurityBindingDocument>();
         await using SqlCommand select = connection.CreateCommand();
         select.CommandText = "SELECT Document FROM SecurityBindings ORDER BY SortOrder, Id;";
         await using SqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);

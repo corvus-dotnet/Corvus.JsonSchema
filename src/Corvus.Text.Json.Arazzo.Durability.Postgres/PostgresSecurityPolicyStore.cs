@@ -119,7 +119,7 @@ public sealed class PostgresSecurityPolicyStore : ISecurityPolicyStore, IAsyncDi
     public async ValueTask<PooledDocumentList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
     {
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-        return new PooledDocumentList<SecurityRuleDocument>(await ReadRulesAsync(connection, cancellationToken).ConfigureAwait(false));
+        return await ReadRulesAsync(connection, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -184,7 +184,7 @@ public sealed class PostgresSecurityPolicyStore : ISecurityPolicyStore, IAsyncDi
     public async ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
     {
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-        return new PooledDocumentList<SecurityBindingDocument>(await ReadBindingsAsync(connection, cancellationToken).ConfigureAwait(false));
+        return await ReadBindingsAsync(connection, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -221,8 +221,8 @@ public sealed class PostgresSecurityPolicyStore : ISecurityPolicyStore, IAsyncDi
     public async ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
     {
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-        var rules = new PooledDocumentList<SecurityRuleDocument>(await ReadRulesAsync(connection, cancellationToken).ConfigureAwait(false));
-        var bindings = new PooledDocumentList<SecurityBindingDocument>(await ReadBindingsAsync(connection, cancellationToken).ConfigureAwait(false));
+        PooledDocumentList<SecurityRuleDocument> rules = await ReadRulesAsync(connection, cancellationToken).ConfigureAwait(false);
+        PooledDocumentList<SecurityBindingDocument> bindings = await ReadBindingsAsync(connection, cancellationToken).ConfigureAwait(false);
         await using NpgsqlCommand select = connection.CreateCommand();
         select.CommandText = "SELECT Generation FROM SecurityPolicyMeta WHERE Id = 0;";
         object? gen = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
@@ -256,9 +256,9 @@ public sealed class PostgresSecurityPolicyStore : ISecurityPolicyStore, IAsyncDi
         return result is byte[] bytes ? bytes : null;
     }
 
-    private static async ValueTask<List<ParsedJsonDocument<SecurityRuleDocument>>> ReadRulesAsync(NpgsqlConnection connection, CancellationToken cancellationToken)
+    private static async ValueTask<PooledDocumentList<SecurityRuleDocument>> ReadRulesAsync(NpgsqlConnection connection, CancellationToken cancellationToken)
     {
-        var list = new List<ParsedJsonDocument<SecurityRuleDocument>>();
+        var list = new PooledDocumentList<SecurityRuleDocument>();
         await using NpgsqlCommand select = connection.CreateCommand();
         select.CommandText = "SELECT Document FROM SecurityRules ORDER BY Name;";
         await using NpgsqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
@@ -270,9 +270,9 @@ public sealed class PostgresSecurityPolicyStore : ISecurityPolicyStore, IAsyncDi
         return list;
     }
 
-    private static async ValueTask<List<ParsedJsonDocument<SecurityBindingDocument>>> ReadBindingsAsync(NpgsqlConnection connection, CancellationToken cancellationToken)
+    private static async ValueTask<PooledDocumentList<SecurityBindingDocument>> ReadBindingsAsync(NpgsqlConnection connection, CancellationToken cancellationToken)
     {
-        var list = new List<ParsedJsonDocument<SecurityBindingDocument>>();
+        var list = new PooledDocumentList<SecurityBindingDocument>();
         await using NpgsqlCommand select = connection.CreateCommand();
         select.CommandText = "SELECT Document FROM SecurityBindings ORDER BY SortOrder, Id;";
         await using NpgsqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);

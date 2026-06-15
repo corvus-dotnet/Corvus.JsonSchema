@@ -32,6 +32,14 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     private static readonly byte[] DocProperty = "doc"u8.ToArray();
     private static readonly byte[] GenerationProperty = "generation"u8.ToArray();
 
+    // Singleton comparers (created once) for the client-side snapshot ordering, since the queries do not order: rules by
+    // their name and bindings by Order then id.
+    private static readonly IComparer<ParsedJsonDocument<SecurityRuleDocument>> ByRuleName =
+        Comparer<ParsedJsonDocument<SecurityRuleDocument>>.Create(static (a, b) => string.CompareOrdinal(a.RootElement.NameValue, b.RootElement.NameValue));
+
+    private static readonly IComparer<ParsedJsonDocument<SecurityBindingDocument>> ByBindingOrder =
+        Comparer<ParsedJsonDocument<SecurityBindingDocument>>.Create(static (a, b) => a.RootElement.OrderValue != b.RootElement.OrderValue ? a.RootElement.OrderValue.CompareTo(b.RootElement.OrderValue) : string.CompareOrdinal(a.RootElement.IdValue, b.RootElement.IdValue));
+
     private readonly CosmosClient client;
     private readonly Container container;
     private readonly TimeProvider timeProvider;
@@ -140,8 +148,8 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
-    public async ValueTask<PooledDocumentList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
-        => new(await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false));
+    public ValueTask<PooledDocumentList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
+        => this.ReadRulesAsync(cancellationToken);
 
     /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
@@ -220,8 +228,8 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
-    public async ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
-        => new(await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false));
+    public ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
+        => this.ReadBindingsAsync(cancellationToken);
 
     /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
@@ -267,8 +275,8 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     /// <inheritdoc/>
     public async ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
     {
-        var rules = new PooledDocumentList<SecurityRuleDocument>(await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false));
-        var bindings = new PooledDocumentList<SecurityBindingDocument>(await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false));
+        PooledDocumentList<SecurityRuleDocument> rules = await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
+        PooledDocumentList<SecurityBindingDocument> bindings = await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
         long generation = await this.ReadGenerationAsync(cancellationToken).ConfigureAwait(false);
         return new SecurityPolicySnapshot(rules, bindings, generation);
     }
@@ -347,27 +355,27 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         return CosmosJson.GetString(payload.Memory, DocProperty) is { } base64 ? Convert.FromBase64String(base64) : null;
     }
 
-    private async ValueTask<List<ParsedJsonDocument<SecurityRuleDocument>>> ReadRulesAsync(CancellationToken cancellationToken)
+    private async ValueTask<PooledDocumentList<SecurityRuleDocument>> ReadRulesAsync(CancellationToken cancellationToken)
     {
-        var list = new List<ParsedJsonDocument<SecurityRuleDocument>>();
+        var list = new PooledDocumentList<SecurityRuleDocument>();
         await foreach (byte[] doc in this.QueryDocumentsAsync(RulePartition, cancellationToken).ConfigureAwait(false))
         {
             list.Add(PersistedJson.ToPooledDocument<SecurityRuleDocument>(doc));
         }
 
-        list.Sort(static (a, b) => string.CompareOrdinal(a.RootElement.NameValue, b.RootElement.NameValue));
+        list.Sort(ByRuleName);
         return list;
     }
 
-    private async ValueTask<List<ParsedJsonDocument<SecurityBindingDocument>>> ReadBindingsAsync(CancellationToken cancellationToken)
+    private async ValueTask<PooledDocumentList<SecurityBindingDocument>> ReadBindingsAsync(CancellationToken cancellationToken)
     {
-        var list = new List<ParsedJsonDocument<SecurityBindingDocument>>();
+        var list = new PooledDocumentList<SecurityBindingDocument>();
         await foreach (byte[] doc in this.QueryDocumentsAsync(BindingPartition, cancellationToken).ConfigureAwait(false))
         {
             list.Add(PersistedJson.ToPooledDocument<SecurityBindingDocument>(doc));
         }
 
-        list.Sort(static (a, b) => a.RootElement.OrderValue != b.RootElement.OrderValue ? a.RootElement.OrderValue.CompareTo(b.RootElement.OrderValue) : string.CompareOrdinal(a.RootElement.IdValue, b.RootElement.IdValue));
+        list.Sort(ByBindingOrder);
         return list;
     }
 

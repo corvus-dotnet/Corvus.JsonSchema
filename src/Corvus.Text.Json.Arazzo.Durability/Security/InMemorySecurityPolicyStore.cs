@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Globalization;
 using Corvus.Text.Json;
 
@@ -16,6 +17,16 @@ namespace Corvus.Text.Json.Arazzo.Durability.Security;
 /// </summary>
 public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
 {
+    // Singleton comparer (created once) for the binding snapshot order: by Order (int, no allocation), with the id as
+    // a tiebreak only when two bindings share an order. Rules sort by their dictionary key (the name), so they need no
+    // comparer and materialize no strings.
+    private static readonly IComparer<ParsedJsonDocument<SecurityBindingDocument>> ByBindingOrder =
+        Comparer<ParsedJsonDocument<SecurityBindingDocument>>.Create(static (a, b) =>
+        {
+            int byOrder = a.RootElement.OrderValue.CompareTo(b.RootElement.OrderValue);
+            return byOrder != 0 ? byOrder : string.CompareOrdinal(a.RootElement.IdValue, b.RootElement.IdValue);
+        });
+
     private readonly Lock gate = new();
     private readonly Dictionary<string, byte[]> rules = new(StringComparer.Ordinal);
     private readonly Dictionary<string, byte[]> bindings = new(StringComparer.Ordinal);
@@ -66,14 +77,7 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
     {
         lock (this.gate)
         {
-            var docs = new List<ParsedJsonDocument<SecurityRuleDocument>>(this.rules.Count);
-            foreach (byte[] json in this.rules.Values)
-            {
-                docs.Add(PersistedJson.ToPooledDocument<SecurityRuleDocument>(json));
-            }
-
-            docs.Sort(static (a, b) => string.CompareOrdinal(a.RootElement.NameValue, b.RootElement.NameValue));
-            return new ValueTask<PooledDocumentList<SecurityRuleDocument>>(new PooledDocumentList<SecurityRuleDocument>(docs));
+            return new ValueTask<PooledDocumentList<SecurityRuleDocument>>(this.SortedRules());
         }
     }
 
@@ -206,34 +210,48 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
     {
         lock (this.gate)
         {
-            var ruleDocs = new List<ParsedJsonDocument<SecurityRuleDocument>>(this.rules.Count);
-            foreach (byte[] json in this.rules.Values)
-            {
-                ruleDocs.Add(PersistedJson.ToPooledDocument<SecurityRuleDocument>(json));
-            }
-
-            ruleDocs.Sort(static (a, b) => string.CompareOrdinal(a.RootElement.NameValue, b.RootElement.NameValue));
             return new ValueTask<SecurityPolicySnapshot>(new SecurityPolicySnapshot(
-                new PooledDocumentList<SecurityRuleDocument>(ruleDocs),
+                this.SortedRules(),
                 this.SortedBindings(),
                 this.generation));
         }
     }
 
+    // Rules sort by their dictionary key (the rule name) — already-allocated strings, ordinal — so the comparison
+    // materializes no new strings and needs no comparer over the parsed documents. The key scratch is itself rented
+    // from the pool (and cleared on return so the pool retains no string references) rather than a fresh string[].
+    private PooledDocumentList<SecurityRuleDocument> SortedRules()
+    {
+        int count = this.rules.Count;
+        string[] names = ArrayPool<string>.Shared.Rent(count);
+        try
+        {
+            this.rules.Keys.CopyTo(names, 0);
+            Array.Sort(names, 0, count, StringComparer.Ordinal);
+            var docs = new PooledDocumentList<SecurityRuleDocument>(count);
+            for (int i = 0; i < count; i++)
+            {
+                docs.Add(PersistedJson.ToPooledDocument<SecurityRuleDocument>(this.rules[names[i]]));
+            }
+
+            return docs;
+        }
+        finally
+        {
+            ArrayPool<string>.Shared.Return(names, clearArray: true);
+        }
+    }
+
     private PooledDocumentList<SecurityBindingDocument> SortedBindings()
     {
-        var docs = new List<ParsedJsonDocument<SecurityBindingDocument>>(this.bindings.Count);
+        var docs = new PooledDocumentList<SecurityBindingDocument>(this.bindings.Count);
         foreach (byte[] json in this.bindings.Values)
         {
             docs.Add(PersistedJson.ToPooledDocument<SecurityBindingDocument>(json));
         }
 
-        docs.Sort(static (a, b) =>
-        {
-            int byOrder = a.RootElement.OrderValue.CompareTo(b.RootElement.OrderValue);
-            return byOrder != 0 ? byOrder : string.CompareOrdinal(a.RootElement.IdValue, b.RootElement.IdValue);
-        });
-        return new PooledDocumentList<SecurityBindingDocument>(docs);
+        docs.Sort(ByBindingOrder);
+        return docs;
     }
 
     private WorkflowEtag NextEtag() => new((++this.etagSequence).ToString(CultureInfo.InvariantCulture));
