@@ -232,33 +232,50 @@ public static class WorkflowCheckpointSerializer
                 }
             }
 
-            Dictionary<string, int> retryCounters = [];
+            // Pre-size each working dictionary to its persisted element count so a long workflow's restore does not
+            // re-allocate the backing array as the dictionary grows (GetPropertyCount is a no-alloc scan).
+            Dictionary<string, int> retryCounters;
             if (root.TryGetProperty("retryCounters"u8, out JsonElement retryCountersElement))
             {
+                retryCounters = new Dictionary<string, int>(retryCountersElement.GetPropertyCount());
                 foreach (JsonProperty<JsonElement> counter in retryCountersElement.EnumerateObject())
                 {
                     retryCounters[counter.Name] = counter.Value.GetInt32();
                 }
             }
+            else
+            {
+                retryCounters = [];
+            }
 
-            Dictionary<string, byte[]> correlationTokens = [];
+            Dictionary<string, byte[]> correlationTokens;
             if (root.TryGetProperty("correlationTokens"u8, out JsonElement correlationTokensElement))
             {
+                correlationTokens = new Dictionary<string, byte[]>(correlationTokensElement.GetPropertyCount());
                 foreach (JsonProperty<JsonElement> token in correlationTokensElement.EnumerateObject())
                 {
                     correlationTokens[token.Name] = token.Value.GetBytesFromBase64();
                 }
             }
+            else
+            {
+                correlationTokens = [];
+            }
 
             JsonElement inputs = root.TryGetProperty("inputs"u8, out JsonElement inputsElement) ? inputsElement : default;
 
-            Dictionary<string, JsonElement> stepOutputs = [];
+            Dictionary<string, JsonElement> stepOutputs;
             if (root.TryGetProperty("stepOutputs"u8, out JsonElement stepOutputsElement))
             {
+                stepOutputs = new Dictionary<string, JsonElement>(stepOutputsElement.GetPropertyCount());
                 foreach (JsonProperty<JsonElement> step in stepOutputsElement.EnumerateObject())
                 {
                     stepOutputs[step.Name] = step.Value;
                 }
+            }
+            else
+            {
+                stepOutputs = [];
             }
 
             JsonElement outputs = root.TryGetProperty("outputs"u8, out JsonElement outputsElement) ? outputsElement : default;
