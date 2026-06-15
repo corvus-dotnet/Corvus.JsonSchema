@@ -55,11 +55,11 @@ public class RequestBindingEmitterTests
     {
         RequestBindingCode code = Emit([new StepArgument("petId", "$inputs.petId")]);
 
-        code.Statements.ShouldContain("((JsonElement)inputs).TryGetProperty(\"petId\"u8, out JsonElement petIdValue);");
+        code.Statements.ShouldContain("((JsonElement)inputs).TryGetProperty(\"petId\"u8, out JsonElement getPet_PetIdValue);");
 
         // The resolved JsonElement is re-wrapped to the parameter's model type with From (a free
         // re-interpretation of the same backing JSON), which then converts to the client's {Type}.Source.
-        code.NamedArguments.ShouldContain("petId: Acme.Pets.JsonString.From(petIdValue)");
+        code.NamedArguments.ShouldContain("petId: Acme.Pets.JsonString.From(getPet_PetIdValue)");
     }
 
     [TestMethod]
@@ -138,7 +138,7 @@ public class RequestBindingEmitterTests
         RequestBindingCode code = Emit([new StepArgument("petId", "{$url}", ArgumentValueKind.Interpolation)]);
 
         code.Fields.ShouldContain("CompiledInterpolationTemplate GetPet_PetIdTemplate = CompiledInterpolationTemplate.Compile(\"{$url}\");");
-        code.NamedArguments.ShouldContain("petId: petIdValue");
+        code.NamedArguments.ShouldContain("petId: getPet_PetIdValue");
     }
 
     [TestMethod]
@@ -146,7 +146,7 @@ public class RequestBindingEmitterTests
     {
         RequestBindingCode code = Emit([new StepArgument("petId", "$inputs.petId")]);
 
-        code.NamedArguments.ShouldContain("petId: Acme.Pets.JsonString.From(petIdValue)");
+        code.NamedArguments.ShouldContain("petId: Acme.Pets.JsonString.From(getPet_PetIdValue)");
         code.NamedArguments.ShouldNotContain(a => a.StartsWith("limit:", StringComparison.Ordinal));
     }
 
@@ -163,8 +163,8 @@ public class RequestBindingEmitterTests
             CreatePet, [], "context", "CreatePet_", NoSteps, "inputs", null,
             new StepBody("$inputs.pet", ArgumentValueKind.Expression));
 
-        code.Statements.ShouldContain("((JsonElement)inputs).TryGetProperty(\"pet\"u8, out JsonElement bodyValue);");
-        code.NamedArguments.ShouldContain("body: Acme.Pets.NewPet.From(bodyValue)");
+        code.Statements.ShouldContain("((JsonElement)inputs).TryGetProperty(\"pet\"u8, out JsonElement createPet_BodyValue);");
+        code.NamedArguments.ShouldContain("body: Acme.Pets.NewPet.From(createPet_BodyValue)");
     }
 
     [TestMethod]
