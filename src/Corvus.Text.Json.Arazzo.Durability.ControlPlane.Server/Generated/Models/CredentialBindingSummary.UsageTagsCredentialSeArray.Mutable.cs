@@ -34,11 +34,11 @@ public readonly partial struct CredentialBindingSummary
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Security tags scoping who may MANAGE this binding (&#167;14.2), independent of usageTags.
+    /// Security tags scoping which runs may USE this binding (&#167;13), independent of managementTags.
     /// </para>
     /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct CredentialSecurityTagArray
+    public readonly partial struct UsageTagsCredentialSeArray
     {
         public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -143,7 +143,7 @@ public readonly partial struct CredentialBindingSummary
             /// <param name="value">The instance of this type.</param>
             /// <returns>A mutable instance.</returns>
             /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-            public static explicit operator Mutable(CredentialSecurityTagArray instance)
+            public static explicit operator Mutable(UsageTagsCredentialSeArray instance)
             {
                 if (instance._parent is not IMutableJsonDocument doc)
                 {
@@ -158,9 +158,9 @@ public readonly partial struct CredentialBindingSummary
             /// Converts to an immutable instance of the <see cref="Mutable"/> type.
             /// </summary>
             /// <param name="value">The <see cref="Mutable"/> instance.</param>
-            /// <returns>An immutable instance of a <see cref="CredentialSecurityTagArray"/>, initialized from the <see cref="Mutable"/> value.</returns>
+            /// <returns>An immutable instance of a <see cref="UsageTagsCredentialSeArray"/>, initialized from the <see cref="Mutable"/> value.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static implicit operator CredentialSecurityTagArray(Mutable instance)
+            public static implicit operator UsageTagsCredentialSeArray(Mutable instance)
             {
                 return new(instance._parent, instance._idx);
             }
@@ -217,7 +217,7 @@ public readonly partial struct CredentialBindingSummary
             public override bool Equals(object? obj)
             {
                 return
-                    (obj is IJsonElement value && Equals(new CredentialSecurityTagArray(value.ParentDocument, value.ParentDocumentIndex))) ||
+                    (obj is IJsonElement value && Equals(new UsageTagsCredentialSeArray(value.ParentDocument, value.ParentDocumentIndex))) ||
                     (obj is null && this.IsNull());
             }
 
@@ -316,7 +316,7 @@ public readonly partial struct CredentialBindingSummary
 #endif
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-            private string DebuggerDisplay => $"CredentialSecurityTagArray.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+            private string DebuggerDisplay => $"UsageTagsCredentialSeArray.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
             /// <summary>
             ///   Sets the value of an array element at the specified index.
             /// </summary>
@@ -683,11 +683,11 @@ public readonly partial struct CredentialBindingSummary
             JsonValueKind IJsonElement.ValueKind => ValueKind;
 
             /// <summary>
-            /// Gets a <see cref="CredentialSecurityTagArray"/> which can be safely stored beyond the lifetime of the
+            /// Gets a <see cref="UsageTagsCredentialSeArray"/> which can be safely stored beyond the lifetime of the
             /// original document.
             /// </summary>
             /// <returns>
-            /// A <see cref="CredentialSecurityTagArray"/> which can be safely stored beyond the lifetime of the
+            /// A <see cref="UsageTagsCredentialSeArray"/> which can be safely stored beyond the lifetime of the
             /// original document.
             /// </returns>
             /// <remarks>
@@ -696,10 +696,10 @@ public readonly partial struct CredentialBindingSummary
             /// document. The result is independent of the workspace.
             /// </para>
             /// </remarks>
-            public readonly CredentialSecurityTagArray Clone()
+            public readonly UsageTagsCredentialSeArray Clone()
             {
                 CheckValidInstance();
-                return _parent.CloneElement<CredentialSecurityTagArray>(_idx);
+                return _parent.CloneElement<UsageTagsCredentialSeArray>(_idx);
             }
 
             /// <summary>
@@ -707,7 +707,7 @@ public readonly partial struct CredentialBindingSummary
             /// document builder registered in the same workspace.
             /// </summary>
             /// <returns>
-            /// An immutable <see cref="CredentialSecurityTagArray"/> that lives for the lifetime of its
+            /// An immutable <see cref="UsageTagsCredentialSeArray"/> that lives for the lifetime of its
             /// workspace and its associated documents.
             /// </returns>
             /// <remarks>
@@ -718,10 +718,10 @@ public readonly partial struct CredentialBindingSummary
             /// immutable but is only valid for the lifetime of the workspace.
             /// </para>
             /// </remarks>
-            public readonly CredentialSecurityTagArray Freeze()
+            public readonly UsageTagsCredentialSeArray Freeze()
             {
                 CheckValidInstance();
-                return _parent.FreezeElement<CredentialSecurityTagArray>(_idx);
+                return _parent.FreezeElement<UsageTagsCredentialSeArray>(_idx);
             }
         }
 
@@ -749,9 +749,9 @@ public readonly partial struct CredentialBindingSummary
                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
             }
 
-            internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingSummary.CredentialSecurityTagArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingSummary.UsageTagsCredentialSeArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
-            public static implicit operator Source(CredentialSecurityTagArray instance) => new(JsonElement.From(instance));
+            public static implicit operator Source(UsageTagsCredentialSeArray instance) => new(JsonElement.From(instance));
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -870,7 +870,7 @@ public readonly partial struct CredentialBindingSummary
 
             public static implicit operator Source<TContext>(Source source) => new (source);
 
-            internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingSummary.CredentialSecurityTagArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingSummary.UsageTagsCredentialSeArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -1144,7 +1144,7 @@ public readonly partial struct CredentialBindingSummary
         /// <returns>An instance of a mutable document initialized with this instance.</returns>
         public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
         {
-            return workspace.CreateBuilder<CredentialSecurityTagArray, Mutable>(this);
+            return workspace.CreateBuilder<UsageTagsCredentialSeArray, Mutable>(this);
         }
     }
 }

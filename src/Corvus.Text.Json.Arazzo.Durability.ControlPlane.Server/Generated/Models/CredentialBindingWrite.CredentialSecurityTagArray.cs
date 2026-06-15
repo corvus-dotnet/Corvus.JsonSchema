@@ -24,17 +24,17 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A persisted source credential binding — references and non-secret metadata only. No secret material is ever included.
+/// A source credential binding to create — references and non-secret metadata only. Secret material must never appear here; each secretRefs entry is a SecretRef pointer the runner dereferences.
 /// </para>
 /// </remarks>
-public readonly partial struct CredentialBindingSummary
+public readonly partial struct CredentialBindingWrite
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Security tags scoping who may MANAGE this binding (&#167;14.2), independent of usageTags.
+    /// Security tags scoping who may MANAGE this binding (&#167;14.2), independent of usageTags. The deployment additionally stamps the creating principal&#39;s internal tenant tag, and rejects a set the creator&#39;s own reach does not admit (no privilege escalation). The reserved internal-tag prefix is not allowed here.
     /// </para>
     /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]

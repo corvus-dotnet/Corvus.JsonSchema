@@ -34,12 +34,12 @@ public readonly partial struct CredentialBindingSummary
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Security tags scoping who may MANAGE this binding (&#167;14.2), independent of usageTags.
+    /// Security tags scoping which runs may USE this binding (&#167;13), independent of managementTags.
     /// </para>
     /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct CredentialSecurityTagArray
-        : IJsonElement<CredentialSecurityTagArray>
+    public readonly partial struct UsageTagsCredentialSeArray
+        : IJsonElement<UsageTagsCredentialSeArray>
     {
         public static partial class JsonSchema
         {
@@ -48,17 +48,17 @@ public readonly partial struct CredentialBindingSummary
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/CredentialBindingSummary/properties/managementTags"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/CredentialBindingSummary/properties/usageTags"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "/components/schemas/CredentialBindingSummary/properties/managementTags";
+            public const string SchemaLocation = "/components/schemas/CredentialBindingSummary/properties/usageTags";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/CredentialBindingSummary/properties/managementTags"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/CredentialBindingSummary/properties/usageTags"u8;
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
