@@ -67,9 +67,11 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         SourceCredentialDefinition definition;
         try
         {
-            // Stamp the principal's deployment-internal tenant tags (e.g. sys:tenant=acme) so the new binding is owned by
-            // the creator's slice of the security shell (§14.2) — the binding's row-authorization scope.
-            definition = ReadWrite(parameters.Body) with { SecurityTags = SecurityTagSet.FromTags(this.access.InternalTags()) };
+            // Stamp the principal's deployment-internal tenant tags (e.g. sys:tenant=acme) onto both scopes so the new
+            // binding is owned and used by the creator's slice of the security shell (§14.2) by default — operator-supplied
+            // management/usage tags layer on in HandleCreate (Phase 4.5c).
+            SecurityTagSet internalTags = SecurityTagSet.FromTags(this.access.InternalTags());
+            definition = ReadWrite(parameters.Body) with { ManagementTags = internalTags, UsageTags = internalTags };
         }
         catch (ArgumentException ex)
         {
