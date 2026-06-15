@@ -126,26 +126,27 @@ public sealed class ControlPlaneCredentialsApiTests
     }
 
     [TestMethod]
-    public async Task A_binding_carries_independent_management_and_usage_tags()
+    public async Task A_binding_carries_independent_management_tags_and_usage_grants()
     {
-        await using Scoped host = await StartAsync();
+        await using Scoped host = await StartAsync(new GrantMappingPolicy());
 
-        // Managed by the ops team, but used by acme's runs — two unrelated scopes set independently.
+        // Managed by the ops team, but used only by runs of a specific workflow (by its immutable identity) — two
+        // unrelated scopes set independently. The usage grant maps to an unforgeable internal tag (sys:workflow=...).
         HttpResponseMessage created = await host.SendJsonAsync(
             HttpMethod.Post,
             "/credentials",
-            """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://petstore-key"}],"managementTags":[{"key":"team","value":"ops"}],"usageTags":[{"key":"tenant","value":"acme"}]}""",
+            """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://petstore-key"}],"managementTags":[{"key":"team","value":"ops"}],"usageGrants":[{"dimension":"workflow","value":"nightly-reconcile"}]}""",
             Write);
         created.StatusCode.ShouldBe(HttpStatusCode.Created);
         using Stj.JsonDocument doc = await ReadJsonAsync(created);
         doc.RootElement.GetProperty("managementTags").EnumerateArray().Select(t => $"{t.GetProperty("key").GetString()}={t.GetProperty("value").GetString()}").ShouldBe(["team=ops"]);
-        doc.RootElement.GetProperty("usageTags").EnumerateArray().Select(t => $"{t.GetProperty("key").GetString()}={t.GetProperty("value").GetString()}").ShouldBe(["tenant=acme"]);
+        doc.RootElement.GetProperty("usageGrants").EnumerateArray().Select(g => $"{g.GetProperty("dimension").GetString()}={g.GetProperty("value").GetString()}").ShouldBe(["workflow=nightly-reconcile"]);
     }
 
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)
         => Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 
-    private static async Task<Scoped> StartAsync()
+    private static async Task<Scoped> StartAsync(ControlPlaneRowSecurityPolicy? rowSecurity = null)
     {
         var store = new InMemoryWorkflowStateStore();
         var management = new WorkflowManagementClient(store, "ops");
@@ -163,10 +164,18 @@ public sealed class ControlPlaneCredentialsApiTests
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), requireAuthorization: true, sourceCredentialStore: new InMemorySourceCredentialStore());
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), requireAuthorization: true, rowSecurity: rowSecurity, sourceCredentialStore: new InMemorySourceCredentialStore());
         await app.StartAsync();
 
         return new Scoped(app, app.GetTestClient());
+    }
+
+    /// <summary>A minimal scoped policy: an operator (full reach) so the management guard passes, while the base
+    /// class's grant mapping (grant {dimension,value} → sys:dimension=value) is used unchanged — so usage grants
+    /// resolve to unforgeable internal tags and describe back.</summary>
+    private sealed class GrantMappingPolicy : ControlPlaneRowSecurityPolicy
+    {
+        public override AccessContext Resolve(System.Security.Claims.ClaimsPrincipal? principal) => AccessContext.System;
     }
 
     private sealed class Scoped(WebApplication app, HttpClient client) : IAsyncDisposable

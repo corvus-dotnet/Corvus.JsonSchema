@@ -313,18 +313,18 @@ public readonly partial struct CredentialBindingWrite
     }
 
     /// <summary>
-    /// Gets the (optional) <c>usageTags</c> property.
+    /// Gets the (optional) <c>usageGrants</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Security tags scoping which RUNS may USE this binding (&#167;13), independent of managementTags. A run may use the binding only if its own tags satisfy every tag here (label-superset). Omit to default to the creating principal&#39;s tenant (the owner&#39;s runs). The reserved internal-tag prefix is not allowed here.
+    /// Identity grants scoping which RUNS may USE this binding (&#167;13), independent of managementTags. Each grant names a deployment identity (e.g. a workflow by base id, or a tenant) that the deployment maps to an unforgeable internal tag a run carries — so usage cannot be self-granted by free-form tags. Omit to default to the creating principal&#39;s identity (the owner&#39;s runs).
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingWrite.UsageTagsCredentialSeArray UsageTags
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingWrite.CredentialUsageGrantArray UsageGrants
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UsageTagsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingWrite.UsageTagsCredentialSeArray value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UsageGrantsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingWrite.CredentialUsageGrantArray value))
             {
                 return value;
             }
@@ -812,9 +812,9 @@ public readonly partial struct CredentialBindingWrite
         public const string SourceName = "sourceName";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="UsageTags"/>.
+        /// Gets the JSON property name for <see cref="UsageGrants"/>.
         /// </summary>
-        public const string UsageTags = "usageTags";
+        public const string UsageGrants = "usageGrants";
 
         /// <summary>
         /// Gets the JSON property name for <see cref="AuthKind"/>.
@@ -852,9 +852,9 @@ public readonly partial struct CredentialBindingWrite
         public static ReadOnlySpan<byte> SourceNameUtf8 => "sourceName"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="UsageTags"/>.
+        /// Gets the JSON property name for <see cref="UsageGrants"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> UsageTagsUtf8 => "usageTags"u8;
+        public static ReadOnlySpan<byte> UsageGrantsUtf8 => "usageGrants"u8;
     }
 
     /// <summary>
@@ -898,9 +898,9 @@ public readonly partial struct CredentialBindingWrite
         public static ReadOnlySpan<byte> SourceName => "sourceName"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="UsageTags"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="UsageGrants"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> UsageTags => "usageTags"u8;
+        public static ReadOnlySpan<byte> UsageGrants => "usageGrants"u8;
     }
 
     /// <summary>
@@ -945,8 +945,8 @@ public readonly partial struct CredentialBindingWrite
         public static ReadOnlySpan<byte> SourceName => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x4E, 0x61, 0x6D, 0x65, 0x22];
 
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="UsageTags"/>.
+        /// Gets the pre-baked property name blob for <see cref="UsageGrants"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> UsageTags => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x75, 0x73, 0x61, 0x67, 0x65, 0x54, 0x61, 0x67, 0x73, 0x22];
+        public static ReadOnlySpan<byte> UsageGrants => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x75, 0x73, 0x61, 0x67, 0x65, 0x47, 0x72, 0x61, 0x6E, 0x74, 0x73, 0x22];
     }
 }
