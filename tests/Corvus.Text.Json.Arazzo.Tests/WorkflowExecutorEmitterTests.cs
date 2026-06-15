@@ -67,7 +67,7 @@ public class WorkflowExecutorEmitterTests
 
         source.ShouldContain("// ── step: getPet ──");
         source.ShouldContain("var getPetClient = new Acme.Pets.PetsClient(transport);");
-        source.ShouldContain("var getPetResponse = await getPetClient.GetPetAsync(petId: Acme.Pets.JsonString.From(petIdValue), cancellationToken: cancellationToken).ConfigureAwait(false);");
+        source.ShouldContain("var getPetResponse = await getPetClient.GetPetAsync(petId: Acme.Pets.JsonString.From(getPet_PetIdValue), cancellationToken: cancellationToken).ConfigureAwait(false);");
         // The body is bound as a live reference — no whole-body clone.
         source.ShouldContain("if (getPetResponse.StatusCode == 200) { getPetResponseBody = (JsonElement)getPetResponse.OkBody; }");
         source.ShouldNotContain("CloneAsBuilder(workspace).RootElement); }");
