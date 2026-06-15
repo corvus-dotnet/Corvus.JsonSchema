@@ -54,6 +54,56 @@ public abstract class ControlPlaneRowSecurityPolicy
     public virtual void ValidateUserTags(IReadOnlyList<SecurityTag> userTags)
     {
     }
+
+    /// <summary>Gets the reserved internal tag prefix this policy stamps/maps to (default <see cref="SecurityShell.DefaultInternalPrefix"/>).</summary>
+    protected virtual string InternalTagPrefix => SecurityShell.DefaultInternalPrefix;
+
+    /// <summary>Maps operator-supplied source credential usage grants (§13) to the <strong>internal</strong> security
+    /// tags a run must carry to use the binding — so a binding's usage scope is expressed in unforgeable, deployment-
+    /// stamped identity terms rather than free-form labels. The default maps a grant <c>{dimension, value}</c> to the
+    /// internal tag <c>{prefix+dimension = value}</c> (e.g. <c>{workflow, nightly-reconcile}</c> →
+    /// <c>sys:workflow=nightly-reconcile</c>); a deployment may override to restrict which grants are permitted.</summary>
+    /// <param name="grants">The operator-supplied usage grants.</param>
+    /// <returns>The internal usage tags for the binding.</returns>
+    public virtual IReadOnlyList<SecurityTag> ResolveUsageGrants(IReadOnlyList<CredentialUsageGrant> grants)
+    {
+        if (grants.Count == 0)
+        {
+            return [];
+        }
+
+        var tags = new List<SecurityTag>(grants.Count);
+        foreach (CredentialUsageGrant grant in grants)
+        {
+            tags.Add(new SecurityTag(this.InternalTagPrefix + grant.Dimension, grant.Value));
+        }
+
+        return tags;
+    }
+
+    /// <summary>Describes a binding's stored internal usage tags back as operator-facing grants (the inverse of
+    /// <see cref="ResolveUsageGrants"/>) for the management API response. The default strips the internal prefix from
+    /// each tag's key; tags without the prefix are ignored.</summary>
+    /// <param name="usageTags">The binding's internal usage tags.</param>
+    /// <returns>The usage grants.</returns>
+    public virtual IReadOnlyList<CredentialUsageGrant> DescribeUsageScope(IReadOnlyList<SecurityTag> usageTags)
+    {
+        if (usageTags.Count == 0)
+        {
+            return [];
+        }
+
+        var grants = new List<CredentialUsageGrant>(usageTags.Count);
+        foreach (SecurityTag tag in usageTags)
+        {
+            if (tag.Key.StartsWith(this.InternalTagPrefix, StringComparison.Ordinal))
+            {
+                grants.Add(new CredentialUsageGrant(tag.Key[this.InternalTagPrefix.Length..], tag.Value));
+            }
+        }
+
+        return grants;
+    }
 }
 
 /// <summary>
@@ -97,4 +147,14 @@ internal sealed class ControlPlaneAccess
     /// <param name="userTags">The user-supplied security tags.</param>
     /// <exception cref="ArgumentException">A user tag is not permitted.</exception>
     public void ValidateUserTags(IReadOnlyList<SecurityTag> userTags) => this.policy?.ValidateUserTags(userTags);
+
+    /// <summary>Maps source credential usage grants to internal usage tags (empty when unscoped).</summary>
+    /// <param name="grants">The operator-supplied usage grants.</param>
+    /// <returns>The internal usage tags.</returns>
+    public IReadOnlyList<SecurityTag> ResolveUsageGrants(IReadOnlyList<CredentialUsageGrant> grants) => this.policy?.ResolveUsageGrants(grants) ?? [];
+
+    /// <summary>Describes internal usage tags back as operator-facing grants (empty when unscoped).</summary>
+    /// <param name="usageTags">The binding's internal usage tags.</param>
+    /// <returns>The usage grants.</returns>
+    public IReadOnlyList<CredentialUsageGrant> DescribeUsageScope(IReadOnlyList<SecurityTag> usageTags) => this.policy?.DescribeUsageScope(usageTags) ?? [];
 }

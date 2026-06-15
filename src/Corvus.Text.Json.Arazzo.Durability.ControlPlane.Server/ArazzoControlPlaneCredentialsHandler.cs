@@ -69,18 +69,20 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         try
         {
             // managementTags = the principal's deployment-internal tenant tag (always stamped, so the owner keeps
-            // management) PLUS any operator-supplied management labels. usageTags = the operator's supplied usage labels,
-            // or the internal tenant tag when none is given (so by default the owning tenant's runs use it). The two
-            // scopes are independent (§13/§14.2). User-supplied tags are validated against the reserved internal prefix.
+            // management) PLUS any operator-supplied management labels (validated against the reserved internal prefix).
             IReadOnlyList<SecurityTag> userManagement = ReadTags(parameters.Body.ManagementTags);
-            IReadOnlyList<SecurityTag> userUsage = ReadTags(parameters.Body.UsageTags);
             this.access.ValidateUserTags(userManagement);
-            this.access.ValidateUserTags(userUsage);
-
             var management = new List<SecurityTag>(this.access.InternalTags());
             management.AddRange(userManagement);
             managementTags = SecurityTagSet.FromTags(management);
-            SecurityTagSet usageTags = SecurityTagSet.FromTags(userUsage.Count > 0 ? userUsage : this.access.InternalTags());
+
+            // usageTags are derived from the operator's usage GRANTS, which the deployment maps to UNFORGEABLE internal
+            // identity tags (e.g. sys:workflow=nightly-reconcile) — never free-form labels, so usage cannot be
+            // self-granted by a workflow author. With no grants, usage defaults to the creating principal's own identity
+            // (the owner's runs). The two scopes are independent (§13/§14.2).
+            IReadOnlyList<CredentialUsageGrant> grants = ReadGrants(parameters.Body.UsageGrants);
+            IReadOnlyList<SecurityTag> usage = grants.Count > 0 ? this.access.ResolveUsageGrants(grants) : this.access.InternalTags();
+            SecurityTagSet usageTags = SecurityTagSet.FromTags(usage);
 
             definition = ReadWrite(parameters.Body) with { ManagementTags = managementTags, UsageTags = usageTags };
         }
@@ -264,14 +266,14 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         return list;
     }
 
-    private static List<SecurityTag> ReadTags(Models.CredentialBindingWrite.UsageTagsCredentialSeArray tags)
+    private static List<CredentialUsageGrant> ReadGrants(Models.CredentialBindingWrite.CredentialUsageGrantArray grants)
     {
-        var list = new List<SecurityTag>();
-        if (tags.IsNotUndefined())
+        var list = new List<CredentialUsageGrant>();
+        if (grants.IsNotUndefined())
         {
-            foreach (Models.CredentialSecurityTag tag in tags.EnumerateArray())
+            foreach (Models.CredentialUsageGrant grant in grants.EnumerateArray())
             {
-                list.Add(new SecurityTag((string)tag.Key, (string)tag.Value));
+                list.Add(new CredentialUsageGrant((string)grant.DimensionValue, (string)grant.Value));
             }
         }
 
@@ -281,7 +283,10 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     private static Models.CredentialSecurityTag.Source ToSecurityTag(SecurityTag tag)
         => new((ref Models.CredentialSecurityTag.Builder b) => b.Create(tag.Key, tag.Value));
 
-    private static Models.CredentialBindingSummary.Source ToSummary(SourceCredentialBinding binding)
+    private static Models.CredentialUsageGrant.Source ToUsageGrant(CredentialUsageGrant grant)
+        => new((ref Models.CredentialUsageGrant.Builder b) => b.Create(grant.Dimension, grant.Value));
+
+    private Models.CredentialBindingSummary.Source ToSummary(SourceCredentialBinding binding)
         => new((ref Models.CredentialBindingSummary.Builder b) =>
         {
             Models.JsonString.Source description = default;
@@ -326,14 +331,17 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
                 });
             }
 
-            Models.CredentialBindingSummary.UsageTagsCredentialSeArray.Source usageTags = default;
-            if (!binding.UsageTagsValue.IsEmpty)
+            // The stored usage scope is described back as operator-facing identity grants (the inverse of the create
+            // mapping) — internal tags are not exposed raw.
+            IReadOnlyList<CredentialUsageGrant> describedGrants = this.access.DescribeUsageScope(binding.UsageTagsValue.ToList());
+            Models.CredentialBindingSummary.CredentialUsageGrantArray.Source usageGrants = default;
+            if (describedGrants.Count > 0)
             {
-                usageTags = new Models.CredentialBindingSummary.UsageTagsCredentialSeArray.Source((ref Models.CredentialBindingSummary.UsageTagsCredentialSeArray.Builder ab) =>
+                usageGrants = new Models.CredentialBindingSummary.CredentialUsageGrantArray.Source((ref Models.CredentialBindingSummary.CredentialUsageGrantArray.Builder ab) =>
                 {
-                    foreach (SecurityTag tag in binding.UsageTagsValue.ToList())
+                    foreach (CredentialUsageGrant grant in describedGrants)
                     {
-                        ab.AddItem(ToSecurityTag(tag));
+                        ab.AddItem(ToUsageGrant(grant));
                     }
                 });
             }
@@ -352,7 +360,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
                 lastUpdatedAt: lastUpdatedAt,
                 lastUpdatedBy: lastUpdatedBy,
                 managementTags: managementTags,
-                usageTags: usageTags);
+                usageGrants: usageGrants);
         });
 
     private static Models.CredentialBindingSummary.SecretReferenceArray.Source ToSecretRefs(SourceCredentialBinding binding)
@@ -369,13 +377,13 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     private static Models.CredentialConfigEntry.Source ToConfigEntry(string key, string value)
         => new((ref Models.CredentialConfigEntry.Builder b) => b.Create(key, value));
 
-    private static Models.CredentialBindingList.Source ToList(IReadOnlyList<SourceCredentialBinding> bindings)
+    private Models.CredentialBindingList.Source ToList(IReadOnlyList<SourceCredentialBinding> bindings)
         => new((ref Models.CredentialBindingList.Builder b) => b.Create(
             credentials: new Models.CredentialBindingList.CredentialBindingSummaryArray.Source((ref Models.CredentialBindingList.CredentialBindingSummaryArray.Builder ab) =>
             {
                 foreach (SourceCredentialBinding binding in bindings)
                 {
-                    ab.AddItem(ToSummary(binding));
+                    ab.AddItem(this.ToSummary(binding));
                 }
             })));
 

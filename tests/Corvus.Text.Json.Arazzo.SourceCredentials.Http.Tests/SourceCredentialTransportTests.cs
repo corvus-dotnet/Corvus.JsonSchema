@@ -112,6 +112,44 @@ public sealed class SourceCredentialTransportTests
     }
 
     [TestMethod]
+    public async Task A_credential_granted_to_a_workflow_identity_is_used_only_by_that_workflows_runs()
+    {
+        Fixture f = NewFixture();
+
+        // The binding is granted to the workflow "nightly-reconcile" by its immutable identity (sys:workflow) — the
+        // unforgeable tag a run inherits from its catalogued version, never one the author sets.
+        await f.Store.AddAsync(
+            new SourceCredentialDefinition(
+                "petstore",
+                "production",
+                SourceCredentialKind.ApiKey,
+                [new SecretReferenceDefinition("value", "env://petstore-nightly")],
+                [new CredentialConfigDefinition("parameterName", "X-Api-Key")],
+                UsageTags: SecurityTagSet.FromTags([WorkflowIdentity.WorkflowTag("nightly-reconcile")])),
+            "system",
+            default);
+
+        // A run of nightly-reconcile carries sys:workflow=nightly-reconcile → entitled.
+        var entitled = new SourceCredentialAuthenticationProvider(f.Cache, "petstore", "production", SecurityTagSet.FromTags([WorkflowIdentity.WorkflowTag("nightly-reconcile")]));
+        using (var request = new HttpRequestMessage(HttpMethod.Get, "https://petstore.example/"))
+        {
+            await entitled.AuthenticateAsync(request, default);
+            Header(request, "X-Api-Key").ShouldBe("nightly-key");
+        }
+
+        // A run of a different workflow carries a different sys:workflow → not entitled → unauthenticated (fail closed).
+        // It cannot forge the identity: the tag is stamped from its own catalogued version, not the binding's grant.
+        var other = new SourceCredentialAuthenticationProvider(f.Cache, "petstore", "production", SecurityTagSet.FromTags([WorkflowIdentity.WorkflowTag("daily-export")]));
+        using (var request = new HttpRequestMessage(HttpMethod.Get, "https://petstore.example/"))
+        {
+            await other.AuthenticateAsync(request, default);
+            request.Headers.Contains("X-Api-Key").ShouldBeFalse();
+        }
+
+        f.Cache.Dispose();
+    }
+
+    [TestMethod]
     public void CreateBinder_binds_a_transport_per_declared_source()
     {
         Fixture f = NewFixture();
@@ -158,6 +196,7 @@ public sealed class SourceCredentialTransportTests
             ["env://petstore-production-rotated"] = "key-v2",
             ["env://petstore-acme"] = "acme-key",
             ["env://petstore-globex"] = "globex-key",
+            ["env://petstore-nightly"] = "nightly-key",
         });
         var store = new InMemorySourceCredentialStore(clock);
         var factory = new SourceCredentialProviderFactory(resolver, timeProvider: clock);

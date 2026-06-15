@@ -2275,6 +2275,15 @@
         },
         "required": ["key", "value"]
       },
+      "CredentialUsageGrant": {
+        "type": "object",
+        "description": "An identity grant of which runs may USE a binding (§13). The deployment maps it to an unforgeable internal tag a run carries (e.g. {workflow, nightly-reconcile} → sys:workflow=nightly-reconcile) — usage cannot be self-granted by free-form tags.",
+        "properties": {
+          "dimension": { "type": "string", "description": "The identity dimension (e.g. workflow, tenant)." },
+          "value": { "type": "string", "description": "The identity value (e.g. the base workflow id, or a tenant id)." }
+        },
+        "required": ["dimension", "value"]
+      },
       "CredentialBindingWrite": {
         "type": "object",
         "description": "A source credential binding to create — references and non-secret metadata only. Secret material must never appear here; each secretRefs entry is a SecretRef pointer the runner dereferences.",
@@ -2304,10 +2313,10 @@
             "description": "Security tags scoping who may MANAGE this binding (§14.2), independent of usageTags. The deployment additionally stamps the creating principal's internal tenant tag, and rejects a set the creator's own reach does not admit (no privilege escalation). The reserved internal-tag prefix is not allowed here.",
             "items": { "$ref": "#/components/schemas/CredentialSecurityTag" }
           },
-          "usageTags": {
+          "usageGrants": {
             "type": "array",
-            "description": "Security tags scoping which RUNS may USE this binding (§13), independent of managementTags. A run may use the binding only if its own tags satisfy every tag here (label-superset). Omit to default to the creating principal's tenant (the owner's runs). The reserved internal-tag prefix is not allowed here.",
-            "items": { "$ref": "#/components/schemas/CredentialSecurityTag" }
+            "description": "Identity grants scoping which RUNS may USE this binding (§13), independent of managementTags. Each grant names a deployment identity (e.g. a workflow by base id, or a tenant) that the deployment maps to an unforgeable internal tag a run carries — so usage cannot be self-granted by free-form tags. Omit to default to the creating principal's identity (the owner's runs).",
+            "items": { "$ref": "#/components/schemas/CredentialUsageGrant" }
           },
           "description": {
             "type": "string"
@@ -2356,10 +2365,10 @@
             "description": "Security tags scoping who may MANAGE this binding (§14.2), independent of usageTags.",
             "items": { "$ref": "#/components/schemas/CredentialSecurityTag" }
           },
-          "usageTags": {
+          "usageGrants": {
             "type": "array",
-            "description": "Security tags scoping which runs may USE this binding (§13), independent of managementTags.",
-            "items": { "$ref": "#/components/schemas/CredentialSecurityTag" }
+            "description": "Identity grants scoping which runs may USE this binding (§13), independent of managementTags.",
+            "items": { "$ref": "#/components/schemas/CredentialUsageGrant" }
           },
           "description": { "type": "string" },
           "createdBy": { "type": "string" },
