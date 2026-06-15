@@ -20,8 +20,10 @@ public readonly record struct WorkflowTransports(IReadOnlyDictionary<string, IAp
 /// and credentials.
 /// </summary>
 /// <param name="descriptor">The descriptor of the workflow about to run.</param>
+/// <param name="runTags">The run's own security tags (§14.2), so a credential-aware binder can resolve only the
+/// source credential bindings the run is entitled to use (§13). Empty for an unscoped run.</param>
 /// <returns>The transports for the run.</returns>
-public delegate WorkflowTransports WorkflowTransportBinder(WorkflowDescriptor descriptor);
+public delegate WorkflowTransports WorkflowTransportBinder(WorkflowDescriptor descriptor, SecurityTagSet runTags);
 
 /// <summary>
 /// Resolves a run's <see cref="WorkflowRun.WorkflowId"/> to a loaded <see cref="IHostedWorkflow"/> — fetching
@@ -66,7 +68,7 @@ public sealed class HostedWorkflowResumer
         ArgumentNullException.ThrowIfNull(run);
 
         IHostedWorkflow hosted = await this.ResolveAsync(run.WorkflowId, cancellationToken).ConfigureAwait(false);
-        WorkflowTransports transports = this.transportBinder(hosted.Descriptor);
+        WorkflowTransports transports = this.transportBinder(hosted.Descriptor, run.SecurityTags);
 
         using JsonWorkspace workspace = JsonWorkspace.Create();
         try

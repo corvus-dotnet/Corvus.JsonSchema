@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.OpenApi;
@@ -77,19 +78,53 @@ public sealed class SourceCredentialTransportTests
     }
 
     [TestMethod]
-    public void CreateApiSources_builds_a_transport_factory_per_source()
+    public async Task A_run_authenticates_only_with_the_binding_it_is_entitled_to()
+    {
+        Fixture f = NewFixture();
+        await f.Store.AddAsync(TenantApiKey("petstore", "production", "acme"), "system", default);
+        await f.Store.AddAsync(TenantApiKey("petstore", "production", "globex"), "system", default);
+
+        // An acme run authenticates with acme's binding.
+        var acme = new SourceCredentialAuthenticationProvider(f.Cache, "petstore", "production", SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]));
+        using (var request = new HttpRequestMessage(HttpMethod.Get, "https://petstore.example/"))
+        {
+            await acme.AuthenticateAsync(request, default);
+            Header(request, "X-Api-Key").ShouldBe("acme-key");
+        }
+
+        // A globex run authenticates with globex's binding — never acme's.
+        var globex = new SourceCredentialAuthenticationProvider(f.Cache, "petstore", "production", SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]));
+        using (var request = new HttpRequestMessage(HttpMethod.Get, "https://petstore.example/"))
+        {
+            await globex.AuthenticateAsync(request, default);
+            Header(request, "X-Api-Key").ShouldBe("globex-key");
+        }
+
+        // A run in neither tenant is entitled to no binding → left unauthenticated (fail closed).
+        var orphan = new SourceCredentialAuthenticationProvider(f.Cache, "petstore", "production", SecurityTagSet.FromTags([new SecurityTag("tenant", "initech")]));
+        using (var request = new HttpRequestMessage(HttpMethod.Get, "https://petstore.example/"))
+        {
+            await orphan.AuthenticateAsync(request, default);
+            request.Headers.Contains("X-Api-Key").ShouldBeFalse();
+        }
+
+        f.Cache.Dispose();
+    }
+
+    [TestMethod]
+    public void CreateBinder_binds_a_transport_per_declared_source()
     {
         Fixture f = NewFixture();
         using var petsClient = new HttpClient { BaseAddress = new Uri("https://petstore.example/") };
         using var billingClient = new HttpClient { BaseAddress = new Uri("https://billing.example/") };
         var sourceClients = new Dictionary<string, HttpClient> { ["petstore"] = petsClient, ["billing"] = billingClient };
 
-        IReadOnlyDictionary<string, IApiTransportFactory> sources = SourceCredentialTransports.CreateApiSources(sourceClients, "production", f.Cache);
+        WorkflowTransportBinder binder = SourceCredentialTransports.CreateBinder(sourceClients, "production", f.Cache);
+        WorkflowTransports transports = binder(new WorkflowDescriptor("orders-v1", NeedsMessageTransport: false, ["petstore", "billing"]), default);
 
-        sources.Keys.OrderBy(k => k).ShouldBe(["billing", "petstore"]);
-        foreach (IApiTransportFactory factory in sources.Values)
+        transports.ApiTransports.Keys.OrderBy(k => k).ShouldBe(["billing", "petstore"]);
+        foreach (IApiTransport transport in transports.ApiTransports.Values)
         {
-            IApiTransport transport = factory.CreateTransport();
             transport.ShouldNotBeNull();
         }
 
@@ -106,6 +141,14 @@ public sealed class SourceCredentialTransportTests
         [new SecretReferenceDefinition("value", $"env://{envVar}")],
         [new CredentialConfigDefinition("parameterName", "X-Api-Key")]);
 
+    private static SourceCredentialDefinition TenantApiKey(string sourceName, string environment, string tenant) => new(
+        sourceName,
+        environment,
+        SourceCredentialKind.ApiKey,
+        [new SecretReferenceDefinition("value", $"env://{sourceName}-{tenant}")],
+        [new CredentialConfigDefinition("parameterName", "X-Api-Key")],
+        SecurityTags: SecurityTagSet.FromTags([new SecurityTag("tenant", tenant)]));
+
     private static Fixture NewFixture()
     {
         var clock = new TestClock(Start);
@@ -113,6 +156,8 @@ public sealed class SourceCredentialTransportTests
         {
             ["env://petstore-production"] = "key-v1",
             ["env://petstore-production-rotated"] = "key-v2",
+            ["env://petstore-acme"] = "acme-key",
+            ["env://petstore-globex"] = "globex-key",
         });
         var store = new InMemorySourceCredentialStore(clock);
         var factory = new SourceCredentialProviderFactory(resolver, timeProvider: clock);
