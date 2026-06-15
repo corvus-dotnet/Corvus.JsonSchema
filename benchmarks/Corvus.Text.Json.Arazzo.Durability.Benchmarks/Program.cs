@@ -13,4 +13,4 @@ ManualConfig config = ManualConfig.CreateMinimumViable()
     .AddJob(Job.ShortRun.WithToolchain(InProcessEmitToolchain.Instance))
     .AddDiagnoser(MemoryDiagnoser.Default);
 
-BenchmarkRunner.Run([typeof(DocumentMaterializationBenchmarks), typeof(WriteToStreamBenchmarks), typeof(RunWriteBenchmarks), typeof(EnvelopeWriteBenchmarks), typeof(CheckpointSerializeBenchmarks), typeof(TagSetBenchmarks), typeof(SourceSetBenchmarks)], config);
+BenchmarkRunner.Run([typeof(DocumentMaterializationBenchmarks), typeof(WriteToStreamBenchmarks), typeof(RunWriteBenchmarks), typeof(EnvelopeWriteBenchmarks), typeof(CheckpointSerializeBenchmarks), typeof(TagSetBenchmarks), typeof(SourceSetBenchmarks), typeof(CosmosReadBenchmark)], config);

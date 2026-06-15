@@ -112,20 +112,66 @@ internal static class CosmosJson
         }
     }
 
-    /// <summary>Reads a Cosmos response content stream fully into an owned UTF-8 buffer.</summary>
+    /// <summary>
+    /// Reads a Cosmos response content stream fully into an <see cref="ArrayPool{T}"/>-rented buffer, returned as a
+    /// disposable <see cref="RentedResponse"/> — no intermediate <see cref="MemoryStream"/> and no owned <see cref="byte"/>
+    /// array. Every caller consumes the payload transiently (parse → <c>Clone</c>, or slice → parse-each), so the buffer's
+    /// lifetime is the <c>using</c> scope; dispose returns it to the pool. The only per-read GC allocation is whatever the
+    /// caller's <c>FromJson</c> clone genuinely retains.
+    /// </summary>
     /// <param name="stream">The response content stream (may be <see langword="null"/>).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The UTF-8 payload (empty if the stream is <see langword="null"/> or empty).</returns>
-    public static async ValueTask<ReadOnlyMemory<byte>> ReadAllAsync(Stream? stream, CancellationToken cancellationToken)
+    /// <returns>The pooled UTF-8 payload (empty if the stream is <see langword="null"/> or empty); dispose to return the buffer.</returns>
+    public static async ValueTask<RentedResponse> ReadAllAsync(Stream? stream, CancellationToken cancellationToken)
     {
         if (stream is null)
         {
-            return ReadOnlyMemory<byte>.Empty;
+            return default;
         }
 
-        using var buffer = new MemoryStream();
-        await stream.CopyToAsync(buffer, cancellationToken).ConfigureAwait(false);
-        return buffer.ToArray();
+        // Size from the stream length when seekable (the Cosmos SDK hands back a seekable MemoryStream), else grow the
+        // rented buffer by doubling. Either way the scratch is pooled, not a MemoryStream + ToArray.
+        int capacity = stream.CanSeek && stream.Length > 0 ? (int)stream.Length : DefaultBufferSize;
+        byte[] rented = ArrayPool<byte>.Shared.Rent(capacity);
+        int total = 0;
+        try
+        {
+            while (true)
+            {
+                if (total == rented.Length)
+                {
+                    byte[] larger = ArrayPool<byte>.Shared.Rent(rented.Length * 2);
+                    Array.Copy(rented, larger, total);
+                    ArrayPool<byte>.Shared.Return(rented);
+                    rented = larger;
+                }
+
+                int read = await stream.ReadAsync(rented.AsMemory(total, rented.Length - total), cancellationToken).ConfigureAwait(false);
+                if (read == 0)
+                {
+                    break;
+                }
+
+                total += read;
+            }
+
+            if (total == 0)
+            {
+                ArrayPool<byte>.Shared.Return(rented);
+                return default;
+            }
+
+            RentedResponse response = new(rented, total);
+            rented = null!; // ownership transferred to the RentedResponse
+            return response;
+        }
+        finally
+        {
+            if (rented is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rented);
+            }
+        }
     }
 
     /// <summary>
@@ -262,6 +308,41 @@ internal static class CosmosJson
 
         /// <summary>Returns the rented buffer to the pool.</summary>
         public void Dispose() => ArrayPool<byte>.Shared.Return(this.rented);
+    }
+
+    /// <summary>
+    /// A Cosmos response payload read into an <see cref="ArrayPool{T}"/>-rented buffer (see <see cref="ReadAllAsync"/>).
+    /// The only allocation is the rented buffer, which <see cref="Dispose"/> returns to the pool; <c>default</c> is the
+    /// empty payload (nothing rented). Read the bytes via <see cref="Memory"/>/<see cref="Span"/>; do not use after disposal.
+    /// </summary>
+    public readonly struct RentedResponse : IDisposable
+    {
+        private readonly byte[]? rented;
+        private readonly int length;
+
+        /// <summary>Initializes a new instance of the <see cref="RentedResponse"/> struct, taking ownership of the rented buffer.</summary>
+        /// <param name="rented">The <see cref="ArrayPool{T}"/>-rented buffer (may be larger than <paramref name="length"/>).</param>
+        /// <param name="length">The number of bytes read.</param>
+        public RentedResponse(byte[] rented, int length)
+        {
+            this.rented = rented;
+            this.length = length;
+        }
+
+        /// <summary>Gets the response payload; valid only until <see cref="Dispose"/>.</summary>
+        public ReadOnlyMemory<byte> Memory => this.rented is null ? ReadOnlyMemory<byte>.Empty : this.rented.AsMemory(0, this.length);
+
+        /// <summary>Gets the response payload; valid only until <see cref="Dispose"/>.</summary>
+        public ReadOnlySpan<byte> Span => this.rented is null ? default : this.rented.AsSpan(0, this.length);
+
+        /// <summary>Returns the rented buffer to the pool, if any.</summary>
+        public void Dispose()
+        {
+            if (this.rented is not null)
+            {
+                ArrayPool<byte>.Shared.Return(this.rented);
+            }
+        }
     }
 
     // A read-only, non-growing MemoryStream over an ArrayPool-rented buffer that returns the buffer to the pool on

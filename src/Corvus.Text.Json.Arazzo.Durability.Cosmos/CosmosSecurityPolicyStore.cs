@@ -343,8 +343,8 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         }
 
         response.EnsureSuccessStatusCode();
-        ReadOnlyMemory<byte> payload = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
-        return CosmosJson.GetString(payload, DocProperty) is { } base64 ? Convert.FromBase64String(base64) : null;
+        using CosmosJson.RentedResponse payload = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+        return CosmosJson.GetString(payload.Memory, DocProperty) is { } base64 ? Convert.FromBase64String(base64) : null;
     }
 
     private async ValueTask<List<ParsedJsonDocument<SecurityRuleDocument>>> ReadRulesAsync(CancellationToken cancellationToken)
@@ -380,8 +380,8 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         {
             using ResponseMessage response = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
-            ReadOnlyMemory<byte> page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
-            foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page))
+            using CosmosJson.RentedResponse page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+            foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page.Memory))
             {
                 if (CosmosJson.GetString(element, DocProperty) is { } base64)
                 {
@@ -400,8 +400,8 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         }
 
         response.EnsureSuccessStatusCode();
-        ReadOnlyMemory<byte> payload = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
-        return CosmosJson.GetInt64(payload, GenerationProperty) ?? 0;
+        using CosmosJson.RentedResponse payload = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+        return CosmosJson.GetInt64(payload.Memory, GenerationProperty) ?? 0;
     }
 
     private async ValueTask BumpGenerationAsync(CancellationToken cancellationToken)
