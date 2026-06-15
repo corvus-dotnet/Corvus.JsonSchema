@@ -64,6 +64,21 @@ public sealed class WorkflowCatalogClientCredentialGateTests
         ((string)version.WorkflowId).ShouldContain("flow");
     }
 
+    [TestMethod]
+    public async Task A_base_id_owned_by_one_identity_cannot_be_versioned_by_another()
+    {
+        var catalog = new WorkflowCatalogClient(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops");
+        SecurityTagSet acme = SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]);
+
+        // acme establishes ownership of base id "flow" and may publish further versions.
+        await catalog.AddAsync(Package("flow"), Owner, default, acme, default);
+        await catalog.AddAsync(Package("flow"), Owner, default, acme, default);
+
+        // globex may not squat the same base id (its immutable workflow identity is owned by acme).
+        await Should.ThrowAsync<WorkflowOwnershipException>(async () =>
+            await catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), default));
+    }
+
     private static ReadOnlyMemory<byte> Package(string workflowId)
     {
         byte[] workflow = Encoding.UTF8.GetBytes($$"""

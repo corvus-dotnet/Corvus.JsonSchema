@@ -63,8 +63,23 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
                 nameof(packageUtf8));
         }
 
+        // Workflow-id ownership (§13/§14.2): a base id's ownership is established by its first version's owner identity;
+        // only that owner may publish further versions, so the immutable workflow identity (sys:workflow) cannot be
+        // squatted. The submitted securityTags carry the submitter's stamped owner identity.
+        CatalogVersion? firstVersion = await this.catalog.GetAsync(baseWorkflowId, 1, cancellationToken).ConfigureAwait(false);
+        if (firstVersion is { } owned && !WorkflowIdentity.SameOwner(WorkflowIdentity.OwnerTags(owned.SecurityTagsValue), securityTags))
+        {
+            activity?.SetTag(ArazzoTelemetry.OutcomeTag, "workflow-not-owned");
+            throw new WorkflowOwnershipException(baseWorkflowId);
+        }
+
+        // Stamp the immutable workflow identity so the version (and its runs) carry sys:workflow=<baseWorkflowId> — the
+        // identity a source credential grant names. Combined with the owner identity, this is the run's unforgeable
+        // entitlement for the catalog-time and run-time usage checks.
+        SecurityTagSet effectiveTags = WorkflowIdentity.WithWorkflowTag(securityTags, baseWorkflowId);
+
         // Catalog-time usage gate (§13): refuse to catalogue a workflow that declares a credential-protected source the
-        // submitter is not entitled to use (by the version's security tags, which its runs inherit) — fail early rather
+        // submitter is not entitled to use (by the version's effective tags, which its runs inherit) — fail early rather
         // than hand the run no credential later. A source with no bindings (unauthenticated, or bindings added later) is
         // allowed; the run-time check at transport bind is the backstop.
         if (this.credentials is { } credentialStore)
@@ -72,7 +87,7 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
             List<string>? denied = null;
             foreach (string source in CatalogPackage.ReadSourceNames(packageUtf8))
             {
-                if (await credentialStore.EvaluateSourceAccessAsync(source, securityTags, cancellationToken).ConfigureAwait(false) == CredentialSourceAccess.Denied)
+                if (await credentialStore.EvaluateSourceAccessAsync(source, effectiveTags, cancellationToken).ConfigureAwait(false) == CredentialSourceAccess.Denied)
                 {
                     (denied ??= []).Add(source);
                 }
@@ -86,7 +101,7 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
         }
 
         CatalogVersion version = await this.catalog.AddAsync(
-            baseWorkflowId, packageUtf8, new CatalogMetadata(owner, this.actor, tags, securityTags), cancellationToken).ConfigureAwait(false);
+            baseWorkflowId, packageUtf8, new CatalogMetadata(owner, this.actor, tags, effectiveTags), cancellationToken).ConfigureAwait(false);
         activity?.SetTag(ArazzoTelemetry.VersionNumberTag, version.Ref.VersionNumber);
         activity?.SetTag(ArazzoTelemetry.WorkflowIdTag, version.Ref.WorkflowId);
         activity?.SetTag(ArazzoTelemetry.OutcomeTag, "added");

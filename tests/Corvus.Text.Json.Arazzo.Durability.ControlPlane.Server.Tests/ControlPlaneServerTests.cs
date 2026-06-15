@@ -616,10 +616,11 @@ public sealed class ControlPlaneServerTests
             runId = doc.RootElement.GetProperty("runId").GetString()!;
         }
 
-        // The triggered run carries the version's security tags (KVP labels), so row authorization sees them.
+        // The triggered run carries the version's security tags (KVP labels), so row authorization sees them — plus the
+        // immutable workflow identity (sys:workflow) the catalog client stamps, which source credential grants name (§13).
         WorkflowRunDetail? detail = await management.GetAsync(runId, AccessContext.System, default);
         detail.ShouldNotBeNull();
-        detail.Value.SecurityTags.ToList().ShouldBe(security);
+        detail.Value.SecurityTags.ToList().ShouldBe([.. security, new SecurityTag("sys:workflow", "flow")]);
 
         await app.StopAsync();
     }
