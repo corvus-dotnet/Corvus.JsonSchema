@@ -116,7 +116,7 @@ public sealed class WorkflowTransportRegistryTests
             new Dictionary<string, IApiTransportFactory> { ["petstore"] = new CountingFactory() });
 
         WorkflowTransportBinder binder = registry.AsBinder();
-        WorkflowTransports transports = binder(new WorkflowDescriptor("orders-v1", NeedsMessageTransport: false, ["petstore"]));
+        WorkflowTransports transports = binder(new WorkflowDescriptor("orders-v1", NeedsMessageTransport: false, ["petstore"]), default);
 
         transports.ApiTransports["petstore"].ShouldNotBeNull();
     }
