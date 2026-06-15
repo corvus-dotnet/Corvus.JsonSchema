@@ -80,7 +80,7 @@ public class WorkflowDispatcherTests
         var transport = new MockApiTransport();
         transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
         using var loader = new WorkflowExecutorLoader();
-        var resumer = new HostedWorkflowResumer(catalog, loader, d => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
+        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
         var dispatcher = new WorkflowDispatcher(runStore, "runner-1", clock);
 
         int dispatched = await dispatcher.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default);
@@ -111,7 +111,7 @@ public class WorkflowDispatcherTests
         await runStore.AcquireLeaseAsync("run-1", "other-runner", TimeSpan.FromMinutes(5), default);
 
         using var loader = new WorkflowExecutorLoader();
-        var resumer = new HostedWorkflowResumer(catalog, loader, d => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)new MockApiTransport(), System.StringComparer.Ordinal), null));
+        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)new MockApiTransport(), System.StringComparer.Ordinal), null));
         var dispatcher = new WorkflowDispatcher(runStore, "runner-1", clock);
 
         (await dispatcher.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default)).ShouldBe(0);
@@ -138,7 +138,7 @@ public class WorkflowDispatcherTests
         var transport = new MockApiTransport();
         transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
         using var loader = new WorkflowExecutorLoader();
-        var resumer = new HostedWorkflowResumer(catalog, loader, d => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
+        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
         var dispatcher = new WorkflowDispatcher(runStore, "runner-2", clock);
 
         int dispatched = await dispatcher.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default);
@@ -162,7 +162,7 @@ public class WorkflowDispatcherTests
         }
 
         using var loader = new WorkflowExecutorLoader();
-        var resumer = new HostedWorkflowResumer(catalog, loader, d => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)new MockApiTransport(), System.StringComparer.Ordinal), null));
+        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)new MockApiTransport(), System.StringComparer.Ordinal), null));
         var dispatcher = new WorkflowDispatcher(runStore, "runner-1", clock);
 
         (await dispatcher.DispatchClaimableAsync(["other-v3"], resumer.AsResumer(), default)).ShouldBe(0);
