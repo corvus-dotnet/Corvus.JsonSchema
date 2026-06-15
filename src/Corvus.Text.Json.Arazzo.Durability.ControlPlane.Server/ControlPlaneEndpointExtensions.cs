@@ -44,13 +44,19 @@ public static class ControlPlaneEndpointExtensions
     /// is a <see cref="PersistentRowSecurityPolicy"/>, it is refreshed after each successful write so authoring
     /// changes take effect in-process.
     /// </param>
+    /// <param name="sourceCredentialStore">
+    /// The persistent store backing the source-credential management API (<c>/credentials</c>, gated by the
+    /// <c>credentials:read</c>/<c>credentials:write</c> scopes, §13). The control plane manages <em>references</em>
+    /// only — it never reads, returns, or resolves secret material. When <see langword="null"/> (the default) an empty
+    /// in-memory store is used so the endpoints function in development.
+    /// </param>
     /// <returns>The same endpoint route builder, for chaining.</returns>
     /// <remarks>
     /// Authentication is always the host's concern: the control plane depends only on a <c>ClaimsPrincipal</c>
     /// and the named scope policies, so a deployment supplies any ASP.NET Core scheme (JWT bearer, OIDC, mTLS,
     /// a dev key) and how a principal acquires scopes.
     /// </remarks>
-    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, IWorkflowManagementClient management, IWorkflowCatalogClient catalog, IRunnerRegistry runners, bool requireAuthorization = false, ControlPlaneRowSecurityPolicy? rowSecurity = null, ISecurityPolicyStore? securityPolicyStore = null)
+    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, IWorkflowManagementClient management, IWorkflowCatalogClient catalog, IRunnerRegistry runners, bool requireAuthorization = false, ControlPlaneRowSecurityPolicy? rowSecurity = null, ISecurityPolicyStore? securityPolicyStore = null, ISourceCredentialStore? sourceCredentialStore = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
@@ -71,11 +77,16 @@ public static class ControlPlaneEndpointExtensions
         ISecurityPolicyStore policyStore = securityPolicyStore ?? new InMemorySecurityPolicyStore();
         var securityHandler = new ArazzoControlPlaneSecurityHandler(policyStore, rowSecurity as PersistentRowSecurityPolicy);
 
+        // The source-credential management API persists references + metadata only — it never touches secret material.
+        ISourceCredentialStore credentialStore = sourceCredentialStore ?? new InMemorySourceCredentialStore();
+        var credentialsHandler = new ArazzoControlPlaneCredentialsHandler(credentialStore);
+
         return endpoints.MapApiEndpoints(
             new ArazzoControlPlaneHandler(management, access),
             new ArazzoControlPlaneRunnersHandler(runners),
             new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access),
             securityHandler,
+            credentialsHandler,
             requireAuthorization ? ControlPlaneAuthorization.RequireDeclaredScopes : null);
     }
 }
