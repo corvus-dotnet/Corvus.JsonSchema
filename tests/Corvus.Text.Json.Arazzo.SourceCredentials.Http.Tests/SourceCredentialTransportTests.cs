@@ -147,7 +147,7 @@ public sealed class SourceCredentialTransportTests
         SourceCredentialKind.ApiKey,
         [new SecretReferenceDefinition("value", $"env://{sourceName}-{tenant}")],
         [new CredentialConfigDefinition("parameterName", "X-Api-Key")],
-        SecurityTags: SecurityTagSet.FromTags([new SecurityTag("tenant", tenant)]));
+        UsageTags: SecurityTagSet.FromTags([new SecurityTag("tenant", tenant)]));
 
     private static Fixture NewFixture()
     {
