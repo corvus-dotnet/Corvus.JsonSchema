@@ -84,6 +84,12 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
             CatalogVersion version = await this.catalog.AddAsync(parameters.Package, owner, tags, securityTags, cancellationToken).ConfigureAwait(false);
             return AddCatalogVersionResult.Created(Models.CatalogVersionSummary.From(version), workspace);
         }
+        catch (WorkflowOwnershipException ex)
+        {
+            // The base workflow id is owned by a different identity — only its owner may publish further versions (§13).
+            return AddCatalogVersionResult.Conflict(
+                Problem("workflow-not-owned", "Workflow id not owned", 409, ex.Message), workspace);
+        }
         catch (Security.SourceCredentialAccessDeniedException ex)
         {
             // The workflow declares a credential-protected source the submitter is not entitled to use (§13) — refuse
