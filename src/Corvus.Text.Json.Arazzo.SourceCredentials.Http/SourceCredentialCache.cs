@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Collections.Concurrent;
-using System.Linq;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.OpenApi.HttpTransport;
@@ -61,14 +60,29 @@ public sealed class SourceCredentialCache : IDisposable
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The cached provider, or <see langword="null"/> if the run is entitled to no credential binding.</returns>
     public ValueTask<IHttpAuthenticationProvider?> GetAsync(string sourceName, string environment, SecurityTagSet runTags, CancellationToken cancellationToken = default)
+        => this.GetAsync(sourceName, environment, SourceCredentialKey.CanonicalTags(runTags), runTags, cancellationToken);
+
+    /// <summary>As <see cref="GetAsync(string, string, SecurityTagSet, CancellationToken)"/>, but with the run-tags key
+    /// supplied pre-computed (<see cref="SourceCredentialKey.CanonicalTags"/>) — the run's tags are fixed at
+    /// transport-bind time, so a per-source provider computes the key once and the per-request warm path stays
+    /// <strong>allocation-free</strong> (§13.4). The <paramref name="runTags"/> are still needed for a cache miss.</summary>
+    /// <param name="sourceName">The Arazzo source description name.</param>
+    /// <param name="environment">The deployment environment.</param>
+    /// <param name="runTagsKey">The pre-computed canonical run-tags key (the cache discriminator).</param>
+    /// <param name="runTags">The run's own security tags (used only on a miss, to entitle the binding).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The cached provider, or <see langword="null"/> if the run is entitled to no credential binding.</returns>
+    public ValueTask<IHttpAuthenticationProvider?> GetAsync(string sourceName, string environment, string runTagsKey, SecurityTagSet runTags, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(sourceName);
         ArgumentNullException.ThrowIfNull(environment);
+        ArgumentNullException.ThrowIfNull(runTagsKey);
 
-        (string, string, string) key = (sourceName, environment, CanonicalTags(runTags));
+        (string, string, string) key = (sourceName, environment, runTagsKey);
         if (this.entries.TryGetValue(key, out Entry? warm) && this.timeProvider.GetUtcNow() < warm.ExpiresAt)
         {
-            // Warm path: a reference read of the published, immutable entry. No store I/O, no allocation.
+            // Warm path: a reference read of the published, immutable entry over a pre-computed key. No store I/O, no
+            // allocation.
             return new ValueTask<IHttpAuthenticationProvider?>(warm.Provider);
         }
 
@@ -121,24 +135,6 @@ public sealed class SourceCredentialCache : IDisposable
         {
             disposable.Dispose();
         }
-    }
-
-    // Canonical, order-independent string form of a run's tags, used as the cache-key discriminator so two tenants
-    // cache and resolve independently.
-    private static string CanonicalTags(SecurityTagSet runTags)
-    {
-        if (runTags.IsEmpty)
-        {
-            return string.Empty;
-        }
-
-        List<Corvus.Text.Json.Arazzo.Durability.SecurityTag> list = runTags.ToList();
-        list.Sort(static (a, b) =>
-        {
-            int byKey = string.CompareOrdinal(a.Key, b.Key);
-            return byKey != 0 ? byKey : string.CompareOrdinal(a.Value, b.Value);
-        });
-        return string.Join(";", list.Select(t => $"{t.Key}={t.Value}"));
     }
 
     private async ValueTask<IHttpAuthenticationProvider?> GetSlowAsync((string SourceName, string Environment, string RunTags) key, SecurityTagSet runTags, CancellationToken cancellationToken)
