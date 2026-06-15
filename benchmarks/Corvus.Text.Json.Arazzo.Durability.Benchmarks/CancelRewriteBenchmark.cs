@@ -103,35 +103,20 @@ public class CancelRewriteBenchmark
         Dictionary<string, byte[]> correlationTokens,
         Dictionary<string, JsonElement> stepOutputs,
         JsonElement inputs)
-    {
-        // Setup-time fixture construction (not the measured path): mirror the production working-state maps.
-        using var retryMap = PooledUtf8Map<int>.Rent(retryCounters.Count);
-        foreach (KeyValuePair<string, int> counter in retryCounters)
-        {
-            retryMap.Set(counter.Key, counter.Value);
-        }
-
-        using var stepMap = PooledUtf8Map<JsonElement>.Rent(stepOutputs.Count);
-        foreach (KeyValuePair<string, JsonElement> step in stepOutputs)
-        {
-            stepMap.Set(step.Key, step.Value);
-        }
-
-        return WorkflowCheckpointSerializer.Serialize(
+        => WorkflowCheckpointSerializer.Serialize(
             new WorkflowRunId("run-0001"),
             "wf-orders",
             WorkflowRunStatus.Suspended,
             cursor: 3,
             createdAt: DateTimeOffset.UnixEpoch,
-            retryCounters: retryMap,
+            retryCounters: retryCounters,
             correlationTokens: correlationTokens,
             inputs: inputs,
-            stepOutputs: stepMap,
+            stepOutputs: stepOutputs,
             outputs: default,
             wait: WorkflowWait.Timer(DateTimeOffset.UnixEpoch),
             fault: null,
             correlationId: "00-trace-01",
             tags: TagSet.FromTags(["nightly", "eu"]),
-            securityTags: SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]));
-    }
+            securityTags: [new SecurityTag("tenant", "acme")]);
 }
