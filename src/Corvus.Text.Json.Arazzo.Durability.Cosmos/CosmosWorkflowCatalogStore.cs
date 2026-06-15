@@ -444,8 +444,8 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         {
             using ResponseMessage response = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
-            ReadOnlyMemory<byte> page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
-            foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page))
+            using CosmosJson.RentedResponse page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+            foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page.Memory))
             {
                 yield return element;
             }
@@ -505,8 +505,8 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         {
             using ResponseMessage response = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
-            ReadOnlyMemory<byte> page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
-            foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page))
+            using CosmosJson.RentedResponse page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+            foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page.Memory))
             {
                 return (int)(CosmosJson.AsInt64OrNull(element) ?? 0);
             }
@@ -525,7 +525,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         }
 
         response.EnsureSuccessStatusCode();
-        ReadOnlyMemory<byte> payload = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
-        return (CatalogDocument.FromJson(payload), response.Headers.ETag);
+        using CosmosJson.RentedResponse payload = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+        return (CatalogDocument.FromJson(payload.Memory), response.Headers.ETag);
     }
 }
