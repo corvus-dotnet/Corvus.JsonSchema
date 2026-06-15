@@ -125,6 +125,23 @@ public sealed class ControlPlaneCredentialsApiTests
         (await host.SendAsync(HttpMethod.Get, "/credentials", Write)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
+    [TestMethod]
+    public async Task A_binding_carries_independent_management_and_usage_tags()
+    {
+        await using Scoped host = await StartAsync();
+
+        // Managed by the ops team, but used by acme's runs — two unrelated scopes set independently.
+        HttpResponseMessage created = await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/credentials",
+            """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://petstore-key"}],"managementTags":[{"key":"team","value":"ops"}],"usageTags":[{"key":"tenant","value":"acme"}]}""",
+            Write);
+        created.StatusCode.ShouldBe(HttpStatusCode.Created);
+        using Stj.JsonDocument doc = await ReadJsonAsync(created);
+        doc.RootElement.GetProperty("managementTags").EnumerateArray().Select(t => $"{t.GetProperty("key").GetString()}={t.GetProperty("value").GetString()}").ShouldBe(["team=ops"]);
+        doc.RootElement.GetProperty("usageTags").EnumerateArray().Select(t => $"{t.GetProperty("key").GetString()}={t.GetProperty("value").GetString()}").ShouldBe(["tenant=acme"]);
+    }
+
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)
         => Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 
