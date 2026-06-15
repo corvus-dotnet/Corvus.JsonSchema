@@ -203,9 +203,9 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             filter = b.And(filter, b.Regex("workflowIdLower", new BsonRegularExpression("^" + EscapeRegex(workflowIdPrefix.ToLowerInvariant()))));
         }
 
-        if (query.Tags is { Count: > 0 } tags)
+        if (!query.Tags.IsEmpty)
         {
-            filter = b.And(filter, b.All("tags", tags)); // $all = contains every queried tag
+            filter = b.And(filter, b.All("tags", query.Tags.ToList())); // $all = contains every queried tag
         }
 
         if (WorkflowContinuationToken.Decode(query.ContinuationToken) is { } after)
@@ -272,14 +272,14 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         bool reactivated = status == CatalogStatus.Active && currentStatus == CatalogStatus.Obsolete;
 
         CatalogOwner owner = patch.Owner ?? current.OwnerValue;
-        IReadOnlyList<string> tags = patch.Tags is { } t ? [.. t] : current.TagsValue;
+        TagSet tags = patch.Tags ?? current.TagsValue;
         string? obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedByOrNull;
         DateTimeOffset? obsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAtValue;
 
         var update = new BsonDocument("$set", new BsonDocument
         {
             ["status"] = status.ToString(),
-            ["tags"] = new BsonArray(tags),
+            ["tags"] = new BsonArray(tags.ToList()),
             ["ownerName"] = owner.Name,
             ["ownerEmail"] = owner.Email,
             ["ownerTeam"] = (BsonValue?)owner.Team ?? BsonNull.Value,
@@ -396,21 +396,14 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             runnable: document.GetValue("runnable", false).AsBoolean,
             securityTags: ReadSecurityTags(document));
 
-    private static IReadOnlyList<string> ReadTags(BsonDocument document)
+    private static TagSet ReadTags(BsonDocument document)
     {
         if (!document.TryGetValue("tags", out BsonValue value) || value.IsBsonNull)
         {
-            return [];
+            return default;
         }
 
-        BsonArray array = value.AsBsonArray;
-        var tags = new List<string>(array.Count);
-        foreach (BsonValue tag in array)
-        {
-            tags.Add(tag.AsString);
-        }
-
-        return tags;
+        return TagSet.FromTags(value.AsBsonArray.Select(static t => t.AsString));
     }
 
     private static IReadOnlyList<SecurityTag>? ReadSecurityTags(BsonDocument document)
@@ -431,11 +424,11 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         return list.Count > 0 ? list : null;
     }
 
-    private static IReadOnlyList<CatalogSourceRef> ReadSources(BsonDocument document)
+    private static SourceSet ReadSources(BsonDocument document)
     {
         if (!document.TryGetValue("sources", out BsonValue value) || value.IsBsonNull)
         {
-            return [];
+            return default;
         }
 
         BsonArray array = value.AsBsonArray;
@@ -448,13 +441,13 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             sources.Add(new CatalogSourceRef(name, type));
         }
 
-        return sources;
+        return SourceSet.FromSources(sources);
     }
 
     private async ValueTask<CatalogVersion> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
-        IReadOnlyList<string> tags = metadata.Tags is { Count: > 0 } t ? [.. t] : [];
+        TagSet tags = metadata.Tags;
         IReadOnlyList<SecurityTag>? securityTags = metadata.SecurityTags is { Count: > 0 } st ? [.. st] : null;
 
         // Assign the next version number atomically: read the current max for the base id, project + insert under a
@@ -475,7 +468,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
                 status: CatalogStatus.Active,
                 tags: tags,
                 owner: metadata.Owner,
-                sources: projection.Sources,
+                sources: SourceSet.FromSources(projection.Sources),
                 hash: projection.Hash,
                 createdBy: metadata.CreatedBy,
                 createdAt: now,
@@ -525,7 +518,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
     {
         CatalogVersionRef versionRef = version.Ref;
         CatalogOwner owner = version.OwnerValue;
-        var sources = new BsonArray(version.SourcesValue.Select(s => new BsonDocument
+        var sources = new BsonArray(version.SourcesValue.ToList().Select(s => new BsonDocument
         {
             ["name"] = s.Name,
             ["type"] = (BsonValue?)s.Type ?? BsonNull.Value,
@@ -542,7 +535,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             ["title"] = (string)version.Title,
             ["description"] = (BsonValue?)version.DescriptionOrNull ?? BsonNull.Value,
             ["status"] = version.StatusValue.ToString(),
-            ["tags"] = new BsonArray(version.TagsValue),
+            ["tags"] = new BsonArray(version.TagsValue.ToList()),
             ["securityTags"] = version.SecurityTagsValue is { Count: > 0 } securityTags
                 ? new BsonArray(securityTags.Select(s => new BsonDocument { ["k"] = s.Key, ["v"] = s.Value }))
                 : BsonNull.Value,

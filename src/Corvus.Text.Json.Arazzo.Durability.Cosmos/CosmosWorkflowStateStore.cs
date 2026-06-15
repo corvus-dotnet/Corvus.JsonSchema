@@ -427,8 +427,11 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         }
 
         var tagParameters = new List<(string Name, string Value)>();
-        if (query.Tags is { Count: > 0 } queryTags)
+        if (!query.Tags.IsEmpty)
         {
+            // The needle is materialized to strings only here, at the SQL parameter-binding leaf the Cosmos query
+            // requires; the stored row tags are matched server-side by ARRAY_CONTAINS and never materialized.
+            List<string> queryTags = query.Tags.ToList();
             for (int i = 0; i < queryTags.Count; i++)
             {
                 string name = $"@tag{i}";

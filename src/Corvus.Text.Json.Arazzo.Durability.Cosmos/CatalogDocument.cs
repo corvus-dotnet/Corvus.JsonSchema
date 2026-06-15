@@ -65,15 +65,11 @@ public readonly partial struct CatalogDocument
 
         writer.WriteString(JsonPropertyNames.StatusUtf8, version.StatusValue.ToString());
 
-        if (version.TagsValue is { Count: > 0 } tags)
+        TagSet tags = version.TagsValue;
+        if (!tags.IsEmpty)
         {
-            writer.WriteStartArray(JsonPropertyNames.TagsUtf8);
-            foreach (string tag in tags)
-            {
-                writer.WriteStringValue(tag);
-            }
-
-            writer.WriteEndArray();
+            writer.WritePropertyName(JsonPropertyNames.TagsUtf8);
+            tags.WriteTo(writer);
         }
 
         if (version.SecurityTagsValue is { Count: > 0 } securityTags)
@@ -105,22 +101,11 @@ public readonly partial struct CatalogDocument
 
         writer.WriteEndObject();
 
-        if (version.SourcesValue is { Count: > 0 } sources)
+        SourceSet sources = version.SourcesValue;
+        if (!sources.IsEmpty)
         {
-            writer.WriteStartArray(JsonPropertyNames.SourcesUtf8);
-            foreach (CatalogSourceRef source in sources)
-            {
-                writer.WriteStartObject();
-                writer.WriteString(SourceInfo.JsonPropertyNames.NameUtf8, source.Name);
-                if (source.Type is { } type)
-                {
-                    writer.WriteString(SourceInfo.JsonPropertyNames.TypeUtf8, type);
-                }
-
-                writer.WriteEndObject();
-            }
-
-            writer.WriteEndArray();
+            writer.WritePropertyName(JsonPropertyNames.SourcesUtf8);
+            sources.WriteTo(writer);
         }
 
         writer.WriteString(JsonPropertyNames.HashUtf8, (string)version.Hash);
@@ -167,15 +152,6 @@ public readonly partial struct CatalogDocument
     /// <returns>The catalog version.</returns>
     public CatalogVersion ToVersion()
     {
-        List<string> tags = [];
-        if (this.Tags.IsNotUndefined())
-        {
-            foreach (JsonString tag in this.Tags.EnumerateArray())
-            {
-                tags.Add((string)tag);
-            }
-        }
-
         List<SecurityTag>? securityTags = null;
         if (this.SecurityTags.IsNotUndefined())
         {
@@ -183,15 +159,6 @@ public readonly partial struct CatalogDocument
             foreach (EmbeddedSecurityTag tag in this.SecurityTags.EnumerateArray())
             {
                 securityTags.Add(new SecurityTag((string)tag.K, (string)tag.V));
-            }
-        }
-
-        List<CatalogSourceRef> sources = [];
-        if (this.Sources.IsNotUndefined())
-        {
-            foreach (SourceInfo source in this.Sources.EnumerateArray())
-            {
-                sources.Add(new CatalogSourceRef((string)source.Name, source.Type.IsNotUndefined() ? (string)source.Type : null));
             }
         }
 
@@ -209,9 +176,9 @@ public readonly partial struct CatalogDocument
             title: (string)this.Title,
             description: this.Description.IsNotUndefined() ? (string)this.Description : null,
             status: Enum.Parse<CatalogStatus>((string)this.Status),
-            tags: tags,
+            tags: TagSet.CopyFrom(this.Tags),
             owner: ownerValue,
-            sources: sources,
+            sources: SourceSet.CopyFrom(this.Sources),
             hash: (string)this.Hash,
             createdBy: (string)this.CreatedBy,
             createdAt: DateTimeOffset.FromUnixTimeMilliseconds((long)this.CreatedAt),

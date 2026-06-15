@@ -20,7 +20,7 @@ public readonly record struct WorkflowStartRequest(
     JsonElement Inputs,
     string IdempotencyKey,
     string? CorrelationId = null,
-    IReadOnlyList<string>? Tags = null);
+    TagSet Tags = default);
 
 /// <summary>
 /// The host's start path: creates (idempotently) and enqueues a <see cref="WorkflowRunStatus.Pending"/> run for

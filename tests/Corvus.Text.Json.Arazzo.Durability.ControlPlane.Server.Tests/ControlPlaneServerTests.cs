@@ -379,7 +379,7 @@ public sealed class ControlPlaneServerTests
         var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
 
         // Add a version (bare workflow id "flow" → flow-v1); the store bakes the metadata via the provider.
-        await catalog.AddAsync(SchemaWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), null, default);
+        await catalog.AddAsync(SchemaWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -409,7 +409,7 @@ public sealed class ControlPlaneServerTests
         var management = new WorkflowManagementClient(runStore, "ops", CompleteResumer, clock);
         var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
 
-        await catalog.AddAsync(SchemaWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), null, default);
+        await catalog.AddAsync(SchemaWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -452,7 +452,7 @@ public sealed class ControlPlaneServerTests
         var management = new WorkflowManagementClient(runStore, "ops", CompleteResumer, clock);
         var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
 
-        await catalog.AddAsync(SchemaWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), null, default);
+        await catalog.AddAsync(SchemaWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -483,7 +483,7 @@ public sealed class ControlPlaneServerTests
         var management = new WorkflowManagementClient(runStore, "ops", CompleteResumer, clock);
         var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
 
-        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), null, default);
+        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -534,7 +534,7 @@ public sealed class ControlPlaneServerTests
         var management = new WorkflowManagementClient(runStore, "ops", CompleteResumer, clock);
         var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
 
-        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), null, default);
+        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -593,7 +593,7 @@ public sealed class ControlPlaneServerTests
         var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
 
         SecurityTag[] security = [new("tenant", "acme"), new("team", "payments")];
-        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), null, security, default);
+        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, security, default);
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -633,7 +633,7 @@ public sealed class ControlPlaneServerTests
         var management = new WorkflowManagementClient(runStore, "ops", CompleteResumer, clock);
         var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
 
-        await catalog.AddAsync(SchemaWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), null, default);
+        await catalog.AddAsync(SchemaWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -661,7 +661,7 @@ public sealed class ControlPlaneServerTests
         var management = new WorkflowManagementClient(runStore, "ops", CompleteResumer, clock);
         var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
 
-        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), null, default);
+        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -745,7 +745,7 @@ public sealed class ControlPlaneServerTests
 
     private static async Task TaggedRunAsync(InMemoryWorkflowStateStore store, string id, TimeProvider clock, string correlationId, string[] tags)
     {
-        WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock, correlationId: correlationId, tags: tags);
+        WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock, correlationId: correlationId, tags: TagSet.FromTags(tags));
         await run.CompleteAsync(default, default);
     }
 

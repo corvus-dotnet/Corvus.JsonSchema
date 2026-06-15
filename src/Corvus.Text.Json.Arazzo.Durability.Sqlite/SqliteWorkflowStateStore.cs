@@ -330,8 +330,11 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             select.Parameters.AddWithValue("@after", (object?)after ?? DBNull.Value);
             select.Parameters.AddWithValue("@limit", query.Limit + 1);
 
-            if (query.Tags is { Count: > 0 } tags)
+            if (!query.Tags.IsEmpty)
             {
+                // The needle (per query, not per row) is materialized to strings only here, at the ADO LIKE-parameter
+                // boundary the driver forces; the row tags themselves are never materialized — the LIKE matches the bytes.
+                List<string> tags = query.Tags.ToList();
                 var predicates = new System.Text.StringBuilder();
                 for (int i = 0; i < tags.Count; i++)
                 {
@@ -385,7 +388,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
                     reader.IsDBNull(7) ? null : reader.GetString(7),
                     reader.IsDBNull(8) ? null : reader.GetString(8),
                     CorrelationId: reader.IsDBNull(9) ? null : reader.GetString(9),
-                    Tags: DecodeTags(reader.IsDBNull(10) ? null : reader.GetString(10)));
+                    Tags: TagSet.FromDelimited(reader.IsDBNull(10) ? null : reader.GetString(10), '\u001F'));
                 runs.Add(new WorkflowRunListing(new WorkflowRunId(reader.GetString(0)), entry));
             }
 
@@ -417,7 +420,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         command.Parameters.AddWithValue("@awaitingCorrelationId", (object?)index.AwaitingCorrelationId ?? DBNull.Value);
         command.Parameters.AddWithValue("@errorType", (object?)index.ErrorType ?? DBNull.Value);
         command.Parameters.AddWithValue("@correlationId", (object?)index.CorrelationId ?? DBNull.Value);
-        command.Parameters.AddWithValue("@tags", (object?)EncodeTags(index.Tags) ?? DBNull.Value);
+        command.Parameters.AddWithValue("@tags", (object?)index.Tags.ToDelimitedOrNull('\u001F') ?? DBNull.Value);
     }
 
     // Re-syncs a run's security tags (§14.4) into the child table for indexed reach-filtering. Called under the
@@ -446,20 +449,6 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             insert.Parameters.AddWithValue("@value", tag.Value);
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
-    }
-
-    private static string? EncodeTags(IReadOnlyList<string>? tags)
-        => tags is { Count: > 0 } ? "\u001F" + string.Join('\u001F', tags) + "\u001F" : null;
-
-    private static IReadOnlyList<string>? DecodeTags(string? encoded)
-    {
-        if (string.IsNullOrEmpty(encoded))
-        {
-            return null;
-        }
-
-        string[] parts = encoded.Trim('\u001F').Split('\u001F', StringSplitOptions.RemoveEmptyEntries);
-        return parts.Length == 0 ? null : parts;
     }
 
     private static string EscapeLike(string value)

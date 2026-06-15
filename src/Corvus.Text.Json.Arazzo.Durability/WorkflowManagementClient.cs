@@ -53,7 +53,7 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, IReadOnlyList<string>? tags, IReadOnlyList<SecurityTag>? securityTags, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, IReadOnlyList<SecurityTag>? securityTags, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(workflowId);
 
@@ -64,7 +64,7 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowRunId> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string? correlationId = null, IReadOnlyList<string>? tags = null, IReadOnlyList<SecurityTag>? securityTags = null, CancellationToken cancellationToken = default)
+    public async ValueTask<WorkflowRunId> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string? correlationId = null, TagSet tags = default, IReadOnlyList<SecurityTag>? securityTags = null, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(workflowId);
         ArgumentException.ThrowIfNullOrEmpty(idempotencyKey);

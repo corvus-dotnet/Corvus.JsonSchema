@@ -313,15 +313,15 @@ public abstract class WorkflowStateStoreConformance
         var index = (IWorkflowWaitIndex)store;
 
         // A single tag matches every run carrying it (ascending id order).
-        WorkflowRunPage byTag = await index.QueryAsync(new WorkflowQuery(Tags: ["tenant-42"]), default);
+        WorkflowRunPage byTag = await index.QueryAsync(new WorkflowQuery(Tags: TagSet.FromTags(["tenant-42"])), default);
         byTag.Runs.Select(r => r.Id.Value).ShouldBe(["r-a", "r-b"]);
 
         // Multiple tags are AND-matched (contains all).
-        WorkflowRunPage byBoth = await index.QueryAsync(new WorkflowQuery(Tags: ["tenant-42", "priority"]), default);
+        WorkflowRunPage byBoth = await index.QueryAsync(new WorkflowQuery(Tags: TagSet.FromTags(["tenant-42", "priority"])), default);
         byBoth.Runs.ShouldHaveSingleItem().Id.Value.ShouldBe("r-a");
 
         // The underscore is a literal, not a single-char wildcard: "a_b" must not match "axb".
-        WorkflowRunPage literalUnderscore = await index.QueryAsync(new WorkflowQuery(Tags: ["a_b"]), default);
+        WorkflowRunPage literalUnderscore = await index.QueryAsync(new WorkflowQuery(Tags: TagSet.FromTags(["a_b"])), default);
         literalUnderscore.Runs.ShouldHaveSingleItem().Id.Value.ShouldBe("r-d");
 
         // Correlation id is an exact match.
@@ -333,8 +333,8 @@ public abstract class WorkflowStateStoreConformance
         WorkflowRunPage all = await index.QueryAsync(new WorkflowQuery(Limit: 100), default);
         WorkflowRunListing a = all.Runs.Single(r => r.Id.Value == "r-a");
         a.Index.CorrelationId.ShouldBe("trace-1");
-        a.Index.Tags.ShouldNotBeNull();
-        a.Index.Tags!.ShouldBe(["tenant-42", "priority"], ignoreOrder: true);
+        a.Index.Tags.IsEmpty.ShouldBeFalse();
+        a.Index.Tags.ToList().ShouldBe(["tenant-42", "priority"], ignoreOrder: true);
     }
 
     [TestMethod]
@@ -467,7 +467,7 @@ public abstract class WorkflowStateStoreConformance
         => new("wf", WorkflowRunStatus.Running, createdAt, updatedAt);
 
     private static WorkflowRunIndexEntry Tagged(string? correlationId, params string[] tags)
-        => new("wf", WorkflowRunStatus.Running, T0, T0, CorrelationId: correlationId, Tags: tags.Length > 0 ? tags : null);
+        => new("wf", WorkflowRunStatus.Running, T0, T0, CorrelationId: correlationId, Tags: TagSet.FromTags(tags));
 
     private static WorkflowRunIndexEntry Suspended(DateTimeOffset? dueAt = null, string? channel = null, string? correlationId = null)
         => new("wf", WorkflowRunStatus.Suspended, T0, T0, dueAt, channel, correlationId);

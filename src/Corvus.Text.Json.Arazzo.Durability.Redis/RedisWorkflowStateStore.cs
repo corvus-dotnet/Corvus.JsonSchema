@@ -161,7 +161,7 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             index.AwaitingCorrelationId ?? string.Empty,
             index.ErrorType ?? string.Empty,
             index.CorrelationId ?? string.Empty,
-            index.Tags is { Count: > 0 } t ? System.Text.Json.JsonSerializer.Serialize(t) : string.Empty,
+            index.Tags.ToJsonStringOrNull() ?? string.Empty,
             Security.SecurityTagSet.ToJsonStringOrNull(index.SecurityTags) ?? string.Empty,
         ];
 
@@ -370,8 +370,8 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
                 continue;
             }
 
-            IReadOnlyList<string>? tags = fields.TryGetValue("tags_json", out RedisValue tagsV) && !tagsV.IsNull && ((string)tagsV!).Length > 0 ? System.Text.Json.JsonSerializer.Deserialize<List<string>>((string)tagsV!) : null;
-            if (query.Tags is { Count: > 0 } wantTags && (tags is null || !wantTags.All(tags.Contains)))
+            TagSet tags = fields.TryGetValue("tags_json", out RedisValue tagsV) && !tagsV.IsNull ? TagSet.FromJsonStringOrEmpty((string?)tagsV) : default;
+            if (!query.Tags.AllContainedIn(tags))
             {
                 continue;
             }

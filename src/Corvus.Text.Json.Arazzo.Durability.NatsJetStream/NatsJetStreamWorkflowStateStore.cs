@@ -300,7 +300,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                 && (query.UpdatedAfter is not { } updatedAfter || index.UpdatedAt >= updatedAfter)
                 && (query.UpdatedBefore is not { } updatedBefore || index.UpdatedAt < updatedBefore)
                 && (query.CorrelationId is not { } cid || index.CorrelationId == cid)
-                && (query.Tags is not { Count: > 0 } qtags || (index.Tags is { } rt && qtags.All(rt.Contains)))
+                && query.Tags.AllContainedIn(index.Tags)
                 && (query.Security?.IsSatisfiedBy(index.SecurityTags ?? []) ?? true)
                 && (after is null || string.CompareOrdinal(runId.Value, after) > 0))
             {
@@ -411,15 +411,10 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                     writer.WriteString("correlationId", runCorrelationId);
                 }
 
-                if (index.Tags is { Count: > 0 } tags)
+                if (!index.Tags.IsEmpty)
                 {
-                    writer.WriteStartArray("tags");
-                    foreach (var t in tags)
-                    {
-                        writer.WriteStringValue(t);
-                    }
-
-                    writer.WriteEndArray();
+                    writer.WritePropertyName("tags");
+                    index.Tags.WriteTo(writer);
                 }
 
                 if (index.SecurityTags is { Count: > 0 } securityTags)
@@ -477,24 +472,8 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                 DecodeSecurityTags(root));
         }
 
-        private static IReadOnlyList<string>? DecodeTags(JsonElement root)
-        {
-            if (!root.TryGetProperty("tags"u8, out JsonElement tags))
-            {
-                return null;
-            }
-
-            var list = new List<string>();
-            foreach (JsonElement tag in tags.EnumerateArray())
-            {
-                if (tag.GetString() is { } value)
-                {
-                    list.Add(value);
-                }
-            }
-
-            return list.Count > 0 ? list : null;
-        }
+        private static TagSet DecodeTags(JsonElement root)
+            => root.TryGetProperty("tags"u8, out JsonElement tags) ? TagSet.CopyFrom(tags) : default;
 
         private static IReadOnlyList<SecurityTag>? DecodeSecurityTags(JsonElement root)
         {

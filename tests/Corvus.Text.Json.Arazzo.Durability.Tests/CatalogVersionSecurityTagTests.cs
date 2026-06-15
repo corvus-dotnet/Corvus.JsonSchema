@@ -23,16 +23,16 @@ public sealed class CatalogVersionSecurityTagTests
         SecurityTag[] security = [new("tenant", "acme"), new("team", "payments")];
         CatalogVersion version = CatalogVersion.Create(
             "orders", 1, "orders-v1", "Orders", null, CatalogStatus.Active,
-            tags: ["nightly"],
+            tags: TagSet.FromTags(["nightly"]),
             owner: new CatalogOwner("Team", "team@example.com"),
-            sources: [new CatalogSourceRef("petstore", "openapi")],
+            sources: SourceSet.FromSources([new CatalogSourceRef("petstore", "openapi")]),
             hash: "abc", createdBy: "ops", createdAt: CreatedAt,
             securityTags: security);
 
         CatalogVersion roundTripped = CatalogVersion.FromJson(version.ToJsonBytes());
 
         roundTripped.SecurityTagsValue.ShouldBe(security);
-        roundTripped.TagsValue.ShouldBe(["nightly"]);
+        roundTripped.TagsValue.ToList().ShouldBe(["nightly"]);
     }
 
     [TestMethod]
@@ -40,9 +40,9 @@ public sealed class CatalogVersionSecurityTagTests
     {
         CatalogVersion version = CatalogVersion.Create(
             "orders", 1, "orders-v1", "Orders", null, CatalogStatus.Active,
-            tags: ["nightly"],
+            tags: TagSet.FromTags(["nightly"]),
             owner: new CatalogOwner("Team", "team@example.com"),
-            sources: [new CatalogSourceRef("petstore", "openapi")],
+            sources: SourceSet.FromSources([new CatalogSourceRef("petstore", "openapi")]),
             hash: "abc", createdBy: "ops", createdAt: CreatedAt);
 
         CatalogVersion.FromJson(version.ToJsonBytes()).SecurityTagsValue.ShouldBeEmpty();

@@ -51,7 +51,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         DateTimeOffset? updatedAfter = ParseInstant(parameters.UpdatedAfter);
         DateTimeOffset? updatedBefore = ParseInstant(parameters.UpdatedBefore);
         string? correlationId = parameters.CorrelationId.IsNotUndefined() ? (string)parameters.CorrelationId : null;
-        IReadOnlyList<string>? tags = ParseTags(parameters.Tag);
+        TagSet tags = ParseTags(parameters.Tag);
 
         WorkflowRunPage page = await this.management.ListAsync(
             new WorkflowQuery(status, workflowId, limit, pageToken, createdAfter, createdBefore, updatedAfter, updatedBefore, correlationId, tags),
@@ -65,21 +65,9 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
             ? DateTimeOffset.Parse((string)value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)
             : null;
 
-    private static IReadOnlyList<string>? ParseTags(Models.TagList tag)
-    {
-        if (tag.IsUndefined())
-        {
-            return null;
-        }
-
-        var tags = new List<string>();
-        foreach (Models.JsonString item in tag.EnumerateArray())
-        {
-            tags.Add((string)item);
-        }
-
-        return tags.Count > 0 ? tags : null;
-    }
+    // The query needle: copy the parsed tag-list parameter's canonical bytes into the holder (per request, not per
+    // row). The in-memory backends match it span-wise; the SQL/Cosmos/Mongo backends bind it at their parameter leaf.
+    private static TagSet ParseTags(Models.TagList tag) => TagSet.CopyFrom(tag);
 
     /// <inheritdoc/>
     public async ValueTask<GetRunResult> HandleGetRunAsync(GetRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
@@ -239,17 +227,12 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
                 correlationId = cid;
             }
 
+            // Emit the tags array straight from the persisted bytes — one detached parse for the response model, no
+            // per-tag string materialization.
             Models.WorkflowRunDetail.JsonStringArray.Source tags = default;
-            if (d.Tags is { Count: > 0 } runTags)
+            if (!d.Tags.IsEmpty)
             {
-                tags = new Models.WorkflowRunDetail.JsonStringArray.Source(
-                    (ref Models.WorkflowRunDetail.JsonStringArray.Builder ab) =>
-                    {
-                        foreach (string tag in runTags)
-                        {
-                            ab.AddItem(tag);
-                        }
-                    });
+                tags = Models.WorkflowRunDetail.JsonStringArray.ParseValue(d.Tags.RawJson);
             }
 
             b.Create(
@@ -322,16 +305,9 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
             }
 
             Models.WorkflowRunSummary.JsonStringArray.Source tags = default;
-            if (e.Tags is { Count: > 0 } runTags)
+            if (!e.Tags.IsEmpty)
             {
-                tags = new Models.WorkflowRunSummary.JsonStringArray.Source(
-                    (ref Models.WorkflowRunSummary.JsonStringArray.Builder ab) =>
-                    {
-                        foreach (string tag in runTags)
-                        {
-                            ab.AddItem(tag);
-                        }
-                    });
+                tags = Models.WorkflowRunSummary.JsonStringArray.ParseValue(e.Tags.RawJson);
             }
 
             b.Create(

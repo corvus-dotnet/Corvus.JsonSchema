@@ -211,7 +211,7 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         bool reactivated = status == CatalogStatus.Active && currentStatus == CatalogStatus.Obsolete;
 
         CatalogOwner owner = patch.Owner ?? cur.OwnerValue;
-        IReadOnlyList<string> tags = patch.Tags is { } t ? [.. t] : cur.TagsValue;
+        TagSet tags = patch.Tags ?? cur.TagsValue;
         string? obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : cur.ObsoletedByOrNull;
         DateTimeOffset? obsoletedAt = newlyObsolete ? now : reactivated ? null : cur.ObsoletedAtValue;
 
@@ -339,7 +339,7 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             return false;
         }
 
-        if (query.Tags is { Count: > 0 } queryTags && !queryTags.All(version.TagsValue.Contains))
+        if (!query.Tags.AllContainedIn(version.TagsValue))
         {
             return false;
         }
@@ -377,7 +377,7 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         int versionNumber = (int)(long)reserved;
 
         CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
-        IReadOnlyList<string> tags = metadata.Tags is { Count: > 0 } t ? [.. t] : [];
+        TagSet tags = metadata.Tags;
         IReadOnlyList<SecurityTag>? securityTags = metadata.SecurityTags is { Count: > 0 } st ? [.. st] : null;
 
         CatalogVersion version = CatalogVersion.Create(
@@ -389,7 +389,7 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             status: CatalogStatus.Active,
             tags: tags,
             owner: metadata.Owner,
-            sources: projection.Sources,
+            sources: SourceSet.FromSources(projection.Sources),
             hash: projection.Hash,
             createdBy: metadata.CreatedBy,
             createdAt: now,
