@@ -25,6 +25,8 @@ public class CheckpointSerializeBenchmarks
     private Dictionary<string, int> retryCounters = null!;
     private Dictionary<string, byte[]> correlationTokens = null!;
     private Dictionary<string, JsonElement> stepOutputs = null!;
+    private PooledUtf8Map<int> retryMap = null!;
+    private PooledUtf8Map<JsonElement> stepMap = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -33,6 +35,20 @@ public class CheckpointSerializeBenchmarks
         this.retryCounters = new Dictionary<string, int> { ["step-a"] = 0, ["step-b"] = 2 };
         this.correlationTokens = [];
         this.stepOutputs = [];
+        this.retryMap = PooledUtf8Map<int>.Rent(this.retryCounters.Count);
+        foreach (KeyValuePair<string, int> counter in this.retryCounters)
+        {
+            this.retryMap.Set(counter.Key, counter.Value);
+        }
+
+        this.stepMap = PooledUtf8Map<JsonElement>.Rent(0);
+    }
+
+    [GlobalCleanup]
+    public void Cleanup()
+    {
+        this.retryMap.Dispose();
+        this.stepMap.Dispose();
     }
 
     /// <summary>Old: fresh growing ArrayBufferWriter + fresh Utf8JsonWriter, then ToArray.</summary>
@@ -78,10 +94,10 @@ public class CheckpointSerializeBenchmarks
             WorkflowRunStatus.Running,
             3,
             DateTimeOffset.UnixEpoch,
-            this.retryCounters,
+            this.retryMap,
             this.correlationTokens,
             default,
-            this.stepOutputs,
+            this.stepMap,
             default);
         return checkpoint.Length;
     }

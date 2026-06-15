@@ -49,10 +49,10 @@ public static class WorkflowCheckpointSerializer
         WorkflowRunStatus status,
         int cursor,
         DateTimeOffset createdAt,
-        IReadOnlyDictionary<string, int> retryCounters,
+        PooledUtf8Map<int> retryCounters,
         IReadOnlyDictionary<string, byte[]> correlationTokens,
         in JsonElement inputs,
-        IReadOnlyDictionary<string, JsonElement> stepOutputs,
+        PooledUtf8Map<JsonElement> stepOutputs,
         in JsonElement outputs,
         WorkflowWait? wait = null,
         WorkflowFault? fault = null,
@@ -99,9 +99,10 @@ public static class WorkflowCheckpointSerializer
             }
 
             writer.WriteStartObject("retryCounters"u8);
-            foreach (KeyValuePair<string, int> counter in retryCounters)
+            PooledUtf8Map<int>.Enumerator retryEnumerator = retryCounters.GetEnumerator();
+            while (retryEnumerator.MoveNext())
             {
-                writer.WriteNumber(counter.Key, counter.Value);
+                writer.WriteNumber(retryEnumerator.CurrentKey, retryEnumerator.CurrentValue);
             }
 
             writer.WriteEndObject();
@@ -122,15 +123,16 @@ public static class WorkflowCheckpointSerializer
             }
 
             writer.WriteStartObject("stepOutputs"u8);
-            foreach (KeyValuePair<string, JsonElement> step in stepOutputs)
+            PooledUtf8Map<JsonElement>.Enumerator stepEnumerator = stepOutputs.GetEnumerator();
+            while (stepEnumerator.MoveNext())
             {
-                if (step.Value.ValueKind == JsonValueKind.Undefined)
+                if (stepEnumerator.CurrentValue.ValueKind == JsonValueKind.Undefined)
                 {
                     continue;
                 }
 
-                writer.WritePropertyName(step.Key);
-                step.Value.WriteTo(writer);
+                writer.WritePropertyName(stepEnumerator.CurrentKey);
+                stepEnumerator.CurrentValue.WriteTo(writer);
             }
 
             writer.WriteEndObject();
@@ -190,6 +192,10 @@ public static class WorkflowCheckpointSerializer
     public static WorkflowCheckpointState Deserialize(ReadOnlyMemory<byte> checkpointUtf8)
     {
         ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(checkpointUtf8);
+
+        // Hoisted so the catch can return their pooled buffers if a later read throws on a corrupt checkpoint.
+        PooledUtf8Map<int>? retryCounters = null;
+        PooledUtf8Map<JsonElement>? stepOutputs = null;
         try
         {
             JsonElement root = document.RootElement;
@@ -216,20 +222,21 @@ public static class WorkflowCheckpointSerializer
                 securityTags = SecurityTagSet.CopyFrom(securityTagsElement);
             }
 
-            // Pre-size each working dictionary to its persisted element count so a long workflow's restore does not
-            // re-allocate the backing array as the dictionary grows (GetPropertyCount is a no-alloc scan).
-            Dictionary<string, int> retryCounters;
+            // Pre-size each working map to its persisted element count so a long workflow's restore does not re-allocate
+            // the backing as it grows (GetPropertyCount is a no-alloc scan), and read keys as borrowed UTF-8 spans
+            // (Utf8NameSpan) copied into the map's pooled arena — no per-step key string is materialized.
             if (root.TryGetProperty("retryCounters"u8, out JsonElement retryCountersElement))
             {
-                retryCounters = new Dictionary<string, int>(retryCountersElement.GetPropertyCount());
+                retryCounters = PooledUtf8Map<int>.Rent(retryCountersElement.GetPropertyCount());
                 foreach (JsonProperty<JsonElement> counter in retryCountersElement.EnumerateObject())
                 {
-                    retryCounters[counter.Name] = counter.Value.GetInt32();
+                    using UnescapedUtf8JsonString name = counter.Utf8NameSpan;
+                    retryCounters.Set(name.Span, counter.Value.GetInt32());
                 }
             }
             else
             {
-                retryCounters = [];
+                retryCounters = PooledUtf8Map<int>.Rent(0);
             }
 
             Dictionary<string, byte[]> correlationTokens;
@@ -248,18 +255,18 @@ public static class WorkflowCheckpointSerializer
 
             JsonElement inputs = root.TryGetProperty("inputs"u8, out JsonElement inputsElement) ? inputsElement : default;
 
-            Dictionary<string, JsonElement> stepOutputs;
             if (root.TryGetProperty("stepOutputs"u8, out JsonElement stepOutputsElement))
             {
-                stepOutputs = new Dictionary<string, JsonElement>(stepOutputsElement.GetPropertyCount());
+                stepOutputs = PooledUtf8Map<JsonElement>.Rent(stepOutputsElement.GetPropertyCount());
                 foreach (JsonProperty<JsonElement> step in stepOutputsElement.EnumerateObject())
                 {
-                    stepOutputs[step.Name] = step.Value;
+                    using UnescapedUtf8JsonString name = step.Utf8NameSpan;
+                    stepOutputs.Set(name.Span, step.Value);
                 }
             }
             else
             {
-                stepOutputs = [];
+                stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
             }
 
             JsonElement outputs = root.TryGetProperty("outputs"u8, out JsonElement outputsElement) ? outputsElement : default;
@@ -289,6 +296,8 @@ public static class WorkflowCheckpointSerializer
         }
         catch
         {
+            retryCounters?.Dispose();
+            stepOutputs?.Dispose();
             document.Dispose();
             throw;
         }

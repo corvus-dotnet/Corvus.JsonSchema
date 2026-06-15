@@ -22,10 +22,10 @@ public sealed class WorkflowCheckpointState : IDisposable
         WorkflowRunStatus status,
         int cursor,
         DateTimeOffset createdAt,
-        Dictionary<string, int> retryCounters,
+        PooledUtf8Map<int> retryCounters,
         Dictionary<string, byte[]> correlationTokens,
         JsonElement inputs,
-        Dictionary<string, JsonElement> stepOutputs,
+        PooledUtf8Map<JsonElement> stepOutputs,
         JsonElement outputs,
         WorkflowWait? wait,
         WorkflowFault? fault,
@@ -66,8 +66,8 @@ public sealed class WorkflowCheckpointState : IDisposable
     /// <summary>Gets the instant the run was first created.</summary>
     public DateTimeOffset CreatedAt { get; }
 
-    /// <summary>Gets the restored per-step retry attempt counts.</summary>
-    public Dictionary<string, int> RetryCounters { get; }
+    /// <summary>Gets the restored per-step retry attempt counts (a pooled UTF-8-keyed map; disposed with this state).</summary>
+    public PooledUtf8Map<int> RetryCounters { get; }
 
     /// <summary>Gets the restored correlation register (correlation-id name → token bytes).</summary>
     public Dictionary<string, byte[]> CorrelationTokens { get; }
@@ -75,8 +75,8 @@ public sealed class WorkflowCheckpointState : IDisposable
     /// <summary>Gets the workflow inputs (an <see cref="JsonValueKind.Undefined"/> element if none were stored).</summary>
     public JsonElement Inputs { get; }
 
-    /// <summary>Gets the restored per-step <c>outputs</c> products.</summary>
-    public Dictionary<string, JsonElement> StepOutputs { get; }
+    /// <summary>Gets the restored per-step <c>outputs</c> products (a pooled UTF-8-keyed map of borrowed views into the parsed document; disposed with this state).</summary>
+    public PooledUtf8Map<JsonElement> StepOutputs { get; }
 
     /// <summary>Gets the final workflow <c>outputs</c> if the run had completed (an <see cref="JsonValueKind.Undefined"/> element otherwise).</summary>
     public JsonElement Outputs { get; }
@@ -97,5 +97,11 @@ public sealed class WorkflowCheckpointState : IDisposable
     public SecurityTagSet SecurityTags { get; }
 
     /// <inheritdoc/>
-    public void Dispose() => this.document.Dispose();
+    public void Dispose()
+    {
+        // The maps hold views into the document; return their pooled buffers before the document's.
+        this.RetryCounters.Dispose();
+        this.StepOutputs.Dispose();
+        this.document.Dispose();
+    }
 }
