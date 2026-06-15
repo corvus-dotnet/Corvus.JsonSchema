@@ -195,8 +195,8 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         }
 
         response.EnsureSuccessStatusCode();
-        ReadOnlyMemory<byte> payload = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
-        RunDocument document = RunDocument.FromJson(payload);
+        using CosmosJson.RentedResponse payload = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+        RunDocument document = RunDocument.FromJson(payload.Memory);
         return new WorkflowCheckpoint(document.CheckpointBytes(), new WorkflowEtag(response.Headers.ETag));
     }
 
@@ -232,8 +232,8 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         }
 
         read.EnsureSuccessStatusCode();
-        ReadOnlyMemory<byte> payload = await CosmosJson.ReadAllAsync(read.Content, cancellationToken).ConfigureAwait(false);
-        LeaseDocument existing = LeaseDocument.FromJson(payload);
+        using CosmosJson.RentedResponse payload = await CosmosJson.ReadAllAsync(read.Content, cancellationToken).ConfigureAwait(false);
+        LeaseDocument existing = LeaseDocument.FromJson(payload.Memory);
         if (existing.ExpiresAtValue > now.ToUnixTimeMilliseconds() && existing.OwnerValue != owner)
         {
             return null;
@@ -263,8 +263,8 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         }
 
         read.EnsureSuccessStatusCode();
-        ReadOnlyMemory<byte> payload = await CosmosJson.ReadAllAsync(read.Content, cancellationToken).ConfigureAwait(false);
-        if (LeaseDocument.FromJson(payload).TokenValue != lease.Token)
+        using CosmosJson.RentedResponse payload = await CosmosJson.ReadAllAsync(read.Content, cancellationToken).ConfigureAwait(false);
+        if (LeaseDocument.FromJson(payload.Memory).TokenValue != lease.Token)
         {
             return;
         }
@@ -576,8 +576,8 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         {
             using ResponseMessage response = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
-            ReadOnlyMemory<byte> page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
-            foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page))
+            using CosmosJson.RentedResponse page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+            foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page.Memory))
             {
                 yield return element;
             }

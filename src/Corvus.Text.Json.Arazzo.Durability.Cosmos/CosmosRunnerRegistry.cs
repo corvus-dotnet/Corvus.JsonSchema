@@ -167,8 +167,8 @@ public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         }
 
         read.EnsureSuccessStatusCode();
-        ReadOnlyMemory<byte> payload = await CosmosJson.ReadAllAsync(read.Content, cancellationToken).ConfigureAwait(false);
-        RunnerRegistration current = RunnerDocument.FromJson(payload).ToRegistration();
+        using CosmosJson.RentedResponse payload = await CosmosJson.ReadAllAsync(read.Content, cancellationToken).ConfigureAwait(false);
+        RunnerRegistration current = RunnerDocument.FromJson(payload.Memory).ToRegistration();
 
         using var stream = RunnerDocument.WriteEnvelopeStream(runnerId, current, at);
         using ResponseMessage response = await this.runners.UpsertItemStreamAsync(stream, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -249,8 +249,8 @@ public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         {
             using ResponseMessage response = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
-            ReadOnlyMemory<byte> page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
-            foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page))
+            using CosmosJson.RentedResponse page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+            foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page.Memory))
             {
                 yield return element;
             }
