@@ -63,14 +63,14 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
                 nameof(packageUtf8));
         }
 
-        // Workflow-id ownership (§13/§14.2): a base id's ownership is established by its first version's owner identity;
-        // only that owner may publish further versions, so the immutable workflow identity (sys:workflow) cannot be
-        // squatted. The submitted securityTags carry the submitter's stamped owner identity.
+        // Workflow-id administration (§13/§14.2): a base id's administration is established by its first version's
+        // stamped administrator identity; only an administrator may publish further versions, so the immutable workflow
+        // identity (sys:workflow) cannot be squatted. The submitted securityTags carry the submitter's stamped identity.
         CatalogVersion? firstVersion = await this.catalog.GetAsync(baseWorkflowId, 1, cancellationToken).ConfigureAwait(false);
-        if (firstVersion is { } owned && !WorkflowIdentity.SameOwner(WorkflowIdentity.OwnerTags(owned.SecurityTagsValue), securityTags))
+        if (firstVersion is { } owned && !WorkflowIdentity.SameAdministrator(WorkflowIdentity.AdministratorIdentity(owned.SecurityTagsValue), securityTags))
         {
-            activity?.SetTag(ArazzoTelemetry.OutcomeTag, "workflow-not-owned");
-            throw new WorkflowOwnershipException(baseWorkflowId);
+            activity?.SetTag(ArazzoTelemetry.OutcomeTag, "workflow-not-administered");
+            throw new WorkflowAdministrationException(baseWorkflowId);
         }
 
         // Stamp the immutable workflow identity so the version (and its runs) carry sys:workflow=<baseWorkflowId> — the

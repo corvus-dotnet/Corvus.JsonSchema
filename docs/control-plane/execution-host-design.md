@@ -705,3 +705,61 @@ rules in the `simple`-criterion grammar**; claims resolve to a rule, rules compi
 rules. A deployment may **wrap** the model (§14.3) with a mandated filter + reserved-prefix internal tags
 (immutable, client-invisible) that AND into every decision, so multi-tenant isolation is inescapable. Applied
 uniformly to workflows and runs.
+
+## 15. Workflow administration — identity, entitlement, and management
+
+A base workflow id needs an **authority**: the identity entitled to publish further versions of it and to anchor
+the source-credential grants its runs use (§13). This is distinct from the catalog's governance **`owner`**
+(`CatalogOwner { name, email, team?, url? }`, §catalog-design) — that is the accountable *contact*, descriptive
+and freely editable. The authority is the **administrator**, and it is a *security identity*, not a contact.
+
+### 15.1 What an administrator is
+
+- An **administrator** is a **deployment-stamped internal (`sys:`) security identity** — the set of internal tags
+  `ControlPlaneRowSecurityPolicy.GetInternalTags(principal)` yields for a principal (§14.3/§14.4). It is the same
+  unforgeable identity the deployment stamps onto a catalogued version (`securityTags`) and that the credential
+  **usage-grants** name (§13, `{dimension, value}` → `sys:{dimension}={value}`). There is **one** identity concept
+  across §13–§15, not a parallel "administrator" entity.
+- **Granularity is the deployment's choice.** Whatever `GetInternalTags` stamps *is* the administration grain — a
+  shell that stamps only `sys:tenant` gives tenant-level administration; one that also stamps `sys:sub` allows
+  per-principal co-administration. The model hard-codes neither.
+- **Unforgeable by construction.** Only the deployment shell stamps `sys:` tags (reserved-prefix, immutable, rejected
+  on user input, §14.3), so a principal cannot self-assert administration by supplying tags — the core security
+  invariant that motivated the whole §13 usage-grant design ("no free-for-all by matching tags").
+
+### 15.2 Establishment and the immutable workflow identity
+
+- **Version 1 establishes administration.** A base id's first version is stamped (`WorkflowIdentity`) with the
+  submitter's identity, and with the **immutable workflow identity** `sys:workflow=<baseWorkflowId>` that its runs
+  inherit — the identity a credential grant names. The administrator identity is the stamped set with `sys:workflow`
+  removed (`WorkflowIdentity.AdministratorIdentity`).
+- **Publishing a further version requires being an administrator.** `WorkflowCatalogClient.AddAsync` refuses
+  (`WorkflowAdministrationException` → 409) a submitter whose stamped identity is not a member of the base id's
+  administrator set — so `sys:workflow` cannot be squatted. Membership is order-independent set-equality on the
+  stamped identity (`WorkflowIdentity.SameAdministrator`); the catalog Add path carries the stamped identity, not an
+  `AccessContext`.
+
+### 15.3 Managing administrators (reassignment and co-administration)
+
+Administration is **mutable** — teams hand workflows off and share them — but a version's `sys:` tags are immutable
+(§14.3), so administration is *not* re-stamped onto versions. It is held in an **explicit, per-base-id administrator
+record** that defaults to version 1's identity until first changed:
+
+- **Record.** A `WorkflowAdministrators` document per base id — the set of administrator identities, with audit and
+  an etag — materialized lazily (absent until the first change; reads then fall back to the version-1 identity). Held
+  in an `IWorkflowAdministratorStore` (per-backend, like the run/catalog/credential stores; InMemory + SQLite first,
+  the remaining backends in the Phase-5 sweep). Never empty: the last administrator cannot be removed (no orphaning).
+- **Operations** (on `IWorkflowCatalogClient`, authorized by **current-administrator membership**, not row reach):
+  `GetAdministrators`, `AddAdministrator` (idempotent), `RemoveAdministrator` (refuses the last), and
+  `TransferAdministration` (replace the set — hand-off; the caller need not remain). Each names administrators with
+  the **usage-grant vocabulary** (`{dimension, value}` the policy maps to `sys:` tags), never free-form tags; changes
+  are etag-CAS with bounded retry.
+- **Trust boundary.** The record holds only `sys:` identity tags — authorization metadata, never secrets — so it
+  persists as plain JSON like every other entity. Administration is over unforgeable stamped identity end to end;
+  the management surface cannot widen entitlement past what the shell stamps.
+
+**Decision (§15):** a base workflow id is governed by an **administrator** — a deployment-stamped `sys:` security
+identity (the same identity used for version stamping and credential grants), distinct from the descriptive
+governance `owner` contact. Version 1 establishes it; publishing further versions requires membership; administration
+is reassignable / shareable via a per-base-id administrator record (last-administrator-protected, etag-CAS), with
+administrators named in the usage-grant `{dimension, value}` vocabulary — never forgeable user tags.
