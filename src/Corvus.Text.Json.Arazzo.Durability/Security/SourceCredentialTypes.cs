@@ -25,23 +25,10 @@ public readonly record struct CredentialConfigDefinition(string Key, string Valu
 /// <param name="SecretRefs">The named references to secret material in the external store (at least one).</param>
 /// <param name="Config">The non-secret auth configuration, if any.</param>
 /// <param name="Description">An optional human description.</param>
-/// <param name="ManagementTags">The security tags (KVP labels) scoping who may MANAGE the binding (§14.2), set at
-/// create and immutable thereafter; default (empty) for an unscoped binding. Independent of <paramref name="UsageTags"/>.</param>
-/// <param name="UsageTags">The security tags (KVP labels) scoping which runs may USE the binding (§13), set at create
-/// and immutable thereafter; default (empty/shared). Independent of <paramref name="ManagementTags"/>.</param>
-/// <param name="ExpiresAt">When the referenced long-lived secret expires, if knowable (§13.2 lifecycle metadata) —
-/// drives the derived <see cref="CredentialStatus"/>; <see langword="null"/> when unknown (non-expiring). Mutable: a
-/// rotation refreshes it.</param>
-/// <param name="RotatedAt">When the referenced secret was last rotated, if known (§13.2 lifecycle metadata) — distinct
-/// from the binding's last-updated audit instant. Mutable.</param>
 public readonly record struct SourceCredentialDefinition(
     string SourceName,
     string Environment,
     SourceCredentialKind AuthKind,
     IReadOnlyList<SecretReferenceDefinition> SecretRefs,
     IReadOnlyList<CredentialConfigDefinition>? Config = null,
-    string? Description = null,
-    SecurityTagSet ManagementTags = default,
-    SecurityTagSet UsageTags = default,
-    DateTimeOffset? ExpiresAt = null,
-    DateTimeOffset? RotatedAt = null);
+    string? Description = null);

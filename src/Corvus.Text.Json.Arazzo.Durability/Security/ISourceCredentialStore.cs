@@ -28,91 +28,44 @@ namespace Corvus.Text.Json.Arazzo.Durability.Security;
 /// </remarks>
 public interface ISourceCredentialStore
 {
-    /// <summary>Creates a binding (identity = sourceName, environment, and the immutable security tags), assigning it an
-    /// id. Throws if a binding with the same (sourceName, environment, security-tags) already exists. The control plane
-    /// stamps the principal's internal tenant tag onto the <paramref name="draft"/> before calling, so the new binding
-    /// is owned by the creator's slice of the security shell (§14.2). The store reads the draft's content bytes-to-bytes
-    /// and stamps id/createdBy/createdAt/etag.</summary>
-    /// <param name="draft">The draft binding (references + non-secret metadata + resolved security tags) — typically built
-    /// by <see cref="SourceCredentialBinding.Draft(SourceCredentialDefinition)"/> or from a request body; the store reads
-    /// it synchronously, so a pooled draft may be disposed once the call returns.</param>
+    /// <summary>Creates a binding for (<paramref name="definition"/>'s sourceName, environment), assigning it an id.
+    /// Throws if a binding for that (sourceName, environment) already exists.</summary>
+    /// <param name="definition">The binding content (references + non-secret metadata only).</param>
     /// <param name="actor">The authenticated identity creating the binding (for audit).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The created binding (with its assigned id), as a pooled document the caller must dispose.</returns>
-    ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialBinding draft, string actor, CancellationToken cancellationToken);
+    ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialDefinition definition, string actor, CancellationToken cancellationToken);
 
-    /// <summary>Gets the binding for (<paramref name="sourceName"/>, <paramref name="environment"/>) that the caller's
-    /// read reach admits, or <see langword="null"/> if none is visible. A binding outside the caller's reach is reported
-    /// as absent (non-disclosing, §14.2).</summary>
+    /// <summary>Gets the binding for (<paramref name="sourceName"/>, <paramref name="environment"/>), or <see langword="null"/> if absent.</summary>
     /// <param name="sourceName">The Arazzo source description name.</param>
     /// <param name="environment">The deployment environment.</param>
-    /// <param name="context">The caller's row-access grant (use <see cref="AccessContext.System"/> for full reach).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The binding as a pooled document the caller must dispose, or <see langword="null"/>.</returns>
-    ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> GetAsync(string sourceName, string environment, AccessContext context, CancellationToken cancellationToken);
+    ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> GetAsync(string sourceName, string environment, CancellationToken cancellationToken);
 
-    /// <summary>
-    /// Lists one keyset page of the bindings the caller's read reach admits, ascending by sourceName then environment.
-    /// Reach is a per-row predicate evaluated in-memory, so the store seeks past <paramref name="pageToken"/> in
-    /// keyset order and streams rows applying reach until <paramref name="limit"/> visible bindings accumulate (or the
-    /// data is exhausted), emitting a <see cref="SourceCredentialPage.NextPageToken"/> when more remain — it never
-    /// materialises the whole table per page. The token is opaque and backend-scoped.
-    /// </summary>
-    /// <param name="context">The caller's row-access grant (use <see cref="AccessContext.System"/> for full reach).</param>
-    /// <param name="limit">The maximum number of bindings to return in the page (the store treats a non-positive value as 1).</param>
-    /// <param name="pageToken">The opaque token (its JSON value) from a previous page's <see cref="SourceCredentialPage.NextPageToken"/>, or undefined for the first page; decoded bytes-native from its UTF-8.</param>
+    /// <summary>Lists all bindings (ascending by sourceName then environment).</summary>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The page (visible bindings + an optional next-page token), as a disposable batch the caller must dispose.</returns>
-    /// <exception cref="FormatException"><paramref name="pageToken"/> is not a valid continuation token.</exception>
-    ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, JsonString pageToken, CancellationToken cancellationToken);
+    /// <returns>All bindings, as a pooled batch the caller must dispose.</returns>
+    ValueTask<PooledDocumentList<SourceCredentialBinding>> ListAsync(CancellationToken cancellationToken);
 
-    /// <summary>Updates the binding for (<paramref name="sourceName"/>, <paramref name="environment"/>) the caller's
-    /// write reach admits, under optimistic concurrency. The (sourceName, environment) identity, the security tags, and
-    /// the created-* audit fields are immutable; only the references and non-secret metadata are replaced.</summary>
+    /// <summary>Updates a binding's content under optimistic concurrency. The (sourceName, environment) identity and the
+    /// created-* audit fields are immutable; only the references and non-secret metadata are replaced.</summary>
     /// <param name="sourceName">The Arazzo source description name.</param>
     /// <param name="environment">The deployment environment.</param>
-    /// <param name="draft">The new content as a draft (its identity and security tags are ignored — those are immutable
-    /// and carried forward from the stored binding); the store reads it synchronously, so a pooled draft may be disposed
-    /// once the call returns.</param>
+    /// <param name="definition">The new content.</param>
     /// <param name="expectedEtag">The expected current etag (<see cref="WorkflowEtag.None"/> to overwrite unconditionally).</param>
     /// <param name="actor">The authenticated identity updating the binding (for audit).</param>
-    /// <param name="context">The caller's row-access grant (use <see cref="AccessContext.System"/> for full reach).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The updated binding as a pooled document the caller must dispose, or <see langword="null"/> if no binding the caller may write exists for that key.</returns>
+    /// <returns>The updated binding as a pooled document the caller must dispose, or <see langword="null"/> if no binding for that key exists.</returns>
     /// <exception cref="SourceCredentialConflictException">The expected etag no longer matches.</exception>
-    ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialBinding draft, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken);
+    ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken);
 
-    /// <summary>Deletes the binding for (<paramref name="sourceName"/>, <paramref name="environment"/>) the caller's
-    /// write reach admits, under optimistic concurrency.</summary>
+    /// <summary>Deletes a binding under optimistic concurrency.</summary>
     /// <param name="sourceName">The Arazzo source description name.</param>
     /// <param name="environment">The deployment environment.</param>
     /// <param name="expectedEtag">The expected current etag (<see cref="WorkflowEtag.None"/> to delete unconditionally).</param>
-    /// <param name="context">The caller's row-access grant (use <see cref="AccessContext.System"/> for full reach).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns><see langword="true"/> if a binding the caller may write was deleted; <see langword="false"/> if none existed.</returns>
+    /// <returns><see langword="true"/> if a binding was deleted; <see langword="false"/> if none existed.</returns>
     /// <exception cref="SourceCredentialConflictException">The expected etag no longer matches.</exception>
-    ValueTask<bool> DeleteAsync(string sourceName, string environment, WorkflowEtag expectedEtag, AccessContext context, CancellationToken cancellationToken);
-
-    /// <summary>Resolves the credential binding a run carrying <paramref name="runTags"/> is entitled to use for
-    /// (<paramref name="sourceName"/>, <paramref name="environment"/>) (design §13/§14.2): the binding the run's tags
-    /// satisfy by label-superset (<see cref="SourceCredentialBinding.IsUsableBy"/>), or <see langword="null"/> if the run
-    /// is entitled to none. This is the <strong>usage</strong> path — distinct from the management reach above — and
-    /// fails closed: an unentitled or absent binding yields no credential, never another scope's secret.</summary>
-    /// <param name="sourceName">The Arazzo source description name.</param>
-    /// <param name="environment">The deployment environment.</param>
-    /// <param name="runTags">The run's own security tags.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The entitled binding as a pooled document the caller must dispose, or <see langword="null"/>.</returns>
-    ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> ResolveForUsageAsync(string sourceName, string environment, SecurityTagSet runTags, CancellationToken cancellationToken);
-
-    /// <summary>Evaluates whether <paramref name="tags"/> are entitled to use the credential bindings configured for
-    /// <paramref name="sourceName"/> across <strong>all</strong> environments (design §13) — the catalog-time usage
-    /// check that gates declaring the source before any run. Returns <see cref="CredentialSourceAccess.Granted"/> if any
-    /// binding for the source is usable by the tags (label-superset), <see cref="CredentialSourceAccess.Denied"/> if the
-    /// source has bindings but none is usable, and <see cref="CredentialSourceAccess.Unconfigured"/> if it has none.</summary>
-    /// <param name="sourceName">The Arazzo source description name.</param>
-    /// <param name="tags">The security tags to evaluate (typically the catalogued workflow version's tags, which its runs inherit).</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The access evaluation.</returns>
-    ValueTask<CredentialSourceAccess> EvaluateSourceAccessAsync(string sourceName, SecurityTagSet tags, CancellationToken cancellationToken);
+    ValueTask<bool> DeleteAsync(string sourceName, string environment, WorkflowEtag expectedEtag, CancellationToken cancellationToken);
 }

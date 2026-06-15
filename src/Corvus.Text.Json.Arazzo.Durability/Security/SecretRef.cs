@@ -106,48 +106,6 @@ public readonly struct SecretRef : IEquatable<SecretRef>
         return true;
     }
 
-    /// <summary>Validates that <paramref name="utf8"/> is a well-formed secret reference naming a known scheme, reading
-    /// the value's UTF-8 directly with no string allocation — the bytes-to-bytes counterpart of
-    /// <see cref="TryParse(string?, out SecretRef)"/> used to validate a draft binding's references at the write
-    /// boundary (so a malformed or accidental inline-secret value is rejected without materialising it).</summary>
-    /// <param name="utf8">The candidate reference as UTF-8 (<c>scheme://locator[#version]</c>).</param>
-    /// <returns><see langword="true"/> if it is well-formed and names a known scheme.</returns>
-    public static bool IsWellFormed(ReadOnlySpan<byte> utf8)
-    {
-        if (utf8.IsEmpty)
-        {
-            return false;
-        }
-
-        int colon = utf8.IndexOf((byte)':');
-        if (colon <= 0 || !IsKnownScheme(utf8[..colon]))
-        {
-            return false;
-        }
-
-        // Skip the scheme separator: ':' optionally followed by '//'.
-        int start = colon + 1;
-        if (utf8[start..].StartsWith("//"u8))
-        {
-            start += 2;
-        }
-
-        ReadOnlySpan<byte> remainder = utf8[start..];
-        if (remainder.IsEmpty)
-        {
-            return false;
-        }
-
-        int hash = remainder.IndexOf((byte)'#');
-        if (hash < 0)
-        {
-            return true; // locator only, already known non-empty
-        }
-
-        // A '#': both the locator and the version fragment must be non-empty.
-        return hash > 0 && hash < remainder.Length - 1;
-    }
-
     /// <inheritdoc/>
     public bool Equals(SecretRef other) => string.Equals(this.Raw, other.Raw, StringComparison.Ordinal);
 
@@ -159,13 +117,6 @@ public readonly struct SecretRef : IEquatable<SecretRef>
 
     /// <inheritdoc/>
     public override string ToString() => this.Raw ?? string.Empty;
-
-    private static bool IsKnownScheme(ReadOnlySpan<byte> token) =>
-        token.SequenceEqual("keyvault"u8)
-        || token.SequenceEqual("awssm"u8)
-        || token.SequenceEqual("vault"u8)
-        || token.SequenceEqual("env"u8)
-        || token.SequenceEqual("file"u8);
 
     private static bool TryParseScheme(ReadOnlySpan<char> token, out SecretScheme scheme)
     {
