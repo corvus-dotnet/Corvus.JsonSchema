@@ -122,7 +122,7 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            return new PooledDocumentList<SecurityRuleDocument>(await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false));
+            return await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -215,7 +215,7 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            return new PooledDocumentList<SecurityBindingDocument>(await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false));
+            return await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -266,8 +266,8 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            var rules = new PooledDocumentList<SecurityRuleDocument>(await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false));
-            var bindings = new PooledDocumentList<SecurityBindingDocument>(await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false));
+            PooledDocumentList<SecurityRuleDocument> rules = await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
+            PooledDocumentList<SecurityBindingDocument> bindings = await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
             using SqliteCommand select = this.connection.CreateCommand();
             select.CommandText = "SELECT Generation FROM SecurityPolicyMeta WHERE Id = 0;";
             object? gen = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
@@ -297,9 +297,9 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         return result is byte[] bytes ? bytes : null;
     }
 
-    private async ValueTask<List<ParsedJsonDocument<SecurityRuleDocument>>> ReadRulesAsync(CancellationToken cancellationToken)
+    private async ValueTask<PooledDocumentList<SecurityRuleDocument>> ReadRulesAsync(CancellationToken cancellationToken)
     {
-        var list = new List<ParsedJsonDocument<SecurityRuleDocument>>();
+        var list = new PooledDocumentList<SecurityRuleDocument>();
         using SqliteCommand select = this.connection.CreateCommand();
         select.CommandText = "SELECT Document FROM SecurityRules ORDER BY Name;";
         using SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
@@ -311,9 +311,9 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         return list;
     }
 
-    private async ValueTask<List<ParsedJsonDocument<SecurityBindingDocument>>> ReadBindingsAsync(CancellationToken cancellationToken)
+    private async ValueTask<PooledDocumentList<SecurityBindingDocument>> ReadBindingsAsync(CancellationToken cancellationToken)
     {
-        var list = new List<ParsedJsonDocument<SecurityBindingDocument>>();
+        var list = new PooledDocumentList<SecurityBindingDocument>();
         using SqliteCommand select = this.connection.CreateCommand();
         select.CommandText = "SELECT Document FROM SecurityBindings ORDER BY SortOrder, Id;";
         using SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
