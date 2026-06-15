@@ -28,7 +28,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     private readonly Dictionary<string, JsonElement> stepOutputs;
     private readonly DateTimeOffset createdAt;
     private readonly string? correlationId;
-    private readonly IReadOnlyList<string>? tags;
+    private readonly TagSet tags;
     private readonly IReadOnlyList<SecurityTag>? securityTags;
     private readonly WorkflowCheckpointState? resumedState;
     private readonly JsonElement inputs;
@@ -52,7 +52,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         WorkflowEtag etag,
         DateTimeOffset createdAt,
         string? correlationId,
-        IReadOnlyList<string>? tags,
+        TagSet tags,
         IReadOnlyList<SecurityTag>? securityTags,
         WorkflowWait? wait,
         WorkflowFault? fault,
@@ -109,7 +109,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     public string? CorrelationId => this.correlationId;
 
     /// <summary>Gets the free-form tags applied to the run at creation, if any.</summary>
-    public IReadOnlyList<string>? Tags => this.tags;
+    public TagSet Tags => this.tags;
 
     /// <summary>Gets the security tags (KVP labels) applied to the run at creation, if any (design §14.2).</summary>
     public IReadOnlyList<SecurityTag>? SecurityTags => this.securityTags;
@@ -132,7 +132,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         JsonElement inputs,
         TimeProvider? timeProvider = null,
         string? correlationId = null,
-        IReadOnlyList<string>? tags = null,
+        TagSet tags = default,
         IReadOnlyList<SecurityTag>? securityTags = null)
     {
         ArgumentNullException.ThrowIfNull(store);
@@ -153,7 +153,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             etag: WorkflowEtag.None,
             createdAt: time.GetUtcNow(),
             correlationId: correlationId ?? Activity.Current?.TraceId.ToString(),
-            tags: tags is { Count: > 0 } ? tags : null,
+            tags: tags,
             securityTags: securityTags is { Count: > 0 } ? securityTags : null,
             wait: null,
             fault: null,

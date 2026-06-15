@@ -161,8 +161,9 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
             select.Parameters.AddWithValue("@after", (object?)after ?? DBNull.Value);
             select.Parameters.AddWithValue("@limit", limit + 1);
 
-            if (query.Tags is { Count: > 0 } tags)
+            if (!query.Tags.IsEmpty)
             {
+                List<string> tags = query.Tags.ToList();
                 var predicates = new StringBuilder();
                 for (int i = 0; i < tags.Count; i++)
                 {
@@ -244,7 +245,7 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
             bool reactivated = status == CatalogStatus.Active && currentStatus == CatalogStatus.Obsolete;
 
             CatalogOwner owner = patch.Owner ?? cur.OwnerValue;
-            IReadOnlyList<string> tags = patch.Tags is { } t ? [.. t] : cur.TagsValue;
+            TagSet tags = patch.Tags ?? cur.TagsValue;
             string? obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : cur.ObsoletedByOrNull;
             DateTimeOffset? obsoletedAt = newlyObsolete ? now : reactivated ? null : cur.ObsoletedAtValue;
 
@@ -259,7 +260,7 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
             update.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
             update.Parameters.AddWithValue("@versionNumber", versionNumber);
             update.Parameters.AddWithValue("@status", status.ToString());
-            update.Parameters.AddWithValue("@tags", (object?)EncodeTags(tags) ?? DBNull.Value);
+            update.Parameters.AddWithValue("@tags", (object?)tags.ToDelimitedOrNull('\u001F') ?? DBNull.Value);
             update.Parameters.AddWithValue("@ownerName", owner.Name);
             update.Parameters.AddWithValue("@ownerEmail", owner.Email);
             update.Parameters.AddWithValue("@ownerTeam", (object?)owner.Team ?? DBNull.Value);
@@ -370,7 +371,7 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
             }
 
             CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
-            IReadOnlyList<string> tags = metadata.Tags is { Count: > 0 } t ? [.. t] : [];
+            TagSet tags = metadata.Tags;
             IReadOnlyList<SecurityTag>? securityTags = metadata.SecurityTags is { Count: > 0 } st ? [.. st] : null;
 
             // Bind the columns directly from the projected/governance source values (no round-trip through the
@@ -387,12 +388,12 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
             insert.Parameters.AddWithValue("@title", projection.Title);
             insert.Parameters.AddWithValue("@description", (object?)projection.Description ?? DBNull.Value);
             insert.Parameters.AddWithValue("@status", nameof(CatalogStatus.Active));
-            insert.Parameters.AddWithValue("@tags", (object?)EncodeTags(tags) ?? DBNull.Value);
+            insert.Parameters.AddWithValue("@tags", (object?)tags.ToDelimitedOrNull('\u001F') ?? DBNull.Value);
             insert.Parameters.AddWithValue("@ownerName", metadata.Owner.Name);
             insert.Parameters.AddWithValue("@ownerEmail", metadata.Owner.Email);
             insert.Parameters.AddWithValue("@ownerTeam", (object?)metadata.Owner.Team ?? DBNull.Value);
             insert.Parameters.AddWithValue("@ownerUrl", (object?)metadata.Owner.Url ?? DBNull.Value);
-            insert.Parameters.AddWithValue("@sources", (object?)EncodeSources(projection.Sources) ?? DBNull.Value);
+            insert.Parameters.AddWithValue("@sources", (object?)SourceSet.FromSources(projection.Sources).ToJsonStringOrNull() ?? DBNull.Value);
             insert.Parameters.AddWithValue("@hash", projection.Hash);
             insert.Parameters.AddWithValue("@createdBy", metadata.CreatedBy);
             insert.Parameters.AddWithValue("@createdAt", now.ToUnixTimeMilliseconds());
@@ -430,7 +431,7 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
                 status: CatalogStatus.Active,
                 tags: tags,
                 owner: metadata.Owner,
-                sources: projection.Sources,
+                sources: SourceSet.FromSources(projection.Sources),
                 hash: projection.Hash,
                 createdBy: metadata.CreatedBy,
                 createdAt: now,
@@ -479,13 +480,13 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
             title: reader.GetString(3),
             description: reader.IsDBNull(4) ? null : reader.GetString(4),
             status: Enum.Parse<CatalogStatus>(reader.GetString(5)),
-            tags: DecodeTags(reader.IsDBNull(6) ? null : reader.GetString(6)) ?? [],
+            tags: TagSet.FromDelimited(reader.IsDBNull(6) ? null : reader.GetString(6), '\u001F'),
             owner: new CatalogOwner(
                 reader.GetString(7),
                 reader.GetString(8),
                 reader.IsDBNull(9) ? null : reader.GetString(9),
                 reader.IsDBNull(10) ? null : reader.GetString(10)),
-            sources: DecodeSources(reader.IsDBNull(11) ? null : reader.GetString(11)),
+            sources: SourceSet.FromJsonStringOrEmpty(reader.IsDBNull(11) ? null : reader.GetString(11)),
             hash: reader.GetString(12),
             createdBy: reader.GetString(13),
             createdAt: DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(14)),
@@ -498,20 +499,6 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
 
     private static string SortKey(string baseWorkflowId, int versionNumber)
         => string.Create(CultureInfo.InvariantCulture, $"{baseWorkflowId}{versionNumber:D10}");
-
-    private static string? EncodeTags(IReadOnlyList<string> tags)
-        => tags is { Count: > 0 } ? "\u001F" + string.Join('\u001F', tags) + "\u001F" : null;
-
-    private static IReadOnlyList<string>? DecodeTags(string? encoded)
-    {
-        if (string.IsNullOrEmpty(encoded))
-        {
-            return null;
-        }
-
-        string[] parts = encoded.Trim('\u001F').Split('\u001F', StringSplitOptions.RemoveEmptyEntries);
-        return parts.Length == 0 ? null : parts;
-    }
 
     // Security tags are denormalized into the parent row (key/value pairs, pair-joined by 0x1F, key/value
     // split by 0x1E) so a single-row read round-trips them for the control-plane's authorization check
@@ -552,51 +539,6 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         }
 
         return list.Count > 0 ? list : null;
-    }
-
-    private static string? EncodeSources(IReadOnlyList<CatalogSourceRef> sources)
-    {
-        if (sources.Count == 0)
-        {
-            return null;
-        }
-
-        var builder = new StringBuilder();
-        for (int i = 0; i < sources.Count; i++)
-        {
-            if (i > 0)
-            {
-                builder.Append('\u001E');
-            }
-
-            builder.Append(sources[i].Name);
-            if (sources[i].Type is { } type)
-            {
-                builder.Append('\u001F').Append(type);
-            }
-        }
-
-        return builder.ToString();
-    }
-
-    private static IReadOnlyList<CatalogSourceRef> DecodeSources(string? encoded)
-    {
-        if (string.IsNullOrEmpty(encoded))
-        {
-            return [];
-        }
-
-        string[] records = encoded.Split('\u001E', StringSplitOptions.RemoveEmptyEntries);
-        var sources = new List<CatalogSourceRef>(records.Length);
-        foreach (string record in records)
-        {
-            int sep = record.IndexOf('\u001F', StringComparison.Ordinal);
-            sources.Add(sep < 0
-                ? new CatalogSourceRef(record, null)
-                : new CatalogSourceRef(record[..sep], record[(sep + 1)..]));
-        }
-
-        return sources;
     }
 
     private static string EscapeLike(string value)

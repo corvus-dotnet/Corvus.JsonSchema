@@ -367,9 +367,11 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             filter = b.And(filter, b.Eq("correlationId", cid));
         }
 
-        if (query.Tags is { Count: > 0 } qtags)
+        if (!query.Tags.IsEmpty)
         {
-            filter = b.And(filter, b.All("tags", qtags)); // $all = contains every queried tag
+            // $all = contains every queried tag; the needle is materialized to strings only here, at the BSON
+            // filter-builder leaf the driver requires — the stored row tags are never materialized.
+            filter = b.And(filter, b.All("tags", query.Tags.ToList()));
         }
 
         if (WorkflowContinuationToken.Decode(query.ContinuationToken) is { } after)
@@ -399,7 +401,7 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
                 }
 
                 string? correlationId = document["correlationId"].IsBsonNull ? null : document["correlationId"].AsString;
-                IReadOnlyList<string>? tags = document.TryGetValue("tags", out var tagsVal) && !tagsVal.IsBsonNull ? tagsVal.AsBsonArray.Select(t => t.AsString).ToList() : null;
+                TagSet tags = document.TryGetValue("tags", out var tagsVal) && !tagsVal.IsBsonNull ? TagSet.FromTags(tagsVal.AsBsonArray.Select(t => t.AsString)) : default;
                 var entry = new WorkflowRunIndexEntry(
                     document["workflowId"].AsString,
                     Enum.Parse<WorkflowRunStatus>(document["status"].AsString),
@@ -470,7 +472,7 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         ["awaitingCorrelationId"] = (BsonValue?)index.AwaitingCorrelationId ?? BsonNull.Value,
         ["errorType"] = (BsonValue?)index.ErrorType ?? BsonNull.Value,
         ["correlationId"] = (BsonValue?)index.CorrelationId ?? BsonNull.Value,
-        ["tags"] = index.Tags is { Count: > 0 } t ? new BsonArray(t) : BsonNull.Value,
+        ["tags"] = index.Tags.IsEmpty ? BsonNull.Value : new BsonArray(index.Tags.ToList()),
         ["securityTags"] = index.SecurityTags is { Count: > 0 } st
             ? new BsonArray(st.Select(s => new BsonDocument { ["k"] = s.Key, ["v"] = s.Value }))
             : BsonNull.Value,

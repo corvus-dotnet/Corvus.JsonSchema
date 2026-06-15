@@ -30,7 +30,7 @@ public sealed class WorkflowCheckpointState : IDisposable
         WorkflowWait? wait,
         WorkflowFault? fault,
         string? correlationId = null,
-        IReadOnlyList<string>? tags = null,
+        TagSet tags = default,
         IReadOnlyList<SecurityTag>? securityTags = null)
     {
         this.document = document;
@@ -91,7 +91,7 @@ public sealed class WorkflowCheckpointState : IDisposable
     public string? CorrelationId { get; }
 
     /// <summary>Gets the free-form tags applied to the run at creation, if any.</summary>
-    public IReadOnlyList<string>? Tags { get; }
+    public TagSet Tags { get; }
 
     /// <summary>Gets the security tags (KVP labels) applied to the run at creation, if any (design §14.2).</summary>
     public IReadOnlyList<SecurityTag>? SecurityTags { get; }

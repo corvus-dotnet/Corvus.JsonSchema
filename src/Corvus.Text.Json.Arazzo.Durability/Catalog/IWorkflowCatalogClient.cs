@@ -22,7 +22,7 @@ public interface IWorkflowCatalogClient
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The added version's metadata.</returns>
     /// <exception cref="ArgumentException">The package is malformed, or its workflow id already carries a <c>-vN</c> suffix.</exception>
-    ValueTask<CatalogVersion> AddAsync(ReadOnlyMemory<byte> packageUtf8, CatalogOwner owner, IReadOnlyList<string>? tags, CancellationToken cancellationToken);
+    ValueTask<CatalogVersion> AddAsync(ReadOnlyMemory<byte> packageUtf8, CatalogOwner owner, TagSet tags, CancellationToken cancellationToken);
 
     /// <summary>Adds a workflow version with security tags (KVP labels for row authorization, §14.2).</summary>
     /// <param name="packageUtf8">The package envelope as UTF-8 JSON.</param>
@@ -32,7 +32,7 @@ public interface IWorkflowCatalogClient
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The added version's metadata.</returns>
     /// <exception cref="ArgumentException">The package is malformed, or its workflow id already carries a <c>-vN</c> suffix.</exception>
-    ValueTask<CatalogVersion> AddAsync(ReadOnlyMemory<byte> packageUtf8, CatalogOwner owner, IReadOnlyList<string>? tags, IReadOnlyList<SecurityTag>? securityTags, CancellationToken cancellationToken);
+    ValueTask<CatalogVersion> AddAsync(ReadOnlyMemory<byte> packageUtf8, CatalogOwner owner, TagSet tags, IReadOnlyList<SecurityTag>? securityTags, CancellationToken cancellationToken);
 
     /// <summary>Searches the catalog, scoped to the caller's read reach (§14.2).</summary>
     /// <param name="query">The search.</param>
@@ -75,7 +75,7 @@ public interface IWorkflowCatalogClient
     /// <param name="context">The caller's access grant; the version must be within its write reach.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The updated version, or <see langword="null"/> if it does not exist or is not within write reach.</returns>
-    ValueTask<CatalogVersion?> UpdateAsync(string baseWorkflowId, int versionNumber, CatalogOwner? owner, IReadOnlyList<string>? tags, CatalogStatus? status, AccessContext context, CancellationToken cancellationToken);
+    ValueTask<CatalogVersion?> UpdateAsync(string baseWorkflowId, int versionNumber, CatalogOwner? owner, TagSet? tags, CatalogStatus? status, AccessContext context, CancellationToken cancellationToken);
 
     /// <summary>Deletes a single version, refusing while any workflow run references its versioned workflow id, if the caller's write reach admits it (§14.2).</summary>
     /// <param name="baseWorkflowId">The base workflow id.</param>

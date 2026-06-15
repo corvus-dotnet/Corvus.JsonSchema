@@ -56,8 +56,9 @@ public abstract class WorkflowCatalogStoreConformance
         ((string)version.CreatedBy).ShouldBe("alice");
         ((string)version.Hash).Length.ShouldBe(64);
         version.SourcesValue.Count.ShouldBe(1);
-        version.SourcesValue[0].Name.ShouldBe("petstore");
-        version.SourcesValue[0].Type.ShouldBe("openapi");
+        List<CatalogSourceRef> sources = version.SourcesValue.ToList();
+        sources[0].Name.ShouldBe("petstore");
+        sources[0].Type.ShouldBe("openapi");
     }
 
     [TestMethod]
@@ -138,8 +139,8 @@ public abstract class WorkflowCatalogStoreConformance
         await store.AddAsync("beta", Package("beta", title: "Beta Flow"), Meta(tags: ["prod"]), default);
 
         (await store.QueryAsync(new CatalogQuery(BaseWorkflowId: "alpha"), default)).Versions.Count.ShouldBe(1);
-        (await store.QueryAsync(new CatalogQuery(Tags: ["prod"]), default)).Versions.Count.ShouldBe(2);
-        (await store.QueryAsync(new CatalogQuery(Tags: ["prod", "billing"]), default)).Versions.Count.ShouldBe(1);
+        (await store.QueryAsync(new CatalogQuery(Tags: TagSet.FromTags(["prod"])), default)).Versions.Count.ShouldBe(2);
+        (await store.QueryAsync(new CatalogQuery(Tags: TagSet.FromTags(["prod", "billing"])), default)).Versions.Count.ShouldBe(1);
         (await store.QueryAsync(new CatalogQuery(Text: "alpha"), default)).Versions.Count.ShouldBe(1);
         (await store.QueryAsync(new CatalogQuery(Owner: "team-a@example.com"), default)).Versions.Count.ShouldBe(2);
         (await store.QueryAsync(new CatalogQuery(Status: CatalogStatus.Obsolete), default)).Versions.Count.ShouldBe(0);
@@ -202,12 +203,12 @@ public abstract class WorkflowCatalogStoreConformance
         clock.Advance(TimeSpan.FromHours(1));
 
         CatalogVersion? updated = await store.UpdateMetadataAsync(
-            "svc", 1, new CatalogMetadataPatch("bob", Owner: new CatalogOwner("Team B", "team-b@example.com"), Tags: ["retired"], Status: CatalogStatus.Obsolete), default);
+            "svc", 1, new CatalogMetadataPatch("bob", Owner: new CatalogOwner("Team B", "team-b@example.com"), Tags: TagSet.FromTags(["retired"]), Status: CatalogStatus.Obsolete), default);
 
         updated.ShouldNotBeNull();
         CatalogVersion updatedValue = updated.Value;
         updatedValue.OwnerValue.Name.ShouldBe("Team B");
-        updatedValue.TagsValue.ShouldBe(["retired"]);
+        updatedValue.TagsValue.ToList().ShouldBe(["retired"]);
         updatedValue.StatusValue.ShouldBe(CatalogStatus.Obsolete);
         updatedValue.LastUpdatedByOrNull.ShouldBe("bob");
         updatedValue.LastUpdatedAtValue.ShouldBe(T0.AddHours(1));
@@ -225,7 +226,7 @@ public abstract class WorkflowCatalogStoreConformance
 
         updated.ShouldNotBeNull();
         CatalogVersion updatedValue = updated.Value;
-        updatedValue.TagsValue.ShouldBe(["keep"]);
+        updatedValue.TagsValue.ToList().ShouldBe(["keep"]);
         updatedValue.OwnerValue.Email.ShouldBe("team-a@example.com");
         updatedValue.StatusValue.ShouldBe(CatalogStatus.Active);
     }
@@ -292,7 +293,7 @@ public abstract class WorkflowCatalogStoreConformance
         CatalogVersion added = await store.AddAsync(
             "secure-flow",
             Package("secure-flow"),
-            new CatalogMetadata(new CatalogOwner("Team A", "team-a@example.com"), "alice", null, tags),
+            new CatalogMetadata(new CatalogOwner("Team A", "team-a@example.com"), "alice", default, tags),
             default);
 
         added.SecurityTagsValue.OrderBy(t => t.Key).ThenBy(t => t.Value).ShouldBe(
@@ -325,7 +326,7 @@ public abstract class WorkflowCatalogStoreConformance
         ];
         foreach ((string baseId, SecurityTag[] tags) in rows)
         {
-            await store.AddAsync(baseId, Package(baseId), new CatalogMetadata(new CatalogOwner("Team A", "team-a@example.com"), "alice", null, tags), default);
+            await store.AddAsync(baseId, Package(baseId), new CatalogMetadata(new CatalogOwner("Team A", "team-a@example.com"), "alice", default, tags), default);
         }
 
         var claims = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal)
@@ -368,7 +369,7 @@ public abstract class WorkflowCatalogStoreConformance
     }
 
     private static CatalogMetadata Meta(IReadOnlyList<string>? tags = null)
-        => new(new CatalogOwner("Team A", "team-a@example.com"), "alice", tags);
+        => new(new CatalogOwner("Team A", "team-a@example.com"), "alice", TagSet.FromTags(tags));
 
     private static ReadOnlyMemory<byte> Package(string workflowId, string title = "Nightly Reconcile")
     {

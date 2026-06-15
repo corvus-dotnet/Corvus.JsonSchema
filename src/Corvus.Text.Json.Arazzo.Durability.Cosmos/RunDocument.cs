@@ -74,15 +74,10 @@ public readonly partial struct RunDocument
             writer.WriteString(JsonPropertyNames.CorrelationIdUtf8, correlationId);
         }
 
-        if (index.Tags is { Count: > 0 } tags)
+        if (!index.Tags.IsEmpty)
         {
-            writer.WriteStartArray(JsonPropertyNames.TagsUtf8);
-            foreach (string tag in tags)
-            {
-                writer.WriteStringValue(tag);
-            }
-
-            writer.WriteEndArray();
+            writer.WritePropertyName(JsonPropertyNames.TagsUtf8);
+            index.Tags.WriteTo(writer);
         }
 
         if (index.SecurityTags is { Count: > 0 } securityTags)
@@ -125,16 +120,6 @@ public readonly partial struct RunDocument
             }
         }
 
-        List<string>? tags = null;
-        if (this.Tags.IsNotUndefined())
-        {
-            tags = [];
-            foreach (JsonString tag in this.Tags.EnumerateArray())
-            {
-                tags.Add((string)tag);
-            }
-        }
-
         return new WorkflowRunIndexEntry(
             (string)this.WorkflowId,
             Enum.Parse<WorkflowRunStatus>((string)this.Status),
@@ -145,7 +130,7 @@ public readonly partial struct RunDocument
             this.AwaitingCorrelationId.IsNotUndefined() ? (string)this.AwaitingCorrelationId : null,
             this.ErrorType.IsNotUndefined() ? (string)this.ErrorType : null,
             CorrelationId: this.CorrelationId.IsNotUndefined() ? (string)this.CorrelationId : null,
-            Tags: tags is { Count: > 0 } ? tags : null,
+            Tags: TagSet.CopyFrom(this.Tags),
             SecurityTags: securityTags is { Count: > 0 } ? securityTags : null);
     }
 }

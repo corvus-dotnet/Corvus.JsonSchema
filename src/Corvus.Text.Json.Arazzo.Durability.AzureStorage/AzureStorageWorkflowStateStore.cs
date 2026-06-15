@@ -382,13 +382,11 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         // Table OData cannot match inside the serialized TagsJson, so a contains-ALL tag predicate is applied
         // client-side. It must run before the keyset "take Limit (plus one to detect a further page)" cut so
         // paging stays correct: filter the materialised stream, then take.
-        IReadOnlyList<string>? qtags = query.Tags is { Count: > 0 } t ? t : null;
-
         var runs = new List<WorkflowRunListing>();
         await foreach (TableEntity entity in this.index.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
         {
             WorkflowRunIndexEntry entry = ReadIndexEntity(entity);
-            if (qtags is not null && !(entry.Tags is { } rt && qtags.All(rt.Contains)))
+            if (!query.Tags.AllContainedIn(entry.Tags))
             {
                 continue;
             }
@@ -445,9 +443,9 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             entity["CorrelationId"] = cid;
         }
 
-        if (index.Tags is { Count: > 0 } t)
+        if (index.Tags.ToJsonStringOrNull() is { } tagsJson)
         {
-            entity["TagsJson"] = System.Text.Json.JsonSerializer.Serialize(t);
+            entity["TagsJson"] = tagsJson;
         }
 
         if (index.SecurityTags is { Count: > 0 } st)
@@ -471,7 +469,7 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             entity.GetString("AwaitingCorrelationId"),
             entity.GetString("ErrorType"),
             CorrelationId: entity.GetString("CorrelationId"),
-            Tags: entity.GetString("TagsJson") is { } tagsJson ? System.Text.Json.JsonSerializer.Deserialize<List<string>>(tagsJson) : null,
+            Tags: TagSet.FromJsonStringOrEmpty(entity.GetString("TagsJson")),
             SecurityTags: Security.SecurityTagSet.FromJsonStringOrNull(entity.GetString("SecurityTagsJson")));
     }
 }
