@@ -90,4 +90,15 @@ public interface ISourceCredentialStore
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The entitled binding as a pooled document the caller must dispose, or <see langword="null"/>.</returns>
     ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> ResolveForUsageAsync(string sourceName, string environment, SecurityTagSet runTags, CancellationToken cancellationToken);
+
+    /// <summary>Evaluates whether <paramref name="tags"/> are entitled to use the credential bindings configured for
+    /// <paramref name="sourceName"/> across <strong>all</strong> environments (design §13) — the catalog-time usage
+    /// check that gates declaring the source before any run. Returns <see cref="CredentialSourceAccess.Granted"/> if any
+    /// binding for the source is usable by the tags (label-superset), <see cref="CredentialSourceAccess.Denied"/> if the
+    /// source has bindings but none is usable, and <see cref="CredentialSourceAccess.Unconfigured"/> if it has none.</summary>
+    /// <param name="sourceName">The Arazzo source description name.</param>
+    /// <param name="tags">The security tags to evaluate (typically the catalogued workflow version's tags, which its runs inherit).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The access evaluation.</returns>
+    ValueTask<CredentialSourceAccess> EvaluateSourceAccessAsync(string sourceName, SecurityTagSet tags, CancellationToken cancellationToken);
 }
