@@ -56,6 +56,47 @@ public readonly partial struct SourceCredentialBinding
     /// <summary>Gets the optimistic-concurrency token.</summary>
     public WorkflowEtag EtagValue => new((string)this.Etag);
 
+    /// <summary>Gets the security tags (KVP labels) scoping this binding for row authorization (§14.2) as a deferred
+    /// holder over the persisted bytes — empty on an unscoped (shared) binding.</summary>
+    public SecurityTagSet SecurityTagsValue => SecurityTagSet.CopyFrom(this.SecurityTags);
+
+    /// <summary>Whether a run carrying <paramref name="runTags"/> is entitled to use this binding (design §13/§14.2):
+    /// it is, iff the run satisfies <em>every</em> security tag the binding carries (label-superset). An unscoped
+    /// (untagged) binding is shared and usable by any run; a tagged binding is usable only by a run that carries all
+    /// of its tags.</summary>
+    /// <param name="runTags">The run's own security tags.</param>
+    /// <returns><see langword="true"/> if the run is entitled to use this binding.</returns>
+    public bool IsUsableBy(SecurityTagSet runTags)
+    {
+        if (this.SecurityTags.IsUndefined() || this.SecurityTags.GetArrayLength() == 0)
+        {
+            return true;
+        }
+
+        List<SecurityTag> runTagList = runTags.ToList();
+        foreach (SecurityTagInfo required in this.SecurityTags.EnumerateArray())
+        {
+            string key = (string)required.Key;
+            string value = (string)required.Value;
+            bool matched = false;
+            foreach (SecurityTag have in runTagList)
+            {
+                if (string.Equals(have.Key, key, StringComparison.Ordinal) && string.Equals(have.Value, value, StringComparison.Ordinal))
+                {
+                    matched = true;
+                    break;
+                }
+            }
+
+            if (!matched)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     /// <summary>Gets the number of secret references on the binding.</summary>
     public int SecretRefCount => this.SecretRefs.IsNotUndefined() ? this.SecretRefs.GetArrayLength() : 0;
 
@@ -134,6 +175,12 @@ public readonly partial struct SourceCredentialBinding
             writer.WriteString(JsonPropertyNames.DescriptionUtf8, description);
         }
 
+        if (!definition.SecurityTags.IsEmpty)
+        {
+            writer.WritePropertyName(JsonPropertyNames.SecurityTagsUtf8);
+            definition.SecurityTags.WriteTo(writer);
+        }
+
         writer.WriteString(JsonPropertyNames.CreatedByUtf8, actor);
         writer.WriteString(JsonPropertyNames.CreatedAtUtf8, createdAt.ToString("O", CultureInfo.InvariantCulture));
         writer.WriteString(JsonPropertyNames.EtagUtf8, etag.Value ?? string.Empty);
@@ -160,6 +207,14 @@ public readonly partial struct SourceCredentialBinding
         if (definition.Description is { } description)
         {
             writer.WriteString(JsonPropertyNames.DescriptionUtf8, description);
+        }
+
+        // Security tags are immutable identity (the binding's row-authorization scope) — carried forward from the
+        // existing binding, never taken from the update definition.
+        if (!this.SecurityTagsValue.IsEmpty)
+        {
+            writer.WritePropertyName(JsonPropertyNames.SecurityTagsUtf8);
+            this.SecurityTagsValue.WriteTo(writer);
         }
 
         writer.WriteString(JsonPropertyNames.CreatedByUtf8, this.CreatedByValue);

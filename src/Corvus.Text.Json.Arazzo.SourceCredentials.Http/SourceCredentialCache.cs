@@ -125,7 +125,7 @@ public sealed class SourceCredentialCache : IDisposable
                 return current.Provider;
             }
 
-            using ParsedJsonDocument<SourceCredentialBinding>? document = await this.store.GetAsync(key.SourceName, key.Environment, cancellationToken).ConfigureAwait(false);
+            using ParsedJsonDocument<SourceCredentialBinding>? document = await this.store.ResolveForUsageAsync(key.SourceName, key.Environment, default, cancellationToken).ConfigureAwait(false);
             DateTimeOffset expiresAt = this.timeProvider.GetUtcNow() + this.ttl;
 
             if (document is null)

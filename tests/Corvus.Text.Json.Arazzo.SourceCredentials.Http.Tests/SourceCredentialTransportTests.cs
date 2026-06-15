@@ -50,7 +50,7 @@ public sealed class SourceCredentialTransportTests
 
         // Rotate the reference in the store, then let the cache TTL lapse — the same bound provider must pick up the
         // new credential on the next request (the property a resumed run relies on, §13.3).
-        await f.Store.UpdateAsync("petstore", "production", ApiKey("petstore", "production", "petstore-production-rotated"), etag, "bob", default);
+        await f.Store.UpdateAsync("petstore", "production", ApiKey("petstore", "production", "petstore-production-rotated"), etag, "bob", AccessContext.System, default);
         f.Clock.Advance(TimeSpan.FromMinutes(6));
 
         using (var second = new HttpRequestMessage(HttpMethod.Get, "https://petstore.example/pets"))
