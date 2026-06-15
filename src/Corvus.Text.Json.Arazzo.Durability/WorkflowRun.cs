@@ -24,8 +24,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
 {
     private readonly IWorkflowStateStore store;
     private readonly TimeProvider timeProvider;
-    private readonly Dictionary<string, int> retryCounts;
-    private readonly Dictionary<string, JsonElement> stepOutputs;
+    private readonly PooledUtf8Map<int> retryCounts;
+    private readonly PooledUtf8Map<JsonElement> stepOutputs;
     private readonly DateTimeOffset createdAt;
     private readonly string? correlationId;
     private readonly TagSet tags;
@@ -45,10 +45,10 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         TimeProvider timeProvider,
         WorkflowRunStatus status,
         int cursor,
-        Dictionary<string, int> retryCounts,
+        PooledUtf8Map<int> retryCounts,
         Dictionary<string, byte[]> correlationTokens,
         JsonElement inputs,
-        Dictionary<string, JsonElement> stepOutputs,
+        PooledUtf8Map<JsonElement> stepOutputs,
         WorkflowEtag etag,
         DateTimeOffset createdAt,
         string? correlationId,
@@ -146,10 +146,10 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             time,
             WorkflowRunStatus.Pending,
             cursor: 0,
-            retryCounts: [],
+            retryCounts: PooledUtf8Map<int>.Rent(0),
             correlationTokens: [],
             inputs,
-            stepOutputs: [],
+            stepOutputs: PooledUtf8Map<JsonElement>.Rent(0),
             etag: WorkflowEtag.None,
             createdAt: time.GetUtcNow(),
             correlationId: correlationId ?? Activity.Current?.TraceId.ToString(),
@@ -224,19 +224,19 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     public bool TryGetStepOutputs(string stepId, out JsonElement outputs) => this.stepOutputs.TryGetValue(stepId, out outputs);
 
     /// <inheritdoc/>
-    public int GetRetryCount(string stepId) => this.retryCounts.GetValueOrDefault(stepId);
+    public int GetRetryCount(string stepId) => this.retryCounts.TryGetValue(stepId, out int count) ? count : 0;
 
     /// <inheritdoc/>
     public void SetStepOutputs(string stepId, in JsonElement outputs)
     {
         if (outputs.ValueKind != JsonValueKind.Undefined)
         {
-            this.stepOutputs[stepId] = outputs;
+            this.stepOutputs.Set(stepId, outputs);
         }
     }
 
     /// <inheritdoc/>
-    public void SetRetryCount(string stepId, int count) => this.retryCounts[stepId] = count;
+    public void SetRetryCount(string stepId, int count) => this.retryCounts.Set(stepId, count);
 
     /// <summary>
     /// Persists this freshly created run in its <see cref="WorkflowRunStatus.Pending"/> state so a dispatcher
@@ -334,7 +334,20 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     }
 
     /// <inheritdoc/>
-    public void Dispose() => this.resumedState?.Dispose();
+    public void Dispose()
+    {
+        if (this.resumedState is { } state)
+        {
+            // A resumed run shares the state's working maps; the state owns and disposes them (with its document).
+            state.Dispose();
+        }
+        else
+        {
+            // A fresh run owns the maps it created in CreateNew.
+            this.retryCounts.Dispose();
+            this.stepOutputs.Dispose();
+        }
+    }
 
     private async ValueTask PersistAsync(JsonElement outputs, CancellationToken cancellationToken)
     {

@@ -22,6 +22,7 @@ public class CheckpointDeserializeBenchmarks
     private byte[] typical = null!;     // 0 retry + 0 correlation + 3 stepOutputs + 0 securityTags (a common resume)
     private byte[] empty = null!;       // 0 / 0 / 0 / 0 — only the scalars
     private byte[] large = null!;       // 40 retry + 40 stepOutputs — a long workflow (dict-growth re-alloc case)
+    private byte[] xlarge = null!;      // 200 retry + 200 stepOutputs — scaling baseline for the working-state spike
 
     [GlobalSetup]
     public void Setup()
@@ -64,6 +65,24 @@ public class CheckpointDeserializeBenchmarks
         }
 
         this.large = Build(manyRetries, [], manyOutputs, inputsDoc.RootElement, default);
+
+        var xlRetries = new Dictionary<string, int>();
+        var xlOutputBuilder = new System.Text.StringBuilder("{");
+        for (int i = 0; i < 200; i++)
+        {
+            xlRetries[$"step-{i}"] = i % 3;
+            xlOutputBuilder.Append(i == 0 ? "" : ",").Append($"\"step-{i}\":{{\"id\":{i}}}");
+        }
+
+        xlOutputBuilder.Append('}');
+        using ParsedJsonDocument<JsonElement> xlOutputsDoc = ParsedJsonDocument<JsonElement>.Parse(xlOutputBuilder.ToString().AsMemory());
+        var xlOutputs = new Dictionary<string, JsonElement>();
+        foreach (JsonProperty<JsonElement> property in xlOutputsDoc.RootElement.EnumerateObject())
+        {
+            xlOutputs[property.Name] = property.Value;
+        }
+
+        this.xlarge = Build(xlRetries, [], xlOutputs, inputsDoc.RootElement, default);
     }
 
     /// <summary>The unavoidable floor: parse the full checkpoint document (what any read must do).</summary>
@@ -111,26 +130,50 @@ public class CheckpointDeserializeBenchmarks
         return state.Cursor;
     }
 
+    /// <summary>A very long workflow (200 retries + 200 stepOutputs): the scaling baseline for the working-state materialization spike.</summary>
+    /// <returns>The cursor.</returns>
+    [Benchmark]
+    public int Deserialize_XLarge()
+    {
+        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(this.xlarge);
+        return state.Cursor;
+    }
+
     private static byte[] Build(
         Dictionary<string, int> retryCounters,
         Dictionary<string, byte[]> correlationTokens,
         Dictionary<string, JsonElement> stepOutputs,
         JsonElement inputs,
         SecurityTagSet securityTags)
-        => WorkflowCheckpointSerializer.Serialize(
+    {
+        // Setup-time fixture construction (not the measured path): mirror the production working-state maps.
+        using var retryMap = PooledUtf8Map<int>.Rent(retryCounters.Count);
+        foreach (KeyValuePair<string, int> counter in retryCounters)
+        {
+            retryMap.Set(counter.Key, counter.Value);
+        }
+
+        using var stepMap = PooledUtf8Map<JsonElement>.Rent(stepOutputs.Count);
+        foreach (KeyValuePair<string, JsonElement> step in stepOutputs)
+        {
+            stepMap.Set(step.Key, step.Value);
+        }
+
+        return WorkflowCheckpointSerializer.Serialize(
             new WorkflowRunId("run-0001"),
             "wf-orders",
             WorkflowRunStatus.Suspended,
             cursor: 3,
             createdAt: DateTimeOffset.UnixEpoch,
-            retryCounters: retryCounters,
+            retryCounters: retryMap,
             correlationTokens: correlationTokens,
             inputs: inputs,
-            stepOutputs: stepOutputs,
+            stepOutputs: stepMap,
             outputs: default,
             wait: WorkflowWait.Timer(DateTimeOffset.UnixEpoch),
             fault: null,
             correlationId: "00-trace-01",
             tags: TagSet.FromTags(["nightly", "eu"]),
             securityTags: securityTags);
+    }
 }

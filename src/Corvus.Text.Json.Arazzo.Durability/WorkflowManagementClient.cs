@@ -454,6 +454,10 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
 
         // The patched/composed context document must outlive the call to Serialize that reads its elements.
         ParsedJsonDocument<JsonElement>? patchedContext = null;
+
+        // A state-patch resume builds a fresh step-outputs map (over the patched context) that this method owns and
+        // must return to the pool; the other modes reuse the state's map, which the state disposes.
+        PooledUtf8Map<JsonElement>? patchedStepOutputs = null;
         try
         {
             using (WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(cp.Utf8))
@@ -466,7 +470,7 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
 
                 int cursor = state.Cursor;
                 JsonElement inputs = state.Inputs;
-                Dictionary<string, JsonElement> stepOutputs = state.StepOutputs;
+                PooledUtf8Map<JsonElement> stepOutputs = state.StepOutputs;
 
                 switch (options.Mode)
                 {
@@ -478,7 +482,7 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
                     case ResumeMode.Skip:
                         if (state.Fault is { } fault && options.SkipOutputs.ValueKind != JsonValueKind.Undefined)
                         {
-                            stepOutputs[fault.StepId] = options.SkipOutputs;
+                            stepOutputs.Set(fault.StepId, options.SkipOutputs);
                         }
 
                         cursor = options.TargetCursor ?? state.Cursor + 1;
@@ -494,6 +498,7 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
                         JsonElement context = patchedContext!.RootElement;
                         inputs = context.TryGetProperty("inputs"u8, out JsonElement patchedInputs) ? patchedInputs : default;
                         stepOutputs = ReadStepOutputs(context);
+                        patchedStepOutputs = stepOutputs;
                         break;
 
                     default:
@@ -531,6 +536,7 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
         }
         finally
         {
+            patchedStepOutputs?.Dispose();
             patchedContext?.Dispose();
         }
 
@@ -553,7 +559,7 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
     /// </summary>
     private static bool TryApplyStatePatch(
         in JsonElement inputs,
-        Dictionary<string, JsonElement> stepOutputs,
+        PooledUtf8Map<JsonElement> stepOutputs,
         in JsonElement patch,
         out ParsedJsonDocument<JsonElement>? patched)
     {
@@ -587,10 +593,10 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
         }
     }
 
-    private static byte[] ComposeContext(in JsonElement inputs, Dictionary<string, JsonElement> stepOutputs)
+    private static byte[] ComposeContext(in JsonElement inputs, PooledUtf8Map<JsonElement> stepOutputs)
         => PersistedJson.ToArray(
             (Inputs: inputs, StepOutputs: stepOutputs),
-            static (Utf8JsonWriter writer, in (JsonElement Inputs, Dictionary<string, JsonElement> StepOutputs) c) =>
+            static (Utf8JsonWriter writer, in (JsonElement Inputs, PooledUtf8Map<JsonElement> StepOutputs) c) =>
             {
                 writer.WriteStartObject();
 
@@ -602,30 +608,34 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
                 }
 
                 writer.WriteStartObject("stepOutputs"u8);
-                foreach (KeyValuePair<string, JsonElement> step in c.StepOutputs)
+                PooledUtf8Map<JsonElement>.Enumerator step = c.StepOutputs.GetEnumerator();
+                while (step.MoveNext())
                 {
-                    if (step.Value.ValueKind == JsonValueKind.Undefined)
+                    if (step.CurrentValue.ValueKind == JsonValueKind.Undefined)
                     {
                         continue;
                     }
 
-                    writer.WritePropertyName(step.Key);
-                    step.Value.WriteTo(writer);
+                    writer.WritePropertyName(step.CurrentKey);
+                    step.CurrentValue.WriteTo(writer);
                 }
 
                 writer.WriteEndObject();
                 writer.WriteEndObject();
             });
 
-    private static Dictionary<string, JsonElement> ReadStepOutputs(in JsonElement context)
+    private static PooledUtf8Map<JsonElement> ReadStepOutputs(in JsonElement context)
     {
-        Dictionary<string, JsonElement> stepOutputs = [];
-        if (context.TryGetProperty("stepOutputs"u8, out JsonElement stepOutputsElement))
+        if (!context.TryGetProperty("stepOutputs"u8, out JsonElement stepOutputsElement))
         {
-            foreach (JsonProperty<JsonElement> step in stepOutputsElement.EnumerateObject())
-            {
-                stepOutputs[step.Name] = step.Value;
-            }
+            return PooledUtf8Map<JsonElement>.Rent(0);
+        }
+
+        var stepOutputs = PooledUtf8Map<JsonElement>.Rent(stepOutputsElement.GetPropertyCount());
+        foreach (JsonProperty<JsonElement> step in stepOutputsElement.EnumerateObject())
+        {
+            using UnescapedUtf8JsonString name = step.Utf8NameSpan;
+            stepOutputs.Set(name.Span, step.Value);
         }
 
         return stepOutputs;
