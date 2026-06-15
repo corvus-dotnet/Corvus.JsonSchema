@@ -35,18 +35,20 @@ public static class WorkflowIdentity
         return SecurityTagSet.FromTags(tags);
     }
 
-    /// <summary>Returns the owner-identity portion of a version's tags — the full set with the workflow-identity tag
-    /// removed — used to compare ownership when a new version is added to an existing base id.</summary>
+    /// <summary>Returns the administrator-identity portion of a version's tags — the full stamped <c>sys:</c> identity
+    /// with the workflow-identity tag removed — used to compare administration when a new version is added to an
+    /// existing base id.</summary>
     /// <param name="versionTags">A catalogued version's security tags.</param>
-    /// <returns>The owner-identity tags.</returns>
-    public static SecurityTagSet OwnerTags(SecurityTagSet versionTags)
+    /// <returns>The administrator-identity tags.</returns>
+    public static SecurityTagSet AdministratorIdentity(SecurityTagSet versionTags)
         => SecurityTagSet.FromTags(versionTags.ToList().Where(t => !string.Equals(t.Key, WorkflowTagKey, StringComparison.Ordinal)).ToList());
 
-    /// <summary>Whether two tag sets are equal as sets (order-independent), used as the ownership comparison.</summary>
+    /// <summary>Whether two administrator identities are equal as sets (order-independent), the administration
+    /// membership comparison.</summary>
     /// <param name="a">The first set.</param>
     /// <param name="b">The second set.</param>
     /// <returns><see langword="true"/> if they contain exactly the same tags.</returns>
-    public static bool SameOwner(SecurityTagSet a, SecurityTagSet b)
+    public static bool SameAdministrator(SecurityTagSet a, SecurityTagSet b)
     {
         List<SecurityTag> left = a.ToList();
         List<SecurityTag> right = b.ToList();
