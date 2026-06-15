@@ -84,6 +84,13 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
             CatalogVersion version = await this.catalog.AddAsync(parameters.Package, owner, tags, securityTags, cancellationToken).ConfigureAwait(false);
             return AddCatalogVersionResult.Created(Models.CatalogVersionSummary.From(version), workspace);
         }
+        catch (Security.SourceCredentialAccessDeniedException ex)
+        {
+            // The workflow declares a credential-protected source the submitter is not entitled to use (§13) — refuse
+            // the submission rather than catalogue a version whose runs could never authenticate the source.
+            return AddCatalogVersionResult.BadRequest(
+                Problem("source-access-denied", "Source credential access denied", 400, ex.Message), workspace);
+        }
         catch (ArgumentException ex)
         {
             return AddCatalogVersionResult.BadRequest(

@@ -335,6 +335,27 @@ public abstract class SourceCredentialStoreConformance
         (await store.ResolveForUsageAsync("petstore", "production", SecurityTagSet.FromTags([new SecurityTag("team", "ops")]), default)).ShouldBeNull();
     }
 
+    [TestMethod]
+    public async Task Source_access_evaluation_is_granted_denied_or_unconfigured()
+    {
+        ISourceCredentialStore store = await this.NewStoreAsync();
+        using (await store.AddAsync(Tagged("petstore", "production", "acme"), "system", default))
+        {
+        }
+
+        SecurityTagSet acme = SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]);
+        SecurityTagSet globex = SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]);
+
+        // Granted: acme's tags can use a petstore binding.
+        (await store.EvaluateSourceAccessAsync("petstore", acme, default)).ShouldBe(CredentialSourceAccess.Granted);
+
+        // Denied: globex's tags cannot use any petstore binding, but bindings exist.
+        (await store.EvaluateSourceAccessAsync("petstore", globex, default)).ShouldBe(CredentialSourceAccess.Denied);
+
+        // Unconfigured: a source with no bindings at all — declaring it is allowed (unauthenticated source).
+        (await store.EvaluateSourceAccessAsync("billing", acme, default)).ShouldBe(CredentialSourceAccess.Unconfigured);
+    }
+
     private static SourceCredentialDefinition ApiKey(string sourceName, string environment) => new(
         sourceName,
         environment,
