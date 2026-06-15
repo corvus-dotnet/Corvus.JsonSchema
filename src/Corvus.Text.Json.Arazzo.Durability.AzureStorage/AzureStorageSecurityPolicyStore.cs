@@ -28,6 +28,14 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
     private const string MetaPartition = "meta";
     private const string GenerationRowKey = "generation";
 
+    // Singleton comparers (created once) for the client-side snapshot ordering, since Table queries are unordered:
+    // rules by name, bindings by Order then id.
+    private static readonly IComparer<ParsedJsonDocument<SecurityRuleDocument>> ByRuleName =
+        Comparer<ParsedJsonDocument<SecurityRuleDocument>>.Create(static (a, b) => string.CompareOrdinal(a.RootElement.NameValue, b.RootElement.NameValue));
+
+    private static readonly IComparer<ParsedJsonDocument<SecurityBindingDocument>> ByBindingOrder =
+        Comparer<ParsedJsonDocument<SecurityBindingDocument>>.Create(static (a, b) => a.RootElement.OrderValue != b.RootElement.OrderValue ? a.RootElement.OrderValue.CompareTo(b.RootElement.OrderValue) : string.CompareOrdinal(a.RootElement.IdValue, b.RootElement.IdValue));
+
     private readonly TableClient rules;
     private readonly TableClient bindings;
     private readonly TableClient meta;
@@ -121,8 +129,8 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
     }
 
     /// <inheritdoc/>
-    public async ValueTask<PooledDocumentList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
-        => new PooledDocumentList<SecurityRuleDocument>(await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false));
+    public ValueTask<PooledDocumentList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
+        => this.ReadRulesAsync(cancellationToken);
 
     /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
@@ -175,8 +183,8 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
     }
 
     /// <inheritdoc/>
-    public async ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
-        => new PooledDocumentList<SecurityBindingDocument>(await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false));
+    public ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
+        => this.ReadBindingsAsync(cancellationToken);
 
     /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
@@ -209,8 +217,8 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
     /// <inheritdoc/>
     public async ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
     {
-        var ruleList = new PooledDocumentList<SecurityRuleDocument>(await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false));
-        var bindingList = new PooledDocumentList<SecurityBindingDocument>(await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false));
+        PooledDocumentList<SecurityRuleDocument> ruleList = await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
+        PooledDocumentList<SecurityBindingDocument> bindingList = await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
         NullableResponse<TableEntity> metaEntity = await this.meta.GetEntityIfExistsAsync<TableEntity>(MetaPartition, GenerationRowKey, cancellationToken: cancellationToken).ConfigureAwait(false);
         long generation = metaEntity.HasValue ? metaEntity.Value!.GetInt64("Generation") ?? 0 : 0;
         return new SecurityPolicySnapshot(ruleList, bindingList, generation);
@@ -227,9 +235,9 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
         return entity.HasValue ? entity.Value!.GetBinary("Doc") : null;
     }
 
-    private async ValueTask<List<ParsedJsonDocument<SecurityRuleDocument>>> ReadRulesAsync(CancellationToken cancellationToken)
+    private async ValueTask<PooledDocumentList<SecurityRuleDocument>> ReadRulesAsync(CancellationToken cancellationToken)
     {
-        var list = new List<ParsedJsonDocument<SecurityRuleDocument>>();
+        var list = new PooledDocumentList<SecurityRuleDocument>();
         await foreach (TableEntity entity in this.rules.QueryAsync<TableEntity>(cancellationToken: cancellationToken).ConfigureAwait(false))
         {
             if (entity.GetBinary("Doc") is { } bytes)
@@ -238,13 +246,13 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
             }
         }
 
-        list.Sort(static (a, b) => string.CompareOrdinal(a.RootElement.NameValue, b.RootElement.NameValue));
+        list.Sort(ByRuleName);
         return list;
     }
 
-    private async ValueTask<List<ParsedJsonDocument<SecurityBindingDocument>>> ReadBindingsAsync(CancellationToken cancellationToken)
+    private async ValueTask<PooledDocumentList<SecurityBindingDocument>> ReadBindingsAsync(CancellationToken cancellationToken)
     {
-        var list = new List<ParsedJsonDocument<SecurityBindingDocument>>();
+        var list = new PooledDocumentList<SecurityBindingDocument>();
         await foreach (TableEntity entity in this.bindings.QueryAsync<TableEntity>(cancellationToken: cancellationToken).ConfigureAwait(false))
         {
             if (entity.GetBinary("Doc") is { } bytes)
@@ -253,7 +261,7 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
             }
         }
 
-        list.Sort(static (a, b) => a.RootElement.OrderValue != b.RootElement.OrderValue ? a.RootElement.OrderValue.CompareTo(b.RootElement.OrderValue) : string.CompareOrdinal(a.RootElement.IdValue, b.RootElement.IdValue));
+        list.Sort(ByBindingOrder);
         return list;
     }
 

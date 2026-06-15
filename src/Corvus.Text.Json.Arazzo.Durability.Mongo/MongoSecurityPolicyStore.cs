@@ -21,6 +21,14 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
 {
     private const string MetaId = "meta";
 
+    // Singleton comparers (created once) for the client-side snapshot ordering, since the queries do not order: rules by
+    // their name and bindings by Order then id.
+    private static readonly IComparer<ParsedJsonDocument<SecurityRuleDocument>> ByRuleName =
+        Comparer<ParsedJsonDocument<SecurityRuleDocument>>.Create(static (a, b) => string.CompareOrdinal(a.RootElement.NameValue, b.RootElement.NameValue));
+
+    private static readonly IComparer<ParsedJsonDocument<SecurityBindingDocument>> ByBindingOrder =
+        Comparer<ParsedJsonDocument<SecurityBindingDocument>>.Create(static (a, b) => a.RootElement.OrderValue != b.RootElement.OrderValue ? a.RootElement.OrderValue.CompareTo(b.RootElement.OrderValue) : string.CompareOrdinal(a.RootElement.IdValue, b.RootElement.IdValue));
+
     private readonly IMongoClient client;
     private readonly bool ownsClient;
     private readonly TimeProvider timeProvider;
@@ -97,8 +105,8 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
-    public async ValueTask<PooledDocumentList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
-        => new PooledDocumentList<SecurityRuleDocument>(await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false));
+    public ValueTask<PooledDocumentList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
+        => this.ReadRulesAsync(cancellationToken);
 
     /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
@@ -147,8 +155,8 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
-    public async ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
-        => new PooledDocumentList<SecurityBindingDocument>(await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false));
+    public ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
+        => this.ReadBindingsAsync(cancellationToken);
 
     /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
@@ -177,8 +185,8 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     /// <inheritdoc/>
     public async ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
     {
-        var ruleList = new PooledDocumentList<SecurityRuleDocument>(await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false));
-        var bindingList = new PooledDocumentList<SecurityBindingDocument>(await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false));
+        PooledDocumentList<SecurityRuleDocument> ruleList = await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
+        PooledDocumentList<SecurityBindingDocument> bindingList = await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
         BsonDocument? metaDoc = await this.meta.Find(Builders<BsonDocument>.Filter.Eq("_id", MetaId)).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
         long generation = metaDoc is not null && metaDoc.TryGetValue("generation", out BsonValue value) ? value.ToInt64() : 0;
         return new SecurityPolicySnapshot(ruleList, bindingList, generation);
@@ -203,29 +211,29 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         return document?["doc"].AsBsonBinaryData.Bytes;
     }
 
-    private async ValueTask<List<ParsedJsonDocument<SecurityRuleDocument>>> ReadRulesAsync(CancellationToken cancellationToken)
+    private async ValueTask<PooledDocumentList<SecurityRuleDocument>> ReadRulesAsync(CancellationToken cancellationToken)
     {
-        var list = new List<ParsedJsonDocument<SecurityRuleDocument>>();
+        var list = new PooledDocumentList<SecurityRuleDocument>();
         List<BsonDocument> documents = await this.rules.Find(Builders<BsonDocument>.Filter.Empty).ToListAsync(cancellationToken).ConfigureAwait(false);
         foreach (BsonDocument document in documents)
         {
             list.Add(PersistedJson.ToPooledDocument<SecurityRuleDocument>(document["doc"].AsBsonBinaryData.Bytes));
         }
 
-        list.Sort(static (a, b) => string.CompareOrdinal(a.RootElement.NameValue, b.RootElement.NameValue));
+        list.Sort(ByRuleName);
         return list;
     }
 
-    private async ValueTask<List<ParsedJsonDocument<SecurityBindingDocument>>> ReadBindingsAsync(CancellationToken cancellationToken)
+    private async ValueTask<PooledDocumentList<SecurityBindingDocument>> ReadBindingsAsync(CancellationToken cancellationToken)
     {
-        var list = new List<ParsedJsonDocument<SecurityBindingDocument>>();
+        var list = new PooledDocumentList<SecurityBindingDocument>();
         List<BsonDocument> documents = await this.bindings.Find(Builders<BsonDocument>.Filter.Empty).ToListAsync(cancellationToken).ConfigureAwait(false);
         foreach (BsonDocument document in documents)
         {
             list.Add(PersistedJson.ToPooledDocument<SecurityBindingDocument>(document["doc"].AsBsonBinaryData.Bytes));
         }
 
-        list.Sort(static (a, b) => a.RootElement.OrderValue != b.RootElement.OrderValue ? a.RootElement.OrderValue.CompareTo(b.RootElement.OrderValue) : string.CompareOrdinal(a.RootElement.IdValue, b.RootElement.IdValue));
+        list.Sort(ByBindingOrder);
         return list;
     }
 
