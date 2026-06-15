@@ -23,10 +23,14 @@ public static class SourceCredentialKey
     /// <param name="usageTags">The binding's usage tags.</param>
     /// <returns>The canonical, order-independent discriminator string.</returns>
     public static string Discriminator(SecurityTagSet managementTags, SecurityTagSet usageTags)
-        => $"{Canonical(managementTags)}{Separator}{Canonical(usageTags)}";
+        => $"{CanonicalTags(managementTags)}{Separator}{CanonicalTags(usageTags)}";
 
-    // Canonical, order-independent string form of a single tag set.
-    private static string Canonical(SecurityTagSet tags)
+    /// <summary>Computes the canonical, order-independent string form of a single tag set — e.g. a run's tags, so a
+    /// runner cache can key on it. Compute once (the run's tags are fixed at transport-bind time) and reuse, to keep
+    /// the per-request warm path allocation-free.</summary>
+    /// <param name="tags">The tag set.</param>
+    /// <returns>The canonical string (empty for an empty set).</returns>
+    public static string CanonicalTags(SecurityTagSet tags)
     {
         if (tags.IsEmpty)
         {
