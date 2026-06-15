@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WorkflowAdministrators",
+  "description": "The explicit, mutable administration record for a base workflow id (design §13/§14.2): the set of ADMINISTRATOR IDENTITIES entitled to publish further versions of the workflow and to manage its administration. An identity is a set of unforgeable, deployment-stamped tags (e.g. sys:tenant=acme) — never author-supplied. Absent for a workflow whose administration has never been mutated, in which case administration defaults to the administrator identity that stamped version 1; the first add-administrator/transfer materializes this record. Backends store this document verbatim, keyed by baseWorkflowId.",
+  "type": "object",
+  "required": ["baseWorkflowId", "administrators", "createdBy", "createdAt", "etag"],
+  "properties": {
+    "baseWorkflowId": {
+      "type": "string",
+      "description": "The base workflow id this administration record governs (no -vN suffix)."
+    },
+    "administrators": {
+      "type": "array",
+      "description": "The set of administrator identities; ANY one of them may publish a new version or mutate this administration record. Never empty — the last administrator cannot be removed.",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/AdministratorIdentity" }
+    },
+    "createdBy": {
+      "type": "string",
+      "description": "The actor that first materialized the explicit administration record."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the explicit administration record was first materialized."
+    },
+    "lastUpdatedBy": {
+      "type": "string",
+      "description": "The actor that last changed the administrator set, if any."
+    },
+    "lastUpdatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the administrator set was last changed, if ever."
+    },
+    "etag": {
+      "type": "string",
+      "description": "The optimistic-concurrency token for the administrator set."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "AdministratorIdentity": {
+      "title": "AdministratorIdentity",
+      "type": "object",
+      "description": "A single administrator identity: the set of unforgeable, deployment-stamped security tags (§14.2) that identifies one owning principal. A submitter whose stamped administrator tags equal this set (as a set) is an administrator. An empty tag set denotes the unscoped (system) administrator.",
+      "required": ["tags"],
+      "properties": {
+        "tags": {
+          "type": "array",
+          "description": "The identity's security tags (KVP labels). Order-independent; compared as a set.",
+          "items": { "$ref": "#/$defs/SecurityTagInfo" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "SecurityTagInfo": {
+      "title": "SecurityTagInfo",
+      "type": "object",
+      "description": "A security label (KVP) forming part of an administrator identity (§14.2).",
+      "required": ["key", "value"],
+      "properties": {
+        "key": {
+          "type": "string",
+          "description": "The label key (e.g. sys:tenant)."
+        },
+        "value": {
+          "type": "string",
+          "description": "The label value (e.g. acme)."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
