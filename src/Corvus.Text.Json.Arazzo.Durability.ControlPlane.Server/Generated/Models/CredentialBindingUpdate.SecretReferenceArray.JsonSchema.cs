@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Replacement references and non-secret metadata for an existing binding (its sourceName/environment identity is taken from the path and is immutable). An administrator may re-tag the managementTags reach scope; the deployment&#39;s internal tags are preserved.
+/// Replacement references and non-secret metadata for an existing binding (its sourceName/environment identity is taken from the path and is immutable).
 /// </para>
 /// </remarks>
 public readonly partial struct CredentialBindingUpdate

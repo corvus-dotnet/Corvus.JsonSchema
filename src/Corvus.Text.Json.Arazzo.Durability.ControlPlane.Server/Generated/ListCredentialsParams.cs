@@ -17,17 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// <summary>
 /// Parameters for the ListCredentials operation (GET /credentials).
 /// </summary>
-/// <remarks>Returns a page of source credential bindings (references and non-secret metadata only), ordered by sourceName then environment. Page with `limit` and the opaque `pageToken` from a previous page's `nextPageToken`.</remarks>
+/// <remarks>Returns all source credential bindings (references and non-secret metadata only), ordered by sourceName then environment.</remarks>
 public readonly struct ListCredentialsParams
 {
-
-    /// <summary>
-    /// Gets the 'limit' query parameter.
-    /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PageLimit Limit { get; init; }
-
-    /// <summary>
-    /// Gets the 'pageToken' query parameter.
-    /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString PageToken { get; init; }
 }

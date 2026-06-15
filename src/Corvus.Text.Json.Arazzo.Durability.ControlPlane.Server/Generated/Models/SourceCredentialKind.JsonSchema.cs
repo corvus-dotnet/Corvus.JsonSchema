@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The HTTP auth scheme the resolved secret(s) build into a provider (non-sensitive metadata). &#39;mtls&#39; is connection-level (a client certificate presented at the TLS handshake, &#167;13.1): it carries a &#39;certificate&#39; secret (a base64 PKCS#12, or a PEM &#39;certificate&#39; paired with a PEM &#39;privateKey&#39;) plus an optional &#39;passphrase&#39;, and — being connection-scoped — cannot be usage-scoped to an individual run.
+/// The HTTP auth scheme the resolved secret(s) build into a provider (non-sensitive metadata).
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -67,14 +67,6 @@ public readonly partial struct SourceCredentialKind
         /// A constant for the <c>enum</c> keyword.
         /// </summary>
         public static readonly SourceCredentialKind EnumJson4 = ParsedJsonDocument<SourceCredentialKind>.StringConstant([.."\"oauth2ClientCredentials\""u8]);
-        /// <summary>
-        /// A constant for the <c>enum</c> keyword.
-        /// </summary>
-        public static readonly byte[] Enum5 = "mtls"u8.ToArray();
-        /// <summary>
-        /// A constant for the <c>enum</c> keyword.
-        /// </summary>
-        public static readonly SourceCredentialKind EnumJson5 = ParsedJsonDocument<SourceCredentialKind>.StringConstant([.."\"mtls\""u8]);
     }
 
     /// <summary>
@@ -125,17 +117,6 @@ public readonly partial struct SourceCredentialKind
         /// as a UTF8 byte array.
         /// </summary>
         public static ReadOnlySpan<byte> Oauth2ClientCredentialsUtf8 => Constants.Enum4;
-
-        /// <summary>
-        /// Gets the string "mtls"
-        /// as a <see cref="SourceCredentialKind"/>.
-        /// </summary>
-        public static SourceCredentialKind Mtls { get; } = Constants.EnumJson5;
-        /// <summary>
-        /// Gets the string "mtls"
-        /// as a UTF8 byte array.
-        /// </summary>
-        public static ReadOnlySpan<byte> MtlsUtf8 => Constants.Enum5;
     }
 
     public static partial class JsonSchema
@@ -147,7 +128,6 @@ public readonly partial struct SourceCredentialKind
                 static () => "bearer"u8,
                 static () => "basic"u8,
                 static () => "oauth2ClientCredentials"u8,
-                static () => "mtls"u8,
             ]);
         }
 

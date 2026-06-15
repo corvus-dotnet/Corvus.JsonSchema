@@ -24,14 +24,19 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Replacement references and non-secret metadata for an existing binding (its sourceName/environment identity is taken from the path and is immutable).
+/// A source credential binding to create — references and non-secret metadata only. Secret material must never appear here; each secretRefs entry is a SecretRef pointer the runner dereferences.
 /// </para>
 /// </remarks>
-public readonly partial struct CredentialBindingUpdate
+public readonly partial struct CredentialBindingWrite
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The named references to secret material in the external store (at least one).
+    /// </para>
+    /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public readonly partial struct SecretReferenceArray
     {
@@ -744,7 +749,7 @@ public readonly partial struct CredentialBindingUpdate
                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
             }
 
-            internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingUpdate.SecretReferenceArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingWrite.SecretReferenceArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
             public static implicit operator Source(SecretReferenceArray instance) => new(JsonElement.From(instance));
 
@@ -865,7 +870,7 @@ public readonly partial struct CredentialBindingUpdate
 
             public static implicit operator Source<TContext>(Source source) => new (source);
 
-            internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingUpdate.SecretReferenceArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingWrite.SecretReferenceArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {

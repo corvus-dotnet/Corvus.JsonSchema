@@ -24,14 +24,19 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Replacement references and non-secret metadata for an existing binding (its sourceName/environment identity is taken from the path and is immutable).
+/// A source credential binding to create — references and non-secret metadata only. Secret material must never appear here; each secretRefs entry is a SecretRef pointer the runner dereferences.
 /// </para>
 /// </remarks>
-public readonly partial struct CredentialBindingUpdate
+public readonly partial struct CredentialBindingWrite
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The named references to secret material in the external store (at least one).
+    /// </para>
+    /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public readonly partial struct SecretReferenceArray
 #if NET8_0_OR_GREATER

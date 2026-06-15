@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The HTTP auth scheme the resolved secret(s) build into a provider (non-sensitive metadata). &#39;mtls&#39; is connection-level (a client certificate presented at the TLS handshake, &#167;13.1): it carries a &#39;certificate&#39; secret (a base64 PKCS#12, or a PEM &#39;certificate&#39; paired with a PEM &#39;privateKey&#39;) plus an optional &#39;passphrase&#39;, and — being connection-scoped — cannot be usage-scoped to an individual run.
+/// The HTTP auth scheme the resolved secret(s) build into a provider (non-sensitive metadata).
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -401,7 +401,6 @@ public readonly partial struct SourceCredentialKind
         /// <param name="matchBearer">Match 2nd item.</param>
         /// <param name="matchBasic">Match 3rd item.</param>
         /// <param name="matchOauth2ClientCredentials">Match 4th item.</param>
-        /// <param name="matchMtls">Match 5th item.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TResult Match<TContext, TResult>(
@@ -410,7 +409,6 @@ public readonly partial struct SourceCredentialKind
             Func<TContext, TResult> matchBearer,
             Func<TContext, TResult> matchBasic,
             Func<TContext, TResult> matchOauth2ClientCredentials,
-            Func<TContext, TResult> matchMtls,
             Func<TContext, TResult> defaultMatch)
 #if NET9_0_OR_GREATER
         where TContext : allows ref struct
@@ -436,11 +434,6 @@ public readonly partial struct SourceCredentialKind
                 return matchOauth2ClientCredentials(context);
             }
 
-            if (this.ValueEquals(Constants.Enum5))
-            {
-                return matchMtls(context);
-            }
-
             return defaultMatch(context);
         }
 
@@ -452,7 +445,6 @@ public readonly partial struct SourceCredentialKind
         /// <param name="matchBearer">Match 2nd item.</param>
         /// <param name="matchBasic">Match 3rd item.</param>
         /// <param name="matchOauth2ClientCredentials">Match 4th item.</param>
-        /// <param name="matchMtls">Match 5th item.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TResult Match<TResult>(
@@ -460,7 +452,6 @@ public readonly partial struct SourceCredentialKind
             Func<TResult> matchBearer,
             Func<TResult> matchBasic,
             Func<TResult> matchOauth2ClientCredentials,
-            Func<TResult> matchMtls,
             Func<TResult> defaultMatch)
         {
             if (this.ValueEquals(Constants.Enum1))
@@ -481,11 +472,6 @@ public readonly partial struct SourceCredentialKind
             if (this.ValueEquals(Constants.Enum4))
             {
                 return matchOauth2ClientCredentials();
-            }
-
-            if (this.ValueEquals(Constants.Enum5))
-            {
-                return matchMtls();
             }
 
             return defaultMatch();
