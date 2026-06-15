@@ -2,8 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using Corvus.Text.Json.Arazzo.Durability;
-using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.OpenApi.HttpTransport;
 
 namespace Corvus.Text.Json.Arazzo.SourceCredentials.Http;
@@ -27,16 +25,12 @@ public sealed class SourceCredentialAuthenticationProvider : IHttpAuthentication
     private readonly SourceCredentialCache cache;
     private readonly string sourceName;
     private readonly string environment;
-    private readonly SecurityTagSet runTags;
-    private readonly string runTagsKey;
 
     /// <summary>Initializes a new instance of the <see cref="SourceCredentialAuthenticationProvider"/> class.</summary>
     /// <param name="cache">The runner credential cache the current provider is read from.</param>
     /// <param name="sourceName">The Arazzo source description name this transport authenticates calls to.</param>
     /// <param name="environment">The deployment environment.</param>
-    /// <param name="runTags">The run's own security tags (§14.2), fixed at transport-bind time, so this provider only
-    /// ever applies the credential binding the run is entitled to (§13).</param>
-    public SourceCredentialAuthenticationProvider(SourceCredentialCache cache, string sourceName, string environment, SecurityTagSet runTags = default)
+    public SourceCredentialAuthenticationProvider(SourceCredentialCache cache, string sourceName, string environment)
     {
         ArgumentNullException.ThrowIfNull(cache);
         ArgumentException.ThrowIfNullOrEmpty(sourceName);
@@ -44,17 +38,12 @@ public sealed class SourceCredentialAuthenticationProvider : IHttpAuthentication
         this.cache = cache;
         this.sourceName = sourceName;
         this.environment = environment;
-        this.runTags = runTags;
-
-        // The run's tags are fixed at transport-bind time, so canonicalize them once here. Every per-request warm read
-        // then hands the cache a pre-computed key and stays allocation-free (§13.4).
-        this.runTagsKey = SourceCredentialKey.CanonicalTags(runTags);
     }
 
     /// <inheritdoc/>
     public async ValueTask AuthenticateAsync(HttpRequestMessage request, CancellationToken cancellationToken = default)
     {
-        IHttpAuthenticationProvider? provider = await this.cache.GetAsync(this.sourceName, this.environment, this.runTagsKey, this.runTags, cancellationToken).ConfigureAwait(false);
+        IHttpAuthenticationProvider? provider = await this.cache.GetAsync(this.sourceName, this.environment, cancellationToken).ConfigureAwait(false);
         if (provider is not null)
         {
             await provider.AuthenticateAsync(request, cancellationToken).ConfigureAwait(false);
