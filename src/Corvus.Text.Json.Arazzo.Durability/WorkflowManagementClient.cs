@@ -270,47 +270,40 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
             byte[] updated;
             WorkflowRunIndexEntry indexEntry;
             string workflowId;
-            using (WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(cp.Utf8))
+            using (ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(cp.Utf8))
             {
-                if (state.Status is WorkflowRunStatus.Completed or WorkflowRunStatus.Cancelled)
+                JsonElement root = document.RootElement;
+                WorkflowRunStatus status = Enum.Parse<WorkflowRunStatus>(root.GetProperty("status"u8).GetString() ?? nameof(WorkflowRunStatus.Pending));
+                if (status is WorkflowRunStatus.Completed or WorkflowRunStatus.Cancelled)
                 {
                     // Terminal already; nothing to cancel.
                     activity?.SetTag(ArazzoTelemetry.OutcomeTag, "already-terminal");
                     return false;
                 }
 
-                workflowId = state.WorkflowId;
+                workflowId = root.GetProperty("workflowId"u8).GetString() ?? string.Empty;
+                string? correlationId = root.TryGetProperty("correlationId"u8, out JsonElement correlationIdElement) ? correlationIdElement.GetString() : null;
+                DateTimeOffset createdAt = root.TryGetProperty("createdAt"u8, out JsonElement createdAtElement) ? createdAtElement.GetDateTimeOffset() : default;
+                string? errorType = root.TryGetProperty("fault"u8, out JsonElement faultElement) && faultElement.TryGetProperty("error"u8, out JsonElement errorElement) ? errorElement.GetString() : null;
+                TagSet tags = root.TryGetProperty("tags"u8, out JsonElement tagsElement) ? TagSet.CopyFrom(tagsElement) : default;
+                IReadOnlyList<SecurityTag>? securityTags = WorkflowCheckpointSerializer.ReadSecurityTags(root);
 
-                // Mark cancelled, clear any wait, but keep the fault record (if any) for post-mortem visibility.
-                // The run-creation metadata (correlation id + tags) is immutable, so carry it through unchanged.
-                updated = WorkflowCheckpointSerializer.Serialize(
-                    state.RunId,
-                    state.WorkflowId,
-                    WorkflowRunStatus.Cancelled,
-                    state.Cursor,
-                    state.CreatedAt,
-                    state.RetryCounters,
-                    state.CorrelationTokens,
-                    state.Inputs,
-                    state.StepOutputs,
-                    state.Outputs,
-                    wait: null,
-                    fault: state.Fault,
-                    correlationId: state.CorrelationId,
-                    tags: state.Tags,
-                    securityTags: state.SecurityTags);
+                // Mark cancelled and clear any wait by rewriting the document verbatim — the run-creation metadata and
+                // the working state (retry counters, correlation tokens, step outputs) are carried through as raw JSON,
+                // not deserialized into dictionaries only to be re-serialized unchanged.
+                updated = WorkflowCheckpointSerializer.RewriteStatus(cp.Utf8.Span, WorkflowRunStatus.Cancelled, dropWait: true);
 
                 indexEntry = new WorkflowRunIndexEntry(
-                    state.WorkflowId,
+                    workflowId,
                     WorkflowRunStatus.Cancelled,
-                    state.CreatedAt,
+                    createdAt,
                     this.timeProvider.GetUtcNow(),
-                    ErrorType: state.Fault?.Error,
-                    CorrelationId: state.CorrelationId,
-                    Tags: state.Tags,
-                    SecurityTags: state.SecurityTags);
+                    ErrorType: errorType,
+                    CorrelationId: correlationId,
+                    Tags: tags,
+                    SecurityTags: securityTags);
 
-                if (activity is { IsAllDataRequested: true } && state.CorrelationId is { } cid)
+                if (activity is { IsAllDataRequested: true } && correlationId is { } cid)
                 {
                     activity.SetTag(ArazzoTelemetry.CorrelationIdTag, cid);
                 }
