@@ -399,9 +399,12 @@ descriptions** to real endpoints + credentials:
 5. **Control-plane operation authorization (§14.1)** — capability scopes as ASP.NET Core policies on the
    endpoints; the auth scheme + claim→policy mapping is per-deployment, with a concrete strategy implemented
    in the sample.
-6. **Source credentials (§13)** — `ISourceCredentialStore` (encrypted/referenced, per backend); the transport
-   binding resolves auth providers from it per run; per-version `credentialStatus` + expiry telemetry +
-   trigger gating; typed `credentials-expired` fault refreshable from the catalog and resumable.
+6. **Source credentials (§13)** — secret-store-first: `ISourceCredentialStore` persists a **secret reference +
+   non-sensitive metadata** (never secret material), per backend; an `ISecretResolver` dereferences the reference
+   to a real secret store at bind time (Key Vault / AWS Secrets Manager / HashiCorp Vault / env+file; an
+   encrypted-in-DB fallback is discouraged). The transport binding builds auth providers from the resolved
+   secret per run; per-version `credentialStatus` + expiry telemetry + trigger gating; typed
+   `credentials-expired` fault refreshable from the catalog and resumable.
 7. **Row security — security tags + rule engine (§14.2)** — security KVP labels on runs/catalog versions
    (separate from user tags; runs inherit the version's); tag rules in the `simple`-criterion grammar that
    claims resolve to; rules compiled to an in-memory evaluator **and** an indexed per-backend store predicate
@@ -462,27 +465,52 @@ state**, bound to the catalog version's sources and resolved per run by the tran
 rotation is transparent — the next run/resume picks up the current secret without changing the workflow or
 the request.
 
+**Secret material lives in a dedicated secret store, never in the Arazzo database.** The durability layer
+persists only a **secret reference** (a scheme'd pointer such as `keyvault://`, `awssm://`, `vault://`,
+`env://`, `file://`) plus **non-sensitive lifecycle metadata** (`kind`, `expiresAt?`, `rotatedAt`, derived
+`credentialStatus`); the runner dereferences the reference through an `ISecretResolver` **at bind time** and
+the auth provider caches only short-lived derivatives (e.g. an OAuth access token) in memory. No secret —
+encrypted or otherwise — is ever written to the Arazzo store, a checkpoint, an index, a log, or telemetry.
+A compromise of the Arazzo store therefore yields references and expiry dates, **never usable credentials**;
+the secret store's ACLs and access audit are the security boundary. Secrets are never logged or surfaced on
+any control-plane response.
+
 ### 13.1 Credential store and binding
 
 - **`ISourceCredentialStore`** in the durability layer (per-backend, like the run/catalog/registry stores),
-  holding a `SourceCredential` per `(sourceName, environment/tenant)`:
-  `{ sourceName, kind (bearer | oauth-client-credentials | api-key | mtls), secretRef, expiresAt?, rotatedAt }`.
-  Secret material is **encrypted at rest** via the existing protected-store mechanism (KeyVault/KMS
-  backends already exist), or `secretRef` points at an external secret (a KeyVault URI) the host dereferences
-  — secrets need not live in the Arazzo store at all.
+  holding a **`SourceCredentialBinding`** per `(sourceName, environment/tenant)` —
+  `{ sourceName, environment, kind (bearer | oauth-client-credentials | api-key | mtls), secretRef, expiresAt?, rotatedAt }`.
+  **`secretRef` is a reference, not the secret** (e.g. `keyvault://vault/secret[/version]`, `awssm://arn`,
+  `vault://mount/path#field`, `env://VAR`, `file://path`); the store never holds secret material. Bindings are
+  not sensitive, so they persist as plain JSON like every other entity — no protected-store wrapper needed.
+- **`ISecretResolver`** (runner-side, read-only) dereferences a `secretRef` to live secret material at bind
+  time: `ResolveAsync(SecretRef, ct) → SecretMaterial`, scheme-dispatched to a provider — **Azure Key Vault**
+  (its *secrets* client, distinct from the existing KeyVault checkpoint key-wrap protector), **AWS Secrets
+  Manager**, **HashiCorp Vault**, and in-box **`env://`/`file://`** (covers k8s Secrets mounted as a volume or
+  projected to env). A discouraged **encrypted-in-DB** fallback (`SourceCredentialBinding` carrying a
+  KMS/KeyVault-enveloped blob) exists only for deployments with no secret store; it is not the default and is
+  documented as such.
 - **Binding.** `WorkflowTransportRegistry` (§8) resolves each source's `IApiTransportFactory` from the
-  credential store: it builds the `IHttpAuthenticationProvider` (`BearerTokenAuthenticationProvider`,
-  `ApiKeyAuthenticationProvider`, … already exist) from the stored credential. For
+  credential store **and the secret resolver**: it reads the binding, dereferences its `secretRef` via the
+  `ISecretResolver`, and builds the `IHttpAuthenticationProvider` (`BearerTokenAuthenticationProvider`,
+  `ApiKeyAuthenticationProvider`, … already exist) from the **resolved** secret. For
   **oauth-client-credentials** the provider holds the long-lived client id/secret and fetches + caches a
   short-lived access token at runtime, so *access-token* expiry is handled automatically by re-fetching; only
   the **long-lived** secret (client secret, refresh token, API key, cert) is what §13.2 tracks for operator
   rotation.
 - **No per-run credentials, no per-requester secrets.** The seam already established (`IApiTransportFactory`
   per source) means credential resolution is entirely host-side; the trigger surface (§6) is unchanged.
+- **Least privilege — control plane vs runner.** Only the **runner** holds secret-store *read* access (it
+  resolves at bind time). The **control plane** manages bindings, metadata, status, and the rotation
+  lifecycle and needs **no** access to secret material. By default rotation is **reference-rotation** (the
+  operator rotates in the secret store; Arazzo re-reads), so the control plane never handles plaintext; an
+  optional, **off-by-default** `ISecretWriter` lets a deployment opt into control-plane write-through to the
+  secret store where that trade-off is wanted.
 
 ### 13.2 Expiry tracking, states, and telemetry
 
-- Each `SourceCredential` carries `expiresAt` when knowable (cert `NotAfter`, API-key/refresh-token lifetime).
+- Each `SourceCredentialBinding` carries `expiresAt` when knowable (cert `NotAfter`, API-key/refresh-token
+  lifetime) as **non-sensitive metadata** — so the monitor and UI read status without secret-store access.
 - A catalog version derives a **`credentialStatus`** — `Valid` | `ExpiringSoon(at)` | `Expired` — as the worst
   status across the sources it binds (min `expiresAt`). It surfaces on the version's control-plane GET
   endpoints and the UI. The catalog list endpoint accepts a `credentialStatus` filter (indexed), so the
@@ -503,17 +531,50 @@ the request.
 - A run that fails because a source rejected its credential (`401`/`403`, or the binding throws a
   credential-expired error) records a **typed fault**: `Faulted` with `errorType = "credentials-expired"` and
   the offending source — distinguishable from ordinary faults and **filterable** in the control plane.
-- An operator **refreshes the credential in the catalog** (uploads a new secret / re-runs OAuth consent /
-  rotates the cert) via a control-plane credential endpoint. The refresh lives with the catalog version's
-  source binding, not the run.
-- **Resume** uses the existing machinery (retry/rewind §7.2): because the transport binding resolves
-  credentials from the store **at bind time**, the resumed run picks up the refreshed credential
+- An operator **rotates the secret in the secret store** (uploads a new secret / re-runs OAuth consent /
+  rotates the cert) and, via a control-plane credential endpoint, updates the binding's **reference + metadata**
+  (a new `secretRef` version and/or refreshed `expiresAt`) — the rotation lives with the catalog version's
+  source binding, not the run, and by default the control plane touches only the reference, never plaintext
+  (the optional `ISecretWriter` write-through path is the exception a deployment may opt into).
+- **Resume** uses the existing machinery (retry/rewind §7.2): because the transport binding resolves the
+  binding and **dereferences its secret at bind time**, the resumed run picks up the rotated secret
   automatically — the original requester is not involved. At-least-once step re-execution (§10) re-runs the
   interrupted step against the now-valid credential and continues from the last checkpoint.
 
-**Decision (§13):** credentials are operator-managed catalog state, encrypted/referenced, resolved per run by
-the transport binding; expiry is surfaced as version status + telemetry (operators own the rotation policy);
-a `credentials-expired` fault is refreshable from the catalog and resumable with no requester involvement.
+### 13.4 Performance — secure-by-default must be ~free on the hot path
+
+Security overhead has to be negligible or operators turn it off; the design goal is that enabling source
+credentials adds **no measurable per-request cost** once warm, and amortizes the one-time resolve — so
+secure-by-default is the cheap default, not a tax.
+
+- **Runner-side credential cache (the cornerstone).** The runner caches, keyed by `(sourceName, environment)`,
+  the resolved binding **and the built `IHttpAuthenticationProvider`** — not just the raw secret — with a
+  **fairly short TTL** (bounded staleness so a rotation in the secret store is picked up within minutes without
+  an explicit invalidation) plus eager rotation/version invalidation. The **warm path does zero secret-store I/O and zero per-request
+  allocation**: the cached provider instance is reused and applies a **pre-built header value** (no per-request
+  `"Bearer " + token` concatenation). A cache miss costs one secret-store round-trip, amortized across every
+  subsequent run and request.
+- **OAuth client-credentials.** The short-lived access token is fetched and cached until just before expiry;
+  refresh is **single-flight** (one in-flight fetch; concurrent callers await it — no thundering herd) and
+  **proactive** (refreshed ahead of expiry, off the request critical path), so the hot path never stalls on a
+  token fetch.
+- **Binding reads** follow the durability allocation discipline (pooled JSON, parse-non-copying, deferred
+  holders) — the binding is a small reference document, read rarely and cached.
+- **Bounded exposure for the perf/security trade-off.** Cached material is **memory-only** (never persisted or
+  logged), TTL-bounded, scrubbed on eviction where the type allows; where possible only the *derived* artifact
+  (the provider / header value) is retained rather than the raw long-lived secret.
+- **Dual gate.** Every §13 hot path ships with **both** a trust-boundary assertion (no secret leaks to store /
+  checkpoint / log / response) **and** a `MemoryDiagnoser` + latency benchmark proving the warm bind/auth path
+  is ≈0 B and ≈0 added latency versus an unauthenticated request — the same benchmark rigour as the allocation
+  campaign.
+
+**Decision (§13):** secrets live in a **dedicated secret store, never the Arazzo database**; the durability
+layer persists only an operator-managed **reference + non-sensitive metadata**, resolved to live secret
+material by the runner's `ISecretResolver` at transport-bind time (Key Vault / AWS Secrets Manager /
+HashiCorp Vault / env+file; encrypted-in-DB only as a discouraged fallback). The control plane manages
+references/status with no secret read (reference-rotation by default; optional write-through). Expiry is
+surfaced as version status + telemetry (operators own the rotation policy); a `credentials-expired` fault is
+refreshable from the catalog and resumable with no requester involvement.
 
 ## 14. Authorization — control plane and tag-based row security
 
