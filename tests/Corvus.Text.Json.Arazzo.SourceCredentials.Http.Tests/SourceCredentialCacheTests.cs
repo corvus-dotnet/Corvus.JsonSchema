@@ -49,7 +49,7 @@ public sealed class SourceCredentialCacheTests
         resolver.ResolveCount.ShouldBe(1);
 
         // Rotate the binding (new etag), past the TTL → rebuild + re-resolve.
-        await store.UpdateAsync("petstore", "production", ApiKeyDefinition("petstore", "production", "rotated"), etag, "bob", default);
+        await store.UpdateAsync("petstore", "production", ApiKeyDefinition("petstore", "production", "rotated"), etag, "bob", AccessContext.System, default);
         clock.Advance(TimeSpan.FromMinutes(6));
         IHttpAuthenticationProvider? afterRotation = await cache.GetAsync("petstore", "production", default);
         afterRotation.ShouldNotBeSameAs(first);
