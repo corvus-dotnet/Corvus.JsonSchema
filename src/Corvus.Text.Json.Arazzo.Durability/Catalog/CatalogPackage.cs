@@ -53,6 +53,32 @@ public static partial class CatalogPackage
         throw new ArgumentException("The package's Arazzo workflow has no workflowId.", nameof(packageZip));
     }
 
+    /// <summary>Reads the distinct source-description names the package's Arazzo workflow declares (its
+    /// <c>sourceDescriptions[].name</c> values), without otherwise validating or projecting the package.</summary>
+    /// <param name="packageZip">The package archive bytes.</param>
+    /// <returns>The declared source names (possibly empty).</returns>
+    public static IReadOnlyList<string> ReadSourceNames(ReadOnlyMemory<byte> packageZip)
+    {
+        WorkflowPackageContents contents = WorkflowPackage.Open(packageZip);
+        using ParsedJsonDocument<JsonElement> workflow = ParsedJsonDocument<JsonElement>.Parse(contents.Workflow);
+        IReadOnlyList<CatalogSourceRef> sources = ReadSources(workflow.RootElement);
+        if (sources.Count == 0)
+        {
+            return [];
+        }
+
+        var names = new List<string>(sources.Count);
+        foreach (CatalogSourceRef source in sources)
+        {
+            if (!names.Contains(source.Name))
+            {
+                names.Add(source.Name);
+            }
+        }
+
+        return names;
+    }
+
     /// <summary>
     /// Processes a submitted package into the stored form: rewrites the first workflow's id to
     /// <c>{baseWorkflowId}-v{versionNumber}</c>, repacks the archive canonically, content-hashes it, and projects

@@ -169,6 +169,32 @@ public sealed class InMemorySourceCredentialStore : ISourceCredentialStore
         }
     }
 
+    /// <inheritdoc/>
+    public ValueTask<CredentialSourceAccess> EvaluateSourceAccessAsync(string sourceName, SecurityTagSet tags, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(sourceName);
+        lock (this.gate)
+        {
+            bool any = false;
+            foreach (KeyValuePair<(string SourceName, string Environment, string Tags), byte[]> entry in this.bindings)
+            {
+                if (!string.Equals(entry.Key.SourceName, sourceName, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                any = true;
+                using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(entry.Value);
+                if (candidate.RootElement.IsUsableBy(tags))
+                {
+                    return new ValueTask<CredentialSourceAccess>(CredentialSourceAccess.Granted);
+                }
+            }
+
+            return new ValueTask<CredentialSourceAccess>(any ? CredentialSourceAccess.Denied : CredentialSourceAccess.Unconfigured);
+        }
+    }
+
     private static string KeyOf(string sourceName, string environment) => $"{sourceName}@{environment}";
 
     // The binding's uniqueness discriminator over (sourceName, environment): the canonical form of BOTH its management

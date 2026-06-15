@@ -5,6 +5,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using Corvus.Text.Json.Arazzo;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 
 namespace Corvus.Text.Json.Arazzo.Durability;
 
@@ -20,12 +21,18 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
     private readonly IWorkflowCatalogStore catalog;
     private readonly IWorkflowWaitIndex runs;
     private readonly string actor;
+    private readonly ISourceCredentialStore? credentials;
 
     /// <summary>Initializes a new instance of the <see cref="WorkflowCatalogClient"/> class.</summary>
     /// <param name="catalog">The catalog store.</param>
     /// <param name="runs">The run index, consulted (by exact versioned workflow id) for referential integrity on delete and purge.</param>
     /// <param name="actor">The authenticated identity recorded on writes (<c>createdBy</c>/<c>lastUpdatedBy</c>) and in audit spans.</param>
-    public WorkflowCatalogClient(IWorkflowCatalogStore catalog, IWorkflowWaitIndex runs, string actor)
+    /// <param name="credentials">An optional source credential store (design §13). When supplied, adding a version is
+    /// refused (<see cref="SourceCredentialAccessDeniedException"/>) if the workflow declares a credential-protected
+    /// source the submitter — by the version's security tags — is not entitled to use: the runs would never receive
+    /// the credential, so the submission is rejected at catalog time rather than failing silently at run time. When
+    /// <see langword="null"/> (the default) no such check is performed.</param>
+    public WorkflowCatalogClient(IWorkflowCatalogStore catalog, IWorkflowWaitIndex runs, string actor, ISourceCredentialStore? credentials = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(runs);
@@ -33,6 +40,7 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
         this.catalog = catalog;
         this.runs = runs;
         this.actor = actor;
+        this.credentials = credentials;
     }
 
     /// <inheritdoc/>
@@ -53,6 +61,28 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
             throw new ArgumentException(
                 $"The submitted workflow id '{baseWorkflowId}' already carries a version suffix; submit the base id without '-vN'.",
                 nameof(packageUtf8));
+        }
+
+        // Catalog-time usage gate (§13): refuse to catalogue a workflow that declares a credential-protected source the
+        // submitter is not entitled to use (by the version's security tags, which its runs inherit) — fail early rather
+        // than hand the run no credential later. A source with no bindings (unauthenticated, or bindings added later) is
+        // allowed; the run-time check at transport bind is the backstop.
+        if (this.credentials is { } credentialStore)
+        {
+            List<string>? denied = null;
+            foreach (string source in CatalogPackage.ReadSourceNames(packageUtf8))
+            {
+                if (await credentialStore.EvaluateSourceAccessAsync(source, securityTags, cancellationToken).ConfigureAwait(false) == CredentialSourceAccess.Denied)
+                {
+                    (denied ??= []).Add(source);
+                }
+            }
+
+            if (denied is not null)
+            {
+                activity?.SetTag(ArazzoTelemetry.OutcomeTag, "source-access-denied");
+                throw new SourceCredentialAccessDeniedException(denied);
+            }
         }
 
         CatalogVersion version = await this.catalog.AddAsync(
