@@ -27,11 +27,11 @@ public sealed class CatalogVersionSecurityTagTests
             owner: new CatalogOwner("Team", "team@example.com"),
             sources: SourceSet.FromSources([new CatalogSourceRef("petstore", "openapi")]),
             hash: "abc", createdBy: "ops", createdAt: CreatedAt,
-            securityTags: security);
+            securityTags: SecurityTagSet.FromTags(security));
 
         CatalogVersion roundTripped = CatalogVersion.FromJson(version.ToJsonBytes());
 
-        roundTripped.SecurityTagsValue.ShouldBe(security);
+        roundTripped.SecurityTagsValue.ToList().ShouldBe(security);
         roundTripped.TagsValue.ToList().ShouldBe(["nightly"]);
     }
 
@@ -45,6 +45,6 @@ public sealed class CatalogVersionSecurityTagTests
             sources: SourceSet.FromSources([new CatalogSourceRef("petstore", "openapi")]),
             hash: "abc", createdBy: "ops", createdAt: CreatedAt);
 
-        CatalogVersion.FromJson(version.ToJsonBytes()).SecurityTagsValue.ShouldBeEmpty();
+        CatalogVersion.FromJson(version.ToJsonBytes()).SecurityTagsValue.ToList().ShouldBeEmpty();
     }
 }

@@ -53,7 +53,7 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, IReadOnlyList<SecurityTag>? securityTags, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, SecurityTagSet securityTags, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(workflowId);
 
@@ -64,7 +64,7 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowRunId> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string? correlationId = null, TagSet tags = default, IReadOnlyList<SecurityTag>? securityTags = null, CancellationToken cancellationToken = default)
+    public async ValueTask<WorkflowRunId> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(workflowId);
         ArgumentException.ThrowIfNullOrEmpty(idempotencyKey);
@@ -286,7 +286,7 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
                 DateTimeOffset createdAt = root.TryGetProperty("createdAt"u8, out JsonElement createdAtElement) ? createdAtElement.GetDateTimeOffset() : default;
                 string? errorType = root.TryGetProperty("fault"u8, out JsonElement faultElement) && faultElement.TryGetProperty("error"u8, out JsonElement errorElement) ? errorElement.GetString() : null;
                 TagSet tags = root.TryGetProperty("tags"u8, out JsonElement tagsElement) ? TagSet.CopyFrom(tagsElement) : default;
-                IReadOnlyList<SecurityTag>? securityTags = WorkflowCheckpointSerializer.ReadSecurityTags(root);
+                SecurityTagSet securityTags = WorkflowCheckpointSerializer.ReadSecurityTags(root);
 
                 // Mark cancelled and clear any wait by rewriting the document verbatim — the run-creation metadata and
                 // the working state (retry counters, correlation tokens, step outputs) are carried through as raw JSON,

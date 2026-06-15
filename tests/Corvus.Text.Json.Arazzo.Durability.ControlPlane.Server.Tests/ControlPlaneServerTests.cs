@@ -593,7 +593,7 @@ public sealed class ControlPlaneServerTests
         var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
 
         SecurityTag[] security = [new("tenant", "acme"), new("team", "payments")];
-        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, security, default);
+        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, SecurityTagSet.FromTags(security), default);
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -619,7 +619,7 @@ public sealed class ControlPlaneServerTests
         // The triggered run carries the version's security tags (KVP labels), so row authorization sees them.
         WorkflowRunDetail? detail = await management.GetAsync(runId, AccessContext.System, default);
         detail.ShouldNotBeNull();
-        detail.Value.SecurityTags.ShouldBe(security);
+        detail.Value.SecurityTags.ToList().ShouldBe(security);
 
         await app.StopAsync();
     }

@@ -181,7 +181,7 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         return new WorkflowEtag((expectedVersion + 1).ToString(CultureInfo.InvariantCulture));
     }
 
-    private static async Task SyncSecurityTagsAsync(NpgsqlConnection connection, WorkflowRunId id, IReadOnlyList<SecurityTag>? securityTags, CancellationToken cancellationToken)
+    private static async Task SyncSecurityTagsAsync(NpgsqlConnection connection, WorkflowRunId id, SecurityTagSet securityTags, CancellationToken cancellationToken)
     {
         await using (NpgsqlCommand delete = connection.CreateCommand())
         {
@@ -190,12 +190,13 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
             await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        if (securityTags is not { Count: > 0 })
+        if (securityTags.IsEmpty)
         {
             return;
         }
 
-        foreach (SecurityTag tag in securityTags)
+        // Materialize at this write leaf: the ref-struct enumerator cannot cross the per-row await below.
+        foreach (SecurityTag tag in securityTags.ToList())
         {
             await using NpgsqlCommand insert = connection.CreateCommand();
             insert.CommandText = "INSERT INTO workflow_run_security_tags (run_id, tag_key, tag_value) VALUES (@id, @key, @value);";

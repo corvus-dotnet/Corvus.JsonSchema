@@ -329,7 +329,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         TagSet tags = patch.Tags ?? current.TagsValue;
         string? obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedByOrNull;
         DateTimeOffset? obsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAtValue;
-        IReadOnlyList<SecurityTag> securityTags = current.SecurityTagsValue;
+        SecurityTagSet securityTags = current.SecurityTagsValue;
 
         CatalogVersion updated = CatalogVersion.Create(
             baseWorkflowId: current.Ref.BaseWorkflowId,
@@ -349,7 +349,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
             obsoletedBy: obsoletedBy,
             obsoletedAt: obsoletedAt,
             runnable: (bool)current.Runnable,
-            securityTags: securityTags is { Count: > 0 } ? securityTags : null);
+            securityTags: securityTags);
 
         var options = new ItemRequestOptions { IfMatchEtag = found.Etag };
         using var stream = CosmosJson.WriteToStream(
@@ -457,7 +457,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         var partition = new PartitionKey(baseWorkflowId);
         TagSet tags = metadata.Tags;
-        IReadOnlyList<SecurityTag>? securityTags = metadata.SecurityTags is { Count: > 0 } st ? [.. st] : null;
+        SecurityTagSet securityTags = metadata.SecurityTags;
 
         while (true)
         {

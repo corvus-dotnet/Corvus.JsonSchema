@@ -118,5 +118,5 @@ public class CancelRewriteBenchmark
             fault: null,
             correlationId: "00-trace-01",
             tags: TagSet.FromTags(["nightly", "eu"]),
-            securityTags: [new SecurityTag("tenant", "acme")]);
+            securityTags: SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]));
 }

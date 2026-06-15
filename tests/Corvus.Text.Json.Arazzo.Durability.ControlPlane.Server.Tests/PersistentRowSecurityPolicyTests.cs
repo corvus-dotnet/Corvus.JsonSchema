@@ -19,8 +19,8 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests;
 [TestClass]
 public sealed class PersistentRowSecurityPolicyTests
 {
-    private static readonly SecurityTag[] Acme = [new("tenant", "acme")];
-    private static readonly SecurityTag[] Globex = [new("tenant", "globex")];
+    private static readonly SecurityTagSet Acme = SecurityTagSet.FromTags([new("tenant", "acme")]);
+    private static readonly SecurityTagSet Globex = SecurityTagSet.FromTags([new("tenant", "globex")]);
 
     private static ClaimsPrincipal Principal(params (string Type, string Value)[] claims)
         => new(new ClaimsIdentity(claims.Select(c => new Claim(c.Type, c.Value)).ToList(), "test"));
@@ -74,7 +74,7 @@ public sealed class PersistentRowSecurityPolicyTests
         AccessContext ctx = policy.Resolve(Principal(("role", "operator")));
         ctx.Reach(AccessVerb.Read).ShouldBeNull(); // unrestricted
         ctx.Admits(AccessVerb.Read, Globex).ShouldBeTrue();
-        ctx.Admits(AccessVerb.Read, []).ShouldBeTrue(); // untagged visible only to full reach
+        ctx.Admits(AccessVerb.Read, SecurityTagSet.Empty).ShouldBeTrue(); // untagged visible only to full reach
     }
 
     [TestMethod]
@@ -138,8 +138,8 @@ public sealed class PersistentRowSecurityPolicyTests
         await policy.RefreshAsync();
 
         AccessContext ctx = policy.Resolve(Principal(("role", "u"), ("tenant", "acme")));
-        ctx.Admits(AccessVerb.Read, [new("sys:tenant", "acme"), new("team", "payments")]).ShouldBeTrue();
-        ctx.Admits(AccessVerb.Read, [new("sys:tenant", "globex"), new("team", "payments")]).ShouldBeFalse(); // wrapper fails
-        ctx.Admits(AccessVerb.Read, [new("sys:tenant", "acme"), new("team", "hr")]).ShouldBeFalse(); // binding fails
+        ctx.Admits(AccessVerb.Read, SecurityTagSet.FromTags([new("sys:tenant", "acme"), new("team", "payments")])).ShouldBeTrue();
+        ctx.Admits(AccessVerb.Read, SecurityTagSet.FromTags([new("sys:tenant", "globex"), new("team", "payments")])).ShouldBeFalse(); // wrapper fails
+        ctx.Admits(AccessVerb.Read, SecurityTagSet.FromTags([new("sys:tenant", "acme"), new("team", "hr")])).ShouldBeFalse(); // binding fails
     }
 }

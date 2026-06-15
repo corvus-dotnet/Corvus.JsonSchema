@@ -345,7 +345,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
 
         // Row-security reach (§14.2): the KV store has no server-side filtering, so apply the reach filter in
         // process over the version's persisted security tags — the only correct option for a key/value backend.
-        if (query.Security is { } security && !security.IsSatisfiedBy(version.SecurityTagsValue))
+        if (query.Security is { } security && !security.IsSatisfiedBy(version.SecurityTagsValue.ToList()))
         {
             return false;
         }
@@ -357,7 +357,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         TagSet tags = metadata.Tags;
-        IReadOnlyList<SecurityTag>? securityTags = metadata.SecurityTags is { Count: > 0 } st ? [.. st] : null;
+        SecurityTagSet securityTags = metadata.SecurityTags;
 
         // Assign the next version number safely: compute the current max for the base id by scanning the bucket,
         // then optimistically Create the new key. A concurrent add that grabbed the same number makes Create

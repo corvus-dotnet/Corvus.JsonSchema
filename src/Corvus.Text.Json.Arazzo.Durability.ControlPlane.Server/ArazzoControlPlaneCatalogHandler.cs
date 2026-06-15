@@ -77,7 +77,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         // Stamp the deployment's internal tags (e.g. the principal's tenant, §14.3) onto the new version so runs
         // triggered from it inherit them. User-supplied security tags would be validated here once the contract
         // carries them.
-        IReadOnlyList<SecurityTag>? securityTags = this.access.InternalTags() is { Count: > 0 } internalTags ? internalTags : null;
+        SecurityTagSet securityTags = SecurityTagSet.FromTags(this.access.InternalTags());
 
         try
         {

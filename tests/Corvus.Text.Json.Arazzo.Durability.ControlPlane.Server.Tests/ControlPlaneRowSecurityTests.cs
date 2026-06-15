@@ -126,7 +126,7 @@ public sealed class ControlPlaneRowSecurityTests
         doc.RootElement.GetProperty("status").GetString().ShouldBe("Faulted");
 
         // Catalog writes are gated the same way: the version is readable (200) but not updatable (403).
-        await host.Catalog.AddAsync(Package("flow"), Owner, default, [new SecurityTag("tenant", "acme")], default);
+        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
         (await host.GetAsync("/catalog/flow/versions/1", tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
         using var patch = new HttpRequestMessage(HttpMethod.Patch, "/catalog/flow/versions/1")
         {
@@ -139,8 +139,8 @@ public sealed class ControlPlaneRowSecurityTests
     public async Task Searching_the_catalog_is_scoped_to_the_principals_tenant()
     {
         await using Scoped host = await StartAsync();
-        await host.Catalog.AddAsync(Package("acme-flow"), Owner, default, [new SecurityTag("tenant", "acme")], default);
-        await host.Catalog.AddAsync(Package("globex-flow"), Owner, default, [new SecurityTag("tenant", "globex")], default);
+        await host.Catalog.AddAsync(Package("acme-flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
+        await host.Catalog.AddAsync(Package("globex-flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), default);
 
         using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync("/catalog", tenant: "acme"));
 
@@ -154,7 +154,7 @@ public sealed class ControlPlaneRowSecurityTests
     public async Task A_catalog_version_in_another_tenant_is_reported_as_not_found()
     {
         await using Scoped host = await StartAsync();
-        await host.Catalog.AddAsync(Package("globex-flow"), Owner, default, [new SecurityTag("tenant", "globex")], default);
+        await host.Catalog.AddAsync(Package("globex-flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), default);
 
         (await host.GetAsync("/catalog/globex-flow/versions/1", tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
         (await host.GetAsync("/catalog/globex-flow/versions/1", tenant: "globex")).StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -178,19 +178,19 @@ public sealed class ControlPlaneRowSecurityTests
 
     private static async Task SeedRunAsync(InMemoryWorkflowStateStore store, string id, TimeProvider clock, params SecurityTag[] security)
     {
-        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock, securityTags: security);
+        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock, securityTags: SecurityTagSet.FromTags(security));
         await run.EnqueueAsync(default);
     }
 
     private static async Task CompleteRunAsync(InMemoryWorkflowStateStore store, string id, TimeProvider clock, params SecurityTag[] security)
     {
-        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock, securityTags: security);
+        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock, securityTags: SecurityTagSet.FromTags(security));
         await run.CompleteAsync(default, default);
     }
 
     private static async Task FaultRunAsync(InMemoryWorkflowStateStore store, string id, TimeProvider clock, params SecurityTag[] security)
     {
-        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock, securityTags: security);
+        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock, securityTags: SecurityTagSet.FromTags(security));
         await run.FaultAsync("step1", attempt: 1, "boom", default);
     }
 
