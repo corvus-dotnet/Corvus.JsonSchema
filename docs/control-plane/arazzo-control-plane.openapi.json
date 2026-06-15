@@ -32,6 +32,10 @@
   {
     "name": "security",
     "description": "Author the row-security policy: rules and claim→rule bindings (capability scopes security:read / security:write)."
+  },
+  {
+    "name": "credentials",
+    "description": "Manage source credential bindings (design §13): operator-managed references to secret material in an external secret store, plus non-sensitive auth metadata. The control plane stores and returns references only — it never reads, returns, or resolves secret material (capability scopes credentials:read / credentials:write)."
   }
   ],
   "paths": {
@@ -1118,6 +1122,140 @@
           }
         }
       }
+    },
+    "/credentials": {
+      "get": {
+        "operationId": "listCredentials",
+        "security": [
+          { "oauth2": ["credentials:read"] },
+          { "openIdConnect": ["credentials:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["credentials"],
+        "summary": "List source credential bindings",
+        "description": "Returns all source credential bindings (references and non-secret metadata only), ordered by sourceName then environment.",
+        "responses": {
+          "200": {
+            "description": "The bindings.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CredentialBindingList" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createCredential",
+        "security": [
+          { "oauth2": ["credentials:write"] },
+          { "openIdConnect": ["credentials:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["credentials"],
+        "summary": "Create a source credential binding",
+        "description": "Creates a binding for (sourceName, environment). The body carries references (a SecretRef of the form scheme://locator[#version]) and non-secret metadata only; a value that is not a well-formed SecretRef is rejected (400). Conflicts if a binding for that (sourceName, environment) already exists.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CredentialBindingWrite" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The created binding.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CredentialBindingSummary" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/credentials/{sourceName}/{environment}": {
+      "get": {
+        "operationId": "getCredential",
+        "security": [
+          { "oauth2": ["credentials:read"] },
+          { "openIdConnect": ["credentials:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["credentials"],
+        "summary": "Get a source credential binding",
+        "parameters": [
+          { "$ref": "#/components/parameters/SourceNamePath" },
+          { "$ref": "#/components/parameters/EnvironmentPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The binding.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CredentialBindingSummary" }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "operationId": "updateCredential",
+        "security": [
+          { "oauth2": ["credentials:write"] },
+          { "openIdConnect": ["credentials:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["credentials"],
+        "summary": "Update a source credential binding",
+        "description": "Replaces the references and non-secret metadata of an existing binding; the (sourceName, environment) identity and the created-* audit fields are immutable. Rotation is by changing the reference. A value that is not a well-formed SecretRef is rejected (400).",
+        "parameters": [
+          { "$ref": "#/components/parameters/SourceNamePath" },
+          { "$ref": "#/components/parameters/EnvironmentPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CredentialBindingUpdate" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated binding.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CredentialBindingSummary" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteCredential",
+        "security": [
+          { "oauth2": ["credentials:write"] },
+          { "openIdConnect": ["credentials:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["credentials"],
+        "summary": "Delete a source credential binding",
+        "parameters": [
+          { "$ref": "#/components/parameters/SourceNamePath" },
+          { "$ref": "#/components/parameters/EnvironmentPath" }
+        ],
+        "responses": {
+          "204": { "description": "The binding was deleted." },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
     }
   },
   "components": {
@@ -1136,7 +1274,9 @@
               "runs:purge": "Permanently delete terminal runs (destructive).",
               "catalog:read": "Search and read catalog workflow versions.",
               "catalog:write": "Add catalog versions and edit their governance metadata.",
-              "catalog:purge": "Delete and purge catalog versions (destructive)."
+              "catalog:purge": "Delete and purge catalog versions (destructive).",
+              "credentials:read": "List and read source credential bindings (references and metadata only — never secret material).",
+              "credentials:write": "Create, update, and delete source credential bindings (references and metadata only — never secret material)."
             }
           },
           "clientCredentials": {
@@ -1147,7 +1287,9 @@
               "runs:purge": "Permanently delete terminal runs (destructive).",
               "catalog:read": "Search and read catalog workflow versions.",
               "catalog:write": "Add catalog versions and edit their governance metadata.",
-              "catalog:purge": "Delete and purge catalog versions (destructive)."
+              "catalog:purge": "Delete and purge catalog versions (destructive).",
+              "credentials:read": "List and read source credential bindings (references and metadata only — never secret material).",
+              "credentials:write": "Create, update, and delete source credential bindings (references and metadata only — never secret material)."
             }
           }
         }
@@ -1168,6 +1310,20 @@
         "in": "path",
         "required": true,
         "description": "The run id.",
+        "schema": { "type": "string" }
+      },
+      "SourceNamePath": {
+        "name": "sourceName",
+        "in": "path",
+        "required": true,
+        "description": "The Arazzo source description name the credential authenticates calls to.",
+        "schema": { "type": "string" }
+      },
+      "EnvironmentPath": {
+        "name": "environment",
+        "in": "path",
+        "required": true,
+        "description": "The deployment environment the binding applies to.",
         "schema": { "type": "string" }
       },
       "StatusQuery": {
@@ -2074,6 +2230,127 @@
         "required": [
           "bindings"
         ]
+      },
+      "SourceCredentialKind": {
+        "type": "string",
+        "description": "The HTTP auth scheme the resolved secret(s) build into a provider (non-sensitive metadata).",
+        "enum": ["apiKey", "bearer", "basic", "oauth2ClientCredentials"]
+      },
+      "SecretReference": {
+        "type": "object",
+        "description": "A named, role-tagged reference to one secret in the external store. The ref is a pointer (scheme://locator[#version]) — never secret material.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The role this secret plays (e.g. value, password, clientSecret)."
+          },
+          "ref": {
+            "type": "string",
+            "description": "The secret reference: scheme://locator[#version] (keyvault, awssm, vault, env, file)."
+          }
+        },
+        "required": ["name", "ref"]
+      },
+      "CredentialConfigEntry": {
+        "type": "object",
+        "description": "A single non-secret auth configuration value.",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The configuration key (e.g. headerName, tokenUrl, scopes, username)."
+          },
+          "value": {
+            "type": "string",
+            "description": "The non-secret configuration value."
+          }
+        },
+        "required": ["key", "value"]
+      },
+      "CredentialBindingWrite": {
+        "type": "object",
+        "description": "A source credential binding to create — references and non-secret metadata only. Secret material must never appear here; each secretRefs entry is a SecretRef pointer the runner dereferences.",
+        "properties": {
+          "sourceName": {
+            "type": "string",
+            "description": "The Arazzo source description name."
+          },
+          "environment": {
+            "type": "string",
+            "description": "The deployment environment."
+          },
+          "authKind": { "$ref": "#/components/schemas/SourceCredentialKind" },
+          "secretRefs": {
+            "type": "array",
+            "description": "The named references to secret material in the external store (at least one).",
+            "minItems": 1,
+            "items": { "$ref": "#/components/schemas/SecretReference" }
+          },
+          "config": {
+            "type": "array",
+            "description": "Non-secret auth configuration. Secret material must never appear here.",
+            "items": { "$ref": "#/components/schemas/CredentialConfigEntry" }
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": ["sourceName", "environment", "authKind", "secretRefs"]
+      },
+      "CredentialBindingUpdate": {
+        "type": "object",
+        "description": "Replacement references and non-secret metadata for an existing binding (its sourceName/environment identity is taken from the path and is immutable).",
+        "properties": {
+          "authKind": { "$ref": "#/components/schemas/SourceCredentialKind" },
+          "secretRefs": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/components/schemas/SecretReference" }
+          },
+          "config": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CredentialConfigEntry" }
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": ["authKind", "secretRefs"]
+      },
+      "CredentialBindingSummary": {
+        "type": "object",
+        "description": "A persisted source credential binding — references and non-secret metadata only. No secret material is ever included.",
+        "properties": {
+          "id": { "type": "string" },
+          "sourceName": { "type": "string" },
+          "environment": { "type": "string" },
+          "authKind": { "$ref": "#/components/schemas/SourceCredentialKind" },
+          "secretRefs": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SecretReference" }
+          },
+          "config": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CredentialConfigEntry" }
+          },
+          "description": { "type": "string" },
+          "createdBy": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "lastUpdatedBy": { "type": "string" },
+          "lastUpdatedAt": { "type": "string", "format": "date-time" },
+          "etag": { "type": "string", "description": "The optimistic-concurrency token." }
+        },
+        "required": ["id", "sourceName", "environment", "authKind", "secretRefs", "createdBy", "createdAt", "etag"]
+      },
+      "CredentialBindingList": {
+        "type": "object",
+        "description": "All source credential bindings.",
+        "properties": {
+          "credentials": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CredentialBindingSummary" }
+          }
+        },
+        "required": ["credentials"]
       }
     }
   }
