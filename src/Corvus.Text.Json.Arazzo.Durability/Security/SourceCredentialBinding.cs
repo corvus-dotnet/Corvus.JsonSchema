@@ -53,6 +53,14 @@ public readonly partial struct SourceCredentialBinding
     /// <summary>Gets the last-update instant, or <see langword="null"/> if the binding has never been updated.</summary>
     public DateTimeOffset? LastUpdatedAtValue => this.LastUpdatedAt.IsNotUndefined() ? ParseDate(this.LastUpdatedAt) : null;
 
+    /// <summary>Gets the instant the referenced secret expires (§13.2 lifecycle metadata), or <see langword="null"/>
+    /// when the binding declares no expiry (treated as non-expiring).</summary>
+    public DateTimeOffset? ExpiresAtOrNull => this.ExpiresAt.IsNotUndefined() ? ParseDate(this.ExpiresAt) : null;
+
+    /// <summary>Gets the instant the referenced secret was last rotated (§13.2 lifecycle metadata), or
+    /// <see langword="null"/> when unknown.</summary>
+    public DateTimeOffset? RotatedAtOrNull => this.RotatedAt.IsNotUndefined() ? ParseDate(this.RotatedAt) : null;
+
     /// <summary>Gets the optimistic-concurrency token.</summary>
     public WorkflowEtag EtagValue => new((string)this.Etag);
 
@@ -101,6 +109,30 @@ public readonly partial struct SourceCredentialBinding
         }
 
         return true;
+    }
+
+    /// <summary>Derives the binding's <see cref="CredentialStatus"/> (§13.2) from its <c>expiresAt</c> against
+    /// <paramref name="now"/> — pure, allocation-free, and never persisted (so it cannot go stale). A binding with no
+    /// declared expiry is <see cref="CredentialStatus.Valid"/>; one whose expiry has passed is
+    /// <see cref="CredentialStatus.Expired"/>; one expiring within <paramref name="expiringWindow"/> is
+    /// <see cref="CredentialStatus.ExpiringSoon"/>. The expiry instant itself is available via
+    /// <see cref="ExpiresAtOrNull"/>.</summary>
+    /// <param name="now">The current instant (supply the deployment's <c>TimeProvider</c> time).</param>
+    /// <param name="expiringWindow">How far ahead of expiry a still-valid credential is reported as expiring-soon.</param>
+    /// <returns>The derived status.</returns>
+    public CredentialStatus DeriveStatus(DateTimeOffset now, TimeSpan expiringWindow)
+    {
+        if (this.ExpiresAtOrNull is not { } expiresAt)
+        {
+            return CredentialStatus.Valid;
+        }
+
+        if (now >= expiresAt)
+        {
+            return CredentialStatus.Expired;
+        }
+
+        return expiresAt - now <= expiringWindow ? CredentialStatus.ExpiringSoon : CredentialStatus.Valid;
     }
 
     /// <summary>Gets the number of secret references on the binding.</summary>
@@ -181,6 +213,8 @@ public readonly partial struct SourceCredentialBinding
             writer.WriteString(JsonPropertyNames.DescriptionUtf8, description);
         }
 
+        WriteLifecycle(writer, definition);
+
         if (!definition.ManagementTags.IsEmpty)
         {
             writer.WritePropertyName(JsonPropertyNames.ManagementTagsUtf8);
@@ -220,6 +254,8 @@ public readonly partial struct SourceCredentialBinding
         {
             writer.WriteString(JsonPropertyNames.DescriptionUtf8, description);
         }
+
+        WriteLifecycle(writer, definition);
 
         // Management and usage tags are immutable identity (the binding's row-authorization scope) — carried forward
         // from the existing binding, never taken from the update definition.
@@ -302,6 +338,23 @@ public readonly partial struct SourceCredentialBinding
         writer.WriteEndArray();
     }
 
+    private static void WriteLifecycle(Utf8JsonWriter writer, SourceCredentialDefinition definition)
+    {
+        // Non-sensitive lifecycle metadata (§13.2); both optional and mutable (a rotation refreshes them). The typed
+        // DateTimeOffset WriteString overload formats ISO-8601 straight into the buffer — no interim string.
+        if (definition.ExpiresAt is { } expiresAt)
+        {
+            writer.WriteString(JsonPropertyNames.ExpiresAtUtf8, expiresAt);
+        }
+
+        if (definition.RotatedAt is { } rotatedAt)
+        {
+            writer.WriteString(JsonPropertyNames.RotatedAtUtf8, rotatedAt);
+        }
+    }
+
+    // Read the instant straight from the backing UTF-8 via the strongly-typed accessor (JsonDateTime → JsonElement →
+    // GetDateTimeOffset) — no managed-string realization, unlike a (string)cast + DateTimeOffset.Parse.
     private static DateTimeOffset ParseDate(in JsonDateTime value)
-        => DateTimeOffset.Parse((string)value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+        => ((JsonElement)value).GetDateTimeOffset();
 }
