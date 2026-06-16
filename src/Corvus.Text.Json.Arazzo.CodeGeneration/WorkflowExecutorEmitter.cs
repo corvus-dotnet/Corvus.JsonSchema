@@ -1153,6 +1153,22 @@ public static class WorkflowExecutorEmitter
         }
 
         writer.AppendLine("        }");
+        if (options.Durable)
+        {
+            // A source credential that expired at bind time faults the run with a typed credentials-expired error
+            // (§13.2/§13.3) rather than propagating opaquely — so the run is Faulted, the fault is filterable, and it is
+            // resumable once the operator rotates the secret in the store (the re-bound run picks up the fresh
+            // credential). Only when there is a run to record the fault on; the null-run fallback re-throws via the
+            // general handler below. The offending source name is recorded as the fault's step id.
+            writer.AppendLine("        catch (SourceCredentialExpiredException ex) when (run is not null)");
+            writer.AppendLine("        {");
+            writer.AppendLine("            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);");
+            writer.AppendLine("            ArazzoTelemetry.WorkflowsFaulted.Add(1);");
+            writer.AppendLine("            WorkflowFault credentialsExpiredFault = await run.FaultAsync(ex.SourceName, 1, SourceCredentialExpiredException.ErrorType, cancellationToken).ConfigureAwait(false);");
+            writer.Append("            return WorkflowRunResult<").Append(options.OutputsTypeName).AppendLine(">.Faulted(credentialsExpiredFault);");
+            writer.AppendLine("        }");
+        }
+
         writer.AppendLine("        catch (Exception ex)");
         writer.AppendLine("        {");
         writer.AppendLine("            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);");

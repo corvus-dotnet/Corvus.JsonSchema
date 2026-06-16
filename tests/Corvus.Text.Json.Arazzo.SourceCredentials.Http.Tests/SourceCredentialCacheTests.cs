@@ -80,6 +80,47 @@ public sealed class SourceCredentialCacheTests
         cache.Dispose();
     }
 
+    [TestMethod]
+    public async Task An_expired_binding_faults_the_bind_without_resolving_the_secret()
+    {
+        (SourceCredentialCache cache, FakeSecretResolver resolver, InMemorySourceCredentialStore store, _) = NewCache();
+        await store.AddAsync(ApiKeyDefinition("petstore", "production", expiresAt: Start - TimeSpan.FromMinutes(1)), "alice", default);
+
+        SourceCredentialExpiredException ex = await Should.ThrowAsync<SourceCredentialExpiredException>(
+            async () => await cache.GetAsync("petstore", "production", default));
+
+        ex.SourceName.ShouldBe("petstore");
+        resolver.ResolveCount.ShouldBe(0); // an expired binding never resolves the secret
+        cache.Dispose();
+    }
+
+    [TestMethod]
+    public async Task A_binding_that_expires_while_cached_faults_on_the_next_bind()
+    {
+        (SourceCredentialCache cache, _, InMemorySourceCredentialStore store, TestClock clock) = NewCache(ttl: TimeSpan.FromMinutes(5));
+        await store.AddAsync(ApiKeyDefinition("petstore", "production", expiresAt: Start + TimeSpan.FromMinutes(2)), "alice", default);
+
+        // Valid when first bound.
+        (await cache.GetAsync("petstore", "production", default)).ShouldNotBeNull();
+
+        // It expires inside the cache window — the next bind faults via the warm-path expiry check.
+        clock.Advance(TimeSpan.FromMinutes(3));
+        SourceCredentialExpiredException ex = await Should.ThrowAsync<SourceCredentialExpiredException>(
+            async () => await cache.GetAsync("petstore", "production", default));
+        ex.SourceName.ShouldBe("petstore");
+        cache.Dispose();
+    }
+
+    [TestMethod]
+    public async Task A_binding_with_a_future_expiry_binds_normally()
+    {
+        (SourceCredentialCache cache, _, InMemorySourceCredentialStore store, _) = NewCache();
+        await store.AddAsync(ApiKeyDefinition("petstore", "production", expiresAt: Start + TimeSpan.FromDays(1)), "alice", default);
+
+        (await cache.GetAsync("petstore", "production", default)).ShouldNotBeNull();
+        cache.Dispose();
+    }
+
     private static (SourceCredentialCache Cache, FakeSecretResolver Resolver, InMemorySourceCredentialStore Store, TestClock Clock) NewCache(TimeSpan? ttl = null)
     {
         var clock = new TestClock(Start);
@@ -94,11 +135,12 @@ public sealed class SourceCredentialCacheTests
         return (cache, resolver, store, clock);
     }
 
-    private static SourceCredentialDefinition ApiKeyDefinition(string sourceName, string environment, string variant = "")
+    private static SourceCredentialDefinition ApiKeyDefinition(string sourceName, string environment, string variant = "", DateTimeOffset? expiresAt = null)
         => new(
             sourceName,
             environment,
             SourceCredentialKind.ApiKey,
             [new SecretReferenceDefinition("value", $"env://{sourceName}-{environment}{(variant.Length == 0 ? string.Empty : "-" + variant)}")],
-            [new CredentialConfigDefinition("parameterName", "X-Api-Key")]);
+            [new CredentialConfigDefinition("parameterName", "X-Api-Key")],
+            ExpiresAt: expiresAt);
 }
