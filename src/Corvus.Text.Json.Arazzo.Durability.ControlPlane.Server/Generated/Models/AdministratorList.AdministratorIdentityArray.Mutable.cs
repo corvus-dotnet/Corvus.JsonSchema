@@ -24,10 +24,10 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The replacement administrator set for a transfer (&#167;15) — at least one identity; duplicates are coalesced.
+/// The administrator identities for a base workflow id (&#167;15).
 /// </para>
 /// </remarks>
-public readonly partial struct AdministratorSetWrite
+public readonly partial struct AdministratorList
 {
     /// <summary>
     /// Generated from JSON Schema.
@@ -744,7 +744,7 @@ public readonly partial struct AdministratorSetWrite
                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
             }
 
-            internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorIdentityArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
             public static implicit operator Source(AdministratorIdentityArray instance) => new(JsonElement.From(instance));
 
@@ -865,7 +865,7 @@ public readonly partial struct AdministratorSetWrite
 
             public static implicit operator Source<TContext>(Source source) => new (source);
 
-            internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorIdentityArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {

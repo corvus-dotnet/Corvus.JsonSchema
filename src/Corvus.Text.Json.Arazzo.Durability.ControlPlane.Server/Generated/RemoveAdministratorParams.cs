@@ -15,9 +15,9 @@ using Corvus.Text.Json.OpenApi;
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
 /// <summary>
-/// Parameters for the RemoveAdministrator operation (DELETE /administrators/{baseWorkflowId}/members/{digest}).
+/// Parameters for the RemoveAdministrator operation (DELETE /administrators/{baseWorkflowId}/members/{dimension}/{value}).
 /// </summary>
-/// <remarks>Removes the administrator identified by its identity digest (from AdministratorGrant.digest in the list) from the base workflow id's administrator set. Removing a multi-tag grantee removes the whole identity in one call. The set may not be left empty — removing the last administrator conflicts (409). The caller must be a current administrator (403 otherwise). An unknown digest is a no-op (the resulting set is returned).</remarks>
+/// <remarks>Removes the named identity from the base workflow id's administrator set. The set may not be left empty — removing the last administrator conflicts (409). The caller must be a current administrator (403 otherwise).</remarks>
 public readonly struct RemoveAdministratorParams
 {
 
@@ -27,7 +27,12 @@ public readonly struct RemoveAdministratorParams
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString BaseWorkflowId { get; init; }
 
     /// <summary>
-    /// Gets the 'digest' path parameter.
+    /// Gets the 'dimension' path parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Digest { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Dimension { get; init; }
+
+    /// <summary>
+    /// Gets the 'value' path parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Value { get; init; }
 }

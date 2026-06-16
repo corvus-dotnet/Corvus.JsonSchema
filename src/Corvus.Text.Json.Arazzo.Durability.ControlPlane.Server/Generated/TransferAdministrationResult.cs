@@ -42,18 +42,6 @@ public readonly struct TransferAdministrationResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="TransferAdministrationResult"/> with status 200.</returns>
     public static TransferAdministrationResult Ok(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.Source body, JsonWorkspace workspace) => new(200, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.CreateBuilder(workspace, body, 30).RootElement, "application/json");
-    /// <summary>
-    /// Creates a 200 Ok result from a context-threaded body, materialised in a single pass.
-    /// </summary>
-    /// <typeparam name="TContext">The type of the context carried by the body.</typeparam>
-    /// <param name="body">The context-threaded response body.</param>
-    /// <param name="workspace">The workspace for building the response value.</param>
-    /// <returns>A <see cref="TransferAdministrationResult"/> with status 200.</returns>
-    public static TransferAdministrationResult Ok<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.Source<TContext> body, JsonWorkspace workspace)
-    #if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-    #endif
-        => new(200, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Creates a 400 BadRequest result.
@@ -62,18 +50,6 @@ public readonly struct TransferAdministrationResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="TransferAdministrationResult"/> with status 400.</returns>
     public static TransferAdministrationResult BadRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(400, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/json");
-    /// <summary>
-    /// Creates a 400 BadRequest result from a context-threaded body, materialised in a single pass.
-    /// </summary>
-    /// <typeparam name="TContext">The type of the context carried by the body.</typeparam>
-    /// <param name="body">The context-threaded response body.</param>
-    /// <param name="workspace">The workspace for building the response value.</param>
-    /// <returns>A <see cref="TransferAdministrationResult"/> with status 400.</returns>
-    public static TransferAdministrationResult BadRequest<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source<TContext> body, JsonWorkspace workspace)
-    #if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-    #endif
-        => new(400, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Creates a 403 Forbidden result.
@@ -82,18 +58,6 @@ public readonly struct TransferAdministrationResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="TransferAdministrationResult"/> with status 403.</returns>
     public static TransferAdministrationResult Forbidden(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(403, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/json");
-    /// <summary>
-    /// Creates a 403 Forbidden result from a context-threaded body, materialised in a single pass.
-    /// </summary>
-    /// <typeparam name="TContext">The type of the context carried by the body.</typeparam>
-    /// <param name="body">The context-threaded response body.</param>
-    /// <param name="workspace">The workspace for building the response value.</param>
-    /// <returns>A <see cref="TransferAdministrationResult"/> with status 403.</returns>
-    public static TransferAdministrationResult Forbidden<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source<TContext> body, JsonWorkspace workspace)
-    #if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-    #endif
-        => new(403, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Creates a 409 Conflict result.
@@ -102,18 +66,6 @@ public readonly struct TransferAdministrationResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="TransferAdministrationResult"/> with status 409.</returns>
     public static TransferAdministrationResult Conflict(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(409, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/json");
-    /// <summary>
-    /// Creates a 409 Conflict result from a context-threaded body, materialised in a single pass.
-    /// </summary>
-    /// <typeparam name="TContext">The type of the context carried by the body.</typeparam>
-    /// <param name="body">The context-threaded response body.</param>
-    /// <param name="workspace">The workspace for building the response value.</param>
-    /// <returns>A <see cref="TransferAdministrationResult"/> with status 409.</returns>
-    public static TransferAdministrationResult Conflict<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source<TContext> body, JsonWorkspace workspace)
-    #if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-    #endif
-        => new(409, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.

@@ -329,7 +329,7 @@ public readonly partial struct AdministratorSetWrite
         /// Set the <c>administrators</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAdministrators(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source value)
+        public void SetAdministrators(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source value)
         {
             CheckValidInstance();
 
@@ -495,7 +495,7 @@ public readonly partial struct AdministratorSetWrite
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
+        public void SetProperty(string propertyName, in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -518,7 +518,7 @@ public readonly partial struct AdministratorSetWrite
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -565,7 +565,7 @@ public readonly partial struct AdministratorSetWrite
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -735,7 +735,7 @@ public readonly partial struct AdministratorSetWrite
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source arg1)
+        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source arg1)
         {
             _createArg1 = arg1;
             _kind = Kind.Create;
@@ -899,7 +899,7 @@ public readonly partial struct AdministratorSetWrite
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source<TContext> arg1)
+        internal Source(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source<TContext> arg1)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1188,7 +1188,7 @@ public readonly partial struct AdministratorSetWrite
         /// </summary>
         /// <param name="arg1">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source arg1, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source arg1, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1);
@@ -1202,7 +1202,7 @@ public readonly partial struct AdministratorSetWrite
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="arg1">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source<TContext> arg1, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source<TContext> arg1, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1247,7 +1247,7 @@ public readonly partial struct AdministratorSetWrite
     /// </summary>
     /// <param name="administrators">The value of the <c>"administrators"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source administrators)
+    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source administrators)
     {
         return new Source(administrators);
     }
@@ -1259,7 +1259,7 @@ public readonly partial struct AdministratorSetWrite
     /// <param name="context">The context to pass to the builder.</param>
     /// <param name="administrators">The value of the <c>"administrators"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source<TContext> administrators)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source<TContext> administrators)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1276,29 +1276,6 @@ public readonly partial struct AdministratorSetWrite
     /// <returns>An instance of a mutable document initialized with the given value.</returns>
     public static JsonDocumentBuilder<Mutable> CreateBuilder(
         JsonWorkspace workspace, scoped in Source value, int initialCapacity = 30)
-    {
-        // Create the document builder without a MetadataDb
-        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
-        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
-        value.AddAsItem(ref cvb);
-        Debug.Assert(cvb.MemberCount == 1);
-        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-        return documentBuilder;
-    }
-
-    /// <summary>
-    /// Creates and initializes a mutable document from a context-threaded value.
-    /// </summary>
-    /// <typeparam name="TContext">The type of the context carried by the value.</typeparam>
-    /// <param name="workspace">The JSON workspace.</param>
-    /// <param name="value">The context-threaded value with which to initialize the builder.</param>
-    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
-    /// <returns>An instance of a mutable document initialized with the given value.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-        JsonWorkspace workspace, scoped in Source<TContext> value, int initialCapacity = 30)
-        #if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-        #endif
     {
         // Create the document builder without a MetadataDb
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);

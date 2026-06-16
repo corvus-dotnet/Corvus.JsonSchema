@@ -48,7 +48,7 @@ public interface IApiAdministratorsHandler
     ValueTask<AddAdministratorResult> HandleAddAdministratorAsync(AddAdministratorParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Handles DELETE /administrators/{baseWorkflowId}/members/{digest} — Remove an administrator
+    /// Handles DELETE /administrators/{baseWorkflowId}/members/{dimension}/{value} — Remove an administrator
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
     /// <param name="workspace">The workspace for building response values.</param>

@@ -55,8 +55,8 @@ public sealed class ControlPlaneAdministratorsApiTests
             Grants(added).Order().ShouldBe(["tenant=acme", "tenant=globex"]);
         }
 
-        // globex, now an administrator, removes acme by its identity digest — the set never empties because globex remains.
-        using (Stj.JsonDocument removed = await ReadJsonAsync(await host.SendAsync(HttpMethod.Delete, $"/administrators/flow/members/{Digest(Acme)}", Write, Globex)))
+        // globex, now an administrator, removes acme — the set never empties because globex remains.
+        using (Stj.JsonDocument removed = await ReadJsonAsync(await host.SendAsync(HttpMethod.Delete, "/administrators/flow/members/tenant/acme", Write, Globex)))
         {
             Grants(removed).ShouldBe(["tenant=globex"]);
         }
@@ -77,7 +77,7 @@ public sealed class ControlPlaneAdministratorsApiTests
         // globex is not an administrator: adding (or transferring, or removing) is refused, non-disclosingly.
         (await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"dimension":"tenant","value":"globex"}""", Write, Globex))
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-        (await host.SendAsync(HttpMethod.Delete, $"/administrators/flow/members/{Digest(Acme)}", Write, Globex))
+        (await host.SendAsync(HttpMethod.Delete, "/administrators/flow/members/tenant/acme", Write, Globex))
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
@@ -102,7 +102,7 @@ public sealed class ControlPlaneAdministratorsApiTests
         await EstablishAsync(host.Catalog, "flow", Acme);
 
         // acme is the sole administrator: removing itself would orphan the workflow — refused (409).
-        (await host.SendAsync(HttpMethod.Delete, $"/administrators/flow/members/{Digest(Acme)}", Write, Acme))
+        (await host.SendAsync(HttpMethod.Delete, "/administrators/flow/members/tenant/acme", Write, Acme))
             .StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
 
@@ -113,7 +113,7 @@ public sealed class ControlPlaneAdministratorsApiTests
         await EstablishAsync(host.Catalog, "flow", Acme);
 
         // acme is an administrator; globex is not. Removing globex changes nothing and returns the unchanged set (200).
-        using Stj.JsonDocument removed = await ReadJsonAsync(await host.SendAsync(HttpMethod.Delete, $"/administrators/flow/members/{Digest(Globex)}", Write, Acme));
+        using Stj.JsonDocument removed = await ReadJsonAsync(await host.SendAsync(HttpMethod.Delete, "/administrators/flow/members/tenant/globex", Write, Acme));
         Grants(removed).ShouldBe(["tenant=acme"]);
     }
 
@@ -162,46 +162,16 @@ public sealed class ControlPlaneAdministratorsApiTests
         (await host.SendAsync(HttpMethod.Get, "/administrators/flow", Write, Acme)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
-    [TestMethod]
-    public async Task A_grant_whose_resolved_identity_collides_with_another_grantee_is_refused()
-    {
-        // A deployment whose identity mapping is NOT unique: the grantee values "real" and "alias" both resolve to the
-        // same sys: identity. With an observed-identity store wired, the collision guard (§16.5.4) must refuse the second.
-        await using Scoped host = await StartAsync(observed: new InMemoryObservedIdentityStore(), policy: new CollidingIdentityPolicy());
-        await EstablishAsync(host.Catalog, "flow", Acme);
-
-        // acme records a co-administrator grantee "real" (→ the shared identity), succeeding and seeding the typeahead.
-        (await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"dimension":"tenant","value":"real"}""", Write, Acme))
-            .StatusCode.ShouldBe(HttpStatusCode.OK);
-
-        // "alias" is a DIFFERENT grantee value that resolves to the SAME identity as "real" — naming it would author an
-        // ambiguous grant (the grant would silently also admit "real"), so it is refused (409), not merged.
-        (await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"dimension":"tenant","value":"alias"}""", Write, Acme))
-            .StatusCode.ShouldBe(HttpStatusCode.Conflict);
-
-        // A genuinely distinct grantee resolves to its own identity and is unaffected.
-        (await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"dimension":"tenant","value":"distinct"}""", Write, Acme))
-            .StatusCode.ShouldBe(HttpStatusCode.OK);
-    }
-
-    // Each administrator is now a resolved-identity grant {digest, identity:[{dimension,value}], kind?, label?}; flatten its
-    // identity grants to dimension=value strings (each administrator in these tests is a single-grant identity).
     private static IEnumerable<string> Grants(Stj.JsonDocument document)
         => document.RootElement.GetProperty("administrators").EnumerateArray()
-            .SelectMany(a => a.GetProperty("identity").EnumerateArray()
-                .Select(g => $"{g.GetProperty("dimension").GetString()}={g.GetProperty("value").GetString()}"));
-
-    // The stable removal key: the digest of the administrator's internal resolved identity (the policy maps the grant
-    // {tenant, value} to sys:tenant=value), matching what the list/add responses hand back.
-    private static string Digest(string tenant)
-        => SecurityIdentityDigest.Compute(SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", tenant)]))!;
+            .Select(a => $"{a.GetProperty("dimension").GetString()}={a.GetProperty("value").GetString()}");
 
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)
         => Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 
     // Publishes version 1 of a base id stamped with the founder's deployment identity (sys:tenant=<founder>), so the
     // founder becomes its sole administrator — mirroring what a real submitter's stamped identity would carry.
-    private static async Task EstablishAsync(SecuredWorkflowCatalog catalog, string workflowId, string founder)
+    private static async Task EstablishAsync(WorkflowCatalogClient catalog, string workflowId, string founder)
     {
         SecurityTagSet founderIdentity = SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", founder)]);
         await catalog.AddAsync(Package(workflowId), new CatalogOwner("Team", "team@example.com", null, null), default, founderIdentity, default);
@@ -219,11 +189,11 @@ public sealed class ControlPlaneAdministratorsApiTests
         return CatalogPackage.Build(workflow, []);
     }
 
-    private static async Task<Scoped> StartAsync(bool withAdministratorStore = true, IObservedIdentityStore? observed = null, ControlPlaneRowSecurityPolicy? policy = null)
+    private static async Task<Scoped> StartAsync(bool withAdministratorStore = true)
     {
         var store = new InMemoryWorkflowStateStore();
-        var management = new SecuredWorkflowManagement(store, "ops");
-        var catalog = new SecuredWorkflowCatalog(
+        var management = new WorkflowManagementClient(store, "ops");
+        var catalog = new WorkflowCatalogClient(
             new InMemoryWorkflowCatalogStore(),
             store,
             "ops",
@@ -242,7 +212,7 @@ public sealed class ControlPlaneAdministratorsApiTests
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: policy ?? new TenantIdentityPolicy(), observedIdentityStore: observed);
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), requireAuthorization: true, rowSecurity: new TenantIdentityPolicy());
         await app.StartAsync();
 
         return new Scoped(app, app.GetTestClient(), catalog);
@@ -262,31 +232,9 @@ public sealed class ControlPlaneAdministratorsApiTests
         }
     }
 
-    /// <summary>A non-unique mapping for the collision test: the grantee values <c>real</c> and <c>alias</c> both resolve
-    /// to the same identity (<c>sys:tenant=shared</c>); every other value resolves distinctly. The caller's <c>tenant</c>
-    /// claim is stamped as its identity, exactly like <see cref="TenantIdentityPolicy"/>.</summary>
-    private sealed class CollidingIdentityPolicy : ControlPlaneRowSecurityPolicy
+    private sealed class Scoped(WebApplication app, HttpClient client, WorkflowCatalogClient catalog) : IAsyncDisposable
     {
-        public override AccessContext Resolve(ClaimsPrincipal? principal) => AccessContext.System;
-
-        public override IReadOnlyList<SecurityTag> GetInternalTags(ClaimsPrincipal? principal)
-        {
-            string? tenant = principal?.FindFirst("tenant")?.Value;
-            return string.IsNullOrEmpty(tenant) ? [] : [new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", tenant)];
-        }
-
-        public override void ResolveUsageGrantInto(ReadOnlySpan<byte> dimension, ReadOnlySpan<byte> value, ref IdentityBuilder builder)
-        {
-            // The grantee identity is resolved bytes-to-bytes; the collision is introduced by remapping the value span,
-            // then delegating to the default prefix+dimension mapping — no managed string on the path.
-            ReadOnlySpan<byte> resolved = value.SequenceEqual("real"u8) || value.SequenceEqual("alias"u8) ? "shared"u8 : value;
-            base.ResolveUsageGrantInto(dimension, resolved, ref builder);
-        }
-    }
-
-    private sealed class Scoped(WebApplication app, HttpClient client, SecuredWorkflowCatalog catalog) : IAsyncDisposable
-    {
-        public SecuredWorkflowCatalog Catalog => catalog;
+        public WorkflowCatalogClient Catalog => catalog;
 
         public Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, string? scope, string? identity = null)
             => this.SendCoreAsync(new HttpRequestMessage(method, path), scope, identity);

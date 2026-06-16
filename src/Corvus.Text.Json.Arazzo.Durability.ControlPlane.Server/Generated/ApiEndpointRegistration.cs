@@ -30,10 +30,11 @@ public static class ApiEndpointRegistration
     /// <param name="catalogHandler">The handler for ApiCatalog operations.</param>
     /// <param name="securityHandler">The handler for ApiSecurity operations.</param>
     /// <param name="credentialsHandler">The handler for ApiCredentials operations.</param>
+    /// <param name="administratorsHandler">The handler for ApiAdministrators operations.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiRunsHandler runsHandler, IApiRunnersHandler runnersHandler, IApiCatalogHandler catalogHandler, IApiSecurityHandler securityHandler, IApiCredentialsHandler credentialsHandler)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiRunsHandler runsHandler, IApiRunnersHandler runnersHandler, IApiCatalogHandler catalogHandler, IApiSecurityHandler securityHandler, IApiCredentialsHandler credentialsHandler, IApiAdministratorsHandler administratorsHandler)
     {
-        return MapApiEndpoints(app, runsHandler, runnersHandler, catalogHandler, securityHandler, credentialsHandler, configureEndpoint: null);
+        return MapApiEndpoints(app, runsHandler, runnersHandler, catalogHandler, securityHandler, credentialsHandler, administratorsHandler, configureEndpoint: null);
     }
 
     /// <summary>
@@ -45,9 +46,10 @@ public static class ApiEndpointRegistration
     /// <param name="catalogHandler">The handler for ApiCatalog operations.</param>
     /// <param name="securityHandler">The handler for ApiSecurity operations.</param>
     /// <param name="credentialsHandler">The handler for ApiCredentials operations.</param>
+    /// <param name="administratorsHandler">The handler for ApiAdministrators operations.</param>
     /// <param name="configureEndpoint">An optional callback invoked once per generated endpoint, after the route is mapped, to apply per-endpoint conventions (authorization, naming, tags, output caching, rate limiting, etc.). May be <see langword="null"/>.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiRunsHandler runsHandler, IApiRunnersHandler runnersHandler, IApiCatalogHandler catalogHandler, IApiSecurityHandler securityHandler, IApiCredentialsHandler credentialsHandler, ConfigureEndpoint? configureEndpoint)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiRunsHandler runsHandler, IApiRunnersHandler runnersHandler, IApiCatalogHandler catalogHandler, IApiSecurityHandler securityHandler, IApiCredentialsHandler credentialsHandler, IApiAdministratorsHandler administratorsHandler, ConfigureEndpoint? configureEndpoint)
     {
 
         IEndpointConventionBuilder __ListRunsEndpoint = app.MapGet("/runs", async (HttpContext context) =>
@@ -3657,6 +3659,414 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "credentials:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "credentials:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __DeleteCredentialEndpoint);
 
+        IEndpointConventionBuilder __ListAdministratorsEndpoint = app.MapGet("/administrators/{baseWorkflowId}", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString BaseWorkflowIdValue = default;
+                if (context.Request.RouteValues.TryGetValue("baseWorkflowId", out object? BaseWorkflowIdRouteVal) && BaseWorkflowIdRouteVal is string BaseWorkflowIdRaw)
+                {
+                    BaseWorkflowIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(BaseWorkflowIdRaw, workspace);
+                }
+
+                if (BaseWorkflowIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'baseWorkflowId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!BaseWorkflowIdValue.IsUndefined() && !BaseWorkflowIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'baseWorkflowId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                ListAdministratorsParams parameters = new()
+                {
+                    BaseWorkflowId = BaseWorkflowIdValue,
+                }
+                ;
+
+                ListAdministratorsResult result = await administratorsHandler.HandleListAdministratorsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "listAdministrators",
+                methodName: "ListAdministrators",
+                httpMethod: "GET",
+                routeTemplate: "/administrators/{baseWorkflowId}",
+                tags: new[] { "administrators" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "administrators:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "administrators:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __ListAdministratorsEndpoint);
+
+        IEndpointConventionBuilder __TransferAdministrationEndpoint = app.MapPut("/administrators/{baseWorkflowId}", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite>? bodyDoc = null;
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString BaseWorkflowIdValue = default;
+                if (context.Request.RouteValues.TryGetValue("baseWorkflowId", out object? BaseWorkflowIdRouteVal) && BaseWorkflowIdRouteVal is string BaseWorkflowIdRaw)
+                {
+                    BaseWorkflowIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(BaseWorkflowIdRaw, workspace);
+                }
+
+                if (BaseWorkflowIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'baseWorkflowId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!BaseWorkflowIdValue.IsUndefined() && !BaseWorkflowIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'baseWorkflowId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                try
+                {
+                    bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!bodyDoc!.RootElement.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                TransferAdministrationParams parameters = new()
+                {
+                    BaseWorkflowId = BaseWorkflowIdValue,
+                    Body = bodyDoc!.RootElement,
+                }
+                ;
+
+                TransferAdministrationResult result = await administratorsHandler.HandleTransferAdministrationAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "transferAdministration",
+                methodName: "TransferAdministration",
+                httpMethod: "PUT",
+                routeTemplate: "/administrators/{baseWorkflowId}",
+                tags: new[] { "administrators" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "administrators:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "administrators:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __TransferAdministrationEndpoint);
+
+        IEndpointConventionBuilder __AddAdministratorEndpoint = app.MapPost("/administrators/{baseWorkflowId}/members", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity>? bodyDoc = null;
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString BaseWorkflowIdValue = default;
+                if (context.Request.RouteValues.TryGetValue("baseWorkflowId", out object? BaseWorkflowIdRouteVal) && BaseWorkflowIdRouteVal is string BaseWorkflowIdRaw)
+                {
+                    BaseWorkflowIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(BaseWorkflowIdRaw, workspace);
+                }
+
+                if (BaseWorkflowIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'baseWorkflowId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!BaseWorkflowIdValue.IsUndefined() && !BaseWorkflowIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'baseWorkflowId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                try
+                {
+                    bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!bodyDoc!.RootElement.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                AddAdministratorParams parameters = new()
+                {
+                    BaseWorkflowId = BaseWorkflowIdValue,
+                    Body = bodyDoc!.RootElement,
+                }
+                ;
+
+                AddAdministratorResult result = await administratorsHandler.HandleAddAdministratorAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "addAdministrator",
+                methodName: "AddAdministrator",
+                httpMethod: "POST",
+                routeTemplate: "/administrators/{baseWorkflowId}/members",
+                tags: new[] { "administrators" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "administrators:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "administrators:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __AddAdministratorEndpoint);
+
+        IEndpointConventionBuilder __RemoveAdministratorEndpoint = app.MapDelete("/administrators/{baseWorkflowId}/members/{dimension}/{value}", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString BaseWorkflowIdValue = default;
+                if (context.Request.RouteValues.TryGetValue("baseWorkflowId", out object? BaseWorkflowIdRouteVal) && BaseWorkflowIdRouteVal is string BaseWorkflowIdRaw)
+                {
+                    BaseWorkflowIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(BaseWorkflowIdRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString DimensionValue = default;
+                if (context.Request.RouteValues.TryGetValue("dimension", out object? DimensionRouteVal) && DimensionRouteVal is string DimensionRaw)
+                {
+                    DimensionValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(DimensionRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString ValueValue = default;
+                if (context.Request.RouteValues.TryGetValue("value", out object? ValueRouteVal) && ValueRouteVal is string ValueRaw)
+                {
+                    ValueValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(ValueRaw, workspace);
+                }
+
+                if (BaseWorkflowIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'baseWorkflowId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (DimensionValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'dimension' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (ValueValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'value' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!BaseWorkflowIdValue.IsUndefined() && !BaseWorkflowIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'baseWorkflowId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!DimensionValue.IsUndefined() && !DimensionValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'dimension' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!ValueValue.IsUndefined() && !ValueValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'value' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                RemoveAdministratorParams parameters = new()
+                {
+                    BaseWorkflowId = BaseWorkflowIdValue,
+                    Dimension = DimensionValue,
+                    Value = ValueValue,
+                }
+                ;
+
+                RemoveAdministratorResult result = await administratorsHandler.HandleRemoveAdministratorAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "removeAdministrator",
+                methodName: "RemoveAdministrator",
+                httpMethod: "DELETE",
+                routeTemplate: "/administrators/{baseWorkflowId}/members/{dimension}/{value}",
+                tags: new[] { "administrators" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "administrators:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "administrators:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __RemoveAdministratorEndpoint);
+
         return app;
     }
     /// <summary>
@@ -3688,7 +4098,7 @@ public static class ApiEndpointRegistration
         /// <summary>
         /// Gets all available scopes for <c>oauth2</c>.
         /// </summary>
-        public static readonly string[] Oauth2AvailableScopes = ["catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "runs:purge", "runs:read", "runs:write"];
+        public static readonly string[] Oauth2AvailableScopes = ["administrators:read", "administrators:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "runs:purge", "runs:read", "runs:write"];
 
 
         /// <summary>
@@ -4094,14 +4504,54 @@ public static class ApiEndpointRegistration
         public static readonly string[] DeleteCredentialOpenIdConnectScopes = ["credentials:write"];
 
         /// <summary>
+        /// Gets the scopes required by <c>ListAdministrators</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] ListAdministratorsOauth2Scopes = ["administrators:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ListAdministrators</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] ListAdministratorsOpenIdConnectScopes = ["administrators:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>TransferAdministration</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] TransferAdministrationOauth2Scopes = ["administrators:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>TransferAdministration</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] TransferAdministrationOpenIdConnectScopes = ["administrators:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>AddAdministrator</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] AddAdministratorOauth2Scopes = ["administrators:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>AddAdministrator</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] AddAdministratorOpenIdConnectScopes = ["administrators:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>RemoveAdministrator</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] RemoveAdministratorOauth2Scopes = ["administrators:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>RemoveAdministrator</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] RemoveAdministratorOpenIdConnectScopes = ["administrators:write"];
+
+        /// <summary>
         /// Gets all scopes required by any operation for the <c>Oauth2</c> scheme.
         /// </summary>
-        public static readonly string[] AllOauth2Scopes = ["catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "runs:purge", "runs:read", "runs:write", "security:read", "security:write"];
+        public static readonly string[] AllOauth2Scopes = ["administrators:read", "administrators:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "runs:purge", "runs:read", "runs:write", "security:read", "security:write"];
 
         /// <summary>
         /// Gets all scopes required by any operation for the <c>OpenIdConnect</c> scheme.
         /// </summary>
-        public static readonly string[] AllOpenIdConnectScopes = ["catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "runs:purge", "runs:read", "runs:write", "security:read", "security:write"];
+        public static readonly string[] AllOpenIdConnectScopes = ["administrators:read", "administrators:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "runs:purge", "runs:read", "runs:write", "security:read", "security:write"];
     }
 
 }
