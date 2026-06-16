@@ -168,7 +168,9 @@ public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
 
         read.EnsureSuccessStatusCode();
         using CosmosJson.RentedResponse payload = await CosmosJson.ReadAllAsync(read.Content, cancellationToken).ConfigureAwait(false);
-        RunnerRegistration current = RunnerDocument.FromJson(payload.Memory).ToRegistration();
+
+        // The registration is embedded as raw nested JSON (no base64) — parse it straight from the doc value's bytes.
+        RunnerRegistration current = RunnerRegistration.FromJson(CosmosJson.GetRawValue(payload.Memory, "doc"u8));
 
         using var stream = RunnerDocument.WriteEnvelopeStream(runnerId, current, at);
         using ResponseMessage response = await this.runners.UpsertItemStreamAsync(stream, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -183,7 +185,7 @@ public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         var result = new List<RunnerRegistration>();
         await foreach (ReadOnlyMemory<byte> element in this.QueryElementsAsync(definition, cancellationToken).ConfigureAwait(false))
         {
-            result.Add(RunnerDocument.FromJson(element).ToRegistration());
+            result.Add(RunnerRegistration.FromJson(CosmosJson.GetRawValue(element, "doc"u8)));
         }
 
         return result;
