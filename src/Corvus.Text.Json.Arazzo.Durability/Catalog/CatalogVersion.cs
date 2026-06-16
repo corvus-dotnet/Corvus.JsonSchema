@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Globalization;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
 
@@ -157,7 +156,7 @@ public readonly partial struct CatalogVersion
 
             writer.WriteString(JsonPropertyNames.HashUtf8, hash);
             writer.WriteString(JsonPropertyNames.CreatedByUtf8, createdBy);
-            writer.WriteString(JsonPropertyNames.CreatedAtUtf8, createdAt.ToString("O", CultureInfo.InvariantCulture));
+            writer.WriteString(JsonPropertyNames.CreatedAtUtf8, createdAt);
             if (lastUpdatedBy is not null)
             {
                 writer.WriteString(JsonPropertyNames.LastUpdatedByUtf8, lastUpdatedBy);
@@ -165,7 +164,7 @@ public readonly partial struct CatalogVersion
 
             if (lastUpdatedAt is { } lua)
             {
-                writer.WriteString(JsonPropertyNames.LastUpdatedAtUtf8, lua.ToString("O", CultureInfo.InvariantCulture));
+                writer.WriteString(JsonPropertyNames.LastUpdatedAtUtf8, lua);
             }
 
             if (obsoletedBy is not null)
@@ -175,7 +174,7 @@ public readonly partial struct CatalogVersion
 
             if (obsoletedAt is { } oa)
             {
-                writer.WriteString(JsonPropertyNames.ObsoletedAtUtf8, oa.ToString("O", CultureInfo.InvariantCulture));
+                writer.WriteString(JsonPropertyNames.ObsoletedAtUtf8, oa);
             }
 
             writer.WriteBoolean(JsonPropertyNames.RunnableUtf8, runnable);
@@ -203,6 +202,8 @@ public readonly partial struct CatalogVersion
     public byte[] ToJsonBytes()
         => PersistedJson.ToArray(this, static (Utf8JsonWriter writer, in CatalogVersion v) => v.WriteTo(writer));
 
+    // Read the instant from the strongly-typed date-time element via its native NodaTime value — no managed-string
+    // realization and no JsonElement hop (the house idiom, e.g. RunnerRegistration, SecurityRuleDocument).
     private static DateTimeOffset ParseDate(in JsonDateTime value)
-        => DateTimeOffset.Parse((string)value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+        => ((NodaTime.OffsetDateTime)value).ToDateTimeOffset();
 }

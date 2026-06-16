@@ -285,7 +285,7 @@ internal static class TokenCache
             return new TokenSet(
                 root.GetProperty("accessToken"u8).GetString()!,
                 root.TryGetProperty("refreshToken"u8, out JsonElement r) ? r.GetString() : null,
-                DateTimeOffset.Parse(root.GetProperty("expiresAtUtc"u8).GetString()!, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind),
+                root.GetProperty("expiresAtUtc"u8).GetDateTimeOffset(),
                 root.GetProperty("authority"u8).GetString()!,
                 root.GetProperty("clientId"u8).GetString()!,
                 root.GetProperty("scope"u8).GetString()!);
@@ -312,7 +312,7 @@ internal static class TokenCache
                 writer.WriteString("refreshToken"u8, refreshToken);
             }
 
-            writer.WriteString("expiresAtUtc"u8, token.ExpiresAtUtc.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
+            writer.WriteString("expiresAtUtc"u8, token.ExpiresAtUtc);
             writer.WriteString("authority"u8, token.Authority);
             writer.WriteString("clientId"u8, token.ClientId);
             writer.WriteString("scope"u8, token.Scope);
