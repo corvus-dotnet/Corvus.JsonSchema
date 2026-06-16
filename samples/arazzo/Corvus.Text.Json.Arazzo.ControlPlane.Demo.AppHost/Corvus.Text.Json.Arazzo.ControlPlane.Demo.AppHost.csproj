@@ -1,0 +1,19 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.4.4">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <UserSecretsId>corvus-arazzo-control-plane-demo-apphost</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The Aspire.AppHost.Sdk turns this into a strongly-typed Projects.* reference for AddProject<T>.
+         Aspire.Hosting.AppHost is added implicitly by the SDK (versionless under CPM; pinned in
+         Directory.Packages.props). -->
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo.ControlPlane.Demo\Corvus.Text.Json.Arazzo.ControlPlane.Demo.csproj" />
+  </ItemGroup>
+
+</Project>
