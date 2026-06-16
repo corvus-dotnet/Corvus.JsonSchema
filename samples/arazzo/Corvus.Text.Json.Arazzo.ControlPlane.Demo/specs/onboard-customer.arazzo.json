@@ -9,7 +9,6 @@
         "type": "object",
         "properties": {
           "email": { "type": "string", "format": "idn-email", "description": "The applicant's email." },
-          "fullName": { "type": "string", "description": "The applicant's full name, submitted for identity verification." },
           "plan": { "type": "string", "enum": [ "free", "pro", "enterprise" ] }
         },
         "required": [ "email" ]
@@ -19,16 +18,6 @@
         {
           "stepId": "verifyIdentity",
           "operationId": "verifyIdentity",
-          "parameters": [ { "name": "accountId", "in": "path", "value": "$steps.createAccount.outputs.accountId" } ],
-          "requestBody": {
-            "contentType": "application/json",
-            "payload": { "fullName": "Applicant", "documentNumber": "X1234567" },
-            "replacements": [ { "target": "/fullName", "value": "$inputs.fullName" } ]
-          },
-          "successCriteria": [
-            { "condition": "$statusCode == 200" },
-            { "condition": "$response.body#/score >= 0.8" }
-          ],
           "outputs": {
             "score": "$response.body#/score",
             "method": "$response.body#/method",
@@ -40,7 +29,6 @@
         {
           "stepId": "provisionResources",
           "operationId": "provisionResources",
-          "parameters": [ { "name": "accountId", "in": "path", "value": "$steps.createAccount.outputs.accountId" } ],
           "outputs": {
             "accountUrl": "$response.body#/accountUrl",
             "quotaGb": "$response.body#/quotaGb",
@@ -48,12 +36,7 @@
             "tags": "$response.body#/tags"
           }
         },
-        {
-          "stepId": "sendWelcome",
-          "operationId": "sendWelcome",
-          "parameters": [ { "name": "accountId", "in": "path", "value": "$steps.createAccount.outputs.accountId" } ],
-          "outputs": {}
-        }
+        { "stepId": "sendWelcome", "operationId": "sendWelcome", "outputs": {} }
       ]
     }
   ]
