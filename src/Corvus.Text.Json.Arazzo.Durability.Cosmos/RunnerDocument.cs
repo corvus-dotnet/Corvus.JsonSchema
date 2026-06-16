@@ -21,14 +21,6 @@ public readonly partial struct RunnerDocument
     /// <summary>Gets the runner id.</summary>
     public string IdValue => (string)this.Id;
 
-    /// <summary>Decodes the canonical registration JSON bytes.</summary>
-    /// <returns>The registration JSON bytes.</returns>
-    public byte[] DocBytes() => Convert.FromBase64String((string)this.Doc);
-
-    /// <summary>Reconstructs the registration carried by this document.</summary>
-    /// <returns>The runner registration.</returns>
-    public RunnerRegistration ToRegistration() => RunnerRegistration.FromJson(this.DocBytes());
-
     /// <summary>Parses a runner document from its persisted JSON as a detached value (one owned copy).</summary>
     /// <param name="utf8">The UTF-8 JSON document.</param>
     /// <returns>The document.</returns>
@@ -69,7 +61,11 @@ public readonly partial struct RunnerDocument
                 writer.WriteStartObject();
                 writer.WriteString(JsonPropertyNames.IdUtf8, c.RunnerId);
                 writer.WriteNumber(JsonPropertyNames.LastSeenAtUtf8, c.LastSeenAt.ToUnixTimeMilliseconds());
-                writer.WriteBase64String(JsonPropertyNames.DocUtf8, c.Doc.Span);
+
+                // The registration is itself JSON — embed it verbatim as a nested value, not base64 (which would be a
+                // spurious encode here + decode on read). It is valid JSON we produced, so skip validation.
+                writer.WritePropertyName(JsonPropertyNames.DocUtf8);
+                writer.WriteRawValue(c.Doc.Span, skipInputValidation: true);
 
                 writer.WriteStartArray(JsonPropertyNames.LoadedVersionsUtf8);
                 foreach (RunnerRegistration.RunnerHostedVersion hosted in c.Registration.HostedVersions.EnumerateArray())
