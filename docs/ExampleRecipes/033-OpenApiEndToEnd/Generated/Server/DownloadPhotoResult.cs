@@ -19,12 +19,16 @@ namespace Petstore.EndToEnd.Server;
 /// </summary>
 public readonly struct DownloadPhotoResult
 {
-    private DownloadPhotoResult(int statusCode, JsonElement body = default, string? contentType = null)
+    private DownloadPhotoResult(int statusCode, JsonElement body = default, string? contentType = null, bool hasBinaryBody = false, Func<Stream, CancellationToken, ValueTask>? binaryWriter = null)
     {
         this.StatusCode = statusCode;
         this.Body = body;
         this.ContentType = contentType;
+        this.HasBinaryBody = hasBinaryBody;
+        this.binaryWriter = binaryWriter;
     }
+
+    private readonly Func<Stream, CancellationToken, ValueTask>? binaryWriter;
 
     /// <summary>Gets the HTTP status code.</summary>
     public int StatusCode { get; }
@@ -35,11 +39,22 @@ public readonly struct DownloadPhotoResult
     /// <summary>Gets the content type for the response body.</summary>
     public string? ContentType { get; }
 
+    /// <summary>Gets a value indicating whether this result has a raw binary (octet-stream) response body.</summary>
+    public bool HasBinaryBody { get; }
+
     /// <summary>
     /// Creates a 200 Ok result.
     /// </summary>
+    /// <param name="body">The raw binary response body.</param>
+    /// <param name="contentType">The content type for the response body.</param>
     /// <returns>A <see cref="DownloadPhotoResult"/> with status 200.</returns>
-    public static DownloadPhotoResult Ok() => new(200, default, null);
+    public static DownloadPhotoResult Ok(ReadOnlyMemory<byte> body, string? contentType = "application/octet-stream") => new(200, default, contentType, hasBinaryBody: true, binaryWriter: (stream, cancellationToken) => stream.WriteAsync(body, cancellationToken));
+
+    /// <summary>Creates a 200 Ok result whose body is streamed directly to the response.</summary>
+    /// <param name="writeBody">A callback that writes the response body to the supplied stream.</param>
+    /// <param name="contentType">The content type for the response body.</param>
+    /// <returns>A <see cref="DownloadPhotoResult"/> with status 200.</returns>
+    public static DownloadPhotoResult Ok(Func<Stream, CancellationToken, ValueTask> writeBody, string? contentType = "application/octet-stream") => new(200, default, contentType, hasBinaryBody: true, binaryWriter: writeBody);
 
     /// <summary>
     /// Creates a 404 NotFound result.
@@ -74,4 +89,12 @@ public readonly struct DownloadPhotoResult
             this.Body.WriteTo(writer);
         }
     }
+
+    /// <summary>
+    /// Writes the raw binary (octet-stream) response body to the specified stream.
+    /// </summary>
+    /// <param name="stream">The response stream.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A value task that completes when the body has been written.</returns>
+    public ValueTask WriteBinaryBodyAsync(Stream stream, CancellationToken cancellationToken) => this.binaryWriter is { } writer ? writer(stream, cancellationToken) : ValueTask.CompletedTask;
 }
