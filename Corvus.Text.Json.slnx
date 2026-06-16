@@ -97,6 +97,7 @@
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.KeyVault.Tests/Corvus.Text.Json.Arazzo.Durability.KeyVault.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Kms.Tests/Corvus.Text.Json.Arazzo.Durability.Kms.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.AwsSecretsManager.Tests/Corvus.Text.Json.Arazzo.Durability.AwsSecretsManager.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Vault.Tests/Corvus.Text.Json.Arazzo.Durability.Vault.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Tests/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.SourceCredentials.Http.Tests/Corvus.Text.Json.Arazzo.SourceCredentials.Http.Tests.csproj" />
@@ -159,6 +160,7 @@
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.KeyVault/Corvus.Text.Json.Arazzo.Durability.KeyVault.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Kms/Corvus.Text.Json.Arazzo.Durability.Kms.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.AwsSecretsManager/Corvus.Text.Json.Arazzo.Durability.AwsSecretsManager.csproj" />
+    <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Vault/Corvus.Text.Json.Arazzo.Durability.Vault.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.CodeGeneration/Corvus.Text.Json.Arazzo.CodeGeneration.csproj" />
