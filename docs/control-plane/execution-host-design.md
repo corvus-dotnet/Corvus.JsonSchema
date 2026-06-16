@@ -506,6 +506,29 @@ any control-plane response.
   operator rotates in the secret store; Arazzo re-reads), so the control plane never handles plaintext; an
   optional, **off-by-default** `ISecretWriter` lets a deployment opt into control-plane write-through to the
   secret store where that trade-off is wanted.
+- **Composing the resolver set (`SecretResolverBuilder`).** The runner brings its own resolver set: a
+  deployment registers exactly the secret stores it uses and hands the result to its
+  `SourceCredentialProviderFactory`. The built-in `env://`/`file://` resolvers live in the core durability
+  assembly; each external store ships its resolver — and a matching `Add…` extension — in its **own** package
+  (`…Durability.KeyVault`, `…Durability.AwsSecretsManager`, `…Durability.Vault`), so a deployment references only
+  the SDKs it actually uses and still supplies the SDK client (least-privileged identity). Schemes are disjoint
+  so registration order is irrelevant, and `Build()` rejects two resolvers for the same scheme rather than
+  silently shadowing one:
+
+  ```csharp
+  ISecretResolver resolver = new SecretResolverBuilder()
+      .AddEnvironmentAndFile()         // in-box env:// and file://
+      .AddKeyVault(credential)         // …Durability.KeyVault  (Azure TokenCredential)
+      .AddAwsSecretsManager(smClient)  // …Durability.AwsSecretsManager
+      .AddHashiCorpVault(vaultClient)  // …Durability.Vault
+      .Build();
+
+  var factory = new SourceCredentialProviderFactory(resolver);
+  ```
+
+  This is purely composition ergonomics over the bring-your-own-resolver model — it widens nothing: the control
+  plane and the durability stores still never hold a resolver, and a scheme with no registered resolver still
+  fails closed.
 
 ### 13.2 Expiry tracking, states, and telemetry
 
