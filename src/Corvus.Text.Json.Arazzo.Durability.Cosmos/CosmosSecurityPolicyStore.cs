@@ -318,7 +318,11 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
                     writer.WriteStartObject();
                     writer.WriteString("id"u8, c.Id);
                     writer.WriteString("pk"u8, c.Partition);
-                    writer.WriteBase64String("doc"u8, c.Doc.Span);
+
+                    // The policy document is JSON — embed it verbatim as a nested value, not base64 (which would be a
+                    // spurious encode here + decode on read). It is valid JSON we produced, so skip validation.
+                    writer.WritePropertyName("doc"u8);
+                    writer.WriteRawValue(c.Doc.Span, skipInputValidation: true);
                     writer.WriteEndObject();
                 });
         }
@@ -352,15 +356,18 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
 
         response.EnsureSuccessStatusCode();
         using CosmosJson.RentedResponse payload = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
-        return CosmosJson.GetString(payload.Memory, DocProperty) is { } base64 ? Convert.FromBase64String(base64) : null;
+
+        // The embedded doc is raw nested JSON (no base64). Copy it out — it outlives the pooled response page.
+        ReadOnlyMemory<byte> doc = CosmosJson.GetRawValue(payload.Memory, DocProperty);
+        return doc.IsEmpty ? null : doc.ToArray();
     }
 
     private async ValueTask<PooledDocumentList<SecurityRuleDocument>> ReadRulesAsync(CancellationToken cancellationToken)
     {
         var list = new PooledDocumentList<SecurityRuleDocument>();
-        await foreach (byte[] doc in this.QueryDocumentsAsync(RulePartition, cancellationToken).ConfigureAwait(false))
+        await foreach (ReadOnlyMemory<byte> doc in this.QueryDocumentsAsync(RulePartition, cancellationToken).ConfigureAwait(false))
         {
-            list.Add(PersistedJson.ToPooledDocument<SecurityRuleDocument>(doc));
+            list.Add(PersistedJson.ToPooledDocument<SecurityRuleDocument>(doc.Span));
         }
 
         list.Sort(ByRuleName);
@@ -370,16 +377,18 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     private async ValueTask<PooledDocumentList<SecurityBindingDocument>> ReadBindingsAsync(CancellationToken cancellationToken)
     {
         var list = new PooledDocumentList<SecurityBindingDocument>();
-        await foreach (byte[] doc in this.QueryDocumentsAsync(BindingPartition, cancellationToken).ConfigureAwait(false))
+        await foreach (ReadOnlyMemory<byte> doc in this.QueryDocumentsAsync(BindingPartition, cancellationToken).ConfigureAwait(false))
         {
-            list.Add(PersistedJson.ToPooledDocument<SecurityBindingDocument>(doc));
+            list.Add(PersistedJson.ToPooledDocument<SecurityBindingDocument>(doc.Span));
         }
 
         list.Sort(ByBindingOrder);
         return list;
     }
 
-    private async IAsyncEnumerable<byte[]> QueryDocumentsAsync(string partition, [EnumeratorCancellation] CancellationToken cancellationToken)
+    // Yields each embedded policy document's raw UTF-8 bytes (a slice into the pooled response page) — no base64
+    // decode. The consumer copies it (ToPooledDocument into the list) within the iteration step, before the page rolls.
+    private async IAsyncEnumerable<ReadOnlyMemory<byte>> QueryDocumentsAsync(string partition, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var query = new QueryDefinition("SELECT c.doc FROM c WHERE c.pk = @pk").WithParameter("@pk", partition);
         using FeedIterator iterator = this.container.GetItemQueryStreamIterator(
@@ -391,9 +400,10 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
             using CosmosJson.RentedResponse page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
             foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page.Memory))
             {
-                if (CosmosJson.GetString(element, DocProperty) is { } base64)
+                ReadOnlyMemory<byte> doc = CosmosJson.GetRawValue(element, DocProperty);
+                if (!doc.IsEmpty)
                 {
-                    yield return Convert.FromBase64String(base64);
+                    yield return doc;
                 }
             }
         }
