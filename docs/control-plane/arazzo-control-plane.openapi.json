@@ -36,6 +36,10 @@
   {
     "name": "credentials",
     "description": "Manage source credential bindings (design §13): operator-managed references to secret material in an external secret store, plus non-sensitive auth metadata. The control plane stores and returns references only — it never reads, returns, or resolves secret material (capability scopes credentials:read / credentials:write)."
+  },
+  {
+    "name": "administrators",
+    "description": "Manage who may publish and administer a base workflow id (design §15): the set of deployment-stamped administrator identities. Identities are named via the deployment-mapped grant {dimension,value} vocabulary, never raw internal tags; mutations are authorized by current-administrator membership (capability scopes administrators:read / administrators:write)."
   }
   ],
   "paths": {
@@ -1256,6 +1260,110 @@
           "404": { "$ref": "#/components/responses/NotFound" }
         }
       }
+    },
+    "/administrators/{baseWorkflowId}": {
+      "get": {
+        "operationId": "listAdministrators",
+        "security": [
+          { "oauth2": ["administrators:read"] },
+          { "openIdConnect": ["administrators:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["administrators"],
+        "summary": "List a workflow's administrators",
+        "description": "Returns the administrator identities entitled to publish further versions of the base workflow id and to manage its administration (design §15). Each identity is described as the deployment-mapped grant {dimension,value} it resolves from — never raw internal tags.",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The administrator identities.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdministratorList" } } }
+          }
+        }
+      },
+      "put": {
+        "operationId": "transferAdministration",
+        "security": [
+          { "oauth2": ["administrators:write"] },
+          { "openIdConnect": ["administrators:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["administrators"],
+        "summary": "Transfer administration (replace the administrator set)",
+        "description": "Replaces the entire administrator set for the base workflow id with the given identities (at least one) — an administrator may transfer administration away from itself (design §15). The caller must be a current administrator (403 otherwise); a stale concurrent change conflicts (409).",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdministratorSetWrite" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "The new administrator set.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdministratorList" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/administrators/{baseWorkflowId}/members": {
+      "post": {
+        "operationId": "addAdministrator",
+        "security": [
+          { "oauth2": ["administrators:write"] },
+          { "openIdConnect": ["administrators:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["administrators"],
+        "summary": "Add an administrator",
+        "description": "Adds an identity to the base workflow id's administrator set (idempotent). The caller must be a current administrator (403 otherwise); a stale concurrent change conflicts (409).",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdministratorIdentity" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "The administrator set after the add.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdministratorList" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/administrators/{baseWorkflowId}/members/{dimension}/{value}": {
+      "delete": {
+        "operationId": "removeAdministrator",
+        "security": [
+          { "oauth2": ["administrators:write"] },
+          { "openIdConnect": ["administrators:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["administrators"],
+        "summary": "Remove an administrator",
+        "description": "Removes the named identity from the base workflow id's administrator set. The set may not be left empty — removing the last administrator conflicts (409). The caller must be a current administrator (403 otherwise).",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/DimensionPath" },
+          { "$ref": "#/components/parameters/ValuePath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The administrator set after the removal.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdministratorList" } } }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
     }
   },
   "components": {
@@ -1276,7 +1384,9 @@
               "catalog:write": "Add catalog versions and edit their governance metadata.",
               "catalog:purge": "Delete and purge catalog versions (destructive).",
               "credentials:read": "List and read source credential bindings (references and metadata only — never secret material).",
-              "credentials:write": "Create, update, and delete source credential bindings (references and metadata only — never secret material)."
+              "credentials:write": "Create, update, and delete source credential bindings (references and metadata only — never secret material).",
+              "administrators:read": "Read a workflow's administrator set (described as deployment-mapped grants — never raw internal tags).",
+              "administrators:write": "Manage a workflow's administrator set: add, remove, and transfer administration (current-administrator membership applies)."
             }
           },
           "clientCredentials": {
@@ -1289,7 +1399,9 @@
               "catalog:write": "Add catalog versions and edit their governance metadata.",
               "catalog:purge": "Delete and purge catalog versions (destructive).",
               "credentials:read": "List and read source credential bindings (references and metadata only — never secret material).",
-              "credentials:write": "Create, update, and delete source credential bindings (references and metadata only — never secret material)."
+              "credentials:write": "Create, update, and delete source credential bindings (references and metadata only — never secret material).",
+              "administrators:read": "Read a workflow's administrator set (described as deployment-mapped grants — never raw internal tags).",
+              "administrators:write": "Manage a workflow's administrator set: add, remove, and transfer administration (current-administrator membership applies)."
             }
           }
         }
@@ -1410,6 +1522,20 @@
         "in": "path",
         "required": true,
         "description": "The base workflow id (without any version suffix).",
+        "schema": { "type": "string" }
+      },
+      "DimensionPath": {
+        "name": "dimension",
+        "in": "path",
+        "required": true,
+        "description": "The identity dimension of an administrator grant (e.g. workflow, tenant).",
+        "schema": { "type": "string" }
+      },
+      "ValuePath": {
+        "name": "value",
+        "in": "path",
+        "required": true,
+        "description": "The identity value of an administrator grant (e.g. the base workflow id, or a tenant id).",
         "schema": { "type": "string" }
       },
       "VersionNumberPath": {
@@ -2425,6 +2551,38 @@
           }
         },
         "required": ["credentials"]
+      },
+      "AdministratorIdentity": {
+        "type": "object",
+        "description": "An administrator identity for a base workflow id (§15), named as the deployment-mapped grant the deployment resolves to an unforgeable internal identity (e.g. {workflow, nightly-reconcile} -> sys:workflow=nightly-reconcile). Administration cannot be self-granted by free-form tags.",
+        "properties": {
+          "dimension": { "type": "string", "description": "The identity dimension (e.g. workflow, tenant)." },
+          "value": { "type": "string", "description": "The identity value (e.g. the base workflow id, or a tenant id)." }
+        },
+        "required": ["dimension", "value"]
+      },
+      "AdministratorList": {
+        "type": "object",
+        "description": "The administrator identities for a base workflow id (§15).",
+        "properties": {
+          "administrators": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AdministratorIdentity" }
+          }
+        },
+        "required": ["administrators"]
+      },
+      "AdministratorSetWrite": {
+        "type": "object",
+        "description": "The replacement administrator set for a transfer (§15) — at least one identity; duplicates are coalesced.",
+        "properties": {
+          "administrators": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/components/schemas/AdministratorIdentity" }
+          }
+        },
+        "required": ["administrators"]
       }
     }
   }
