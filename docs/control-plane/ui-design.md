@@ -28,7 +28,11 @@ reference assembly that proves the pieces compose; it doubles as the sample's ru
 
 ## The contract it targets
 
-Six operations, three scope tiers (from [`README.md`](./README.md) / the OpenAPI document):
+The kit tracks the control-plane OpenAPI document across its operator surfaces and capability-scope tiers
+(from [`README.md`](./README.md)). **Runs** and the **workflow catalog** ship today; **source credentials**
+and **workflow administration** are the surfaces being added (their components are designed below).
+
+### Runs — `runs:read` / `runs:write` / `runs:purge`
 
 | Operation | HTTP | Scope | Kit surface |
 |-----------|------|-------|-------------|
@@ -39,7 +43,33 @@ Six operations, three scope tiers (from [`README.md`](./README.md) / the OpenAPI
 | `deleteRun` | `DELETE /runs/{runId}` | `runs:purge` | `<arazzo-run-detail>` (guarded action) |
 | `purgeRuns` | `PURGE /runs?olderThan&limit` | `runs:purge` | `<arazzo-purge-dialog>` |
 
-Key model facts the UI renders:
+### Workflow catalog — `catalog:read` / `catalog:write` / `catalog:purge`
+
+| Operation | HTTP | Scope | Kit surface |
+|-----------|------|-------|-------------|
+| `searchCatalog` · `listCatalogVersions` · `getCatalogVersion` | `GET /catalog[/{base}[/versions/{n}]]` | `catalog:read` | `<arazzo-catalog-table>`, `<arazzo-catalog-detail>` |
+| `getCatalogPackage`/`Workflow`/`Source`/`WorkflowSchemas` · `validateCatalogValue` | `GET …/{package,workflow,sources/{name},schemas}` · `POST …/validate` | `catalog:read` | `<arazzo-catalog-detail>`, `<arazzo-value-editor>` |
+| `addCatalogVersion` | `POST /catalog/{base}/versions` | `catalog:write` | `<arazzo-catalog-add-dialog>` |
+| `updateCatalogVersion` · `obsoleteCatalogVersion` | `PATCH …/versions/{n}` | `catalog:write` | `<arazzo-catalog-detail>` (guarded) |
+| `deleteCatalogVersion` · `purgeCatalog` | `DELETE …/versions/{n}` · `PURGE /catalog` | `catalog:purge` | `<arazzo-catalog-detail>`, panel toolbar |
+
+### Source credentials — `credentials:read` / `credentials:write` *(in progress)*
+
+| Operation | HTTP | Scope | Kit surface |
+|-----------|------|-------|-------------|
+| `listCredentials` · `getCredential` | `GET /credentials[/{source}/{env}]` | `credentials:read` | `<arazzo-credentials-table>`, `<arazzo-credential-detail>` |
+| `createCredential` · `updateCredential` · `deleteCredential` | `POST /credentials` · `PUT`/`DELETE /credentials/{source}/{env}` | `credentials:write` | `<arazzo-credential-dialog>` |
+
+### Workflow administration — `administrators:read` / `administrators:write` *(in progress)*
+
+| Operation | HTTP | Scope | Kit surface |
+|-----------|------|-------|-------------|
+| `listAdministrators` | `GET /administrators/{base}` | `administrators:read` | `<arazzo-administrators-panel>` |
+| `addAdministrator` · `removeAdministrator` · `transferAdministration` | `POST .../members` · `DELETE .../members/{dim}/{val}` · `PUT /administrators/{base}` | `administrators:write` | `<arazzo-administrators-panel>` |
+
+Key model facts the **runs** UI renders (the catalog, credential, and administrator surfaces carry their own
+summary/detail models — `CatalogVersionSummary`/`CatalogVersion`, `CredentialBindingSummary`,
+`AdministratorList`):
 
 - `WorkflowRunStatus` = `Pending | Running | Suspended | Completed | Cancelled | Faulted`.
 - `WorkflowRunSummary` (list row): `id, workflowId, status, createdAt, updatedAt, dueAt?, awaitingChannel?,
@@ -58,16 +88,19 @@ Key model facts the UI renders:
 
 ```
 ┌────────────────────────────────────────────────────────────┐
-│ Layer 2   <arazzo-control-plane>   reference panel / sample  │
+│ Layer 2   <arazzo-control-plane> (runs) · <arazzo-catalog>   │
 │           composes Layer 1; owns layout, filters, routing    │
 ├────────────────────────────────────────────────────────────┤
-│ Layer 1   <arazzo-runs-table> <arazzo-run-detail>            │
-│           <arazzo-resume-dialog> <arazzo-cancel-button>      │
-│           <arazzo-purge-dialog>  <arazzo-status-badge>       │
+│ Layer 1   runs:    runs-table · run-detail · resume-dialog   │
+│           cancel-button · purge-dialog · status-badge        │
+│           value-editor · workflow-id-input · …-step-picker   │
+│           catalog: catalog-table · catalog-detail · add-…    │
+│           credentials/administrators (in progress)           │
 │           standalone custom elements (Shadow DOM)            │
 ├────────────────────────────────────────────────────────────┤
 │ Layer 0   ArazzoControlPlaneClient   (no DOM)                │
-│           6 ops · keyset paging · problem+json → errors      │
+│           run · catalog · credential · administrator ops     │
+│           keyset paging · problem+json → errors              │
 │           auth via host-supplied fetch/getToken              │
 └────────────────────────────────────────────────────────────┘
                           │ uses host's
@@ -115,6 +148,36 @@ await client.cancelRun(runId, { reason });                              // → W
 // runs:purge
 await client.deleteRun(runId);                                         // → void (204)
 await client.purgeRuns({ olderThan, limit });                         // → { purgedCount }
+
+// catalog:read — search + per-version documents
+await client.searchCatalog({ text, baseWorkflowId, workflowIdPrefix, tags, status, owner, pageToken });
+for await (const page of client.searchCatalogPaged({ … })) { … }
+await client.listCatalogVersions(baseWorkflowId);                     // → { versions, nextPageToken }
+await client.getCatalogVersion(baseWorkflowId, n);                    // → CatalogVersion | throws 404
+await client.getCatalogPackage(baseWorkflowId, n);                    // → ArrayBuffer (zip)
+await client.getCatalogWorkflow(baseWorkflowId, n);                   // → Arazzo document
+await client.getCatalogWorkflowSchemas(baseWorkflowId, n);           // → baked schema metadata
+await client.getCatalogSource(baseWorkflowId, n, sourceName);
+await client.validateCatalogValue(baseWorkflowId, n, target, value); // → { valid, errors? }
+// catalog:write / catalog:purge
+await client.addCatalogVersion({ baseWorkflowId, package | workflow+sources, owner, tags });
+await client.updateCatalogVersion(baseWorkflowId, n, patch);
+await client.obsoleteCatalogVersion(baseWorkflowId, n);
+await client.deleteCatalogVersion(baseWorkflowId, n);                 // → void (204)
+await client.purgeCatalog();                                          // → { purgedCount }
+
+// credentials:read / credentials:write — references + non-secret metadata only (never secret material)
+await client.listCredentials();                                      // → { credentials: [CredentialBindingSummary] }
+await client.getCredential(sourceName, environment);                 // → CredentialBindingSummary | throws 404
+await client.createCredential(body);                                 // → CredentialBindingSummary (201) | 400 | 409
+await client.updateCredential(sourceName, environment, body);       // → CredentialBindingSummary (PUT) | 400 | 404
+await client.deleteCredential(sourceName, environment);             // → void (204) | 404
+
+// administrators:read / administrators:write — identities named by the {dimension,value} grant
+await client.listAdministrators(baseWorkflowId);                          // → { administrators: [{dimension,value}] }
+await client.addAdministrator(baseWorkflowId, { dimension, value });      // → AdministratorList | 400 | 403 | 409
+await client.removeAdministrator(baseWorkflowId, dimension, value);       // → AdministratorList | 403 | 409
+await client.transferAdministration(baseWorkflowId, { administrators }); // → AdministratorList | 400 | 403 | 409
 ```
 
 ### Behaviours baked in
@@ -188,11 +251,88 @@ cancel without the rest.
 Bulk reap: `olderThan` (date/relative picker) + optional `limit`, a strong confirm ("permanently delete N+
 completed/cancelled runs"), and a result toast (`purgedCount`). `runs:purge` only.
 
+### Run authoring helpers
+
+Three smaller elements the run widgets compose (and a host can reuse standalone):
+
+- **`<arazzo-workflow-id-input>`** — a `workflowId` text filter with **catalog autocomplete** (type-ahead over
+  catalogued base ids); emits `workflow-id-changed`.
+- **`<arazzo-workflow-step-picker>`** — choose a resume **target step by name** (for Rewind/Skip) from the
+  workflow's steps, resolving the cursor; direction-constrained so you can't pick an unreachable step.
+- **`<arazzo-value-editor>`** — a **strongly-typed form built from a step's precomputed schema metadata**
+  (unions/tuples/maps/`const`, inline booleans, live per-field validation). It is the editor for Skip's
+  `skipOutputs` and for typed inputs; validates against the baked schema before emitting `value-changed`.
+
+### Catalog (`/catalog`)
+
+The workflow catalog browse/govern surface — one row per workflow with a version switcher.
+
+#### `<arazzo-catalog-table>`
+Searches catalogued versions (text · base id · `workflowIdPrefix` · tags · status · owner), keyset-paged.
+
+| | |
+|---|---|
+| **Attributes** | `base-url`, `text`, `workflow-id-prefix`, `status`, `page-size`, `poll`, `selectable` |
+| **Properties** | `.client`, `.filters` |
+| **Events** | `version-selected {detail:{version}}`, `loaded {detail:{count, hasMore}}`, `error` |
+
+Columns: `baseWorkflowId` · latest version · status · `runnable` · owner · tags. Server-side `workflowId`
+prefix search is index-backed.
+
+#### `<arazzo-catalog-detail>`
+One workflow's versions and documents, plus governance actions. A version switcher selects a version; renders
+its metadata (`owner`, tags, status, `runnable`, baked `credentialStatus`), and offers the document downloads
+(`package`/`workflow`/`sources`/`schemas`) and a typed-value **validate** (via `<arazzo-value-editor>` against
+the baked schemas). Guarded actions: **update** governance metadata + **obsolete** (`catalog:write`),
+**delete** a version (`catalog:purge`, confirmed). Emits `version-changed` / `version-deleted`.
+
+#### `<arazzo-catalog-add-dialog>`
+Upload a pre-built package **or build one in-browser** from a workflow document + its source files
+(`./workflow-package`), set `owner`/tags, and submit — the catalog assigns the version number server-side.
+`catalog:write`. Emits `version-added`.
+
+### Credentials & administration (`/credentials`, `/administrators`)
+
+Two operator surfaces that manage **references and identity metadata only — never secret material** (client methods
+in [Layer 0](#layer-0--arazzocontrolplaneclient)). The UI mirrors that invariant: no field ever accepts or displays a
+secret; a credential is a `secretRef` (`scheme://locator[#version]`) plus non-secret config, and rotation is
+*re-pointing the reference*, not entering a secret.
+
+#### `<arazzo-credentials-table>`
+The rotation worklist. Status-first, like the CLI's `credentials list`.
+
+| | |
+|---|---|
+| **Attributes** | `base-url`, `status` (filter: `valid`/`expiring`/`expired`), `source` (filter), `poll` (ms) |
+| **Properties** | `.client`, `.filters = { status, source }` |
+| **Events** | `credential-selected {detail:{binding}}`, `loaded {detail:{count, expiring, expired}}`, `error` |
+| **Parts** | `table`, `row`, `status`, `expires`, `filters` |
+
+Columns: source · environment · authKind · **`credentialStatus`** (a status badge — `valid`/`expiringSoon`/`expired`)
+· `expiresAt` · usage grants. A footer counts expiring/expired; `status`/`source` filter client-side. No secret column
+exists.
+
+#### `<arazzo-credential-detail>` / `<arazzo-credential-dialog>`
+Detail shows the binding's references, config, lifecycle (`expiresAt`/`rotatedAt`/status), and management/usage scopes.
+The create/edit dialog edits **references and metadata** — role-named `secretRef` rows, config key/values, auth kind,
+optional `expiresAt`, usage grants — and rejects a value that isn't a well-formed `secretRef` *before* submit (the same
+boundary the server enforces, so a secret can't be smuggled in). **Edit is a merge** mirroring the CLI: re-pointing a
+reference is a rotation and stamps `rotatedAt`; unspecified fields are preserved. `credentials:write` gates create/edit/
+delete; delete is behind a confirm.
+
+#### `<arazzo-administrators-panel baseworkflowid="…">`
+The administrator set for one base id. Lists the `{dimension, value}` identities; **add** (a `{dimension,value}` form),
+**remove** (per-row, refused for the last — surfaces `409`), and **transfer** (replace the whole set). Non-disclosing:
+a non-administrator caller's mutation is a `403` shown as a plain "you are not an administrator of this workflow"
+banner, never a leak of who is. `administrators:write` gates mutations.
+
 ---
 
-## Layer 2 — `<arazzo-control-plane>`
+## Layer 2 — reference panels
 
-The reference panel and the sample's run screen. Composes Layer 1 into a master/detail layout:
+Each panel composes Layer 1 into a master/detail screen, owns **one** Layer-0 client (built from `base-url` +
+`authProvider`) shared with every child, and gates actions by `scopes`. Two ship today; the credential and
+administration panels are added with their surfaces.
 
 ```html
 <arazzo-control-plane base-url="/arazzo/v1" scopes="runs:read runs:write"></arazzo-control-plane>
@@ -203,11 +343,21 @@ The reference panel and the sample's run screen. Composes Layer 1 into a master/
 </script>
 ```
 
+### `<arazzo-control-plane>` — run management (`arazzo-control-plane.js`)
 - Left: `<arazzo-runs-table>` with a filter bar (status chips + workflowId search) and auto-refresh toggle.
 - Right: `<arazzo-run-detail>` for the selected run, wiring its `Resume`/`Cancel`/`Delete` to the dialogs.
 - Toolbar: a guarded **Purge** entry (only if `scopes` includes `runs:purge`).
-- Owns one Layer-0 client, builds it from `base-url` + `authProvider`, and passes it to every child — so
-  auth and base-URL are configured exactly once.
+
+### `<arazzo-catalog>` — catalog browse/govern (`arazzo-catalog.js`)
+- Left: `<arazzo-catalog-table>` (search + filters); Right: `<arazzo-catalog-detail>` with the version
+  switcher, document downloads, typed-value validate, and the guarded update/obsolete/delete actions.
+- Toolbar: a guarded **Add version** entry (`<arazzo-catalog-add-dialog>`, `catalog:write`).
+
+### Credentials & administration panels *(in progress)*
+- A credentials panel pairs `<arazzo-credentials-table>` (status worklist) with `<arazzo-credential-detail>` /
+  `<arazzo-credential-dialog>` for create/edit/rotate (`credentials:read`/`write`).
+- An administration view embeds `<arazzo-administrators-panel>` for a selected base workflow id
+  (`administrators:read`/`write`).
 
 ---
 
@@ -255,14 +405,18 @@ web/arazzo-control-plane-ui/
 ├─ package.json                        npm package: exports (., /client, /components/*), files: ["src"]
 ├─ README.md                           package readme
 ├─ src/                               ← DELIVERABLE (published to npm)
-│  ├─ arazzo-client.js                 Layer 0 — ArazzoControlPlaneClient, ProblemError
-│  ├─ arazzo-control-plane.js          Layer 2 — registers everything; the panel
+│  ├─ arazzo-client.js                 Layer 0 — ArazzoControlPlaneClient, ProblemError (run·catalog·credential·administrator ops)
+│  ├─ arazzo-control-plane.js          Layer 2 — run-management panel (registers everything)
+│  ├─ arazzo-catalog.js                Layer 2 — catalog browse/govern panel
+│  ├─ workflow-package.js              build/inspect a package archive in-browser (./workflow-package)
 │  ├─ arazzo-kit.css                   optional shared theme tokens
-│  └─ components/                      Layer 1 — status-badge, runs-table, run-detail,
-│                                        resume-dialog, cancel-button, purge-dialog, base.js
+│  └─ components/                      Layer 1 — base.js + status-badge; runs: runs-table, run-detail,
+│                                        resume-dialog, cancel-button, purge-dialog, value-editor,
+│                                        workflow-id-input, workflow-step-picker; catalog: catalog-table,
+│                                        catalog-detail, catalog-add-dialog; (credentials/administrators in progress)
 ├─ demo/                              ← DEV-ONLY sample (not published)
 │  ├─ index.html                       live demo wired to the mock
-│  ├─ mock-api.js                      in-memory control plane (seeded runs, all 6 ops, problem+json)
+│  ├─ mock-api.js                      in-memory control plane (seeded runs + catalog, problem+json)
 │  └─ favicon.svg                      the Corvus mark
 └─ test/                             ← DEV-ONLY (not published): node:test + @web/test-runner + Playwright
 ```
@@ -271,10 +425,12 @@ Each deliverable file is a standalone ES module importing only its siblings — 
 consumer can `import` one component, or the whole panel, from npm, a CDN, or their own static host.
 
 ## Dev / mock harness
-`demo/mock-api.js` implements the six operations in memory (seeded with runs in every status, including a
-faulted run with a fault record and a suspended run with timer/message waits) and returns RFC 9457 errors so
-the error/empty/loading paths and the resume `409` are all exercisable with **no server**. `demo/index.html`
-mounts `<arazzo-control-plane>` against it. This is the "open it and it works" quick-start entry point.
+`demo/mock-api.js` implements the run and catalog operations in memory (seeded with runs in every status,
+including a faulted run with a fault record and a suspended run with timer/message waits, plus catalogued
+workflow versions) and returns RFC 9457 errors so the error/empty/loading paths and the resume/conflict `409`s
+are all exercisable with **no server**. `demo/index.html` mounts the panels against it. This is the "open it
+and it works" quick-start entry point. (The credential and administration surfaces extend the mock as they
+land.)
 
 ## Validation against the real contract
 The kit's `ArazzoControlPlaneClient` is checked against the same OpenAPI document the server/CLI are
