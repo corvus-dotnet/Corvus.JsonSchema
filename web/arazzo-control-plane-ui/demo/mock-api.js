@@ -492,6 +492,81 @@ function toCatalogSummary(v) {
   };
 }
 
+// ---- source credentials (§13) — references + non-secret metadata only -------------------------
+
+const SECRET_REF = /^(keyvault|awssm|vault|env|file):\/\/.+/;
+const EXPIRING_WINDOW_MS = 7 * 24 * 60 * 60000;
+
+function isSecretRef(ref) {
+  return typeof ref === 'string' && SECRET_REF.test(ref);
+}
+
+function credentialStatus(expiresAt) {
+  if (!expiresAt) return 'valid';
+  const ms = Date.parse(expiresAt) - Date.now();
+  if (Number.isNaN(ms)) return 'valid';
+  if (ms <= 0) return 'expired';
+  if (ms <= EXPIRING_WINDOW_MS) return 'expiringSoon';
+  return 'valid';
+}
+
+function seedCredentials() {
+  const day = 24 * 60 * 60000;
+  const b = (sourceName, environment, authKind, secretRefs, extra = {}) => ({
+    id: `cred-${sourceName}-${environment}`,
+    sourceName, environment, authKind, secretRefs,
+    config: extra.config ?? [],
+    managementTags: extra.managementTags ?? [],
+    usageGrants: extra.usageGrants ?? [],
+    description: extra.description,
+    expiresAt: extra.expiresAt,
+    rotatedAt: extra.rotatedAt,
+    createdBy: 'alice@example.com', createdAt: iso(-30 * day), etag: nextEtag(),
+  });
+  return [
+    b('petstore', 'production', 'apiKey', [{ name: 'value', ref: 'keyvault://petstore-key#3' }], { config: [{ key: 'parameterName', value: 'X-Api-Key' }], expiresAt: iso(20 * day), description: 'Petstore API key.' }),
+    b('billing', 'production', 'oauth2ClientCredentials', [{ name: 'clientSecret', ref: 'vault://kv/billing#secret' }], { usageGrants: [{ dimension: 'workflow', value: 'nightly-reconcile' }], expiresAt: iso(3 * day) }),
+    b('legacy', 'production', 'basic', [{ name: 'password', ref: 'env://LEGACY_PW' }], { expiresAt: iso(-2 * day) }),
+    b('events', 'staging', 'bearer', [{ name: 'token', ref: 'awssm://events-token' }], {}),
+  ];
+}
+
+function toCredentialSummary(b) {
+  return {
+    id: b.id,
+    sourceName: b.sourceName,
+    environment: b.environment,
+    authKind: b.authKind,
+    secretRefs: b.secretRefs,
+    config: b.config ?? [],
+    managementTags: b.managementTags ?? [],
+    usageGrants: b.usageGrants ?? [],
+    description: b.description ?? undefined,
+    expiresAt: b.expiresAt ?? undefined,
+    rotatedAt: b.rotatedAt ?? undefined,
+    credentialStatus: credentialStatus(b.expiresAt),
+    createdBy: b.createdBy,
+    createdAt: b.createdAt,
+    lastUpdatedBy: b.lastUpdatedBy ?? undefined,
+    lastUpdatedAt: b.lastUpdatedAt ?? undefined,
+    etag: b.etag,
+  };
+}
+
+// ---- workflow administration (§15) — deployment-mapped {dimension,value} identities ------------
+
+function seedAdministrators() {
+  // Keyed by baseWorkflowId; each administrator is a {dimension, value} grant.
+  return {
+    'nightly-reconcile': [{ dimension: 'tenant', value: 'platform' }],
+    'onboard-customer': [{ dimension: 'tenant', value: 'platform' }, { dimension: 'tenant', value: 'growth' }],
+  };
+}
+
+function sameIdentity(a, b) {
+  return a.dimension === b.dimension && a.value === b.value;
+}
+
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 }
@@ -510,9 +585,12 @@ function problem(status, title, detail) {
 export function createMockControlPlane(options = {}) {
   const runs = options.seed ? structuredClone(options.seed) : seedRuns();
   const catalog = options.catalogSeed ? structuredClone(options.catalogSeed) : seedCatalog();
+  const credentials = options.credentialsSeed ? structuredClone(options.credentialsSeed) : seedCredentials();
+  const administrators = options.administratorsSeed ? structuredClone(options.administratorsSeed) : seedAdministrators();
   const latency = options.latencyMs ?? 250;
   const find = (id) => runs.find((r) => r.id === id);
   const findVersion = (base, n) => catalog.find((v) => v.baseWorkflowId === base && v.versionNumber === Number(n));
+  const findCredential = (s, e) => credentials.find((c) => c.sourceName === s && c.environment === e);
 
   async function handle(url, init = {}) {
     const method = (init.method || 'GET').toUpperCase();
@@ -523,6 +601,12 @@ export function createMockControlPlane(options = {}) {
 
     const catalogResponse = await handleCatalog(path, method, u.searchParams, body, isForm ? init.body : null);
     if (catalogResponse) return catalogResponse;
+
+    const credentialsResponse = handleCredentials(path, method, body);
+    if (credentialsResponse) return credentialsResponse;
+
+    const administratorsResponse = handleAdministrators(path, method, body);
+    if (administratorsResponse) return administratorsResponse;
 
     // /runs collection
     if (/\/runs\/?$/.test(path)) {
@@ -807,9 +891,147 @@ export function createMockControlPlane(options = {}) {
     return new Response(bytes, { status: 200, headers: { 'Content-Type': 'application/octet-stream' } });
   }
 
+  // ---- source credentials (§13) -----------------------------------------------------------------
+
+  function handleCredentials(fullPath, method, body) {
+    const idx = fullPath.indexOf('/credentials');
+    if (idx < 0) return null;
+    const path = fullPath.slice(idx);
+
+    if (/^\/credentials\/?$/.test(path)) {
+      if (method === 'GET') return json({ credentials: credentials.map(toCredentialSummary) });
+      if (method === 'POST') return createCredential(body);
+      return problem(405, 'Method not allowed');
+    }
+    const m = path.match(/^\/credentials\/([^/]+)\/([^/]+)$/);
+    if (m) {
+      const sourceName = decodeURIComponent(m[1]);
+      const environment = decodeURIComponent(m[2]);
+      const existing = findCredential(sourceName, environment);
+      if (method === 'GET') return existing ? json(toCredentialSummary(existing)) : notFoundCredential(sourceName, environment);
+      if (method === 'PUT') return existing ? updateCredential(existing, body) : notFoundCredential(sourceName, environment);
+      if (method === 'DELETE') return deleteCredential(existing, sourceName, environment);
+      return problem(405, 'Method not allowed');
+    }
+    return null;
+  }
+
+  // A secretRef must be a reference, never inline secret material — the boundary that keeps secrets out.
+  function refError(refs) {
+    if (!Array.isArray(refs) || refs.length === 0) return 'At least one secretRef is required.';
+    for (const r of refs) {
+      if (!isSecretRef(r?.ref)) return `'${r?.ref}' is not a well-formed secretRef (scheme://locator[#version]).`;
+    }
+    return null;
+  }
+
+  function createCredential(body) {
+    if (!body?.sourceName || !body?.environment || !body?.authKind) {
+      return problem(400, 'Invalid credential binding', 'sourceName, environment, and authKind are required.');
+    }
+    const err = refError(body.secretRefs);
+    if (err) return problem(400, 'Invalid credential binding', err);
+    if (findCredential(body.sourceName, body.environment)) {
+      return problem(409, 'Credential already exists', `A binding for '${body.sourceName}@${body.environment}' already exists.`);
+    }
+    const b = {
+      id: `cred-${body.sourceName}-${body.environment}`,
+      sourceName: body.sourceName, environment: body.environment, authKind: body.authKind,
+      secretRefs: body.secretRefs, config: body.config ?? [], managementTags: body.managementTags ?? [],
+      usageGrants: body.usageGrants ?? [], description: body.description,
+      expiresAt: body.expiresAt, rotatedAt: body.rotatedAt,
+      createdBy: 'demo', createdAt: iso(0), etag: nextEtag(),
+    };
+    credentials.push(b);
+    return json(toCredentialSummary(b), 201);
+  }
+
+  function updateCredential(b, body) {
+    const err = refError(body?.secretRefs);
+    if (err) return problem(400, 'Invalid credential binding', err);
+    b.authKind = body.authKind ?? b.authKind;
+    b.secretRefs = body.secretRefs;
+    b.config = body.config ?? [];
+    b.description = body.description;
+    b.expiresAt = body.expiresAt;
+    b.rotatedAt = body.rotatedAt;
+    b.lastUpdatedBy = 'demo';
+    b.lastUpdatedAt = iso(0);
+    b.etag = nextEtag();
+    return json(toCredentialSummary(b));
+  }
+
+  function deleteCredential(b, sourceName, environment) {
+    if (!b) return notFoundCredential(sourceName, environment);
+    credentials.splice(credentials.indexOf(b), 1);
+    return new Response(null, { status: 204 });
+  }
+
+  function notFoundCredential(sourceName, environment) {
+    return problem(404, 'Credential not found', `No source credential binding for '${sourceName}@${environment}' exists.`);
+  }
+
+  // ---- workflow administration (§15) ------------------------------------------------------------
+  // The mock is identity-less (no auth), so it models the membership-governed mutations as happy-path; the
+  // current-administrator 403 is exercised by the server/CLI tests and by component tests with a fake client.
+
+  function handleAdministrators(fullPath, method, body) {
+    const idx = fullPath.indexOf('/administrators');
+    if (idx < 0) return null;
+    const path = fullPath.slice(idx);
+
+    const memberMatch = path.match(/^\/administrators\/([^/]+)\/members\/([^/]+)\/([^/]+)$/);
+    if (memberMatch && method === 'DELETE') {
+      return removeAdministrator(decodeURIComponent(memberMatch[1]), decodeURIComponent(memberMatch[2]), decodeURIComponent(memberMatch[3]));
+    }
+    const membersMatch = path.match(/^\/administrators\/([^/]+)\/members$/);
+    if (membersMatch && method === 'POST') {
+      return addAdministrator(decodeURIComponent(membersMatch[1]), body);
+    }
+    const baseMatch = path.match(/^\/administrators\/([^/]+)$/);
+    if (baseMatch) {
+      const base = decodeURIComponent(baseMatch[1]);
+      if (method === 'GET') return json({ administrators: administrators[base] ?? [] });
+      if (method === 'PUT') return transferAdministration(base, body);
+      return problem(405, 'Method not allowed');
+    }
+    return null;
+  }
+
+  function addAdministrator(base, identity) {
+    if (!identity?.dimension || !identity?.value) return problem(400, 'Invalid administrator identity', 'An identity of { dimension, value } is required.');
+    const set = administrators[base] ?? (administrators[base] = []);
+    if (!set.some((a) => sameIdentity(a, identity))) set.push({ dimension: identity.dimension, value: identity.value });
+    return json({ administrators: set });
+  }
+
+  function removeAdministrator(base, dimension, value) {
+    const set = administrators[base] ?? [];
+    const i = set.findIndex((a) => sameIdentity(a, { dimension, value }));
+    if (i >= 0) {
+      if (set.length === 1) return problem(409, 'Cannot remove the last administrator', 'A workflow must always have at least one administrator.');
+      set.splice(i, 1);
+    }
+    return json({ administrators: set });
+  }
+
+  function transferAdministration(base, body) {
+    if (!Array.isArray(body?.administrators) || body.administrators.length === 0) {
+      return problem(400, 'Invalid administrator set', 'At least one administrator is required.');
+    }
+    const deduped = [];
+    for (const a of body.administrators) {
+      if (a?.dimension && a?.value && !deduped.some((d) => sameIdentity(d, a))) deduped.push({ dimension: a.dimension, value: a.value });
+    }
+    administrators[base] = deduped;
+    return json({ administrators: deduped });
+  }
+
   return {
     runs,
     catalog,
+    credentials,
+    administrators,
     fetch: async (url, init) => {
       if (latency) await new Promise((r) => setTimeout(r, latency));
       return handle(url, init);

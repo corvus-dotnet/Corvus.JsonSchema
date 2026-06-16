@@ -395,6 +395,144 @@ export class ArazzoControlPlaneClient {
     return `/catalog/${encodeURIComponent(baseWorkflowId)}/versions/${encodeURIComponent(versionNumber)}`;
   }
 
+  // ---- credentials:read -------------------------------------------------------------------------
+
+  /**
+   * `listCredentials` — every source credential binding (references and non-secret metadata only — never
+   * secret material), ordered by sourceName then environment. Each summary carries a derived `credentialStatus`
+   * (`valid` | `expiringSoon` | `expired`).
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<{ credentials: object[] }>} A {@link CredentialBindingList}.
+   */
+  async listCredentials(opts = {}) {
+    const result = await this._request('GET', '/credentials', { signal: opts.signal });
+    return { credentials: result.credentials ?? [] };
+  }
+
+  /**
+   * `getCredential` — one binding by its `(sourceName, environment)` key.
+   * @param {string} sourceName
+   * @param {string} environment
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} A {@link CredentialBindingSummary}. Throws {@link ProblemError} `404` if absent.
+   */
+  getCredential(sourceName, environment, opts = {}) {
+    return this._request('GET', this._credentialPath(sourceName, environment), { signal: opts.signal });
+  }
+
+  // ---- credentials:write ------------------------------------------------------------------------
+
+  /**
+   * `createCredential` — create a binding. The body carries **references** (a `secretRef` of the form
+   * `scheme://locator[#version]`) and non-secret metadata only; a value that is not a well-formed `secretRef`
+   * is rejected (`400`), so secret material can never be persisted inline.
+   * @param {{ sourceName: string, environment: string, authKind: string, secretRefs: Array<{name: string, ref: string}>, config?: Array<{key: string, value: string}>, managementTags?: Array<{key: string, value: string}>, usageGrants?: Array<{dimension: string, value: string}>, expiresAt?: string, description?: string }} body
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The created {@link CredentialBindingSummary}. Throws {@link ProblemError} `400`/`409`.
+   */
+  createCredential(body, opts = {}) {
+    if (!body || !body.sourceName || !body.environment) {
+      throw new TypeError('createCredential requires a sourceName and environment.');
+    }
+    return this._request('POST', '/credentials', { body, signal: opts.signal });
+  }
+
+  /**
+   * `updateCredential` — replace a binding's references and non-secret metadata (the `(sourceName, environment)`
+   * identity and created-* audit fields are immutable). Re-pointing a `secretRef` is how a credential is
+   * rotated. A value that is not a well-formed `secretRef` is rejected (`400`).
+   * @param {string} sourceName
+   * @param {string} environment
+   * @param {object} body The replacement reference set + metadata.
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The updated {@link CredentialBindingSummary}. Throws {@link ProblemError} `400`/`404`.
+   */
+  updateCredential(sourceName, environment, body, opts = {}) {
+    return this._request('PUT', this._credentialPath(sourceName, environment), { body: body ?? {}, signal: opts.signal });
+  }
+
+  /**
+   * `deleteCredential` — delete a binding by its `(sourceName, environment)` key.
+   * @param {string} sourceName
+   * @param {string} environment
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<void>} Resolves on `204`. Throws {@link ProblemError} `404` if absent.
+   */
+  async deleteCredential(sourceName, environment, opts = {}) {
+    await this._request('DELETE', this._credentialPath(sourceName, environment), { signal: opts.signal });
+  }
+
+  /** @private */
+  _credentialPath(sourceName, environment) {
+    return `/credentials/${encodeURIComponent(sourceName)}/${encodeURIComponent(environment)}`;
+  }
+
+  // ---- administrators:read ----------------------------------------------------------------------
+
+  /**
+   * `listAdministrators` — the administrator identities of a base workflow id, each described as the
+   * deployment-mapped grant `{ dimension, value }` it resolves from (never raw internal tags). An unknown base
+   * id (or one with no established administration) is an empty set, not an error.
+   * @param {string} baseWorkflowId
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<{ administrators: Array<{ dimension: string, value: string }> }>} An {@link AdministratorList}.
+   */
+  async listAdministrators(baseWorkflowId, opts = {}) {
+    const result = await this._request('GET', this._administratorsPath(baseWorkflowId), { signal: opts.signal });
+    return { administrators: result.administrators ?? [] };
+  }
+
+  // ---- administrators:write ---------------------------------------------------------------------
+
+  /**
+   * `addAdministrator` — add an identity to the base id's administrator set (idempotent). The caller must be a
+   * current administrator (`403` otherwise).
+   * @param {string} baseWorkflowId
+   * @param {{ dimension: string, value: string }} identity
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The resulting {@link AdministratorList}. Throws {@link ProblemError} `400`/`403`/`409`.
+   */
+  addAdministrator(baseWorkflowId, identity, opts = {}) {
+    if (!identity || !identity.dimension || !identity.value) {
+      throw new TypeError('addAdministrator requires an identity of { dimension, value }.');
+    }
+    return this._request('POST', `${this._administratorsPath(baseWorkflowId)}/members`, { body: identity, signal: opts.signal });
+  }
+
+  /**
+   * `removeAdministrator` — remove the named identity. The set may not be left empty — removing the last
+   * administrator is refused (`409`). The caller must be a current administrator (`403` otherwise).
+   * @param {string} baseWorkflowId
+   * @param {string} dimension
+   * @param {string} value
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The resulting {@link AdministratorList}.
+   */
+  removeAdministrator(baseWorkflowId, dimension, value, opts = {}) {
+    return this._request('DELETE', `${this._administratorsPath(baseWorkflowId)}/members/${encodeURIComponent(dimension)}/${encodeURIComponent(value)}`, { signal: opts.signal });
+  }
+
+  /**
+   * `transferAdministration` — replace the entire administrator set with the given identities (at least one);
+   * an administrator may transfer administration away from itself. The caller must be a current administrator
+   * (`403` otherwise).
+   * @param {string} baseWorkflowId
+   * @param {{ administrators: Array<{ dimension: string, value: string }> }} body
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The resulting {@link AdministratorList}. Throws {@link ProblemError} `400`/`403`/`409`.
+   */
+  transferAdministration(baseWorkflowId, body, opts = {}) {
+    if (!body || !Array.isArray(body.administrators) || body.administrators.length === 0) {
+      throw new TypeError('transferAdministration requires at least one administrator.');
+    }
+    return this._request('PUT', this._administratorsPath(baseWorkflowId), { body, signal: opts.signal });
+  }
+
+  /** @private */
+  _administratorsPath(baseWorkflowId) {
+    return `/administrators/${encodeURIComponent(baseWorkflowId)}`;
+  }
+
   // ---- internals --------------------------------------------------------------------------------
 
   /**
