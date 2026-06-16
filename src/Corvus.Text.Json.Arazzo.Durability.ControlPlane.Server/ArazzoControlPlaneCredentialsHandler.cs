@@ -26,9 +26,13 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
 {
     private const string ProblemBase = "https://corvus-oss.org/arazzo/control-plane/problems/";
 
+    private static readonly TimeSpan DefaultExpiringWindow = TimeSpan.FromDays(7);
+
     private readonly ISourceCredentialStore store;
     private readonly ControlPlaneAccess access;
     private readonly string actor;
+    private readonly TimeProvider timeProvider;
+    private readonly TimeSpan expiringWindow;
 
     /// <summary>Initializes a new, unscoped instance (every request runs with <see cref="AccessContext.System"/> — no
     /// row security).</summary>
@@ -44,7 +48,11 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     /// <param name="access">Resolves the caller's <see cref="AccessContext"/> per request and the internal tenant tags
     /// stamped onto created bindings (§14.2). Unscoped (<see cref="AccessContext.System"/>) when no row security is configured.</param>
     /// <param name="actor">The audit actor recorded on writes (a deployment may resolve this from the principal).</param>
-    internal ArazzoControlPlaneCredentialsHandler(ISourceCredentialStore store, ControlPlaneAccess access, string actor = "control-plane")
+    /// <param name="timeProvider">The clock used to derive each binding's <see cref="CredentialStatus"/> on read
+    /// (defaults to <see cref="TimeProvider.System"/>).</param>
+    /// <param name="expiringWindow">How far ahead of expiry a still-valid credential is reported as
+    /// <see cref="CredentialStatus.ExpiringSoon"/> (defaults to 7 days).</param>
+    internal ArazzoControlPlaneCredentialsHandler(ISourceCredentialStore store, ControlPlaneAccess access, string actor = "control-plane", TimeProvider? timeProvider = null, TimeSpan? expiringWindow = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(access);
@@ -52,6 +60,8 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         this.store = store;
         this.access = access;
         this.actor = actor;
+        this.timeProvider = timeProvider ?? TimeProvider.System;
+        this.expiringWindow = expiringWindow ?? DefaultExpiringWindow;
     }
 
     /// <inheritdoc/>
@@ -173,7 +183,9 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
             ReadAuthKind(body.AuthKind),
             ReadSecretRefs(body.SecretRefs),
             ReadConfig(body.Config),
-            OptionalString(body.Description));
+            OptionalString(body.Description),
+            ExpiresAt: OptionalInstant(body.ExpiresAt),
+            RotatedAt: OptionalInstant(body.RotatedAt));
     }
 
     private static SourceCredentialDefinition ReadUpdate(string sourceName, string environment, Models.CredentialBindingUpdate body)
@@ -183,7 +195,9 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
             ReadAuthKind(body.AuthKind),
             ReadSecretRefs(body.SecretRefs),
             ReadConfig(body.Config),
-            OptionalString(body.Description));
+            OptionalString(body.Description),
+            ExpiresAt: OptionalInstant(body.ExpiresAt),
+            RotatedAt: OptionalInstant(body.RotatedAt));
 
     private static SourceCredentialKind ReadAuthKind(Models.SourceCredentialKind authKind)
         => authKind.IsNotUndefined()
@@ -252,6 +266,11 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
 
     private static string? OptionalString(Models.JsonString value) => value.IsNotUndefined() ? (string)value : null;
 
+    // Read an optional date-time from the request body via the typed conversion (CTJ's JSON-Schema-compliant parse over
+    // the backing UTF-8) — no managed-string realization.
+    private static DateTimeOffset? OptionalInstant(Models.JsonDateTime value)
+        => value.IsNotUndefined() ? ((NodaTime.OffsetDateTime)value).ToDateTimeOffset() : null;
+
     private static List<SecurityTag> ReadTags(Models.CredentialBindingWrite.CredentialSecurityTagArray tags)
     {
         var list = new List<SecurityTag>();
@@ -307,6 +326,22 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
                 lastUpdatedAt = ua;
             }
 
+            Models.JsonDateTime.Source expiresAt = default;
+            if (binding.ExpiresAtOrNull is { } ea)
+            {
+                expiresAt = ea;
+            }
+
+            Models.JsonDateTime.Source rotatedAt = default;
+            if (binding.RotatedAtOrNull is { } ra)
+            {
+                rotatedAt = ra;
+            }
+
+            // credentialStatus is derived from expiresAt against the current time (§13.2) — never persisted, so it
+            // cannot go stale.
+            CredentialStatus status = binding.DeriveStatus(this.timeProvider.GetUtcNow(), this.expiringWindow);
+
             Models.CredentialBindingSummary.CredentialConfigEntryArray.Source config = default;
             if (binding.Config.IsNotUndefined() && binding.Config.GetArrayLength() > 0)
             {
@@ -350,6 +385,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
                 authKind: binding.AuthKindValue.ToJsonToken(),
                 createdAt: binding.CreatedAtValue,
                 createdBy: binding.CreatedByValue,
+                credentialStatus: ToStatusToken(status),
                 environment: binding.EnvironmentValue,
                 etag: binding.EtagValue.Value ?? string.Empty,
                 id: binding.IdValue,
@@ -357,11 +393,21 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
                 sourceName: binding.SourceNameValue,
                 config: config,
                 description: description,
+                expiresAt: expiresAt,
                 lastUpdatedAt: lastUpdatedAt,
                 lastUpdatedBy: lastUpdatedBy,
                 managementTags: managementTags,
+                rotatedAt: rotatedAt,
                 usageGrants: usageGrants);
         });
+
+    private static string ToStatusToken(CredentialStatus status) => status switch
+    {
+        CredentialStatus.Valid => "valid",
+        CredentialStatus.ExpiringSoon => "expiringSoon",
+        CredentialStatus.Expired => "expired",
+        _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Unknown credential status."),
+    };
 
     private static Models.CredentialBindingSummary.SecretReferenceArray.Source ToSecretRefs(SourceCredentialBinding binding)
         => new((ref Models.CredentialBindingSummary.SecretReferenceArray.Builder ab) =>

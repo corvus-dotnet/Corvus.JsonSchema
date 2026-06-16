@@ -143,6 +143,81 @@ public sealed class ControlPlaneCredentialsApiTests
         doc.RootElement.GetProperty("usageGrants").EnumerateArray().Select(g => $"{g.GetProperty("dimension").GetString()}={g.GetProperty("value").GetString()}").ShouldBe(["workflow=nightly-reconcile"]);
     }
 
+    [TestMethod]
+    public async Task Lifecycle_metadata_round_trips_and_a_status_is_derived()
+    {
+        await using Scoped host = await StartAsync();
+
+        DateTimeOffset expiresAt = DateTimeOffset.UtcNow.AddDays(30);
+        DateTimeOffset rotatedAt = DateTimeOffset.UtcNow.AddDays(-2);
+        string body = $$"""{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"env://PETSTORE"}],"expiresAt":"{{expiresAt:O}}","rotatedAt":"{{rotatedAt:O}}"}""";
+
+        using (Stj.JsonDocument doc = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/credentials", body, Write)))
+        {
+            DateTimeOffset.Parse(doc.RootElement.GetProperty("expiresAt").GetString()!).ShouldBe(expiresAt);
+            DateTimeOffset.Parse(doc.RootElement.GetProperty("rotatedAt").GetString()!).ShouldBe(rotatedAt);
+            doc.RootElement.GetProperty("credentialStatus").GetString().ShouldBe("valid"); // 30 days out, beyond the window
+        }
+
+        // The metadata survives the get/list read path too.
+        using (Stj.JsonDocument got = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/credentials/petstore/production", Read)))
+        {
+            DateTimeOffset.Parse(got.RootElement.GetProperty("expiresAt").GetString()!).ShouldBe(expiresAt);
+            got.RootElement.GetProperty("credentialStatus").GetString().ShouldBe("valid");
+        }
+    }
+
+    [TestMethod]
+    public async Task The_derived_status_reflects_expiry_against_the_window()
+    {
+        await using Scoped host = await StartAsync();
+
+        async Task<string?> StatusForExpiryAsync(string source, DateTimeOffset expiresAt)
+        {
+            string body = $$"""{"sourceName":"{{source}}","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"env://X"}],"expiresAt":"{{expiresAt:O}}"}""";
+            using Stj.JsonDocument doc = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/credentials", body, Write));
+            return doc.RootElement.GetProperty("credentialStatus").GetString();
+        }
+
+        // Default expiring window is 7 days: 30d out = valid, 3d out = expiringSoon, 1d past = expired.
+        (await StatusForExpiryAsync("far", DateTimeOffset.UtcNow.AddDays(30))).ShouldBe("valid");
+        (await StatusForExpiryAsync("near", DateTimeOffset.UtcNow.AddDays(3))).ShouldBe("expiringSoon");
+        (await StatusForExpiryAsync("gone", DateTimeOffset.UtcNow.AddDays(-1))).ShouldBe("expired");
+    }
+
+    [TestMethod]
+    public async Task A_binding_without_an_expiry_is_valid_and_omits_expiresAt()
+    {
+        await using Scoped host = await StartAsync();
+
+        using Stj.JsonDocument doc = await ReadJsonAsync(await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/credentials",
+            """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"env://PETSTORE"}]}""",
+            Write));
+
+        doc.RootElement.GetProperty("credentialStatus").GetString().ShouldBe("valid");
+        doc.RootElement.TryGetProperty("expiresAt", out _).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task An_update_can_rotate_the_expiry_and_refresh_the_status()
+    {
+        await using Scoped host = await StartAsync();
+
+        string expired = $$"""{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"env://PETSTORE"}],"expiresAt":"{{DateTimeOffset.UtcNow.AddDays(-1):O}}"}""";
+        using (Stj.JsonDocument created = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/credentials", expired, Write)))
+        {
+            created.RootElement.GetProperty("credentialStatus").GetString().ShouldBe("expired");
+        }
+
+        string rotated = $$"""{"authKind":"apiKey","secretRefs":[{"name":"value","ref":"env://PETSTORE#2"}],"expiresAt":"{{DateTimeOffset.UtcNow.AddDays(30):O}}"}""";
+        using (Stj.JsonDocument updated = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Put, "/credentials/petstore/production", rotated, Write)))
+        {
+            updated.RootElement.GetProperty("credentialStatus").GetString().ShouldBe("valid");
+        }
+    }
+
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)
         => Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 
