@@ -62,7 +62,7 @@ public interface IApiCredentialsClient : IAsyncDisposable
         /// <summary>
         /// Gets all available scopes for <c>oauth2</c>.
         /// </summary>
-        public static readonly string[] Oauth2AvailableScopes = ["administrators:read", "administrators:write", "availability:read", "availability:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "environments:read", "environments:write", "runs:purge", "runs:read", "runs:write", "security:read", "security:write", "sources:read", "sources:write"];
+        public static readonly string[] Oauth2AvailableScopes = ["administrators:read", "administrators:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "runs:purge", "runs:read", "runs:write"];
 
 
         /// <summary>
@@ -162,12 +162,10 @@ public interface IApiCredentialsClient : IAsyncDisposable
     /// List source credential bindings
     /// </summary>
     /// <remarks>
-    /// Returns a page of source credential bindings (references and non-secret metadata only), ordered by sourceName then environment. Page with `limit` and the opaque `pageToken` from a previous page's `nextPageToken`.
+    /// Returns all source credential bindings (references and non-secret metadata only), ordered by sourceName then environment.
     /// </remarks>
-    /// <param name="limit">The limit parameter.</param>
-    /// <param name="pageToken">The pageToken parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<ListCredentialsResponse> ListCredentialsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<ListCredentialsResponse> ListCredentialsAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Create a source credential binding
@@ -177,7 +175,7 @@ public interface IApiCredentialsClient : IAsyncDisposable
     /// </remarks>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<CreateCredentialResponse> CreateCredentialAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialBindingCreate.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<CreateCredentialResponse> CreateCredentialAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialBindingWrite.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Get a source credential binding

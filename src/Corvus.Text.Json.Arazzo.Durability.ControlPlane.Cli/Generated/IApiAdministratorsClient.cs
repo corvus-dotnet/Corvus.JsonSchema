@@ -62,7 +62,7 @@ public interface IApiAdministratorsClient : IAsyncDisposable
         /// <summary>
         /// Gets all available scopes for <c>oauth2</c>.
         /// </summary>
-        public static readonly string[] Oauth2AvailableScopes = ["administrators:read", "administrators:write", "availability:read", "availability:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "environments:read", "environments:write", "runs:purge", "runs:read", "runs:write", "security:read", "security:write", "sources:read", "sources:write"];
+        public static readonly string[] Oauth2AvailableScopes = ["administrators:read", "administrators:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "runs:purge", "runs:read", "runs:write"];
 
 
         /// <summary>
@@ -178,16 +178,17 @@ public interface IApiAdministratorsClient : IAsyncDisposable
     /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<AddAdministratorResponse> AddAdministratorAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorMemberWrite.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<AddAdministratorResponse> AddAdministratorAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorIdentity.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Remove an administrator
     /// </summary>
     /// <remarks>
-    /// Removes the administrator identified by its identity digest (from AdministratorGrant.digest in the list) from the base workflow id's administrator set. Removing a multi-tag grantee removes the whole identity in one call. The set may not be left empty — removing the last administrator conflicts (409). The caller must be a current administrator (403 otherwise). An unknown digest is a no-op (the resulting set is returned).
+    /// Removes the named identity from the base workflow id's administrator set. The set may not be left empty — removing the last administrator conflicts (409). The caller must be a current administrator (403 otherwise).
     /// </remarks>
     /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
-    /// <param name="digest">The digest parameter.</param>
+    /// <param name="dimension">The dimension parameter.</param>
+    /// <param name="value">The value parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<RemoveAdministratorResponse> RemoveAdministratorAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source digest, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<RemoveAdministratorResponse> RemoveAdministratorAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source dimension, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

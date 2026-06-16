@@ -62,7 +62,7 @@ public interface IApiCatalogClient : IAsyncDisposable
         /// <summary>
         /// Gets all available scopes for <c>oauth2</c>.
         /// </summary>
-        public static readonly string[] Oauth2AvailableScopes = ["catalog:purge", "catalog:read", "catalog:write", "runs:purge", "runs:read", "runs:write"];
+        public static readonly string[] Oauth2AvailableScopes = ["administrators:read", "administrators:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "runs:purge", "runs:read", "runs:write"];
 
 
         /// <summary>

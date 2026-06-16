@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Replacement references and non-secret metadata for an existing binding (its sourceName/environment identity is taken from the path and is immutable). An administrator may re-tag the managementTags reach scope; the deployment&#39;s internal tags are preserved.
+/// Replacement references and non-secret metadata for an existing binding (its sourceName/environment identity is taken from the path and is immutable).
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -166,7 +166,7 @@ public readonly partial struct CredentialBindingUpdate
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
-    /// The HTTP auth scheme the resolved secret(s) build into a provider (non-sensitive metadata). &#39;mtls&#39; is connection-level (a client certificate presented at the TLS handshake, &#167;13.1): it carries a &#39;certificate&#39; secret (a base64 PKCS#12, or a PEM &#39;certificate&#39; paired with a PEM &#39;privateKey&#39;) plus an optional &#39;passphrase&#39;, and — being connection-scoped — cannot be usage-scoped to an individual run.
+    /// The HTTP auth scheme the resolved secret(s) build into a provider (non-sensitive metadata).
     /// </para>
     /// </remarks>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SourceCredentialKind AuthKind
@@ -227,27 +227,6 @@ public readonly partial struct CredentialBindingUpdate
         get
         {
             if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExpiresAtUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>managementTags</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Replacement non-internal security tags scoping who may MANAGE this binding (&#167;14.2); absent leaves the tags unchanged. The reserved internal-tag prefix is rejected (400); the deployment&#39;s internal tags are preserved.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialBindingUpdate.CredentialSecurityTagArray ManagementTags
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ManagementTagsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialBindingUpdate.CredentialSecurityTagArray value))
             {
                 return value;
             }
@@ -762,11 +741,6 @@ public readonly partial struct CredentialBindingUpdate
         public const string ExpiresAt = "expiresAt";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="ManagementTags"/>.
-        /// </summary>
-        public const string ManagementTags = "managementTags";
-
-        /// <summary>
         /// Gets the JSON property name for <see cref="RotatedAt"/>.
         /// </summary>
         public const string RotatedAt = "rotatedAt";
@@ -795,11 +769,6 @@ public readonly partial struct CredentialBindingUpdate
         /// Gets the JSON property name for <see cref="ExpiresAt"/>.
         /// </summary>
         public static ReadOnlySpan<byte> ExpiresAtUtf8 => "expiresAt"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="ManagementTags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> ManagementTagsUtf8 => "managementTags"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="RotatedAt"/>.
@@ -838,11 +807,6 @@ public readonly partial struct CredentialBindingUpdate
         public static ReadOnlySpan<byte> ExpiresAt => "expiresAt"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="ManagementTags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> ManagementTags => "managementTags"u8;
-
-        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="RotatedAt"/>.
         /// </summary>
         public static ReadOnlySpan<byte> RotatedAt => "rotatedAt"u8;
@@ -878,11 +842,6 @@ public readonly partial struct CredentialBindingUpdate
         /// Gets the pre-baked property name blob for <see cref="ExpiresAt"/>.
         /// </summary>
         public static ReadOnlySpan<byte> ExpiresAt => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x78, 0x70, 0x69, 0x72, 0x65, 0x73, 0x41, 0x74, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="ManagementTags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> ManagementTags => [0x05, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x6E, 0x61, 0x67, 0x65, 0x6D, 0x65, 0x6E, 0x74, 0x54, 0x61, 0x67, 0x73, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="RotatedAt"/>.

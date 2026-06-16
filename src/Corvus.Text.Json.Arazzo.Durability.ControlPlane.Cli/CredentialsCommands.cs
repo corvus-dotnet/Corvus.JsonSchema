@@ -89,7 +89,7 @@ internal sealed class CredentialCreateSettings : CredentialKeySettings
 /// <summary>Settings for updating a binding. Only the supplied fields change (a PATCH-style merge); unspecified ones are
 /// preserved from the current binding. Changing a reference is how a credential is "rotated" — the operator writes the
 /// new secret version to their store out of band, then re-points the binding here (<c>rotatedAt</c> is stamped
-/// automatically). Usage grants are immutable across updates; management tags may be re-tagged via <c>--manage</c>.</summary>
+/// automatically). Management tags and usage grants are immutable across updates.</summary>
 internal sealed class CredentialUpdateSettings : CredentialKeySettings
 {
     [CommandOption("--auth-kind <KIND>")]
@@ -115,10 +115,6 @@ internal sealed class CredentialUpdateSettings : CredentialKeySettings
     [CommandOption("--description <TEXT>")]
     [Description("Replace the description (preserved if omitted).")]
     public string? Description { get; init; }
-
-    [CommandOption("--manage <KEY=VALUE>")]
-    [Description("Re-tag who may administer the binding, e.g. --manage team=ops (repeatable). Replaces the non-internal management tags; preserved if omitted; the reserved 'sys:' prefix is not permitted.")]
-    public ILookup<string, string>? ManagementTags { get; init; }
 }
 
 internal sealed class CredentialListCommand : AsyncCommand<CredentialListSettings>
@@ -129,94 +125,70 @@ internal sealed class CredentialListCommand : AsyncCommand<CredentialListSetting
         using (http)
         await using (transport)
         {
+            await using ListCredentialsResponse response = await client.ListCredentialsAsync(cancellationToken);
             bool asJson = settings.Output.Equals("json", StringComparison.OrdinalIgnoreCase);
-            string? wantStatus = CredentialCommandHelpers.NormalizeStatus(settings.Status);
-
-            // A status-first table — the operator's real question is "what's about to break?". Status is
-            // colour-coded and a footer counts the expiring/expired bindings; --status / --source filter client-side.
-            var table = new Table().Border(TableBorder.Rounded);
-            table.AddColumn("Source");
-            table.AddColumn("Environment");
-            table.AddColumn("AuthKind");
-            table.AddColumn("Status");
-            table.AddColumn("Expires");
-            table.AddColumn("Grants");
-            List<string>? jsonItems = asJson ? [] : null;
-            int expiring = 0;
-            int expired = 0;
-
-            // Walk every keyset page (the store pages server-side) so the table shows the complete set.
-            string? pageToken = null;
-            do
-            {
-                string? next = null;
-                await using ListCredentialsResponse response = await client.ListCredentialsAsync(
-                    pageToken: pageToken is { } token ? (Models.JsonString.Source)token : default,
-                    cancellationToken: cancellationToken);
-                int rc = response.MatchResult(
-                    list =>
-                    {
-                        next = list.NextPageToken.IsNotUndefined() ? (string)list.NextPageToken : null;
-                        foreach (Models.CredentialBindingSummary summary in list.Credentials.EnumerateArray())
-                        {
-                            string status = (string)summary.CredentialStatus;
-                            string source = (string)summary.SourceName;
-                            if ((wantStatus is not null && !string.Equals(status, wantStatus, StringComparison.Ordinal))
-                                || (settings.Source is { } s && !string.Equals(source, s, StringComparison.Ordinal)))
-                            {
-                                continue;
-                            }
-
-                            if (jsonItems is not null)
-                            {
-                                jsonItems.Add(summary.ToString());
-                                continue;
-                            }
-
-                            if (string.Equals(status, "expiringSoon", StringComparison.Ordinal))
-                            {
-                                expiring++;
-                            }
-                            else if (string.Equals(status, "expired", StringComparison.Ordinal))
-                            {
-                                expired++;
-                            }
-
-                            table.AddRow(
-                                Markup.Escape(source),
-                                Markup.Escape((string)summary.Environment),
-                                Markup.Escape((string)summary.AuthKind),
-                                CredentialCommandHelpers.StatusMarkup(status),
-                                Markup.Escape(CredentialCommandHelpers.FormatDate(summary.ExpiresAt)),
-                                Markup.Escape(CredentialCommandHelpers.GrantSummary(summary)));
-                        }
-
-                        return 0;
-                    },
-                    Output.Unexpected);
-                if (rc != 0)
-                {
-                    return rc;
-                }
-
-                pageToken = next;
-            }
-            while (pageToken is not null);
-
-            if (jsonItems is not null)
-            {
-                return Output.Print($"{{\"credentials\":[{string.Join(",", jsonItems)}]}}");
-            }
-
-            IAnsiConsole console = AnsiConsole.Create(new AnsiConsoleSettings { Out = new AnsiConsoleOutput(Console.Out) });
-            console.Write(table);
-            if (expiring > 0 || expired > 0)
-            {
-                console.MarkupLine($"[yellow]{expiring} expiring soon[/], [red]{expired} expired[/].");
-            }
-
-            return 0;
+            return response.MatchResult(
+                list => asJson ? Output.Print(list.ToString()) : RenderTable(list, settings),
+                Output.Unexpected);
         }
+    }
+
+    // A status-first table — the operator's real question is "what's about to break?". Status is colour-coded and a
+    // footer counts the expiring/expired bindings; --status / --source filter client-side.
+    private static int RenderTable(Models.CredentialBindingList list, CredentialListSettings settings)
+    {
+        string? wantStatus = CredentialCommandHelpers.NormalizeStatus(settings.Status);
+        IAnsiConsole console = AnsiConsole.Create(new AnsiConsoleSettings { Out = new AnsiConsoleOutput(Console.Out) });
+
+        var table = new Table().Border(TableBorder.Rounded);
+        table.AddColumn("Source");
+        table.AddColumn("Environment");
+        table.AddColumn("AuthKind");
+        table.AddColumn("Status");
+        table.AddColumn("Expires");
+        table.AddColumn("Grants");
+
+        int expiring = 0;
+        int expired = 0;
+        foreach (Models.CredentialBindingSummary summary in list.Credentials.EnumerateArray())
+        {
+            string status = (string)summary.CredentialStatus;
+            if (wantStatus is not null && !string.Equals(status, wantStatus, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            string source = (string)summary.SourceName;
+            if (settings.Source is { } s && !string.Equals(source, s, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (string.Equals(status, "expiringSoon", StringComparison.Ordinal))
+            {
+                expiring++;
+            }
+            else if (string.Equals(status, "expired", StringComparison.Ordinal))
+            {
+                expired++;
+            }
+
+            table.AddRow(
+                Markup.Escape(source),
+                Markup.Escape((string)summary.Environment),
+                Markup.Escape((string)summary.AuthKind),
+                CredentialCommandHelpers.StatusMarkup(status),
+                Markup.Escape(CredentialCommandHelpers.FormatDate(summary.ExpiresAt)),
+                Markup.Escape(CredentialCommandHelpers.GrantSummary(summary)));
+        }
+
+        console.Write(table);
+        if (expiring > 0 || expired > 0)
+        {
+            console.MarkupLine($"[yellow]{expiring} expiring soon[/], [red]{expired} expired[/].");
+        }
+
+        return 0;
     }
 }
 
@@ -339,29 +311,22 @@ internal static class CredentialCommandHelpers
 
     public static string GrantSummary(Models.CredentialBindingSummary summary)
     {
-        Models.CredentialUsageGrantee grantee = summary.UsageGrantee;
-        if (!grantee.IsNotUndefined() || !grantee.Identity.IsNotUndefined())
+        if (!summary.UsageGrants.IsNotUndefined())
         {
             return "—";
         }
 
         var grants = new List<string>();
-        foreach (Models.CredentialUsageGrant grant in grantee.Identity.EnumerateArray())
+        foreach (Models.CredentialUsageGrant grant in summary.UsageGrants.EnumerateArray())
         {
             grants.Add($"{(string)grant.DimensionValue}={(string)grant.Value}");
         }
 
-        if (grants.Count == 0)
-        {
-            return "—";
-        }
-
-        string body = string.Join(", ", grants);
-        return grantee.Label.IsNotUndefined() ? $"{(string)grantee.Label} ({body})" : body;
+        return grants.Count > 0 ? string.Join(", ", grants) : "—";
     }
 
-    public static Models.CredentialBindingCreate.Source BuildWrite(CredentialCreateSettings s)
-        => new((ref Models.CredentialBindingCreate.Builder b) =>
+    public static Models.CredentialBindingWrite.Source BuildWrite(CredentialCreateSettings s)
+        => new((ref Models.CredentialBindingWrite.Builder b) =>
         {
             Models.JsonString.Source description = s.Description is { } d ? (Models.JsonString.Source)d : default;
             Models.JsonDateTime.Source expiresAt = s.ExpiresAt is { } e ? (Models.JsonDateTime.Source)e : default;
@@ -375,7 +340,7 @@ internal static class CredentialCommandHelpers
                 expiresAt: expiresAt,
                 managementTags: WriteManagementTags(s.ManagementTags),
                 rotatedAt: default,
-                usageGrantee: WriteUsageGrantee(s.Grants));
+                usageGrants: WriteUsageGrants(s.Grants));
         });
 
     public static Snapshot Capture(Models.CredentialBindingSummary summary)
@@ -433,8 +398,7 @@ internal static class CredentialCommandHelpers
                 config: UpdateConfig(config),
                 description: descriptionSource,
                 expiresAt: expiresAt,
-                rotatedAt: rotatedAt,
-                managementTags: WriteUpdateManagementTags(s.ManagementTags));
+                rotatedAt: rotatedAt);
         });
     }
 
@@ -470,8 +434,8 @@ internal static class CredentialCommandHelpers
         return merged;
     }
 
-    private static Models.CredentialBindingCreate.SecretReferenceArray.Source WriteRefs(IReadOnlyDictionary<string, string>? refs)
-        => new((ref Models.CredentialBindingCreate.SecretReferenceArray.Builder ab) =>
+    private static Models.CredentialBindingWrite.SecretReferenceArray.Source WriteRefs(IReadOnlyDictionary<string, string>? refs)
+        => new((ref Models.CredentialBindingWrite.SecretReferenceArray.Builder ab) =>
         {
             if (refs is null)
             {
@@ -493,14 +457,14 @@ internal static class CredentialCommandHelpers
             }
         });
 
-    private static Models.CredentialBindingCreate.CredentialConfigEntryArray.Source WriteConfig(IReadOnlyDictionary<string, string>? config)
+    private static Models.CredentialBindingWrite.CredentialConfigEntryArray.Source WriteConfig(IReadOnlyDictionary<string, string>? config)
     {
         if (config is not { Count: > 0 })
         {
             return default;
         }
 
-        return new Models.CredentialBindingCreate.CredentialConfigEntryArray.Source((ref Models.CredentialBindingCreate.CredentialConfigEntryArray.Builder ab) =>
+        return new Models.CredentialBindingWrite.CredentialConfigEntryArray.Source((ref Models.CredentialBindingWrite.CredentialConfigEntryArray.Builder ab) =>
         {
             foreach ((string key, string value) in config)
             {
@@ -525,14 +489,14 @@ internal static class CredentialCommandHelpers
         });
     }
 
-    private static Models.CredentialBindingCreate.CredentialSecurityTagArray.Source WriteManagementTags(ILookup<string, string>? tags)
+    private static Models.CredentialBindingWrite.CredentialSecurityTagArray.Source WriteManagementTags(ILookup<string, string>? tags)
     {
         if (tags is null)
         {
             return default;
         }
 
-        return new Models.CredentialBindingCreate.CredentialSecurityTagArray.Source((ref Models.CredentialBindingCreate.CredentialSecurityTagArray.Builder ab) =>
+        return new Models.CredentialBindingWrite.CredentialSecurityTagArray.Source((ref Models.CredentialBindingWrite.CredentialSecurityTagArray.Builder ab) =>
         {
             foreach (IGrouping<string, string> group in tags)
             {
@@ -544,44 +508,22 @@ internal static class CredentialCommandHelpers
         });
     }
 
-    private static Models.CredentialBindingUpdate.CredentialSecurityTagArray.Source WriteUpdateManagementTags(ILookup<string, string>? tags)
+    private static Models.CredentialBindingWrite.CredentialUsageGrantArray.Source WriteUsageGrants(ILookup<string, string>? grants)
     {
-        if (tags is null)
+        if (grants is null)
         {
             return default;
         }
 
-        return new Models.CredentialBindingUpdate.CredentialSecurityTagArray.Source((ref Models.CredentialBindingUpdate.CredentialSecurityTagArray.Builder ab) =>
+        return new Models.CredentialBindingWrite.CredentialUsageGrantArray.Source((ref Models.CredentialBindingWrite.CredentialUsageGrantArray.Builder ab) =>
         {
-            foreach (IGrouping<string, string> group in tags)
+            foreach (IGrouping<string, string> group in grants)
             {
                 foreach (string value in group)
                 {
-                    ab.AddItem(new Models.CredentialSecurityTag.Source((ref Models.CredentialSecurityTag.Builder tb) => tb.Create(group.Key, value)));
+                    ab.AddItem(new Models.CredentialUsageGrant.Source((ref Models.CredentialUsageGrant.Builder gb) => gb.Create(group.Key, value)));
                 }
             }
         });
-    }
-
-    // The interim CLI form: the --grant {dimension=value}s become the usage grantee's identity (AND-matched), with no
-    // resolved kind/label (the CLI has no interactive grantee picker). Omitted entirely when no grants are given.
-    private static Models.CredentialUsageGrantee.Source WriteUsageGrantee(ILookup<string, string>? grants)
-    {
-        if (grants?.Any() != true)
-        {
-            return default;
-        }
-
-        return new Models.CredentialUsageGrantee.Source((ref Models.CredentialUsageGrantee.Builder b) => b.Create(
-            identity: new Models.CredentialUsageGrantee.CredentialUsageGrantArray.Source((ref Models.CredentialUsageGrantee.CredentialUsageGrantArray.Builder ab) =>
-            {
-                foreach (IGrouping<string, string> group in grants)
-                {
-                    foreach (string value in group)
-                    {
-                        ab.AddItem(new Models.CredentialUsageGrant.Source((ref Models.CredentialUsageGrant.Builder gb) => gb.Create(group.Key, value)));
-                    }
-                }
-            })));
     }
 }

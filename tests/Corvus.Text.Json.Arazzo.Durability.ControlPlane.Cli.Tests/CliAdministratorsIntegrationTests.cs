@@ -42,9 +42,8 @@ public sealed partial class CliIntegrationTests
         addOut.ShouldContain("globex");
         addOut.ShouldContain("acme");
 
-        // globex, now an administrator, removes acme by its identity digest — the set never empties because globex remains.
-        string acmeDigest = SecurityIdentityDigest.Compute(SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", "acme")]))!;
-        (int removeExit, string removeOut, _) = await RunAsync(host, "administrators", "remove", "flow", acmeDigest, "--token", "globex");
+        // globex, now an administrator, removes acme — the set never empties because globex remains.
+        (int removeExit, string removeOut, _) = await RunAsync(host, "administrators", "remove", "flow", "tenant", "acme", "--token", "globex");
         removeExit.ShouldBe(0);
         removeOut.ShouldContain("globex");
         removeOut.ShouldNotContain("acme");
@@ -71,8 +70,8 @@ public sealed partial class CliIntegrationTests
     {
         var clock = new MutableClock(T0);
         var store = new InMemoryWorkflowStateStore(clock);
-        var management = new SecuredWorkflowManagement(store, "ops", CompleteResumer, clock);
-        var catalog = new SecuredWorkflowCatalog(
+        var management = new WorkflowManagementClient(store, "ops", CompleteResumer, clock);
+        var catalog = new WorkflowCatalogClient(
             new InMemoryWorkflowCatalogStore(clock),
             store,
             "ops",
@@ -95,9 +94,7 @@ public sealed partial class CliIntegrationTests
         app.Urls.Add("http://127.0.0.1:0");
         app.UseAuthentication();
         app.UseAuthorization();
-        // The subject a granted access request keys on is the caller's tenant identity (the CLI's --token), so the
-        // access-requests command tests can submit/approve/self-serve over the same authenticated host.
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), accessRequestSubjectClaimType: "tenant");
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), requireAuthorization: true, rowSecurity: new TenantIdentityPolicy());
         await app.StartAsync();
 
         return new Host(app, store, clock, app.Urls.First());
