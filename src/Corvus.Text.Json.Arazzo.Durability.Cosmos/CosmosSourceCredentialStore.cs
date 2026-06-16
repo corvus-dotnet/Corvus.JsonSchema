@@ -7,7 +7,6 @@ using System.Net;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
-using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Internal;
@@ -36,6 +35,15 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
     private const string ContainerId = "workflow_credentials";
 
     private static readonly byte[] DocProperty = "doc"u8.ToArray();
+
+    // The single-partition candidate set for a (sourceName, environment) is read with this projection and ordered in
+    // memory; the binding document and its tag discriminator are the two fields each store operation needs.
+    private static readonly IComparer<ParsedJsonDocument<SourceCredentialBinding>> BySourceThenEnvironment =
+        Comparer<ParsedJsonDocument<SourceCredentialBinding>>.Create(static (a, b) =>
+        {
+            int bySource = string.CompareOrdinal(a.RootElement.SourceNameValue, b.RootElement.SourceNameValue);
+            return bySource != 0 ? bySource : string.CompareOrdinal(a.RootElement.EnvironmentValue, b.RootElement.EnvironmentValue);
+        });
 
     private readonly CosmosClient client;
     private readonly Container container;
@@ -105,27 +113,27 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialBinding draft, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialDefinition definition, string actor, CancellationToken cancellationToken)
     {
-        SourceCredentialBinding.ValidateDraft(draft);
+        SourceCredentialBinding.ValidateDefinition(definition);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "scred-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
-        string partition = PartitionKey(draft.SourceNameValue, draft.EnvironmentValue);
-        string tags = SourceCredentialKey.Discriminator(draft.ManagementTagsValue, draft.UsageTagsValue);
+        string partition = PartitionKey(definition.SourceName, definition.Environment);
+        string tags = SourceCredentialKey.Discriminator(definition.ManagementTags, definition.UsageTags);
 
         // The document id within the partition is a deterministic, opaque hash of the tag discriminator, so a duplicate
         // (sourceName, environment, tags) create collides on the item id and Cosmos returns a 409 — mirroring the
         // relational backends' composite-primary-key uniqueness.
         string itemId = ItemId(tags);
-        byte[] json = SourceCredentialSerialization.SerializeNew(id, draft, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] json = SourceCredentialSerialization.SerializeNew(id, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
 
-        using Stream stream = EnvelopeStream(itemId, partition, json, out ParsedJsonDocument<SourceCredentialBinding> document);
+        using MemoryStream stream = EnvelopeStream(itemId, partition, json, out ParsedJsonDocument<SourceCredentialBinding> document);
         try
         {
             using ResponseMessage response = await this.container.CreateItemStreamAsync(stream, new PartitionKey(partition), cancellationToken: cancellationToken).ConfigureAwait(false);
             if (response.StatusCode == HttpStatusCode.Conflict)
             {
-                throw new InvalidOperationException($"A source credential binding for '{draft.SourceNameValue}@{draft.EnvironmentValue}' with those security tags already exists.");
+                throw new InvalidOperationException($"A source credential binding for '{definition.SourceName}@{definition.Environment}' with those security tags already exists.");
             }
 
             response.EnsureSuccessStatusCode();
@@ -149,86 +157,24 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, Corvus.Text.Json.Arazzo.Durability.JsonString pageToken, CancellationToken cancellationToken)
+    public async ValueTask<PooledDocumentList<SourceCredentialBinding>> ListAsync(AccessContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        int pageSize = limit > 0 ? limit : 1;
-        (string SourceName, string Environment, string TieBreaker) cursor = (string.Empty, string.Empty, string.Empty);
-        bool hasCursor = false;
-        if (pageToken.IsNotUndefined())
-        {
-            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
-            hasCursor = SourceCredentialContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
-        }
-
-        // Keyset seek in the stable total order (sourceName, environment, discriminator). Cosmos cannot push the
-        // security-reach predicate — reach is a per-row check applied in memory as we stream — and the discriminator is
-        // not a stored envelope property (it is recomputed from each binding's own immutable tags), so only the first
-        // two key parts are seekable/orderable server-side. The query seeks past the cursor's (sourceName, environment)
-        // and re-includes the cursor's exact (sourceName, environment) so the in-memory tie-breaker comparison can skip
-        // rows up to and including it; the cross-partition ORDER BY needs a composite index on (sourceName, environment)
-        // (a deployment concern). Streaming stops once a further visible row beyond the page is seen, so we read only as
-        // far as the page (plus one) requires, never the whole container.
-        QueryDefinition query = hasCursor
-            ? new QueryDefinition(
-                    "SELECT c.doc FROM c WHERE c.sourceName > @s OR (c.sourceName = @s AND c.environment >= @e) ORDER BY c.sourceName, c.environment")
-                .WithParameter("@s", cursor.SourceName)
-                .WithParameter("@e", cursor.Environment)
-            : new QueryDefinition("SELECT c.doc FROM c ORDER BY c.sourceName, c.environment");
-
-        var docs = new PooledDocumentList<SourceCredentialBinding>(pageSize);
-        bool hasMore = false;
+        var docs = new PooledDocumentList<SourceCredentialBinding>();
         try
         {
-            string lastSource = string.Empty, lastEnv = string.Empty, lastTie = string.Empty;
-            await foreach (ReadOnlyMemory<byte> json in this.QueryDocumentsAsync(query, partition: null, cancellationToken).ConfigureAwait(false))
+            var query = new QueryDefinition("SELECT c.doc FROM c");
+            await foreach (byte[] json in this.QueryDocumentsAsync(query, partition: null, cancellationToken).ConfigureAwait(false))
             {
-                ParsedJsonDocument<SourceCredentialBinding> cand = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json.Span);
-                bool kept = false;
-                try
+                using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
+                if (context.Admits(AccessVerb.Read, candidate.RootElement.ManagementTagsValue))
                 {
-                    string source = cand.RootElement.SourceNameValue;
-                    string environment = cand.RootElement.EnvironmentValue;
-                    string tie = ItemIdSeedFor(cand.RootElement);
-
-                    // The server seek re-includes the cursor's exact (sourceName, environment), so skip any row at or before
-                    // the cursor in the full (sourceName, environment, discriminator) order — the discriminator tie-break is
-                    // resolved here since it is not a stored, orderable property.
-                    if (hasCursor && CompareKey(source, environment, tie, cursor.SourceName, cursor.Environment, cursor.TieBreaker) <= 0)
-                    {
-                        continue;
-                    }
-
-                    SecurityTagSet tags = cand.RootElement.ManagementTags.IsNotUndefined()
-                        ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(cand.RootElement.ManagementTags).Memory)
-                        : SecurityTagSet.Empty;
-                    if (!context.Admits(AccessVerb.Read, tags))
-                    {
-                        continue;
-                    }
-
-                    if (docs.Count == pageSize)
-                    {
-                        hasMore = true;
-                        break;
-                    }
-
-                    docs.Add(cand);
-                    kept = true;
-                    lastSource = source;
-                    lastEnv = environment;
-                    lastTie = tie;
-                }
-                finally
-                {
-                    if (!kept)
-                    {
-                        cand.Dispose();
-                    }
+                    docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(json));
                 }
             }
 
-            return hasMore ? SourceCredentialPage.Create(docs, lastSource, lastEnv, lastTie) : SourceCredentialPage.Create(docs);
+            docs.Sort(BySourceThenEnvironment);
+            return docs;
         }
         catch
         {
@@ -238,9 +184,9 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialBinding draft, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialDefinition definition, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken)
     {
-        SourceCredentialBinding.ValidateDraft(draft);
+        SourceCredentialBinding.ValidateDefinition(definition);
         ArgumentNullException.ThrowIfNull(actor);
         ArgumentNullException.ThrowIfNull(context);
         (byte[]? existing, string? tags) = await this.FindForManagementAsync(sourceName, environment, AccessVerb.Write, context, cancellationToken).ConfigureAwait(false);
@@ -250,9 +196,9 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
         }
 
         string partition = PartitionKey(sourceName, environment);
-        byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, $"{sourceName}@{environment}", expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, $"{sourceName}@{environment}", expectedEtag, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
 
-        using Stream stream = EnvelopeStream(ItemId(tags!), partition, json, out ParsedJsonDocument<SourceCredentialBinding> document);
+        using MemoryStream stream = EnvelopeStream(ItemId(tags!), partition, json, out ParsedJsonDocument<SourceCredentialBinding> document);
         try
         {
             using ResponseMessage response = await this.container.ReplaceItemStreamAsync(stream, ItemId(tags!), new PartitionKey(partition), cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -299,9 +245,9 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
         ArgumentNullException.ThrowIfNull(environment);
         string partition = PartitionKey(sourceName, environment);
         var query = new QueryDefinition("SELECT c.doc FROM c");
-        await foreach (ReadOnlyMemory<byte> json in this.QueryDocumentsAsync(query, partition, cancellationToken).ConfigureAwait(false))
+        await foreach (byte[] json in this.QueryDocumentsAsync(query, partition, cancellationToken).ConfigureAwait(false))
         {
-            ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json.Span);
+            ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
             if (candidate.RootElement.IsUsableBy(runTags))
             {
                 return candidate;
@@ -322,10 +268,10 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
         // scoped to the source name; every value is bound as a parameter (no concatenation).
         var query = new QueryDefinition("SELECT c.doc FROM c WHERE c.sourceName = @s").WithParameter("@s", sourceName);
         bool any = false;
-        await foreach (ReadOnlyMemory<byte> json in this.QueryDocumentsAsync(query, partition: null, cancellationToken).ConfigureAwait(false))
+        await foreach (byte[] json in this.QueryDocumentsAsync(query, partition: null, cancellationToken).ConfigureAwait(false))
         {
             any = true;
-            using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json.Span);
+            using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
             if (candidate.RootElement.IsUsableBy(tags))
             {
                 return CredentialSourceAccess.Granted;
@@ -367,7 +313,7 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
     // caller's pooled return document from the same binding bytes. The binding doc is base64'd verbatim (no SDK
     // serializer); sourceName/environment are projected so EvaluateSourceAccessAsync can query by source across
     // partitions. On any failure building the stream, the return document is disposed before the exception escapes.
-    private static Stream EnvelopeStream(string id, string partition, byte[] doc, out ParsedJsonDocument<SourceCredentialBinding> document)
+    private static MemoryStream EnvelopeStream(string id, string partition, byte[] doc, out ParsedJsonDocument<SourceCredentialBinding> document)
     {
         document = PersistedJson.ToPooledDocument<SourceCredentialBinding>(doc);
         try
@@ -381,11 +327,7 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
                     writer.WriteString("pk"u8, c.Partition);
                     writer.WriteString("sourceName"u8, c.Source);
                     writer.WriteString("environment"u8, c.Environment);
-
-                    // The binding document is itself JSON, so embed it verbatim as a nested value — no base64 wrap (which
-                    // would be a spurious encode here + decode on read). It is valid JSON we produced, so skip validation.
-                    writer.WritePropertyName("doc"u8);
-                    writer.WriteRawValue(c.Doc, skipInputValidation: true);
+                    writer.WriteBase64String("doc"u8, c.Doc);
                     writer.WriteEndObject();
                 });
         }
@@ -415,13 +357,12 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
     {
         string partition = PartitionKey(sourceName, environment);
         var query = new QueryDefinition("SELECT c.doc, c.tags FROM c");
-        await foreach (ReadOnlyMemory<byte> json in this.QueryDocumentsAsync(query, partition, cancellationToken).ConfigureAwait(false))
+        await foreach (byte[] json in this.QueryDocumentsAsync(query, partition, cancellationToken).ConfigureAwait(false))
         {
-            using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json.Span);
+            using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
             if (context.Admits(verb, candidate.RootElement.ManagementTagsValue))
             {
-                // The bytes outlive the response page (the caller may update/delete from them), so copy them out.
-                return (json.ToArray(), ItemIdSeedFor(candidate.RootElement));
+                return (json, ItemIdSeedFor(candidate.RootElement));
             }
         }
 
@@ -434,25 +375,7 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
     private static string ItemIdSeedFor(SourceCredentialBinding binding)
         => SourceCredentialKey.Discriminator(binding.ManagementTagsValue, binding.UsageTagsValue);
 
-    // Orders two bindings by the stable total key (sourceName, environment, discriminator), ordinally — matching the
-    // Cosmos string ORDER BY — so the in-memory keyset skip past the cursor agrees with the server-side seek on the
-    // first two parts and resolves the discriminator tie-break the query cannot express.
-    private static int CompareKey(string sourceA, string envA, string tieA, string sourceB, string envB, string tieB)
-    {
-        int bySource = string.CompareOrdinal(sourceA, sourceB);
-        if (bySource != 0)
-        {
-            return bySource;
-        }
-
-        int byEnv = string.CompareOrdinal(envA, envB);
-        return byEnv != 0 ? byEnv : string.CompareOrdinal(tieA, tieB);
-    }
-
-    // Yields the embedded binding document's raw UTF-8 bytes (a slice into the pooled response page) for each result —
-    // no base64 decode. The slice is valid only for the duration of the consumer's iteration step; a consumer that
-    // keeps the bytes past it (e.g. for an update) copies them (ToArray), a transient consumer parses them in place.
-    private async IAsyncEnumerable<ReadOnlyMemory<byte>> QueryDocumentsAsync(QueryDefinition query, string? partition, [EnumeratorCancellation] CancellationToken cancellationToken)
+    private async IAsyncEnumerable<byte[]> QueryDocumentsAsync(QueryDefinition query, string? partition, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         QueryRequestOptions? options = partition is null ? null : new QueryRequestOptions { PartitionKey = new PartitionKey(partition) };
         using FeedIterator iterator = this.container.GetItemQueryStreamIterator(query, requestOptions: options);
@@ -463,10 +386,9 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
             using CosmosJson.RentedResponse page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
             foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page.Memory))
             {
-                ReadOnlyMemory<byte> doc = CosmosJson.GetRawValue(element, DocProperty);
-                if (!doc.IsEmpty)
+                if (CosmosJson.GetString(element, DocProperty) is { } base64)
                 {
-                    yield return doc;
+                    yield return Convert.FromBase64String(base64);
                 }
             }
         }

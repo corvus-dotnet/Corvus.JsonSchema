@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Globalization;
-using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using MongoDB.Bson;
@@ -100,19 +99,19 @@ public sealed class MongoSourceCredentialStore : ISourceCredentialStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialBinding draft, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialDefinition definition, string actor, CancellationToken cancellationToken)
     {
-        SourceCredentialBinding.ValidateDraft(draft);
+        SourceCredentialBinding.ValidateDefinition(definition);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "scred-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
         WorkflowEtag etag = NewEtag();
-        byte[] json = SourceCredentialSerialization.SerializeNew(id, draft, actor, this.timeProvider.GetUtcNow(), etag);
-        string tags = SourceCredentialKey.Discriminator(draft.ManagementTagsValue, draft.UsageTagsValue);
+        byte[] json = SourceCredentialSerialization.SerializeNew(id, definition, actor, this.timeProvider.GetUtcNow(), etag);
+        string tags = SourceCredentialKey.Discriminator(definition.ManagementTags, definition.UsageTags);
         var document = new BsonDocument
         {
-            ["_id"] = Key(draft.SourceNameValue, draft.EnvironmentValue, tags),
-            ["sourceName"] = draft.SourceNameValue,
-            ["environment"] = draft.EnvironmentValue,
+            ["_id"] = Key(definition.SourceName, definition.Environment, tags),
+            ["sourceName"] = definition.SourceName,
+            ["environment"] = definition.Environment,
             ["tags"] = tags,
             ["etag"] = etag.Value!,
             ["doc"] = new BsonBinaryData(json),
@@ -123,7 +122,7 @@ public sealed class MongoSourceCredentialStore : ISourceCredentialStore, IAsyncD
         }
         catch (MongoWriteException ex) when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
         {
-            throw new InvalidOperationException($"A source credential binding for '{draft.SourceNameValue}@{draft.EnvironmentValue}' with those security tags already exists.");
+            throw new InvalidOperationException($"A source credential binding for '{definition.SourceName}@{definition.Environment}' with those security tags already exists.");
         }
 
         return PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
@@ -140,87 +139,26 @@ public sealed class MongoSourceCredentialStore : ISourceCredentialStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    public async ValueTask<PooledDocumentList<SourceCredentialBinding>> ListAsync(AccessContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        int pageSize = limit > 0 ? limit : 1;
-        (string SourceName, string Environment, string TieBreaker) cursor = (string.Empty, string.Empty, string.Empty);
-        bool hasCursor = false;
-        if (pageToken.IsNotUndefined())
-        {
-            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
-            hasCursor = SourceCredentialContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
-        }
-
-        // Keyset seek past the cursor in composite _id (s, e, t) order — an indexed range scan over the unique _id, not a
-        // collection load. The standard 3-field keyset predicate ("strictly after" the cursor) plus a matching ascending
-        // sort makes _id both the seek key and the stable total order, so the page boundary is the row key we hand back.
-        FilterDefinitionBuilder<BsonDocument> b = Builders<BsonDocument>.Filter;
-        FilterDefinition<BsonDocument> filter = b.Empty;
-        if (hasCursor)
-        {
-            filter = b.Or(
-                b.Gt("_id.s", cursor.SourceName),
-                b.And(b.Eq("_id.s", cursor.SourceName), b.Gt("_id.e", cursor.Environment)),
-                b.And(b.Eq("_id.s", cursor.SourceName), b.Eq("_id.e", cursor.Environment), b.Gt("_id.t", cursor.TieBreaker)));
-        }
-
-        SortDefinition<BsonDocument> sort = Builders<BsonDocument>.Sort.Ascending("_id.s").Ascending("_id.e").Ascending("_id.t");
-
-        var docs = new PooledDocumentList<SourceCredentialBinding>(pageSize);
-        bool hasMore = false;
+        var docs = new PooledDocumentList<SourceCredentialBinding>();
         try
         {
-            // Reach (§14.2) is a per-row predicate applied in memory as we stream; the cursor is consumed only until the
-            // page fills, so we read ≈ pageSize / selectivity rows rather than the whole collection. A FURTHER visible row
-            // beyond the page is the signal to emit a continuation token — the row key of the last *included* binding.
-            using IAsyncCursor<BsonDocument> mongoCursor = await this.credentials.Find(filter).Sort(sort).ToCursorAsync(cancellationToken).ConfigureAwait(false);
-            string lastSource = string.Empty, lastEnv = string.Empty, lastTags = string.Empty;
-            bool stop = false;
-            while (!stop && await mongoCursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
+            List<BsonDocument> documents = await this.credentials.Find(Builders<BsonDocument>.Filter.Empty)
+                .Sort(Builders<BsonDocument>.Sort.Ascending("sourceName").Ascending("environment"))
+                .ToListAsync(cancellationToken).ConfigureAwait(false);
+            foreach (BsonDocument document in documents)
             {
-                foreach (BsonDocument document in mongoCursor.Current)
+                byte[] json = document["doc"].AsBsonBinaryData.Bytes;
+                using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
+                if (context.Admits(AccessVerb.Read, candidate.RootElement.ManagementTagsValue))
                 {
-                    byte[] json = document["doc"].AsBsonBinaryData.Bytes;
-                    ParsedJsonDocument<SourceCredentialBinding> cand = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
-                    bool kept = false;
-                    try
-                    {
-                        SecurityTagSet tags = cand.RootElement.ManagementTags.IsNotUndefined()
-                            ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(cand.RootElement.ManagementTags).Memory)
-                            : SecurityTagSet.Empty;
-                        if (!context.Admits(AccessVerb.Read, tags))
-                        {
-                            continue;
-                        }
-
-                        if (docs.Count == pageSize)
-                        {
-                            hasMore = true;
-                            stop = true;
-                            break;
-                        }
-
-                        BsonDocument id = document["_id"].AsBsonDocument;
-                        docs.Add(cand);
-                        kept = true;
-                        lastSource = id["s"].AsString;
-                        lastEnv = id["e"].AsString;
-                        lastTags = id["t"].AsString;
-                    }
-                    finally
-                    {
-                        if (!kept)
-                        {
-                            cand.Dispose();
-                        }
-                    }
+                    docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(json));
                 }
             }
 
-            return hasMore
-                ? SourceCredentialPage.Create(docs, lastSource, lastEnv, lastTags)
-                : SourceCredentialPage.Create(docs);
+            return docs;
         }
         catch
         {
@@ -230,9 +168,9 @@ public sealed class MongoSourceCredentialStore : ISourceCredentialStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialBinding draft, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialDefinition definition, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken)
     {
-        SourceCredentialBinding.ValidateDraft(draft);
+        SourceCredentialBinding.ValidateDefinition(definition);
         ArgumentNullException.ThrowIfNull(actor);
         ArgumentNullException.ThrowIfNull(context);
         (byte[]? existing, string? tags) = await this.FindForManagementAsync(sourceName, environment, AccessVerb.Write, context, cancellationToken).ConfigureAwait(false);
@@ -241,7 +179,7 @@ public sealed class MongoSourceCredentialStore : ISourceCredentialStore, IAsyncD
             return null;
         }
 
-        byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, $"{sourceName}@{environment}", expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, $"{sourceName}@{environment}", expectedEtag, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
         var update = Builders<BsonDocument>.Update
             .Set("etag", SourceCredentialSerialization.EtagOf(json).Value!)
             .Set("doc", new BsonBinaryData(json));

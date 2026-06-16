@@ -5,7 +5,6 @@
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
-using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using MySqlConnector;
@@ -92,20 +91,20 @@ public sealed class MySqlSourceCredentialStore : ISourceCredentialStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialBinding draft, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialDefinition definition, string actor, CancellationToken cancellationToken)
     {
-        SourceCredentialBinding.ValidateDraft(draft);
+        SourceCredentialBinding.ValidateDefinition(definition);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "scred-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
         WorkflowEtag etag = NewEtag();
-        byte[] json = SourceCredentialSerialization.SerializeNew(id, draft, actor, this.timeProvider.GetUtcNow(), etag);
-        string tags = SourceCredentialKey.Discriminator(draft.ManagementTagsValue, draft.UsageTagsValue);
+        byte[] json = SourceCredentialSerialization.SerializeNew(id, definition, actor, this.timeProvider.GetUtcNow(), etag);
+        string tags = SourceCredentialKey.Discriminator(definition.ManagementTags, definition.UsageTags);
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using MySqlCommand insert = connection.CreateCommand();
         insert.CommandText = "INSERT INTO SourceCredentials (SourceName, Environment, TagsHash, Tags, Etag, Document) VALUES (@s, @e, @h, @t, @etag, @doc);";
-        insert.Parameters.AddWithValue("@s", draft.SourceNameValue);
-        insert.Parameters.AddWithValue("@e", draft.EnvironmentValue);
-        insert.Parameters.AddWithValue("@h", TagsHash(draft.SourceNameValue, draft.EnvironmentValue, tags));
+        insert.Parameters.AddWithValue("@s", definition.SourceName);
+        insert.Parameters.AddWithValue("@e", definition.Environment);
+        insert.Parameters.AddWithValue("@h", TagsHash(definition.SourceName, definition.Environment, tags));
         insert.Parameters.AddWithValue("@t", tags);
         insert.Parameters.AddWithValue("@etag", etag.Value!);
         insert.Parameters.AddWithValue("@doc", json);
@@ -115,7 +114,7 @@ public sealed class MySqlSourceCredentialStore : ISourceCredentialStore, IAsyncD
         }
         catch (MySqlException ex) when (ex.ErrorCode == MySqlErrorCode.DuplicateKeyEntry)
         {
-            throw new InvalidOperationException($"A source credential binding for '{draft.SourceNameValue}@{draft.EnvironmentValue}' with those security tags already exists.");
+            throw new InvalidOperationException($"A source credential binding for '{definition.SourceName}@{definition.Environment}' with those security tags already exists.");
         }
 
         return PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
@@ -133,88 +132,27 @@ public sealed class MySqlSourceCredentialStore : ISourceCredentialStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    public async ValueTask<PooledDocumentList<SourceCredentialBinding>> ListAsync(AccessContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        int pageSize = limit > 0 ? limit : 1;
-        (string SourceName, string Environment, string TieBreaker) cursor = (string.Empty, string.Empty, string.Empty);
-        bool hasCursor = false;
-        if (pageToken.IsNotUndefined())
-        {
-            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
-            hasCursor = SourceCredentialContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
-        }
-
-        await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-        var docs = new PooledDocumentList<SourceCredentialBinding>(pageSize);
-        bool hasMore = false;
+        var docs = new PooledDocumentList<SourceCredentialBinding>();
         try
         {
-            // Keyset seek past the cursor in (SourceName, Environment, TagsHash) order — an indexed range scan over the
-            // primary key, not a table load. Tags is LONGTEXT and cannot be a key/ordered column, so the orderable PK
-            // component TagsHash (CHAR(64), a SHA-256 hex digest) is the tie-breaker; it is already a hex string, so the
-            // token carries it verbatim. Reach is a per-row predicate applied in memory as we stream; the reader is
-            // consumed only until the page fills, so we read ≈ pageSize / selectivity rows, never the whole table.
+            await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
             await using MySqlCommand select = connection.CreateCommand();
-            if (hasCursor)
-            {
-                select.CommandText =
-                    "SELECT SourceName, Environment, TagsHash, Document FROM SourceCredentials " +
-                    "WHERE SourceName > @s OR (SourceName = @s AND Environment > @e) OR (SourceName = @s AND Environment = @e AND TagsHash > @t) " +
-                    "ORDER BY SourceName, Environment, TagsHash;";
-                select.Parameters.AddWithValue("@s", cursor.SourceName);
-                select.Parameters.AddWithValue("@e", cursor.Environment);
-                select.Parameters.AddWithValue("@t", cursor.TieBreaker);
-            }
-            else
-            {
-                select.CommandText = "SELECT SourceName, Environment, TagsHash, Document FROM SourceCredentials ORDER BY SourceName, Environment, TagsHash;";
-            }
-
+            select.CommandText = "SELECT Document FROM SourceCredentials ORDER BY SourceName, Environment;";
             await using MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-            string lastSource = string.Empty, lastEnv = string.Empty, lastTie = string.Empty;
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
-                string source = reader.GetString(0);
-                string environment = reader.GetString(1);
-                string tie = reader.GetString(2);
-                byte[] json = reader.GetFieldValue<byte[]>(3);
-                ParsedJsonDocument<SourceCredentialBinding> cand = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
-                bool kept = false;
-                try
+                byte[] json = reader.GetFieldValue<byte[]>(0);
+                using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
+                if (context.Admits(AccessVerb.Read, candidate.RootElement.ManagementTagsValue))
                 {
-                    SecurityTagSet tags = cand.RootElement.ManagementTags.IsNotUndefined()
-                        ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(cand.RootElement.ManagementTags).Memory)
-                        : SecurityTagSet.Empty;
-                    if (!context.Admits(AccessVerb.Read, tags))
-                    {
-                        continue;
-                    }
-
-                    if (docs.Count == pageSize)
-                    {
-                        hasMore = true;
-                        break;
-                    }
-
-                    docs.Add(cand);
-                    kept = true;
-                    lastSource = source;
-                    lastEnv = environment;
-                    lastTie = tie;
-                }
-                finally
-                {
-                    if (!kept)
-                    {
-                        cand.Dispose();
-                    }
+                    docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(json));
                 }
             }
 
-            return hasMore
-                ? SourceCredentialPage.Create(docs, lastSource, lastEnv, lastTie)
-                : SourceCredentialPage.Create(docs);
+            return docs;
         }
         catch
         {
@@ -224,9 +162,9 @@ public sealed class MySqlSourceCredentialStore : ISourceCredentialStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialBinding draft, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialDefinition definition, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken)
     {
-        SourceCredentialBinding.ValidateDraft(draft);
+        SourceCredentialBinding.ValidateDefinition(definition);
         ArgumentNullException.ThrowIfNull(actor);
         ArgumentNullException.ThrowIfNull(context);
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
@@ -236,7 +174,7 @@ public sealed class MySqlSourceCredentialStore : ISourceCredentialStore, IAsyncD
             return null;
         }
 
-        byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, $"{sourceName}@{environment}", expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, $"{sourceName}@{environment}", expectedEtag, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
         await using MySqlCommand update = connection.CreateCommand();
         update.CommandText = "UPDATE SourceCredentials SET Etag = @etag, Document = @doc WHERE SourceName = @s AND Environment = @e AND TagsHash = @h;";
         update.Parameters.AddWithValue("@etag", SourceCredentialSerialization.EtagOf(json).Value!);

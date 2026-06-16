@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Globalization;
-using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using StackExchange.Redis;
@@ -122,35 +121,35 @@ public sealed class RedisSourceCredentialStore : ISourceCredentialStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialBinding draft, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialDefinition definition, string actor, CancellationToken cancellationToken)
     {
-        SourceCredentialBinding.ValidateDraft(draft);
+        SourceCredentialBinding.ValidateDefinition(definition);
         ArgumentNullException.ThrowIfNull(actor);
         cancellationToken.ThrowIfCancellationRequested();
         string id = "scred-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
         WorkflowEtag etag = NewEtag();
-        byte[] json = SourceCredentialSerialization.SerializeNew(id, draft, actor, this.timeProvider.GetUtcNow(), etag);
-        string discriminator = SourceCredentialKey.Discriminator(draft.ManagementTagsValue, draft.UsageTagsValue);
+        byte[] json = SourceCredentialSerialization.SerializeNew(id, definition, actor, this.timeProvider.GetUtcNow(), etag);
+        string discriminator = SourceCredentialKey.Discriminator(definition.ManagementTags, definition.UsageTags);
 
         RedisKey[] keys =
         [
-            BindKey(draft.SourceNameValue, draft.EnvironmentValue, discriminator),
-            EnvIndexKey(draft.SourceNameValue, draft.EnvironmentValue),
-            SourceIndexKey(draft.SourceNameValue),
+            BindKey(definition.SourceName, definition.Environment, discriminator),
+            EnvIndexKey(definition.SourceName, definition.Environment),
+            SourceIndexKey(definition.SourceName),
             AllIndexKey,
         ];
         RedisValue[] argv =
         [
             json,
             discriminator,
-            SourceIndexMember(draft.EnvironmentValue, discriminator),
-            AllIndexMember(draft.SourceNameValue, draft.EnvironmentValue, discriminator),
+            SourceIndexMember(definition.Environment, discriminator),
+            AllIndexMember(definition.SourceName, definition.Environment, discriminator),
         ];
 
         RedisResult result = await this.database.ScriptEvaluateAsync(AddScript, keys, argv).ConfigureAwait(false);
         if ((long)result == 0)
         {
-            throw new InvalidOperationException($"A source credential binding for '{draft.SourceNameValue}@{draft.EnvironmentValue}' with those security tags already exists.");
+            throw new InvalidOperationException($"A source credential binding for '{definition.SourceName}@{definition.Environment}' with those security tags already exists.");
         }
 
         return PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
@@ -168,50 +167,16 @@ public sealed class RedisSourceCredentialStore : ISourceCredentialStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    public async ValueTask<PooledDocumentList<SourceCredentialBinding>> ListAsync(AccessContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         cancellationToken.ThrowIfCancellationRequested();
-        int pageSize = limit > 0 ? limit : 1;
-        (string SourceName, string Environment, string TieBreaker) cursor = (string.Empty, string.Empty, string.Empty);
-        bool hasCursor = false;
-        if (pageToken.IsNotUndefined())
-        {
-            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
-            hasCursor = SourceCredentialContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
-        }
-
-        // Redis has no server-side ordering for a SET, so the keyset scan runs over the all-index members in memory: the
-        // members are the small identity tuples (no documents), so sort them into the stable total order
-        // (sourceName, environment, discriminator), seek past the cursor, then fetch each candidate's document lazily —
-        // only up to what the page needs, never the whole table.
-        RedisValue[] rawMembers = await this.database.SetMembersAsync(AllIndexKey).ConfigureAwait(false);
-        var members = new (string Source, string Environment, string Discriminator)[rawMembers.Length];
-        for (int i = 0; i < rawMembers.Length; i++)
-        {
-            members[i] = SplitAllIndexMember((string)rawMembers[i]!);
-        }
-
-        Array.Sort(members, ByIdentity);
-
-        // Index of the first member strictly past the cursor in (source, environment, discriminator) order.
-        int start = 0;
-        if (hasCursor)
-        {
-            while (start < members.Length && ByIdentity.Compare(members[start], (cursor.SourceName, cursor.Environment, cursor.TieBreaker)) <= 0)
-            {
-                start++;
-            }
-        }
-
-        var docs = new PooledDocumentList<SourceCredentialBinding>(pageSize);
-        bool hasMore = false;
+        var docs = new PooledDocumentList<SourceCredentialBinding>();
         try
         {
-            string lastSource = string.Empty, lastEnv = string.Empty, lastDisc = string.Empty;
-            for (int i = start; i < members.Length; i++)
+            foreach (RedisValue member in await this.database.SetMembersAsync(AllIndexKey).ConfigureAwait(false))
             {
-                (string src, string env, string discriminator) = members[i];
+                (string src, string env, string discriminator) = SplitAllIndexMember((string)member!);
                 RedisValue value = await this.database.StringGetAsync(BindKey(src, env, discriminator)).ConfigureAwait(false);
                 if (value.IsNullOrEmpty)
                 {
@@ -219,41 +184,15 @@ public sealed class RedisSourceCredentialStore : ISourceCredentialStore, IAsyncD
                 }
 
                 byte[] json = (byte[])value!;
-                ParsedJsonDocument<SourceCredentialBinding> cand = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
-                bool kept = false;
-                try
+                using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
+                if (context.Admits(AccessVerb.Read, candidate.RootElement.ManagementTagsValue))
                 {
-                    SecurityTagSet tags = cand.RootElement.ManagementTags.IsNotUndefined()
-                        ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(cand.RootElement.ManagementTags).Memory)
-                        : SecurityTagSet.Empty;
-                    if (!context.Admits(AccessVerb.Read, tags))
-                    {
-                        continue;
-                    }
-
-                    if (docs.Count == pageSize)
-                    {
-                        // A further visible row beyond the page exists: stop and hand back a cursor at the last included row.
-                        hasMore = true;
-                        break;
-                    }
-
-                    docs.Add(cand);
-                    kept = true;
-                    lastSource = src;
-                    lastEnv = env;
-                    lastDisc = discriminator;
-                }
-                finally
-                {
-                    if (!kept)
-                    {
-                        cand.Dispose();
-                    }
+                    docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(json));
                 }
             }
 
-            return hasMore ? SourceCredentialPage.Create(docs, lastSource, lastEnv, lastDisc) : SourceCredentialPage.Create(docs);
+            docs.Sort(BySourceThenEnvironment);
+            return docs;
         }
         catch
         {
@@ -263,9 +202,9 @@ public sealed class RedisSourceCredentialStore : ISourceCredentialStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialBinding draft, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialDefinition definition, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken)
     {
-        SourceCredentialBinding.ValidateDraft(draft);
+        SourceCredentialBinding.ValidateDefinition(definition);
         ArgumentNullException.ThrowIfNull(actor);
         ArgumentNullException.ThrowIfNull(context);
         cancellationToken.ThrowIfCancellationRequested();
@@ -275,7 +214,7 @@ public sealed class RedisSourceCredentialStore : ISourceCredentialStore, IAsyncD
             return null;
         }
 
-        byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, $"{sourceName}@{environment}", expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, $"{sourceName}@{environment}", expectedEtag, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
 
         // The identity (sourceName, environment, security tags) is immutable, so the per-binding key is unchanged and
         // the index sets need no maintenance; just overwrite the document bytes verbatim.
@@ -382,20 +321,12 @@ public sealed class RedisSourceCredentialStore : ISourceCredentialStore, IAsyncD
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
-    // Orders the (unordered) all-index members into the stable total keyset order for ListAsync: the contractual
-    // (sourceName, environment) primary order, made total by the discriminator tie-breaker — all compared ordinally to
-    // match the token's byte order.
-    private static readonly IComparer<(string Source, string Environment, string Discriminator)> ByIdentity =
-        Comparer<(string Source, string Environment, string Discriminator)>.Create(static (a, b) =>
+    // Orders the client-side snapshot for ListAsync: by source name then environment, since the index set is unordered.
+    private static readonly IComparer<ParsedJsonDocument<SourceCredentialBinding>> BySourceThenEnvironment =
+        Comparer<ParsedJsonDocument<SourceCredentialBinding>>.Create(static (a, b) =>
         {
-            int bySource = string.CompareOrdinal(a.Source, b.Source);
-            if (bySource != 0)
-            {
-                return bySource;
-            }
-
-            int byEnv = string.CompareOrdinal(a.Environment, b.Environment);
-            return byEnv != 0 ? byEnv : string.CompareOrdinal(a.Discriminator, b.Discriminator);
+            int bySource = string.CompareOrdinal(a.RootElement.SourceNameValue, b.RootElement.SourceNameValue);
+            return bySource != 0 ? bySource : string.CompareOrdinal(a.RootElement.EnvironmentValue, b.RootElement.EnvironmentValue);
         });
 
     private static RedisKey BindKey(string sourceName, string environment, string discriminator)

@@ -6,7 +6,6 @@ using System.Globalization;
 using System.Text;
 using Azure;
 using Azure.Data.Tables;
-using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 
@@ -36,6 +35,15 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
     private const string SourceNameColumn = "SourceName";
     private const string EnvironmentColumn = "Environment";
     private const string DiscriminatorColumn = "Tags";
+
+    // Singleton comparer (created once) for the client-side snapshot ordering, since Table queries are unordered:
+    // by source name then environment — the listing order every backend agrees on.
+    private static readonly IComparer<ParsedJsonDocument<SourceCredentialBinding>> BySourceThenEnvironment =
+        Comparer<ParsedJsonDocument<SourceCredentialBinding>>.Create(static (a, b) =>
+        {
+            int bySource = string.CompareOrdinal(a.RootElement.SourceNameValue, b.RootElement.SourceNameValue);
+            return bySource != 0 ? bySource : string.CompareOrdinal(a.RootElement.EnvironmentValue, b.RootElement.EnvironmentValue);
+        });
 
     private readonly TableClient credentials;
     private readonly TimeProvider timeProvider;
@@ -91,18 +99,18 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialBinding draft, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialDefinition definition, string actor, CancellationToken cancellationToken)
     {
-        SourceCredentialBinding.ValidateDraft(draft);
+        SourceCredentialBinding.ValidateDefinition(definition);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "scred-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
         WorkflowEtag etag = NewEtag();
-        byte[] json = SourceCredentialSerialization.SerializeNew(id, draft, actor, this.timeProvider.GetUtcNow(), etag);
-        string discriminator = SourceCredentialKey.Discriminator(draft.ManagementTagsValue, draft.UsageTagsValue);
-        var entity = new TableEntity(PartitionKey(draft.SourceNameValue), RowKey(draft.EnvironmentValue, discriminator))
+        byte[] json = SourceCredentialSerialization.SerializeNew(id, definition, actor, this.timeProvider.GetUtcNow(), etag);
+        string discriminator = SourceCredentialKey.Discriminator(definition.ManagementTags, definition.UsageTags);
+        var entity = new TableEntity(PartitionKey(definition.SourceName), RowKey(definition.Environment, discriminator))
         {
-            [SourceNameColumn] = draft.SourceNameValue,
-            [EnvironmentColumn] = draft.EnvironmentValue,
+            [SourceNameColumn] = definition.SourceName,
+            [EnvironmentColumn] = definition.Environment,
             [DiscriminatorColumn] = discriminator,
             [DocColumn] = json,
         };
@@ -112,7 +120,7 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
         }
         catch (RequestFailedException ex) when (ex.Status == 409)
         {
-            throw new InvalidOperationException($"A source credential binding for '{draft.SourceNameValue}@{draft.EnvironmentValue}' with those security tags already exists.");
+            throw new InvalidOperationException($"A source credential binding for '{definition.SourceName}@{definition.Environment}' with those security tags already exists.");
         }
 
         return PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
@@ -129,104 +137,28 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    public async ValueTask<PooledDocumentList<SourceCredentialBinding>> ListAsync(AccessContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        int pageSize = limit > 0 ? limit : 1;
-        (string SourceName, string Environment, string TieBreaker) cursor = (string.Empty, string.Empty, string.Empty);
-        bool hasCursor = false;
-        if (pageToken.IsNotUndefined())
-        {
-            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
-            hasCursor = SourceCredentialContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
-        }
-
-        // The contractual order is (sourceName, environment) with the tag discriminator as the tie-breaker for a stable
-        // TOTAL order. Table storage orders by (PartitionKey, RowKey) = (Enc(source), Enc(env)_Enc(disc)), but Enc is
-        // URL-safe base64 and therefore NOT ordinal-order-preserving, so the keyset cannot be pushed as a server-side
-        // range filter. Instead the entity keys (decoded into the plain SourceName/Environment/Tags columns) are pulled,
-        // sorted in memory into the total order, paged, and only the page's Documents are fetched.
-        var keys = new List<EntityKey>();
-        await foreach (TableEntity entity in this.credentials.QueryAsync<TableEntity>(
-            select: [SourceNameColumn, EnvironmentColumn, DiscriminatorColumn], cancellationToken: cancellationToken).ConfigureAwait(false))
-        {
-            if (entity.GetString(SourceNameColumn) is not { } source ||
-                entity.GetString(EnvironmentColumn) is not { } environment ||
-                entity.GetString(DiscriminatorColumn) is not { } discriminator)
-            {
-                continue;
-            }
-
-            keys.Add(new EntityKey(source, environment, discriminator));
-        }
-
-        keys.Sort(static (a, b) =>
-        {
-            int bySource = string.CompareOrdinal(a.SourceName, b.SourceName);
-            if (bySource != 0)
-            {
-                return bySource;
-            }
-
-            int byEnv = string.CompareOrdinal(a.Environment, b.Environment);
-            return byEnv != 0 ? byEnv : string.CompareOrdinal(a.Discriminator, b.Discriminator);
-        });
-
-        var docs = new PooledDocumentList<SourceCredentialBinding>(pageSize);
-        bool hasMore = false;
+        var docs = new PooledDocumentList<SourceCredentialBinding>();
         try
         {
-            EntityKey last = default;
-            foreach (EntityKey key in keys)
+            await foreach (TableEntity entity in this.credentials.QueryAsync<TableEntity>(cancellationToken: cancellationToken).ConfigureAwait(false))
             {
-                // Skip entities at or before the cursor in (source, env, disc) total order.
-                if (hasCursor && Compare(key, cursor) <= 0)
-                {
-                    continue;
-                }
-
-                // Fetch the Document only now, for entities past the cursor, and only until the page fills plus one.
-                TableEntity entity = (await this.credentials.GetEntityAsync<TableEntity>(
-                    PartitionKey(key.SourceName), RowKey(key.Environment, key.Discriminator), [DocColumn], cancellationToken).ConfigureAwait(false)).Value;
                 if (entity.GetBinary(DocColumn) is not { } json)
                 {
                     continue;
                 }
 
-                ParsedJsonDocument<SourceCredentialBinding> cand = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
-                bool kept = false;
-                try
+                using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
+                if (context.Admits(AccessVerb.Read, candidate.RootElement.ManagementTagsValue))
                 {
-                    SecurityTagSet tags = cand.RootElement.ManagementTags.IsNotUndefined()
-                        ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(cand.RootElement.ManagementTags).Memory)
-                        : SecurityTagSet.Empty;
-                    if (!context.Admits(AccessVerb.Read, tags))
-                    {
-                        continue;
-                    }
-
-                    if (docs.Count == pageSize)
-                    {
-                        hasMore = true;
-                        break;
-                    }
-
-                    docs.Add(cand);
-                    kept = true;
-                    last = key;
-                }
-                finally
-                {
-                    if (!kept)
-                    {
-                        cand.Dispose();
-                    }
+                    docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(json));
                 }
             }
 
-            return hasMore
-                ? SourceCredentialPage.Create(docs, last.SourceName, last.Environment, last.Discriminator)
-                : SourceCredentialPage.Create(docs);
+            docs.Sort(BySourceThenEnvironment);
+            return docs;
         }
         catch
         {
@@ -236,9 +168,9 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialBinding draft, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialDefinition definition, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken)
     {
-        SourceCredentialBinding.ValidateDraft(draft);
+        SourceCredentialBinding.ValidateDefinition(definition);
         ArgumentNullException.ThrowIfNull(actor);
         ArgumentNullException.ThrowIfNull(context);
         (byte[]? existing, string? discriminator) = await this.FindForManagementAsync(sourceName, environment, AccessVerb.Write, context, cancellationToken).ConfigureAwait(false);
@@ -247,7 +179,7 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
             return null;
         }
 
-        byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, $"{sourceName}@{environment}", expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, $"{sourceName}@{environment}", expectedEtag, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
         var entity = new TableEntity(PartitionKey(sourceName), RowKey(environment, discriminator!))
         {
             [SourceNameColumn] = sourceName,
@@ -285,7 +217,7 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
     {
         ArgumentNullException.ThrowIfNull(sourceName);
         ArgumentNullException.ThrowIfNull(environment);
-        string filter = TableClient.CreateQueryFilter($"PartitionKey eq {PartitionKey(sourceName)} and Environment eq {environment}");
+        string filter = TableClient.CreateQueryFilter($"PartitionKey eq {PartitionKey(sourceName)} and {EnvironmentColumn} eq {environment}");
         await foreach (TableEntity entity in this.credentials.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
         {
             if (entity.GetBinary(DocColumn) is not { } json)
@@ -331,19 +263,6 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
-    // Orders a key against a decoded keyset cursor in the contractual total order: (source, env, discriminator) ordinal.
-    private static int Compare(in EntityKey key, in (string SourceName, string Environment, string TieBreaker) cursor)
-    {
-        int bySource = string.CompareOrdinal(key.SourceName, cursor.SourceName);
-        if (bySource != 0)
-        {
-            return bySource;
-        }
-
-        int byEnv = string.CompareOrdinal(key.Environment, cursor.Environment);
-        return byEnv != 0 ? byEnv : string.CompareOrdinal(key.Discriminator, cursor.TieBreaker);
-    }
-
     // The PartitionKey is the source name; the RowKey folds environment and the tag discriminator. Both are
     // user-supplied/derived strings that may contain Table-forbidden characters (/\#? and control chars — the
     // discriminator carries a U+0001 tag-set separator), so each segment is URL-safe-base64 encoded; the encoded
@@ -362,7 +281,7 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
     // bytes and its tag discriminator (the row-key segment). A binding outside reach is invisible (non-disclosing).
     private async ValueTask<(byte[]? Json, string? Discriminator)> FindForManagementAsync(string sourceName, string environment, AccessVerb verb, AccessContext context, CancellationToken cancellationToken)
     {
-        string filter = TableClient.CreateQueryFilter($"PartitionKey eq {PartitionKey(sourceName)} and Environment eq {environment}");
+        string filter = TableClient.CreateQueryFilter($"PartitionKey eq {PartitionKey(sourceName)} and {EnvironmentColumn} eq {environment}");
         await foreach (TableEntity entity in this.credentials.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
         {
             if (entity.GetBinary(DocColumn) is not { } json)
@@ -379,8 +298,4 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
 
         return (null, null);
     }
-
-    // The decoded entity key columns (the plain source/environment/discriminator, not the base64 PartitionKey/RowKey),
-    // carried so the listing snapshot can be put into the contractual total order without re-decoding the keys.
-    private readonly record struct EntityKey(string SourceName, string Environment, string Discriminator);
 }
