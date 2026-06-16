@@ -2236,6 +2236,11 @@
         "description": "The HTTP auth scheme the resolved secret(s) build into a provider (non-sensitive metadata).",
         "enum": ["apiKey", "bearer", "basic", "oauth2ClientCredentials"]
       },
+      "CredentialStatus": {
+        "type": "string",
+        "description": "The derived health of a binding's referenced secret (§13.2), computed from expiresAt against the current time — never persisted. 'valid' = not near expiry (or no known expiry); 'expiringSoon' = within the rotation-warning window; 'expired' = past expiry.",
+        "enum": ["valid", "expiringSoon", "expired"]
+      },
       "SecretReference": {
         "type": "object",
         "description": "A named, role-tagged reference to one secret in the external store. The ref is a pointer (scheme://locator[#version]) — never secret material.",
@@ -2318,6 +2323,16 @@
             "description": "Identity grants scoping which RUNS may USE this binding (§13), independent of managementTags. Each grant names a deployment identity (e.g. a workflow by base id, or a tenant) that the deployment maps to an unforgeable internal tag a run carries — so usage cannot be self-granted by free-form tags. Omit to default to the creating principal's identity (the owner's runs).",
             "items": { "$ref": "#/components/schemas/CredentialUsageGrant" }
           },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the referenced long-lived secret expires, if knowable (e.g. a cert NotAfter, an API-key/refresh-token lifetime). Non-sensitive lifecycle metadata (§13.2) driving the derived credentialStatus; omit when expiry is unknown (treated as non-expiring)."
+          },
+          "rotatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the referenced secret was last rotated, if known. Non-sensitive lifecycle metadata for operator visibility; distinct from lastUpdatedAt."
+          },
           "description": {
             "type": "string"
           }
@@ -2337,6 +2352,16 @@
           "config": {
             "type": "array",
             "items": { "$ref": "#/components/schemas/CredentialConfigEntry" }
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the (rotated) referenced secret expires, if knowable. Non-sensitive lifecycle metadata (§13.2); omit when unknown."
+          },
+          "rotatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the referenced secret was last rotated, if known. Non-sensitive lifecycle metadata for operator visibility."
           },
           "description": {
             "type": "string"
@@ -2371,13 +2396,24 @@
             "items": { "$ref": "#/components/schemas/CredentialUsageGrant" }
           },
           "description": { "type": "string" },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the referenced secret expires, if known (§13.2). Absent when expiry is unknown (non-expiring)."
+          },
+          "rotatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the referenced secret was last rotated, if known (§13.2)."
+          },
+          "credentialStatus": { "$ref": "#/components/schemas/CredentialStatus" },
           "createdBy": { "type": "string" },
           "createdAt": { "type": "string", "format": "date-time" },
           "lastUpdatedBy": { "type": "string" },
           "lastUpdatedAt": { "type": "string", "format": "date-time" },
           "etag": { "type": "string", "description": "The optimistic-concurrency token." }
         },
-        "required": ["id", "sourceName", "environment", "authKind", "secretRefs", "createdBy", "createdAt", "etag"]
+        "required": ["id", "sourceName", "environment", "authKind", "secretRefs", "createdBy", "createdAt", "credentialStatus", "etag"]
       },
       "CredentialBindingList": {
         "type": "object",

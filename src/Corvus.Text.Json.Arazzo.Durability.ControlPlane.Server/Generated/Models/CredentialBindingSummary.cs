@@ -241,6 +241,30 @@ public readonly partial struct CredentialBindingSummary
     }
 
     /// <summary>
+    /// Gets the <c>credentialStatus</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
+    /// </para>
+    /// <para>
+    /// The derived health of a binding&#39;s referenced secret (&#167;13.2), computed from expiresAt against the current time — never persisted. &#39;valid&#39; = not near expiry (or no known expiry); &#39;expiringSoon&#39; = within the rotation-warning window; &#39;expired&#39; = past expiry.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialStatus CredentialStatus
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CredentialStatusUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialStatus value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the (optional) <c>description</c> property.
     /// </summary>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Description
@@ -293,6 +317,27 @@ public readonly partial struct CredentialBindingSummary
         get
         {
             if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EtagUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>expiresAt</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// When the referenced secret expires, if known (&#167;13.2). Absent when expiry is unknown (non-expiring).
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime ExpiresAt
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExpiresAtUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime value))
             {
                 return value;
             }
@@ -367,6 +412,27 @@ public readonly partial struct CredentialBindingSummary
         get
         {
             if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ManagementTagsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingSummary.CredentialSecurityTagArray value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>rotatedAt</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// When the referenced secret was last rotated, if known (&#167;13.2).
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime RotatedAt
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RotatedAtUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime value))
             {
                 return value;
             }
@@ -902,6 +968,11 @@ public readonly partial struct CredentialBindingSummary
         public const string CreatedBy = "createdBy";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="CredentialStatus"/>.
+        /// </summary>
+        public const string CredentialStatus = "credentialStatus";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Description"/>.
         /// </summary>
         public const string Description = "description";
@@ -915,6 +986,11 @@ public readonly partial struct CredentialBindingSummary
         /// Gets the JSON property name for <see cref="Etag"/>.
         /// </summary>
         public const string Etag = "etag";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="ExpiresAt"/>.
+        /// </summary>
+        public const string ExpiresAt = "expiresAt";
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Id"/>.
@@ -935,6 +1011,11 @@ public readonly partial struct CredentialBindingSummary
         /// Gets the JSON property name for <see cref="ManagementTags"/>.
         /// </summary>
         public const string ManagementTags = "managementTags";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="RotatedAt"/>.
+        /// </summary>
+        public const string RotatedAt = "rotatedAt";
 
         /// <summary>
         /// Gets the JSON property name for <see cref="SecretRefs"/>.
@@ -972,6 +1053,11 @@ public readonly partial struct CredentialBindingSummary
         public static ReadOnlySpan<byte> CreatedByUtf8 => "createdBy"u8;
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="CredentialStatus"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> CredentialStatusUtf8 => "credentialStatus"u8;
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Description"/>.
         /// </summary>
         public static ReadOnlySpan<byte> DescriptionUtf8 => "description"u8;
@@ -985,6 +1071,11 @@ public readonly partial struct CredentialBindingSummary
         /// Gets the JSON property name for <see cref="Etag"/>.
         /// </summary>
         public static ReadOnlySpan<byte> EtagUtf8 => "etag"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="ExpiresAt"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ExpiresAtUtf8 => "expiresAt"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Id"/>.
@@ -1005,6 +1096,11 @@ public readonly partial struct CredentialBindingSummary
         /// Gets the JSON property name for <see cref="ManagementTags"/>.
         /// </summary>
         public static ReadOnlySpan<byte> ManagementTagsUtf8 => "managementTags"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="RotatedAt"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RotatedAtUtf8 => "rotatedAt"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="SecretRefs"/>.
@@ -1048,6 +1144,11 @@ public readonly partial struct CredentialBindingSummary
         public static ReadOnlySpan<byte> CreatedBy => "createdBy"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="CredentialStatus"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> CredentialStatus => "credentialStatus"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Description"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Description => "description"u8;
@@ -1061,6 +1162,11 @@ public readonly partial struct CredentialBindingSummary
         /// Gets the escaped UTF-8 JSON property name for <see cref="Etag"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Etag => "etag"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="ExpiresAt"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ExpiresAt => "expiresAt"u8;
 
         /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Id"/>.
@@ -1081,6 +1187,11 @@ public readonly partial struct CredentialBindingSummary
         /// Gets the escaped UTF-8 JSON property name for <see cref="ManagementTags"/>.
         /// </summary>
         public static ReadOnlySpan<byte> ManagementTags => "managementTags"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="RotatedAt"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RotatedAt => "rotatedAt"u8;
 
         /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="SecretRefs"/>.
@@ -1125,6 +1236,11 @@ public readonly partial struct CredentialBindingSummary
         public static ReadOnlySpan<byte> CreatedBy => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x42, 0x79, 0x22];
 
         /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="CredentialStatus"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> CredentialStatus => [0x25, 0x01, 0x00, 0x00, 0x22, 0x63, 0x72, 0x65, 0x64, 0x65, 0x6E, 0x74, 0x69, 0x61, 0x6C, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22];
+
+        /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Description"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Description => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x22];
@@ -1138,6 +1254,11 @@ public readonly partial struct CredentialBindingSummary
         /// Gets the pre-baked property name blob for <see cref="Etag"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Etag => [0x65, 0x00, 0x00, 0x00, 0x22, 0x65, 0x74, 0x61, 0x67, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="ExpiresAt"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ExpiresAt => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x78, 0x70, 0x69, 0x72, 0x65, 0x73, 0x41, 0x74, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Id"/>.
@@ -1158,6 +1279,11 @@ public readonly partial struct CredentialBindingSummary
         /// Gets the pre-baked property name blob for <see cref="ManagementTags"/>.
         /// </summary>
         public static ReadOnlySpan<byte> ManagementTags => [0x05, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x6E, 0x61, 0x67, 0x65, 0x6D, 0x65, 0x6E, 0x74, 0x54, 0x61, 0x67, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="RotatedAt"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RotatedAt => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x72, 0x6F, 0x74, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="SecretRefs"/>.
