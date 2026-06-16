@@ -164,12 +164,12 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
         try
         {
             var query = new QueryDefinition("SELECT c.doc FROM c");
-            await foreach (byte[] json in this.QueryDocumentsAsync(query, partition: null, cancellationToken).ConfigureAwait(false))
+            await foreach (ReadOnlyMemory<byte> json in this.QueryDocumentsAsync(query, partition: null, cancellationToken).ConfigureAwait(false))
             {
-                using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
+                using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json.Span);
                 if (context.Admits(AccessVerb.Read, candidate.RootElement.ManagementTagsValue))
                 {
-                    docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(json));
+                    docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(json.Span));
                 }
             }
 
@@ -245,9 +245,9 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
         ArgumentNullException.ThrowIfNull(environment);
         string partition = PartitionKey(sourceName, environment);
         var query = new QueryDefinition("SELECT c.doc FROM c");
-        await foreach (byte[] json in this.QueryDocumentsAsync(query, partition, cancellationToken).ConfigureAwait(false))
+        await foreach (ReadOnlyMemory<byte> json in this.QueryDocumentsAsync(query, partition, cancellationToken).ConfigureAwait(false))
         {
-            ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
+            ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json.Span);
             if (candidate.RootElement.IsUsableBy(runTags))
             {
                 return candidate;
@@ -268,10 +268,10 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
         // scoped to the source name; every value is bound as a parameter (no concatenation).
         var query = new QueryDefinition("SELECT c.doc FROM c WHERE c.sourceName = @s").WithParameter("@s", sourceName);
         bool any = false;
-        await foreach (byte[] json in this.QueryDocumentsAsync(query, partition: null, cancellationToken).ConfigureAwait(false))
+        await foreach (ReadOnlyMemory<byte> json in this.QueryDocumentsAsync(query, partition: null, cancellationToken).ConfigureAwait(false))
         {
             any = true;
-            using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
+            using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json.Span);
             if (candidate.RootElement.IsUsableBy(tags))
             {
                 return CredentialSourceAccess.Granted;
@@ -327,7 +327,11 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
                     writer.WriteString("pk"u8, c.Partition);
                     writer.WriteString("sourceName"u8, c.Source);
                     writer.WriteString("environment"u8, c.Environment);
-                    writer.WriteBase64String("doc"u8, c.Doc);
+
+                    // The binding document is itself JSON, so embed it verbatim as a nested value — no base64 wrap (which
+                    // would be a spurious encode here + decode on read). It is valid JSON we produced, so skip validation.
+                    writer.WritePropertyName("doc"u8);
+                    writer.WriteRawValue(c.Doc, skipInputValidation: true);
                     writer.WriteEndObject();
                 });
         }
@@ -357,12 +361,13 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
     {
         string partition = PartitionKey(sourceName, environment);
         var query = new QueryDefinition("SELECT c.doc, c.tags FROM c");
-        await foreach (byte[] json in this.QueryDocumentsAsync(query, partition, cancellationToken).ConfigureAwait(false))
+        await foreach (ReadOnlyMemory<byte> json in this.QueryDocumentsAsync(query, partition, cancellationToken).ConfigureAwait(false))
         {
-            using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
+            using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json.Span);
             if (context.Admits(verb, candidate.RootElement.ManagementTagsValue))
             {
-                return (json, ItemIdSeedFor(candidate.RootElement));
+                // The bytes outlive the response page (the caller may update/delete from them), so copy them out.
+                return (json.ToArray(), ItemIdSeedFor(candidate.RootElement));
             }
         }
 
@@ -375,7 +380,10 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
     private static string ItemIdSeedFor(SourceCredentialBinding binding)
         => SourceCredentialKey.Discriminator(binding.ManagementTagsValue, binding.UsageTagsValue);
 
-    private async IAsyncEnumerable<byte[]> QueryDocumentsAsync(QueryDefinition query, string? partition, [EnumeratorCancellation] CancellationToken cancellationToken)
+    // Yields the embedded binding document's raw UTF-8 bytes (a slice into the pooled response page) for each result —
+    // no base64 decode. The slice is valid only for the duration of the consumer's iteration step; a consumer that
+    // keeps the bytes past it (e.g. for an update) copies them (ToArray), a transient consumer parses them in place.
+    private async IAsyncEnumerable<ReadOnlyMemory<byte>> QueryDocumentsAsync(QueryDefinition query, string? partition, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         QueryRequestOptions? options = partition is null ? null : new QueryRequestOptions { PartitionKey = new PartitionKey(partition) };
         using FeedIterator iterator = this.container.GetItemQueryStreamIterator(query, requestOptions: options);
@@ -386,9 +394,8 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
             using CosmosJson.RentedResponse page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
             foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page.Memory))
             {
-                // Decode the base64 doc field straight to the leaf byte[] — no intermediate base64 string (ledger:
-                // one transient owned array per read, as the relational backends' GetFieldValue<byte[]> gives).
-                if (CosmosJson.GetBytesFromBase64(element, DocProperty) is { } doc)
+                ReadOnlyMemory<byte> doc = CosmosJson.GetRawValue(element, DocProperty);
+                if (!doc.IsEmpty)
                 {
                     yield return doc;
                 }
