@@ -33,6 +33,7 @@
     <PackageVersion Include="Azure.Security.KeyVault.Keys" Version="4.10.0" />
     <PackageVersion Include="Azure.Security.KeyVault.Secrets" Version="4.8.0" />
     <PackageVersion Include="Azure.Storage.Blobs" Version="12.29.0" />
+    <PackageVersion Include="VaultSharp" Version="1.17.5.1" />
     <PackageVersion Include="Microsoft.Azure.Cosmos" Version="3.61.0" />
     <PackageVersion Include="Microsoft.Bcl.Memory" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.0.1" />
