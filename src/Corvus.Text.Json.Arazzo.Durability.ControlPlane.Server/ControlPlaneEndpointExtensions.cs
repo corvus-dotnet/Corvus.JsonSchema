@@ -81,12 +81,18 @@ public static class ControlPlaneEndpointExtensions
         ISourceCredentialStore credentialStore = sourceCredentialStore ?? new InMemorySourceCredentialStore();
         var credentialsHandler = new ArazzoControlPlaneCredentialsHandler(credentialStore, access);
 
+        // The administration management API (§15) governs a base id's administrator set by current-administrator
+        // membership; it delegates to the catalog client (which owns the administrator store, if one is configured) and
+        // names administrators by deployment-mapped grants rather than raw internal tags.
+        var administratorsHandler = new ArazzoControlPlaneAdministratorsHandler(catalog, access);
+
         return endpoints.MapApiEndpoints(
             new ArazzoControlPlaneHandler(management, access),
             new ArazzoControlPlaneRunnersHandler(runners),
             new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access),
             securityHandler,
             credentialsHandler,
+            administratorsHandler,
             requireAuthorization ? ControlPlaneAuthorization.RequireDeclaredScopes : null);
     }
 }
