@@ -101,11 +101,11 @@ public sealed class MongoWorkflowAdministratorStore : IWorkflowAdministratorStor
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         byte[]? json = await this.ReadDocumentAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
-        return json is null ? null : ParsedJsonDocument<WorkflowAdministrators>.Parse(json.AsMemory());
+        return json is null ? null : PersistedJson.ToPooledDocument<WorkflowAdministrators>(json);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<WorkflowAdministrators>> PutAsync(string baseWorkflowId, IReadOnlyList<WorkflowAdministrators.AdministratorIdentity> administrators, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<WorkflowAdministrators>> PutAsync(string baseWorkflowId, IReadOnlyList<SecurityTagSet> administrators, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         ArgumentNullException.ThrowIfNull(administrators);
@@ -116,28 +116,19 @@ public sealed class MongoWorkflowAdministratorStore : IWorkflowAdministratorStor
         }
 
         byte[]? existing = await this.ReadDocumentAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
-        WorkflowEtag etag = NewEtag();
-
-        // Mirror the administrator digests top-level (design §15.4) so the reverse index is an indexed multikey query, not
-        // a scan of opaque document bytes. These are the exact digests the forward IsAdministeredBy compares.
-        var digests = new BsonArray(WorkflowAdministeredPaging.DistinctDigests(administrators));
-
         byte[] json;
         if (existing is not null)
         {
-            // Parse the existing record ONCE, NON-COPYING over the driver's array (the read leaf) — used for both the etag
-            // check and the carried-forward merge. The caller must hold its current etag (None means "I expected no record").
-            using ParsedJsonDocument<WorkflowAdministrators> current = ParsedJsonDocument<WorkflowAdministrators>.Parse(existing.AsMemory());
-            if (expectedEtag.IsNone || expectedEtag != current.RootElement.EtagValue)
+            // A record exists: the caller must hold its current etag (None means "I expected no record").
+            if (expectedEtag.IsNone || expectedEtag != WorkflowAdministratorsSerialization.EtagOf(existing))
             {
                 throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
             }
 
-            json = WorkflowAdministratorsSerialization.SerializeUpdated(current.RootElement, administrators, actor, this.timeProvider.GetUtcNow(), etag);
+            json = WorkflowAdministratorsSerialization.SerializeUpdated(existing, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
             var update = Builders<BsonDocument>.Update
-                .Set("etag", etag.Value!)
-                .Set("doc", new BsonBinaryData(json))
-                .Set("adminDigests", digests);
+                .Set("etag", WorkflowAdministratorsSerialization.EtagOf(json).Value!)
+                .Set("doc", new BsonBinaryData(json));
             await this.administrators.UpdateOneAsync(
                 Builders<BsonDocument>.Filter.Eq("_id", baseWorkflowId),
                 update,
@@ -152,51 +143,17 @@ public sealed class MongoWorkflowAdministratorStore : IWorkflowAdministratorStor
                 throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
             }
 
-            json = WorkflowAdministratorsSerialization.SerializeNew(baseWorkflowId, administrators, actor, this.timeProvider.GetUtcNow(), etag);
+            json = WorkflowAdministratorsSerialization.SerializeNew(baseWorkflowId, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
             var document = new BsonDocument
             {
                 ["_id"] = baseWorkflowId,
-                ["etag"] = etag.Value!,
+                ["etag"] = WorkflowAdministratorsSerialization.EtagOf(json).Value!,
                 ["doc"] = new BsonBinaryData(json),
-                ["adminDigests"] = digests,
             };
             await this.administrators.InsertOneAsync(document, options: null, cancellationToken).ConfigureAwait(false);
         }
 
         return PersistedJson.ToPooledDocument<WorkflowAdministrators>(json);
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<WorkflowAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, JsonString pageToken, CancellationToken cancellationToken)
-    {
-        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
-        int pageSize = limit > 0 ? limit : WorkflowAdministeredPage.DefaultPageSize;
-
-        // The keyset cursor (the base id == _id to page strictly after) reifies once here for the filter leaf, never per
-        // row. Mongo's default string sort/compare is binary over UTF-8 (ordinal) — the contract's order.
-        string? after = WorkflowAdministeredContinuationToken.DecodeCursorToString(pageToken);
-
-        FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.AnyEq("adminDigests", adminDigest);
-        if (after is not null)
-        {
-            filter &= Builders<BsonDocument>.Filter.Gt("_id", after);
-        }
-
-        // The (_id) sort + Limit(n+1) bounds the read to one page + 1 (lookahead) — never every administered workflow.
-        List<BsonDocument> documents = await this.administrators
-            .Find(filter)
-            .Sort(Builders<BsonDocument>.Sort.Ascending("_id"))
-            .Limit(pageSize + 1)
-            .Project(Builders<BsonDocument>.Projection.Include("_id"))
-            .ToListAsync(cancellationToken).ConfigureAwait(false);
-
-        var rows = new List<string>(documents.Count);
-        foreach (BsonDocument document in documents)
-        {
-            rows.Add(document["_id"].AsString);
-        }
-
-        return WorkflowAdministeredPaging.ToPage(rows, pageSize);
     }
 
     /// <inheritdoc/>

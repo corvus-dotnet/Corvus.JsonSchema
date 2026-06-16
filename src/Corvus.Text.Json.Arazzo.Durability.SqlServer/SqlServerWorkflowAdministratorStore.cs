@@ -2,10 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Data;
 using System.Globalization;
-using Corvus.Runtime.InteropServices;
-using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.Data.SqlClient;
 
@@ -65,11 +62,11 @@ public sealed class SqlServerWorkflowAdministratorStore : IWorkflowAdministrator
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         byte[]? json = await ReadDocumentAsync(connection, baseWorkflowId, cancellationToken).ConfigureAwait(false);
-        return json is null ? null : ParsedJsonDocument<WorkflowAdministrators>.Parse(json.AsMemory());
+        return json is null ? null : PersistedJson.ToPooledDocument<WorkflowAdministrators>(json);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<WorkflowAdministrators>> PutAsync(string baseWorkflowId, IReadOnlyList<WorkflowAdministrators.AdministratorIdentity> administrators, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<WorkflowAdministrators>> PutAsync(string baseWorkflowId, IReadOnlyList<SecurityTagSet> administrators, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         ArgumentNullException.ThrowIfNull(administrators);
@@ -81,23 +78,22 @@ public sealed class SqlServerWorkflowAdministratorStore : IWorkflowAdministrator
 
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         byte[]? existing = await ReadDocumentAsync(connection, baseWorkflowId, cancellationToken).ConfigureAwait(false);
-        WorkflowEtag etag = NewEtag();
-
-        // Build the document to persist (and decide insert vs update) BEFORE the transaction: the etag conflict is the
-        // caller's error and must throw before any write. The returned document owns its pooled buffer; current (parsed
-        // non-copying over the driver array) need only outlive the synchronous serialize.
-        ParsedJsonDocument<WorkflowAdministrators> result;
-        bool isUpdate;
+        byte[] json;
         if (existing is not null)
         {
-            using ParsedJsonDocument<WorkflowAdministrators> current = ParsedJsonDocument<WorkflowAdministrators>.Parse(existing.AsMemory());
-            if (expectedEtag.IsNone || expectedEtag != current.RootElement.EtagValue)
+            // A record exists: the caller must hold its current etag (None means "I expected no record").
+            if (expectedEtag.IsNone || expectedEtag != WorkflowAdministratorsSerialization.EtagOf(existing))
             {
                 throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
             }
 
-            result = WorkflowAdministratorsSerialization.SerializeUpdatedDoc(current.RootElement, administrators, actor, this.timeProvider.GetUtcNow(), etag);
-            isUpdate = true;
+            json = WorkflowAdministratorsSerialization.SerializeUpdated(existing, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
+            await using SqlCommand update = connection.CreateCommand();
+            update.CommandText = "UPDATE WorkflowAdministrators SET Etag = @etag, Document = @doc WHERE BaseWorkflowId = @id;";
+            update.Parameters.AddWithValue("@etag", WorkflowAdministratorsSerialization.EtagOf(json).Value!);
+            update.Parameters.AddWithValue("@doc", json);
+            update.Parameters.AddWithValue("@id", baseWorkflowId);
+            await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
         else
         {
@@ -107,103 +103,22 @@ public sealed class SqlServerWorkflowAdministratorStore : IWorkflowAdministrator
                 throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
             }
 
-            result = WorkflowAdministratorsSerialization.SerializeNewDoc(baseWorkflowId, administrators, actor, this.timeProvider.GetUtcNow(), etag);
-            isUpdate = false;
+            json = WorkflowAdministratorsSerialization.SerializeNew(baseWorkflowId, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
+            await using SqlCommand insert = connection.CreateCommand();
+            insert.CommandText = "INSERT INTO WorkflowAdministrators (BaseWorkflowId, Etag, Document) VALUES (@id, @etag, @doc);";
+            insert.Parameters.AddWithValue("@id", baseWorkflowId);
+            insert.Parameters.AddWithValue("@etag", WorkflowAdministratorsSerialization.EtagOf(json).Value!);
+            insert.Parameters.AddWithValue("@doc", json);
+            await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        try
-        {
-            ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(result.RootElement).Memory;
-
-            // The document write and the reverse-index rewrite are atomic (design §15.4): the inbox must never observe a
-            // base id indexed under a digest its current administrator set no longer holds, or vice versa.
-            await using SqlTransaction transaction = (SqlTransaction)await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-
-            await using (SqlCommand write = connection.CreateCommand())
-            {
-                write.Transaction = transaction;
-                write.CommandText = isUpdate
-                    ? "UPDATE WorkflowAdministrators SET Etag = @etag, Document = @doc WHERE BaseWorkflowId = @id;"
-                    : "INSERT INTO WorkflowAdministrators (BaseWorkflowId, Etag, Document) VALUES (@id, @etag, @doc);";
-                write.Parameters.AddWithValue("@etag", etag.Value!);
-                using ReadOnlyMemoryStream docStream = ReadOnlyMemoryStream.Rent(utf8);
-                write.Parameters.Add(new SqlParameter("@doc", SqlDbType.VarBinary, -1) { Value = docStream });
-                write.Parameters.AddWithValue("@id", baseWorkflowId);
-                await write.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            }
-
-            await RewriteIndexAsync(connection, transaction, baseWorkflowId, administrators, cancellationToken).ConfigureAwait(false);
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-            return result;
-        }
-        catch
-        {
-            result.Dispose();
-            throw;
-        }
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<WorkflowAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, JsonString pageToken, CancellationToken cancellationToken)
-    {
-        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
-        int pageSize = limit > 0 ? limit : WorkflowAdministeredPage.DefaultPageSize;
-
-        // The keyset cursor (the base id to page strictly after) reifies once here for the @after parameter — the SQL leaf
-        // — never per row. The index columns are Latin1_General_BIN2 so the keyset compare is ordinal (the contract's order).
-        string? after = WorkflowAdministeredContinuationToken.DecodeCursorToString(pageToken);
-
-        await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-        await using SqlCommand select = connection.CreateCommand();
-        select.CommandText = after is null
-            ? "SELECT TOP (@n) BaseWorkflowId FROM WorkflowAdministratorIndex WHERE AdminDigest = @digest ORDER BY BaseWorkflowId;"
-            : "SELECT TOP (@n) BaseWorkflowId FROM WorkflowAdministratorIndex WHERE AdminDigest = @digest AND BaseWorkflowId > @after ORDER BY BaseWorkflowId;";
-        select.Parameters.AddWithValue("@digest", adminDigest);
-        select.Parameters.AddWithValue("@n", pageSize + 1);
-        if (after is not null)
-        {
-            select.Parameters.AddWithValue("@after", after);
-        }
-
-        var rows = new List<string>(pageSize + 1);
-        await using (SqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
-        {
-            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
-            {
-                rows.Add(reader.GetString(0));
-            }
-        }
-
-        return WorkflowAdministeredPaging.ToPage(rows, pageSize);
+        return PersistedJson.ToPooledDocument<WorkflowAdministrators>(json);
     }
 
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => default;
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
-
-    // Rewrites this base id's reverse-index rows within the write transaction (§15.4): retract the stale digests, then
-    // index the current ones. The administrator set is small, so a delete-all-then-insert is simplest and correct.
-    private static async ValueTask RewriteIndexAsync(SqlConnection connection, SqlTransaction transaction, string baseWorkflowId, IReadOnlyList<WorkflowAdministrators.AdministratorIdentity> administrators, CancellationToken cancellationToken)
-    {
-        await using (SqlCommand clear = connection.CreateCommand())
-        {
-            clear.Transaction = transaction;
-            clear.CommandText = "DELETE FROM WorkflowAdministratorIndex WHERE BaseWorkflowId = @id;";
-            clear.Parameters.AddWithValue("@id", baseWorkflowId);
-            await clear.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        }
-
-        foreach (string digest in WorkflowAdministeredPaging.DistinctDigests(administrators))
-        {
-            await using SqlCommand index = connection.CreateCommand();
-            index.Transaction = transaction;
-            index.CommandText = "INSERT INTO WorkflowAdministratorIndex (AdminDigest, BaseWorkflowId) VALUES (@digest, @id);";
-            index.Parameters.AddWithValue("@digest", digest);
-            index.Parameters.AddWithValue("@id", baseWorkflowId);
-            await index.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        }
-    }
 
     private static async ValueTask<byte[]?> ReadDocumentAsync(SqlConnection connection, string baseWorkflowId, CancellationToken cancellationToken)
     {
@@ -237,14 +152,6 @@ public sealed class SqlServerWorkflowAdministratorStore : IWorkflowAdministrator
                 BaseWorkflowId NVARCHAR(450) NOT NULL PRIMARY KEY,
                 Etag NVARCHAR(255) NOT NULL,
                 Document VARBINARY(MAX) NOT NULL
-            );
-        END;
-        IF OBJECT_ID(N'WorkflowAdministratorIndex', N'U') IS NULL
-        BEGIN
-            CREATE TABLE WorkflowAdministratorIndex (
-                AdminDigest NVARCHAR(64) COLLATE Latin1_General_BIN2 NOT NULL,
-                BaseWorkflowId NVARCHAR(450) COLLATE Latin1_General_BIN2 NOT NULL,
-                PRIMARY KEY (AdminDigest, BaseWorkflowId)
             );
         END;
         """;

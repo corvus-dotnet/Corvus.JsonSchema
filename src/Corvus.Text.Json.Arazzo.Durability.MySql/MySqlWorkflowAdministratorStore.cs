@@ -3,8 +3,6 @@
 // </copyright>
 
 using System.Globalization;
-using Corvus.Runtime.InteropServices;
-using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using MySqlConnector;
 
@@ -89,11 +87,11 @@ public sealed class MySqlWorkflowAdministratorStore : IWorkflowAdministratorStor
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         await using MySqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         byte[]? json = await ReadDocumentAsync(connection, baseWorkflowId, cancellationToken).ConfigureAwait(false);
-        return json is null ? null : ParsedJsonDocument<WorkflowAdministrators>.Parse(json.AsMemory());
+        return json is null ? null : PersistedJson.ToPooledDocument<WorkflowAdministrators>(json);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<WorkflowAdministrators>> PutAsync(string baseWorkflowId, IReadOnlyList<WorkflowAdministrators.AdministratorIdentity> administrators, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<WorkflowAdministrators>> PutAsync(string baseWorkflowId, IReadOnlyList<SecurityTagSet> administrators, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         ArgumentNullException.ThrowIfNull(administrators);
@@ -105,23 +103,22 @@ public sealed class MySqlWorkflowAdministratorStore : IWorkflowAdministratorStor
 
         await using MySqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         byte[]? existing = await ReadDocumentAsync(connection, baseWorkflowId, cancellationToken).ConfigureAwait(false);
-        WorkflowEtag etag = NewEtag();
-
-        // Build the document to persist (and decide insert vs update) BEFORE the transaction: the etag conflict is the
-        // caller's error and must throw before any write. The returned document owns its pooled buffer; current (parsed
-        // non-copying over the driver array) need only outlive the synchronous serialize.
-        ParsedJsonDocument<WorkflowAdministrators> result;
-        bool isUpdate;
+        byte[] json;
         if (existing is not null)
         {
-            using ParsedJsonDocument<WorkflowAdministrators> current = ParsedJsonDocument<WorkflowAdministrators>.Parse(existing.AsMemory());
-            if (expectedEtag.IsNone || expectedEtag != current.RootElement.EtagValue)
+            // A record exists: the caller must hold its current etag (None means "I expected no record").
+            if (expectedEtag.IsNone || expectedEtag != WorkflowAdministratorsSerialization.EtagOf(existing))
             {
                 throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
             }
 
-            result = WorkflowAdministratorsSerialization.SerializeUpdatedDoc(current.RootElement, administrators, actor, this.timeProvider.GetUtcNow(), etag);
-            isUpdate = true;
+            json = WorkflowAdministratorsSerialization.SerializeUpdated(existing, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
+            await using MySqlCommand update = connection.CreateCommand();
+            update.CommandText = "UPDATE WorkflowAdministrators SET Etag = @etag, Document = @doc WHERE BaseWorkflowId = @id;";
+            update.Parameters.AddWithValue("@etag", WorkflowAdministratorsSerialization.EtagOf(json).Value!);
+            update.Parameters.AddWithValue("@doc", json);
+            update.Parameters.AddWithValue("@id", baseWorkflowId);
+            await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
         else
         {
@@ -131,73 +128,16 @@ public sealed class MySqlWorkflowAdministratorStore : IWorkflowAdministratorStor
                 throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
             }
 
-            result = WorkflowAdministratorsSerialization.SerializeNewDoc(baseWorkflowId, administrators, actor, this.timeProvider.GetUtcNow(), etag);
-            isUpdate = false;
+            json = WorkflowAdministratorsSerialization.SerializeNew(baseWorkflowId, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
+            await using MySqlCommand insert = connection.CreateCommand();
+            insert.CommandText = "INSERT INTO WorkflowAdministrators (BaseWorkflowId, Etag, Document) VALUES (@id, @etag, @doc);";
+            insert.Parameters.AddWithValue("@id", baseWorkflowId);
+            insert.Parameters.AddWithValue("@etag", WorkflowAdministratorsSerialization.EtagOf(json).Value!);
+            insert.Parameters.AddWithValue("@doc", json);
+            await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        try
-        {
-            ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(result.RootElement).Memory;
-
-            // The document write and the reverse-index rewrite are atomic (design §15.4): the inbox must never observe a
-            // base id indexed under a digest its current administrator set no longer holds, or vice versa.
-            await using MySqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-
-            await using (MySqlCommand write = connection.CreateCommand())
-            {
-                write.Transaction = transaction;
-                write.CommandText = isUpdate
-                    ? "UPDATE WorkflowAdministrators SET Etag = @etag, Document = @doc WHERE BaseWorkflowId = @id;"
-                    : "INSERT INTO WorkflowAdministrators (BaseWorkflowId, Etag, Document) VALUES (@id, @etag, @doc);";
-                write.Parameters.AddWithValue("@etag", etag.Value!);
-                write.Parameters.AddWithValue("@doc", utf8);
-                write.Parameters.AddWithValue("@id", baseWorkflowId);
-                await write.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            }
-
-            await RewriteIndexAsync(connection, transaction, baseWorkflowId, administrators, cancellationToken).ConfigureAwait(false);
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-            return result;
-        }
-        catch
-        {
-            result.Dispose();
-            throw;
-        }
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<WorkflowAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, JsonString pageToken, CancellationToken cancellationToken)
-    {
-        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
-        int pageSize = limit > 0 ? limit : WorkflowAdministeredPage.DefaultPageSize;
-
-        // The keyset cursor (the base id to page strictly after) reifies once here for the @after parameter — the SQL leaf
-        // — never per row. The index columns are utf8mb4_bin so the keyset compare is binary (ordinal; the contract's order).
-        string? after = WorkflowAdministeredContinuationToken.DecodeCursorToString(pageToken);
-
-        await using MySqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        await using MySqlCommand select = connection.CreateCommand();
-        select.CommandText = after is null
-            ? "SELECT BaseWorkflowId FROM WorkflowAdministratorIndex WHERE AdminDigest = @digest ORDER BY BaseWorkflowId LIMIT @n;"
-            : "SELECT BaseWorkflowId FROM WorkflowAdministratorIndex WHERE AdminDigest = @digest AND BaseWorkflowId > @after ORDER BY BaseWorkflowId LIMIT @n;";
-        select.Parameters.AddWithValue("@digest", adminDigest);
-        select.Parameters.AddWithValue("@n", pageSize + 1);
-        if (after is not null)
-        {
-            select.Parameters.AddWithValue("@after", after);
-        }
-
-        var rows = new List<string>(pageSize + 1);
-        await using (MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
-        {
-            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
-            {
-                rows.Add(reader.GetString(0));
-            }
-        }
-
-        return WorkflowAdministeredPaging.ToPage(rows, pageSize);
+        return PersistedJson.ToPooledDocument<WorkflowAdministrators>(json);
     }
 
     /// <inheritdoc/>
@@ -206,29 +146,6 @@ public sealed class MySqlWorkflowAdministratorStore : IWorkflowAdministratorStor
         if (this.ownsDataSource)
         {
             await this.dataSource.DisposeAsync().ConfigureAwait(false);
-        }
-    }
-
-    // Rewrites this base id's reverse-index rows within the write transaction (§15.4): retract the stale digests, then
-    // index the current ones. The administrator set is small, so a delete-all-then-insert is simplest and correct.
-    private static async ValueTask RewriteIndexAsync(MySqlConnection connection, MySqlTransaction transaction, string baseWorkflowId, IReadOnlyList<WorkflowAdministrators.AdministratorIdentity> administrators, CancellationToken cancellationToken)
-    {
-        await using (MySqlCommand clear = connection.CreateCommand())
-        {
-            clear.Transaction = transaction;
-            clear.CommandText = "DELETE FROM WorkflowAdministratorIndex WHERE BaseWorkflowId = @id;";
-            clear.Parameters.AddWithValue("@id", baseWorkflowId);
-            await clear.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        }
-
-        foreach (string digest in WorkflowAdministeredPaging.DistinctDigests(administrators))
-        {
-            await using MySqlCommand index = connection.CreateCommand();
-            index.Transaction = transaction;
-            index.CommandText = "INSERT INTO WorkflowAdministratorIndex (AdminDigest, BaseWorkflowId) VALUES (@digest, @id);";
-            index.Parameters.AddWithValue("@digest", digest);
-            index.Parameters.AddWithValue("@id", baseWorkflowId);
-            await index.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -256,11 +173,6 @@ public sealed class MySqlWorkflowAdministratorStore : IWorkflowAdministratorStor
             BaseWorkflowId VARCHAR(255) NOT NULL PRIMARY KEY,
             Etag VARCHAR(255) NOT NULL,
             Document LONGBLOB NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS WorkflowAdministratorIndex (
-            AdminDigest VARCHAR(64) COLLATE utf8mb4_bin NOT NULL,
-            BaseWorkflowId VARCHAR(255) COLLATE utf8mb4_bin NOT NULL,
-            PRIMARY KEY (AdminDigest, BaseWorkflowId)
         );
         """;
 }
