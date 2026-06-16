@@ -187,6 +187,48 @@ public sealed class SourceCredentialTransportTests
         [new CredentialConfigDefinition("parameterName", "X-Api-Key")],
         UsageTags: SecurityTagSet.FromTags([new SecurityTag("tenant", tenant)]));
 
+    [TestMethod]
+    public async Task A_401_on_an_authenticated_source_faults_as_credentials_expired()
+    {
+        Fixture f = NewFixture();
+        await f.Store.AddAsync(ApiKey("petstore", "production", "petstore-production"), "alice", default);
+        var transport = new SourceCredentialApiTransport(new FixedStatusTransport(401), f.Cache, "petstore", "production");
+
+        SourceCredentialExpiredException ex = await Should.ThrowAsync<SourceCredentialExpiredException>(
+            async () => await transport.SendAsync<FakeRequest, FakeResponse>(default, default));
+
+        ex.SourceName.ShouldBe("petstore");
+        f.Cache.Dispose();
+    }
+
+    [TestMethod]
+    public async Task A_success_response_passes_through_unchanged()
+    {
+        Fixture f = NewFixture();
+        await f.Store.AddAsync(ApiKey("petstore", "production", "petstore-production"), "alice", default);
+        var transport = new SourceCredentialApiTransport(new FixedStatusTransport(200), f.Cache, "petstore", "production");
+
+        FakeResponse response = await transport.SendAsync<FakeRequest, FakeResponse>(default, default);
+
+        response.StatusCode.ShouldBe(200);
+        f.Cache.Dispose();
+    }
+
+    [TestMethod]
+    public async Task A_403_on_an_unauthenticated_source_is_not_a_credential_fault()
+    {
+        Fixture f = NewFixture();
+
+        // No binding for "unbound" → the run is not entitled to a credential, so the 403 is left to ordinary step
+        // criteria rather than mislabelled a credential rejection.
+        var transport = new SourceCredentialApiTransport(new FixedStatusTransport(403), f.Cache, "unbound", "production");
+
+        FakeResponse response = await transport.SendAsync<FakeRequest, FakeResponse>(default, default);
+
+        response.StatusCode.ShouldBe(403);
+        f.Cache.Dispose();
+    }
+
     private static Fixture NewFixture()
     {
         var clock = new TestClock(Start);
@@ -205,4 +247,78 @@ public sealed class SourceCredentialTransportTests
     }
 
     private sealed record Fixture(TestClock Clock, InMemorySourceCredentialStore Store, SourceCredentialCache Cache);
+
+    // An inner transport that returns a fixed HTTP status for every call — drives the decorator's response check.
+    private sealed class FixedStatusTransport(int statusCode) : IApiTransport
+    {
+        public ValueTask<TResponse> SendAsync<TRequest, TResponse>(in TRequest request, CancellationToken cancellationToken = default)
+            where TRequest : struct, IApiRequest<TRequest>
+            where TResponse : struct, IApiResponse<TResponse>
+            => TResponse.CreateAsync(statusCode, System.IO.Stream.Null, cancellationToken: cancellationToken);
+
+        public ValueTask<TResponse> SendAsync<TRequest, TBody, TResponse>(in TRequest request, in TBody body, CancellationToken cancellationToken = default)
+            where TRequest : struct, IApiRequest<TRequest>
+            where TBody : struct, Corvus.Text.Json.Internal.IJsonElement<TBody>
+            where TResponse : struct, IApiResponse<TResponse>
+            => TResponse.CreateAsync(statusCode, System.IO.Stream.Null, cancellationToken: cancellationToken);
+
+        public ValueTask<TResponse> SendAsync<TRequest, TResponse>(in TRequest request, System.IO.Stream body, string contentType, CancellationToken cancellationToken = default)
+            where TRequest : struct, IApiRequest<TRequest>
+            where TResponse : struct, IApiResponse<TResponse>
+            => TResponse.CreateAsync(statusCode, System.IO.Stream.Null, cancellationToken: cancellationToken);
+
+        public ValueTask<TResponse> SendAsync<TRequest, TResponse>(in TRequest request, Func<System.IO.Stream, CancellationToken, ValueTask> bodyWriter, string contentType, CancellationToken cancellationToken = default)
+            where TRequest : struct, IApiRequest<TRequest>
+            where TResponse : struct, IApiResponse<TResponse>
+            => TResponse.CreateAsync(statusCode, System.IO.Stream.Null, cancellationToken: cancellationToken);
+
+        public ValueTask DisposeAsync() => default;
+    }
+
+    private readonly struct FakeRequest : IApiRequest<FakeRequest>
+    {
+        public static ReadOnlySpan<byte> PathTemplateUtf8 => "/x"u8;
+
+        public static OperationMethod Method => OperationMethod.Get;
+
+        public static bool HasPathParameters => false;
+
+        public static bool HasQueryParameters => false;
+
+        public static bool HasHeaderParameters => false;
+
+        public static bool HasCookieParameters => false;
+
+        public void WriteResolvedPath(System.Buffers.IBufferWriter<byte> writer)
+        {
+        }
+
+        public int WriteQueryString(System.Buffers.IBufferWriter<byte> writer) => 0;
+
+        public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state)
+        {
+        }
+
+        public int WriteCookies(System.Buffers.IBufferWriter<byte> writer) => 0;
+
+        public void Validate(ValidationMode mode = ValidationMode.Basic)
+        {
+        }
+    }
+
+    private readonly struct FakeResponse(int statusCode) : IApiResponse<FakeResponse>
+    {
+        public int StatusCode => statusCode;
+
+        public bool IsSuccess => statusCode is >= 200 and < 300;
+
+        public static ValueTask<FakeResponse> CreateAsync(int statusCode, System.IO.Stream contentStream, string? contentType = null, IResponseHeaders? responseHeaders = null, IAsyncDisposable? owner = null, IApiTransport? transport = null, CancellationToken cancellationToken = default)
+            => new(new FakeResponse(statusCode));
+
+        public void Validate(ValidationMode mode = ValidationMode.Basic)
+        {
+        }
+
+        public ValueTask DisposeAsync() => default;
+    }
 }
