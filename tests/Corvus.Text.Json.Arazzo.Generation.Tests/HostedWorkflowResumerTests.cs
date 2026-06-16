@@ -94,6 +94,34 @@ public class HostedWorkflowResumerTests
     }
 
     [TestMethod]
+    public async Task An_expired_source_credential_faults_the_run_as_credentials_expired()
+    {
+        var catalog = new InMemoryWorkflowCatalogStore(executorProvider: new WorkflowExecutorProvider());
+        CatalogVersion version = await catalog.AddAsync("adopt", Package(), Meta(), default);
+
+        var runStore = new InMemoryWorkflowStateStore();
+        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+        using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", version.Ref.WorkflowId, inputs.RootElement);
+
+        // The source's transport raises a credential-expired condition at bind time (as the runner cache would for an
+        // expired binding). The durable executor must catch it and fault the run as a typed, resumable credentials
+        // fault — not propagate an opaque exception.
+        var transport = new ThrowingApiTransport(new SourceCredentialExpiredException("petstore"));
+
+        using var loader = new WorkflowExecutorLoader();
+        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
+
+        WorkflowResumer resume = resumer.AsResumer();
+        WorkflowRunResultKind kind = await resume(run, default);
+
+        kind.ShouldBe(WorkflowRunResultKind.Faulted);
+        run.Status.ShouldBe(WorkflowRunStatus.Faulted);
+        run.Fault.ShouldNotBeNull();
+        run.Fault!.Value.Error.ShouldBe(SourceCredentialExpiredException.ErrorType);
+        run.Fault!.Value.StepId.ShouldBe("petstore");
+    }
+
+    [TestMethod]
     public async Task Throws_when_the_version_is_not_runnable()
     {
         // No executor provider → the catalogued version carries no executor.
@@ -116,4 +144,31 @@ public class HostedWorkflowResumerTests
         => WorkflowPackage.Pack(
             Encoding.UTF8.GetBytes(WorkflowJson),
             [new("petstore", Encoding.UTF8.GetBytes(PetstoreOpenApi))]);
+
+    // A transport that fails every call with a fixed exception — used to drive the executor's bind-time fault path.
+    private sealed class ThrowingApiTransport(Exception exception) : IApiTransport
+    {
+        public ValueTask<TResponse> SendAsync<TRequest, TResponse>(in TRequest request, CancellationToken cancellationToken = default)
+            where TRequest : struct, IApiRequest<TRequest>
+            where TResponse : struct, IApiResponse<TResponse>
+            => throw exception;
+
+        public ValueTask<TResponse> SendAsync<TRequest, TBody, TResponse>(in TRequest request, in TBody body, CancellationToken cancellationToken = default)
+            where TRequest : struct, IApiRequest<TRequest>
+            where TBody : struct, Corvus.Text.Json.Internal.IJsonElement<TBody>
+            where TResponse : struct, IApiResponse<TResponse>
+            => throw exception;
+
+        public ValueTask<TResponse> SendAsync<TRequest, TResponse>(in TRequest request, System.IO.Stream body, string contentType, CancellationToken cancellationToken = default)
+            where TRequest : struct, IApiRequest<TRequest>
+            where TResponse : struct, IApiResponse<TResponse>
+            => throw exception;
+
+        public ValueTask<TResponse> SendAsync<TRequest, TResponse>(in TRequest request, Func<System.IO.Stream, CancellationToken, ValueTask> bodyWriter, string contentType, CancellationToken cancellationToken = default)
+            where TRequest : struct, IApiRequest<TRequest>
+            where TResponse : struct, IApiResponse<TResponse>
+            => throw exception;
+
+        public ValueTask DisposeAsync() => default;
+    }
 }

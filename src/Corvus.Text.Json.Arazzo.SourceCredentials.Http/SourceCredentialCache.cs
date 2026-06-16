@@ -79,10 +79,17 @@ public sealed class SourceCredentialCache : IDisposable
         ArgumentNullException.ThrowIfNull(runTagsKey);
 
         (string, string, string) key = (sourceName, environment, runTagsKey);
-        if (this.entries.TryGetValue(key, out Entry? warm) && this.timeProvider.GetUtcNow() < warm.ExpiresAt)
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        if (this.entries.TryGetValue(key, out Entry? warm) && now < warm.ExpiresAt)
         {
             // Warm path: a reference read of the published, immutable entry over a pre-computed key. No store I/O, no
-            // allocation.
+            // allocation. Enforcing credential expiry (§13.2) costs exactly one nullable comparison on the success path;
+            // the throw is the exceptional branch, so the hot path is unchanged.
+            if (warm.CredentialExpiresAt is { } credentialExpiry && now >= credentialExpiry)
+            {
+                throw new SourceCredentialExpiredException(sourceName);
+            }
+
             return new ValueTask<IHttpAuthenticationProvider?>(warm.Provider);
         }
 
@@ -146,29 +153,46 @@ public sealed class SourceCredentialCache : IDisposable
             // Another caller may have filled the entry while we waited on the gate.
             if (this.entries.TryGetValue(key, out Entry? current) && this.timeProvider.GetUtcNow() < current.ExpiresAt)
             {
+                if (current.CredentialExpiresAt is { } cachedExpiry && this.timeProvider.GetUtcNow() >= cachedExpiry)
+                {
+                    throw new SourceCredentialExpiredException(key.SourceName);
+                }
+
                 return current.Provider;
             }
 
             using ParsedJsonDocument<SourceCredentialBinding>? document = await this.store.ResolveForUsageAsync(key.SourceName, key.Environment, runTags, cancellationToken).ConfigureAwait(false);
-            DateTimeOffset expiresAt = this.timeProvider.GetUtcNow() + this.ttl;
+            DateTimeOffset now = this.timeProvider.GetUtcNow();
+            DateTimeOffset cacheExpiresAt = now + this.ttl;
 
             if (document is null)
             {
                 // Negative cache: remember "no binding" for the TTL so an unauthenticated source costs no repeat I/O.
-                this.Publish(key, current, new Entry(null, expiresAt, WorkflowEtag.None));
+                this.Publish(key, current, new Entry(null, cacheExpiresAt, WorkflowEtag.None, credentialExpiresAt: null));
                 return null;
             }
 
+            // §13.2: a run binds only a credential it is entitled to use; if that binding has expired, fault the bind so
+            // the durable executor records a typed credentials-expired fault (resumable after rotation). Cache the
+            // expired state so repeat reads in the window throw without re-resolving; a rotation (new etag, or an
+            // explicit Invalidate) refreshes it.
+            DateTimeOffset? credentialExpiresAt = document.RootElement.ExpiresAtOrNull;
             WorkflowEtag etag = document.RootElement.EtagValue;
+            if (credentialExpiresAt is { } expiry && now >= expiry)
+            {
+                this.Publish(key, current, new Entry(null, cacheExpiresAt, etag, credentialExpiresAt));
+                throw new SourceCredentialExpiredException(key.SourceName);
+            }
+
             if (current is { Provider: not null } && current.Etag == etag)
             {
                 // Unchanged binding: keep the existing provider (no secret re-resolve), just extend the warm window.
-                this.Publish(key, current, new Entry(current.Provider, expiresAt, etag), disposePrevious: false);
+                this.Publish(key, current, new Entry(current.Provider, cacheExpiresAt, etag, credentialExpiresAt), disposePrevious: false);
                 return current.Provider;
             }
 
             IHttpAuthenticationProvider provider = await this.factory.CreateAsync(document.RootElement, cancellationToken).ConfigureAwait(false);
-            this.Publish(key, current, new Entry(provider, expiresAt, etag));
+            this.Publish(key, current, new Entry(provider, cacheExpiresAt, etag, credentialExpiresAt));
             return provider;
         }
         finally
@@ -187,12 +211,16 @@ public sealed class SourceCredentialCache : IDisposable
     }
 
     // Immutable once published, so the lock-free warm-path read sees a consistent snapshot (no torn DateTimeOffset).
-    private sealed class Entry(IHttpAuthenticationProvider? provider, DateTimeOffset expiresAt, WorkflowEtag etag)
+    private sealed class Entry(IHttpAuthenticationProvider? provider, DateTimeOffset expiresAt, WorkflowEtag etag, DateTimeOffset? credentialExpiresAt)
     {
         public IHttpAuthenticationProvider? Provider { get; } = provider;
 
+        // The cache TTL window (when to refresh) — distinct from CredentialExpiresAt (when the secret itself expires).
         public DateTimeOffset ExpiresAt { get; } = expiresAt;
 
         public WorkflowEtag Etag { get; } = etag;
+
+        // The bound credential's own expiry (§13.2), or null when it has no known expiry (non-expiring).
+        public DateTimeOffset? CredentialExpiresAt { get; } = credentialExpiresAt;
     }
 }
