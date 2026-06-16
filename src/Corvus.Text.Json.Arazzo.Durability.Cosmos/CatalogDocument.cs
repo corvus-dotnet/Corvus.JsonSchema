@@ -36,7 +36,12 @@ public readonly partial struct CatalogDocument
 
     /// <summary>Decodes the canonical package bytes.</summary>
     /// <returns>The package bytes.</returns>
-    public byte[] PackageBytes() => Convert.FromBase64String((string)this.Package);
+    public byte[] PackageBytes()
+    {
+        // Get the base64 as raw UTF-8 (no intermediate managed string) and decode via the UTF-8 buffer decoder.
+        using UnescapedUtf8JsonString utf8 = this.Package.GetUtf8String();
+        return CosmosJson.DecodeBase64Utf8(utf8.Span);
+    }
 
     /// <summary>
     /// Writes the catalog document's persisted JSON straight to <paramref name="writer"/> from a catalog version and its
