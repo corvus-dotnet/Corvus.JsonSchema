@@ -30,6 +30,7 @@
     <PackageVersion Include="AWSSDK.KeyManagementService" Version="4.0.12.3" />
     <PackageVersion Include="Azure.Data.Tables" Version="12.11.0" />
     <PackageVersion Include="Azure.Security.KeyVault.Keys" Version="4.10.0" />
+    <PackageVersion Include="Azure.Security.KeyVault.Secrets" Version="4.8.0" />
     <PackageVersion Include="Azure.Storage.Blobs" Version="12.29.0" />
     <PackageVersion Include="Microsoft.Azure.Cosmos" Version="3.61.0" />
     <PackageVersion Include="Microsoft.Bcl.Memory" Version="10.0.7" />
