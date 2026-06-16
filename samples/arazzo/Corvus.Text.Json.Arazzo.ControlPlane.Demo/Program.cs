@@ -19,6 +19,12 @@ using LedgerService = Corvus.Text.Json.Arazzo.ControlPlane.Demo.Ledger.LedgerSer
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
+// Aspire service defaults: OpenTelemetry (incl. the Corvus.Arazzo workflow source/meter), health checks,
+// service discovery, and HTTP resilience. Under the AppHost this exports traces/logs/metrics to the dashboard;
+// run standalone it is a no-op exporter (no OTLP endpoint configured), so `dotnet run` on this project alone
+// still works exactly as before.
+builder.AddServiceDefaults();
+
 // A fresh SQLite database file each run — deleted on startup, so the demo always starts from the seed.
 string dbPath = Path.Combine(Path.GetTempPath(), "arazzo-control-plane-demo.db");
 foreach (string path in new[] { dbPath, dbPath + "-wal", dbPath + "-shm" })
@@ -69,6 +75,9 @@ await DemoData.SeedAsync(catalog, stateStore, specsDir);
 
 WebApplication app = builder.Build();
 
+// /health (readiness) and /alive (liveness) — the AppHost's WithHttpHealthCheck("/health") polls these.
+app.MapDefaultEndpoints();
+
 if (requireAuthorization)
 {
     app.UseAuthentication();
@@ -78,7 +87,7 @@ if (requireAuthorization)
 // Serve a demo page (wwwroot/index.html) and the build-free UI source (web/arazzo-control-plane-ui) at /ui.
 app.UseDefaultFiles();
 app.UseStaticFiles();
-string uiRoot = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, "..", "..", "web", "arazzo-control-plane-ui"));
+string uiRoot = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, "..", "..", "..", "web", "arazzo-control-plane-ui"));
 if (Directory.Exists(uiRoot))
 {
     app.UseStaticFiles(new StaticFileOptions { FileProvider = new PhysicalFileProvider(uiRoot), RequestPath = "/ui" });

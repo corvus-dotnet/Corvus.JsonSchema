@@ -131,5 +131,15 @@
     <!-- Azure Identity (example recipes only) -->
     <PackageVersion Include="Azure.Identity" Version="1.13.2" />
     <PackageVersion Include="Azure.Messaging.ServiceBus" Version="7.20.1" />
+    <!-- .NET Aspire composition + OpenTelemetry (arazzo demo AppHost + ServiceDefaults; versions track aspire CLI 13.4.4).
+         Aspire.Hosting.AppHost is *not* listed here: the Aspire.AppHost.Sdk injects it already-versioned, and CPM
+         forbids a PackageVersion for an implicitly-versioned reference (NU1009). -->
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.6.0" />
+    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.6.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.2" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.15.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.1" />
   </ItemGroup>
 </Project>

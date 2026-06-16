@@ -3,12 +3,32 @@
 A self-contained ASP.NET Core host that runs the **real** Arazzo control-plane server over a fresh-on-startup
 SQLite store, seeds it with demo workflows + runs, and serves the build-free web UI from the same origin.
 
+This host is one project in the self-contained [`samples/arazzo/`](../) composition. The
+[**Aspire AppHost**](../Corvus.Text.Json.Arazzo.ControlPlane.Demo.AppHost) is the composition root that launches
+it (and, next, the runner host plus the locally-runnable Vault / Keycloak / Postgres dependency containers), with
+the Aspire dashboard as the OpenTelemetry viewer.
+
+## Run it
+
+**Under Aspire (recommended)** — gives you the dashboard (traces, logs, metrics) and one launch point for the
+whole composition:
+
 ```bash
-dotnet run --project samples/Corvus.Text.Json.Arazzo.ControlPlane.Demo
+cd samples/arazzo
+aspire run            # or: dotnet run --project Corvus.Text.Json.Arazzo.ControlPlane.Demo.AppHost
 ```
 
-Then open the printed URL (e.g. <http://localhost:5179>). The SQLite file is deleted and re-seeded every time
-the host starts, so you always begin from the same demo state.
+The dashboard prints a URL; the `controlplane` resource links straight to the demo (UI at `/ui`).
+
+**Standalone** — just this host, no dashboard (the OpenTelemetry exporter is a no-op when no OTLP endpoint is
+configured), useful for a quick look:
+
+```bash
+dotnet run --project samples/arazzo/Corvus.Text.Json.Arazzo.ControlPlane.Demo
+```
+
+Either way, open the printed URL. The SQLite file is deleted and re-seeded every time the host starts, so you
+always begin from the same demo state.
 
 ## What it shows
 
