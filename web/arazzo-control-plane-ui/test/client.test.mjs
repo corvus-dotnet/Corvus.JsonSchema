@@ -309,3 +309,90 @@ test('purgeCatalog reaps obsolete, unreferenced versions', async () => {
   assert.ok(purgedCount >= 1);
   assert.equal(after, before - purgedCount);
 });
+
+// ---- credentials (§13) — references and non-secret metadata only --------------------------------
+
+test('listCredentials returns the seeded bindings with a derived credentialStatus', async () => {
+  const { credentials } = await makeClient().listCredentials();
+  assert.equal(credentials.length, 4);
+  const byStatus = Object.fromEntries(credentials.map((c) => [c.sourceName, c.credentialStatus]));
+  assert.equal(byStatus.petstore, 'valid');       // 20 days out
+  assert.equal(byStatus.billing, 'expiringSoon');  // 3 days out (inside the 7-day window)
+  assert.equal(byStatus.legacy, 'expired');        // 2 days past
+  assert.equal(byStatus.events, 'valid');          // no expiry
+  // references only — every secretRef carries a scheme, never inline secret material.
+  assert.ok(credentials.every((c) => c.secretRefs.every((r) => /:\/\//.test(r.ref))));
+});
+
+test('getCredential returns one binding and 404s for an unknown key', async () => {
+  const c = makeClient();
+  const b = await c.getCredential('petstore', 'production');
+  assert.equal(b.sourceName, 'petstore');
+  assert.equal(b.secretRefs[0].ref, 'keyvault://petstore-key#3');
+  await assert.rejects(() => c.getCredential('nope', 'production'), (e) => e instanceof ProblemError && e.status === 404);
+});
+
+test('createCredential adds a binding, rejects an inline secret (400) and a duplicate (409)', async () => {
+  const c = makeClient();
+  const created = await c.createCredential({ sourceName: 'new', environment: 'production', authKind: 'apiKey', secretRefs: [{ name: 'value', ref: 'keyvault://new-key' }] });
+  assert.equal(created.sourceName, 'new');
+  assert.equal(created.credentialStatus, 'valid');
+  // an inline secret (no scheme) is refused at the edge — secret material cannot be persisted.
+  await assert.rejects(
+    () => c.createCredential({ sourceName: 'x', environment: 'y', authKind: 'apiKey', secretRefs: [{ name: 'value', ref: 'hunter2' }] }),
+    (e) => e instanceof ProblemError && e.status === 400);
+  // a duplicate (sourceName, environment) conflicts.
+  await assert.rejects(
+    () => c.createCredential({ sourceName: 'petstore', environment: 'production', authKind: 'apiKey', secretRefs: [{ name: 'value', ref: 'env://X' }] }),
+    (e) => e.status === 409);
+});
+
+test('updateCredential re-points the reference (rotation) and 404s for an unknown key', async () => {
+  const c = makeClient();
+  const updated = await c.updateCredential('petstore', 'production', {
+    authKind: 'apiKey', secretRefs: [{ name: 'value', ref: 'keyvault://petstore-key#4' }], rotatedAt: new Date().toISOString(),
+  });
+  assert.equal(updated.secretRefs[0].ref, 'keyvault://petstore-key#4');
+  assert.ok(updated.rotatedAt);
+  await assert.rejects(
+    () => c.updateCredential('nope', 'production', { authKind: 'apiKey', secretRefs: [{ name: 'value', ref: 'env://X' }] }),
+    (e) => e.status === 404);
+});
+
+test('deleteCredential removes the binding (then 404)', async () => {
+  const c = makeClient();
+  await c.deleteCredential('events', 'staging');
+  await assert.rejects(() => c.getCredential('events', 'staging'), (e) => e.status === 404);
+});
+
+// ---- administrators (§15) — identities named by the {dimension,value} grant ---------------------
+
+test('listAdministrators returns the set, and an empty set for an unknown base id', async () => {
+  const c = makeClient();
+  assert.deepEqual((await c.listAdministrators('nightly-reconcile')).administrators, [{ dimension: 'tenant', value: 'platform' }]);
+  assert.deepEqual((await c.listAdministrators('ghost')).administrators, []);
+});
+
+test('addAdministrator is idempotent and transferAdministration replaces the whole set', async () => {
+  const c = makeClient();
+  const added = await c.addAdministrator('nightly-reconcile', { dimension: 'tenant', value: 'growth' });
+  assert.equal(added.administrators.length, 2);
+  const again = await c.addAdministrator('nightly-reconcile', { dimension: 'tenant', value: 'growth' });
+  assert.equal(again.administrators.length, 2, 'idempotent');
+  const transferred = await c.transferAdministration('nightly-reconcile', { administrators: [{ dimension: 'tenant', value: 'acme' }] });
+  assert.deepEqual(transferred.administrators, [{ dimension: 'tenant', value: 'acme' }]);
+});
+
+test('removeAdministrator refuses to remove the last administrator (409)', async () => {
+  const c = makeClient();
+  await assert.rejects(
+    () => c.removeAdministrator('nightly-reconcile', 'tenant', 'platform'),
+    (e) => e instanceof ProblemError && e.status === 409);
+  const after = await c.removeAdministrator('onboard-customer', 'tenant', 'growth');
+  assert.equal(after.administrators.length, 1);
+});
+
+test('addAdministrator / transferAdministration validate before calling the server', async () => {
+  await assert.rejects(async () => makeClient().addAdministrator('x', { dimension: 'tenant' }), TypeError);
+  await assert.rejects(async () => makeClient().transferAdministration('x', { administrators: [] }), TypeError);
+});

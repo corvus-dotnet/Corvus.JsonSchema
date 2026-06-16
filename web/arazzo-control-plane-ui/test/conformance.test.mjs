@@ -155,3 +155,55 @@ test('purgeRuns: uses the non-standard PURGE method on the collection with docum
     assert.ok(OPS.purgeRuns.queryParams.has(key), `purge query param '${key}' is declared`);
   }
 });
+
+test('the contract declares the credential and administration operations', () => {
+  for (const id of ['listCredentials', 'getCredential', 'createCredential', 'updateCredential', 'deleteCredential',
+                    'listAdministrators', 'addAdministrator', 'removeAdministrator', 'transferAdministration']) {
+    assert.ok(OPS[id], `operation ${id} present in the OpenAPI document`);
+  }
+});
+
+test('credentials: each client method emits the contract method + templated path + body', async () => {
+  const { client, calls } = capturing();
+  await client.listCredentials();
+  assert.equal(calls[0].method, OPS.listCredentials.method);
+  assert.equal(calls[0].path, OPS.listCredentials.path);
+
+  await client.getCredential('petstore', 'production');
+  assert.equal(calls[1].method, OPS.getCredential.method);
+  assert.equal(calls[1].path, OPS.getCredential.path.replace('{sourceName}', 'petstore').replace('{environment}', 'production'));
+
+  await client.createCredential({ sourceName: 'a', environment: 'b', authKind: 'apiKey', secretRefs: [{ name: 'value', ref: 'env://A' }] });
+  assert.equal(calls[2].method, OPS.createCredential.method);
+  assert.equal(calls[2].path, OPS.createCredential.path);
+  assert.equal(calls[2].body.sourceName, 'a');
+
+  await client.updateCredential('petstore', 'production', { authKind: 'bearer', secretRefs: [{ name: 'value', ref: 'env://B' }] });
+  assert.equal(calls[3].method, OPS.updateCredential.method);
+  assert.equal(calls[3].path, OPS.updateCredential.path.replace('{sourceName}', 'petstore').replace('{environment}', 'production'));
+
+  await client.deleteCredential('petstore', 'production');
+  assert.equal(calls[4].method, OPS.deleteCredential.method);
+  assert.equal(calls[4].path, OPS.deleteCredential.path.replace('{sourceName}', 'petstore').replace('{environment}', 'production'));
+});
+
+test('administrators: each client method emits the contract method + templated path + body', async () => {
+  const { client, calls } = capturing();
+  await client.listAdministrators('flow');
+  assert.equal(calls[0].method, OPS.listAdministrators.method);
+  assert.equal(calls[0].path, OPS.listAdministrators.path.replace('{baseWorkflowId}', 'flow'));
+
+  await client.addAdministrator('flow', { dimension: 'tenant', value: 'acme' });
+  assert.equal(calls[1].method, OPS.addAdministrator.method);
+  assert.equal(calls[1].path, OPS.addAdministrator.path.replace('{baseWorkflowId}', 'flow'));
+  assert.equal(calls[1].body.dimension, 'tenant');
+
+  await client.removeAdministrator('flow', 'tenant', 'acme');
+  assert.equal(calls[2].method, OPS.removeAdministrator.method);
+  assert.equal(calls[2].path, OPS.removeAdministrator.path.replace('{baseWorkflowId}', 'flow').replace('{dimension}', 'tenant').replace('{value}', 'acme'));
+
+  await client.transferAdministration('flow', { administrators: [{ dimension: 'tenant', value: 'acme' }] });
+  assert.equal(calls[3].method, OPS.transferAdministration.method);
+  assert.equal(calls[3].path, OPS.transferAdministration.path.replace('{baseWorkflowId}', 'flow'));
+  assert.equal(calls[3].body.administrators[0].value, 'acme');
+});
