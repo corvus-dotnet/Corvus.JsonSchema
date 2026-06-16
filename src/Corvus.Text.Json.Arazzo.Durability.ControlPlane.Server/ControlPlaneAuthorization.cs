@@ -47,8 +47,14 @@ public static class ControlPlaneScopes
     /// <summary>Manage source credential bindings (references and metadata only — never secret material).</summary>
     public const string CredentialsWrite = "credentials:write";
 
+    /// <summary>Read a workflow's administrator set (described as deployment-mapped grants — never raw internal tags).</summary>
+    public const string AdministratorsRead = "administrators:read";
+
+    /// <summary>Manage a workflow's administrator set (add, remove, transfer — current-administrator membership applies).</summary>
+    public const string AdministratorsWrite = "administrators:write";
+
     /// <summary>Gets all control-plane capability scopes.</summary>
-    public static IReadOnlyList<string> All { get; } = [CatalogRead, CatalogWrite, CatalogPurge, RunsRead, RunsWrite, RunsPurge, SecurityRead, SecurityWrite, CredentialsRead, CredentialsWrite];
+    public static IReadOnlyList<string> All { get; } = [CatalogRead, CatalogWrite, CatalogPurge, RunsRead, RunsWrite, RunsPurge, SecurityRead, SecurityWrite, CredentialsRead, CredentialsWrite, AdministratorsRead, AdministratorsWrite];
 }
 
 /// <summary>
