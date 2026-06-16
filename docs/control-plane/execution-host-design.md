@@ -568,6 +568,33 @@ secure-by-default is the cheap default, not a tax.
   is ≈0 B and ≈0 added latency versus an unauthenticated request — the same benchmark rigour as the allocation
   campaign.
 
+#### §13.4.1 Backend store allocation ledger (audited)
+
+The warm bind (the per-request hot path) is benchmark-proven **0 B** (`WarmCredentialBindBenchmarks.Warm_GetProvider`)
+— it is the runner cache, backend-independent. The credential **store** read is the *cold/miss* path the cache
+amortizes; it is driver/IO-bound, so the right confidence tool is not a per-backend micro-benchmark (the driver's own
+allocation dominates and is not ours) but a **static byte-flow audit** against a fixed ledger checklist, plus a
+measured floor for the one in-process driver:
+
+- **Read leaf.** The driver hands back the binding document as a `byte[]` (relational `GetFieldValue<byte[]>`, Mongo
+  `BsonBinaryData.Bytes`, Redis `(byte[])RedisValue`, NATS KV `byte[]`, Azure Table `GetBinary`, Cosmos base64 field
+  decoded straight to bytes) with **no intermediate copy, stream round-trip, or `System.Text.Json`**; it is parsed once
+  via the pooled, zero-copy `PersistedJson.ToPooledDocument`.
+- **Reach / usage filter.** Applied in memory over the small per-`(sourceName, environment)` candidate set through the
+  **deferred holders** (`candidate.RootElement.ManagementTagsValue`, `IsUsableBy`) — never an eager tag-list
+  materialization; non-matching candidate documents are disposed.
+- **Write.** Serialized through the shared pooled-scratch `SourceCredentialSerialization` (`PersistedJson.ToArray`);
+  `byte[]` only at the driver leaf.
+
+This was audited across all nine backends (InMemory, SQLite, Postgres, SqlServer, MySql, Mongo, Cosmos, Redis,
+NATS JetStream, AzureStorage): all conform. The lone deviation found was **Cosmos**, which stores the document as a
+base64 field and originally materialised a transient base64 `string` before decoding — now decoded directly from the
+response bytes (`CosmosJson.GetBytesFromBase64`), restoring the single-`byte[]`-leaf shape. Measured floor (the shared
+CTJ parse + filter primitive, cache-miss): **624 B** in-process (InMemory); through a real embedded driver
+(`SqliteSourceCredentialStore`) **2288 B**, the ~1.7 KB delta being `Microsoft.Data.Sqlite`'s reader/command, not our
+code. Correctness of every backend's read/write path is proven by the shared 12-test `SourceCredentialStoreConformance`
+(incl. the trust-boundary test) run on real containers via Testcontainers.
+
 **Decision (§13):** secrets live in a **dedicated secret store, never the Arazzo database**; the durability
 layer persists only an operator-managed **reference + non-sensitive metadata**, resolved to live secret
 material by the runner's `ISecretResolver` at transport-bind time (Key Vault / AWS Secrets Manager /
