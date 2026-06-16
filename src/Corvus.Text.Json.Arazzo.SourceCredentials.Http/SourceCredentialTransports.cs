@@ -38,7 +38,17 @@ public static class SourceCredentialTransports
     {
         ArgumentNullException.ThrowIfNull(httpClient);
         ArgumentNullException.ThrowIfNull(cache);
-        return new HttpClientApiTransportFactory(httpClient, new SourceCredentialAuthenticationProvider(cache, sourceName, environment, runTags));
+
+        // Inner: applies the entitled credential to each request (§13.4 warm path). Outer: turns a runtime 401/403 on an
+        // authenticated call into a typed, resumable credentials-expired fault (§13.3 reactive path).
+        var authenticating = new HttpClientApiTransportFactory(httpClient, new SourceCredentialAuthenticationProvider(cache, sourceName, environment, runTags));
+        return new SourceCredentialApiTransportFactory(authenticating, cache, sourceName, environment, runTags);
+    }
+
+    private sealed class SourceCredentialApiTransportFactory(IApiTransportFactory inner, SourceCredentialCache cache, string sourceName, string environment, SecurityTagSet runTags) : IApiTransportFactory
+    {
+        public IApiTransport CreateTransport()
+            => new SourceCredentialApiTransport(inner.CreateTransport(), cache, sourceName, environment, runTags);
     }
 
     /// <summary>Builds a <see cref="WorkflowTransportBinder"/> that, per run, binds each of the workflow's declared API
