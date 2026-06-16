@@ -248,6 +248,35 @@ internal static class CosmosJson
         return null;
     }
 
+    /// <summary>Reads a base64-encoded string property and decodes it straight to bytes — no intermediate managed
+    /// string — for a payload stored verbatim as base64 (e.g. a credential binding document). Returns
+    /// <see langword="null"/> if the property is absent or JSON null.</summary>
+    /// <param name="element">The element JSON.</param>
+    /// <param name="propertyUtf8">The UTF-8 property name.</param>
+    /// <returns>The decoded bytes (one owned array, the read leaf), or <see langword="null"/>.</returns>
+    public static byte[]? GetBytesFromBase64(ReadOnlyMemory<byte> element, ReadOnlySpan<byte> propertyUtf8)
+    {
+        var reader = new Utf8JsonReader(element.Span);
+        if (!reader.Read() || reader.TokenType != JsonTokenType.StartObject)
+        {
+            return null;
+        }
+
+        while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+        {
+            bool match = reader.ValueTextEquals(propertyUtf8);
+            reader.Read();
+            if (match)
+            {
+                return reader.TokenType == JsonTokenType.Null ? null : reader.GetBytesFromBase64();
+            }
+
+            reader.Skip();
+        }
+
+        return null;
+    }
+
     /// <summary>Reads an integer property from a projection element, or <see langword="null"/> if absent/not a number.</summary>
     /// <param name="element">The element JSON.</param>
     /// <param name="propertyUtf8">The UTF-8 property name.</param>
