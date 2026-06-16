@@ -386,9 +386,11 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
             using CosmosJson.RentedResponse page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
             foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page.Memory))
             {
-                if (CosmosJson.GetString(element, DocProperty) is { } base64)
+                // Decode the base64 doc field straight to the leaf byte[] — no intermediate base64 string (ledger:
+                // one transient owned array per read, as the relational backends' GetFieldValue<byte[]> gives).
+                if (CosmosJson.GetBytesFromBase64(element, DocProperty) is { } doc)
                 {
-                    yield return Convert.FromBase64String(base64);
+                    yield return doc;
                 }
             }
         }
