@@ -27,6 +27,22 @@ arazzo-runs <command> [args] --server <url> [--token <bearer>]
 `--server` is the control plane's **base origin** (e.g. `https://host:8080`); the generated request paths are
 absolute (`/runs`). `--server`/`--token` may also come from `ARAZZO_RUNS_SERVER` / `ARAZZO_RUNS_TOKEN`.
 
+The runs commands above sit at the top level; the other control-plane resources are grouped under noun branches
+(run `arazzo-runs <group> --help` for each):
+
+| Group | Purpose |
+|-------|---------|
+| `catalog` | Pack/verify workflow packages and manage catalogued versions (governance, status). |
+| `security` | Author the row-security policy: `rule` and claim→rule `binding` subcommands. |
+| `credentials` | Manage source credential bindings — **references and non-secret metadata only, never secret material**. `list` is a status-first table (`--status`/`--source`); `update` is a merge (re-point a `--ref` to rotate; unspecified fields are preserved). |
+| `administrators` | Manage a workflow's administrator set (`list`/`add`/`remove`/`transfer`); administrators are named by the deployment-mapped grant `{dimension, value}`. |
+
+```bash
+arazzo-runs credentials list --status expiring --server https://host:8080
+arazzo-runs credentials update petstore production --ref value=keyvault://petstore-key#4 --server https://host:8080
+arazzo-runs administrators add billing tenant acme --server https://host:8080
+```
+
 ### Examples
 
 ```bash

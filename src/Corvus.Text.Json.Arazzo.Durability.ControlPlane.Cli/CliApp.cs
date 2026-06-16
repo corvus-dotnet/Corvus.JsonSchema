@@ -91,6 +91,25 @@ public static class CliApp
                     binding.AddCommand<SecurityBindingDeleteCommand>("delete").WithDescription("Delete a claim→rule binding.");
                 });
             });
+
+            c.AddBranch<CommandSettings>("credentials", credentials =>
+            {
+                credentials.SetDescription("Manage source credential bindings — references and non-secret metadata only, never secret material (credentials:read / credentials:write).");
+                credentials.AddCommand<CredentialListCommand>("list").WithDescription("List bindings as a status-first table (--status / --source filter; --output json).");
+                credentials.AddCommand<CredentialGetCommand>("get").WithDescription("Show one binding's references and lifecycle metadata.");
+                credentials.AddCommand<CredentialCreateCommand>("create").WithDescription("Create a binding from secret references (--ref name=scheme://...), auth kind, config, grants.");
+                credentials.AddCommand<CredentialUpdateCommand>("update").WithDescription("Change a binding (merge): re-point a --ref to rotate, adjust --expires-at / --config; unspecified fields are preserved.");
+                credentials.AddCommand<CredentialDeleteCommand>("delete").WithDescription("Delete a binding.");
+            });
+
+            c.AddBranch<CommandSettings>("administrators", administrators =>
+            {
+                administrators.SetDescription("Manage a workflow's administrator set — the identities entitled to publish versions and govern administration (administrators:read / administrators:write).");
+                administrators.AddCommand<AdministratorListCommand>("list").WithDescription("List a base id's administrators (named as deployment-mapped grants).");
+                administrators.AddCommand<AdministratorAddCommand>("add").WithDescription("Add an administrator identity (dimension value).");
+                administrators.AddCommand<AdministratorRemoveCommand>("remove").WithDescription("Remove an administrator identity (the set may not be left empty).");
+                administrators.AddCommand<AdministratorTransferCommand>("transfer").WithDescription("Replace the whole administrator set (--admin dimension=value, repeatable).");
+            });
         });
 
         return app;
