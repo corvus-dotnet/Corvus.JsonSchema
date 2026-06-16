@@ -217,7 +217,7 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
     {
         ArgumentNullException.ThrowIfNull(sourceName);
         ArgumentNullException.ThrowIfNull(environment);
-        string filter = TableClient.CreateQueryFilter($"PartitionKey eq {PartitionKey(sourceName)} and {EnvironmentColumn} eq {environment}");
+        string filter = TableClient.CreateQueryFilter($"PartitionKey eq {PartitionKey(sourceName)} and Environment eq {environment}");
         await foreach (TableEntity entity in this.credentials.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
         {
             if (entity.GetBinary(DocColumn) is not { } json)
@@ -281,7 +281,7 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
     // bytes and its tag discriminator (the row-key segment). A binding outside reach is invisible (non-disclosing).
     private async ValueTask<(byte[]? Json, string? Discriminator)> FindForManagementAsync(string sourceName, string environment, AccessVerb verb, AccessContext context, CancellationToken cancellationToken)
     {
-        string filter = TableClient.CreateQueryFilter($"PartitionKey eq {PartitionKey(sourceName)} and {EnvironmentColumn} eq {environment}");
+        string filter = TableClient.CreateQueryFilter($"PartitionKey eq {PartitionKey(sourceName)} and Environment eq {environment}");
         await foreach (TableEntity entity in this.credentials.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
         {
             if (entity.GetBinary(DocColumn) is not { } json)
