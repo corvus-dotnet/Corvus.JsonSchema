@@ -13,4 +13,9 @@ ManualConfig config = ManualConfig.CreateMinimumViable()
     .AddJob(Job.ShortRun.WithToolchain(InProcessEmitToolchain.Instance))
     .AddDiagnoser(MemoryDiagnoser.Default);
 
-BenchmarkRunner.Run([typeof(DocumentMaterializationBenchmarks), typeof(WriteToStreamBenchmarks), typeof(RunWriteBenchmarks), typeof(EnvelopeWriteBenchmarks), typeof(CheckpointSerializeBenchmarks), typeof(TagSetBenchmarks), typeof(SourceSetBenchmarks), typeof(SecurityTagSetBenchmarks), typeof(CosmosReadBenchmark), typeof(CheckpointDeserializeBenchmarks), typeof(WorkingStateMaterializationBenchmarks), typeof(PooledDocumentListBenchmark), typeof(CancelRewriteBenchmark), typeof(WarmCredentialBindBenchmarks), typeof(CredentialStoreReadBenchmarks)], config);
+// Discover every benchmark class in this assembly (so a new one can never silently not-run for want of manual
+// registration) and honour command-line args — most importantly `--filter`, so any single benchmark can be run in
+// isolation to read its ledger figure. With no args, run them all (`--filter *`) rather than dropping to the
+// interactive menu, which would hang a non-interactive run.
+string[] effectiveArgs = args.Length == 0 ? ["--filter", "*"] : args;
+BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(effectiveArgs, config);
