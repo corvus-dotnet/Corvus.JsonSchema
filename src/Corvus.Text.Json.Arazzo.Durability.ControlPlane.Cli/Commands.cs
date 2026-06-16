@@ -65,6 +65,29 @@ internal class RunsSettings : CommandSettings
         return (http, transport, new ApiSecurityClient(transport));
     }
 
+    /// <summary>Builds the source-credential API client (and the HTTP client / transport it owns) for this invocation.
+    /// The credential surface manages <em>references</em> and non-secret metadata only — never secret material.</summary>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The HTTP client, transport, and credentials API client. Dispose the HTTP client and transport.</returns>
+    public async Task<(HttpClient Http, HttpClientTransport Transport, ApiCredentialsClient Client)> CreateCredentialsClientAsync(CancellationToken cancellationToken)
+    {
+        string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
+        var http = new HttpClient { BaseAddress = new Uri(this.ResolveServer()!, UriKind.Absolute) };
+        var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
+        return (http, transport, new ApiCredentialsClient(transport));
+    }
+
+    /// <summary>Builds the workflow-administration API client (and the HTTP client / transport it owns) for this invocation.</summary>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The HTTP client, transport, and administrators API client. Dispose the HTTP client and transport.</returns>
+    public async Task<(HttpClient Http, HttpClientTransport Transport, ApiAdministratorsClient Client)> CreateAdministratorsClientAsync(CancellationToken cancellationToken)
+    {
+        string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
+        var http = new HttpClient { BaseAddress = new Uri(this.ResolveServer()!, UriKind.Absolute) };
+        var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
+        return (http, transport, new ApiAdministratorsClient(transport));
+    }
+
     private string? ResolveServer() => this.Server ?? Environment.GetEnvironmentVariable("ARAZZO_RUNS_SERVER");
 }
 
