@@ -404,7 +404,11 @@ descriptions** to real endpoints + credentials:
    to a real secret store at bind time (Key Vault / AWS Secrets Manager / HashiCorp Vault / env+file; an
    encrypted-in-DB fallback is discouraged). The transport binding builds auth providers from the resolved
    secret per run; per-version `credentialStatus` + expiry telemetry + trigger gating; typed
-   `credentials-expired` fault refreshable from the catalog and resumable.
+   `credentials-expired` fault refreshable from the catalog and resumable. **✅ Implemented** — binding store +
+   resolvers + usage-security across all nine backends, the `/credentials` REST surface, lifecycle metadata with a
+   derived `credentialStatus`, and a resumable `credentials-expired` fault (see §13.2 for what shipped vs. this
+   sketch), plus the §15 `/administrators` API and an `arazzo-runs credentials`/`administrators` CLI; a web UI for the
+   two surfaces is in progress.
 7. **Row security — security tags + rule engine (§14.2)** — security KVP labels on runs/catalog versions
    (separate from user tags; runs inherit the version's); tag rules in the `simple`-criterion grammar that
    claims resolve to; rules compiled to an in-memory evaluator **and** an indexed per-backend store predicate
@@ -548,6 +552,18 @@ any control-plane response.
   - when a credential is **expired**, marks the version's binding **`Credentials Expired`** — a degraded,
     non-runnable state that gates *new* triggers (`409`, like the no-live-runner gate §6.2) while leaving
     catalogued/in-flight state intact.
+
+**✅ Implemented — what shipped (and where it differs from this sketch).** The binding carries non-secret
+`expiresAt?`/`rotatedAt`, and a **`credentialStatus`** (`valid` | `expiringSoon` | `expired`) is **derived per
+binding on read** (never persisted, so it cannot go stale) and surfaced on the `/credentials` GET/list endpoints — the
+operator's rotation worklist lives there. The **per-version catalog rollup was cut on security review**: joining
+credential-binding lifecycle onto catalog versions would leak it to the broader catalog-read audience, crossing the
+independent management/catalog scopes, so status stays on the credential-management surface only. Trigger gating moved
+**runner-side**: the control plane has no environment (bindings are per `(source, environment)`, and environment is a
+runner concern), so the expiry check happens at **bind time within the run's own usage entitlement** — the runner
+raises a resumable **`credentials-expired`** fault when it binds an expired credential, and reactively when a bound
+credential is rejected `401`/`403`; the warm bind path stays **0 B/op**. The operator reads and rotates through the
+`/credentials` API and the `arazzo-runs credentials` CLI (`update` re-points a reference and stamps `rotatedAt`).
 
 ### 13.3 Faulted run → refresh → resume
 
@@ -797,13 +813,20 @@ record** that defaults to version 1's identity until first changed:
 
 - **Record.** A `WorkflowAdministrators` document per base id — the set of administrator identities, with audit and
   an etag — materialized lazily (absent until the first change; reads then fall back to the version-1 identity). Held
-  in an `IWorkflowAdministratorStore` (per-backend, like the run/catalog/credential stores; InMemory + SQLite first,
-  the remaining backends in the Phase-5 sweep). Never empty: the last administrator cannot be removed (no orphaning).
+  in an `IWorkflowAdministratorStore` (per-backend, like the run/catalog/credential stores — **shipped across all nine
+  backends**, container-verified on a shared conformance suite). Never empty: the last administrator cannot be removed
+  (no orphaning).
 - **Operations** (on `IWorkflowCatalogClient`, authorized by **current-administrator membership**, not row reach):
   `GetAdministrators`, `AddAdministrator` (idempotent), `RemoveAdministrator` (refuses the last), and
   `TransferAdministration` (replace the set — hand-off; the caller need not remain). Each names administrators with
   the **usage-grant vocabulary** (`{dimension, value}` the policy maps to `sys:` tags), never free-form tags; changes
   are etag-CAS with bounded retry.
+- **Surfaces (✅ implemented).** A `/administrators/{baseWorkflowId}` control-plane API (`GET` list, `PUT` transfer,
+  `POST .../members` add, `DELETE .../members/{dimension}/{value}` remove), gated by `administrators:read`/
+  `administrators:write` scopes — non-disclosing (unknown base id and not-an-administrator both `403`), `409` on the
+  optimistic-concurrency race or a last-administrator removal. An `arazzo-runs administrators` CLI
+  (`list`/`add`/`remove`/`transfer`) drives it; a web UI is in progress. Administrators are named by the deployment-
+  mapped grant on the wire, never raw `sys:` tags.
 - **Trust boundary.** The record holds only `sys:` identity tags — authorization metadata, never secrets — so it
   persists as plain JSON like every other entity. Administration is over unforgeable stamped identity end to end;
   the management surface cannot widen entitlement past what the shell stamps.
