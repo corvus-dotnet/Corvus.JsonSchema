@@ -345,7 +345,7 @@ public readonly partial struct LightMeasuredPayload
         /// Set the <c>lumens</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLumens(scoped in Streetlights.Client.Models.LightMeasuredPayload.LightIntensityMeasuredInLumens.Source value)
+        public void SetLumens(in Streetlights.Client.Models.LightMeasuredPayload.LightIntensityMeasuredInLumens.Source value)
         {
             CheckValidInstance();
 
@@ -390,7 +390,7 @@ public readonly partial struct LightMeasuredPayload
         /// Set the <c>sentAt</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSentAt(scoped in Streetlights.Client.Models.JsonDateTime.Source value)
+        public void SetSentAt(in Streetlights.Client.Models.JsonDateTime.Source value)
         {
             CheckValidInstance();
 
@@ -536,7 +536,7 @@ public readonly partial struct LightMeasuredPayload
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
+        public void SetProperty(string propertyName, in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -559,7 +559,7 @@ public readonly partial struct LightMeasuredPayload
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -606,7 +606,7 @@ public readonly partial struct LightMeasuredPayload
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -777,7 +777,7 @@ public readonly partial struct LightMeasuredPayload
 
         internal Source(Streetlights.Client.Models.LightMeasuredPayload.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Streetlights.Client.Models.LightMeasuredPayload.LightIntensityMeasuredInLumens.Source arg1, scoped in Streetlights.Client.Models.JsonDateTime.Source arg2)
+        internal Source(in Streetlights.Client.Models.LightMeasuredPayload.LightIntensityMeasuredInLumens.Source arg1, in Streetlights.Client.Models.JsonDateTime.Source arg2)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1167,7 +1167,7 @@ public readonly partial struct LightMeasuredPayload
         /// <param name="arg1">The value of the property.</param>
         /// <param name="arg2">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(scoped in Streetlights.Client.Models.LightMeasuredPayload.LightIntensityMeasuredInLumens.Source arg1, scoped in Streetlights.Client.Models.JsonDateTime.Source arg2, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(in Streetlights.Client.Models.LightMeasuredPayload.LightIntensityMeasuredInLumens.Source arg1, in Streetlights.Client.Models.JsonDateTime.Source arg2, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2);
@@ -1210,7 +1210,7 @@ public readonly partial struct LightMeasuredPayload
     /// <param name="lumens">The value of the <c>"lumens"</c> property.</param>
     /// <param name="sentAt">The value of the <c>"sentAt"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Streetlights.Client.Models.LightMeasuredPayload.LightIntensityMeasuredInLumens.Source lumens = default, scoped in Streetlights.Client.Models.JsonDateTime.Source sentAt = default)
+    public static Source Build(in Streetlights.Client.Models.LightMeasuredPayload.LightIntensityMeasuredInLumens.Source lumens = default, in Streetlights.Client.Models.JsonDateTime.Source sentAt = default)
     {
         return new Source(lumens, sentAt);
     }

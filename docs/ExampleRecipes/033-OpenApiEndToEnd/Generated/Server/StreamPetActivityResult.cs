@@ -19,17 +19,21 @@ namespace Petstore.EndToEnd.Server;
 /// </summary>
 public readonly struct StreamPetActivityResult
 {
-    private StreamPetActivityResult(int statusCode, JsonElement body = default, string? contentType = null, StreamPetActivityStreamWriterInvoker? streamWriter = null, object? streamWriterContext = null)
+    private StreamPetActivityResult(int statusCode, JsonElement body = default, string? contentType = null, StreamPetActivityStreamWriterInvoker? streamWriter = null, object? streamWriterContext = null, bool hasBinaryBody = false, Func<Stream, CancellationToken, ValueTask>? binaryWriter = null)
     {
         this.StatusCode = statusCode;
         this.Body = body;
         this.ContentType = contentType;
         this.streamWriter = streamWriter;
         this.streamWriterContext = streamWriterContext;
+        this.HasBinaryBody = hasBinaryBody;
+        this.binaryWriter = binaryWriter;
     }
 
     private readonly StreamPetActivityStreamWriterInvoker? streamWriter;
     private readonly object? streamWriterContext;
+
+    private readonly Func<Stream, CancellationToken, ValueTask>? binaryWriter;
 
     /// <summary>Gets the HTTP status code.</summary>
     public int StatusCode { get; }
@@ -39,6 +43,9 @@ public readonly struct StreamPetActivityResult
 
     /// <summary>Gets the content type for the response body.</summary>
     public string? ContentType { get; }
+
+    /// <summary>Gets a value indicating whether this result has a raw binary (octet-stream) response body.</summary>
+    public bool HasBinaryBody { get; }
 
     /// <summary>Gets a value indicating whether this result has a streaming response body.</summary>
     public bool HasStreamingBody => this.streamWriter is not null;
@@ -82,6 +89,14 @@ public readonly struct StreamPetActivityResult
             this.Body.WriteTo(writer);
         }
     }
+
+    /// <summary>
+    /// Writes the raw binary (octet-stream) response body to the specified stream.
+    /// </summary>
+    /// <param name="stream">The response stream.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A value task that completes when the body has been written.</returns>
+    public ValueTask WriteBinaryBodyAsync(Stream stream, CancellationToken cancellationToken) => this.binaryWriter is { } writer ? writer(stream, cancellationToken) : ValueTask.CompletedTask;
 
     /// <summary>
     /// Writes the streaming response body.
