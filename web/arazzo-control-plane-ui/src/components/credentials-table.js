@@ -2,22 +2,16 @@
 //
 //   <arazzo-credentials-table base-url="/arazzo/v1" status="expiring" selectable></arazzo-credentials-table>
 //
-// Attributes : base-url, status (valid|expiring|expired), source, page-size (default 50), selectable, scopes
+// Attributes : base-url, status (valid|expiring|expired), source, selectable, scopes (gates the New button)
 // Properties : .client, .filters = { status, source }
-// Events     : credential-selected {binding}, loaded {count, expiring, expired}, error {problem}
-// Parts      : table, row, cell, status, toolbar, foot, pager
-//
-// This is the MASTER of a master-detail surface (<arazzo-credentials>): a status-first list whose rows SELECT into a
-// detail pane (credential-selected) where the binding is viewed/rotated/duplicated/revoked. It is a management surface,
-// not a creation one — creating a credential is rooted where the source and its auth are known (the catalog's
-// per-workflow Sources panel, §7.5), not free-typed here.
+// Events     : credential-selected {binding}, credential-new {}, loaded {count, expiring, expired}, error {problem}
+// Parts      : table, row, cell, status, toolbar
 //
 // A binding manages a REFERENCE and non-secret metadata only — never secret material — so the table renders a
 // `secretRef` and a derived `credentialStatus`, never a secret. The operator's question is "what's about to
 // break?", so status is the headline column (colour-coded) with an "N expiring / M expired" footer.
 
-import { ArazzoElement, SHARED_CSS, PAGER_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, absoluteTime, countdown, define } from './base.js';
-import './pager.js';
+import { ArazzoElement, SHARED_CSS, escapeHtml, absoluteTime, countdown, define } from './base.js';
 
 const STATUS = {
   valid: { label: 'valid', color: 'var(--arazzo-status-completed, #2a8a4a)' },
@@ -41,15 +35,12 @@ function shortDate(iso) {
 
 class ArazzoCredentialsTable extends ArazzoElement {
   static get observedAttributes() {
-    return ['base-url', 'status', 'source', 'selectable', 'scopes', 'page-size'];
+    return ['base-url', 'status', 'source', 'selectable', 'scopes'];
   }
 
   constructor() {
     super();
     /** @private */ this._bindings = [];
-    /** @private */ this._history = []; // pageTokens of pages before the current one
-    /** @private */ this._currentToken = undefined;
-    /** @private */ this._nextPageToken = null;
     /** @private */ this._loading = false;
     /** @private */ this._error = null;
     /** @private */ this._selectedKey = null;
@@ -58,17 +49,13 @@ class ArazzoCredentialsTable extends ArazzoElement {
 
   connectedCallback() {
     this.renderShell();
-    this.reload();
+    this.load();
   }
 
   attributeChangedCallback(name) {
     if (!this.isConnected) return;
-    if (name === 'base-url' || name === 'page-size') this.reload();
+    if (name === 'base-url') this.load();
     else this.renderBody();
-  }
-
-  get pageSize() {
-    return Number(this.getAttribute('page-size')) || 50;
   }
 
   /** Imperative filter set (equivalent to the attributes). */
@@ -83,22 +70,14 @@ class ArazzoCredentialsTable extends ArazzoElement {
   }
 
   requestRender() {
-    this.reload();
-  }
-
-  /** Re-fetch from the server (e.g. after a create/update/delete) — back to page 1. */
-  refresh() {
-    this.reload();
-  }
-
-  /** Reload from page 1 (resets the keyset cursor). */
-  reload() {
-    this._history = [];
-    this._currentToken = undefined;
     this.load();
   }
 
-  /** Fetch ONE keyset page at the current cursor, replacing the rows (the store pages server-side). */
+  /** Re-fetch from the server (e.g. after a create/update/delete). */
+  refresh() {
+    this.load();
+  }
+
   async load() {
     const client = this.client;
     if (!client) {
@@ -110,15 +89,12 @@ class ArazzoCredentialsTable extends ArazzoElement {
     const seq = ++this._reqSeq;
     this._loading = true;
     this._error = null;
-    this._bindings = [];
-    this._nextPageToken = null;
     this.renderBody();
 
     try {
-      const { credentials, nextPageToken } = await client.listCredentials({ limit: this.pageSize, pageToken: this._currentToken });
+      const { credentials } = await client.listCredentials();
       if (seq !== this._reqSeq) return;
       this._bindings = credentials;
-      this._nextPageToken = nextPageToken;
       this._loading = false;
       this.renderBody();
     } catch (err) {
@@ -130,26 +106,12 @@ class ArazzoCredentialsTable extends ArazzoElement {
     }
   }
 
-  nextPage() {
-    if (!this._nextPageToken) return;
-    this._history.push(this._currentToken);
-    this._currentToken = this._nextPageToken;
-    this.load();
-  }
-
-  prevPage() {
-    if (this._history.length === 0) return;
-    this._currentToken = this._history.pop();
-    this.load();
-  }
-
   // ---- rendering --------------------------------------------------------------------------------
 
   renderShell() {
     this.shadowRoot.innerHTML = `
       <style>
         ${SHARED_CSS}
-        ${GRANTEE_CHIP_CSS}
         .wrap { border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
         .toolbar { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
         .toolbar .grow { flex: 1; }
@@ -170,7 +132,10 @@ class ArazzoCredentialsTable extends ArazzoElement {
         .grant { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_muted); white-space: nowrap; }
         .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
         @keyframes pulse { 50% { opacity: 0.45; } }
-        ${PAGER_CSS}
+        .foot { display: flex; align-items: center; gap: 12px; padding: 9px 12px; background: var(--_surface); border-top: 1px solid var(--_border); font-size: 12px; color: var(--_muted); }
+        .pill { font-weight: 600; }
+        .pill.amber { color: var(--arazzo-status-suspended, #b07d18); }
+        .pill.red { color: var(--arazzo-status-faulted, #d4351c); }
       </style>
       <div class="wrap" part="table">
         <div class="toolbar" part="toolbar">
@@ -184,7 +149,7 @@ class ArazzoCredentialsTable extends ArazzoElement {
           </label>
           <input class="src" type="text" placeholder="source…" aria-label="Filter by source">
           <span class="grow"></span>
-          <button class="refresh ghost" type="button" title="Refresh">↻</button>
+          <button class="new primary" type="button" hidden>New credential</button>
         </div>
         <table>
           <thead>
@@ -192,7 +157,7 @@ class ArazzoCredentialsTable extends ArazzoElement {
           </thead>
           <tbody part="rows"></tbody>
         </table>
-        <arazzo-pager class="pager" part="pager"></arazzo-pager>
+        <div class="foot" part="foot"></div>
       </div>
     `;
     const status = this.$('.status');
@@ -201,9 +166,7 @@ class ArazzoCredentialsTable extends ArazzoElement {
     const src = this.$('.src');
     src.value = this.getAttribute('source') || '';
     src.addEventListener('input', () => this.filters = { ...this.filters, source: src.value.trim() || undefined });
-    this.$('.refresh').addEventListener('click', () => this.reload());
-    this.$('arazzo-pager').addEventListener('prev', () => this.prevPage());
-    this.$('arazzo-pager').addEventListener('next', () => this.nextPage());
+    this.$('.new').addEventListener('click', () => this.emit('credential-new', {}));
   }
 
   visibleBindings() {
@@ -218,6 +181,9 @@ class ArazzoCredentialsTable extends ArazzoElement {
     const tbody = this.$('tbody');
     if (!tbody) return;
     const selectable = this.hasAttribute('selectable');
+    const scopes = (this.getAttribute('scopes') || '').split(/\s+/).filter(Boolean);
+    const newBtn = this.$('.new');
+    if (newBtn) newBtn.hidden = !(scopes.length === 0 || scopes.includes('credentials:write'));
 
     if (this._error) {
       tbody.innerHTML = `<tr><td colspan="6">
@@ -247,7 +213,6 @@ class ArazzoCredentialsTable extends ArazzoElement {
     if (selectable) {
       this.$$('tbody tr.selectable').forEach((tr) => tr.addEventListener('click', () => this.select(tr.dataset.key)));
     }
-    // View / rotate / duplicate / revoke are actions on the selected row's detail pane (master-detail), not row buttons.
 
     const expiring = rows.filter((b) => b.credentialStatus === 'expiringSoon').length;
     const expired = rows.filter((b) => b.credentialStatus === 'expired').length;
@@ -259,8 +224,8 @@ class ArazzoCredentialsTable extends ArazzoElement {
     const key = `${b.sourceName}@${b.environment}`;
     const status = STATUS[b.credentialStatus] || { label: b.credentialStatus, color: 'var(--_muted)' };
     const ref = b.secretRefs?.[0]?.ref;
-    const grants = b.usageGrantee && Array.isArray(b.usageGrantee.identity) && b.usageGrantee.identity.length > 0
-      ? `<div class="grants">${granteeChip(b.usageGrantee)}</div>`
+    const grants = Array.isArray(b.usageGrants) && b.usageGrants.length > 0
+      ? `<div class="grants">${b.usageGrants.map((g) => `<span class="grant">${escapeHtml(g.dimension)}=${escapeHtml(g.value)}</span>`).join('')}</div>`
       : '<span class="muted">—</span>';
     const expires = b.expiresAt
       ? `<span title="${escapeHtml(absoluteTime(b.expiresAt))}">${escapeHtml(shortDate(b.expiresAt))} <span class="muted">(${escapeHtml(countdown(b.expiresAt))})</span></span>`
@@ -278,18 +243,14 @@ class ArazzoCredentialsTable extends ArazzoElement {
   }
 
   renderFoot(expiring, expired) {
-    let info;
-    if (this._loading) {
-      info = 'Loading…';
-    } else {
-      const total = this.visibleBindings().length;
-      const parts = [`${total} binding${total === 1 ? '' : 's'}`];
-      if (expiring > 0) parts.push(`<span class="pill amber">${expiring} expiring soon</span>`);
-      if (expired > 0) parts.push(`<span class="pill red">${expired} expired</span>`);
-      if (this._history.length) parts.push(`page ${this._history.length + 1}`);
-      info = parts.join(' · ');
-    }
-    this.$('arazzo-pager')?.update({ hasPrev: this._history.length > 0, hasNext: !!this._nextPageToken, loading: this._loading, info });
+    const foot = this.$('.foot');
+    if (!foot) return;
+    if (this._loading) { foot.textContent = 'Loading…'; return; }
+    const total = this.visibleBindings().length;
+    const parts = [`${total} binding${total === 1 ? '' : 's'}`];
+    if (expiring > 0) parts.push(`<span class="pill amber">${expiring} expiring soon</span>`);
+    if (expired > 0) parts.push(`<span class="pill red">${expired} expired</span>`);
+    foot.innerHTML = parts.join(' · ');
   }
 
   /** Select a binding by `source@environment` (highlights the row and emits `credential-selected`). */

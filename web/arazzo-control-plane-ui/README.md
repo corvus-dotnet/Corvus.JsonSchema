@@ -30,10 +30,14 @@ package `exports` — `@corvus-dotnet/arazzo-control-plane-ui`, `.../client`, `.
   strongly-typed form built from a step's precomputed schema metadata — the output editor for Skip's
   `skipOutputs`) for runs;
   `<arazzo-catalog-table>`,
-  `<arazzo-catalog-detail>`, `<arazzo-catalog-add-dialog>` for the workflow catalog. Each works alone. The
+  `<arazzo-catalog-detail>`, `<arazzo-catalog-add-dialog>` for the workflow catalog;
+  `<arazzo-credentials-table>` (a status-first rotation worklist), `<arazzo-credential-dialog>` (create/edit;
+  re-pointing a reference rotates), and `<arazzo-administrators-panel>` for the source-credential (§13) and
+  workflow-administration (§15) surfaces. Each works alone. The
   add dialog can build the package archive in-browser from a workflow + its sources (`./workflow-package` ·
   [`src/workflow-package.js`](./src/workflow-package.js)) or upload a pre-built one; the catalog assigns the
-  version number server-side.
+  version number server-side. The credential components move **references and non-secret metadata only — never
+  secret material**.
 - **Layer 2 — `<arazzo-control-plane>`** ([`src/arazzo-control-plane.js`](./src/arazzo-control-plane.js)) and
   **`<arazzo-catalog>`** ([`src/arazzo-catalog.js`](./src/arazzo-catalog.js)): the reference panels that
   compose Layer 1 into a run-management screen and a catalog browse/govern screen respectively.
@@ -102,6 +106,9 @@ The kit never embeds an IdP flow. Configure credentials one of three ways (prece
 | `<arazzo-cancel-button>` | `base-url`, `runid`, `label`, `disabled`, `no-confirm` | `run-cancelled`, `error` |
 | `<arazzo-purge-dialog>` | (`.client`, `.open()`) | `purge-completed`, `error` |
 | `<arazzo-status-badge>` | `status` | — |
+| `<arazzo-credentials-table>` | `base-url`, `status`, `source`, `selectable`, `scopes` | `credential-selected`, `credential-new`, `loaded`, `error` |
+| `<arazzo-credential-dialog>` | (`.client`, `.open(binding?)`) | `credential-saved`, `error` |
+| `<arazzo-administrators-panel>` | `base-url`, `base-workflow-id`, `scopes` | `administrators-changed`, `error` |
 | `<arazzo-control-plane>` | `base-url`, `scopes`, `theme`, `poll` | re-emits the above |
 
 The runs table / panel filter server-side by status, workflowId, and a **time window** — `created-after` /

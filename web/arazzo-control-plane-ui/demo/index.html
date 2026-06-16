@@ -51,6 +51,8 @@
     <div class="tabs" role="tablist">
       <button id="tab-runs" role="tab" aria-selected="true" aria-controls="view-runs">Runs</button>
       <button id="tab-catalog" role="tab" aria-selected="false" aria-controls="view-catalog">Catalog</button>
+      <button id="tab-credentials" role="tab" aria-selected="false" aria-controls="view-credentials">Credentials</button>
+      <button id="tab-administrators" role="tab" aria-selected="false" aria-controls="view-administrators">Administrators</button>
     </div>
 
     <div id="view-runs" role="tabpanel">
@@ -59,6 +61,16 @@
 
     <div id="view-catalog" role="tabpanel" hidden>
       <arazzo-catalog base-url="https://mock/arazzo/v1" scopes="catalog:read catalog:write catalog:purge" theme="auto"></arazzo-catalog>
+    </div>
+
+    <div id="view-credentials" role="tabpanel" hidden>
+      <arazzo-credentials-table base-url="https://mock/arazzo/v1" scopes="credentials:read credentials:write" selectable></arazzo-credentials-table>
+      <arazzo-credential-dialog></arazzo-credential-dialog>
+    </div>
+
+    <div id="view-administrators" role="tabpanel" hidden>
+      <div class="controls"><label>Workflow <select id="admin-base"></select></label></div>
+      <arazzo-administrators-panel base-url="https://mock/arazzo/v1" scopes="administrators:read administrators:write"></arazzo-administrators-panel>
     </div>
 
     <p class="note">
@@ -70,14 +82,41 @@
 
   <script type="module">
     import { createMockControlPlane } from './mock-api.js';
+    import { ArazzoControlPlaneClient } from '../src/arazzo-client.js';
     import '../src/arazzo-control-plane.js';
     import '../src/arazzo-catalog.js';
+    import '../src/components/credentials-table.js';
+    import '../src/components/credential-dialog.js';
+    import '../src/components/administrators-panel.js';
 
     const mock = createMockControlPlane();
     const panel = document.querySelector('arazzo-control-plane');
     const catalog = document.querySelector('arazzo-catalog');
     panel.fetch = mock.fetch; // inject the mock; a real host sets panel.authProvider instead
     catalog.fetch = mock.fetch;
+
+    // The Layer-1 credential/administrator components take a Layer-0 client (not a fetch hook); share one
+    // built over the mock. A real host builds the client with its own auth (getAuthHeader/fetch).
+    const client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+    const credTable = document.querySelector('arazzo-credentials-table');
+    const credDialog = document.querySelector('arazzo-credential-dialog');
+    const admins = document.querySelector('arazzo-administrators-panel');
+    credTable.client = client;
+    credDialog.client = client;
+    admins.client = client;
+
+    // Credentials: the table emits; wire its new/select to the dialog, and the dialog's save back to a refresh.
+    credTable.addEventListener('credential-new', () => credDialog.open());
+    credTable.addEventListener('credential-selected', (e) => credDialog.open(e.detail.binding));
+    credDialog.addEventListener('credential-saved', () => credTable.refresh());
+
+    // Administrators: a workflow selector drives the panel's base id.
+    const adminBase = document.getElementById('admin-base');
+    for (const id of ['nightly-reconcile', 'onboard-customer', 'adopt-pet', 'ghost']) {
+      const o = document.createElement('option'); o.value = id; o.textContent = id; adminBase.appendChild(o);
+    }
+    admins.baseWorkflowId = adminBase.value;
+    adminBase.addEventListener('change', () => { admins.baseWorkflowId = adminBase.value; });
 
     // Theme drives the panels (their `theme` attribute) and the surrounding page (arazzo-kit.css honours
     // data-theme on <html>); 'auto' falls back to the OS preference for both.
@@ -91,24 +130,27 @@
     themeSel.addEventListener('change', (e) => applyTheme(e.target.value));
     applyTheme(themeSel.value);
 
-    // The scope selector carries both runs:* and catalog:* — split per panel so each only sees its own.
+    // The scope selector carries runs:* / catalog:* / credentials:* / administrators:* — split per surface.
+    const prefixed = (value, prefix) => value.split(/\s+/).filter((s) => s.startsWith(prefix)).join(' ');
     document.getElementById('scopes').addEventListener('change', (e) => {
-      const all = e.target.value.split(/\s+/);
-      panel.setAttribute('scopes', all.filter((s) => s.startsWith('runs:')).join(' '));
-      catalog.setAttribute('scopes', all.filter((s) => s.startsWith('catalog:')).join(' '));
+      const all = e.target.value;
+      panel.setAttribute('scopes', prefixed(all, 'runs:'));
+      catalog.setAttribute('scopes', prefixed(all, 'catalog:'));
+      credTable.setAttribute('scopes', prefixed(all, 'credentials:'));
+      admins.setAttribute('scopes', prefixed(all, 'administrators:'));
     });
 
     // Tabs.
-    const tabs = { runs: document.getElementById('tab-runs'), catalog: document.getElementById('tab-catalog') };
-    const views = { runs: document.getElementById('view-runs'), catalog: document.getElementById('view-catalog') };
+    const tabNames = ['runs', 'catalog', 'credentials', 'administrators'];
+    const tabs = Object.fromEntries(tabNames.map((n) => [n, document.getElementById(`tab-${n}`)]));
+    const views = Object.fromEntries(tabNames.map((n) => [n, document.getElementById(`view-${n}`)]));
     const selectTab = (name) => {
-      for (const key of Object.keys(tabs)) {
+      for (const key of tabNames) {
         tabs[key].setAttribute('aria-selected', String(key === name));
         views[key].hidden = key !== name;
       }
     };
-    tabs.runs.addEventListener('click', () => selectTab('runs'));
-    tabs.catalog.addEventListener('click', () => selectTab('catalog'));
+    for (const name of tabNames) tabs[name].addEventListener('click', () => selectTab(name));
 
     // Surface kit events in the console so you can see the composition contract at work.
     for (const type of ['run-selected', 'run-changed', 'run-deleted', 'purge-completed', 'error']) {
@@ -117,6 +159,10 @@
     for (const type of ['version-selected', 'workflow-added', 'version-changed', 'version-deleted', 'purge-completed', 'error']) {
       catalog.addEventListener(type, (e) => console.log(`[arazzo:catalog] ${type}`, e.detail));
     }
+    for (const type of ['credential-selected', 'credential-new', 'credential-saved', 'loaded', 'error']) {
+      credTable.addEventListener(type, (e) => console.log(`[arazzo:credentials] ${type}`, e.detail));
+    }
+    admins.addEventListener('administrators-changed', (e) => console.log('[arazzo:administrators] changed', e.detail));
   </script>
 </body>
 </html>
