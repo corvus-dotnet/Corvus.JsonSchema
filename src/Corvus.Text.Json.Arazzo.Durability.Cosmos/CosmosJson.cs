@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Buffers;
+using System.Buffers.Text;
 using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
@@ -248,18 +249,46 @@ internal static class CosmosJson
         return null;
     }
 
-    /// <summary>Reads a base64-encoded string property and decodes it straight to bytes — no intermediate managed
-    /// string — for a payload stored verbatim as base64 (e.g. a credential binding document). Returns
-    /// <see langword="null"/> if the property is absent or JSON null.</summary>
+    /// <summary>Decodes a base64 value held as raw UTF-8 (e.g. a generated base64-string property's
+    /// <c>GetUtf8String().Span</c>) straight to an owned <see cref="byte"/> array via the UTF-8 buffer decoder — no
+    /// intermediate managed base64 string. The decode runs through pooled scratch; the returned array is sized to the
+    /// exact decoded length (the form a caller that keeps the bytes, e.g. a package/checkpoint, demands).</summary>
+    /// <param name="utf8Base64">The base64 text as UTF-8 bytes.</param>
+    /// <returns>The decoded bytes (one owned array).</returns>
+    public static byte[] DecodeBase64Utf8(ReadOnlySpan<byte> utf8Base64)
+    {
+        if (utf8Base64.IsEmpty)
+        {
+            return [];
+        }
+
+        byte[] scratch = ArrayPool<byte>.Shared.Rent(Base64.GetMaxDecodedFromUtf8Length(utf8Base64.Length));
+        try
+        {
+            Base64.DecodeFromUtf8(utf8Base64, scratch, out _, out int written);
+            return scratch.AsSpan(0, written).ToArray();
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(scratch);
+        }
+    }
+
+    /// <summary>Returns the <strong>raw UTF-8 bytes</strong> of a property's value (any JSON value — object, array,
+    /// scalar) as a slice of <paramref name="element"/> — no copy, no decode. Used to read a document that was embedded
+    /// verbatim as a nested JSON value (via <see cref="Utf8JsonWriter.WriteRawValue(ReadOnlySpan{byte}, bool)"/>) rather
+    /// than base64-wrapped, so a JSON payload round-trips with no spurious encode/decode. Empty if the property is
+    /// absent. The returned memory is a view into <paramref name="element"/>; copy it (e.g. parse it) before that
+    /// backing buffer is reused.</summary>
     /// <param name="element">The element JSON.</param>
     /// <param name="propertyUtf8">The UTF-8 property name.</param>
-    /// <returns>The decoded bytes (one owned array, the read leaf), or <see langword="null"/>.</returns>
-    public static byte[]? GetBytesFromBase64(ReadOnlyMemory<byte> element, ReadOnlySpan<byte> propertyUtf8)
+    /// <returns>The value's raw UTF-8 bytes, or empty if absent.</returns>
+    public static ReadOnlyMemory<byte> GetRawValue(ReadOnlyMemory<byte> element, ReadOnlySpan<byte> propertyUtf8)
     {
         var reader = new Utf8JsonReader(element.Span);
         if (!reader.Read() || reader.TokenType != JsonTokenType.StartObject)
         {
-            return null;
+            return default;
         }
 
         while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
@@ -268,13 +297,15 @@ internal static class CosmosJson
             reader.Read();
             if (match)
             {
-                return reader.TokenType == JsonTokenType.Null ? null : reader.GetBytesFromBase64();
+                int start = (int)reader.TokenStartIndex;
+                reader.Skip();
+                return element[start..(int)reader.BytesConsumed];
             }
 
             reader.Skip();
         }
 
-        return null;
+        return default;
     }
 
     /// <summary>Reads an integer property from a projection element, or <see langword="null"/> if absent/not a number.</summary>
