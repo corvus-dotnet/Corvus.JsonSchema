@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Globalization;
 using Corvus.Text.Json;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Security;
@@ -109,7 +108,7 @@ public readonly partial struct WorkflowAdministrators
         writer.WriteString(JsonPropertyNames.BaseWorkflowIdUtf8, baseWorkflowId);
         WriteAdministrators(writer, administrators);
         writer.WriteString(JsonPropertyNames.CreatedByUtf8, actor);
-        writer.WriteString(JsonPropertyNames.CreatedAtUtf8, createdAt.ToString("O", CultureInfo.InvariantCulture));
+        writer.WriteString(JsonPropertyNames.CreatedAtUtf8, createdAt);
         writer.WriteString(JsonPropertyNames.EtagUtf8, etag.Value ?? string.Empty);
         writer.WriteEndObject();
     }
@@ -126,9 +125,9 @@ public readonly partial struct WorkflowAdministrators
         writer.WriteString(JsonPropertyNames.BaseWorkflowIdUtf8, this.BaseWorkflowIdValue);
         WriteAdministrators(writer, administrators);
         writer.WriteString(JsonPropertyNames.CreatedByUtf8, this.CreatedByValue);
-        writer.WriteString(JsonPropertyNames.CreatedAtUtf8, (string)this.CreatedAt);
+        writer.WriteString(JsonPropertyNames.CreatedAtUtf8, this.CreatedAtValue);
         writer.WriteString(JsonPropertyNames.LastUpdatedByUtf8, actor);
-        writer.WriteString(JsonPropertyNames.LastUpdatedAtUtf8, updatedAt.ToString("O", CultureInfo.InvariantCulture));
+        writer.WriteString(JsonPropertyNames.LastUpdatedAtUtf8, updatedAt);
         writer.WriteString(JsonPropertyNames.EtagUtf8, etag.Value ?? string.Empty);
         writer.WriteEndObject();
     }
@@ -148,6 +147,8 @@ public readonly partial struct WorkflowAdministrators
         writer.WriteEndArray();
     }
 
+    // Read the instant from the strongly-typed date-time element via its native NodaTime value — no managed-string
+    // realization and no JsonElement hop (the house idiom, e.g. RunnerRegistration, SecurityRuleDocument).
     private static DateTimeOffset ParseDate(in JsonDateTime value)
-        => DateTimeOffset.Parse((string)value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+        => ((NodaTime.OffsetDateTime)value).ToDateTimeOffset();
 }

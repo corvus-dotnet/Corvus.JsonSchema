@@ -60,6 +60,9 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         return ListRunsResult.Ok(BuildPage(page), workspace);
     }
 
+    // Untrusted client-supplied instant (query param / request body): parse leniently with the framework ISO parser.
+    // NodaTime's OffsetDateTime conversion is stricter and rejects some valid client formats, so it is NOT used here —
+    // unlike the durability schema types, whose dates we write ourselves and read back via the NodaTime value.
     private static DateTimeOffset? ParseInstant(Models.JsonDateTime value)
         => value.IsNotUndefined()
             ? DateTimeOffset.Parse((string)value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)
