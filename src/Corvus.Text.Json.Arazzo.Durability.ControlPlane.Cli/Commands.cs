@@ -88,6 +88,17 @@ internal class RunsSettings : CommandSettings
         return (http, transport, new ApiAdministratorsClient(transport));
     }
 
+    /// <summary>Builds the access-request API client (and the HTTP client / transport it owns) for this invocation.</summary>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The HTTP client, transport, and access-request API client. Dispose the HTTP client and transport.</returns>
+    public async Task<(HttpClient Http, HttpClientTransport Transport, ApiAccessRequestsClient Client)> CreateAccessRequestsClientAsync(CancellationToken cancellationToken)
+    {
+        string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
+        HttpClient http = this.CreateHttpClient();
+        var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
+        return (http, transport, new ApiAccessRequestsClient(transport));
+    }
+
     private string? ResolveServer() => this.Server ?? Environment.GetEnvironmentVariable("ARAZZO_RUNS_SERVER");
 
     /// <summary>
