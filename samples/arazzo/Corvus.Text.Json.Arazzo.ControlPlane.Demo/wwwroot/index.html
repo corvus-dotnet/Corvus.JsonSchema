@@ -75,7 +75,11 @@
     // /me is absent (404), so this is inert and the sign-in bar stays hidden. The cookie travels same-origin.
     const loginUrl = () => '/login?returnUrl=' + encodeURIComponent(location.pathname + location.search);
     const authFetch = async (input, init = {}) => {
-      const res = await fetch(input, { credentials: 'include', ...init });
+      // X-CSRF anti-forgery (§16.3): the server requires this header on cookie-authenticated state-changing
+      // calls; sending it on every request is harmless and forces a CORS preflight that isolates cross-origin.
+      const headers = new Headers(init.headers || {});
+      headers.set('X-CSRF', '1');
+      const res = await fetch(input, { credentials: 'include', ...init, headers });
       if (res.status === 401) { location.assign(loginUrl()); return new Promise(() => {}); }
       return res;
     };
