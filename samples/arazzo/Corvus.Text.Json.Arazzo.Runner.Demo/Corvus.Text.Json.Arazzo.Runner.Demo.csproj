@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Aspire service defaults: OpenTelemetry (incl. the shared Corvus.Arazzo source/meter), health checks,
+         service discovery, HTTP resilience — the runner's traces/logs/metrics flow to the Aspire dashboard. -->
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo.ControlPlane.Demo.ServiceDefaults\Corvus.Text.Json.Arazzo.ControlPlane.Demo.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo\Corvus.Text.Json.Arazzo.csproj" />
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability\Corvus.Text.Json.Arazzo.Durability.csproj" />
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.Sqlite\Corvus.Text.Json.Arazzo.Durability.Sqlite.csproj" />
+  </ItemGroup>
+
+</Project>
