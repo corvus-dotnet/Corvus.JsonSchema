@@ -82,7 +82,13 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         ValidateWorkflowId(definition.BaseWorkflowId);
 
         ParsedJsonDocument<AccessRequest> created = await this.requests.CreateAsync(definition, actor, cancellationToken).ConfigureAwait(false);
-        if (!eligibleForSelfElevation)
+
+        // Self-elevation eligibility is symmetric to capability (§16.5.3): claims ∪ stored eligibility. The caller
+        // resolves the IdP-coarse claims part; here we add the approver-granted part — a stored eligibility assignment
+        // (an eligibleOnly binding) for this subject + workflow + scopes. Either source auto-approves into a fresh,
+        // time-boxed active grant; otherwise the request stays pending for a human approver.
+        bool eligible = eligibleForSelfElevation || await this.IsStoredEligibleAsync(definition, cancellationToken).ConfigureAwait(false);
+        if (!eligible)
         {
             return created;
         }
@@ -122,6 +128,65 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         RequireStatus(request, AccessRequestStatusNames.Pending);
         await this.EnsureAdministratorAsync(request.BaseWorkflowIdValue, approverIdentity, cancellationToken).ConfigureAwait(false);
         return await this.GrantAndDecideAsync(request, request.EtagValue, actor, reason, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Approves a pending request as <em>durable eligibility</em> (§16.5.3): writes an eligibility assignment
+    /// (an <c>eligibleOnly</c> binding) rather than a live grant, so the requester may thereafter self-elevate this
+    /// capability JIT without re-approval. The approver must be a §15 administrator of the target workflow.</summary>
+    /// <param name="requestId">The request id.</param>
+    /// <param name="approverIdentity">The approver's unforgeable identity tags.</param>
+    /// <param name="actor">The approver's audit identity.</param>
+    /// <param name="reason">An optional approval note.</param>
+    /// <param name="eligibilityWindow">How long the eligibility itself lasts; <see langword="null"/> is standing eligibility. Each activation is independently capped at the deployment max TTL.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The request marked <see cref="AccessRequestStatus.Eligible"/>, or <see langword="null"/> if no request with that id exists.</returns>
+    /// <exception cref="WorkflowAdministrationException">The approver is not an administrator of the target workflow.</exception>
+    /// <exception cref="AccessRequestStateException">The request is not pending, or none of its scopes is grantable.</exception>
+    public async ValueTask<ParsedJsonDocument<AccessRequest>?> ApproveAsEligibleAsync(string requestId, SecurityTagSet approverIdentity, string actor, string? reason, TimeSpan? eligibilityWindow, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(requestId);
+        ArgumentNullException.ThrowIfNull(actor);
+        using ParsedJsonDocument<AccessRequest>? fetched = await this.requests.GetAsync(requestId, cancellationToken).ConfigureAwait(false);
+        if (fetched is null)
+        {
+            return null;
+        }
+
+        AccessRequest request = fetched.RootElement;
+        RequireStatus(request, AccessRequestStatusNames.Pending);
+        await this.EnsureAdministratorAsync(request.BaseWorkflowIdValue, approverIdentity, cancellationToken).ConfigureAwait(false);
+
+        List<string> granted = this.CapScopes(request.RequestedScopesArray());
+        if (granted.Count == 0)
+        {
+            throw new AccessRequestStateException(request.IdValue, "None of the requested scopes is grantable (eligibility may cover only run access).");
+        }
+
+        DateTimeOffset? expiresAt = eligibilityWindow is { } window ? this.timeProvider.GetUtcNow().Add(window) : null;
+        string bindingId = await this.WriteBindingAsync(request, granted, actor, eligibleOnly: true, expiresAt: expiresAt, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            // The eligibility assignment confers nothing active (the resolver ignores eligibleOnly bindings), so there is
+            // no in-process policy refresh — only the self-elevation strategy reads it, from the store.
+            ParsedJsonDocument<AccessRequest>? decided = await this.requests.DecideAsync(
+                request.IdValue,
+                new AccessRequestDecision(AccessRequestStatus.Eligible, reason, bindingId, expiresAt),
+                request.EtagValue,
+                actor,
+                cancellationToken).ConfigureAwait(false);
+
+            if (decided is null)
+            {
+                await this.RevokeBindingAsync(bindingId, cancellationToken).ConfigureAwait(false);
+            }
+
+            return decided;
+        }
+        catch (AccessRequestConflictException)
+        {
+            await this.RevokeBindingAsync(bindingId, cancellationToken).ConfigureAwait(false);
+            throw;
+        }
     }
 
     /// <summary>Denies a pending request. The decider must be a §15 administrator of the target workflow.</summary>
@@ -178,8 +243,9 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         return await this.requests.DecideAsync(requestId, new AccessRequestDecision(AccessRequestStatus.Withdrawn), request.EtagValue, actor, cancellationToken).ConfigureAwait(false);
     }
 
-    /// <summary>Revokes an approved grant early. The revoker must be a §15 administrator of the target workflow; the
-    /// granted binding is deleted (so access stops at the next resolution, fail-safe) before the request is marked revoked.</summary>
+    /// <summary>Revokes an approved grant or an eligibility assignment early. The revoker must be a §15 administrator
+    /// of the target workflow; the granted binding is deleted (an active grant stops at the next resolution, fail-safe;
+    /// an eligibility assignment can no longer be activated) before the request is marked revoked.</summary>
     /// <param name="requestId">The request id.</param>
     /// <param name="approverIdentity">The administrator's unforgeable identity tags.</param>
     /// <param name="actor">The administrator's audit identity.</param>
@@ -187,7 +253,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The revoked request, or <see langword="null"/> if absent.</returns>
     /// <exception cref="WorkflowAdministrationException">The revoker is not an administrator of the target workflow.</exception>
-    /// <exception cref="AccessRequestStateException">The request is not an approved grant.</exception>
+    /// <exception cref="AccessRequestStateException">The request is not an approved grant or an eligibility assignment.</exception>
     public async ValueTask<ParsedJsonDocument<AccessRequest>?> RevokeAsync(string requestId, SecurityTagSet approverIdentity, string actor, string? reason, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(requestId);
@@ -199,10 +265,11 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         }
 
         AccessRequest request = fetched.RootElement;
-        RequireStatus(request, AccessRequestStatusNames.Approved);
+        RequireRevocable(request);
         await this.EnsureAdministratorAsync(request.BaseWorkflowIdValue, approverIdentity, cancellationToken).ConfigureAwait(false);
 
-        // Security first: drop the active grant so access stops immediately, then record the revocation.
+        // Security first: drop the granted binding so access stops immediately (an eligibility assignment can no longer
+        // be activated), then record the revocation.
         if (request.GrantedBindingIdOrNull is { } bindingId)
         {
             await this.RevokeBindingAsync(bindingId, cancellationToken).ConfigureAwait(false);
@@ -221,6 +288,17 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         if (!string.Equals(request.StatusValue, expected, StringComparison.Ordinal))
         {
             throw new AccessRequestStateException(request.IdValue, $"The request is {request.StatusValue}, not {expected}.");
+        }
+    }
+
+    // Only a live grant (Approved) or a standing eligibility assignment (Eligible) can be revoked.
+    private static void RequireRevocable(AccessRequest request)
+    {
+        string status = request.StatusValue;
+        if (!string.Equals(status, AccessRequestStatusNames.Approved, StringComparison.Ordinal)
+            && !string.Equals(status, AccessRequestStatusNames.Eligible, StringComparison.Ordinal))
+        {
+            throw new AccessRequestStateException(request.IdValue, $"The request is {status}; only an approved grant or an eligibility assignment can be revoked.");
         }
     }
 
@@ -278,20 +356,29 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         }
     }
 
+    // The active-grant path: time-box the entitlement at min(requested, max TTL) from now, then write it.
     private async ValueTask<(string BindingId, DateTimeOffset ExpiresAt)> WriteGrantAsync(AccessRequest request, IReadOnlyList<string> granted, string actor, CancellationToken cancellationToken)
     {
-        string baseWorkflowId = request.BaseWorkflowIdValue;
-        ValidateWorkflowId(baseWorkflowId);
-        string ruleName = await this.EnsureWorkflowRuleAsync(baseWorkflowId, actor, cancellationToken).ConfigureAwait(false);
-
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         long maxSeconds = (long)this.options.MaxTtl.TotalSeconds;
         long requested = request.RequestedDurationSecondsOrNull ?? maxSeconds;
         long seconds = Math.Clamp(requested, 1, maxSeconds);
         DateTimeOffset expiresAt = now.AddSeconds(seconds);
 
-        // The capability scope and its matching row reach are granted together: runs:read → read-reach to the
-        // workflow's rows, runs:write → write-reach. Purge is never granted.
+        string bindingId = await this.WriteBindingAsync(request, granted, actor, eligibleOnly: false, expiresAt: expiresAt, cancellationToken).ConfigureAwait(false);
+        return (bindingId, expiresAt);
+    }
+
+    // Writes a single security-policy binding for the requester on the target workflow — the shared shape of an active
+    // grant and an eligibility assignment. The capability scope and its matching row reach are granted together:
+    // runs:read → read-reach to the workflow's rows, runs:write → write-reach; purge is never granted. An eligibleOnly
+    // binding confers nothing active (the resolver ignores it) — it records the eligibility the self-elevation strategy reads.
+    private async ValueTask<string> WriteBindingAsync(AccessRequest request, IReadOnlyList<string> granted, string actor, bool eligibleOnly, DateTimeOffset? expiresAt, CancellationToken cancellationToken)
+    {
+        string baseWorkflowId = request.BaseWorkflowIdValue;
+        ValidateWorkflowId(baseWorkflowId);
+        string ruleName = await this.EnsureWorkflowRuleAsync(baseWorkflowId, actor, cancellationToken).ConfigureAwait(false);
+
         VerbGrant reach = VerbGrant.Rules(ruleName);
         var definition = new SecurityBindingDefinition(
             request.SubjectClaimTypeValue,
@@ -299,18 +386,19 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
             Read: granted.Contains(ControlPlaneScopes.RunsRead) ? reach : VerbGrant.None,
             Write: granted.Contains(ControlPlaneScopes.RunsWrite) ? reach : VerbGrant.None,
             Purge: VerbGrant.None,
-            Description: "Access request " + request.IdValue,
+            Description: (eligibleOnly ? "Eligibility for access request " : "Access request ") + request.IdValue,
             Scopes: granted,
-            ExpiresAt: expiresAt);
+            ExpiresAt: expiresAt,
+            EligibleOnly: eligibleOnly);
 
         using ParsedJsonDocument<SecurityBindingDocument> binding = await this.policy.AddBindingAsync(definition, actor, cancellationToken).ConfigureAwait(false);
-        return (binding.RootElement.IdValue, expiresAt);
+        return binding.RootElement.IdValue;
     }
 
     // Ensures the per-workflow reach rule (sys:workflow == '<id>') exists, idempotently, and returns its name.
     private async ValueTask<string> EnsureWorkflowRuleAsync(string baseWorkflowId, string actor, CancellationToken cancellationToken)
     {
-        string ruleName = "workflow-access:" + baseWorkflowId;
+        string ruleName = WorkflowRuleName(baseWorkflowId);
         using (ParsedJsonDocument<SecurityRuleDocument>? existing = await this.policy.GetRuleAsync(ruleName, cancellationToken).ConfigureAwait(false))
         {
             if (existing is not null)
@@ -358,13 +446,14 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
     }
 
     // The platform cap on scopes: at most the requested scopes that the deployment allows (run access only).
-    private List<string> CapScopes(AccessRequest request)
+    private List<string> CapScopes(AccessRequest request) => this.CapScopes(request.RequestedScopesArray());
+
+    private List<string> CapScopes(IReadOnlyList<string> requested)
     {
-        string[] requested = request.RequestedScopesArray();
         var granted = new List<string>(this.options.GrantableScopes.Count);
         foreach (string allowed in this.options.GrantableScopes)
         {
-            if (Array.IndexOf(requested, allowed) >= 0 && !granted.Contains(allowed))
+            if (requested.Contains(allowed) && !granted.Contains(allowed))
             {
                 granted.Add(allowed);
             }
@@ -372,6 +461,80 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
 
         return granted;
     }
+
+    // Approver-granted eligibility (§16.5.3): is there an eligibleOnly binding for this subject that covers the
+    // requested workflow + (capped) scopes and has not lapsed? Read from the store directly — the resolver excludes
+    // eligibility from active resolution. A cold submit-path scan over the bindings; a by-claim query is a later refinement.
+    private async ValueTask<bool> IsStoredEligibleAsync(AccessRequestDefinition definition, CancellationToken cancellationToken)
+    {
+        List<string> capped = this.CapScopes(definition.RequestedScopes);
+        if (capped.Count == 0)
+        {
+            return false;
+        }
+
+        string ruleName = WorkflowRuleName(definition.BaseWorkflowId);
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        using PooledDocumentList<SecurityBindingDocument> bindings = await this.policy.ListBindingsAsync(cancellationToken).ConfigureAwait(false);
+        foreach (SecurityBindingDocument binding in bindings)
+        {
+            if (!binding.EligibleOnlyValue
+                || !string.Equals(binding.ClaimTypeValue, definition.SubjectClaimType, StringComparison.Ordinal)
+                || !string.Equals(binding.ClaimValueOrNull, definition.SubjectClaimValue, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            // A lapsed eligibility window grants nothing — fail-safe, the same shape as an expired active grant.
+            if (binding.ExpiresAtValue is { } expiresAt && expiresAt <= now)
+            {
+                continue;
+            }
+
+            // The assignment must be for this workflow (its reach names the workflow rule) and cover every capped scope.
+            if ((GrantsRule(binding.Read, ruleName) || GrantsRule(binding.Write, ruleName)) && CoversAll(binding.ScopesArray(), capped))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // Whether a per-verb grant names the given rule (an eligibility/grant binding's reach is the workflow's access rule).
+    private static bool GrantsRule(VerbGrant grant, string ruleName)
+    {
+        if (!grant.HasRuleNames)
+        {
+            return false;
+        }
+
+        foreach (JsonString name in grant.RuleNames.EnumerateArray())
+        {
+            if (string.Equals((string)name, ruleName, StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // Whether the eligible binding's granted scopes cover every (capped) requested scope.
+    private static bool CoversAll(string[] eligibleScopes, IReadOnlyList<string> required)
+    {
+        foreach (string scope in required)
+        {
+            if (Array.IndexOf(eligibleScopes, scope) < 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static string WorkflowRuleName(string baseWorkflowId) => "workflow-access:" + baseWorkflowId;
 
     private ValueTask RefreshAsync(CancellationToken cancellationToken) => this.rowSecurity?.RefreshAsync(cancellationToken) ?? default;
 }

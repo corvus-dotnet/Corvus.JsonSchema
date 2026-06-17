@@ -1450,6 +1450,29 @@
         }
       }
     },
+    "/accessRequests/{requestId}/approve-as-eligible": {
+      "parameters": [
+        { "name": "requestId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The access request id." }
+      ],
+      "post": {
+        "operationId": "approveAccessRequestAsEligible",
+        "security": [{ "oauth2": [] }, { "openIdConnect": [] }, { "mtls": [] }],
+        "tags": ["accessRequests"],
+        "summary": "Approve an access request as durable eligibility",
+        "description": "Approves a pending request as durable eligibility (design §16.5.3) rather than as a live grant: writes a capped eligibility assignment scoped to the workflow, after which the requester may self-elevate JIT without re-approval (each activation independently time-boxed). The caller must be an administrator of the target workflow (403 otherwise). A request that is not pending conflicts (409); a request whose scopes are not grantable is rejected (400).",
+        "requestBody": {
+          "required": false,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessRequestEligibilityNote" } } }
+        },
+        "responses": {
+          "200": { "description": "The request marked eligible.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessRequestView" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
     "/accessRequests/{requestId}/deny": {
       "parameters": [
         { "name": "requestId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The access request id." }
@@ -2758,14 +2781,14 @@
           "requesterLabel": { "type": "string", "description": "An optional human-friendly requester label." },
           "reason": { "type": "string", "description": "The optional justification supplied with the request." },
           "requestedDurationSeconds": { "type": "integer", "format": "int64", "description": "The proposed time-bound duration in seconds, if any." },
-          "status": { "type": "string", "enum": ["Pending", "Approved", "Denied", "Withdrawn", "Revoked"], "description": "The lifecycle state." },
+          "status": { "type": "string", "enum": ["Pending", "Approved", "Denied", "Withdrawn", "Revoked", "Eligible"], "description": "The lifecycle state. 'Eligible' (§16.5.3) means the request was approved as durable eligibility — the requester may self-elevate this JIT — rather than as a live grant ('Approved')." },
           "createdBy": { "type": "string", "description": "The requester's audit identity." },
           "createdAt": { "type": "string", "format": "date-time", "description": "When the request was created." },
           "decidedBy": { "type": "string", "description": "The deciding identity, if decided." },
           "decidedAt": { "type": "string", "format": "date-time", "description": "When the request was decided, if decided." },
           "decisionReason": { "type": "string", "description": "An optional note recorded with the decision." },
-          "grantedBindingId": { "type": "string", "description": "On approval, the id of the security-policy binding that backs the grant (audit)." },
-          "grantedUntil": { "type": "string", "format": "date-time", "description": "When the granted entitlement expires (approved grants only)." },
+          "grantedBindingId": { "type": "string", "description": "The id of the security-policy binding that backs the grant ('Approved') or the eligibility assignment ('Eligible') (audit)." },
+          "grantedUntil": { "type": "string", "format": "date-time", "description": "When the granted entitlement (or, for 'Eligible', the eligibility window) expires; absent for a standing grant/eligibility." },
           "etag": { "type": "string", "description": "The request's optimistic-concurrency token." }
         },
         "required": ["id", "baseWorkflowId", "requestedScopes", "subjectClaimType", "subjectClaimValue", "status", "createdBy", "createdAt", "etag"]
@@ -2783,6 +2806,14 @@
         "description": "An optional note recorded with an approve/deny/withdraw/revoke decision (design §16.5).",
         "properties": {
           "reason": { "type": "string", "description": "An optional note explaining the decision." }
+        }
+      },
+      "AccessRequestEligibilityNote": {
+        "type": "object",
+        "description": "Options for approving a request as durable eligibility (design §16.5.3).",
+        "properties": {
+          "reason": { "type": "string", "description": "An optional note explaining the decision." },
+          "eligibilityWindowSeconds": { "type": "integer", "format": "int64", "minimum": 1, "description": "How long the eligibility itself lasts, in seconds; absent means standing eligibility. Each activation is independently capped at the deployment maximum TTL." }
         }
       }
     }
