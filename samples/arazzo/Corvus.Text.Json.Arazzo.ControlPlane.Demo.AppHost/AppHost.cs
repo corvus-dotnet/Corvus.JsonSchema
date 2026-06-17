@@ -47,11 +47,22 @@ var vaultInit = builder.AddContainer("vault-init", "hashicorp/vault", "1.18")
     .WithArgs("-c", provisionScript)
     .WaitFor(vault);
 
+// Keycloak — the identity provider (design §16). It is bootstrapped declaratively: the realm import seeds the
+// `arazzo` realm with an `arazzo-admins` group (→ the first system admin, §16.2), demo domain groups, a seed
+// admin + demo user, and the UI (auth-code+PKCE) and CLI (device-flow) OIDC clients with a `groups` claim mapper.
+// Ephemeral (no data volume): the realm is re-imported fresh on each run, matching the demo's reset-each-run
+// theme (the control plane wipes SQLite, Vault dev is in-memory) — predictable state, no volume drift.
+var keycloak = builder.AddKeycloak("keycloak")
+    .WithRealmImport("realms");
+
 // The ASP.NET control-plane host: the real server surface (catalog, runs, credentials, administrators, security)
 // plus the build-free web UI and the demo /svc backends. It stores credential *references* only (never binds to
-// Vault — the §13 invariant), so it needs no Vault token. Externally reachable; OTel flows to the dashboard.
+// Vault — the §13 invariant), so it needs no Vault token. It references Keycloak as the OIDC authority for token
+// validation (§16.3) and waits for the realm import. Externally reachable; OTel flows to the dashboard.
 var controlplane = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPlane_Demo>("controlplane")
     .WithEnvironment("ConnectionStrings__workflowstore", sharedStore)
+    .WithReference(keycloak)
+    .WaitFor(keycloak)
     .WithExternalHttpEndpoints()
     .WithHttpHealthCheck("/health");
 

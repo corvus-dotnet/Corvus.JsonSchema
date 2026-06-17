@@ -10,6 +10,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Keycloak hosting integration (AddKeycloak + WithRealmImport) for the §16 identity provider. -->
+    <PackageReference Include="Aspire.Hosting.Keycloak" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The declaratively-imported Keycloak realm (bind-mounted into the container by WithRealmImport). -->
+    <Content Include="realms\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- The Aspire.AppHost.Sdk turns this into a strongly-typed Projects.* reference for AddProject<T>.
          Aspire.Hosting.AppHost is added implicitly by the SDK (versionless under CPM; pinned in
          Directory.Packages.props). -->

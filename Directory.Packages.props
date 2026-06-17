@@ -134,6 +134,7 @@
     <!-- .NET Aspire composition + OpenTelemetry (arazzo demo AppHost + ServiceDefaults; versions track aspire CLI 13.4.4).
          Aspire.Hosting.AppHost is *not* listed here: the Aspire.AppHost.Sdk injects it already-versioned, and CPM
          forbids a PackageVersion for an implicitly-versioned reference (NU1009). -->
+    <PackageVersion Include="Aspire.Hosting.Keycloak" Version="13.4.5-preview.1.26316.12" />
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.6.0" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.6.0" />
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />
