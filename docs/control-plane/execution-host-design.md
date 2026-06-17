@@ -1053,6 +1053,63 @@ it doubles as the **ideal first live-executed workflow** (internal, controlled, 
 suspend/resume + a typed privileged action end to end), so it is the concrete motivation to unpause live
 execution, dogfooded on the system's own governance rather than a demo toy.
 
+### 16.5.2 Built-in access-request + approval — build plan
+
+The built-in (default-strategy) surface is built first. Two design decisions were taken (recorded here as the
+plan of record):
+
+- **Decision A — the grant lives in the Arazzo authorization plane (per-principal capability *and* reach).** An
+  approval writes a **single entitlement** binding the requester's subject claim to *both* a capability scope
+  (`runs:write`) and a row reach (`domain=payments`). Arazzo never mutates the IdP; capability and reach are
+  *both* resolved from claims **∪** stored per-principal entitlements. Rejected: "membership confers capability,
+  gate reach only" (weaker — everyone in a domain would hold run capability) and "reach-only now" (leaves the
+  grant semantics incomplete).
+- **Decision B — the request targets a workflow (per-workflow), routed to that workflow's §15 administrators.** A
+  request is *"run access to `nightly-reconcile`"*; it routes to the existing `IWorkflowAdministratorStore`
+  administrators of that base id (no new domain-admin registry). The granted reach may still be the workflow's
+  domain. Rejected: per-domain routing (would add a parallel admin registry; the design's "domain administrator"
+  language is a future generalization).
+
+**The Decision-A crux (two enforcement layers).** Reach is resolved *in* the handler
+(`PersistentRowSecurityPolicy.Resolve` → `AccessContext`); a scope is enforced *before* the handler by the
+authorization policy reading the `scope` claim. So a stored scope grant is only effective if it is **unioned into
+the principal's effective scopes at authentication time**, not merely in row security. The shape: extend the
+security-policy binding with an optional granted-`scopes[]`, and introduce **one entitlement resolver**
+(*claims ∪ stored per-principal grants → effective scopes + `AccessContext`*) that **both** the scope-authorization
+layer and the row-security layer consult (the demo `KeycloakClaimsTransformer` and the durable server both call
+it). One entitlement object carries scope + reach — exactly the §16.5 wording.
+
+**Performance invariant.** The entitlement resolver is a **per-request warm path**, so it is held to the
+security layer's low/zero-allocation bar: generated CTJ types (no hand-rolled records), ledger-then-code per op,
+and a `MemoryDiagnoser` benchmark proving the resolve path's allocation floor. The added
+scope-union must not regress the existing `Resolve`/`HasScope` warm path.
+
+**Platform cap (guardrail 2), enforced in the approval handler** (there is no write-time cap in the policy store
+today — the right place for it is the approval layer): an approval grants **at most** `requested ∩ a fixed
+grantable allowlist` — run capability + reach only, **never** `security:write`/system reach/a third party/
+escalation; the subject is fixed to the requester and the reach to the target workflow's domain.
+
+**Sequenced build (each its own gated, tested commit):**
+
+1. **Entitlement resolver** (Decision-A foundation) — extend the binding schema with optional `scopes[]`; the
+   unified resolver; wire granted scopes into the authorization scope source; unit-test claims ∪ grants; benchmark
+   the warm path. *Hardest/most core — first, in isolation.*
+2. **Access-request store + model** — a generated `AccessRequest` schema type (requester identity, target base id,
+   requested scopes, requested reach, status, decision audit, resulting-binding ref) + `IAccessRequestStore` +
+   `SqliteAccessRequestStore`.
+3. **Approval service** — over (1)+(2): gate approve on §15 admin-of-target-workflow; enforce the platform cap;
+   write the entitlement; mark Approved + audit; deny/withdraw paths.
+4. **API** — the `accessRequests` OpenAPI resource (`POST` create = any authenticated principal [guardrail 1];
+   `GET` list with mine/approvable filters; `GET {id}`; `POST {id}/approve|deny|withdraw`); regen server; handler;
+   wire into `MapArazzoControlPlane`.
+5. **CLI** — an `access-requests` command branch; regen client; integration tests.
+6. **Demo E2E** — wire the store into the demo host; prove the §16.5 worked example against real Keycloak (alice
+   requests → payments admin approves → alice may trigger that workflow, and only it).
+7. **UI** — the request button + approver queue in the live app shell.
+
+**Open sub-decisions** (to settle in-flight, surfaced not guessed): the exact **grantable-scope allowlist**
+(step 3); whether **revoke/withdraw of an already-granted entitlement** is in this slice or a follow-up.
+
 ### 16.6 Decisions (§16)
 
 - **Identity lives in the IdP; Arazzo authorizes claims** — no user table, no credential issuance.
