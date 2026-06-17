@@ -883,3 +883,129 @@ identity (the same identity used for version stamping and credential grants), di
 governance `owner` contact. Version 1 establishes it; publishing further versions requires membership; administration
 is reassignable / shareable via a per-base-id administrator record (last-administrator-protected, etag-CAS), with
 administrators named in the usage-grant `{dimension, value}` vocabulary — never forgeable user tags.
+
+## 16. Identity, login, and the entitlement lifecycle
+
+§14/§15 decide *what a principal may do once authenticated*. This section decides *how a principal comes to
+exist, logs in, and is granted access* — the layer an identity provider (the demo runs **Keycloak**, the
+locally-runnable stand-in, §13.5-style) forces us to make concrete.
+
+### 16.1 Two planes — identity vs. authorization
+
+The governing invariant: **the Arazzo control plane has no user registry and issues no credentials.** It
+authorizes *claims*. Two cleanly separated planes:
+
+- **Identity plane (the IdP — Keycloak).** *Who you are.* Owns registration (human + machine), credentials, MFA,
+  the login flows, and **coarse org/team membership** (groups/roles/attributes). The single source of truth for
+  identity.
+- **Authorization plane (Arazzo).** *What you may do here.* The deployment shell resolves the authenticated
+  principal → **capability scopes** (§14.1) + **`sys:` internal tags** (§14.3); the **security-policy store**
+  (§14.2) holds the claim→entitlement rules; §15 administrators and §13 credential grants key off the *same*
+  `sys:` identity. Arazzo holds no passwords and no user table — only grant *bindings* keyed to claims.
+
+This is the §13.5 secure-introduction / separation principle at the API edge: identity provisioning is a
+separate, declarative concern; Arazzo never holds identity or credentials.
+
+### 16.2 Bootstrapping the first admin — declarative, in three tiers
+
+The "first admin into an empty system" problem (the identity analogue of §13.5's secret-zero) is solved with
+**configuration / IaC, not an interactive "create first user" screen**:
+
+1. **IdP super-admin** — Keycloak's own `KC_BOOTSTRAP_ADMIN_USERNAME`/`PASSWORD` at first boot (the master-realm
+   admin). Dev: fixed; prod: secret-managed + temporary, recoverable via Keycloak break-glass.
+2. **Arazzo realm + seed admin principal** — a **declarative realm import** (realm JSON) seeds an `arazzo` realm,
+   an `arazzo-admins` group, and a seed admin user (and a seed admin client for automation). This is the
+   deploy-time identity-provisioning step — the exact shape as the §13.5 `vault-init` provisioner.
+3. **Arazzo authz grant** — the deployment policy maps the `arazzo-admins` group claim → **all capability scopes
+   + unrestricted reach** (the "service operator", i.e. `AccessContext.System`-equivalent). Config-as-code,
+   per §14.1's "scheme + claim mapping supplied per deployment".
+
+The first admin then logs in via OIDC and *already holds* admin — they exist because the realm import + the
+policy config say so. A **break-glass** path (the dev API-key scheme, or a one-time bootstrap token disabled
+after first use) remains for recovery when the IdP or its config is unavailable.
+
+### 16.3 Login UX
+
+- **Web UI — OIDC Authorization Code + PKCE via a BFF.** The host runs the OIDC dance and holds tokens in a
+  secure **HttpOnly cookie session**; the (zero-build, web-component) SPA calls the API same-origin with **no
+  tokens in JavaScript**. Safer than a browser-held token for a no-build SPA, and it keeps the SPA trivial.
+- **CLI — OIDC for native apps.** **Device Authorization Flow** (RFC 8628) is the default (works headless / over
+  SSH — print a verification URL + code), with **Auth Code + PKCE on a loopback redirect** as the richer local
+  option. Access + refresh tokens are cached (OS secret store, else a `0600` file) and silently refreshed;
+  subsequent commands are non-interactive. Built on `Duende.IdentityModel.OidcClient` (already referenced).
+
+### 16.4 Principals — humans and machines
+
+Both are *principals with claims*; only the authN flow and IdP-side registration differ — Arazzo's authz is
+identical for both.
+
+- **Humans** → Keycloak **users** (self-service registration where the realm enables it, else admin-invite),
+  placed in **groups/roles** → claims. Arazzo never registers a human.
+- **Machines** → Keycloak **clients**, in two tiers (matching current best practice):
+  - **Client credentials** with **private-key-JWT or mTLS** (not a shared secret) for simple cases — static
+    secrets are the weak spot and must be rotated.
+  - **Workload identity federation** (the target): the workload presents platform attestation (Kubernetes
+    ServiceAccount, cloud IAM, SPIFFE/SVID) and exchanges it for an Arazzo-scoped token — **no stored secret**.
+    The §13.5 secure-introduction principle, now for the API caller (the same idea the runner uses toward Vault).
+
+### 16.5 The entitlement lifecycle — invite, grant, request, approve
+
+This is the operational flow §14/§15 left implicit. The **division of responsibility**:
+
+- The **IdP owns identity + coarse, slow-changing org/team membership** (groups → claims). Adding/removing a
+  person *from the org or a team* is an IdP operation.
+- The **Arazzo security-policy store owns the claim→entitlement bindings**, including **per-principal grants**
+  (the deployment shell can stamp `sys:sub`, §15.1, so a rule may key to one principal). Granting access in
+  Arazzo means *writing a rule/binding* (§14.2 grammar) — **never mutating the IdP**. Fast-changing, in-domain
+  entitlement lives here, next to the §15 administrators who approve it.
+
+A principal needs two things to act, sourced differently:
+
+| Need | What | Source |
+|------|------|--------|
+| **Capability** | a scope (`catalog:read`, `runs:write`, …, §14.1) | usually a **role claim** from the IdP → policy |
+| **Reach** | which domain's rows (§14.2/§14.3) | a **team/domain claim** → `sys:` tag → a security rule |
+
+Two flows, by privilege level:
+
+- **Onboard (coarse, standing — no request).** Invite the user in the IdP and add them to their team group →
+  on login their claims yield `sys:team=payments` → the **standing bootstrap rule** grants `catalog:read` +
+  **read-reach to `domain=payments`**. They can **list/read payments workflows immediately**. Read/list access
+  is membership-driven: it falls out of org/team membership, no request needed.
+- **Elevate (run/admin — request → approve).** Running needs `runs:write` + **write-reach** to the domain; this
+  is *not* granted by mere membership. The user issues an **access request** ("run access to `payments`") →
+  Arazzo **routes it to the domain administrator** (§15 — Arazzo already knows who holds the `sys:team=payments`
+  admin grant) → on approval Arazzo **writes an entitlement** (a security-policy binding granting `runs:write`
+  reach `domain=payments`, scoped to the requester's `sys:sub`, or by elevating them into an operator role) →
+  effective on their next request, **revocable and audited** in the grants view.
+
+**Effective access at request time** = the deployment shell resolves the principal's claims → `sys:` tags →
+capability scopes + the security-policy store's rules (standing rules **∪** per-principal entitlements) →
+the `AccessContext` (`ReadReach`/`WriteReach`/`PurgeReach` + scopes) the handlers already enforce.
+
+> **Worked example — Alice (Payments).** (1) An admin invites Alice in Keycloak and adds her to the `payments`
+> group. (2) Alice logs in (OIDC); her `team=payments` claim → `sys:team=payments`; the standing rule lets her
+> **list payments workflows** right away. (3) Alice needs to run `nightly-reconcile`; she has no run access, so
+> she clicks **Request run access — payments**. (4) The request lands in the **payments domain administrator's**
+> approval queue. (5) The admin approves; Arazzo writes a `runs:write` entitlement scoped to Alice + reach
+> `domain=payments`. (6) Alice can now trigger payments runs — and only payments runs. The admin can revoke it,
+> and the grant is auditable.
+
+**What this means we must build** (the new surface — the rest already exists): an **access-request + approval
+workflow** — a request resource, the routing to the relevant §15 administrator, the approver queue, and the
+entitlement write on approval — exposed in the API, CLI, and UI. The grant store, the rule grammar/engine, and
+the §15 administrator lookup are already in place; the request/approval workflow layers on top of them.
+
+### 16.6 Decisions (§16)
+
+- **Identity lives in the IdP; Arazzo authorizes claims** — no user table, no credential issuance.
+- **Bootstrap is declarative** — realm import + claim→capability policy config; a break-glass token covers IdP/
+  config-unavailable recovery.
+- **UI login = Authorization Code + PKCE via a BFF** (HttpOnly cookie session; no token in the SPA).
+- **CLI login = Device Authorization Flow (default) + loopback PKCE**, with a cached, silently-refreshed token.
+- **Machine identity = client-credentials (private-key-JWT/mTLS) now, workload-identity-federation as the target.**
+- **Entitlement = IdP coarse membership (claims) + Arazzo fine-grained grants** (security-policy store, incl.
+  per-principal via `sys:sub`). **Read/list is membership-driven** (standing rules); **elevated capability (run/
+  admin) goes through an in-app access request → §15 domain-administrator approval → entitlement write.**
+- A consolidated "principals & grants" admin view is **deferred**, but the **access-request/approval surface is
+  in scope** for the Keycloak slice (it is the missing piece, not a nicety).
