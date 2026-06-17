@@ -8,6 +8,7 @@
 // process (its real-life deployment is a container, scaled independently) whose long-running loops are hosted
 // BackgroundServices; the minimal web surface exists only for the §5.4 health probe + Aspire/OTel.
 using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Sqlite;
 using Corvus.Text.Json.Arazzo.Runner.Demo;
 
@@ -27,6 +28,10 @@ string connectionString = builder.Configuration.GetConnectionString("workflowsto
 SqliteWorkflowStateStore stateStore = await SqliteWorkflowStateStore.ConnectAsync(connectionString);
 SqliteWorkflowCatalogStore catalogStore = await SqliteWorkflowCatalogStore.ConnectAsync(connectionString);
 SqliteRunnerRegistry registry = await SqliteRunnerRegistry.ConnectAsync(connectionString);
+
+// The §13 source-credential store, shared with the control plane: the control plane registers the binding
+// (reference + metadata, never the secret), and the runner reads it to learn which Vault references to resolve.
+SqliteSourceCredentialStore credentials = await SqliteSourceCredentialStore.ConnectAsync(connectionString);
 var catalog = new WorkflowCatalogClient(catalogStore, stateStore, "runner");
 
 var options = new RunnerOptions($"runner-{Environment.MachineName}-{Environment.ProcessId}");
@@ -35,11 +40,16 @@ builder.Services.AddSingleton(options);
 builder.Services.AddSingleton<IWorkflowStateStore>(stateStore);
 builder.Services.AddSingleton<IWorkflowCatalogStore>(catalogStore);
 builder.Services.AddSingleton<IRunnerRegistry>(registry);
+builder.Services.AddSingleton<ISourceCredentialStore>(credentials);
 builder.Services.AddSingleton(catalog);
 
 // The two long-running loops (design §5.4 registration/heartbeat, §7 dispatch + resume).
 builder.Services.AddHostedService<RunnerRegistrationService>();
 builder.Services.AddHostedService<WorkflowDispatchService>();
+
+// A startup self-check (design §13.5): resolve the seeded credential references against Vault using only the
+// runner's read-only token, and assert a write is refused — proving the secret-consumer boundary end to end.
+builder.Services.AddHostedService<VaultCredentialSelfCheckService>();
 
 WebApplication app = builder.Build();
 

@@ -642,6 +642,53 @@ references/status with no secret read (reference-rotation by default; optional w
 surfaced as version status + telemetry (operators own the rotation policy); a `credentials-expired` fault is
 refreshable from the catalog and resumable with no requester involvement.
 
+### 13.5 Secret provisioning — separation of duties (write ≠ read)
+
+Resolution (§13.1) is only half the story. *Putting* the secret into the store is a **separate security
+concern from reading it**, and the two MUST be distinct identities with distinct least-privilege policies. This
+is the governing rule for the whole subsystem:
+
+- **The runner is a read-only consumer.** Its secret-store identity is granted **read** on its own scoped paths
+  and nothing else — no write, no access outside those paths. A runner that could write secrets is a privilege
+  it never needs and an exfiltration/poisoning path it should not have.
+- **Provisioning is a distinct, write-capable identity, owned by automation** — a CI/CD pipeline or a
+  declarative IaC step (e.g. Terraform's Vault provider), never the consuming workload and never the control
+  plane. It writes secrets + the consumer's read-only policy as code (explicit paths, no wildcards), versioned
+  and auditable. "A CI pipeline for staging should not inherit access to production credentials."
+- **The control plane never touches the secret store at all** — it persists only the *reference* (§13.1),
+  upholding the no-secret-material invariant. Only the provisioner (write) and the runner (read) bind to it.
+- **Secure introduction ("secret zero").** The runner still needs *some* identity to authenticate to the
+  store. In production that is platform-native attestation — a Kubernetes ServiceAccount, cloud IAM (AWS/Azure/
+  GCP), or Vault **AppRole** with a short-TTL, response-wrapped `secret_id` delivered by the trusted
+  orchestrator — never a long-lived, write-capable token embedded in the workload. The orchestrator (the
+  platform) is the trusted intermediary that hands the consumer its scoped identity.
+
+#### 13.5.1 Local-dev composition (the locally-runnable stand-in)
+
+Like SQLite stands in for the production durability store, the demo composition (Aspire AppHost,
+`samples/arazzo/`) runs HashiCorp Vault locally and **mirrors the separation faithfully** rather than
+collapsing it:
+
+- a **Vault dev-mode container** (the secret store);
+- a **one-shot provisioner** (a Vault-CLI init container — the "CI/IaC provisioning step" stand-in, the only
+  write-capable identity): it writes a **read-only, path-scoped policy** (`path "secret/data/arazzo/*"
+  { capabilities = ["read"] }`), mints the runner's **read-only token** bound to that policy, and seeds the
+  demo secret values, then exits;
+- the **runner** holds *only* that read-only token — its startup self-check resolves the demo reference **and**
+  asserts a write is refused (403), proving the boundary is real;
+- the **control plane** stays Vault-free, storing only the `vault://…` reference.
+
+The security-critical properties — **separation of duties** and a **least-privilege, read-only consumer** — are
+preserved exactly. The honest dev↔prod deltas (the locally-runnable concessions): the runner's read-only token
+is delivered by the Aspire orchestrator rather than platform attestation/AppRole-wrapping; the dev root token
+is a fixed value; secret *values* are non-sensitive dummies (in prod the provisioning step sources real secrets
+from the CI's secure store). None of those weaken the write/read split.
+
+**Decision (§13.5):** provisioning (write) and consumption (read) are **always separate least-privilege
+identities**; the runner is read-only and path-scoped; the control plane never binds to the secret store. The
+consumer's identity arrives by secure introduction (platform attestation / AppRole in prod; orchestrator-
+delivered scoped token in local dev) — never a long-lived write-capable token in the workload.
+
 ## 14. Authorization — control plane and tag-based row security
 
 Two layers: **operation** authorization (can this principal call this endpoint at all) and **row**

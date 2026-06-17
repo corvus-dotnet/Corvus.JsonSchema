@@ -6,8 +6,12 @@ SQLite store, seeds it with demo workflows + runs, and serves the build-free web
 This host is one project in the self-contained [`samples/arazzo/`](../) composition. The
 [**Aspire AppHost**](../Corvus.Text.Json.Arazzo.ControlPlane.Demo.AppHost) is the composition root that launches
 it alongside the [**runner**](../Corvus.Text.Json.Arazzo.Runner.Demo) (the execution-host process, which shares
-this host's durability store) — with the locally-runnable Vault / Keycloak / Postgres dependency containers next,
-and the Aspire dashboard as the OpenTelemetry viewer.
+this host's durability store) and a locally-runnable **HashiCorp Vault** for source credentials (§13) — with
+Keycloak (OIDC) and optionally Postgres next, and the Aspire dashboard as the OpenTelemetry viewer.
+
+> **Credentials are reference-only here.** This host stores the `vault://…` credential *reference* (the §13
+> invariant — it never touches secret material); a separate provisioner seeds Vault and grants the runner a
+> read-only token; the runner is the only secret consumer. See design §13.5.
 
 ## Run it
 
