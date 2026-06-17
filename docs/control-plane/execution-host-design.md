@@ -929,10 +929,13 @@ after first use) remains for recovery when the IdP or its config is unavailable.
 - **Web UI — OIDC Authorization Code + PKCE via a BFF.** The host runs the OIDC dance and holds tokens in a
   secure **HttpOnly cookie session**; the (zero-build, web-component) SPA calls the API same-origin with **no
   tokens in JavaScript**. Safer than a browser-held token for a no-build SPA, and it keeps the SPA trivial.
-- **CLI — OIDC for native apps.** **Device Authorization Flow** (RFC 8628) is the default (works headless / over
-  SSH — print a verification URL + code), with **Auth Code + PKCE on a loopback redirect** as the richer local
-  option. Access + refresh tokens are cached (OS secret store, else a `0600` file) and silently refreshed;
-  subsequent commands are non-interactive. Built on `Duende.IdentityModel.OidcClient` (already referenced).
+- **CLI — OIDC for native apps.** **Auth Code + PKCE on a loopback redirect** (RFC 8252) is the default — it
+  opens the system browser, the smoothest experience on a desktop (and the Azure CLI default) — with the
+  **Device Authorization Flow** (RFC 8628; `--use-device-code`) for headless / over-SSH use, printing a
+  verification URL + code. Access + refresh tokens are cached (a file under the user's app-data, overridable;
+  `offline_access` is requested for the refresh token) and silently refreshed, so subsequent commands are
+  non-interactive. Built on `Duende.IdentityModel.OidcClient` (the `arazzo-runs login [--use-device-code]` /
+  `logout` commands; `--authority`/`--client-id`/`--server` or `ARAZZO_RUNS_*` env select the IdP + control plane).
 
 **BFF session-cookie security (CSRF).** A cookie is *ambient* — the browser attaches it to cross-site requests —
 so the BFF session needs CSRF defence in depth (the bearer/API-key paths are immune; they carry no ambient
@@ -1056,7 +1059,8 @@ execution, dogfooded on the system's own governance rather than a demo toy.
 - **Bootstrap is declarative** — realm import + claim→capability policy config; a break-glass token covers IdP/
   config-unavailable recovery.
 - **UI login = Authorization Code + PKCE via a BFF** (HttpOnly cookie session; no token in the SPA).
-- **CLI login = Device Authorization Flow (default) + loopback PKCE**, with a cached, silently-refreshed token.
+- **CLI login = loopback Auth Code + PKCE (default; opens the browser) + Device Authorization Flow
+  (`--use-device-code`, headless/SSH)**, with a cached, silently-refreshed token.
 - **Machine identity = client-credentials (private-key-JWT/mTLS) now, workload-identity-federation as the target.**
 - **Entitlement = IdP coarse membership (claims) + Arazzo fine-grained grants** (security-policy store, incl.
   per-principal via `sys:sub`). **Read/list is membership-driven** (standing rules); **elevated capability (run/
