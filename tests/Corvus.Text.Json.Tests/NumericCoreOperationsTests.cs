@@ -216,6 +216,23 @@ public class NumericCoreOperationsTests
     [DataRow(false, "15", "", -1, false, "14", "", -1, 1)]     // 1.5 > 1.4
     [DataRow(false, "15", "", -1, false, "15", "", -1, 0)]     // 1.5 == 1.5
     [DataRow(false, "123", "45", -3, false, "123", "44", -3, 1)] // 12.345 > 12.344
+
+    // Issue #819: a zero bound has an empty significand (integral and fractional both
+    // empty). The effective-length heuristic treats an empty significand as if it were
+    // in [0.1, 1), so any positive value with magnitude < 0.1 (effective length < 0)
+    // was wrongly compared as smaller than zero, and vice versa.
+    [DataRow(false, "", "", 0, false, "", "", 0, 0)]           // 0 == 0
+    [DataRow(false, "", "5", -2, false, "", "", 0, 1)]         // 0.05 > 0
+    [DataRow(false, "", "", 0, false, "", "5", -2, -1)]        // 0 < 0.05
+    [DataRow(false, "", "83", -3, false, "", "", 0, 1)]        // 0.083 > 0
+    [DataRow(false, "", "", 0, false, "", "83", -3, -1)]       // 0 < 0.083
+    [DataRow(false, "5", "", -50, false, "", "", 0, 1)]        // 5e-50 > 0 (tiny positive)
+    [DataRow(false, "", "", 0, false, "5", "", -50, -1)]       // 0 < 5e-50
+    [DataRow(true, "", "5", -2, false, "", "", 0, -1)]         // -0.05 < 0 (sign path)
+    [DataRow(false, "", "", 0, true, "", "5", -2, 1)]          // 0 > -0.05 (sign path)
+    [DataRow(false, "", "5", -1, false, "", "", 0, 1)]         // 0.5 > 0 (>= 0.1, regression guard)
+    [DataRow(false, "1", "", -1, false, "", "", 0, 1)]         // 0.1 > 0 (boundary, regression guard)
+    [DataRow(false, "", "", 0, false, "", "5", -1, -1)]        // 0 < 0.5 (regression guard)
     public void CompareNormalizedJsonNumbers(
         bool leftNeg, string leftIntg, string leftFrac, int leftExp,
         bool rightNeg, string rightIntg, string rightFrac, int rightExp,
