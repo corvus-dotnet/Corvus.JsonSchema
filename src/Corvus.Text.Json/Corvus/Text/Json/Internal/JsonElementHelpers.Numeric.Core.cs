@@ -297,6 +297,28 @@ public static partial class JsonElementHelpers
         ReadOnlySpan<byte> rightFractional,
         int rightExponent)
     {
+        // Step 0: Handle zero explicitly.
+        // Zero has an empty significand (both integral and fractional empty). Its
+        // order of magnitude cannot be expressed by the effective-length comparison
+        // below — that heuristic would treat an empty significand as belonging to
+        // [0.1, 1) (effective length 0), so any value with magnitude < 0.1 was wrongly
+        // ordered against zero (issue #819). Zero is less than every positive value and
+        // greater than every negative value.
+        bool leftIsZero = leftIntegral.IsEmpty && leftFractional.IsEmpty;
+        bool rightIsZero = rightIntegral.IsEmpty && rightFractional.IsEmpty;
+        if (leftIsZero || rightIsZero)
+        {
+            if (leftIsZero && rightIsZero)
+            {
+                return 0;
+            }
+
+            // The non-zero side's sign determines the ordering.
+            return leftIsZero
+                ? (rightIsNegative ? 1 : -1)
+                : (leftIsNegative ? -1 : 1);
+        }
+
         // Step 1: Compare signs
         if (leftIsNegative != rightIsNegative)
         {

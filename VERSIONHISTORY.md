@@ -1,5 +1,13 @@
 # Version History
 
+## V5.1.18
+
+V5.1.18 fixes a numeric validation bug where a zero-valued bound mis-validated `number` values whose magnitude was just below `0.1`.
+
+### Bug fixes
+
+- **A zero-valued numeric bound (`minimum`/`exclusiveMinimum`/`maximum`/`exclusiveMaximum` = `0`) no longer mis-validates `number` values in the open interval `(0, 0.1)`** — The shared numeric comparator `JsonElementHelpers.CompareNormalizedJsonNumbers` orders two normalized numbers by their *effective length* (significand length + exponent), the position of the most significant digit. Zero normalizes to an **empty significand** with exponent `0`, giving it effective length `0` — the same band as values in `[0.1, 1)`. As a result any value whose absolute magnitude was less than `0.1` (effective length `< 0`, e.g. `0.05`, `0.083`) was ordered as if it were *smaller* than zero: `minimum: 0` and `exclusiveMinimum: 0` wrongly **rejected** such values, while `maximum: 0` and `exclusiveMaximum: 0` wrongly **accepted** them. Values of `0`, values `>= 0.1`, negative values (handled by the sign comparison), and the same keywords with non-zero bounds were all unaffected, as were `integer`-typed schemas (only integer magnitudes reach the comparator). The comparator now detects an empty significand and orders zero explicitly — less than every positive value, greater than every negative value — before the effective-length comparison. This is a runtime fix in the shared comparator used by generated models, the standalone evaluator, the dynamic `Validator`, and JsonLogic; no regeneration of generated code is required. See [#819](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/819).
+
 ## V5.1.17
 
 V5.1.17 fixes an RFC 7396 JSON Merge Patch bug where merging a nested object corrupted the parent element handle.
