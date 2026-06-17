@@ -1,0 +1,234 @@
+// <copyright file="AccessRequestApprovalServiceTests.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+using System.Security.Claims;
+using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
+using Corvus.Text.Json.Arazzo.Durability.Security;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Shouldly;
+
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests;
+
+/// <summary>
+/// Coverage of <see cref="AccessRequestApprovalService"/> (design §16.5): the §15-admin gate, the platform cap
+/// (run access only), self-elevation, time-boxed grant + early revoke, the workflow-id injection guard, and the
+/// end-to-end check that an approval grants exactly the target workflow.
+/// </summary>
+[TestClass]
+public sealed class AccessRequestApprovalServiceTests
+{
+    private static readonly DateTimeOffset Now = new(2026, 6, 15, 12, 0, 0, TimeSpan.Zero);
+    private static readonly SecurityTagSet Boss = SecurityTagSet.FromTags([new("sys:tenant", "boss")]);
+    private static readonly SecurityTagSet Mallory = SecurityTagSet.FromTags([new("sys:tenant", "mallory")]);
+
+    private static ClaimsPrincipal Principal(params (string Type, string Value)[] claims)
+        => new(new ClaimsIdentity(claims.Select(c => new Claim(c.Type, c.Value)).ToList(), "test"));
+
+    [TestMethod]
+    public async Task Approving_writes_a_time_boxed_run_grant_scoped_to_the_workflow()
+    {
+        Harness h = await Harness.CreateAsync();
+        string id = await h.SubmitPendingAsync(["runs:write", "runs:read"], requestedDurationSeconds: 3600);
+
+        using (ParsedJsonDocument<AccessRequest>? approved = await h.Service.ApproveAsync(id, Boss, "boss", "looks good", default))
+        {
+            approved.ShouldNotBeNull();
+            approved!.RootElement.StatusValue.ShouldBe("Approved");
+            approved.RootElement.DecidedByOrNull.ShouldBe("boss");
+            approved.RootElement.GrantedBindingIdOrNull.ShouldNotBeNull();
+            approved.RootElement.GrantedUntilValue.ShouldBe(Now.AddSeconds(3600));
+        }
+
+        // The entitlement actually grants: a fresh policy over the same store admits alice to this workflow's runs only.
+        PersistentRowSecurityPolicy policy = await h.RefreshedPolicyAsync();
+        ClaimsPrincipal alice = Principal(("sub", "alice"));
+        policy.ResolveGrantedScopes(alice).ShouldBe(["runs:write", "runs:read"], ignoreOrder: true);
+        policy.Resolve(alice).Admits(AccessVerb.Write, SecurityTagSet.FromTags([new("sys:workflow", "nightly-reconcile")])).ShouldBeTrue();
+        policy.Resolve(alice).Admits(AccessVerb.Write, SecurityTagSet.FromTags([new("sys:workflow", "other-flow")])).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task A_non_administrator_cannot_approve()
+    {
+        Harness h = await Harness.CreateAsync();
+        string id = await h.SubmitPendingAsync(["runs:write"]);
+
+        await Should.ThrowAsync<WorkflowAdministrationException>(async () => await h.Service.ApproveAsync(id, Mallory, "mallory", null, default));
+
+        // Still pending, no grant written.
+        using ParsedJsonDocument<AccessRequest>? still = await h.Requests.GetAsync(id, default);
+        still!.RootElement.StatusValue.ShouldBe("Pending");
+        PersistentRowSecurityPolicy policy = await h.RefreshedPolicyAsync();
+        policy.ResolveGrantedScopes(Principal(("sub", "alice"))).ShouldBeEmpty();
+    }
+
+    [TestMethod]
+    public async Task An_approval_is_capped_to_run_access()
+    {
+        Harness h = await Harness.CreateAsync();
+
+        // Over-ask: only runs:read/write are grantable; security:write and runs:purge are never granted.
+        string id = await h.SubmitPendingAsync(["runs:write", "security:write", "runs:purge", "runs:read"]);
+        using (await h.Service.ApproveAsync(id, Boss, "boss", null, default))
+        {
+        }
+
+        PersistentRowSecurityPolicy policy = await h.RefreshedPolicyAsync();
+        policy.ResolveGrantedScopes(Principal(("sub", "alice"))).ShouldBe(["runs:read", "runs:write"], ignoreOrder: true);
+    }
+
+    [TestMethod]
+    public async Task A_request_with_no_grantable_scope_is_rejected()
+    {
+        Harness h = await Harness.CreateAsync();
+        string id = await h.SubmitPendingAsync(["security:write"]);
+
+        await Should.ThrowAsync<AccessRequestStateException>(async () => await h.Service.ApproveAsync(id, Boss, "boss", null, default));
+    }
+
+    [TestMethod]
+    public async Task An_eligible_requester_self_elevates_without_an_approver()
+    {
+        Harness h = await Harness.CreateAsync();
+
+        // alice is NOT an administrator, but is eligible to self-elevate → the request is auto-approved.
+        using (ParsedJsonDocument<AccessRequest> submitted = await h.Service.SubmitAsync(
+            new AccessRequestDefinition("nightly-reconcile", ["runs:write"], "sub", "alice"),
+            "alice",
+            eligibleForSelfElevation: true,
+            default))
+        {
+            submitted.RootElement.StatusValue.ShouldBe("Approved");
+            submitted.RootElement.GrantedBindingIdOrNull.ShouldNotBeNull();
+        }
+
+        PersistentRowSecurityPolicy policy = await h.RefreshedPolicyAsync();
+        policy.ResolveGrantedScopes(Principal(("sub", "alice"))).ShouldContain("runs:write");
+    }
+
+    [TestMethod]
+    public async Task Revoking_deletes_the_grant_and_marks_the_request_revoked()
+    {
+        Harness h = await Harness.CreateAsync();
+        string id = await h.SubmitPendingAsync(["runs:write"]);
+
+        string bindingId;
+        using (ParsedJsonDocument<AccessRequest>? approved = await h.Service.ApproveAsync(id, Boss, "boss", null, default))
+        {
+            bindingId = approved!.RootElement.GrantedBindingIdOrNull!;
+        }
+
+        using (ParsedJsonDocument<AccessRequest>? revoked = await h.Service.RevokeAsync(id, Boss, "boss", "no longer needed", default))
+        {
+            revoked!.RootElement.StatusValue.ShouldBe("Revoked");
+            revoked.RootElement.GrantedBindingIdOrNull.ShouldBe(bindingId); // kept for audit
+        }
+
+        // The binding is gone and access has stopped.
+        (await h.Policy.GetBindingAsync(bindingId, default)).ShouldBeNull();
+        PersistentRowSecurityPolicy policy = await h.RefreshedPolicyAsync();
+        policy.ResolveGrantedScopes(Principal(("sub", "alice"))).ShouldBeEmpty();
+    }
+
+    [TestMethod]
+    public async Task Only_the_requester_may_withdraw_and_only_while_pending()
+    {
+        Harness h = await Harness.CreateAsync();
+        string id = await h.SubmitPendingAsync(["runs:write"]);
+
+        await Should.ThrowAsync<AccessRequestStateException>(async () => await h.Service.WithdrawAsync(id, "sub", "mallory", "mallory", default));
+
+        using (ParsedJsonDocument<AccessRequest>? withdrawn = await h.Service.WithdrawAsync(id, "sub", "alice", "alice", default))
+        {
+            withdrawn!.RootElement.StatusValue.ShouldBe("Withdrawn");
+        }
+    }
+
+    [TestMethod]
+    public async Task Denying_requires_an_administrator_and_marks_the_request_denied()
+    {
+        Harness h = await Harness.CreateAsync();
+        string id = await h.SubmitPendingAsync(["runs:write"]);
+
+        await Should.ThrowAsync<WorkflowAdministrationException>(async () => await h.Service.DenyAsync(id, Mallory, "mallory", null, default));
+
+        using ParsedJsonDocument<AccessRequest>? denied = await h.Service.DenyAsync(id, Boss, "boss", "not now", default);
+        denied!.RootElement.StatusValue.ShouldBe("Denied");
+    }
+
+    [TestMethod]
+    public async Task A_workflow_id_that_could_inject_the_rule_grammar_is_rejected()
+    {
+        Harness h = await Harness.CreateAsync();
+
+        // A crafted id containing a quote would break out of the sys:workflow == '...' literal — rejected up front.
+        await Should.ThrowAsync<AccessRequestStateException>(async () => await h.Service.SubmitAsync(
+            new AccessRequestDefinition("evil' || $claims.superset || 'x", ["runs:write"], "sub", "alice"),
+            "alice",
+            eligibleForSelfElevation: false,
+            default));
+    }
+
+    // A clock fixed at a known instant so grant expiry is deterministic.
+    private sealed class FixedClock(DateTimeOffset now) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => now;
+    }
+
+    // The in-process harness: a real WorkflowCatalogClient (with boss as the workflow's §15 administrator), the
+    // in-memory access-request + security-policy stores, and the service under test.
+    private sealed class Harness
+    {
+        private const string Workflow = "nightly-reconcile";
+
+        private Harness(AccessRequestApprovalService service, IAccessRequestStore requests, ISecurityPolicyStore policy, TimeProvider clock)
+        {
+            this.Service = service;
+            this.Requests = requests;
+            this.Policy = policy;
+            this.Clock = clock;
+        }
+
+        public AccessRequestApprovalService Service { get; }
+
+        public IAccessRequestStore Requests { get; }
+
+        public ISecurityPolicyStore Policy { get; }
+
+        public TimeProvider Clock { get; }
+
+        public static async Task<Harness> CreateAsync()
+        {
+            var clock = new FixedClock(Now);
+            var stateStore = new InMemoryWorkflowStateStore(clock);
+            var adminStore = new InMemoryWorkflowAdministratorStore();
+            var catalog = new WorkflowCatalogClient(new InMemoryWorkflowCatalogStore(clock), stateStore, "ops", administrators: adminStore);
+            await adminStore.PutAsync(Workflow, [Boss], WorkflowEtag.None, "seed", default);
+
+            var requests = new InMemoryAccessRequestStore(clock);
+            var policy = new InMemorySecurityPolicyStore(clock);
+            var service = new AccessRequestApprovalService(requests, policy, catalog, clock);
+            return new Harness(service, requests, policy, clock);
+        }
+
+        public async Task<string> SubmitPendingAsync(IReadOnlyList<string> scopes, long? requestedDurationSeconds = null)
+        {
+            using ParsedJsonDocument<AccessRequest> submitted = await this.Service.SubmitAsync(
+                new AccessRequestDefinition(Workflow, scopes, "sub", "alice", RequestedDurationSeconds: requestedDurationSeconds),
+                "alice",
+                eligibleForSelfElevation: false,
+                default);
+            submitted.RootElement.StatusValue.ShouldBe("Pending");
+            return submitted.RootElement.IdValue;
+        }
+
+        public async Task<PersistentRowSecurityPolicy> RefreshedPolicyAsync()
+        {
+            var resolver = new PersistentRowSecurityPolicy(this.Policy, timeProvider: this.Clock);
+            await resolver.RefreshAsync();
+            return resolver;
+        }
+    }
+}

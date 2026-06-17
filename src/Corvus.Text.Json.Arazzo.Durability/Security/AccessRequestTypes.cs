@@ -18,6 +18,9 @@ public enum AccessRequestStatus
 
     /// <summary>Withdrawn by the requester before a decision.</summary>
     Withdrawn,
+
+    /// <summary>An approved grant revoked early by an administrator (the entitlement was deleted).</summary>
+    Revoked,
 }
 
 /// <summary>The content of a new access request (supplied on create).</summary>
@@ -74,6 +77,9 @@ public static class AccessRequestStatusNames
     /// <summary>The persisted name for <see cref="AccessRequestStatus.Withdrawn"/>.</summary>
     public const string Withdrawn = "Withdrawn";
 
+    /// <summary>The persisted name for <see cref="AccessRequestStatus.Revoked"/>.</summary>
+    public const string Revoked = "Revoked";
+
     /// <summary>Gets the persisted wire name for a status.</summary>
     /// <param name="status">The status.</param>
     /// <returns>The wire name.</returns>
@@ -83,8 +89,24 @@ public static class AccessRequestStatusNames
         AccessRequestStatus.Approved => Approved,
         AccessRequestStatus.Denied => Denied,
         AccessRequestStatus.Withdrawn => Withdrawn,
+        AccessRequestStatus.Revoked => Revoked,
         _ => throw new ArgumentOutOfRangeException(nameof(status)),
     };
+}
+
+/// <summary>Thrown when an access request cannot be acted on as asked — a wrong-state transition (e.g. approving a
+/// request that is not pending) or a request whose scopes are not grantable by the platform cap.</summary>
+public sealed class AccessRequestStateException : Exception
+{
+    /// <summary>Initializes a new instance of the <see cref="AccessRequestStateException"/> class.</summary>
+    /// <param name="requestId">The request id (or workflow id) the operation concerned.</param>
+    /// <param name="message">The reason the operation is not permitted in the request's current state.</param>
+    public AccessRequestStateException(string requestId, string message)
+        : base(message)
+        => this.RequestId = requestId;
+
+    /// <summary>Gets the request id (or workflow id) the operation concerned.</summary>
+    public string RequestId { get; }
 }
 
 /// <summary>Thrown when an access request's expected etag no longer matches (an optimistic-concurrency conflict).</summary>
