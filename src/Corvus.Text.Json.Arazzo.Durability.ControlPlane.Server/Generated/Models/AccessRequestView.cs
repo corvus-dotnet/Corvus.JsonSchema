@@ -322,7 +322,7 @@ public readonly partial struct AccessRequestView
     /// </summary>
     /// <remarks>
     /// <para>
-    /// On approval, the id of the security-policy binding that backs the grant (audit).
+    /// The id of the security-policy binding that backs the grant (&#39;Approved&#39;) or the eligibility assignment (&#39;Eligible&#39;) (audit).
     /// </para>
     /// </remarks>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString GrantedBindingId
@@ -343,7 +343,7 @@ public readonly partial struct AccessRequestView
     /// </summary>
     /// <remarks>
     /// <para>
-    /// When the granted entitlement expires (approved grants only).
+    /// When the granted entitlement (or, for &#39;Eligible&#39;, the eligibility window) expires; absent for a standing grant/eligibility.
     /// </para>
     /// </remarks>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime GrantedUntil
@@ -478,14 +478,14 @@ public readonly partial struct AccessRequestView
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
-    /// The lifecycle state.
+    /// The lifecycle state. &#39;Eligible&#39; (&#167;16.5.3) means the request was approved as durable eligibility — the requester may self-elevate this JIT — rather than as a live grant (&#39;Approved&#39;).
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.TheLifecycleState Status
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.StatusEntity Status
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.TheLifecycleState value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.StatusEntity value))
             {
                 return value;
             }

@@ -4427,6 +4427,114 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", System.Array.Empty<string>(), "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", System.Array.Empty<string>(), "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __ApproveAccessRequestEndpoint);
 
+        IEndpointConventionBuilder __ApproveAccessRequestAsEligibleEndpoint = app.MapPost("/accessRequests/{requestId}/approve-as-eligible", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestEligibilityNote>? bodyDoc = null;
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString RequestIdValue = default;
+                if (context.Request.RouteValues.TryGetValue("requestId", out object? RequestIdRouteVal) && RequestIdRouteVal is string RequestIdRaw)
+                {
+                    RequestIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(RequestIdRaw, workspace);
+                }
+
+                if (RequestIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'requestId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!RequestIdValue.IsUndefined() && !RequestIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'requestId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                // An optional request body is read only when the request actually carries one;
+                // an absent body leaves the body parameter undefined rather than failing to parse.
+                if ((context.Request.ContentLength ?? 0) > 0 || context.Request.Headers.ContainsKey("Transfer-Encoding"))
+                {
+                    try
+                    {
+                        bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestEligibilityNote>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                    }
+                    catch
+                    {
+                        context.Response.StatusCode = 400;
+                        context.Response.ContentType = "application/problem+json";
+                        await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                        return;
+                    }
+
+                    if (!bodyDoc!.RootElement.EvaluateSchema())
+                    {
+                        context.Response.StatusCode = 400;
+                        context.Response.ContentType = "application/problem+json";
+                        await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                        return;
+                    }
+
+                }
+
+                ApproveAccessRequestAsEligibleParams parameters = new()
+                {
+                    RequestId = RequestIdValue,
+                    Body = bodyDoc is null ? default : bodyDoc.RootElement,
+                }
+                ;
+
+                ApproveAccessRequestAsEligibleResult result = await accessRequestsHandler.HandleApproveAccessRequestAsEligibleAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "approveAccessRequestAsEligible",
+                methodName: "ApproveAccessRequestAsEligible",
+                httpMethod: "POST",
+                routeTemplate: "/accessRequests/{requestId}/approve-as-eligible",
+                tags: new[] { "accessRequests" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", System.Array.Empty<string>(), "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", System.Array.Empty<string>(), "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __ApproveAccessRequestAsEligibleEndpoint);
+
         IEndpointConventionBuilder __DenyAccessRequestEndpoint = app.MapPost("/accessRequests/{requestId}/deny", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
