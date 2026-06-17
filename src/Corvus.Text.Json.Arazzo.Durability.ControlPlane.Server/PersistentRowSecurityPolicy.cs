@@ -30,18 +30,21 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
     private readonly ISecurityPolicyStore store;
     private readonly SecurityShell shell;
     private readonly Func<ClaimsPrincipal?, IReadOnlyList<SecurityTag>>? internalTagResolver;
+    private readonly TimeProvider timeProvider;
     private volatile Compiled compiled = new(-1, []);
 
     /// <summary>Initializes a new instance of the <see cref="PersistentRowSecurityPolicy"/> class.</summary>
     /// <param name="store">The persistent rule/binding store.</param>
     /// <param name="shell">The deployment shell (mandated wrapper rules + reserved internal-tag prefix). Defaults to a prefix-only shell with no wrapper.</param>
     /// <param name="internalTagResolver">An optional deployment hook stamping internal (e.g. <c>sys:tenant</c>) tags from the principal on row creation.</param>
-    public PersistentRowSecurityPolicy(ISecurityPolicyStore store, SecurityShell? shell = null, Func<ClaimsPrincipal?, IReadOnlyList<SecurityTag>>? internalTagResolver = null)
+    /// <param name="timeProvider">The time source used to expire time-bound (§16.5.2) grants; defaults to <see cref="TimeProvider.System"/>.</param>
+    public PersistentRowSecurityPolicy(ISecurityPolicyStore store, SecurityShell? shell = null, Func<ClaimsPrincipal?, IReadOnlyList<SecurityTag>>? internalTagResolver = null, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         this.store = store;
         this.shell = shell ?? new SecurityShell([]);
         this.internalTagResolver = internalTagResolver;
+        this.timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     /// <summary>Reloads and recompiles the rule/binding snapshot if the store's generation has advanced.</summary>
@@ -69,20 +72,24 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
         // capability — the common case.
         var bindings = new List<BindingClauses>(snapshot.Bindings.Count);
         bool anyScopeGrants = false;
+        bool anyExpiringBindings = false;
         foreach (SecurityBindingDocument binding in snapshot.Bindings)
         {
             string[] scopes = binding.ScopesArray();
+            DateTimeOffset? expiresAt = binding.ExpiresAtValue;
             anyScopeGrants |= scopes.Length > 0;
+            anyExpiringBindings |= expiresAt.HasValue;
             bindings.Add(new BindingClauses(
                 binding.ClaimTypeValue,
                 binding.ClaimValueOrNull,
                 VerbClauseFor(binding.Read, expressions),
                 VerbClauseFor(binding.Write, expressions),
                 VerbClauseFor(binding.Purge, expressions),
-                scopes));
+                scopes,
+                expiresAt));
         }
 
-        this.compiled = new Compiled(snapshot.Generation, bindings, anyScopeGrants);
+        this.compiled = new Compiled(snapshot.Generation, bindings, anyScopeGrants, anyExpiringBindings);
     }
 
     /// <inheritdoc/>
@@ -91,13 +98,16 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
         Compiled current = this.compiled;
         IReadOnlyDictionary<string, IReadOnlyList<string>> claims = CollectClaims(principal);
 
-        // Bindings matching this principal, in resolution order.
+        // Read the clock only when some binding is time-bound (the common case has none → no clock read).
+        DateTimeOffset now = current.AnyExpiringBindings ? this.timeProvider.GetUtcNow() : default;
+
+        // Bindings matching this principal and still in effect, in resolution order (an expired grant is excluded).
         var matched = new List<BindingClauses>();
         if (principal?.Identity?.IsAuthenticated == true)
         {
             foreach (BindingClauses binding in current.Bindings)
             {
-                if (Matches(binding, principal))
+                if (Matches(binding, principal) && !IsExpired(binding, now))
                 {
                     matched.Add(binding);
                 }
@@ -122,12 +132,14 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
             return [];
         }
 
-        // Elevated path (a binding grants a scope): union the granted scopes of every matched binding. Allocates a
-        // small list only when this principal actually holds a per-principal grant.
+        // Elevated path (a binding grants a scope): union the granted scopes of every matched, in-effect binding.
+        // Allocates a small list only when this principal actually holds a per-principal grant. The clock is read once
+        // (and only when some binding is time-bound); an expired grant is excluded fail-safe.
+        DateTimeOffset now = current.AnyExpiringBindings ? this.timeProvider.GetUtcNow() : default;
         List<string>? granted = null;
         foreach (BindingClauses binding in current.Bindings)
         {
-            if (binding.Scopes.Length == 0 || !Matches(binding, principal))
+            if (binding.Scopes.Length == 0 || !Matches(binding, principal) || IsExpired(binding, now))
             {
                 continue;
             }
@@ -256,13 +268,19 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
         return this.shell.BuildFilter(rules, claims);
     }
 
+    // A grant is expired (and excluded fail-safe) once now is at/after its expiry. A standing grant (no expiry) never
+    // expires; when no binding is time-bound the caller passes now = default and this is always false (no clock read).
+    private static bool IsExpired(BindingClauses binding, DateTimeOffset now)
+        => binding.ExpiresAt is { } expiresAt && now >= expiresAt;
+
     // A binding's per-verb grant, pre-resolved at snapshot time: unrestricted (operator) or a (possibly null) clause.
     private readonly record struct VerbClause(bool Unrestricted, string? Clause);
 
-    // A binding pre-resolved at snapshot time: its claim match, the three per-verb clauses, and the granted scopes.
-    private sealed record BindingClauses(string ClaimType, string? ClaimValue, VerbClause Read, VerbClause Write, VerbClause Purge, string[] Scopes);
+    // A binding pre-resolved at snapshot time: its claim match, the three per-verb clauses, the granted scopes, and the
+    // optional time-bound expiry.
+    private sealed record BindingClauses(string ClaimType, string? ClaimValue, VerbClause Read, VerbClause Write, VerbClause Purge, string[] Scopes, DateTimeOffset? ExpiresAt = null);
 
-    private sealed record Compiled(long Generation, IReadOnlyList<BindingClauses> Bindings, bool AnyScopeGrants = false)
+    private sealed record Compiled(long Generation, IReadOnlyList<BindingClauses> Bindings, bool AnyScopeGrants = false, bool AnyExpiringBindings = false)
     {
         // Combined-expression -> compiled rule, scoped to this generation (discarded when the snapshot advances).
         public ConcurrentDictionary<string, SecurityRule[]> CompiledCombos { get; } = new(StringComparer.Ordinal);

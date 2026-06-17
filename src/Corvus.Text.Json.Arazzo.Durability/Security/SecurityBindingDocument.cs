@@ -51,6 +51,9 @@ public readonly partial struct SecurityBindingDocument
     /// <summary>Gets the optimistic-concurrency token.</summary>
     public WorkflowEtag EtagValue => new((string)this.Etag);
 
+    /// <summary>Gets when this grant expires (design §16.5.2), or <see langword="null"/> for a standing grant.</summary>
+    public DateTimeOffset? ExpiresAtValue => this.ExpiresAt.IsNotUndefined() ? ((NodaTime.OffsetDateTime)this.ExpiresAt).ToDateTimeOffset() : null;
+
     /// <summary>Materialises the granted capability scopes (design §14.1) as an array — empty when the binding grants
     /// no capability (a reach-only binding). Used at snapshot-compile time (per generation), off the request hot path.</summary>
     /// <returns>The granted scopes, or an empty array.</returns>
@@ -128,7 +131,8 @@ public readonly partial struct SecurityBindingDocument
             read: definition.Read,
             write: definition.Write,
             claimValue: definition.ClaimValue is { } claimValue ? (JsonString.Source)claimValue : default,
-            description: definition.Description is { } description ? (JsonString.Source)description : default);
+            description: definition.Description is { } description ? (JsonString.Source)description : default,
+            expiresAt: definition.ExpiresAt is { } expiresAt ? (JsonDateTime.Source)expiresAt : default);
         ApplyScopes(builder, definition.Scopes);
         return builder;
     }
@@ -162,6 +166,15 @@ public readonly partial struct SecurityBindingDocument
         else
         {
             builder.RootElement.RemoveDescription();
+        }
+
+        if (definition.ExpiresAt is { } expiresAt)
+        {
+            builder.RootElement.SetExpiresAt(expiresAt);
+        }
+        else
+        {
+            builder.RootElement.RemoveExpiresAt();
         }
 
         ApplyScopes(builder, definition.Scopes);
