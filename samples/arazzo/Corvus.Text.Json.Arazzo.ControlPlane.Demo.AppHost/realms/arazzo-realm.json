@@ -43,7 +43,7 @@
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": false,
-      "redirectUris": ["http://localhost:*/signin-oidc", "https://localhost:*/signin-oidc"],
+      "redirectUris": ["http://localhost:*", "https://localhost:*"],
       "webOrigins": ["+"],
       "attributes": { "pkce.code.challenge.method": "S256" },
       "protocolMappers": [
@@ -73,7 +73,7 @@
         "oauth2.device.authorization.grant.enabled": "true",
         "pkce.code.challenge.method": "S256"
       },
-      "redirectUris": ["http://localhost:*/*", "http://127.0.0.1:*/*"],
+      "redirectUris": ["http://localhost:*", "http://127.0.0.1:*"],
       "protocolMappers": [
         {
           "name": "groups",

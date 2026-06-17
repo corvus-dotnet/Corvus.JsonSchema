@@ -12,8 +12,11 @@ using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Sqlite;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.FileProviders;
 using OnboardingApi = Corvus.Text.Json.Arazzo.ControlPlane.Demo.Onboarding.ApiEndpointRegistration;
 using OnboardingService = Corvus.Text.Json.Arazzo.ControlPlane.Demo.Onboarding.OnboardingService;
@@ -75,16 +78,26 @@ await Corvus.Text.Json.Arazzo.Durability.Security.SecurityBootstrap.SeedAsync(se
 bool requireAuthorization = builder.Configuration.GetValue("ControlPlane:RequireAuthorization", false);
 if (requireAuthorization)
 {
-    // A forwarding policy scheme picks by the presented credential: an X-Api-Key header → the dev API-key scheme,
-    // otherwise the Keycloak JWT bearer (validated against the referenced realm via the Aspire Keycloak client).
+    // Three ways in (§16.3): browser users via the BFF (interactive OIDC → an HttpOnly cookie session); API
+    // callers with a Keycloak bearer token (CLI/machines); and the dev API-key (break-glass/scripts, §16.2). A
+    // forwarding policy scheme routes each request to the right scheme by what it presents.
     builder.Services
         .AddAuthentication("control-plane")
-        .AddPolicyScheme("control-plane", "Keycloak bearer or dev API key", options =>
+        .AddPolicyScheme("control-plane", "BFF cookie, Keycloak bearer, or dev API key", options =>
         {
             options.ForwardDefaultSelector = context =>
-                context.Request.Headers.ContainsKey(DevApiKeyAuthenticationHandler.ApiKeyHeader)
-                    ? DevApiKeyAuthenticationHandler.SchemeName
-                    : JwtBearerDefaults.AuthenticationScheme;
+            {
+                if (context.Request.Headers.ContainsKey(DevApiKeyAuthenticationHandler.ApiKeyHeader))
+                {
+                    return DevApiKeyAuthenticationHandler.SchemeName;
+                }
+
+                // A bearer token → validate it; otherwise it's a browser, served from the BFF cookie session.
+                return context.Request.Headers.Authorization.Any(
+                    h => h is not null && h.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                    ? JwtBearerDefaults.AuthenticationScheme
+                    : CookieAuthenticationDefaults.AuthenticationScheme;
+            };
         })
         .AddKeycloakJwtBearer("keycloak", realm: "arazzo", options =>
         {
@@ -98,7 +111,37 @@ if (requireAuthorization)
             {
                 options.Keys["demo-admin-key"] = string.Join(' ', ControlPlaneScopes.All);
                 options.Keys["demo-readonly-key"] = $"{ControlPlaneScopes.CatalogRead} {ControlPlaneScopes.RunsRead}";
-            });
+            })
+        .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+        {
+            // The BFF holds the tokens; the SPA never sees them (it calls same-origin with this HttpOnly cookie).
+            options.Cookie.HttpOnly = true;
+            options.Cookie.SameSite = SameSiteMode.Lax;
+            options.Cookie.Name = "arazzo.session";
+
+            // API calls must get 401/403 (the SPA redirects to /login) — never a server-side HTML login redirect.
+            options.Events.OnRedirectToLogin = context => { context.Response.StatusCode = StatusCodes.Status401Unauthorized; return Task.CompletedTask; };
+            options.Events.OnRedirectToAccessDenied = context => { context.Response.StatusCode = StatusCodes.Status403Forbidden; return Task.CompletedTask; };
+        })
+        .AddKeycloakOpenIdConnect("keycloak", realm: "arazzo", OpenIdConnectDefaults.AuthenticationScheme, options =>
+        {
+            // The BFF: Authorization Code + PKCE against the arazzo-ui client; tokens are kept server-side in the
+            // cookie session. The `groups` claim flows from the id token into the principal, where the §14.1
+            // transformer maps it to capability scopes — the same mapping the bearer path uses.
+            options.ClientId = "arazzo-ui";
+            options.ClientSecret = "arazzo-ui-dev-secret";
+            options.ResponseType = "code";
+            options.UsePkce = true;
+
+            // Use the standard authorize redirect (Keycloak 26 advertises PAR, which net10's handler would
+            // otherwise use); the demo keeps the simpler flow.
+            options.PushedAuthorizationBehavior = PushedAuthorizationBehavior.Disable;
+            options.RequireHttpsMetadata = false;
+            options.SaveTokens = true;
+            options.Scope.Add("openid");
+            options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            options.TokenValidationParameters.NameClaimType = "preferred_username";
+        });
 
     // The demo's concrete §14.1 mapping: Keycloak `groups` → the capability scopes the policies read (§16.5).
     builder.Services.AddSingleton<IClaimsTransformation, KeycloakClaimsTransformer>();
@@ -133,6 +176,26 @@ if (requireAuthorization)
 {
     app.UseAuthentication();
     app.UseAuthorization();
+
+    // BFF endpoints (§16.3). The SPA is same-origin and carries the HttpOnly cookie automatically; on a 401 it
+    // sends the browser to /login (the OIDC challenge → Keycloak), and reads /me to show who is signed in.
+    app.MapGet("/login", (string? returnUrl) =>
+        Results.Challenge(
+            new AuthenticationProperties { RedirectUri = string.IsNullOrEmpty(returnUrl) ? "/ui/" : returnUrl },
+            [OpenIdConnectDefaults.AuthenticationScheme]));
+
+    app.MapPost("/logout", () =>
+        Results.SignOut(
+            new AuthenticationProperties { RedirectUri = "/ui/" },
+            [CookieAuthenticationDefaults.AuthenticationScheme, OpenIdConnectDefaults.AuthenticationScheme]));
+
+    app.MapGet("/me", (ClaimsPrincipal user) => user.Identity?.IsAuthenticated == true
+        ? Results.Json(new
+        {
+            name = user.Identity!.Name,
+            groups = user.FindAll("groups").Select(static c => c.Value).ToArray(),
+        })
+        : Results.Unauthorized());
 }
 
 // Serve a demo page (wwwroot/index.html) and the build-free UI source (web/arazzo-control-plane-ui) at /ui.
