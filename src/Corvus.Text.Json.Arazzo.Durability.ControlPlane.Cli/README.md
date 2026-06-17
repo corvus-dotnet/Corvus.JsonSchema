@@ -24,8 +24,10 @@ arazzo-runs <command> [args] --server <url> [--token <bearer>]
 | `login [--use-device-code]` | Sign in interactively and cache an access token. |
 | `logout` | Remove the cached access token. |
 
-`--server` is the control plane's **base origin** (e.g. `https://host:8080`); the generated request paths are
-absolute (`/runs`). `--server`/`--token` may also come from `ARAZZO_RUNS_SERVER` / `ARAZZO_RUNS_TOKEN`.
+`--server` is the control plane's **base URL** — origin plus any base path the deployment mounts the API under,
+e.g. `https://host:8080` (API at the root) or `https://host/arazzo/v1`. The generated request paths are absolute
+(`/runs`); the CLI prepends the `--server` base path to them, so it adapts to wherever the API is served.
+`--server`/`--token` may also come from `ARAZZO_RUNS_SERVER` / `ARAZZO_RUNS_TOKEN`.
 
 The runs commands above sit at the top level; the other control-plane resources are grouped under noun branches
 (run `arazzo-runs <group> --help` for each):

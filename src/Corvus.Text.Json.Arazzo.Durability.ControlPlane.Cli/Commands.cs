@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli;
 internal class RunsSettings : CommandSettings
 {
     [CommandOption("--server <URL>")]
-    [Description("Control-plane base origin (or env ARAZZO_RUNS_SERVER), e.g. https://host:8080.")]
+    [Description("Control-plane base URL — origin plus any base path (or env ARAZZO_RUNS_SERVER), e.g. https://host:8080 or https://host/arazzo/v1.")]
     public string? Server { get; init; }
 
     [CommandOption("--token <TOKEN>")]
@@ -37,7 +37,7 @@ internal class RunsSettings : CommandSettings
     public async Task<(HttpClient Http, HttpClientTransport Transport, ApiRunsClient Client)> CreateClientAsync(CancellationToken cancellationToken)
     {
         string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
-        var http = new HttpClient { BaseAddress = new Uri(this.ResolveServer()!, UriKind.Absolute) };
+        HttpClient http = this.CreateHttpClient();
         var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
         return (http, transport, new ApiRunsClient(transport));
     }
@@ -49,7 +49,7 @@ internal class RunsSettings : CommandSettings
     public async Task<(HttpClient Http, HttpClientTransport Transport, ApiCatalogClient Client)> CreateCatalogClientAsync(CancellationToken cancellationToken)
     {
         string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
-        var http = new HttpClient { BaseAddress = new Uri(this.ResolveServer()!, UriKind.Absolute) };
+        HttpClient http = this.CreateHttpClient();
         var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
         return (http, transport, new ApiCatalogClient(transport));
     }
@@ -60,7 +60,7 @@ internal class RunsSettings : CommandSettings
     public async Task<(HttpClient Http, HttpClientTransport Transport, ApiSecurityClient Client)> CreateSecurityClientAsync(CancellationToken cancellationToken)
     {
         string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
-        var http = new HttpClient { BaseAddress = new Uri(this.ResolveServer()!, UriKind.Absolute) };
+        HttpClient http = this.CreateHttpClient();
         var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
         return (http, transport, new ApiSecurityClient(transport));
     }
@@ -72,7 +72,7 @@ internal class RunsSettings : CommandSettings
     public async Task<(HttpClient Http, HttpClientTransport Transport, ApiCredentialsClient Client)> CreateCredentialsClientAsync(CancellationToken cancellationToken)
     {
         string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
-        var http = new HttpClient { BaseAddress = new Uri(this.ResolveServer()!, UriKind.Absolute) };
+        HttpClient http = this.CreateHttpClient();
         var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
         return (http, transport, new ApiCredentialsClient(transport));
     }
@@ -83,12 +83,54 @@ internal class RunsSettings : CommandSettings
     public async Task<(HttpClient Http, HttpClientTransport Transport, ApiAdministratorsClient Client)> CreateAdministratorsClientAsync(CancellationToken cancellationToken)
     {
         string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
-        var http = new HttpClient { BaseAddress = new Uri(this.ResolveServer()!, UriKind.Absolute) };
+        HttpClient http = this.CreateHttpClient();
         var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
         return (http, transport, new ApiAdministratorsClient(transport));
     }
 
     private string? ResolveServer() => this.Server ?? Environment.GetEnvironmentVariable("ARAZZO_RUNS_SERVER");
+
+    /// <summary>
+    /// Builds the HTTP client for this invocation, adapting to the control plane's base path. The generated
+    /// client builds <em>absolute</em> operation paths (e.g. <c>/catalog</c>); when <c>--server</c> carries a
+    /// base path (e.g. <c>https://host/arazzo/v1</c>) a <see cref="BasePathHandler"/> prepends it, so the CLI
+    /// works wherever a deployment mounts the API (at the root, or under any prefix the server's base URL gives).
+    /// </summary>
+    /// <returns>The HTTP client (whose handler chain it owns and disposes).</returns>
+    private HttpClient CreateHttpClient()
+    {
+        var server = new Uri(this.ResolveServer()!, UriKind.Absolute);
+        string basePath = server.AbsolutePath.TrimEnd('/');
+        HttpMessageHandler handler = new HttpClientHandler();
+        if (basePath.Length > 0)
+        {
+            handler = new BasePathHandler(basePath) { InnerHandler = handler };
+        }
+
+        return new HttpClient(handler) { BaseAddress = new Uri(server.GetLeftPart(UriPartial.Authority)) };
+    }
+}
+
+/// <summary>
+/// Mounts each request under the control plane's base path. The generated client produces absolute operation
+/// paths (<c>/runs</c>, <c>/catalog</c>, …) resolved against the origin; this prepends the base path that the
+/// <c>--server</c> URL carries (e.g. <c>/arazzo/v1</c>), preserving the query — so the CLI adapts to wherever the
+/// deployment serves the API rather than assuming it sits at the origin root.
+/// </summary>
+internal sealed class BasePathHandler(string basePath) : DelegatingHandler
+{
+    /// <inheritdoc/>
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (request.RequestUri is { IsAbsoluteUri: true } uri)
+        {
+            request.RequestUri = new UriBuilder(uri) { Path = basePath + uri.AbsolutePath }.Uri;
+        }
+
+        return base.SendAsync(request, cancellationToken);
+    }
 }
 
 /// <summary>Settings for a command that targets a single run by id.</summary>
