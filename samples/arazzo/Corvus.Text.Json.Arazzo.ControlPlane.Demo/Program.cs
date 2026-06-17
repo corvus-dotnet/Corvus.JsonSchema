@@ -13,6 +13,7 @@ using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Sqlite;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.FileProviders;
 using OnboardingApi = Corvus.Text.Json.Arazzo.ControlPlane.Demo.Onboarding.ApiEndpointRegistration;
 using OnboardingService = Corvus.Text.Json.Arazzo.ControlPlane.Demo.Onboarding.OnboardingService;
@@ -66,15 +67,31 @@ SqliteSourceCredentialStore sourceCredentials = await SqliteSourceCredentialStor
 var securityPolicy = new Corvus.Text.Json.Arazzo.Durability.Security.InMemorySecurityPolicyStore();
 await Corvus.Text.Json.Arazzo.Durability.Security.SecurityBootstrap.SeedAsync(securityPolicy);
 
-// Control-plane authorization is per-deployment (design §14.1). The demo ships a concrete strategy — a dev
-// API-key scheme mapping a key to capability scopes — gated behind config so the open demo + its build-free
-// UI still run by default. Enable enforcement with `ControlPlane__RequireAuthorization=true`, then call the
-// API with `X-Api-Key: demo-admin-key` (all scopes) or `demo-readonly-key` (catalog:read + runs:read).
+// Control-plane authorization is per-deployment (design §14.1). The real strategy is OIDC: bearer tokens from
+// Keycloak (humans via the BFF, machines via client-credentials, §16.3), with the dev API-key kept for
+// break-glass / scripts (§16.2). Gated behind config so the open demo + its build-free UI still run by default.
+// Enable with `ControlPlane__RequireAuthorization=true`, then present a Keycloak bearer token, or an
+// `X-Api-Key: demo-admin-key` (all scopes) / `demo-readonly-key` (catalog:read + runs:read) header.
 bool requireAuthorization = builder.Configuration.GetValue("ControlPlane:RequireAuthorization", false);
 if (requireAuthorization)
 {
+    // A forwarding policy scheme picks by the presented credential: an X-Api-Key header → the dev API-key scheme,
+    // otherwise the Keycloak JWT bearer (validated against the referenced realm via the Aspire Keycloak client).
     builder.Services
-        .AddAuthentication(DevApiKeyAuthenticationHandler.SchemeName)
+        .AddAuthentication("control-plane")
+        .AddPolicyScheme("control-plane", "Keycloak bearer or dev API key", options =>
+        {
+            options.ForwardDefaultSelector = context =>
+                context.Request.Headers.ContainsKey(DevApiKeyAuthenticationHandler.ApiKeyHeader)
+                    ? DevApiKeyAuthenticationHandler.SchemeName
+                    : JwtBearerDefaults.AuthenticationScheme;
+        })
+        .AddKeycloakJwtBearer("keycloak", realm: "arazzo", options =>
+        {
+            // The demo runs Keycloak on http and does not pin an audience; the realm + signature are validated.
+            options.RequireHttpsMetadata = false;
+            options.TokenValidationParameters.ValidateAudience = false;
+        })
         .AddScheme<DevApiKeyOptions, DevApiKeyAuthenticationHandler>(
             DevApiKeyAuthenticationHandler.SchemeName,
             options =>
@@ -82,6 +99,9 @@ if (requireAuthorization)
                 options.Keys["demo-admin-key"] = string.Join(' ', ControlPlaneScopes.All);
                 options.Keys["demo-readonly-key"] = $"{ControlPlaneScopes.CatalogRead} {ControlPlaneScopes.RunsRead}";
             });
+
+    // The demo's concrete §14.1 mapping: Keycloak `groups` → the capability scopes the policies read (§16.5).
+    builder.Services.AddSingleton<IClaimsTransformation, KeycloakClaimsTransformer>();
     builder.Services.AddArazzoControlPlaneAuthorization();
 }
 
