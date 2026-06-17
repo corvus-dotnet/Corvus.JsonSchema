@@ -1,0 +1,93 @@
+{
+  "realm": "arazzo",
+  "enabled": true,
+  "displayName": "Arazzo Control Plane",
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "groups": [
+    { "name": "arazzo-admins" },
+    { "name": "payments" },
+    { "name": "onboarding" }
+  ],
+  "users": [
+    {
+      "username": "arazzo-admin",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "admin@arazzo.example",
+      "firstName": "Arazzo",
+      "lastName": "Admin",
+      "credentials": [{ "type": "password", "value": "admin", "temporary": false }],
+      "groups": ["/arazzo-admins"]
+    },
+    {
+      "username": "alice",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "alice@arazzo.example",
+      "firstName": "Alice",
+      "lastName": "Payments",
+      "credentials": [{ "type": "password", "value": "alice", "temporary": false }],
+      "groups": ["/payments"]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "arazzo-ui",
+      "name": "Arazzo Control Plane UI (BFF)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "arazzo-ui-dev-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": ["http://localhost:*/signin-oidc", "https://localhost:*/signin-oidc"],
+      "webOrigins": ["+"],
+      "attributes": { "pkce.code.challenge.method": "S256" },
+      "protocolMappers": [
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "config": {
+            "claim.name": "groups",
+            "full.path": "false",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "arazzo-cli",
+      "name": "Arazzo CLI",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "attributes": {
+        "oauth2.device.authorization.grant.enabled": "true",
+        "pkce.code.challenge.method": "S256"
+      },
+      "redirectUris": ["http://localhost:*/*", "http://127.0.0.1:*/*"],
+      "protocolMappers": [
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "config": {
+            "claim.name": "groups",
+            "full.path": "false",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ]
+}
