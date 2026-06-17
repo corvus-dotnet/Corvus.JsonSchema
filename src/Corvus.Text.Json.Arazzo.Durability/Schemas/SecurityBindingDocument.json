@@ -20,6 +20,11 @@
     "read": { "$ref": "#/$defs/VerbGrantInfo" },
     "write": { "$ref": "#/$defs/VerbGrantInfo" },
     "purge": { "$ref": "#/$defs/VerbGrantInfo" },
+    "scopes": {
+      "type": "array",
+      "description": "Capability scopes (design §14.1) this binding grants the matched principal, unioned into the principal's effective scopes at authentication time. Absent or empty grants no capability (a reach-only binding).",
+      "items": { "type": "string" }
+    },
     "order": {
       "type": "integer",
       "format": "int32",

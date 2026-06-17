@@ -24,7 +24,6 @@ public class RowSecurityResolveBenchmarks
 {
     private PersistentRowSecurityPolicy noGrantPolicy = null!;
     private PersistentRowSecurityPolicy grantedPolicy = null!;
-    private PersistentRowSecurityPolicy ambientPolicy = null!;
     private ClaimsPrincipal principal = null!;
 
     [GlobalSetup]
@@ -36,46 +35,27 @@ public class RowSecurityResolveBenchmarks
 
         // The common deployment shape: a standing reach-only rule + binding, NO per-principal capability grant.
         var noGrantStore = new InMemorySecurityPolicyStore();
-        using (ParsedJsonDocument<SecurityRuleDocument> draft = SecurityRuleDocument.Draft("team == 'payments'"))
-        {
-            (await noGrantStore.AddRuleAsync("team-payments", draft.RootElement, "admin", default)).Dispose();
-        }
-
-        using (ParsedJsonDocument<SecurityBindingDocument> binding = SecurityBindingDocument.Draft("team", "payments", VerbGrant.Rules("team-payments"), VerbGrant.None, VerbGrant.None))
-        {
-            (await noGrantStore.AddBindingAsync(binding.RootElement, "admin", default)).Dispose();
-        }
-
+        await noGrantStore.AddRuleAsync("team-payments", new SecurityRuleDefinition("team == 'payments'"), "admin", default);
+        await noGrantStore.AddBindingAsync(
+            new SecurityBindingDefinition("team", "payments", VerbGrant.Rules("team-payments"), VerbGrant.None, VerbGrant.None),
+            "admin",
+            default);
         this.noGrantPolicy = new PersistentRowSecurityPolicy(noGrantStore);
         await this.noGrantPolicy.RefreshAsync();
 
-        // The same, plus the per-principal, time-bound capability grant an access-request approval writes (the
-        // elevated state). The far-future expiry makes the grant active while forcing the resolver's time-bound path
-        // (AnyExpiringBindings → a single clock read) — proving that path stays allocation-free.
+        // The same, plus the per-principal capability grant an access-request approval writes (the elevated state).
         var grantedStore = new InMemorySecurityPolicyStore();
-        using (ParsedJsonDocument<SecurityRuleDocument> draft = SecurityRuleDocument.Draft("team == 'payments'"))
-        {
-            (await grantedStore.AddRuleAsync("team-payments", draft.RootElement, "admin", default)).Dispose();
-        }
-
-        using (ParsedJsonDocument<SecurityBindingDocument> binding = SecurityBindingDocument.Draft("team", "payments", VerbGrant.Rules("team-payments"), VerbGrant.None, VerbGrant.None))
-        {
-            (await grantedStore.AddBindingAsync(binding.RootElement, "admin", default)).Dispose();
-        }
-
-        using (ParsedJsonDocument<SecurityBindingDocument> grant = SecurityBindingDocument.Draft("sub", "alice", VerbGrant.Rules("team-payments"), VerbGrant.Rules("team-payments"), VerbGrant.None, scopes: [ControlPlaneScopes.RunsWrite], expiresAt: new DateTimeOffset(2999, 1, 1, 0, 0, 0, TimeSpan.Zero)))
-        {
-            (await grantedStore.AddBindingAsync(grant.RootElement, "approver", default)).Dispose();
-        }
-
+        await grantedStore.AddRuleAsync("team-payments", new SecurityRuleDefinition("team == 'payments'"), "admin", default);
+        await grantedStore.AddBindingAsync(
+            new SecurityBindingDefinition("team", "payments", VerbGrant.Rules("team-payments"), VerbGrant.None, VerbGrant.None),
+            "admin",
+            default);
+        await grantedStore.AddBindingAsync(
+            new SecurityBindingDefinition("sub", "alice", VerbGrant.Rules("team-payments"), VerbGrant.Rules("team-payments"), VerbGrant.None, Scopes: [ControlPlaneScopes.RunsWrite]),
+            "approver",
+            default);
         this.grantedPolicy = new PersistentRowSecurityPolicy(grantedStore);
         await this.grantedPolicy.RefreshAsync();
-
-        // The same common (reach-only) shape, but with a request-context ambient dimension (§16.5.5) — sys:tenant=acme.
-        // The ambient claim is injected into the reach map and the caller's internal tags are stamped from the one
-        // provider, so the per-request cost is a couple of small entries on the already-allocated reach path.
-        this.ambientPolicy = new PersistentRowSecurityPolicy(noGrantStore, ambient: new StaticAmbientIdentityDimensions([new SecurityTag("sys:tenant", "acme")]));
-        await this.ambientPolicy.RefreshAsync();
     }
 
     /// <summary>The existing per-request reach resolution — the baseline.</summary>
@@ -92,14 +72,4 @@ public class RowSecurityResolveBenchmarks
     /// <returns>The granted scopes.</returns>
     [Benchmark]
     public IReadOnlyList<string> ResolveGrantedScopes_elevatedPath() => this.grantedPolicy.ResolveGrantedScopes(this.principal);
-
-    /// <summary>Reach resolution with a request-context ambient dimension stamped (§16.5.5) — bounds the cost of injecting the ambient claim against the no-ambient <see cref="Resolve_reach"/> baseline.</summary>
-    /// <returns>The resolved access context.</returns>
-    [Benchmark]
-    public AccessContext Resolve_reach_ambient() => this.ambientPolicy.Resolve(this.principal);
-
-    /// <summary>The caller's internal-tag stamping with an ambient dimension (§16.5.5) — the small merged list the ambient append produces (the no-ambient baseline returns the shared empty array, zero allocation).</summary>
-    /// <returns>The caller's internal tags.</returns>
-    [Benchmark]
-    public IReadOnlyList<SecurityTag> GetInternalTags_ambient() => this.ambientPolicy.GetInternalTags(this.principal);
 }
