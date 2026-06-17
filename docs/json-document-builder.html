@@ -1539,6 +1539,29 @@ JsonElement.Mutable otherChild = root.GetProperty(&quot;otherChild&quot;u8);
 <li>Reading properties that may have been removed or reordered</li>
 </ul>
 <p>Without version tracking, you could silently access incorrect data or crash with memory corruption. The <code>InvalidOperationException</code> is intentional and helps you write correct code. The root element exemption is safe because the root is always at index 0 and is never relocated.</p>
+<h3 id="refreshing-a-stale-reference-without-re-navigating-jsonmarshal.refreshunsafe-advanced">Refreshing a stale reference without re-navigating (<code>JsonMarshal.RefreshUnsafe</code>) — advanced</h3>
+<blockquote>
+<p>⚠️ <strong><code>JsonMarshal.RefreshUnsafe&lt;T&gt;</code> is a deliberately unsafe, high-performance escape hatch.</strong> It is <strong>only</strong> for use where you <em>know</em> your changes cannot have altered the element's index in its parent document. Reach for it only in allocation- and lookup-sensitive code where you can <em>prove</em> the rule below holds. The safe, idiomatic option is always to re-navigate from the root (see <a href="#best-practices-for-version-tracking">Best Practices</a>).</p>
+</blockquote>
+<p>There is one common case where re-navigating from the root is wasteful: you hold a cached <em>intermediate</em> element and then mutate <strong>only inside that element's own subtree</strong> (a descendant property or item). The mutation bumps the document version, so your cached handle is now version-stale — but the element itself has <strong>not</strong> moved: every descendant lives at a higher index than the element's own start row, so that start row is unchanged. Re-navigating from the root to find it again would be pure overhead.</p>
+<p><code>Corvus.Runtime.InteropServices.JsonMarshal.RefreshUnsafe&lt;T&gt;(in T element)</code> takes such an element and returns a fresh handle to the <em>same</em> element, stamped with the document's current version — no lookup, no allocation:</p>
+<pre><code class="language-csharp">using Corvus.Runtime.InteropServices;
+
+JsonElement.Mutable root = doc.RootElement;
+JsonElement.Mutable order = root.GetProperty(&quot;order&quot;u8);
+
+// Mutate only WITHIN 'order' (a descendant). This bumps the version, so 'order' is now stale,
+// but 'order' itself has not moved — only its subtree grew.
+order.GetProperty(&quot;lines&quot;u8).SetProperty(&quot;count&quot;u8, 3);
+
+// Refresh the handle in place instead of re-navigating from the root.
+order = JsonMarshal.RefreshUnsafe(in order);
+
+// 'order' is usable again.
+order.SetProperty(&quot;status&quot;u8, &quot;packed&quot;u8);
+</code></pre>
+<p>This is exactly how RFC 7396 merge-patch application (<code>JsonMergePatchExtensions.ApplyMergePatch</code>) keeps the parent object live while recursively merging into its children.</p>
+<p><strong>The contract you must guarantee.</strong> Use <code>RefreshUnsafe</code> <strong>only where you know your changes cannot have modified the element's index in the parent document</strong> — i.e. the document has been mutated <strong>solely within the refreshed element's own subtree</strong>, never at or before the element's position (the node itself replaced, an ancestor, or a <em>preceding sibling</em> changing size). If anything at or before the element moved, its start index is no longer valid and <code>RefreshUnsafe</code> returns a handle that <strong>silently addresses the wrong node</strong> — the very memory-corruption class that version tracking exists to prevent. <code>RefreshUnsafe</code> only checks for document disposal, never the correctness of the position, so it cannot catch this for you. When in doubt, re-navigate from the (always-live) root instead.</p>
 <h2 id="comparison-with-system.text.json.nodes">Comparison with System.Text.Json.Nodes</h2>
 <h3 id="similar-capabilities">Similar Capabilities</h3>
 <p>Both <code>JsonDocumentBuilder</code> and <code>System.Text.Json.Nodes</code> (JsonNode, JsonObject, JsonArray) provide mutable JSON document manipulation:</p>

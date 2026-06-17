@@ -98,7 +98,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/215c480debed1dec30f1eb4114e9a8ef8cba94f9/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/Internal/IMutableJsonDocument.cs#L19">IMutableJsonDocument.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2cdbda48c0220a238aebe75769e2c0ef5f2d9440/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/Internal/IMutableJsonDocument.cs#L19">IMutableJsonDocument.cs</a></p>
 <p>Represents a mutable JSON document that supports editing and value storage operations.</p>
 <pre><code class="language-csharp">public interface IMutableJsonDocument : IWorkspaceManagedDocument, IJsonDocument, IDisposable
 </code></pre>
@@ -221,6 +221,10 @@
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-imutablejsondocument.overwritesimplevalue.html#overwritesimplevalue-int-int-int-int-jsontokentype-int-int">OverwriteSimpleValue(int, int, int, int, JsonTokenType, int, int)</a></td>
 <td>Overwrites a range with a single simple value row directly, bypassing <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-complexvaluebuilder.html"><code>ComplexValueBuilder</code></a>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-imutablejsondocument.refreshelementunsafe.html#refreshelementunsafe-int">RefreshElementUnsafe(int)</a></td>
+<td>Creates a fresh element of type <code>TElement</code> for the element at the specified index, capturing the document's current version.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-imutablejsondocument.removerange.html#removerange-int-int-int-int">RemoveRange(int, int, int, int)</a></td>

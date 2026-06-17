@@ -98,7 +98,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Runtime.InteropServices<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/215c480debed1dec30f1eb4114e9a8ef8cba94f9/src/Corvus.Text.Json/Corvus/Runtime/InteropServices/JsonMarshal.cs#L17">JsonMarshal.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2cdbda48c0220a238aebe75769e2c0ef5f2d9440/src/Corvus.Text.Json/Corvus/Runtime/InteropServices/JsonMarshal.cs#L17">JsonMarshal.cs</a></p>
 <p>An unsafe class that provides a set of methods to access the underlying data representations of JSON types.</p>
 <pre><code class="language-csharp">public static class JsonMarshal
 </code></pre>
@@ -128,6 +128,10 @@
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-runtime-interopservices-jsonmarshal.isvalueescaped.html#isvalueescaped-t">IsValueEscaped(T)</a> <code>static</code></td>
 <td>Gets a value indicating whether the raw UTF-8 value contains escaped JSON text.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-runtime-interopservices-jsonmarshal.refreshunsafe.html#refreshunsafe-t">RefreshUnsafe(T)</a> <code>static</code></td>
+<td>Returns a fresh handle to a mutable JSON element whose cached document version is brought up to date with the parent document's current version, without re-validating the element's position.</td>
 </tr>
 </tbody>
 </table>
