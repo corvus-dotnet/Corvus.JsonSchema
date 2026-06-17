@@ -18,21 +18,30 @@ public enum AccessRequestStatus
 
     /// <summary>Withdrawn by the requester before a decision.</summary>
     Withdrawn,
-
-    /// <summary>An approved grant revoked early by an administrator (the entitlement was deleted).</summary>
-    Revoked,
-
-    /// <summary>Approved as durable eligibility (§16.5.3): an eligibility assignment was written (no active grant), so
-    /// the requester may self-elevate this capability JIT without re-approval. Distinct from <see cref="Approved"/>,
-    /// which writes a live, time-boxed grant.</summary>
-    Eligible,
 }
 
-/// <summary>A decision applied to a request (a terminal transition).</summary>
-/// <param name="Status">The terminal status — <see cref="AccessRequestStatus.Approved"/>, <see cref="AccessRequestStatus.Eligible"/>, <see cref="AccessRequestStatus.Denied"/>, <see cref="AccessRequestStatus.Withdrawn"/>, or <see cref="AccessRequestStatus.Revoked"/>.</param>
+/// <summary>The content of a new access request (supplied on create).</summary>
+/// <param name="BaseWorkflowId">The base workflow id the request targets (approval routes to its §15 administrators).</param>
+/// <param name="RequestedScopes">The capability scopes requested (e.g. <c>runs:write</c>); at least one.</param>
+/// <param name="SubjectClaimType">The principal claim type the eventual grant keys on (e.g. <c>sub</c>).</param>
+/// <param name="SubjectClaimValue">The requester's value for <paramref name="SubjectClaimType"/>.</param>
+/// <param name="RequesterLabel">An optional human-friendly label for the requester (display only).</param>
+/// <param name="Reason">An optional justification.</param>
+/// <param name="RequestedDurationSeconds">The optional time-bound (PIM) duration the requester proposes, in seconds; <see langword="null"/> defaults to the deployment maximum TTL.</param>
+public readonly record struct AccessRequestDefinition(
+    string BaseWorkflowId,
+    IReadOnlyList<string> RequestedScopes,
+    string SubjectClaimType,
+    string SubjectClaimValue,
+    string? RequesterLabel = null,
+    string? Reason = null,
+    long? RequestedDurationSeconds = null);
+
+/// <summary>A decision applied to a pending request (a terminal transition).</summary>
+/// <param name="Status">The terminal status (<see cref="AccessRequestStatus.Approved"/>, <see cref="AccessRequestStatus.Denied"/>, or <see cref="AccessRequestStatus.Withdrawn"/>).</param>
 /// <param name="DecisionReason">An optional note recorded with the decision.</param>
-/// <param name="GrantedBindingId">The id of the security-policy binding written to confer the grant (active) or the eligibility assignment.</param>
-/// <param name="GrantedUntil">When the grant (or eligibility window) expires; <see langword="null"/> for a standing grant/eligibility.</param>
+/// <param name="GrantedBindingId">On approval, the id of the security-policy binding written to confer the grant.</param>
+/// <param name="GrantedUntil">On approval of a time-bound grant, when it expires; <see langword="null"/> for a standing grant.</param>
 public readonly record struct AccessRequestDecision(
     AccessRequestStatus Status,
     string? DecisionReason = null,
@@ -41,45 +50,14 @@ public readonly record struct AccessRequestDecision(
 
 /// <summary>A filter over access requests (all criteria optional; an absent criterion matches anything).</summary>
 /// <param name="Status">Only requests in this state.</param>
-/// <param name="BaseWorkflowId">Only requests targeting this base workflow id, carried as its request JSON value (undefined matches anything); the store reifies it at its own leaf (a DB parameter, or a bytes-native span compare).</param>
-/// <param name="SubjectClaimType">Only requests whose subject keys on this claim type (with <paramref name="SubjectClaimValue"/>, "mine"); a server-derived/config string leaf.</param>
-/// <param name="SubjectClaimValue">Only requests whose subject value matches; a server-derived (ClaimsPrincipal) string leaf.</param>
-/// <param name="AdministeredBaseWorkflowIds">The approver inbox (design §15.4/§16.5): only requests targeting one of these
-/// base workflow ids — the set the caller administers, resolved server-side from the reverse administration index (a
-/// genuine server-derived leaf, like <paramref name="SubjectClaimValue"/>). <see langword="null"/> matches anything; a
-/// caller administering nothing is short-circuited to an empty page before the store, so the set is never empty here.</param>
+/// <param name="BaseWorkflowId">Only requests targeting this base workflow id.</param>
+/// <param name="SubjectClaimType">Only requests whose subject keys on this claim type (with <paramref name="SubjectClaimValue"/>, "mine").</param>
+/// <param name="SubjectClaimValue">Only requests whose subject value matches.</param>
 public readonly record struct AccessRequestQuery(
     AccessRequestStatus? Status = null,
-    JsonString BaseWorkflowId = default,
+    string? BaseWorkflowId = null,
     string? SubjectClaimType = null,
-    string? SubjectClaimValue = null,
-    IReadOnlyList<string>? AdministeredBaseWorkflowIds = null)
-{
-    /// <summary>Whether a row passes the approver-inbox filter: <see langword="true"/> when no administered set is
-    /// constrained, or when the set contains the row's base workflow id. String-free — the candidate base-workflow-id
-    /// strings' bytes are compared against the row's JSON value (no base-workflow-id string is realised from the document).
-    /// The shared client-side membership test for stores that filter in memory (the in-memory store and the KV/table
-    /// backends, which scan their keyset index and apply this per row).</summary>
-    /// <param name="request">The candidate row.</param>
-    /// <returns><see langword="true"/> if the row is admitted by the administered-set filter.</returns>
-    public bool MatchesAdministeredSet(in AccessRequest request)
-    {
-        if (this.AdministeredBaseWorkflowIds is not { } administered)
-        {
-            return true;
-        }
-
-        foreach (string administeredBaseWorkflowId in administered)
-        {
-            if (request.BaseWorkflowIdEquals(administeredBaseWorkflowId))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-}
+    string? SubjectClaimValue = null);
 
 /// <summary>The wire (persisted) names for <see cref="AccessRequestStatus"/>.</summary>
 public static class AccessRequestStatusNames
@@ -96,12 +74,6 @@ public static class AccessRequestStatusNames
     /// <summary>The persisted name for <see cref="AccessRequestStatus.Withdrawn"/>.</summary>
     public const string Withdrawn = "Withdrawn";
 
-    /// <summary>The persisted name for <see cref="AccessRequestStatus.Revoked"/>.</summary>
-    public const string Revoked = "Revoked";
-
-    /// <summary>The persisted name for <see cref="AccessRequestStatus.Eligible"/>.</summary>
-    public const string Eligible = "Eligible";
-
     /// <summary>Gets the persisted wire name for a status.</summary>
     /// <param name="status">The status.</param>
     /// <returns>The wire name.</returns>
@@ -111,25 +83,8 @@ public static class AccessRequestStatusNames
         AccessRequestStatus.Approved => Approved,
         AccessRequestStatus.Denied => Denied,
         AccessRequestStatus.Withdrawn => Withdrawn,
-        AccessRequestStatus.Revoked => Revoked,
-        AccessRequestStatus.Eligible => Eligible,
         _ => throw new ArgumentOutOfRangeException(nameof(status)),
     };
-}
-
-/// <summary>Thrown when an access request cannot be acted on as asked — a wrong-state transition (e.g. approving a
-/// request that is not pending) or a request whose scopes are not grantable by the platform cap.</summary>
-public sealed class AccessRequestStateException : Exception
-{
-    /// <summary>Initializes a new instance of the <see cref="AccessRequestStateException"/> class.</summary>
-    /// <param name="requestId">The request id (or workflow id) the operation concerned.</param>
-    /// <param name="message">The reason the operation is not permitted in the request's current state.</param>
-    public AccessRequestStateException(string requestId, string message)
-        : base(message)
-        => this.RequestId = requestId;
-
-    /// <summary>Gets the request id (or workflow id) the operation concerned.</summary>
-    public string RequestId { get; }
 }
 
 /// <summary>Thrown when an access request's expected etag no longer matches (an optimistic-concurrency conflict).</summary>

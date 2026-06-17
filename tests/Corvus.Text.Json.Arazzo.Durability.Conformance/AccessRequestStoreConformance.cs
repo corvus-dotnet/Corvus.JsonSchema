@@ -45,7 +45,8 @@ public abstract class AccessRequestStoreConformance
     {
         IAccessRequestStore store = await this.NewStoreAsync();
         string id;
-        using (ParsedJsonDocument<AccessRequest> created = await CreateRequestAsync(store, AccessRequest.Draft("nightly-reconcile", ["runs:write", "runs:read"], "sub", "alice", requesterLabel: "Alice", reason: "on-call", requestedDurationSeconds: 3600),
+        using (ParsedJsonDocument<AccessRequest> created = await store.CreateAsync(
+            new AccessRequestDefinition("nightly-reconcile", ["runs:write", "runs:read"], "sub", "alice", RequesterLabel: "Alice", Reason: "on-call", RequestedDurationSeconds: 3600),
             "alice",
             default))
         {
@@ -86,20 +87,14 @@ public abstract class AccessRequestStoreConformance
         string bobReconcile = await this.CreateAsync(store, "nightly-reconcile", "bob");
         string aliceOnboard = await this.CreateAsync(store, "onboard-customer", "alice");
 
-        // By workflow (baseWorkflowId carried as its request JSON value, reified at the store's own leaf).
-        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> bw = AsJsonString("nightly-reconcile"))
-        {
-            (await this.IdsAsync(store, new AccessRequestQuery(BaseWorkflowId: bw.RootElement))).ShouldBe([aliceReconcile, bobReconcile], ignoreOrder: true);
-        }
+        // By workflow.
+        (await this.IdsAsync(store, new AccessRequestQuery(BaseWorkflowId: "nightly-reconcile"))).ShouldBe([aliceReconcile, bobReconcile], ignoreOrder: true);
 
         // By subject (alice's requests across workflows).
         (await this.IdsAsync(store, new AccessRequestQuery(SubjectClaimType: "sub", SubjectClaimValue: "alice"))).ShouldBe([aliceReconcile, aliceOnboard], ignoreOrder: true);
 
         // By workflow AND subject.
-        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> bw = AsJsonString("nightly-reconcile"))
-        {
-            (await this.IdsAsync(store, new AccessRequestQuery(BaseWorkflowId: bw.RootElement, SubjectClaimType: "sub", SubjectClaimValue: "bob"))).ShouldBe([bobReconcile]);
-        }
+        (await this.IdsAsync(store, new AccessRequestQuery(BaseWorkflowId: "nightly-reconcile", SubjectClaimType: "sub", SubjectClaimValue: "bob"))).ShouldBe([bobReconcile]);
 
         // By status: all are Pending until decided; deny one and filter.
         await store.DecideAsync(bobReconcile, new AccessRequestDecision(AccessRequestStatus.Denied), WorkflowEtag.None, "admin", default);
@@ -157,7 +152,8 @@ public abstract class AccessRequestStoreConformance
         IAccessRequestStore store = await this.NewStoreAsync();
         WorkflowEtag created;
         string id;
-        using (ParsedJsonDocument<AccessRequest> request = await CreateRequestAsync(store, AccessRequest.Draft("w", ["runs:write"], "sub", "alice"),
+        using (ParsedJsonDocument<AccessRequest> request = await store.CreateAsync(
+            new AccessRequestDefinition("w", ["runs:write"], "sub", "alice"),
             "alice",
             default))
         {
@@ -179,135 +175,6 @@ public abstract class AccessRequestStoreConformance
         overridden!.RootElement.StatusValue.ShouldBe("Withdrawn");
     }
 
-    [TestMethod]
-    public async Task Listing_keyset_pages_oldest_first_without_gaps_or_duplicates()
-    {
-        var clock = new StepClock(new DateTimeOffset(2026, 6, 1, 9, 0, 0, TimeSpan.Zero));
-        IAccessRequestStore store = await this.NewStoreAsync(clock);
-
-        // Distinct createdAt per request (the clock steps), so (createdAt, id) order is creation order.
-        var expected = new List<string>();
-        for (int i = 0; i < 8; i++)
-        {
-            expected.Add(await this.CreateAsync(store, "w", $"user-{i}"));
-            clock.Advance(TimeSpan.FromSeconds(1));
-        }
-
-        // Walk every page via the continuation token with a small limit; collect the ids in page order. The token is
-        // round-tripped through the JsonString seam exactly as the HTTP layer does.
-        var seen = new List<string>();
-        byte[]? token = null;
-        int pages = 0;
-        do
-        {
-            using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString>? tokenDoc = token is null ? null : AsJsonString(token);
-            using AccessRequestPage page = await store.ListAsync(default, 3, tokenDoc?.RootElement ?? default, default);
-            page.Requests.Count.ShouldBeLessThanOrEqualTo(3);
-            foreach (AccessRequest request in page.Requests)
-            {
-                seen.Add(request.IdValue);
-            }
-
-            token = page.NextPageToken.IsEmpty ? null : page.NextPageToken.ToArray();
-            pages++;
-        }
-        while (token is not null);
-
-        // 8 items, 3 per page → 3 pages; oldest-first, no duplicates or gaps across boundaries.
-        pages.ShouldBe(3);
-        seen.ShouldBe(expected);
-
-        // A malformed token is rejected (rather than silently restarting from the first page).
-        await Should.ThrowAsync<FormatException>(async () =>
-        {
-            using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> badToken = AsJsonString("this~is~not~a~token"u8);
-            using AccessRequestPage bad = await store.ListAsync(default, 3, badToken.RootElement, default);
-        });
-    }
-
-    [TestMethod]
-    public async Task Listing_filters_by_the_administered_workflow_set_for_the_approver_inbox()
-    {
-        IAccessRequestStore store = await this.NewStoreAsync();
-        string aliceReconcile = await this.CreateAsync(store, "nightly-reconcile", "alice");
-        string bobReconcile = await this.CreateAsync(store, "nightly-reconcile", "bob");
-        string aliceOnboard = await this.CreateAsync(store, "onboard-customer", "alice");
-        string carolExport = await this.CreateAsync(store, "daily-export", "carol");
-
-        // The approver inbox: every request targeting a workflow in the administered set (reconcile + export), across all
-        // subjects — onboard-customer is outside the set and never surfaced.
-        (await this.IdsAsync(store, new AccessRequestQuery(AdministeredBaseWorkflowIds: ["nightly-reconcile", "daily-export"])))
-            .ShouldBe([aliceReconcile, bobReconcile, carolExport], ignoreOrder: true);
-
-        // Combined with a status filter (the inbox's optional status filter).
-        await store.DecideAsync(bobReconcile, new AccessRequestDecision(AccessRequestStatus.Denied), WorkflowEtag.None, "admin", default);
-        (await this.IdsAsync(store, new AccessRequestQuery(Status: AccessRequestStatus.Pending, AdministeredBaseWorkflowIds: ["nightly-reconcile", "daily-export"])))
-            .ShouldBe([aliceReconcile, carolExport], ignoreOrder: true);
-
-        // A single-workflow administered set is exactly that workflow's queue.
-        (await this.IdsAsync(store, new AccessRequestQuery(AdministeredBaseWorkflowIds: ["onboard-customer"]))).ShouldBe([aliceOnboard]);
-    }
-
-    [TestMethod]
-    public async Task The_approver_inbox_keyset_pages_oldest_first_across_the_administered_set()
-    {
-        var clock = new StepClock(new DateTimeOffset(2026, 6, 1, 9, 0, 0, TimeSpan.Zero));
-        IAccessRequestStore store = await this.NewStoreAsync(clock);
-
-        // Interleave requests across two administered workflows and one the caller does NOT administer; the inbox must
-        // page the administered two oldest-first and never surface the third.
-        string[] workflows = ["alpha", "beta", "gamma"]; // gamma is not administered
-        var expected = new List<string>();
-        for (int i = 0; i < 9; i++)
-        {
-            string workflow = workflows[i % 3];
-            string id = await this.CreateAsync(store, workflow, $"user-{i}");
-            if (workflow != "gamma")
-            {
-                expected.Add(id);
-            }
-
-            clock.Advance(TimeSpan.FromSeconds(1));
-        }
-
-        var query = new AccessRequestQuery(AdministeredBaseWorkflowIds: ["alpha", "beta"]);
-        var seen = new List<string>();
-        byte[]? token = null;
-        int pages = 0;
-        do
-        {
-            using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString>? tokenDoc = token is null ? null : AsJsonString(token);
-            using AccessRequestPage page = await store.ListAsync(query, 2, tokenDoc?.RootElement ?? default, default);
-            page.Requests.Count.ShouldBeLessThanOrEqualTo(2);
-            foreach (AccessRequest request in page.Requests)
-            {
-                seen.Add(request.IdValue);
-            }
-
-            token = page.NextPageToken.IsEmpty ? null : page.NextPageToken.ToArray();
-            pages++;
-        }
-        while (token is not null);
-
-        // 6 administered requests, 2 per page → 3 pages; oldest-first, no duplicates, gamma excluded.
-        pages.ShouldBe(3);
-        seen.ShouldBe(expected);
-    }
-
-    // Wraps a value as the JSON string a request carries it as — the conformance carries a filter value as the request
-    // JSON the store reifies at its own leaf, and round-trips a page token (the store's emitted bytes) the same way.
-    private static ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> AsJsonString(ReadOnlySpan<byte> valueUtf8)
-    {
-        byte[] quoted = new byte[valueUtf8.Length + 2];
-        quoted[0] = (byte)'"';
-        valueUtf8.CopyTo(quoted.AsSpan(1));
-        quoted[^1] = (byte)'"';
-        return ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString>.Parse(quoted);
-    }
-
-    private static ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> AsJsonString(string value)
-        => AsJsonString(System.Text.Encoding.UTF8.GetBytes(value));
-
     private async ValueTask<IAccessRequestStore> NewStoreAsync(TimeProvider? timeProvider = null)
     {
         IAccessRequestStore store = await this.CreateStoreAsync(timeProvider ?? TimeProvider.System);
@@ -321,20 +188,11 @@ public abstract class AccessRequestStoreConformance
 
     private async ValueTask<string> CreateAsync(IAccessRequestStore store, string baseWorkflowId, string subject)
     {
-        using ParsedJsonDocument<AccessRequest> created = await CreateRequestAsync(store, AccessRequest.Draft(baseWorkflowId, ["runs:write"], "sub", subject),
+        using ParsedJsonDocument<AccessRequest> created = await store.CreateAsync(
+            new AccessRequestDefinition(baseWorkflowId, ["runs:write"], "sub", subject),
             subject,
             default);
         return created.RootElement.IdValue;
-    }
-
-    // Creates the (pooled, disposable) draft request, disposing the draft once the store has read it; the created
-    // document is returned for the caller to assert on and dispose.
-    private static async Task<ParsedJsonDocument<AccessRequest>> CreateRequestAsync(IAccessRequestStore store, ParsedJsonDocument<AccessRequest> draft, string actor, CancellationToken cancellationToken = default)
-    {
-        using (draft)
-        {
-            return await store.CreateAsync(draft.RootElement, actor, cancellationToken);
-        }
     }
 
     private async ValueTask<List<string>> IdsAsync(IAccessRequestStore store, AccessRequestQuery query)

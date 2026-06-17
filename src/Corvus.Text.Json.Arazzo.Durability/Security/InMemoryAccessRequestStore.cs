@@ -19,15 +19,7 @@ public sealed class InMemoryAccessRequestStore : IAccessRequestStore
         Comparer<ParsedJsonDocument<AccessRequest>>.Create(static (a, b) =>
         {
             int byTime = a.RootElement.CreatedAtValue.CompareTo(b.RootElement.CreatedAtValue);
-            if (byTime != 0)
-            {
-                return byTime;
-            }
-
-            // Tiebreak on id, string-free: compare the JSON values' UTF-8 bytes (no id string is realised per comparison).
-            using UnescapedUtf8JsonString aid = a.RootElement.Id.GetUtf8String();
-            using UnescapedUtf8JsonString bid = b.RootElement.Id.GetUtf8String();
-            return aid.Span.SequenceCompareTo(bid.Span);
+            return byTime != 0 ? byTime : string.CompareOrdinal(a.RootElement.IdValue, b.RootElement.IdValue);
         });
 
     private readonly Lock gate = new();
@@ -42,14 +34,19 @@ public sealed class InMemoryAccessRequestStore : IAccessRequestStore
         => this.timeProvider = timeProvider ?? TimeProvider.System;
 
     /// <inheritdoc/>
-    public ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequest draft, string actor, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequestDefinition definition, string actor, CancellationToken cancellationToken)
     {
+        ArgumentException.ThrowIfNullOrEmpty(definition.BaseWorkflowId);
+        ArgumentException.ThrowIfNullOrEmpty(definition.SubjectClaimType);
+        ArgumentException.ThrowIfNullOrEmpty(definition.SubjectClaimValue);
+        ArgumentNullException.ThrowIfNull(definition.RequestedScopes);
+        ArgumentOutOfRangeException.ThrowIfZero(definition.RequestedScopes.Count);
         ArgumentNullException.ThrowIfNull(actor);
 
         lock (this.gate)
         {
             string id = "req-" + (++this.requestSequence).ToString(CultureInfo.InvariantCulture);
-            byte[] json = AccessRequestSerialization.SerializeNew(id, draft, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
+            byte[] json = AccessRequestSerialization.SerializeNew(id, definition, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
             this.requests[id] = json;
             return new ValueTask<ParsedJsonDocument<AccessRequest>>(PersistedJson.ToPooledDocument<AccessRequest>(json));
         }
@@ -103,47 +100,30 @@ public sealed class InMemoryAccessRequestStore : IAccessRequestStore
                 return new ValueTask<ParsedJsonDocument<AccessRequest>?>((ParsedJsonDocument<AccessRequest>?)null);
             }
 
-            // Parse the existing document NON-COPYING over the stored array (alive in the dictionary through this
-            // synchronous decision under the lock) — the merge reads its etag + carried-forward fields, no per-read copy.
-            using ParsedJsonDocument<AccessRequest> current = ParsedJsonDocument<AccessRequest>.Parse(existing.AsMemory());
-            byte[] json = AccessRequestSerialization.SerializeDecision(current.RootElement, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
+            byte[] json = AccessRequestSerialization.SerializeDecision(existing, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
             this.requests[id] = json;
             return new ValueTask<ParsedJsonDocument<AccessRequest>?>(PersistedJson.ToPooledDocument<AccessRequest>(json));
         }
     }
 
-    private static bool Matches(in AccessRequest request, AccessRequestQuery query)
+    private static bool Matches(AccessRequest request, AccessRequestQuery query)
     {
-        // Status is compared string-free (no status field is realised to a managed string per row).
-        if (query.Status is { } status && !request.HasStatus(status))
+        if (query.Status is { } status && !string.Equals(request.StatusValue, AccessRequestStatusNames.ToWire(status), StringComparison.Ordinal))
         {
             return false;
         }
 
-        if (query.BaseWorkflowId.IsNotUndefined())
-        {
-            // baseWorkflowId arrives as the request's JSON value and is reified nowhere on the way here; compare it to the
-            // row's persisted UTF-8 directly (no managed string).
-            using UnescapedUtf8JsonString filterBaseWorkflowId = query.BaseWorkflowId.GetUtf8String();
-            using UnescapedUtf8JsonString rowBaseWorkflowId = request.BaseWorkflowId.GetUtf8String();
-            if (!rowBaseWorkflowId.Span.SequenceEqual(filterBaseWorkflowId.Span))
-            {
-                return false;
-            }
-        }
-
-        if (query.SubjectClaimType is { } subjectType && !request.SubjectClaimTypeEquals(subjectType))
+        if (query.BaseWorkflowId is { } baseWorkflowId && !string.Equals(request.BaseWorkflowIdValue, baseWorkflowId, StringComparison.Ordinal))
         {
             return false;
         }
 
-        // The approver inbox: the row's base workflow id must be one the caller administers (server-derived strings).
-        if (!query.MatchesAdministeredSet(request))
+        if (query.SubjectClaimType is { } subjectType && !string.Equals(request.SubjectClaimTypeValue, subjectType, StringComparison.Ordinal))
         {
             return false;
         }
 
-        return query.SubjectClaimValue is not { } subjectValue || request.SubjectClaimValueEquals(subjectValue);
+        return query.SubjectClaimValue is not { } subjectValue || string.Equals(request.SubjectClaimValueValue, subjectValue, StringComparison.Ordinal);
     }
 
     private WorkflowEtag NextEtag() => new((++this.etagSequence).ToString(CultureInfo.InvariantCulture));

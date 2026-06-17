@@ -26,23 +26,11 @@ public readonly partial struct AccessRequest
     /// <summary>Gets the base workflow id the request targets.</summary>
     public string BaseWorkflowIdValue => (string)this.BaseWorkflowId;
 
-    /// <summary>Tests whether this request's base workflow id is the given one, string-free (no base-workflow-id string is
-    /// realised from the document — the candidate string's bytes are compared against the JSON value).</summary>
-    /// <param name="baseWorkflowId">The base workflow id to test for.</param>
-    /// <returns><see langword="true"/> if the base workflow ids match.</returns>
-    public bool BaseWorkflowIdEquals(string baseWorkflowId) => this.BaseWorkflowId.ValueEquals(baseWorkflowId);
-
     /// <summary>Gets the principal claim type the granted entitlement keys on (e.g. <c>sub</c>).</summary>
     public string SubjectClaimTypeValue => (string)this.SubjectClaimType;
 
     /// <summary>Gets the requester's value for <see cref="SubjectClaimTypeValue"/>.</summary>
     public string SubjectClaimValueValue => (string)this.SubjectClaimValue;
-
-    /// <summary>Tests whether the request's subject claim type equals the given one, string-free (no string realised).</summary>
-    public bool SubjectClaimTypeEquals(string subjectClaimType) => this.SubjectClaimType.ValueEquals(subjectClaimType);
-
-    /// <summary>Tests whether the request's subject claim value equals the given one, string-free (no string realised).</summary>
-    public bool SubjectClaimValueEquals(string subjectClaimValue) => this.SubjectClaimValue.ValueEquals(subjectClaimValue);
 
     /// <summary>Gets the optional human-friendly requester label, or <see langword="null"/>.</summary>
     public string? RequesterLabelOrNull => this.RequesterLabel.IsNotUndefined() ? (string)this.RequesterLabel : null;
@@ -56,26 +44,8 @@ public readonly partial struct AccessRequest
     /// <summary>Gets when the granted entitlement expires, or <see langword="null"/> (undecided, or a standing grant).</summary>
     public DateTimeOffset? GrantedUntilValue => this.GrantedUntil.IsNotUndefined() ? ((NodaTime.OffsetDateTime)this.GrantedUntil).ToDateTimeOffset() : null;
 
-    /// <summary>Gets the request's lifecycle state as a realised <see cref="string"/> — for a display/log/serialize sink
-    /// only. To <em>branch</em> on the status, use the string-free <see cref="HasStatus"/> predicate, which compares the
-    /// JSON value's bytes and never allocates.</summary>
+    /// <summary>Gets the request's lifecycle state.</summary>
     public string StatusValue => (string)this.Status;
-
-    /// <summary>Tests whether the request is in the given lifecycle state, string-free (no status string is realised) — the
-    /// per-row status filter the in-memory and KV/table stores apply when scanning. The u8 literals mirror the schema's
-    /// status enum (see <see cref="AccessRequestStatusNames"/>).</summary>
-    /// <param name="status">The status to test for.</param>
-    /// <returns><see langword="true"/> if the request's status equals <paramref name="status"/>.</returns>
-    public bool HasStatus(AccessRequestStatus status) => status switch
-    {
-        AccessRequestStatus.Pending => this.Status.ValueEquals("Pending"u8),
-        AccessRequestStatus.Approved => this.Status.ValueEquals("Approved"u8),
-        AccessRequestStatus.Denied => this.Status.ValueEquals("Denied"u8),
-        AccessRequestStatus.Withdrawn => this.Status.ValueEquals("Withdrawn"u8),
-        AccessRequestStatus.Revoked => this.Status.ValueEquals("Revoked"u8),
-        AccessRequestStatus.Eligible => this.Status.ValueEquals("Eligible"u8),
-        _ => false,
-    };
 
     /// <summary>Gets the actor (requester) that created the request.</summary>
     public string CreatedByValue => (string)this.CreatedBy;
@@ -127,131 +97,15 @@ public readonly partial struct AccessRequest
     /// <summary>Realises a new (Pending) request into a workspace and writes its JSON to the caller's (pooled) writer.</summary>
     /// <param name="writer">The writer to serialize into (typically the pooled writer from <see cref="PersistedJson"/>).</param>
     /// <param name="id">The request id.</param>
-    /// <param name="draft">The draft request carrying the create-content (request + subject) as JSON values — read bytes-to-bytes.</param>
+    /// <param name="definition">The request content.</param>
     /// <param name="actor">The actor (requester) creating the request (audit).</param>
     /// <param name="createdAt">The creation instant.</param>
     /// <param name="etag">The optimistic-concurrency token to assign.</param>
-    public static void WriteNew(Utf8JsonWriter writer, string id, in AccessRequest draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+    public static void WriteNew(Utf8JsonWriter writer, string id, AccessRequestDefinition definition, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        using JsonDocumentBuilder<Mutable> builder = BuildNew(workspace, id, draft, actor, createdAt, etag);
+        using JsonDocumentBuilder<Mutable> builder = BuildNew(workspace, id, definition, actor, createdAt, etag);
         builder.RootElement.WriteTo(writer);
-    }
-
-    /// <summary>
-    /// Builds a draft request from the create-content (the requested workflow/scopes/duration/reason and the resolved
-    /// subject) for a store to complete with the server-stamped id/etag/created metadata and the initial Pending status.
-    /// The store reads only these content fields (bytes-to-bytes) and stamps the rest. A handler supplies the body
-    /// fields and the principal-derived subject; the eligibility predicate + approval pipeline read the draft directly.
-    /// </summary>
-    /// <param name="baseWorkflowId">The base workflow id the request targets.</param>
-    /// <param name="requestedScopes">The capability scopes requested (at least one).</param>
-    /// <param name="subjectClaimType">The principal claim type the eventual grant keys on.</param>
-    /// <param name="subjectClaimValue">The requester's value for <paramref name="subjectClaimType"/>.</param>
-    /// <param name="requesterLabel">An optional human-friendly requester label.</param>
-    /// <param name="reason">An optional justification.</param>
-    /// <param name="requestedDurationSeconds">The optional proposed time-bound (PIM) duration in seconds.</param>
-    /// <returns>A pooled, disposable draft document the caller must dispose once the store/pipeline has read it.</returns>
-    public static ParsedJsonDocument<AccessRequest> Draft(
-        string baseWorkflowId,
-        IReadOnlyList<string> requestedScopes,
-        string subjectClaimType,
-        string subjectClaimValue,
-        string? requesterLabel = null,
-        string? reason = null,
-        long? requestedDurationSeconds = null)
-    {
-        ArgumentNullException.ThrowIfNull(baseWorkflowId);
-        ArgumentNullException.ThrowIfNull(requestedScopes);
-        var state = new DraftState(baseWorkflowId, requestedScopes, subjectClaimType, subjectClaimValue, requesterLabel, reason, requestedDurationSeconds);
-        return PersistedJson.ToPooledDocument<AccessRequest, DraftState>(
-            in state,
-            static (Utf8JsonWriter writer, in DraftState c) =>
-            {
-                writer.WriteStartObject();
-                writer.WriteString("baseWorkflowId"u8, c.BaseWorkflowId);
-                writer.WriteStartArray("requestedScopes"u8);
-                foreach (string scope in c.RequestedScopes)
-                {
-                    writer.WriteStringValue(scope);
-                }
-
-                writer.WriteEndArray();
-                writer.WriteString("subjectClaimType"u8, c.SubjectClaimType);
-                writer.WriteString("subjectClaimValue"u8, c.SubjectClaimValue);
-                if (c.RequesterLabel is { } requesterLabel)
-                {
-                    writer.WriteString("requesterLabel"u8, requesterLabel);
-                }
-
-                if (c.Reason is { } reason)
-                {
-                    writer.WriteString("reason"u8, reason);
-                }
-
-                if (c.RequestedDurationSeconds is { } duration)
-                {
-                    writer.WriteNumber("requestedDurationSeconds"u8, duration);
-                }
-
-                writer.WriteEndObject();
-            });
-    }
-
-    /// <summary>Builds a draft Pending request carrying the request body's already-parsed JSON values bytes-to-bytes —
-    /// the warm HTTP path: <paramref name="baseWorkflowId"/>, <paramref name="requestedScopes"/> (the whole array, no
-    /// intermediate <see cref="System.Collections.Generic.List{T}"/> of managed strings) and <paramref name="reason"/>
-    /// are copied straight from the body, while the principal-derived subject/label are carried as the strings they
-    /// already are. The store stamps id/etag/createdAt; the eligibility predicate and <c>SubmitAsync</c> read the draft.</summary>
-    /// <param name="baseWorkflowId">The target workflow id, as the body's JSON value.</param>
-    /// <param name="requestedScopes">The requested scopes array, as the body's JSON value (copied verbatim).</param>
-    /// <param name="subjectClaimType">The principal's subject claim type (the grant is scoped to it).</param>
-    /// <param name="subjectClaimValue">The principal's subject claim value.</param>
-    /// <param name="requesterLabel">An optional human-facing requester label (the authentication name).</param>
-    /// <param name="reason">An optional reason, as the body's JSON value (skipped when undefined).</param>
-    /// <param name="requestedDurationSeconds">An optional requested grant duration.</param>
-    /// <returns>The pooled draft document (the caller disposes it).</returns>
-    public static ParsedJsonDocument<AccessRequest> Draft(
-        in JsonElement baseWorkflowId,
-        in JsonElement requestedScopes,
-        string subjectClaimType,
-        string subjectClaimValue,
-        string? requesterLabel,
-        in JsonElement reason,
-        long? requestedDurationSeconds)
-    {
-        ArgumentNullException.ThrowIfNull(subjectClaimType);
-        ArgumentNullException.ThrowIfNull(subjectClaimValue);
-        var state = new DraftElementState(baseWorkflowId, requestedScopes, subjectClaimType, subjectClaimValue, requesterLabel, reason, requestedDurationSeconds);
-        return PersistedJson.ToPooledDocument<AccessRequest, DraftElementState>(
-            in state,
-            static (Utf8JsonWriter writer, in DraftElementState c) =>
-            {
-                writer.WriteStartObject();
-                writer.WritePropertyName("baseWorkflowId"u8);
-                c.BaseWorkflowId.WriteTo(writer);
-                writer.WritePropertyName("requestedScopes"u8);
-                c.RequestedScopes.WriteTo(writer);
-                writer.WriteString("subjectClaimType"u8, c.SubjectClaimType);
-                writer.WriteString("subjectClaimValue"u8, c.SubjectClaimValue);
-                if (c.RequesterLabel is { } requesterLabel)
-                {
-                    writer.WriteString("requesterLabel"u8, requesterLabel);
-                }
-
-                if (c.Reason.ValueKind != JsonValueKind.Undefined)
-                {
-                    writer.WritePropertyName("reason"u8);
-                    c.Reason.WriteTo(writer);
-                }
-
-                if (c.RequestedDurationSeconds is { } duration)
-                {
-                    writer.WriteNumber("requestedDurationSeconds"u8, duration);
-                }
-
-                writer.WriteEndObject();
-            });
     }
 
     /// <summary>Realises a decided copy of this request (status + decision fields set; everything else carried through)
@@ -268,75 +122,29 @@ public readonly partial struct AccessRequest
         builder.RootElement.WriteTo(writer);
     }
 
-    // Realises a new Pending request into the pooled workspace arena: the draft's create-content is carried
-    // bytes-to-bytes (its JSON values — including the requestedScopes array — flow straight into the builder); id, the
-    // initial Pending status, and the server-stamped audit/concurrency fields are added here.
-    private static JsonDocumentBuilder<Mutable> BuildNew(JsonWorkspace workspace, string id, in AccessRequest draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+    // Realises a new Pending request into the pooled workspace arena. requestedScopes is the only required array; it is
+    // built through a small capturing callback (this is the cold write path — CreateAsync — not the warm read path).
+    private static JsonDocumentBuilder<Mutable> BuildNew(JsonWorkspace workspace, string id, AccessRequestDefinition definition, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
         => CreateBuilder(
             workspace,
-            baseWorkflowId: draft.BaseWorkflowId,
+            baseWorkflowId: definition.BaseWorkflowId,
             createdAt: createdAt,
             createdBy: actor,
             etag: etag.Value ?? string.Empty,
             id: id,
-            requestedScopes: draft.RequestedScopes,
+            requestedScopes: JsonStringArray.Build((ref JsonStringArray.Builder array) =>
+            {
+                foreach (string scope in definition.RequestedScopes)
+                {
+                    array.AddItem(scope);
+                }
+            }),
             status: AccessRequestStatusNames.Pending,
-            subjectClaimType: draft.SubjectClaimType,
-            subjectClaimValue: draft.SubjectClaimValue,
-            reason: draft.Reason.IsNotUndefined() ? (JsonString.Source)draft.Reason : default,
-            requesterLabel: draft.RequesterLabel.IsNotUndefined() ? (JsonString.Source)draft.RequesterLabel : default,
-            requestedDurationSeconds: draft.RequestedDurationSeconds.IsNotUndefined() ? (RequestedDurationSecondsEntity.Source)draft.RequestedDurationSeconds : default);
-
-    // The create-content of a draft request, threaded through the pooled-writer callback (a static lambda, no closure).
-    private readonly struct DraftState(
-        string baseWorkflowId,
-        IReadOnlyList<string> requestedScopes,
-        string subjectClaimType,
-        string subjectClaimValue,
-        string? requesterLabel,
-        string? reason,
-        long? requestedDurationSeconds)
-    {
-        public string BaseWorkflowId { get; } = baseWorkflowId;
-
-        public IReadOnlyList<string> RequestedScopes { get; } = requestedScopes;
-
-        public string SubjectClaimType { get; } = subjectClaimType;
-
-        public string SubjectClaimValue { get; } = subjectClaimValue;
-
-        public string? RequesterLabel { get; } = requesterLabel;
-
-        public string? Reason { get; } = reason;
-
-        public long? RequestedDurationSeconds { get; } = requestedDurationSeconds;
-    }
-
-    // The bytes-to-bytes draft context: the request body's already-parsed JSON values (baseWorkflowId/requestedScopes/
-    // reason) plus the principal-derived subject/label strings.
-    private readonly struct DraftElementState(
-        JsonElement baseWorkflowId,
-        JsonElement requestedScopes,
-        string subjectClaimType,
-        string subjectClaimValue,
-        string? requesterLabel,
-        JsonElement reason,
-        long? requestedDurationSeconds)
-    {
-        public JsonElement BaseWorkflowId { get; } = baseWorkflowId;
-
-        public JsonElement RequestedScopes { get; } = requestedScopes;
-
-        public string SubjectClaimType { get; } = subjectClaimType;
-
-        public string SubjectClaimValue { get; } = subjectClaimValue;
-
-        public string? RequesterLabel { get; } = requesterLabel;
-
-        public JsonElement Reason { get; } = reason;
-
-        public long? RequestedDurationSeconds { get; } = requestedDurationSeconds;
-    }
+            subjectClaimType: definition.SubjectClaimType,
+            subjectClaimValue: definition.SubjectClaimValue,
+            reason: definition.Reason is { } reason ? (JsonString.Source)reason : default,
+            requesterLabel: definition.RequesterLabel is { } label ? (JsonString.Source)label : default,
+            requestedDurationSeconds: definition.RequestedDurationSeconds is { } duration ? (RequestedDurationSecondsEntity.Source)duration : default);
 
     // Realises a mutable builder over this document and applies the decision; id/created/request fields carry through.
     private JsonDocumentBuilder<Mutable> ApplyDecision(JsonWorkspace workspace, AccessRequestDecision decision, string actor, DateTimeOffset decidedAt, WorkflowEtag etag)

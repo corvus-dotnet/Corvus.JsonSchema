@@ -22,11 +22,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.Security;
 public interface IAccessRequestStore
 {
     /// <summary>Creates a new <see cref="AccessRequestStatus.Pending"/> request, assigning it an id.</summary>
-    /// <param name="draft">The draft request carrying the create-content as JSON values; the store stamps the id/etag/created metadata and the Pending status. Build one programmatically via <see cref="AccessRequest.Draft(string, System.Collections.Generic.IReadOnlyList{string}, string, string, string, string, long?)"/>.</param>
+    /// <param name="definition">The request content.</param>
     /// <param name="actor">The authenticated identity (the requester) creating the request (for audit).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The created request (with its assigned id), as a pooled document the caller must dispose.</returns>
-    ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequest draft, string actor, CancellationToken cancellationToken);
+    ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequestDefinition definition, string actor, CancellationToken cancellationToken);
 
     /// <summary>Gets a request by id, or <see langword="null"/> if absent.</summary>
     /// <param name="id">The request id.</param>
@@ -34,29 +34,11 @@ public interface IAccessRequestStore
     /// <returns>The request as a pooled document the caller must dispose, or <see langword="null"/>.</returns>
     ValueTask<ParsedJsonDocument<AccessRequest>?> GetAsync(string id, CancellationToken cancellationToken);
 
-    /// <summary>Lists requests matching a filter, oldest first (creation order). The full filtered read used by the default
-    /// keyset pager; the paged <see cref="ListAsync(AccessRequestQuery, int, JsonString, CancellationToken)"/> is the API
-    /// list seam.</summary>
+    /// <summary>Lists requests matching a filter, oldest first (creation order).</summary>
     /// <param name="query">The filter (all criteria optional).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The matching requests, as a pooled batch the caller must dispose.</returns>
     ValueTask<PooledDocumentList<AccessRequest>> ListAsync(AccessRequestQuery query, CancellationToken cancellationToken);
-
-    /// <summary>Lists requests as a keyset page (design §16.5): the <paramref name="query"/>-filtered requests oldest-first
-    /// by <c>(createdAt, id)</c>, bounded to <paramref name="limit"/>, resuming strictly after <paramref name="pageToken"/>.
-    /// The default implementation pages over <see cref="ListAsync(AccessRequestQuery, CancellationToken)"/> in memory; a
-    /// backend overrides it with a native keyset query so the read itself is bounded.</summary>
-    /// <param name="query">The filter (all criteria optional).</param>
-    /// <param name="limit">The maximum requests to return (a non-positive value uses the store's default page size).</param>
-    /// <param name="pageToken">The opaque token (its JSON value) from a previous page's <see cref="AccessRequestPage.NextPageToken"/>, or undefined for the first page; decoded bytes-native from its UTF-8.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>One keyset page, as a disposable the caller must dispose.</returns>
-    /// <exception cref="FormatException"><paramref name="pageToken"/> is not a valid continuation token.</exception>
-    async ValueTask<AccessRequestPage> ListAsync(AccessRequestQuery query, int limit, JsonString pageToken, CancellationToken cancellationToken)
-    {
-        using PooledDocumentList<AccessRequest> filtered = await this.ListAsync(query, cancellationToken).ConfigureAwait(false);
-        return AccessRequestPaging.PageInMemory(filtered, limit, pageToken);
-    }
 
     /// <summary>Applies a terminal decision to a request under optimistic concurrency.</summary>
     /// <param name="id">The request id.</param>

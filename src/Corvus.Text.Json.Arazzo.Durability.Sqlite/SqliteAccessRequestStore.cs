@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using System.Globalization;
 using System.Text;
 using Corvus.Text.Json.Arazzo.Durability.Security;
@@ -68,8 +67,13 @@ public sealed class SqliteAccessRequestStore : IAccessRequestStore, IAsyncDispos
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequest draft, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequestDefinition definition, string actor, CancellationToken cancellationToken)
     {
+        ArgumentException.ThrowIfNullOrEmpty(definition.BaseWorkflowId);
+        ArgumentException.ThrowIfNullOrEmpty(definition.SubjectClaimType);
+        ArgumentException.ThrowIfNullOrEmpty(definition.SubjectClaimValue);
+        ArgumentNullException.ThrowIfNull(definition.RequestedScopes);
+        ArgumentOutOfRangeException.ThrowIfZero(definition.RequestedScopes.Count);
         ArgumentNullException.ThrowIfNull(actor);
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
@@ -77,15 +81,15 @@ public sealed class SqliteAccessRequestStore : IAccessRequestStore, IAsyncDispos
             string id = "req-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
             WorkflowEtag etag = NewEtag();
             DateTimeOffset now = this.timeProvider.GetUtcNow();
-            byte[] json = AccessRequestSerialization.SerializeNew(id, draft, actor, now, etag);
+            byte[] json = AccessRequestSerialization.SerializeNew(id, definition, actor, now, etag);
             using SqliteCommand insert = this.connection.CreateCommand();
             insert.CommandText =
                 "INSERT INTO AccessRequests (Id, BaseWorkflowId, SubjectClaimType, SubjectClaimValue, Status, CreatedAt, Etag, Document) " +
                 "VALUES (@id, @bw, @st, @sv, @status, @createdAt, @etag, @doc);";
             insert.Parameters.AddWithValue("@id", id);
-            insert.Parameters.AddWithValue("@bw", draft.BaseWorkflowIdValue);
-            insert.Parameters.AddWithValue("@st", draft.SubjectClaimTypeValue);
-            insert.Parameters.AddWithValue("@sv", draft.SubjectClaimValueValue);
+            insert.Parameters.AddWithValue("@bw", definition.BaseWorkflowId);
+            insert.Parameters.AddWithValue("@st", definition.SubjectClaimType);
+            insert.Parameters.AddWithValue("@sv", definition.SubjectClaimValue);
             insert.Parameters.AddWithValue("@status", AccessRequestStatusNames.Pending);
             insert.Parameters.AddWithValue("@createdAt", now.UtcDateTime.ToString("o", CultureInfo.InvariantCulture));
             insert.Parameters.AddWithValue("@etag", etag.Value!);
@@ -107,7 +111,7 @@ public sealed class SqliteAccessRequestStore : IAccessRequestStore, IAsyncDispos
         try
         {
             byte[]? doc = await this.DocumentAsync(id, cancellationToken).ConfigureAwait(false);
-            return doc is null ? null : ParsedJsonDocument<AccessRequest>.Parse(doc.AsMemory());
+            return doc is null ? null : PersistedJson.ToPooledDocument<AccessRequest>(doc);
         }
         finally
         {
@@ -131,10 +135,10 @@ public sealed class SqliteAccessRequestStore : IAccessRequestStore, IAsyncDispos
                 select.Parameters.AddWithValue("@status", AccessRequestStatusNames.ToWire(status));
             }
 
-            if (query.BaseWorkflowId.IsNotUndefined())
+            if (query.BaseWorkflowId is { } baseWorkflowId)
             {
                 conditions.Add("BaseWorkflowId = @bw");
-                select.Parameters.AddWithValue("@bw", (string)query.BaseWorkflowId);
+                select.Parameters.AddWithValue("@bw", baseWorkflowId);
             }
 
             if (query.SubjectClaimType is { } subjectType)
@@ -148,8 +152,6 @@ public sealed class SqliteAccessRequestStore : IAccessRequestStore, IAsyncDispos
                 conditions.Add("SubjectClaimValue = @sv");
                 select.Parameters.AddWithValue("@sv", subjectValue);
             }
-
-            AppendAdministeredFilter(conditions, select, query.AdministeredBaseWorkflowIds);
 
             if (conditions.Count > 0)
             {
@@ -161,130 +163,10 @@ public sealed class SqliteAccessRequestStore : IAccessRequestStore, IAsyncDispos
             using SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
-                list.Add(ParsedJsonDocument<AccessRequest>.Parse(reader.GetFieldValue<byte[]>(0).AsMemory()));
+                list.Add(PersistedJson.ToPooledDocument<AccessRequest>(reader.GetFieldValue<byte[]>(0)));
             }
 
             return list;
-        }
-        finally
-        {
-            this.gate.Release();
-        }
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<AccessRequestPage> ListAsync(AccessRequestQuery query, int limit, JsonString pageToken, CancellationToken cancellationToken)
-    {
-        int pageSize = limit > 0 ? limit : AccessRequestPage.DefaultPageSize;
-
-        // Decode the keyset cursor; createdAt + id reify to the strings the ADO predicate needs (a genuine DB-param leaf)
-        // only here — createdAt as the ISO-8601 "o" form the CreatedAt column stores (reconstructed from the token's UTC
-        // ticks), id as its text. Undefined token = first page; a malformed token throws FormatException.
-        string? cursorCreatedAt = null;
-        string? cursorId = null;
-        if (pageToken.IsNotUndefined())
-        {
-            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
-            byte[] buffer = ArrayPool<byte>.Shared.Rent(AccessRequestContinuationToken.GetMaxDecodedLength(tokenUtf8.Span.Length));
-            try
-            {
-                if (AccessRequestContinuationToken.TryDecode(tokenUtf8.Span, buffer, out long cursorTicks, out ReadOnlySpan<byte> cursorIdUtf8))
-                {
-                    cursorCreatedAt = new DateTime(cursorTicks, DateTimeKind.Utc).ToString("o", CultureInfo.InvariantCulture);
-                    cursorId = Encoding.UTF8.GetString(cursorIdUtf8);
-                }
-            }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return(buffer);
-            }
-        }
-
-        await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
-        {
-            using SqliteCommand select = this.connection.CreateCommand();
-            var sql = new StringBuilder("SELECT Document FROM AccessRequests");
-            var conditions = new List<string>(5);
-            if (query.Status is { } status)
-            {
-                conditions.Add("Status = @status");
-                select.Parameters.AddWithValue("@status", AccessRequestStatusNames.ToWire(status));
-            }
-
-            if (query.BaseWorkflowId.IsNotUndefined())
-            {
-                conditions.Add("BaseWorkflowId = @bw");
-                select.Parameters.AddWithValue("@bw", (string)query.BaseWorkflowId);
-            }
-
-            if (query.SubjectClaimType is { } subjectType)
-            {
-                conditions.Add("SubjectClaimType = @st");
-                select.Parameters.AddWithValue("@st", subjectType);
-            }
-
-            if (query.SubjectClaimValue is { } subjectValue)
-            {
-                conditions.Add("SubjectClaimValue = @sv");
-                select.Parameters.AddWithValue("@sv", subjectValue);
-            }
-
-            AppendAdministeredFilter(conditions, select, query.AdministeredBaseWorkflowIds);
-
-            if (cursorCreatedAt is not null)
-            {
-                // Keyset seek strictly past (createdAt, id): CreatedAt is the fixed-width ISO-8601 "o" UTC form so its
-                // ordinal/lexicographic order is chronological, and Id is the TEXT primary key (SQLite BINARY collation ==
-                // ordinal byte order == the in-memory pager's id span compare).
-                conditions.Add("(CreatedAt > @ca OR (CreatedAt = @ca AND Id > @id))");
-                select.Parameters.AddWithValue("@ca", cursorCreatedAt);
-                select.Parameters.AddWithValue("@id", cursorId!);
-            }
-
-            if (conditions.Count > 0)
-            {
-                sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));
-            }
-
-            // ORDER BY the keyset and LIMIT one beyond the page (lookahead) — the IX_AccessRequests on (CreatedAt, Id) is
-            // not declared, but ORDER BY drives the bounded read; never a full read + re-parse of the whole queue.
-            sql.Append(" ORDER BY CreatedAt, Id LIMIT @limit;");
-            select.Parameters.AddWithValue("@limit", pageSize + 1);
-            select.CommandText = sql.ToString();
-
-            var page = new PooledDocumentList<AccessRequest>(pageSize);
-            try
-            {
-                bool hasMore = false;
-                using (SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
-                {
-                    while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
-                    {
-                        if (page.Count == pageSize)
-                        {
-                            hasMore = true; // the (pageSize+1)th row exists → a next page; don't parse it
-                            break;
-                        }
-
-                        page.Add(ParsedJsonDocument<AccessRequest>.Parse(reader.GetFieldValue<byte[]>(0).AsMemory()));
-                    }
-                }
-
-                if (!hasMore)
-                {
-                    return AccessRequestPage.Create(page);
-                }
-
-                AccessRequest last = page[page.Count - 1];
-                using UnescapedUtf8JsonString lastId = last.Id.GetUtf8String();
-                return AccessRequestPage.Create(page, last.CreatedAtValue.UtcTicks, lastId.Span);
-            }
-            catch
-            {
-                page.Dispose();
-                throw;
-            }
         }
         finally
         {
@@ -307,8 +189,7 @@ public sealed class SqliteAccessRequestStore : IAccessRequestStore, IAsyncDispos
             }
 
             WorkflowEtag etag = NewEtag();
-            using ParsedJsonDocument<AccessRequest> current = ParsedJsonDocument<AccessRequest>.Parse(doc.AsMemory());
-            byte[] json = AccessRequestSerialization.SerializeDecision(current.RootElement, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), etag);
+            byte[] json = AccessRequestSerialization.SerializeDecision(doc, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), etag);
             using SqliteCommand update = this.connection.CreateCommand();
             update.CommandText = "UPDATE AccessRequests SET Status = @status, Etag = @etag, Document = @doc WHERE Id = @k;";
             update.Parameters.AddWithValue("@status", AccessRequestStatusNames.ToWire(decision.Status));
@@ -329,26 +210,6 @@ public sealed class SqliteAccessRequestStore : IAccessRequestStore, IAsyncDispos
     {
         this.gate.Dispose();
         return this.connection.DisposeAsync();
-    }
-
-    // Appends the approver-inbox filter (design §16.5): BaseWorkflowId IN (the administered set) — server-derived strings
-    // reified as @adm{i} parameters (the SQL leaf). The set is never empty here (the handler short-circuits a caller who
-    // administers nothing to an empty page before the store), but a null set (the non-inbox modes) adds nothing.
-    private static void AppendAdministeredFilter(List<string> conditions, SqliteCommand command, IReadOnlyList<string>? administered)
-    {
-        if (administered is not { Count: > 0 } set)
-        {
-            return;
-        }
-
-        var names = new string[set.Count];
-        for (int i = 0; i < set.Count; i++)
-        {
-            names[i] = "@adm" + i.ToString(CultureInfo.InvariantCulture);
-            command.Parameters.AddWithValue(names[i], set[i]);
-        }
-
-        conditions.Add("BaseWorkflowId IN (" + string.Join(", ", names) + ")");
     }
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
