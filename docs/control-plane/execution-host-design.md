@@ -996,6 +996,43 @@ workflow** — a request resource, the routing to the relevant §15 administrato
 entitlement write on approval — exposed in the API, CLI, and UI. The grant store, the rule grammar/engine, and
 the §15 administrator lookup are already in place; the request/approval workflow layers on top of them.
 
+### 16.5.1 The approval process — a strategy seam, and the workflow-backed target
+
+The approval *decision process* is a **pluggable strategy**, not hard-wired — the same shape ServiceNow Flow
+Designer and Camunda/BPMN use for self-service access requests (request → route to approver → grant + audit):
+
+- **Default (built-in, ships with the access-request surface).** A single-approver flow: the request routes to
+  the §15 domain administrator, who approves, and the control plane performs the bounded grant write. No engine
+  involved — so the onboarding/entitlement surface is **decoupled from the (paused) live-execution work** and
+  ships with the Keycloak slice.
+- **Workflow-backed (the target — Arazzo governing Arazzo).** A **system-provided Arazzo approval workflow**,
+  bootstrapped declaratively at deploy (catalogued + §15-administered by the bootstrap system admin), behind the
+  same strategy seam, for orgs needing multi-stage / conditional / notified / time-boxed approvals. It is the
+  natural composition of primitives that already exist: a human approval = a **suspended-for-message / human-task
+  run**; customization = **publishing a new catalog version** (governed by §15 + catalog versioning); the grant =
+  a **typed OpenAPI operation** on the security API called with a §13 system credential.
+
+Three guardrails make a *user-editable* approval safe (without them it is a privilege-escalation engine):
+
+1. **The requester needs no access (circularity break).** "Request access" is a first-class control-plane
+   endpoint any authenticated principal may call — it is *not* a general workflow trigger. The approval workflow
+   is **system-bootstrapped, system-administered, and runs as `AccessContext.System`**, seeded before any user
+   exists (the §16.2 bootstrap pattern). The requester triggers it but never needs rights on it.
+2. **The grant authority is capped by the platform, not the workflow.** The editable workflow decides *who/
+   whether/how many approvers, conditions, escalations, timeouts* — but the security API's grant operation
+   enforces the ceiling: an approval may grant **at most the requested scope to the requesting subject** — never
+   `security:write`, never system reach, never a third party, never escalation. So the decision process can be
+   liberalized freely; the **privilege ceiling is fixed** (the same bounded-authority idea as the §13.5 Vault
+   provisioner).
+3. **Editing the approval workflow is a top-tier, audited, system-admin-only operation** — separation of duties
+   at the meta-level: who can be *approved by* it ≠ who can *edit* it.
+
+**Sequencing.** The built-in default lands with the Keycloak/OIDC + access-request surface (this slice). The
+workflow-backed approval is the **capstone of the slice**, implemented once the rest of Keycloak is proven — and
+it doubles as the **ideal first live-executed workflow** (internal, controlled, high-value, exercising human-task
+suspend/resume + a typed privileged action end to end), so it is the concrete motivation to unpause live
+execution, dogfooded on the system's own governance rather than a demo toy.
+
 ### 16.6 Decisions (§16)
 
 - **Identity lives in the IdP; Arazzo authorizes claims** — no user table, no credential issuance.
@@ -1009,3 +1046,9 @@ the §15 administrator lookup are already in place; the request/approval workflo
   admin) goes through an in-app access request → §15 domain-administrator approval → entitlement write.**
 - A consolidated "principals & grants" admin view is **deferred**, but the **access-request/approval surface is
   in scope** for the Keycloak slice (it is the missing piece, not a nicety).
+- **Approval is a strategy seam (§16.5.1).** A **built-in single-approver default** (route to the §15 domain
+  admin → bounded grant write, no engine) ships with the access-request surface, decoupled from live execution.
+  A **system-bootstrapped, customizable workflow-backed approval** is the documented target — implemented as the
+  **capstone of this slice** once the rest of Keycloak is proven, and serving as the first live-executed workflow.
+  Three guardrails are mandatory: requester-needs-no-access, platform-capped grant authority, and edit-as-system-
+  admin-only (separation of duties).
