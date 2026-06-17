@@ -16,12 +16,12 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 public interface IAccessRequestApprovalService
 {
     /// <summary>Submits a request; auto-approves it (self-elevation) when the requester is eligible.</summary>
-    /// <param name="draft">The draft request carrying the create-content (subject = the requester) as JSON values.</param>
+    /// <param name="definition">The request content (subject = the requester).</param>
     /// <param name="actor">The requester's audit identity.</param>
     /// <param name="eligibleForSelfElevation">Whether the requester is eligible to self-elevate this request.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The created request — pending, or already approved when self-elevated.</returns>
-    ValueTask<ParsedJsonDocument<AccessRequest>> SubmitAsync(AccessRequest draft, string actor, bool eligibleForSelfElevation, CancellationToken cancellationToken);
+    ValueTask<ParsedJsonDocument<AccessRequest>> SubmitAsync(AccessRequestDefinition definition, string actor, bool eligibleForSelfElevation, CancellationToken cancellationToken);
 
     /// <summary>Approves a pending request, writing the time-boxed entitlement (the approver must be a §15 administrator of the target workflow).</summary>
     /// <param name="requestId">The request id.</param>
@@ -31,17 +31,6 @@ public interface IAccessRequestApprovalService
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The approved request, or <see langword="null"/> if absent.</returns>
     ValueTask<ParsedJsonDocument<AccessRequest>?> ApproveAsync(string requestId, SecurityTagSet approverIdentity, string actor, string? reason, CancellationToken cancellationToken);
-
-    /// <summary>Approves a pending request as durable eligibility (§16.5.3) rather than a live grant — the requester may
-    /// thereafter self-elevate JIT without re-approval (the approver must be a §15 administrator of the target workflow).</summary>
-    /// <param name="requestId">The request id.</param>
-    /// <param name="approverIdentity">The approver's unforgeable identity tags.</param>
-    /// <param name="actor">The approver's audit identity.</param>
-    /// <param name="reason">An optional approval note.</param>
-    /// <param name="eligibilityWindow">How long the eligibility itself lasts; <see langword="null"/> is standing eligibility.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The request marked <see cref="AccessRequestStatus.Eligible"/>, or <see langword="null"/> if absent.</returns>
-    ValueTask<ParsedJsonDocument<AccessRequest>?> ApproveAsEligibleAsync(string requestId, SecurityTagSet approverIdentity, string actor, string? reason, TimeSpan? eligibilityWindow, CancellationToken cancellationToken);
 
     /// <summary>Denies a pending request (the decider must be a §15 administrator of the target workflow).</summary>
     /// <param name="requestId">The request id.</param>
