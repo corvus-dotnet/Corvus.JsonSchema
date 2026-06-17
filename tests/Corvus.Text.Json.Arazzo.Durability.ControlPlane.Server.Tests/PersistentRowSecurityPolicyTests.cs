@@ -225,4 +225,54 @@ public sealed class PersistentRowSecurityPolicyTests
         policy.ResolveGrantedScopes(null).ShouldBeEmpty();
         policy.ResolveGrantedScopes(new ClaimsPrincipal(new ClaimsIdentity())).ShouldBeEmpty(); // not authenticated
     }
+
+    [TestMethod]
+    public async Task An_expired_grant_confers_no_capability_or_reach()
+    {
+        var store = new InMemorySecurityPolicyStore();
+        await store.AddRuleAsync("payments-domain", new SecurityRuleDefinition("domain == 'payments'"), "admin", default);
+
+        // A time-bound grant whose expiry is already in the past relative to the policy's clock (§16.5.2).
+        await store.AddBindingAsync(
+            new SecurityBindingDefinition("sub", "alice", VerbGrant.Rules("payments-domain"), VerbGrant.Rules("payments-domain"), VerbGrant.None, Scopes: [ControlPlaneScopes.RunsWrite], ExpiresAt: ClockNow.AddMinutes(-1)),
+            "approver",
+            default);
+
+        var policy = new PersistentRowSecurityPolicy(store, timeProvider: new FixedClock(ClockNow));
+        await policy.RefreshAsync();
+
+        ClaimsPrincipal alice = Principal(("sub", "alice"));
+
+        // Expired → excluded fail-safe from both capability and reach.
+        policy.ResolveGrantedScopes(alice).ShouldBeEmpty();
+        policy.Resolve(alice).Admits(AccessVerb.Write, SecurityTagSet.FromTags([new("domain", "payments")])).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task A_future_dated_grant_is_active_until_it_expires()
+    {
+        var store = new InMemorySecurityPolicyStore();
+        await store.AddRuleAsync("payments-domain", new SecurityRuleDefinition("domain == 'payments'"), "admin", default);
+        await store.AddBindingAsync(
+            new SecurityBindingDefinition("sub", "alice", VerbGrant.Rules("payments-domain"), VerbGrant.Rules("payments-domain"), VerbGrant.None, Scopes: [ControlPlaneScopes.RunsWrite], ExpiresAt: ClockNow.AddHours(1)),
+            "approver",
+            default);
+
+        var policy = new PersistentRowSecurityPolicy(store, timeProvider: new FixedClock(ClockNow));
+        await policy.RefreshAsync();
+
+        ClaimsPrincipal alice = Principal(("sub", "alice"));
+
+        // Not yet expired → active (both capability and reach).
+        policy.ResolveGrantedScopes(alice).ShouldContain(ControlPlaneScopes.RunsWrite);
+        policy.Resolve(alice).Admits(AccessVerb.Write, SecurityTagSet.FromTags([new("domain", "payments")])).ShouldBeTrue();
+    }
+
+    private static readonly DateTimeOffset ClockNow = new(2026, 6, 15, 12, 0, 0, TimeSpan.Zero);
+
+    // A clock fixed at a known instant so a binding's expiry is deterministic relative to "now".
+    private sealed class FixedClock(DateTimeOffset now) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => now;
+    }
 }
