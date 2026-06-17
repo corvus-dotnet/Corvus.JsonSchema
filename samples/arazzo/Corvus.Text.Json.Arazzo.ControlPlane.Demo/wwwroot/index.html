@@ -19,6 +19,8 @@
     .tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--arazzo-border); }
     .tabs button { font: inherit; font-size: 14px; cursor: pointer; border: none; background: none; color: var(--arazzo-muted); padding: 8px 14px; border-bottom: 2px solid transparent; margin-bottom: -1px; }
     .tabs button[aria-selected="true"] { color: var(--arazzo-text); border-bottom-color: var(--arazzo-accent); font-weight: 600; }
+    .authbar { margin-left: auto; display: inline-flex; gap: 10px; align-items: baseline; font-size: 13px; }
+    .linklike { font: inherit; font-size: 13px; cursor: pointer; border: none; background: none; padding: 0; color: var(--arazzo-accent); text-decoration: underline; }
     [hidden] { display: none !important; }
   </style>
 </head>
@@ -27,6 +29,7 @@
     <header class="top">
       <h1>Arazzo Control Plane</h1>
       <span class="sub">Live demo — the real control-plane server over a fresh in-process SQLite store</span>
+      <div id="auth" class="authbar" hidden></div>
     </header>
 
     <div class="controls">
@@ -66,6 +69,49 @@
 
     const panel = document.querySelector('arazzo-control-plane');
     const catalog = document.querySelector('arazzo-catalog');
+
+    // BFF auth (§16.3). When the host runs with authorization on, an API 401 means "not signed in" — bounce the
+    // browser to /login (the OIDC challenge). When the host runs open (the default), the API returns 200 and
+    // /me is absent (404), so this is inert and the sign-in bar stays hidden. The cookie travels same-origin.
+    const loginUrl = () => '/login?returnUrl=' + encodeURIComponent(location.pathname + location.search);
+    const authFetch = async (input, init = {}) => {
+      const res = await fetch(input, { credentials: 'include', ...init });
+      if (res.status === 401) { location.assign(loginUrl()); return new Promise(() => {}); }
+      return res;
+    };
+    panel.fetch = authFetch;
+    catalog.fetch = authFetch;
+
+    // Sign-in bar: show who is signed in (from /me) with a sign-out, or a sign-in link; hidden when auth is off.
+    const authEl = document.getElementById('auth');
+    (async () => {
+      let me;
+      try {
+        const r = await fetch('/me', { credentials: 'include' });
+        if (r.status === 404) return;                 // authorization disabled — no BFF endpoints
+        me = r.ok ? await r.json() : null;
+      } catch { return; }
+      authEl.hidden = false;
+      if (me) {
+        const who = document.createElement('span');
+        who.className = 'sub';
+        who.textContent = 'Signed in as ' + me.name + (me.groups?.length ? ' (' + me.groups.join(', ') + ')' : '');
+        const out = document.createElement('button');
+        out.className = 'linklike';
+        out.textContent = 'Sign out';
+        out.addEventListener('click', () => {
+          const f = document.createElement('form'); f.method = 'post'; f.action = '/logout';
+          document.body.appendChild(f); f.submit();   // POST navigation so the OIDC sign-out redirect chain runs
+        });
+        authEl.replaceChildren(who, out);
+      } else {
+        const a = document.createElement('a');
+        a.className = 'linklike';
+        a.href = loginUrl();
+        a.textContent = 'Sign in';
+        authEl.replaceChildren(a);
+      }
+    })();
 
     // Theme drives the panels (their `theme` attribute) and the page (arazzo-kit.css honours data-theme on <html>).
     const applyTheme = (v) => {
