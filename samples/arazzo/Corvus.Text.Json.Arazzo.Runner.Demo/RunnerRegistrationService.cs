@@ -6,8 +6,6 @@ using System.Buffers;
 using System.Globalization;
 using System.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
-using Corvus.Text.Json.Arazzo.Durability.Environments;
-using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
 
 namespace Corvus.Text.Json.Arazzo.Runner.Demo;
 
@@ -19,9 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Runner.Demo;
 /// </summary>
 public sealed class RunnerRegistrationService(
     IRunnerRegistry registry,
-    IEnvironmentStore environments,
-    IEnvironmentRunnerAuthorizationStore runnerAuthorizations,
-    SecuredWorkflowCatalog catalog,
+    WorkflowCatalogClient catalog,
     RunnerOptions options,
     ILogger<RunnerRegistrationService> logger) : BackgroundService
 {
@@ -40,20 +36,6 @@ public sealed class RunnerRegistrationService(
                 "Runner {RunnerId} registered, hosting {Count} catalog version(s).",
                 options.RunnerId,
                 registration.HostedVersions.GetArrayLength());
-
-            // A runner may not self-assert into an environment (design §5.5): receiving its runs means receiving its
-            // credentials. So registration only records the runner's intent — an idempotent Pending authorization keyed on
-            // (environment, runnerId). It becomes dispatchable only once an administrator of that environment authorizes it;
-            // re-registering (incl. after a stale-heartbeat prune) leaves an existing Authorized/Revoked decision intact.
-            using (ParsedJsonDocument<EnvironmentRunnerAuthorization> authorization =
-                await runnerAuthorizations.EnsurePendingAsync(options.Environment, options.RunnerId, options.RunnerId, stoppingToken).ConfigureAwait(false))
-            {
-                logger.LogInformation(
-                    "Runner {RunnerId} authorization to serve environment '{Environment}' is {Status}.",
-                    options.RunnerId,
-                    options.Environment,
-                    authorization.RootElement.StatusValue);
-            }
 
             using var timer = new PeriodicTimer(HeartbeatInterval);
             while (await timer.WaitForNextTickAsync(stoppingToken).ConfigureAwait(false))
@@ -81,32 +63,12 @@ public sealed class RunnerRegistrationService(
         // IsVersionHostedAsync uses loaded == true to confirm a live host before accepting a trigger.
         CatalogPage page = await catalog.SearchAsync(new CatalogQuery(Limit: 1000), AccessContext.System, cancellationToken).ConfigureAwait(false);
 
-        // A runner's row-security reach is its environment's (design §5.5): stamp the serving environment's
-        // managementTags onto the registration as reachTags, so the control plane's reach-filtered GET /runners shows
-        // this runner only to callers whose reach admits that environment. Read as the trusted runner (System); if the
-        // environment is unknown or unscoped the runner registers with no reachTags (visible only to unrestricted reach).
-        SecurityTagSet reachTags = SecurityTagSet.Empty;
-        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Environments.Environment>? environmentDoc = await environments.GetAsync(options.Environment, AccessContext.System, cancellationToken).ConfigureAwait(false))
-        {
-            if (environmentDoc is { } doc)
-            {
-                reachTags = doc.RootElement.ManagementTagsValue;
-            }
-        }
-
         var buffer = new ArrayBufferWriter<byte>();
         using (var writer = new Utf8JsonWriter(buffer))
         {
             DateTimeOffset now = DateTimeOffset.UtcNow;
             writer.WriteStartObject();
             writer.WriteString("runnerId", options.RunnerId);
-            writer.WriteString("environment", options.Environment);
-            if (!reachTags.IsEmpty)
-            {
-                writer.WritePropertyName("reachTags"u8);
-                reachTags.WriteTo(writer);
-            }
-
             writer.WriteString("startedAt", startedAt.ToString("O", CultureInfo.InvariantCulture));
             writer.WriteString("lastSeenAt", now.ToString("O", CultureInfo.InvariantCulture));
             writer.WriteNumber("maxConcurrency", options.MaxConcurrency);

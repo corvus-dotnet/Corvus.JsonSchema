@@ -4,7 +4,6 @@
 
 using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Durability;
-using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
 
 namespace Corvus.Text.Json.Arazzo.Runner.Demo;
 
@@ -23,23 +22,16 @@ namespace Corvus.Text.Json.Arazzo.Runner.Demo;
 /// </remarks>
 public sealed class WorkflowDispatchService(
     IWorkflowStateStore store,
-    IEnvironmentRunnerAuthorizationStore runnerAuthorizations,
-    SecuredWorkflowCatalog catalog,
+    WorkflowCatalogClient catalog,
     RunnerOptions options,
     ILogger<WorkflowDispatchService> logger) : BackgroundService
 {
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(2);
 
-    // The last-observed authorization state, so IsAuthorizedAsync logs only on a transition (not every poll cycle).
-    private bool? lastAuthorized;
-
     /// <inheritdoc/>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        // §5.5 dispatch: the runner claims new + orphaned runs only while an administrator of its environment has authorized
-        // it (the gate; revoke takes effect within a poll cycle, in-flight runs drain), AND only runs pinned to the single
-        // environment it serves (runnerEnvironment) — a production run never lands on a staging runner.
-        var dispatcher = new WorkflowDispatcher(store, options.RunnerId, dispatchGate: this.IsAuthorizedAsync, runnerEnvironment: options.Environment);
+        var dispatcher = new WorkflowDispatcher(store, options.RunnerId);
         var worker = new WorkflowWorker(store, options.RunnerId);
 
         using var timer = new PeriodicTimer(PollInterval);
@@ -77,31 +69,6 @@ public sealed class WorkflowDispatchService(
                 break;
             }
         }
-    }
-
-    // The §5.5 dispatch gate: this runner may take new/orphaned work only while an administrator of its environment has
-    // Authorized it (Pending on first registration, revocable). Read its own authorization each cycle; log only on a state
-    // change so a paused runner does not spam the log. A revoked/pending runner stays registered + heartbeating but idle.
-    private async ValueTask<bool> IsAuthorizedAsync(CancellationToken cancellationToken)
-    {
-        using ParsedJsonDocument<EnvironmentRunnerAuthorization>? authorization =
-            await runnerAuthorizations.GetAsync(options.Environment, options.RunnerId, cancellationToken).ConfigureAwait(false);
-        bool authorized = authorization is { } doc && doc.RootElement.IsAuthorized;
-
-        if (this.lastAuthorized != authorized)
-        {
-            this.lastAuthorized = authorized;
-            if (authorized)
-            {
-                logger.LogInformation("Runner {RunnerId} is authorized to serve environment '{Environment}'; dispatch is active.", options.RunnerId, options.Environment);
-            }
-            else
-            {
-                logger.LogWarning("Runner {RunnerId} is not authorized to serve environment '{Environment}' (pending or revoked); dispatch is paused until an administrator authorizes it.", options.RunnerId, options.Environment);
-            }
-        }
-
-        return authorized;
     }
 
     // The stub resumer (see remarks): live execution re-enters the compiled executor; until then, complete the run.
