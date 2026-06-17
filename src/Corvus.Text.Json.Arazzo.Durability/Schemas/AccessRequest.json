@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AccessRequest",
+  "description": "The persisted form of a principal's request for elevated capability on a workflow (design §16.5): the target workflow, the requested capability scopes, the requesting subject the grant will key on, plus the decision state and audit/optimistic-concurrency metadata. Backends store this document verbatim.",
+  "type": "object",
+  "required": ["id", "baseWorkflowId", "requestedScopes", "subjectClaimType", "subjectClaimValue", "status", "createdBy", "createdAt", "etag"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "The request's stable identifier."
+    },
+    "baseWorkflowId": {
+      "type": "string",
+      "description": "The base workflow id the request targets; approval routes to this workflow's §15 administrators."
+    },
+    "requestedScopes": {
+      "type": "array",
+      "description": "The capability scopes (design §14.1) requested, e.g. runs:write. An approval grants at most these, capped by the platform allowlist.",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "subjectClaimType": {
+      "type": "string",
+      "description": "The principal claim type the granted entitlement will key on (e.g. 'sub') — captured from the requester so the grant is scoped to exactly them."
+    },
+    "subjectClaimValue": {
+      "type": "string",
+      "description": "The requester's value for subjectClaimType (e.g. their subject id)."
+    },
+    "requesterLabel": {
+      "type": "string",
+      "description": "An optional human-friendly label for the requester (e.g. a username), for display only."
+    },
+    "reason": {
+      "type": "string",
+      "description": "An optional justification supplied with the request."
+    },
+    "requestedDurationSeconds": {
+      "type": "integer",
+      "format": "int64",
+      "minimum": 1,
+      "description": "The time-bound (PIM/JIT) duration the requester proposes, in seconds; capped at approval to the deployment's maximum TTL. Absent means 'default to the maximum'."
+    },
+    "grantedUntil": {
+      "type": "string",
+      "format": "date-time",
+      "description": "On approval, when the granted entitlement expires (now + min(requested, max-TTL)); absent for a standing grant. Echoes the binding's expiresAt for display/audit."
+    },
+    "status": {
+      "type": "string",
+      "description": "The request's lifecycle state.",
+      "enum": ["Pending", "Approved", "Denied", "Withdrawn"]
+    },
+    "createdBy": {
+      "type": "string",
+      "description": "The actor (the requester) that created the request."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the request was created."
+    },
+    "decidedBy": {
+      "type": "string",
+      "description": "The actor (an administrator, or the requester for a withdrawal) that decided the request, if decided."
+    },
+    "decidedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the request was decided, if decided."
+    },
+    "decisionReason": {
+      "type": "string",
+      "description": "An optional note recorded with the decision."
+    },
+    "grantedBindingId": {
+      "type": "string",
+      "description": "On approval, the id of the security-policy binding written to confer the grant (for audit and later revocation)."
+    },
+    "etag": {
+      "type": "string",
+      "description": "The optimistic-concurrency token."
+    }
+  },
+  "additionalProperties": false
+}
