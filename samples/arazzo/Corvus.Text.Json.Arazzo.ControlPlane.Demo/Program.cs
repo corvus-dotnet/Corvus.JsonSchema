@@ -75,6 +75,9 @@ await Corvus.Text.Json.Arazzo.Durability.Security.SecurityBootstrap.SeedAsync(se
 // break-glass / scripts (§16.2). Gated behind config so the open demo + its build-free UI still run by default.
 // Enable with `ControlPlane__RequireAuthorization=true`, then present a Keycloak bearer token, or an
 // `X-Api-Key: demo-admin-key` (all scopes) / `demo-readonly-key` (catalog:read + runs:read) header.
+// The BFF session cookie name, shared by the cookie config and the library anti-forgery check (§16.3).
+const string SessionCookieName = "arazzo.session";
+
 bool requireAuthorization = builder.Configuration.GetValue("ControlPlane:RequireAuthorization", false);
 if (requireAuthorization)
 {
@@ -117,7 +120,7 @@ if (requireAuthorization)
             // The BFF holds the tokens; the SPA never sees them (it calls same-origin with this HttpOnly cookie).
             options.Cookie.HttpOnly = true;
             options.Cookie.SameSite = SameSiteMode.Lax;
-            options.Cookie.Name = "arazzo.session";
+            options.Cookie.Name = SessionCookieName;
 
             // API calls must get 401/403 (the SPA redirects to /login) — never a server-side HTML login redirect.
             options.Events.OnRedirectToLogin = context => { context.Response.StatusCode = StatusCodes.Status401Unauthorized; return Task.CompletedTask; };
@@ -174,6 +177,11 @@ app.MapDefaultEndpoints();
 
 if (requireAuthorization)
 {
+    // BFF anti-forgery (§16.3) — before authn/authz so a forged request is rejected up front (defence in depth).
+    // Provided by the control-plane server library so any deployment adds it with one call; the SPA sends the
+    // X-CSRF header on every API request, which (combined with the cookie) forces a same-origin CORS preflight.
+    app.UseArazzoControlPlaneAntiForgery(SessionCookieName);
+
     app.UseAuthentication();
     app.UseAuthorization();
 

@@ -934,6 +934,23 @@ after first use) remains for recovery when the IdP or its config is unavailable.
   option. Access + refresh tokens are cached (OS secret store, else a `0600` file) and silently refreshed;
   subsequent commands are non-interactive. Built on `Duende.IdentityModel.OidcClient` (already referenced).
 
+**BFF session-cookie security (CSRF).** A cookie is *ambient* — the browser attaches it to cross-site requests —
+so the BFF session needs CSRF defence in depth (the bearer/API-key paths are immune; they carry no ambient
+credential). Layers, matching the canonical .NET BFF (Duende) pattern:
+
+- **`HttpOnly`** — the session cookie is invisible to JavaScript (XSS cannot read it).
+- **`SameSite=Lax`** — the cookie is not sent on cross-site state-changing requests (the classic CSRF vector).
+  It stays `Lax`, not `Strict`, so the top-level redirect back from the IdP carries it. SameSite alone is not
+  sufficient: *all subdomains are same-site*, and older browsers vary.
+- **Required anti-forgery header (`X-CSRF`)** — the robust layer. The server **rejects (403)** any request that
+  carries the session cookie, uses an unsafe method, and lacks the `X-CSRF` header; the SPA sends it on every
+  call. A custom header forces a **CORS preflight** for any cross-origin caller, which is **denied by default**
+  (no CORS policy is configured), isolating the cookie-authenticated API to the same origin. This is *not* the
+  classic synchronizer-token antiforgery (which is for server-rendered forms); the required-header form is the
+  idiomatic SPA/JSON-BFF choice.
+- **OIDC `state` + `nonce` + correlation cookie** protect the login flow itself; **`/logout` is POST-only**
+  (not GET-forgeable, and SameSite blocks a cross-site logout-POST from carrying the cookie).
+
 ### 16.4 Principals — humans and machines
 
 Both are *principals with claims*; only the authN flow and IdP-side registration differ — Arazzo's authz is
