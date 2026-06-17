@@ -16,6 +16,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Keycloak JWT-bearer client integration: validates OIDC tokens against the referenced Keycloak realm (§16.3). -->
+    <PackageReference Include="Aspire.Keycloak.Authentication" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Aspire service defaults: OpenTelemetry (incl. the Corvus.Arazzo source/meter), health checks,
          service discovery, HTTP resilience — so this host's telemetry flows to the Aspire dashboard. -->
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.ControlPlane.Demo.ServiceDefaults\Corvus.Text.Json.Arazzo.ControlPlane.Demo.ServiceDefaults.csproj" />
