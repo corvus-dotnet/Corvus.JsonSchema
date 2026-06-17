@@ -146,6 +146,10 @@ internal sealed class ControlPlaneAccess
 
     private ClaimsPrincipal? Principal => this.httpContextAccessor?.HttpContext?.User;
 
+    /// <summary>Gets the current request's authenticated principal (e.g. for a handler that needs a specific claim such
+    /// as the requesting subject); <see langword="null"/> when unscoped or unauthenticated.</summary>
+    internal ClaimsPrincipal? CurrentPrincipal => this.Principal;
+
     /// <summary>Resolves the current request's access grant (<see cref="AccessContext.System"/> when unscoped).</summary>
     /// <returns>The caller's access grant.</returns>
     public AccessContext Current() => this.policy is null ? AccessContext.System : this.policy.Resolve(this.Principal);
