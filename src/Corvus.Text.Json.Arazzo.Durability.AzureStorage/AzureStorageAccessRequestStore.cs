@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using System.Globalization;
 using System.Text;
 using Azure;
@@ -18,8 +17,8 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 /// entity holding its <see cref="AccessRequest"/> schema document in a binary <c>Doc</c> property, keyed by the
 /// (encoded) request id under a constant partition so a record is a point read by (PartitionKey, RowKey). The
 /// filterable fields (status, target workflow, subject, creation instant) are mirrored into entity columns so
-/// <see cref="ListAsync(AccessRequestQuery, CancellationToken)"/> can apply a server-side filter; ordering is client-side
-/// (oldest first) because Table queries are unordered. The etag travels inside the document, so optimistic concurrency on a decision is a
+/// <see cref="ListAsync"/> can apply a server-side filter; ordering is client-side (oldest first) because Table queries
+/// are unordered. The etag travels inside the document, so optimistic concurrency on a decision is a
 /// read-compare-write. Works against Azure Storage and the Azurite emulator.
 /// </summary>
 public sealed class AzureStorageAccessRequestStore : IAccessRequestStore
@@ -39,15 +38,7 @@ public sealed class AzureStorageAccessRequestStore : IAccessRequestStore
         Comparer<ParsedJsonDocument<AccessRequest>>.Create(static (a, b) =>
         {
             int byCreated = a.RootElement.CreatedAtValue.CompareTo(b.RootElement.CreatedAtValue);
-            if (byCreated != 0)
-            {
-                return byCreated;
-            }
-
-            // Tiebreak on id, string-free: compare the JSON values' UTF-8 bytes (no id string is realised per comparison).
-            using UnescapedUtf8JsonString aid = a.RootElement.Id.GetUtf8String();
-            using UnescapedUtf8JsonString bid = b.RootElement.Id.GetUtf8String();
-            return aid.Span.SequenceCompareTo(bid.Span);
+            return byCreated != 0 ? byCreated : string.CompareOrdinal(a.RootElement.IdValue, b.RootElement.IdValue);
         });
 
     private readonly TableClient requests;
@@ -104,18 +95,23 @@ public sealed class AzureStorageAccessRequestStore : IAccessRequestStore
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequest draft, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequestDefinition definition, string actor, CancellationToken cancellationToken)
     {
+        ArgumentException.ThrowIfNullOrEmpty(definition.BaseWorkflowId);
+        ArgumentException.ThrowIfNullOrEmpty(definition.SubjectClaimType);
+        ArgumentException.ThrowIfNullOrEmpty(definition.SubjectClaimValue);
+        ArgumentNullException.ThrowIfNull(definition.RequestedScopes);
+        ArgumentOutOfRangeException.ThrowIfZero(definition.RequestedScopes.Count);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "req-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
         WorkflowEtag etag = NewEtag();
         DateTimeOffset now = this.timeProvider.GetUtcNow();
-        byte[] json = AccessRequestSerialization.SerializeNew(id, draft, actor, now, etag);
+        byte[] json = AccessRequestSerialization.SerializeNew(id, definition, actor, now, etag);
         var entity = new TableEntity(RequestPartition, Enc(id))
         {
-            [BaseWorkflowIdColumn] = draft.BaseWorkflowIdValue,
-            [SubjectClaimTypeColumn] = draft.SubjectClaimTypeValue,
-            [SubjectClaimValueColumn] = draft.SubjectClaimValueValue,
+            [BaseWorkflowIdColumn] = definition.BaseWorkflowId,
+            [SubjectClaimTypeColumn] = definition.SubjectClaimType,
+            [SubjectClaimValueColumn] = definition.SubjectClaimValue,
             [StatusColumn] = AccessRequestStatusNames.Pending,
             [CreatedAtColumn] = now.UtcDateTime.ToString("o", CultureInfo.InvariantCulture),
             [DocumentColumn] = json,
@@ -129,7 +125,7 @@ public sealed class AzureStorageAccessRequestStore : IAccessRequestStore
     {
         ArgumentNullException.ThrowIfNull(id);
         byte[]? doc = await this.DocumentAsync(id, cancellationToken).ConfigureAwait(false);
-        return doc is null ? null : ParsedJsonDocument<AccessRequest>.Parse(doc.AsMemory());
+        return doc is null ? null : PersistedJson.ToPooledDocument<AccessRequest>(doc);
     }
 
     /// <inheritdoc/>
@@ -141,113 +137,12 @@ public sealed class AzureStorageAccessRequestStore : IAccessRequestStore
         {
             if (entity.GetBinary(DocumentColumn) is { } bytes)
             {
-                list.Add(ParsedJsonDocument<AccessRequest>.Parse(bytes.AsMemory()));
+                list.Add(PersistedJson.ToPooledDocument<AccessRequest>(bytes));
             }
         }
 
         list.Sort(OldestFirst);
         return list;
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<AccessRequestPage> ListAsync(AccessRequestQuery query, int limit, JsonString pageToken, CancellationToken cancellationToken)
-    {
-        int pageSize = limit > 0 ? limit : AccessRequestPage.DefaultPageSize;
-
-        // Decode the keyset cursor; createdAt + id reify to strings (the leaf) only here — createdAt as the ISO-8601 "o"
-        // form the CreatedAt column stores (reconstructed from the token's UTC ticks), id as text. Undefined = first page.
-        string? cursorCreatedAt = null;
-        string? cursorId = null;
-        if (pageToken.IsNotUndefined())
-        {
-            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
-            byte[] buffer = ArrayPool<byte>.Shared.Rent(AccessRequestContinuationToken.GetMaxDecodedLength(tokenUtf8.Span.Length));
-            try
-            {
-                if (AccessRequestContinuationToken.TryDecode(tokenUtf8.Span, buffer, out long cursorTicks, out ReadOnlySpan<byte> cursorIdUtf8))
-                {
-                    cursorCreatedAt = new DateTime(cursorTicks, DateTimeKind.Utc).ToString("o", CultureInfo.InvariantCulture);
-                    cursorId = Encoding.UTF8.GetString(cursorIdUtf8);
-                }
-            }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return(buffer);
-            }
-        }
-
-        // Table Storage has no server-side ORDER BY and the RowKey is Base64(id) (not the (createdAt, id) keyset order), so
-        // the order is materialised client-side — but over a PROJECTION of just the keyset fields (RowKey + CreatedAt, no
-        // Doc), with the filter applied server-side (those are entity columns). Only the page's documents are then point-read
-        // — never every request's Doc. createdAt is the fixed-width ISO "o" form (ordinal == chronological) and id is
-        // recovered from RowKey so the compare is byte-ordinal == the in-memory pager's.
-        string? filter = BuildFilter(query);
-        var keys = new List<(string CreatedAt, string Id)>();
-        await foreach (TableEntity entity in this.requests
-            .QueryAsync<TableEntity>(filter, select: ["RowKey", CreatedAtColumn], cancellationToken: cancellationToken)
-            .ConfigureAwait(false))
-        {
-            if (entity.GetString(CreatedAtColumn) is { } createdAt)
-            {
-                keys.Add((createdAt, Dec(entity.RowKey)));
-            }
-        }
-
-        keys.Sort(static (a, b) =>
-        {
-            int byCreated = string.CompareOrdinal(a.CreatedAt, b.CreatedAt);
-            return byCreated != 0 ? byCreated : string.CompareOrdinal(a.Id, b.Id);
-        });
-
-        // Keyset skip past the cursor, then take one id beyond the page (lookahead) — all in memory over the projection.
-        var pageIds = new List<string>(pageSize + 1);
-        foreach ((string createdAt, string id) in keys)
-        {
-            if (cursorCreatedAt is not null)
-            {
-                int byCreated = string.CompareOrdinal(createdAt, cursorCreatedAt);
-                bool after = byCreated > 0 || (byCreated == 0 && string.CompareOrdinal(id, cursorId) > 0);
-                if (!after)
-                {
-                    continue; // at or before the cursor — already returned in an earlier page
-                }
-            }
-
-            pageIds.Add(id);
-            if (pageIds.Count > pageSize)
-            {
-                break; // one id beyond the page → a next page exists
-            }
-        }
-
-        bool hasMore = pageIds.Count > pageSize;
-        int take = hasMore ? pageSize : pageIds.Count;
-        var page = new PooledDocumentList<AccessRequest>(take);
-        try
-        {
-            for (int i = 0; i < take; i++)
-            {
-                byte[]? doc = await this.DocumentAsync(pageIds[i], cancellationToken).ConfigureAwait(false);
-                if (doc is not null)
-                {
-                    page.Add(ParsedJsonDocument<AccessRequest>.Parse(doc.AsMemory()));
-                }
-            }
-
-            if (!hasMore || page.Count == 0)
-            {
-                return AccessRequestPage.Create(page);
-            }
-
-            AccessRequest last = page[page.Count - 1];
-            using UnescapedUtf8JsonString lastId = last.Id.GetUtf8String();
-            return AccessRequestPage.Create(page, last.CreatedAtValue.UtcTicks, lastId.Span);
-        }
-        catch
-        {
-            page.Dispose();
-            throw;
-        }
     }
 
     /// <inheritdoc/>
@@ -262,8 +157,7 @@ public sealed class AzureStorageAccessRequestStore : IAccessRequestStore
         }
 
         WorkflowEtag etag = NewEtag();
-        using ParsedJsonDocument<AccessRequest> current = ParsedJsonDocument<AccessRequest>.Parse(doc.AsMemory());
-        byte[] json = AccessRequestSerialization.SerializeDecision(current.RootElement, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), etag);
+        byte[] json = AccessRequestSerialization.SerializeDecision(doc, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), etag);
 
         // The immutable filterable columns (workflow/subject/createdAt) carry through from the loaded document so the
         // replaced entity keeps them; only Status and Doc change on a decision.
@@ -271,11 +165,14 @@ public sealed class AzureStorageAccessRequestStore : IAccessRequestStore
         {
             [StatusColumn] = AccessRequestStatusNames.ToWire(decision.Status),
             [DocumentColumn] = json,
-            [BaseWorkflowIdColumn] = current.RootElement.BaseWorkflowIdValue,
-            [SubjectClaimTypeColumn] = current.RootElement.SubjectClaimTypeValue,
-            [SubjectClaimValueColumn] = current.RootElement.SubjectClaimValueValue,
-            [CreatedAtColumn] = current.RootElement.CreatedAtValue.UtcDateTime.ToString("o", CultureInfo.InvariantCulture),
         };
+        using (ParsedJsonDocument<AccessRequest> current = PersistedJson.ToPooledDocument<AccessRequest>(doc))
+        {
+            entity[BaseWorkflowIdColumn] = current.RootElement.BaseWorkflowIdValue;
+            entity[SubjectClaimTypeColumn] = current.RootElement.SubjectClaimTypeValue;
+            entity[SubjectClaimValueColumn] = current.RootElement.SubjectClaimValueValue;
+            entity[CreatedAtColumn] = current.RootElement.CreatedAtValue.UtcDateTime.ToString("o", CultureInfo.InvariantCulture);
+        }
 
         await this.requests.UpsertEntityAsync(entity, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
         return PersistedJson.ToPooledDocument<AccessRequest>(json);
@@ -285,11 +182,6 @@ public sealed class AzureStorageAccessRequestStore : IAccessRequestStore
 
     private static string Enc(string value)
         => Convert.ToBase64String(Encoding.UTF8.GetBytes(value)).Replace('/', '_').Replace('+', '-');
-
-    // The inverse of Enc: recovers a request id from its Base64 RowKey so the keyset order can be computed from the
-    // projection without reading documents. Only ever applied to RowKeys this store wrote (round-trips exactly).
-    private static string Dec(string rowKey)
-        => Encoding.UTF8.GetString(Convert.FromBase64String(rowKey.Replace('_', '/').Replace('-', '+')));
 
     // Builds the OData filter for the optional query criteria (an absent criterion matches anything); null when the
     // query is empty so the read is an unfiltered scan of the single partition.
@@ -304,9 +196,9 @@ public sealed class AzureStorageAccessRequestStore : IAccessRequestStore
             conditions.Add(TableClient.CreateQueryFilter($"Status eq {AccessRequestStatusNames.ToWire(status)}"));
         }
 
-        if (query.BaseWorkflowId.IsNotUndefined())
+        if (query.BaseWorkflowId is { } baseWorkflowId)
         {
-            conditions.Add(TableClient.CreateQueryFilter($"BaseWorkflowId eq {(string)query.BaseWorkflowId}"));
+            conditions.Add(TableClient.CreateQueryFilter($"BaseWorkflowId eq {baseWorkflowId}"));
         }
 
         if (query.SubjectClaimType is { } subjectType)
@@ -317,20 +209,6 @@ public sealed class AzureStorageAccessRequestStore : IAccessRequestStore
         if (query.SubjectClaimValue is { } subjectValue)
         {
             conditions.Add(TableClient.CreateQueryFilter($"SubjectClaimValue eq {subjectValue}"));
-        }
-
-        if (query.AdministeredBaseWorkflowIds is { Count: > 0 } administered)
-        {
-            // The approver inbox (§16.5): BaseWorkflowId IN (the administered set) — Azure Table has no IN, so it is an OR
-            // group over the server-derived base ids (each value quoted by CreateQueryFilter). The set is never empty here
-            // (the handler short-circuits a caller who administers nothing to an empty page before the store).
-            var anyOf = new List<string>(administered.Count);
-            foreach (string baseWorkflowId in administered)
-            {
-                anyOf.Add(TableClient.CreateQueryFilter($"BaseWorkflowId eq {baseWorkflowId}"));
-            }
-
-            conditions.Add("(" + string.Join(" or ", anyOf) + ")");
         }
 
         return conditions.Count == 0 ? null : string.Join(" and ", conditions);

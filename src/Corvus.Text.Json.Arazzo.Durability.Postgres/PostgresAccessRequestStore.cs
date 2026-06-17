@@ -2,10 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using System.Globalization;
 using System.Text;
-using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Npgsql;
 
@@ -81,40 +79,33 @@ public sealed class PostgresAccessRequestStore : IAccessRequestStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequest draft, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequestDefinition definition, string actor, CancellationToken cancellationToken)
     {
+        ArgumentException.ThrowIfNullOrEmpty(definition.BaseWorkflowId);
+        ArgumentException.ThrowIfNullOrEmpty(definition.SubjectClaimType);
+        ArgumentException.ThrowIfNullOrEmpty(definition.SubjectClaimValue);
+        ArgumentNullException.ThrowIfNull(definition.RequestedScopes);
+        ArgumentOutOfRangeException.ThrowIfZero(definition.RequestedScopes.Count);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "req-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
         WorkflowEtag etag = NewEtag();
         DateTimeOffset now = this.timeProvider.GetUtcNow();
-
-        // Serialize once into the pooled buffer the returned document owns; bind its exact bytes via ReadOnlyMemory as the
-        // BYTEA parameter (no GC document array, no second copy). The document is returned on success, disposed on failure.
-        ParsedJsonDocument<AccessRequest> doc = AccessRequestSerialization.SerializeNewDoc(id, draft, actor, now, etag);
-        try
-        {
-            ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory;
-            await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-            await using NpgsqlCommand insert = connection.CreateCommand();
-            insert.CommandText =
-                "INSERT INTO AccessRequests (Id, BaseWorkflowId, SubjectClaimType, SubjectClaimValue, Status, CreatedAt, Etag, Document) " +
-                "VALUES (@id, @bw, @st, @sv, @status, @createdAt, @etag, @doc);";
-            insert.Parameters.AddWithValue("id", id);
-            insert.Parameters.AddWithValue("bw", draft.BaseWorkflowIdValue);
-            insert.Parameters.AddWithValue("st", draft.SubjectClaimTypeValue);
-            insert.Parameters.AddWithValue("sv", draft.SubjectClaimValueValue);
-            insert.Parameters.AddWithValue("status", AccessRequestStatusNames.Pending);
-            insert.Parameters.AddWithValue("createdAt", now.UtcDateTime.ToString("o", CultureInfo.InvariantCulture));
-            insert.Parameters.AddWithValue("etag", etag.Value!);
-            insert.Parameters.Add(new NpgsqlParameter<ReadOnlyMemory<byte>>("doc", utf8));
-            await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            return doc;
-        }
-        catch
-        {
-            doc.Dispose();
-            throw;
-        }
+        byte[] json = AccessRequestSerialization.SerializeNew(id, definition, actor, now, etag);
+        await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using NpgsqlCommand insert = connection.CreateCommand();
+        insert.CommandText =
+            "INSERT INTO AccessRequests (Id, BaseWorkflowId, SubjectClaimType, SubjectClaimValue, Status, CreatedAt, Etag, Document) " +
+            "VALUES (@id, @bw, @st, @sv, @status, @createdAt, @etag, @doc);";
+        insert.Parameters.AddWithValue("id", id);
+        insert.Parameters.AddWithValue("bw", definition.BaseWorkflowId);
+        insert.Parameters.AddWithValue("st", definition.SubjectClaimType);
+        insert.Parameters.AddWithValue("sv", definition.SubjectClaimValue);
+        insert.Parameters.AddWithValue("status", AccessRequestStatusNames.Pending);
+        insert.Parameters.AddWithValue("createdAt", now.UtcDateTime.ToString("o", CultureInfo.InvariantCulture));
+        insert.Parameters.AddWithValue("etag", etag.Value!);
+        insert.Parameters.AddWithValue("doc", json);
+        await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        return PersistedJson.ToPooledDocument<AccessRequest>(json);
     }
 
     /// <inheritdoc/>
@@ -123,7 +114,7 @@ public sealed class PostgresAccessRequestStore : IAccessRequestStore, IAsyncDisp
         ArgumentNullException.ThrowIfNull(id);
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         byte[]? doc = await DocumentAsync(connection, id, cancellationToken).ConfigureAwait(false);
-        return doc is null ? null : ParsedJsonDocument<AccessRequest>.Parse(doc.AsMemory());
+        return doc is null ? null : PersistedJson.ToPooledDocument<AccessRequest>(doc);
     }
 
     /// <inheritdoc/>
@@ -140,10 +131,10 @@ public sealed class PostgresAccessRequestStore : IAccessRequestStore, IAsyncDisp
             select.Parameters.AddWithValue("status", AccessRequestStatusNames.ToWire(status));
         }
 
-        if (query.BaseWorkflowId.IsNotUndefined())
+        if (query.BaseWorkflowId is { } baseWorkflowId)
         {
             conditions.Add("BaseWorkflowId = @bw");
-            select.Parameters.AddWithValue("bw", (string)query.BaseWorkflowId);
+            select.Parameters.AddWithValue("bw", baseWorkflowId);
         }
 
         if (query.SubjectClaimType is { } subjectType)
@@ -157,8 +148,6 @@ public sealed class PostgresAccessRequestStore : IAccessRequestStore, IAsyncDisp
             conditions.Add("SubjectClaimValue = @sv");
             select.Parameters.AddWithValue("sv", subjectValue);
         }
-
-        AppendAdministeredFilter(conditions, select, query.AdministeredBaseWorkflowIds);
 
         if (conditions.Count > 0)
         {
@@ -170,122 +159,10 @@ public sealed class PostgresAccessRequestStore : IAccessRequestStore, IAsyncDisp
         await using NpgsqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
-            list.Add(ParsedJsonDocument<AccessRequest>.Parse(reader.GetFieldValue<byte[]>(0).AsMemory()));
+            list.Add(PersistedJson.ToPooledDocument<AccessRequest>(reader.GetFieldValue<byte[]>(0)));
         }
 
         return list;
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<AccessRequestPage> ListAsync(AccessRequestQuery query, int limit, JsonString pageToken, CancellationToken cancellationToken)
-    {
-        int pageSize = limit > 0 ? limit : AccessRequestPage.DefaultPageSize;
-
-        // Decode the keyset cursor; createdAt + id reify to the strings the Npgsql predicate needs (a genuine DB-param leaf)
-        // only here — createdAt as the ISO-8601 "o" form the CreatedAt column stores (reconstructed from the token's UTC
-        // ticks so it byte-matches the boundary row), id as its text. Undefined token = first page.
-        string? cursorCreatedAt = null;
-        string? cursorId = null;
-        if (pageToken.IsNotUndefined())
-        {
-            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
-            byte[] buffer = ArrayPool<byte>.Shared.Rent(AccessRequestContinuationToken.GetMaxDecodedLength(tokenUtf8.Span.Length));
-            try
-            {
-                if (AccessRequestContinuationToken.TryDecode(tokenUtf8.Span, buffer, out long cursorTicks, out ReadOnlySpan<byte> cursorIdUtf8))
-                {
-                    cursorCreatedAt = new DateTime(cursorTicks, DateTimeKind.Utc).ToString("o", CultureInfo.InvariantCulture);
-                    cursorId = Encoding.UTF8.GetString(cursorIdUtf8);
-                }
-            }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return(buffer);
-            }
-        }
-
-        await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-        await using NpgsqlCommand select = connection.CreateCommand();
-        var sql = new StringBuilder("SELECT Document FROM AccessRequests");
-        var conditions = new List<string>(5);
-        if (query.Status is { } status)
-        {
-            conditions.Add("Status = @status");
-            select.Parameters.AddWithValue("status", AccessRequestStatusNames.ToWire(status));
-        }
-
-        if (query.BaseWorkflowId.IsNotUndefined())
-        {
-            conditions.Add("BaseWorkflowId = @bw");
-            select.Parameters.AddWithValue("bw", (string)query.BaseWorkflowId);
-        }
-
-        if (query.SubjectClaimType is { } subjectType)
-        {
-            conditions.Add("SubjectClaimType = @st");
-            select.Parameters.AddWithValue("st", subjectType);
-        }
-
-        if (query.SubjectClaimValue is { } subjectValue)
-        {
-            conditions.Add("SubjectClaimValue = @sv");
-            select.Parameters.AddWithValue("sv", subjectValue);
-        }
-
-        AppendAdministeredFilter(conditions, select, query.AdministeredBaseWorkflowIds);
-
-        if (cursorCreatedAt is not null)
-        {
-            // Keyset seek strictly past (createdAt, id): CreatedAt is the fixed-width ISO-8601 "o" UTC form (ordinal ==
-            // chronological), and Id is declared COLLATE "C" so its compare is byte-ordinal == the in-memory pager's.
-            conditions.Add("(CreatedAt > @ca OR (CreatedAt = @ca AND Id > @id))");
-            select.Parameters.AddWithValue("ca", cursorCreatedAt);
-            select.Parameters.AddWithValue("id", cursorId!);
-        }
-
-        if (conditions.Count > 0)
-        {
-            sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));
-        }
-
-        // The IX_AccessRequests_Created index on (CreatedAt, Id) drives both the order and the seek; LIMIT bounds the read
-        // to one page + 1 (lookahead) — never a full read + parse of the whole queue.
-        sql.Append(" ORDER BY CreatedAt, Id LIMIT @limit;");
-        select.Parameters.AddWithValue("limit", pageSize + 1);
-        select.CommandText = sql.ToString();
-
-        var page = new PooledDocumentList<AccessRequest>(pageSize);
-        try
-        {
-            bool hasMore = false;
-            await using (NpgsqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
-            {
-                while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
-                {
-                    if (page.Count == pageSize)
-                    {
-                        hasMore = true; // the (pageSize+1)th row exists → a next page; don't parse it
-                        break;
-                    }
-
-                    page.Add(ParsedJsonDocument<AccessRequest>.Parse(reader.GetFieldValue<byte[]>(0).AsMemory()));
-                }
-            }
-
-            if (!hasMore)
-            {
-                return AccessRequestPage.Create(page);
-            }
-
-            AccessRequest last = page[page.Count - 1];
-            using UnescapedUtf8JsonString lastId = last.Id.GetUtf8String();
-            return AccessRequestPage.Create(page, last.CreatedAtValue.UtcTicks, lastId.Span);
-        }
-        catch
-        {
-            page.Dispose();
-            throw;
-        }
     }
 
     /// <inheritdoc/>
@@ -294,35 +171,22 @@ public sealed class PostgresAccessRequestStore : IAccessRequestStore, IAsyncDisp
         ArgumentNullException.ThrowIfNull(id);
         ArgumentNullException.ThrowIfNull(actor);
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-        byte[]? existing = await DocumentAsync(connection, id, cancellationToken).ConfigureAwait(false);
-        if (existing is null)
+        byte[]? doc = await DocumentAsync(connection, id, cancellationToken).ConfigureAwait(false);
+        if (doc is null)
         {
             return null;
         }
 
         WorkflowEtag etag = NewEtag();
-
-        // Parse the existing document NON-COPYING over the driver's array (the read leaf), check the etag, and serialize the
-        // decided result into the pooled buffer the returned document owns — bound via ReadOnlyMemory (no GC array, no copy).
-        using ParsedJsonDocument<AccessRequest> current = ParsedJsonDocument<AccessRequest>.Parse(existing.AsMemory());
-        ParsedJsonDocument<AccessRequest> updated = AccessRequestSerialization.SerializeDecisionDoc(current.RootElement, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), etag);
-        try
-        {
-            ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(updated.RootElement).Memory;
-            await using NpgsqlCommand update = connection.CreateCommand();
-            update.CommandText = "UPDATE AccessRequests SET Status = @status, Etag = @etag, Document = @doc WHERE Id = @k;";
-            update.Parameters.AddWithValue("status", AccessRequestStatusNames.ToWire(decision.Status));
-            update.Parameters.AddWithValue("etag", etag.Value!);
-            update.Parameters.Add(new NpgsqlParameter<ReadOnlyMemory<byte>>("doc", utf8));
-            update.Parameters.AddWithValue("k", id);
-            await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            return updated;
-        }
-        catch
-        {
-            updated.Dispose();
-            throw;
-        }
+        byte[] json = AccessRequestSerialization.SerializeDecision(doc, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), etag);
+        await using NpgsqlCommand update = connection.CreateCommand();
+        update.CommandText = "UPDATE AccessRequests SET Status = @status, Etag = @etag, Document = @doc WHERE Id = @k;";
+        update.Parameters.AddWithValue("status", AccessRequestStatusNames.ToWire(decision.Status));
+        update.Parameters.AddWithValue("etag", etag.Value!);
+        update.Parameters.AddWithValue("doc", json);
+        update.Parameters.AddWithValue("k", id);
+        await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        return PersistedJson.ToPooledDocument<AccessRequest>(json);
     }
 
     /// <inheritdoc/>
@@ -332,27 +196,6 @@ public sealed class PostgresAccessRequestStore : IAccessRequestStore, IAsyncDisp
         {
             await this.dataSource.DisposeAsync().ConfigureAwait(false);
         }
-    }
-
-    // Appends the approver-inbox filter (design §16.5): BaseWorkflowId IN (the administered set) — server-derived strings
-    // reified as @adm{i} parameters (the SQL leaf). The set is never empty here (the handler short-circuits a caller who
-    // administers nothing to an empty page before the store); a null set (the non-inbox modes) adds nothing.
-    private static void AppendAdministeredFilter(List<string> conditions, NpgsqlCommand command, IReadOnlyList<string>? administered)
-    {
-        if (administered is not { Count: > 0 } set)
-        {
-            return;
-        }
-
-        var names = new string[set.Count];
-        for (int i = 0; i < set.Count; i++)
-        {
-            string name = "adm" + i.ToString(CultureInfo.InvariantCulture);
-            names[i] = "@" + name;
-            command.Parameters.AddWithValue(name, set[i]);
-        }
-
-        conditions.Add("BaseWorkflowId IN (" + string.Join(", ", names) + ")");
     }
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
@@ -379,7 +222,7 @@ public sealed class PostgresAccessRequestStore : IAccessRequestStore, IAsyncDisp
     private const string SchemaSql =
         """
         CREATE TABLE IF NOT EXISTS AccessRequests (
-            Id TEXT COLLATE "C" NOT NULL PRIMARY KEY,
+            Id TEXT NOT NULL PRIMARY KEY,
             BaseWorkflowId TEXT NOT NULL,
             SubjectClaimType TEXT NOT NULL,
             SubjectClaimValue TEXT NOT NULL,
@@ -391,6 +234,5 @@ public sealed class PostgresAccessRequestStore : IAccessRequestStore, IAsyncDisp
         CREATE INDEX IF NOT EXISTS IX_AccessRequests_Status ON AccessRequests (Status);
         CREATE INDEX IF NOT EXISTS IX_AccessRequests_Workflow ON AccessRequests (BaseWorkflowId);
         CREATE INDEX IF NOT EXISTS IX_AccessRequests_Subject ON AccessRequests (SubjectClaimType, SubjectClaimValue);
-        CREATE INDEX IF NOT EXISTS IX_AccessRequests_Created ON AccessRequests (CreatedAt, Id);
         """;
 }

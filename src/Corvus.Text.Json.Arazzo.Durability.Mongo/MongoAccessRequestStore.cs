@@ -2,9 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using System.Globalization;
-using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using MongoDB.Bson;
@@ -68,19 +66,24 @@ public sealed class MongoAccessRequestStore : IAccessRequestStore, IAsyncDisposa
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequest draft, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequestDefinition definition, string actor, CancellationToken cancellationToken)
     {
+        ArgumentException.ThrowIfNullOrEmpty(definition.BaseWorkflowId);
+        ArgumentException.ThrowIfNullOrEmpty(definition.SubjectClaimType);
+        ArgumentException.ThrowIfNullOrEmpty(definition.SubjectClaimValue);
+        ArgumentNullException.ThrowIfNull(definition.RequestedScopes);
+        ArgumentOutOfRangeException.ThrowIfZero(definition.RequestedScopes.Count);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "req-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
         WorkflowEtag etag = NewEtag();
         DateTimeOffset now = this.timeProvider.GetUtcNow();
-        byte[] json = AccessRequestSerialization.SerializeNew(id, draft, actor, now, etag);
+        byte[] json = AccessRequestSerialization.SerializeNew(id, definition, actor, now, etag);
         var document = new BsonDocument
         {
             ["_id"] = id,
-            ["baseWorkflowId"] = draft.BaseWorkflowIdValue,
-            ["subjectClaimType"] = draft.SubjectClaimTypeValue,
-            ["subjectClaimValue"] = draft.SubjectClaimValueValue,
+            ["baseWorkflowId"] = definition.BaseWorkflowId,
+            ["subjectClaimType"] = definition.SubjectClaimType,
+            ["subjectClaimValue"] = definition.SubjectClaimValue,
             ["status"] = AccessRequestStatusNames.Pending,
             ["createdAt"] = now.UtcDateTime.ToString("o", CultureInfo.InvariantCulture),
             ["doc"] = new BsonBinaryData(json),
@@ -94,7 +97,7 @@ public sealed class MongoAccessRequestStore : IAccessRequestStore, IAsyncDisposa
     {
         ArgumentNullException.ThrowIfNull(id);
         byte[]? doc = await this.DocumentAsync(id, cancellationToken).ConfigureAwait(false);
-        return doc is null ? null : ParsedJsonDocument<AccessRequest>.Parse(doc.AsMemory());
+        return doc is null ? null : PersistedJson.ToPooledDocument<AccessRequest>(doc);
     }
 
     /// <inheritdoc/>
@@ -106,9 +109,9 @@ public sealed class MongoAccessRequestStore : IAccessRequestStore, IAsyncDisposa
             filter &= Builders<BsonDocument>.Filter.Eq("status", AccessRequestStatusNames.ToWire(status));
         }
 
-        if (query.BaseWorkflowId.IsNotUndefined())
+        if (query.BaseWorkflowId is { } baseWorkflowId)
         {
-            filter &= Builders<BsonDocument>.Filter.Eq("baseWorkflowId", (string)query.BaseWorkflowId);
+            filter &= Builders<BsonDocument>.Filter.Eq("baseWorkflowId", baseWorkflowId);
         }
 
         if (query.SubjectClaimType is { } subjectType)
@@ -121,118 +124,14 @@ public sealed class MongoAccessRequestStore : IAccessRequestStore, IAsyncDisposa
             filter &= Builders<BsonDocument>.Filter.Eq("subjectClaimValue", subjectValue);
         }
 
-        if (query.AdministeredBaseWorkflowIds is { } administered)
-        {
-            // The approver inbox (§16.5): the request's baseWorkflowId must be one the caller administers (server-derived strings).
-            filter &= Builders<BsonDocument>.Filter.In("baseWorkflowId", administered);
-        }
-
         var list = new PooledDocumentList<AccessRequest>();
         List<BsonDocument> documents = await this.requests.Find(filter).Sort(OldestFirst).ToListAsync(cancellationToken).ConfigureAwait(false);
         foreach (BsonDocument document in documents)
         {
-            list.Add(ParsedJsonDocument<AccessRequest>.Parse(document["doc"].AsBsonBinaryData.Bytes.AsMemory()));
+            list.Add(PersistedJson.ToPooledDocument<AccessRequest>(document["doc"].AsBsonBinaryData.Bytes));
         }
 
         return list;
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<AccessRequestPage> ListAsync(AccessRequestQuery query, int limit, JsonString pageToken, CancellationToken cancellationToken)
-    {
-        int pageSize = limit > 0 ? limit : AccessRequestPage.DefaultPageSize;
-
-        // Decode the keyset cursor; createdAt + id reify to the strings the Mongo filter needs (the leaf) only here —
-        // createdAt as the ISO-8601 "o" form the createdAt field stores (reconstructed from the token's UTC ticks).
-        string? cursorCreatedAt = null;
-        string? cursorId = null;
-        if (pageToken.IsNotUndefined())
-        {
-            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
-            byte[] buffer = ArrayPool<byte>.Shared.Rent(AccessRequestContinuationToken.GetMaxDecodedLength(tokenUtf8.Span.Length));
-            try
-            {
-                if (AccessRequestContinuationToken.TryDecode(tokenUtf8.Span, buffer, out long cursorTicks, out ReadOnlySpan<byte> cursorIdUtf8))
-                {
-                    cursorCreatedAt = new DateTime(cursorTicks, DateTimeKind.Utc).ToString("o", CultureInfo.InvariantCulture);
-                    cursorId = Encoding.UTF8.GetString(cursorIdUtf8);
-                }
-            }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return(buffer);
-            }
-        }
-
-        var b = Builders<BsonDocument>.Filter;
-        FilterDefinition<BsonDocument> filter = b.Empty;
-        if (query.Status is { } status)
-        {
-            filter &= b.Eq("status", AccessRequestStatusNames.ToWire(status));
-        }
-
-        if (query.BaseWorkflowId.IsNotUndefined())
-        {
-            filter &= b.Eq("baseWorkflowId", (string)query.BaseWorkflowId);
-        }
-
-        if (query.SubjectClaimType is { } subjectType)
-        {
-            filter &= b.Eq("subjectClaimType", subjectType);
-        }
-
-        if (query.SubjectClaimValue is { } subjectValue)
-        {
-            filter &= b.Eq("subjectClaimValue", subjectValue);
-        }
-
-        if (query.AdministeredBaseWorkflowIds is { } administered)
-        {
-            // The approver inbox (§16.5): the request's baseWorkflowId must be one the caller administers (server-derived strings).
-            filter &= b.In("baseWorkflowId", administered);
-        }
-
-        if (cursorCreatedAt is not null)
-        {
-            // Keyset seek strictly past (createdAt, id): BSON compares strings by bytes, so the ISO createdAt order is
-            // chronological and _id is byte-ordinal — the same total order OldestFirst / the in-memory pager uses.
-            filter &= b.Or(
-                b.Gt("createdAt", cursorCreatedAt),
-                b.And(b.Eq("createdAt", cursorCreatedAt), b.Gt("_id", cursorId)));
-        }
-
-        // The (createdAt, _id) sort + Limit(n+1) bounds the read to one page + 1 (lookahead) — never the whole queue.
-        var page = new PooledDocumentList<AccessRequest>(pageSize);
-        try
-        {
-            List<BsonDocument> documents = await this.requests
-                .Find(filter)
-                .Sort(OldestFirst)
-                .Limit(pageSize + 1)
-                .ToListAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-            bool hasMore = documents.Count > pageSize;
-            int take = hasMore ? pageSize : documents.Count;
-            for (int i = 0; i < take; i++)
-            {
-                page.Add(ParsedJsonDocument<AccessRequest>.Parse(documents[i]["doc"].AsBsonBinaryData.Bytes.AsMemory()));
-            }
-
-            if (!hasMore)
-            {
-                return AccessRequestPage.Create(page);
-            }
-
-            AccessRequest last = page[page.Count - 1];
-            using UnescapedUtf8JsonString lastId = last.Id.GetUtf8String();
-            return AccessRequestPage.Create(page, last.CreatedAtValue.UtcTicks, lastId.Span);
-        }
-        catch
-        {
-            page.Dispose();
-            throw;
-        }
     }
 
     /// <inheritdoc/>
@@ -247,8 +146,7 @@ public sealed class MongoAccessRequestStore : IAccessRequestStore, IAsyncDisposa
         }
 
         WorkflowEtag etag = NewEtag();
-        using ParsedJsonDocument<AccessRequest> current = ParsedJsonDocument<AccessRequest>.Parse(doc.AsMemory());
-        byte[] json = AccessRequestSerialization.SerializeDecision(current.RootElement, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), etag);
+        byte[] json = AccessRequestSerialization.SerializeDecision(doc, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), etag);
         UpdateDefinition<BsonDocument> update = Builders<BsonDocument>.Update
             .Set("status", AccessRequestStatusNames.ToWire(decision.Status))
             .Set("doc", new BsonBinaryData(json));

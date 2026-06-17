@@ -2,11 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using System.Globalization;
 using System.Net;
 using System.Runtime.CompilerServices;
-using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Internal;
@@ -21,7 +19,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
 /// id, so a request is a single logical record reached by a single-partition point read. The record holds its
 /// <see cref="AccessRequest"/> schema document verbatim as a raw nested JSON value (no base64 round-trip); the
 /// filterable fields (status, target workflow, subject, creation instant) are mirrored to top-level envelope properties
-/// so <see cref="ListAsync(AccessRequestQuery, CancellationToken)"/> can query and order on them, and the store-owned etag travels inside the embedded
+/// so <see cref="ListAsync"/> can query and order on them, and the store-owned etag travels inside the embedded
 /// document. Documents are written and read through the Cosmos <em>stream</em> APIs (no SDK serializer), so persistence
 /// flows through Corvus.Text.Json.
 /// </summary>
@@ -105,21 +103,26 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequest draft, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequestDefinition definition, string actor, CancellationToken cancellationToken)
     {
+        ArgumentException.ThrowIfNullOrEmpty(definition.BaseWorkflowId);
+        ArgumentException.ThrowIfNullOrEmpty(definition.SubjectClaimType);
+        ArgumentException.ThrowIfNullOrEmpty(definition.SubjectClaimValue);
+        ArgumentNullException.ThrowIfNull(definition.RequestedScopes);
+        ArgumentOutOfRangeException.ThrowIfZero(definition.RequestedScopes.Count);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "req-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
         DateTimeOffset now = this.timeProvider.GetUtcNow();
-        byte[] json = AccessRequestSerialization.SerializeNew(id, draft, actor, now, NewEtag());
+        byte[] json = AccessRequestSerialization.SerializeNew(id, definition, actor, now, NewEtag());
         var fields = new EnvelopeFields(
             id,
-            draft.BaseWorkflowIdValue,
-            draft.SubjectClaimTypeValue,
-            draft.SubjectClaimValueValue,
+            definition.BaseWorkflowId,
+            definition.SubjectClaimType,
+            definition.SubjectClaimValue,
             AccessRequestStatusNames.Pending,
             now.UtcDateTime.ToString("o", CultureInfo.InvariantCulture),
             json);
-        using Stream stream = EnvelopeStream(in fields, out ParsedJsonDocument<AccessRequest> document);
+        using MemoryStream stream = EnvelopeStream(in fields, out ParsedJsonDocument<AccessRequest> document);
         try
         {
             using ResponseMessage response = await this.container.CreateItemStreamAsync(stream, new PartitionKey(id), cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -137,16 +140,8 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
     public async ValueTask<ParsedJsonDocument<AccessRequest>?> GetAsync(string id, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
-        using CosmosJson.RentedResponse? payload = await this.ReadResponseAsync(id, cancellationToken).ConfigureAwait(false);
-        if (payload is not { } page)
-        {
-            return null;
-        }
-
-        // The embedded doc is raw nested JSON (a slice of the live pooled response). Copy it into an owned pooled
-        // document (no GC array) before the response buffer is returned at the end of this using.
-        ReadOnlyMemory<byte> doc = CosmosJson.GetRawValue(page.Memory, DocProperty);
-        return doc.IsEmpty ? null : PersistedJson.ToPooledDocument<AccessRequest>(doc.Span);
+        byte[]? doc = await this.DocumentAsync(id, cancellationToken).ConfigureAwait(false);
+        return doc is null ? null : PersistedJson.ToPooledDocument<AccessRequest>(doc);
     }
 
     /// <inheritdoc/>
@@ -161,7 +156,7 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
             conditions.Add("c.status = @status");
         }
 
-        if (query.BaseWorkflowId.IsNotUndefined())
+        if (query.BaseWorkflowId is not null)
         {
             conditions.Add("c.bw = @bw");
         }
@@ -176,8 +171,6 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
             conditions.Add("c.sv = @sv");
         }
 
-        string[]? adminNames = AppendAdministeredCondition(conditions, query.AdministeredBaseWorkflowIds);
-
         string where = conditions.Count == 0 ? string.Empty : " WHERE " + string.Join(" AND ", conditions);
         var definition = new QueryDefinition("SELECT c.doc FROM c" + where + " ORDER BY c.createdAt, c.id");
         if (query.Status is { } statusFilter)
@@ -185,9 +178,9 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
             definition = definition.WithParameter("@status", AccessRequestStatusNames.ToWire(statusFilter));
         }
 
-        if (query.BaseWorkflowId.IsNotUndefined())
+        if (query.BaseWorkflowId is { } baseWorkflowId)
         {
-            definition = definition.WithParameter("@bw", (string)query.BaseWorkflowId);
+            definition = definition.WithParameter("@bw", baseWorkflowId);
         }
 
         if (query.SubjectClaimType is { } subjectType)
@@ -199,8 +192,6 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
         {
             definition = definition.WithParameter("@sv", subjectValue);
         }
-
-        definition = WithAdministeredParameters(definition, query.AdministeredBaseWorkflowIds, adminNames);
 
         var list = new PooledDocumentList<AccessRequest>();
         try
@@ -220,176 +211,39 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
     }
 
     /// <inheritdoc/>
-    // This project generates its own Cosmos-namespace JsonString (per-root type identity), so the seam parameter is fully
-    // qualified to the core JsonString IAccessRequestStore's signature uses.
-    public async ValueTask<AccessRequestPage> ListAsync(AccessRequestQuery query, int limit, global::Corvus.Text.Json.Arazzo.Durability.JsonString pageToken, CancellationToken cancellationToken)
-    {
-        int pageSize = limit > 0 ? limit : AccessRequestPage.DefaultPageSize;
-
-        // Decode the keyset cursor; createdAt + id reify to the strings the Cosmos parameters need (the leaf) only here —
-        // createdAt as the ISO-8601 "o" form the mirrored c.createdAt stores (reconstructed from the token's UTC ticks).
-        string? cursorCreatedAt = null;
-        string? cursorId = null;
-        if (pageToken.IsNotUndefined())
-        {
-            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
-            byte[] buffer = ArrayPool<byte>.Shared.Rent(AccessRequestContinuationToken.GetMaxDecodedLength(tokenUtf8.Span.Length));
-            try
-            {
-                if (AccessRequestContinuationToken.TryDecode(tokenUtf8.Span, buffer, out long cursorTicks, out ReadOnlySpan<byte> cursorIdUtf8))
-                {
-                    cursorCreatedAt = new DateTime(cursorTicks, DateTimeKind.Utc).ToString("o", CultureInfo.InvariantCulture);
-                    cursorId = Encoding.UTF8.GetString(cursorIdUtf8);
-                }
-            }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return(buffer);
-            }
-        }
-
-        var conditions = new List<string>(5);
-        if (query.Status is not null)
-        {
-            conditions.Add("c.status = @status");
-        }
-
-        if (query.BaseWorkflowId.IsNotUndefined())
-        {
-            conditions.Add("c.bw = @bw");
-        }
-
-        if (query.SubjectClaimType is not null)
-        {
-            conditions.Add("c.st = @st");
-        }
-
-        if (query.SubjectClaimValue is not null)
-        {
-            conditions.Add("c.sv = @sv");
-        }
-
-        string[]? adminNames = AppendAdministeredCondition(conditions, query.AdministeredBaseWorkflowIds);
-
-        if (cursorCreatedAt is not null)
-        {
-            // Keyset seek strictly past (createdAt, id): Cosmos orders strings ordinally, so the ISO createdAt order is
-            // chronological and the id order is byte-ordinal — the same total order the in-memory pager uses.
-            conditions.Add("(c.createdAt > @ca OR (c.createdAt = @ca AND c.id > @id))");
-        }
-
-        string where = conditions.Count == 0 ? string.Empty : " WHERE " + string.Join(" AND ", conditions);
-        var definition = new QueryDefinition("SELECT c.doc FROM c" + where + " ORDER BY c.createdAt, c.id");
-        if (query.Status is { } statusFilter)
-        {
-            definition = definition.WithParameter("@status", AccessRequestStatusNames.ToWire(statusFilter));
-        }
-
-        if (query.BaseWorkflowId.IsNotUndefined())
-        {
-            definition = definition.WithParameter("@bw", (string)query.BaseWorkflowId);
-        }
-
-        if (query.SubjectClaimType is { } subjectType)
-        {
-            definition = definition.WithParameter("@st", subjectType);
-        }
-
-        if (query.SubjectClaimValue is { } subjectValue)
-        {
-            definition = definition.WithParameter("@sv", subjectValue);
-        }
-
-        if (cursorCreatedAt is not null)
-        {
-            definition = definition.WithParameter("@ca", cursorCreatedAt).WithParameter("@id", cursorId);
-        }
-
-        definition = WithAdministeredParameters(definition, query.AdministeredBaseWorkflowIds, adminNames);
-
-        var page = new PooledDocumentList<AccessRequest>(pageSize);
-        try
-        {
-            bool hasMore = false;
-            await foreach (ReadOnlyMemory<byte> doc in this.QueryDocumentsAsync(definition, cancellationToken).ConfigureAwait(false))
-            {
-                if (page.Count == pageSize)
-                {
-                    hasMore = true; // a row beyond the page exists → there is a next page; stop early
-                    break;
-                }
-
-                page.Add(PersistedJson.ToPooledDocument<AccessRequest>(doc.Span));
-            }
-
-            if (!hasMore)
-            {
-                return AccessRequestPage.Create(page);
-            }
-
-            AccessRequest last = page[page.Count - 1];
-            using UnescapedUtf8JsonString lastId = last.Id.GetUtf8String();
-            return AccessRequestPage.Create(page, last.CreatedAtValue.UtcTicks, lastId.Span);
-        }
-        catch
-        {
-            page.Dispose();
-            throw;
-        }
-    }
-
-    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<AccessRequest>?> DecideAsync(string id, AccessRequestDecision decision, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         ArgumentNullException.ThrowIfNull(actor);
-        ParsedJsonDocument<AccessRequest> document;
-        Stream stream;
-        using (CosmosJson.RentedResponse? payload = await this.ReadResponseAsync(id, cancellationToken).ConfigureAwait(false))
+        byte[]? existing = await this.DocumentAsync(id, cancellationToken).ConfigureAwait(false);
+        if (existing is null)
         {
-            if (payload is not { } page)
-            {
-                return null;
-            }
-
-            ReadOnlyMemory<byte> doc = CosmosJson.GetRawValue(page.Memory, DocProperty);
-            if (doc.IsEmpty)
-            {
-                return null;
-            }
-
-            // Parse the existing document NON-COPYING over the live response (no GC array, no pooled copy) to check the
-            // etag and carry its immutable fields forward; a stale etag throws AccessRequestConflictException. The status
-            // mirror moves to the decided value; the workflow/subject/creation mirrors are immutable, so they carry
-            // through from the stored record (read off the same parsed model, like the other backends). The parse and its
-            // synchronous consumers (SerializeDecision, the mirror reads, EnvelopeStream) all complete before the response
-            // buffer is returned at the end of this using.
-            using ParsedJsonDocument<AccessRequest> current = ParsedJsonDocument<AccessRequest>.Parse(doc);
-            byte[] json = AccessRequestSerialization.SerializeDecision(current.RootElement, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), NewEtag());
-            var fields = new EnvelopeFields(
-                id,
-                current.RootElement.BaseWorkflowIdValue,
-                current.RootElement.SubjectClaimTypeValue,
-                current.RootElement.SubjectClaimValueValue,
-                AccessRequestStatusNames.ToWire(decision.Status),
-                current.RootElement.CreatedAtValue.UtcDateTime.ToString("o", CultureInfo.InvariantCulture),
-                json);
-            stream = EnvelopeStream(in fields, out document);
+            return null;
         }
 
-        using (stream)
+        // Parse the existing document once (pooled, inside SerializeDecision) to check the etag and carry its immutable
+        // fields forward; a stale etag throws AccessRequestConflictException. The status mirror moves to the decided
+        // value; the workflow/subject/creation mirrors are immutable, so they carry through from the stored record.
+        byte[] json = AccessRequestSerialization.SerializeDecision(existing, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        var fields = new EnvelopeFields(
+            id,
+            EnvelopeString(existing, "bw"u8),
+            EnvelopeString(existing, "st"u8),
+            EnvelopeString(existing, "sv"u8),
+            AccessRequestStatusNames.ToWire(decision.Status),
+            EnvelopeString(existing, "createdAt"u8),
+            json);
+        using MemoryStream stream = EnvelopeStream(in fields, out ParsedJsonDocument<AccessRequest> document);
+        try
         {
-            try
-            {
-                using ResponseMessage response = await this.container.ReplaceItemStreamAsync(stream, id, new PartitionKey(id), cancellationToken: cancellationToken).ConfigureAwait(false);
-                response.EnsureSuccessStatusCode();
-                return document;
-            }
-            catch
-            {
-                document.Dispose();
-                throw;
-            }
+            using ResponseMessage response = await this.container.ReplaceItemStreamAsync(stream, id, new PartitionKey(id), cancellationToken: cancellationToken).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+            return document;
+        }
+        catch
+        {
+            document.Dispose();
+            throw;
         }
     }
 
@@ -404,42 +258,6 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
         return default;
     }
 
-    // The approver-inbox filter (design §16.5): adds "c.bw IN (@adm0, ...)" to the conditions and returns the parameter
-    // names so the caller can bind the (server-derived) administered base ids. The set is never empty here (the handler
-    // short-circuits a caller who administers nothing); a null set (the non-inbox modes) adds nothing and returns null.
-    private static string[]? AppendAdministeredCondition(List<string> conditions, IReadOnlyList<string>? administered)
-    {
-        if (administered is not { Count: > 0 } set)
-        {
-            return null;
-        }
-
-        var names = new string[set.Count];
-        for (int i = 0; i < set.Count; i++)
-        {
-            names[i] = "@adm" + i.ToString(CultureInfo.InvariantCulture);
-        }
-
-        conditions.Add("c.bw IN (" + string.Join(", ", names) + ")");
-        return names;
-    }
-
-    // Binds the administered-base-id parameters produced by AppendAdministeredCondition onto the query definition.
-    private static QueryDefinition WithAdministeredParameters(QueryDefinition definition, IReadOnlyList<string>? administered, string[]? names)
-    {
-        if (names is null || administered is null)
-        {
-            return definition;
-        }
-
-        for (int i = 0; i < names.Length; i++)
-        {
-            definition = definition.WithParameter(names[i], administered[i]);
-        }
-
-        return definition;
-    }
-
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
     // Serializes the {id, pk, bw, st, sv, status, createdAt, doc} envelope into a pooled stream and builds the caller's
@@ -447,7 +265,7 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
     // nested value — no base64 wrap (which would be a spurious encode here + decode on read). It is valid JSON we
     // produced, so skip validation. On any failure building the stream, the return document is disposed before the
     // exception escapes.
-    private static Stream EnvelopeStream(in EnvelopeFields fields, out ParsedJsonDocument<AccessRequest> document)
+    private static MemoryStream EnvelopeStream(in EnvelopeFields fields, out ParsedJsonDocument<AccessRequest> document)
     {
         document = PersistedJson.ToPooledDocument<AccessRequest>(fields.Doc);
         try
@@ -476,6 +294,30 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
         }
     }
 
+    // Reads a mirrored top-level string from the stored ENVELOPE (not the embedded doc). DocumentAsync hands back only
+    // the embedded doc, so DecideAsync re-reads the envelope's immutable mirrors (bw/st/sv/createdAt) here to re-stamp
+    // them on the replacement. Always present on a record this store wrote.
+    private static string EnvelopeString(ReadOnlySpan<byte> envelope, ReadOnlySpan<byte> propertyUtf8)
+    {
+        var reader = new Utf8JsonReader(envelope);
+        if (reader.Read() && reader.TokenType == JsonTokenType.StartObject)
+        {
+            while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+            {
+                bool match = reader.ValueTextEquals(propertyUtf8);
+                reader.Read();
+                if (match)
+                {
+                    return reader.GetString() ?? string.Empty;
+                }
+
+                reader.Skip();
+            }
+        }
+
+        return string.Empty;
+    }
+
     private static async ValueTask ProvisionAsync(CosmosClient client, string databaseName, CancellationToken cancellationToken)
     {
         Database database = await client.CreateDatabaseIfNotExistsAsync(databaseName, cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -489,11 +331,10 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
         return new CosmosAccessRequestStore(client, container, timeProvider ?? TimeProvider.System, ownsClient);
     }
 
-    // Point-reads the single record for a request id by its id into a pooled response (no GC array) — a single-partition
-    // point read, NotFound by status code (not an exception). Returns null on NotFound; otherwise the caller slices the
-    // embedded doc off the LIVE response (CosmosJson.GetRawValue) and copies/parses it before this response is returned
-    // to the pool — disposing the returned RentedResponse releases the buffer.
-    private async ValueTask<CosmosJson.RentedResponse?> ReadResponseAsync(string id, CancellationToken cancellationToken)
+    // Reads the single record for a request id by its id — a single-partition point read, NotFound by status code (not
+    // an exception). The embedded doc is raw nested JSON (no base64); copy it out, as it outlives the pooled response
+    // page (the caller parses it, or DecideAsync checks its etag and replaces from it).
+    private async ValueTask<byte[]?> DocumentAsync(string id, CancellationToken cancellationToken)
     {
         using ResponseMessage response = await this.container.ReadItemStreamAsync(id, new PartitionKey(id), cancellationToken: cancellationToken).ConfigureAwait(false);
         if (response.StatusCode == HttpStatusCode.NotFound)
@@ -502,7 +343,9 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
         }
 
         response.EnsureSuccessStatusCode();
-        return await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+        using CosmosJson.RentedResponse payload = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+        ReadOnlyMemory<byte> doc = CosmosJson.GetRawValue(payload.Memory, DocProperty);
+        return doc.IsEmpty ? null : doc.ToArray();
     }
 
     // Yields each matched request's embedded doc raw UTF-8 bytes (a slice into the pooled response page) — no base64
