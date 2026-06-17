@@ -2,11 +2,14 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers.Text;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 using System.Text;
 using Corvus.Text.Json;
+using Duende.IdentityModel;
 using Duende.IdentityModel.Client;
 using Duende.IdentityModel.OidcClient;
 using Duende.IdentityModel.OidcClient.Browser;
@@ -100,9 +103,21 @@ internal static class OAuthFlows
             throw new InvalidOperationException($"OIDC discovery failed: {discovery.Error}");
         }
 
+        // PKCE on the device flow (RFC 8628 §3.1 + RFC 9700): the client the deployment provisions enforces
+        // S256, so bind the device-code grant to a verifier the same way the loopback code flow does.
+        (string codeVerifier, string codeChallenge) = CreatePkcePair();
+
+        var authorizationRequest = new DeviceAuthorizationRequest
+        {
+            Address = discovery.DeviceAuthorizationEndpoint,
+            ClientId = config.ClientId,
+            Scope = config.Scope,
+        };
+        authorizationRequest.Parameters.AddRequired("code_challenge", codeChallenge);
+        authorizationRequest.Parameters.AddRequired("code_challenge_method", "S256");
+
         DeviceAuthorizationResponse authorization = await http.RequestDeviceAuthorizationAsync(
-            new DeviceAuthorizationRequest { Address = discovery.DeviceAuthorizationEndpoint, ClientId = config.ClientId, Scope = config.Scope },
-            cancellationToken).ConfigureAwait(false);
+            authorizationRequest, cancellationToken).ConfigureAwait(false);
         if (authorization.IsError)
         {
             throw new InvalidOperationException($"Device authorization failed: {authorization.Error}");
@@ -121,9 +136,16 @@ internal static class OAuthFlows
         {
             await Task.Delay(TimeSpan.FromSeconds(interval), cancellationToken).ConfigureAwait(false);
 
+            var tokenRequest = new DeviceTokenRequest
+            {
+                Address = discovery.TokenEndpoint,
+                ClientId = config.ClientId,
+                DeviceCode = authorization.DeviceCode!,
+            };
+            tokenRequest.Parameters.AddRequired("code_verifier", codeVerifier);
+
             TokenResponse token = await http.RequestDeviceTokenAsync(
-                new DeviceTokenRequest { Address = discovery.TokenEndpoint, ClientId = config.ClientId, DeviceCode = authorization.DeviceCode! },
-                cancellationToken).ConfigureAwait(false);
+                tokenRequest, cancellationToken).ConfigureAwait(false);
 
             if (!token.IsError)
             {
@@ -141,6 +163,17 @@ internal static class OAuthFlows
                     throw new InvalidOperationException($"Device sign-in failed: {token.Error}");
             }
         }
+    }
+
+    // A PKCE verifier/challenge pair (RFC 7636). The verifier comes from Duende.IdentityModel's hardened CSPRNG
+    // helper — the same primitive its OidcClient uses for the loopback flow — for a 256-bit, base64url-encoded
+    // value. The S256 challenge is the RFC 7636 §4.2 transform BASE64URL(SHA256(ASCII(verifier))); there is no
+    // library one-liner for the challenge itself.
+    private static (string CodeVerifier, string CodeChallenge) CreatePkcePair()
+    {
+        string codeVerifier = CryptoRandom.CreateUniqueId(32, CryptoRandom.OutputFormat.Base64Url);
+        string codeChallenge = Base64Url.EncodeToString(SHA256.HashData(Encoding.ASCII.GetBytes(codeVerifier)));
+        return (codeVerifier, codeChallenge);
     }
 
     // OIDC discovery, requiring HTTPS except for a loopback authority (a local dev IdP over http).
