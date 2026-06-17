@@ -5,10 +5,12 @@
 // A self-contained demo host: the REAL Arazzo control-plane server over a fresh-on-startup SQLite store,
 // seeded with demo workflows + runs, serving the build-free web UI from the same origin. Run it with
 // `dotnet run --project samples/Corvus.Text.Json.Arazzo.ControlPlane.Demo` and open the printed URL.
+using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.CodeGeneration;
 using Corvus.Text.Json.Arazzo.ControlPlane.Demo;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Sqlite;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.FileProviders;
@@ -54,6 +56,11 @@ var catalog = new WorkflowCatalogClient(catalogStore, stateStore, "demo");
 // control plane's GET /runners (§5.4) — not an in-memory table only this process can see.
 SqliteRunnerRegistry runners = await SqliteRunnerRegistry.ConnectAsync(connectionString);
 
+// The §13 source-credential store. The control plane manages credential *references* + metadata only — it never
+// binds to the secret store (the §13/§13.5 invariant); the runner is the read-only secret consumer. This lights
+// up the /credentials surface (and the CLI + web UI) over the shared store.
+SqliteSourceCredentialStore sourceCredentials = await SqliteSourceCredentialStore.ConnectAsync(connectionString);
+
 // The row-security authoring API (§14.2) is served from a security-policy store, seeded with the editable
 // bootstrap rules (tenant-scoped / ABAC superset / intersection) so /security/* is populated out of the box.
 var securityPolicy = new Corvus.Text.Json.Arazzo.Durability.Security.InMemorySecurityPolicyStore();
@@ -81,6 +88,22 @@ if (requireAuthorization)
 string specsDir = Path.Combine(builder.Environment.ContentRootPath, "specs");
 await DemoData.SeedAsync(catalog, stateStore, specsDir);
 
+// Seed demo source-credential bindings — references only (the §13 invariant: never secret material). Each points
+// at the Vault path the AppHost's provisioner seeds (vault://secret/arazzo/<source>#api-key); the runner resolves
+// it with its read-only token. This populates /credentials (and the CLI + web UI) out of the box.
+foreach (string source in new[] { "onboarding", "ledger" })
+{
+    // AddAsync returns the persisted binding as a pooled document — dispose it (the seed doesn't read it back).
+    using ParsedJsonDocument<SourceCredentialBinding> seeded = await sourceCredentials.AddAsync(
+        new SourceCredentialDefinition(
+            source,
+            "production",
+            SourceCredentialKind.ApiKey,
+            [new SecretReferenceDefinition("api-key", $"vault://secret/arazzo/{source}#api-key")]),
+        "demo",
+        default);
+}
+
 WebApplication app = builder.Build();
 
 // /health (readiness) and /alive (liveness) — the AppHost's WithHttpHealthCheck("/health") polls these.
@@ -106,7 +129,7 @@ else
 }
 
 // The real control-plane API, under a conventional base path the UI points at.
-app.MapGroup("/arazzo/v1").MapArazzoControlPlane(management, catalog, runners, requireAuthorization, securityPolicyStore: securityPolicy);
+app.MapGroup("/arazzo/v1").MapArazzoControlPlane(management, catalog, runners, requireAuthorization, securityPolicyStore: securityPolicy, sourceCredentialStore: sourceCredentials);
 
 // The demo backend services the workflows call (generated from the same OpenAPI sources, returning sample data).
 OnboardingApi.MapApiEndpoints(app.MapGroup("/svc/onboarding"), new OnboardingService());
