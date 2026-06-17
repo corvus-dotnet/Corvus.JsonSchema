@@ -1120,8 +1120,11 @@ approval service.
    requests → payments admin approves → alice may trigger that workflow, and only it).
 7. **UI** — the request button + approver queue in the live app shell.
 
-**Open sub-decisions** (to settle in-flight, surfaced not guessed): the exact **grantable-scope allowlist**
-(step 3); whether **revoke/withdraw of an already-granted entitlement** is in this slice or a follow-up.
+**Sub-decisions (settled).** **Grantable-scope allowlist = `runs:read` + `runs:write` only** — an approval grants at
+most run access to the requester's own subject, reach-scoped to the target workflow's domain; the hard never-list is
+enforced regardless (`security:*`, `administrators:write`, any `*:purge`, system reach, a third-party subject).
+**Early revoke is in this slice** — a revoke deletes the granted security-policy binding (the grant stops at the next
+resolution, fail-safe) and marks the request `Revoked`, audited; so a grant is both time-boxed *and* cuttable short.
 
 ### 16.5.3 Eligible vs active — self-elevation (no ambient privilege)
 
@@ -1148,6 +1151,24 @@ marker), not standing elevated scopes (the demo `KeycloakClaimsTransformer` move
 span/event on the `Corvus.Arazzo` ActivitySource/Meter (already wired to OTel / the Aspire dashboard via
 ServiceDefaults). Lands in step 3 (the eligibility strategy + an `activate` convenience) and the demo claims-mapping
 change; the step-2 store needs no changes.
+
+**Approver-granted eligibility (the PIM "eligible assignment").** Beyond the coarse IdP-claim eligibility, a §15
+administrator may **grant eligibility** to a principal — the durable "you may self-elevate this" assignment, distinct
+from a one-time active grant. The flow: a request → the approver chooses **approve-as-eligible** (writes an
+eligibility assignment: subject + scope ∩ allowlist + reach = the workflow + an eligibility window + a per-activation
+TTL cap), optionally **also activating once now** ("make eligible, then grant"); thereafter the principal
+**self-elevates JIT** without re-approval — each self-elevation auto-approved because the stored eligibility matches,
+minting a fresh time-boxed active grant, audited. Eligibility itself confers **no ambient capability** — it only
+gates activation. An admin can revoke eligibility (future activations denied) and/or an active grant (cut current
+access short). This is the symmetric counterpart of the capability resolution: **capability = claims ∪ stored
+entitlements**; **eligibility = claims ∪ stored eligibility**. Decisions: **(a) model — reuse the security-policy
+binding with an optional `eligibleOnly` flag**: the resolver *ignores* eligible-only bindings (they grant nothing
+active — preserving no-ambient-elevation), and the self-elevation strategy *reads* them as eligibility; one store,
+one model, riding the shared serialization (all 10 backends free, like `scopes`/`expiresAt`). **(b) sequencing —
+active grants land in step 3** (the §15-admin gate + platform cap + revoke + IdP-claim self-elevation); **approver-
+granted stored eligibility + self-elevation-against-it is 3c**. The `eligibleOnly` binding field is added up front
+(in step 3) with the resolver already excluding such bindings — so the field is sound and inert until 3c writes/reads
+it (no later migration).
 
 ### 16.6 Decisions (§16)
 
