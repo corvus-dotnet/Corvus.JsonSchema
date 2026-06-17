@@ -60,7 +60,7 @@ public class ConfigureEndpointHookTests
         using IHost host = await BuildHostAsync(Capture, withAuth: false);
 
         // The callback fires once per generated endpoint.
-        Assert.AreEqual(44, recorded.Count, "Callback should be invoked once per generated endpoint");
+        Assert.AreEqual(45, recorded.Count, "Callback should be invoked once per generated endpoint");
 
         // Descriptor fields are accurate for a known operation (GET /items -> ListItems).
         RecordedEndpoint listItems = recorded.Single(r => r.MethodName == "ListItems");
