@@ -75,6 +75,13 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
         bool anyExpiringBindings = false;
         foreach (SecurityBindingDocument binding in snapshot.Bindings)
         {
+            // An eligibility assignment (§16.5.3/§16.5.4) confers nothing active — exclude it from the compiled set so
+            // the resolver never grants from it. The self-elevation strategy reads eligibility from the store directly.
+            if (binding.EligibleOnlyValue)
+            {
+                continue;
+            }
+
             string[] scopes = binding.ScopesArray();
             DateTimeOffset? expiresAt = binding.ExpiresAtValue;
             anyScopeGrants |= scopes.Length > 0;
