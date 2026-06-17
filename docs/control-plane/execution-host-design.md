@@ -1089,6 +1089,19 @@ today — the right place for it is the approval layer): an approval grants **at
 grantable allowlist` — run capability + reach only, **never** `security:write`/system reach/a third party/
 escalation; the subject is fixed to the requester and the reach to the target workflow's domain.
 
+**Time-bound grants (PIM / just-in-time).** Approved elevation is **time-boxed, not standing** — the privileged-
+identity-management model. Two decisions: (a) **lazy, fail-safe expiry** — the entitlement carries an optional
+`expiresAt` and the resolver **excludes any binding past it at resolution time**, so an expired grant stops working
+even if cleanup is down; a background **reaper** deletes expired rows as housekeeping only (correctness never
+depends on it — the same fail-safe shape as a token/lease). The warm path stays zero-allocation on the common
+non-expiring case via a precomputed `AnyExpiringBindings` flag; the resolver gains a `TimeProvider`. (b)
+**deployment max-TTL + requester-proposed duration** — the deployment configures a maximum TTL; the request may
+propose a duration ≤ max (defaulting to it); approval stamps `expiresAt = now + min(proposed, max)`. Standing
+grants (the bootstrap admin, standing read rules) carry no expiry. Modelled as **optional** fields — the binding's
+`expiresAt`, the request's `requestedDurationSeconds` (proposed) + `grantedUntil` (audit) — added up front so there
+is no later migration; the lazy-expiry resolver + reaper land as a focused sub-step (1.5) between the store and the
+approval service.
+
 **Sequenced build (each its own gated, tested commit):**
 
 1. **Entitlement resolver** (Decision-A foundation) — extend the binding schema with optional `scopes[]`; the
@@ -1109,6 +1122,32 @@ escalation; the subject is fixed to the requester and the reach to the target wo
 
 **Open sub-decisions** (to settle in-flight, surfaced not guessed): the exact **grantable-scope allowlist**
 (step 3); whether **revoke/withdraw of an already-granted entitlement** is in this slice or a follow-up.
+
+### 16.5.3 Eligible vs active — self-elevation (no ambient privilege)
+
+Elevated capability is **never ambient** — not for delegated administrators, and **not for the bootstrap system
+admin**. The Azure-PIM *eligible vs active* model: a principal may be **eligible** (permitted to self-elevate a
+capability) without it being active; wielding it requires an explicit, **audited activation** (justification +
+time-box ≤ max TTL) that turns eligible → active. Decisions:
+
+- **Scope — everyone.** No standing god-mode for any identity. Even the bootstrap system admin logs in with
+  standing read + eligibility only and must activate to act. A **break-glass** path (the dev API-key scheme / a
+  one-time bootstrap token) remains for recovery when the elevation path itself is unavailable — the §16.2
+  secret-zero analogue.
+- **Eligibility source — the IdP (coarse) now.** Eligibility is a group/role claim (e.g. `arazzo-admins` ⇒
+  eligible-for-all), checked at activation; finer Arazzo-stored eligible-assignments are a later refinement —
+  consistent with the §16.1 plane split (the IdP owns coarse membership).
+
+**Composition (no rework).** A self-elevation reuses the whole access-request machinery: it is an `AccessRequest`
+(subject = the activator, requested scopes = the eligible capability, duration ≤ max) **auto-approved by an
+eligibility strategy** behind the §16.5.1 seam — the same time-boxed, platform-capped, audited entitlement the
+route-to-admin default writes, minus the human approver. The **resolver is unchanged** (capability already comes
+only from *active* stored entitlements); what changes is the **claims mapping** — a group confers *eligibility* (a
+marker), not standing elevated scopes (the demo `KeycloakClaimsTransformer` moves from `arazzo-admins → All` to
+`arazzo-admins → eligible-for-All`). Each activation is **audited by telemetry**: the request/grant trail plus a
+span/event on the `Corvus.Arazzo` ActivitySource/Meter (already wired to OTel / the Aspire dashboard via
+ServiceDefaults). Lands in step 3 (the eligibility strategy + an `activate` convenience) and the demo claims-mapping
+change; the step-2 store needs no changes.
 
 ### 16.6 Decisions (§16)
 
