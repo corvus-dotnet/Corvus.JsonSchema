@@ -141,6 +141,24 @@ public class GeneratedServerEndToEndTests
     }
 
     [TestMethod]
+    public async Task OptionalBodyProbe_WithoutBody_ReturnsNoContent()
+    {
+        // Regression (optional request bodies): a body-less POST to an operation whose requestBody is required:false
+        // must not be rejected by the dispatch — the empty body binds undefined and the handler runs, returning 204.
+        HttpResponseMessage response = await client!.PostAsync("/optional-body-probe", null);
+        Assert.AreEqual(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task OptionalBodyProbe_WithBody_ReturnsNoContent()
+    {
+        // The same operation still accepts (and parses) a body when one is supplied.
+        StringContent content = new("""{"note":"hello"}""", Encoding.UTF8, "application/json");
+        HttpResponseMessage response = await client!.PostAsync("/optional-body-probe", content);
+        Assert.AreEqual(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [TestMethod]
     public async Task SearchItems_ReturnsOk()
     {
         HttpRequestMessage request = new(HttpMethod.Get, "/search?q=test");

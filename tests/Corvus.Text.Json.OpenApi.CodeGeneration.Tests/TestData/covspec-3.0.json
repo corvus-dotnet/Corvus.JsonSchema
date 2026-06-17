@@ -23,6 +23,32 @@
     }
   ],
   "paths": {
+    "/optional-body-probe": {
+      "post": {
+        "operationId": "optionalBodyProbe",
+        "summary": "Regression probe: an optional request body that is absent must not fail to parse.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "note": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Accepted, with or without a body."
+          }
+        }
+      }
+    },
     "/items": {
       "servers": [
         {

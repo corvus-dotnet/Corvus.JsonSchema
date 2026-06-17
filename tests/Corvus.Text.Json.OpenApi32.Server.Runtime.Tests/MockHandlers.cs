@@ -54,6 +54,11 @@ internal sealed class MockDefaultHandler : IApiDefaultHandler
     public ValueTask<PurgeItemsResult> HandlePurgeItemsAsync(PurgeItemsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
         => new(PurgeItemsResult.NoContent());
 
+    // The optional-body probe runs only if the dispatch did not reject a body-less request: an absent optional body
+    // must bind undefined, not 400. The handler ignores the body and returns 204.
+    public ValueTask<OptionalBodyProbeResult> HandleOptionalBodyProbeAsync(OptionalBodyProbeParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+        => new(OptionalBodyProbeResult.NoContent());
+
     public ValueTask<GetItemResult> HandleGetItemAsync(GetItemParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         ItemEntity body = ReturnInvalidResponse

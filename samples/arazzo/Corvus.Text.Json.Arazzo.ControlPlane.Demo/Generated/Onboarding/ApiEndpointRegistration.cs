@@ -124,31 +124,36 @@ public static class ApiEndpointRegistration
                 }
 
 
-                try
+                // An optional request body is read only when the request actually carries one;
+                // an absent body leaves the body parameter undefined rather than failing to parse.
+                if ((context.Request.ContentLength ?? 0) > 0 || context.Request.Headers.ContainsKey("Transfer-Encoding"))
                 {
-                    bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.ControlPlane.Demo.Onboarding.Models.IdentityRequest>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
-                }
-                catch
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
+                    try
+                    {
+                        bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.ControlPlane.Demo.Onboarding.Models.IdentityRequest>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                    }
+                    catch
+                    {
+                        context.Response.StatusCode = 400;
+                        context.Response.ContentType = "application/problem+json";
+                        await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                        return;
+                    }
 
-                if (!bodyDoc!.RootElement.EvaluateSchema())
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
+                    if (!bodyDoc!.RootElement.EvaluateSchema())
+                    {
+                        context.Response.StatusCode = 400;
+                        context.Response.ContentType = "application/problem+json";
+                        await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                        return;
+                    }
 
+                }
 
                 VerifyIdentityParams parameters = new()
                 {
                     AccountId = AccountIdValue,
-                    Body = bodyDoc!.RootElement,
+                    Body = bodyDoc is null ? default : bodyDoc.RootElement,
                 }
                 ;
 
