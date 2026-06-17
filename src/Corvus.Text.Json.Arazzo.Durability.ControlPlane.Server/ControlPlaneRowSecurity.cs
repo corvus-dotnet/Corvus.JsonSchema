@@ -37,6 +37,17 @@ public abstract class ControlPlaneRowSecurityPolicy
     public abstract AccessContext Resolve(ClaimsPrincipal? principal);
 
     /// <summary>
+    /// Resolves the capability scopes (§14.1) this policy grants the principal directly — the Arazzo-plane
+    /// per-principal grants that are <em>unioned</em> with the scopes the principal already carries in claims, so an
+    /// access-request approval can grant run/admin capability (e.g. <c>runs:write</c>) without mutating the IdP. The
+    /// deployment stamps these into the principal's effective scopes at authentication time (see the entitlement
+    /// claims transformer). The default grants none — scopes come solely from claims.
+    /// </summary>
+    /// <param name="principal">The authenticated principal (<see langword="null"/> if unauthenticated).</param>
+    /// <returns>The granted scopes (empty when none); the common path allocates nothing.</returns>
+    public virtual IReadOnlyList<string> ResolveGrantedScopes(ClaimsPrincipal? principal) => [];
+
+    /// <summary>
     /// Returns the deployment-internal security tags to stamp onto rows the principal creates (e.g. the
     /// principal's tenant as <c>sys:tenant=acme</c>), making the new row owned by the principal's slice of the
     /// shell. These carry the reserved internal prefix and are not user-editable. The default stamps nothing.

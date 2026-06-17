@@ -142,4 +142,87 @@ public sealed class PersistentRowSecurityPolicyTests
         ctx.Admits(AccessVerb.Read, SecurityTagSet.FromTags([new("sys:tenant", "globex"), new("team", "payments")])).ShouldBeFalse(); // wrapper fails
         ctx.Admits(AccessVerb.Read, SecurityTagSet.FromTags([new("sys:tenant", "acme"), new("team", "hr")])).ShouldBeFalse(); // binding fails
     }
+
+    [TestMethod]
+    public async Task A_binding_grants_capability_scopes_to_the_matched_principal()
+    {
+        var store = new InMemorySecurityPolicyStore();
+        await store.AddBindingAsync(
+            new SecurityBindingDefinition("sub", "alice", VerbGrant.None, VerbGrant.None, VerbGrant.None, Scopes: [ControlPlaneScopes.RunsWrite, ControlPlaneScopes.RunsRead]),
+            "approver",
+            default);
+
+        var policy = new PersistentRowSecurityPolicy(store);
+        await policy.RefreshAsync();
+
+        // The granted scopes survive the store round-trip (schema → write → snapshot → resolve).
+        policy.ResolveGrantedScopes(Principal(("sub", "alice"))).ShouldBe([ControlPlaneScopes.RunsWrite, ControlPlaneScopes.RunsRead], ignoreOrder: true);
+
+        // A different principal is granted nothing.
+        policy.ResolveGrantedScopes(Principal(("sub", "bob"))).ShouldBeEmpty();
+    }
+
+    [TestMethod]
+    public async Task A_reach_only_binding_grants_no_capability_scopes()
+    {
+        var store = new InMemorySecurityPolicyStore();
+
+        // A binding with reach grants but no scopes is the common (standing-rule) case → the zero-allocation fast path.
+        await store.AddBindingAsync(new SecurityBindingDefinition("sub", "alice", VerbGrant.Full, VerbGrant.None, VerbGrant.None), "admin", default);
+        var policy = new PersistentRowSecurityPolicy(store);
+        await policy.RefreshAsync();
+
+        policy.ResolveGrantedScopes(Principal(("sub", "alice"))).ShouldBeEmpty();
+    }
+
+    [TestMethod]
+    public async Task Granted_scopes_union_and_deduplicate_across_matched_bindings()
+    {
+        var store = new InMemorySecurityPolicyStore();
+        await store.AddBindingAsync(new SecurityBindingDefinition("sub", "alice", VerbGrant.None, VerbGrant.None, VerbGrant.None, Scopes: [ControlPlaneScopes.RunsWrite]), "approver", default);
+        await store.AddBindingAsync(new SecurityBindingDefinition("team", "payments", VerbGrant.None, VerbGrant.None, VerbGrant.None, Scopes: [ControlPlaneScopes.RunsWrite, ControlPlaneScopes.CatalogRead]), "approver", default);
+
+        var policy = new PersistentRowSecurityPolicy(store);
+        await policy.RefreshAsync();
+
+        // runs:write appears in both bindings but resolves once (union, deduplicated).
+        policy.ResolveGrantedScopes(Principal(("sub", "alice"), ("team", "payments")))
+            .ShouldBe([ControlPlaneScopes.RunsWrite, ControlPlaneScopes.CatalogRead], ignoreOrder: true);
+    }
+
+    [TestMethod]
+    public async Task A_scope_grant_does_not_alter_the_bindings_reach()
+    {
+        var store = new InMemorySecurityPolicyStore();
+        await store.AddRuleAsync("payments-domain", new SecurityRuleDefinition("domain == 'payments'"), "admin", default);
+
+        // A single entitlement carrying BOTH a capability (runs:write) AND a reach (domain=payments) — the §16.5 shape.
+        await store.AddBindingAsync(
+            new SecurityBindingDefinition("sub", "alice", VerbGrant.Rules("payments-domain"), VerbGrant.Rules("payments-domain"), VerbGrant.None, Scopes: [ControlPlaneScopes.RunsWrite]),
+            "approver",
+            default);
+
+        var policy = new PersistentRowSecurityPolicy(store);
+        await policy.RefreshAsync();
+
+        ClaimsPrincipal alice = Principal(("sub", "alice"));
+        policy.ResolveGrantedScopes(alice).ShouldContain(ControlPlaneScopes.RunsWrite);
+
+        // Reach is resolved exactly as before — scoped to the payments domain, denied elsewhere.
+        AccessContext ctx = policy.Resolve(alice);
+        ctx.Admits(AccessVerb.Write, SecurityTagSet.FromTags([new("domain", "payments")])).ShouldBeTrue();
+        ctx.Admits(AccessVerb.Write, SecurityTagSet.FromTags([new("domain", "billing")])).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task A_null_or_unauthenticated_principal_is_granted_no_scopes()
+    {
+        var store = new InMemorySecurityPolicyStore();
+        await store.AddBindingAsync(new SecurityBindingDefinition("*", null, VerbGrant.None, VerbGrant.None, VerbGrant.None, Scopes: [ControlPlaneScopes.RunsWrite]), "approver", default);
+        var policy = new PersistentRowSecurityPolicy(store);
+        await policy.RefreshAsync();
+
+        policy.ResolveGrantedScopes(null).ShouldBeEmpty();
+        policy.ResolveGrantedScopes(new ClaimsPrincipal(new ClaimsIdentity())).ShouldBeEmpty(); // not authenticated
+    }
 }

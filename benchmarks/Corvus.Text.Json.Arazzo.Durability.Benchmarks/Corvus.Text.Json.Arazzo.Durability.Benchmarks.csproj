@@ -12,9 +12,15 @@
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" />
   </ItemGroup>
+  <!-- The row-security resolver lives in the ASP.NET-hosted control-plane server; reference its framework so the
+       benchmark exe can load that assembly (the policy is only constructed and called, never actually hosted). -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability\Corvus.Text.Json.Arazzo.Durability.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability.Cosmos\Corvus.Text.Json.Arazzo.Durability.Cosmos.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability.Sqlite\Corvus.Text.Json.Arazzo.Durability.Sqlite.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.SourceCredentials.Http\Corvus.Text.Json.Arazzo.SourceCredentials.Http.csproj" />
   </ItemGroup>
