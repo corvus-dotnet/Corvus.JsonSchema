@@ -54,6 +54,9 @@ public readonly partial struct SecurityBindingDocument
     /// <summary>Gets when this grant expires (design §16.5.2), or <see langword="null"/> for a standing grant.</summary>
     public DateTimeOffset? ExpiresAtValue => this.ExpiresAt.IsNotUndefined() ? ((NodaTime.OffsetDateTime)this.ExpiresAt).ToDateTimeOffset() : null;
 
+    /// <summary>Gets a value indicating whether this is an eligibility assignment (design §16.5.3/§16.5.4) — ignored by the resolver, read by the self-elevation strategy — rather than an active grant.</summary>
+    public bool EligibleOnlyValue => this.EligibleOnly.IsNotUndefined() && (bool)this.EligibleOnly;
+
     /// <summary>Materialises the granted capability scopes (design §14.1) as an array — empty when the binding grants
     /// no capability (a reach-only binding). Used at snapshot-compile time (per generation), off the request hot path.</summary>
     /// <returns>The granted scopes, or an empty array.</returns>
@@ -132,7 +135,8 @@ public readonly partial struct SecurityBindingDocument
             write: definition.Write,
             claimValue: definition.ClaimValue is { } claimValue ? (JsonString.Source)claimValue : default,
             description: definition.Description is { } description ? (JsonString.Source)description : default,
-            expiresAt: definition.ExpiresAt is { } expiresAt ? (JsonDateTime.Source)expiresAt : default);
+            expiresAt: definition.ExpiresAt is { } expiresAt ? (JsonDateTime.Source)expiresAt : default,
+            eligibleOnly: definition.EligibleOnly ? (JsonBoolean.Source)true : default);
         ApplyScopes(builder, definition.Scopes);
         return builder;
     }
@@ -175,6 +179,15 @@ public readonly partial struct SecurityBindingDocument
         else
         {
             builder.RootElement.RemoveExpiresAt();
+        }
+
+        if (definition.EligibleOnly)
+        {
+            builder.RootElement.SetEligibleOnly(true);
+        }
+        else
+        {
+            builder.RootElement.RemoveEligibleOnly();
         }
 
         ApplyScopes(builder, definition.Scopes);
