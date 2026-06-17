@@ -51,6 +51,32 @@ public readonly partial struct SecurityBindingDocument
     /// <summary>Gets the optimistic-concurrency token.</summary>
     public WorkflowEtag EtagValue => new((string)this.Etag);
 
+    /// <summary>Materialises the granted capability scopes (design §14.1) as an array — empty when the binding grants
+    /// no capability (a reach-only binding). Used at snapshot-compile time (per generation), off the request hot path.</summary>
+    /// <returns>The granted scopes, or an empty array.</returns>
+    public string[] ScopesArray()
+    {
+        if (!this.Scopes.IsNotUndefined())
+        {
+            return [];
+        }
+
+        int count = this.Scopes.GetArrayLength();
+        if (count == 0)
+        {
+            return [];
+        }
+
+        var result = new string[count];
+        int i = 0;
+        foreach (JsonString scope in this.Scopes.EnumerateArray())
+        {
+            result[i++] = (string)scope;
+        }
+
+        return result;
+    }
+
     /// <summary>Realises a new binding into a workspace and writes its JSON to the caller's (pooled) writer in one pass —
     /// a store serializes the result to its driver bytes via <see cref="PersistedJson.ToArray"/> and returns a pooled
     /// document over those bytes.</summary>
@@ -89,7 +115,8 @@ public readonly partial struct SecurityBindingDocument
 
     // Realises a new binding into the pooled workspace arena (shared by the buffer-writing and detached-value paths).
     private static JsonDocumentBuilder<Mutable> BuildNew(JsonWorkspace workspace, string id, SecurityBindingDefinition definition, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
-        => CreateBuilder(
+    {
+        JsonDocumentBuilder<Mutable> builder = CreateBuilder(
             workspace,
             claimType: definition.ClaimType,
             createdAt: createdAt,
@@ -102,6 +129,9 @@ public readonly partial struct SecurityBindingDocument
             write: definition.Write,
             claimValue: definition.ClaimValue is { } claimValue ? (JsonString.Source)claimValue : default,
             description: definition.Description is { } description ? (JsonString.Source)description : default);
+        ApplyScopes(builder, definition.Scopes);
+        return builder;
+    }
 
     // Realises a mutable builder over this document and modifies only the fields an update touches; id and the
     // created-* metadata are carried through unchanged (no field-by-field rebuild).
@@ -134,7 +164,31 @@ public readonly partial struct SecurityBindingDocument
             builder.RootElement.RemoveDescription();
         }
 
+        ApplyScopes(builder, definition.Scopes);
         return builder;
+    }
+
+    // Sets (or removes, when empty) the granted capability scopes on a binding builder — shared by the new/updated
+    // write paths. The scopes list is threaded as the build context so the item callback is static (no closure).
+    private static void ApplyScopes(JsonDocumentBuilder<Mutable> builder, IReadOnlyList<string>? scopes)
+    {
+        if (scopes is { Count: > 0 })
+        {
+            builder.RootElement.SetScopes(
+                JsonStringArray.Build(
+                    scopes,
+                    static (in IReadOnlyList<string> source, ref JsonStringArray.Builder array) =>
+                    {
+                        foreach (string scope in source)
+                        {
+                            array.AddItem(scope);
+                        }
+                    }));
+        }
+        else
+        {
+            builder.RootElement.RemoveScopes();
+        }
     }
 
     /// <summary>

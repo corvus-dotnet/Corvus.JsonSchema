@@ -19,6 +19,7 @@ public readonly record struct SecurityRuleDefinition(string Expression, string? 
 /// <param name="Purge">The purge-verb grant.</param>
 /// <param name="Order">Resolution order (ascending).</param>
 /// <param name="Description">An optional human description.</param>
+/// <param name="Scopes">The capability scopes (design §14.1) this binding grants the matched principal; <see langword="null"/> or empty is a reach-only binding.</param>
 public readonly record struct SecurityBindingDefinition(
     string ClaimType,
     string? ClaimValue,
@@ -26,7 +27,8 @@ public readonly record struct SecurityBindingDefinition(
     VerbGrant Write,
     VerbGrant Purge,
     int Order = 0,
-    string? Description = null);
+    string? Description = null,
+    IReadOnlyList<string>? Scopes = null);
 
 /// <summary>
 /// A consistent point-in-time view of all rules and bindings plus a monotonic generation token a resolver caches
