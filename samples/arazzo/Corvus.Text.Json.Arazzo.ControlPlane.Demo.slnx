@@ -2,6 +2,7 @@
   <Folder Name="/Demo/">
     <Project Path="Corvus.Text.Json.Arazzo.ControlPlane.Demo/Corvus.Text.Json.Arazzo.ControlPlane.Demo.csproj" />
     <Project Path="Corvus.Text.Json.Arazzo.ControlPlane.Demo.AppHost/Corvus.Text.Json.Arazzo.ControlPlane.Demo.AppHost.csproj" />
+    <Project Path="Corvus.Text.Json.Arazzo.Runner.Demo/Corvus.Text.Json.Arazzo.Runner.Demo.csproj" />
     <Project Path="Corvus.Text.Json.Arazzo.ControlPlane.Demo.ServiceDefaults/Corvus.Text.Json.Arazzo.ControlPlane.Demo.ServiceDefaults.csproj" />
   </Folder>
 </Solution>
