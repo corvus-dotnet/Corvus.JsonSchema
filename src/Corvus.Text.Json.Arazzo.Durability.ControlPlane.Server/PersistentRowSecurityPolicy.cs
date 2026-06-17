@@ -63,20 +63,26 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
             expressions[rule.NameValue] = rule.ExpressionValue;
         }
 
-        // Pre-resolve each binding's claim match and per-verb clause string ONCE per generation, so Resolve does no
-        // rule-name lookups or clause-string building on the hot path.
+        // Pre-resolve each binding's claim match, per-verb clause string, and granted scopes ONCE per generation, so
+        // Resolve / ResolveGrantedScopes do no rule-name lookups, clause-string building, or scope materialisation on
+        // the hot path. anyScopeGrants lets the scope resolution early-out (zero allocation) when no binding grants a
+        // capability — the common case.
         var bindings = new List<BindingClauses>(snapshot.Bindings.Count);
+        bool anyScopeGrants = false;
         foreach (SecurityBindingDocument binding in snapshot.Bindings)
         {
+            string[] scopes = binding.ScopesArray();
+            anyScopeGrants |= scopes.Length > 0;
             bindings.Add(new BindingClauses(
                 binding.ClaimTypeValue,
                 binding.ClaimValueOrNull,
                 VerbClauseFor(binding.Read, expressions),
                 VerbClauseFor(binding.Write, expressions),
-                VerbClauseFor(binding.Purge, expressions)));
+                VerbClauseFor(binding.Purge, expressions),
+                scopes));
         }
 
-        this.compiled = new Compiled(snapshot.Generation, bindings);
+        this.compiled = new Compiled(snapshot.Generation, bindings, anyScopeGrants);
     }
 
     /// <inheritdoc/>
@@ -102,6 +108,41 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
             this.ResolveReach(matched, claims, current, static b => b.Read),
             this.ResolveReach(matched, claims, current, static b => b.Write),
             this.ResolveReach(matched, claims, current, static b => b.Purge));
+    }
+
+    /// <inheritdoc/>
+    public override IReadOnlyList<string> ResolveGrantedScopes(ClaimsPrincipal? principal)
+    {
+        Compiled current = this.compiled;
+
+        // Common path: no binding in this generation grants any capability scope → nothing to union. Returns the
+        // shared empty array — zero allocation on the per-request warm path.
+        if (!current.AnyScopeGrants || principal?.Identity?.IsAuthenticated != true)
+        {
+            return [];
+        }
+
+        // Elevated path (a binding grants a scope): union the granted scopes of every matched binding. Allocates a
+        // small list only when this principal actually holds a per-principal grant.
+        List<string>? granted = null;
+        foreach (BindingClauses binding in current.Bindings)
+        {
+            if (binding.Scopes.Length == 0 || !Matches(binding, principal))
+            {
+                continue;
+            }
+
+            foreach (string scope in binding.Scopes)
+            {
+                granted ??= [];
+                if (!granted.Contains(scope))
+                {
+                    granted.Add(scope);
+                }
+            }
+        }
+
+        return (IReadOnlyList<string>?)granted ?? [];
     }
 
     /// <inheritdoc/>
@@ -218,10 +259,10 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
     // A binding's per-verb grant, pre-resolved at snapshot time: unrestricted (operator) or a (possibly null) clause.
     private readonly record struct VerbClause(bool Unrestricted, string? Clause);
 
-    // A binding pre-resolved at snapshot time: its claim match plus the three per-verb clauses.
-    private sealed record BindingClauses(string ClaimType, string? ClaimValue, VerbClause Read, VerbClause Write, VerbClause Purge);
+    // A binding pre-resolved at snapshot time: its claim match, the three per-verb clauses, and the granted scopes.
+    private sealed record BindingClauses(string ClaimType, string? ClaimValue, VerbClause Read, VerbClause Write, VerbClause Purge, string[] Scopes);
 
-    private sealed record Compiled(long Generation, IReadOnlyList<BindingClauses> Bindings)
+    private sealed record Compiled(long Generation, IReadOnlyList<BindingClauses> Bindings, bool AnyScopeGrants = false)
     {
         // Combined-expression -> compiled rule, scoped to this generation (discarded when the snapshot advances).
         public ConcurrentDictionary<string, SecurityRule[]> CompiledCombos { get; } = new(StringComparer.Ordinal);
