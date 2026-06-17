@@ -105,50 +105,14 @@ internal sealed class AccessRequestListCommand : AsyncCommand<AccessRequestListS
         using (http)
         await using (transport)
         {
-            // Walk every keyset page (the store pages server-side) so the output is the complete queue, never the first
-            // page alone. Each view is materialised (ToString) while its page response is alive, then the accumulated set
-            // is rendered/printed once. The Source filter values are built inline per call (they are ref structs that
-            // cannot be held across the loop's await).
-            var items = new List<string>();
-            string? pageToken = null;
-            do
-            {
-                string? next = null;
-                await using ListAccessRequestsResponse response = await client.ListAccessRequestsAsync(
-                    status: settings.Status is { } s ? (Models.GetAccessRequestsStatus.Source)s : default,
-                    baseWorkflowId: settings.Workflow is { } w ? (Models.JsonString.Source)w : default,
-                    pageToken: pageToken is { } token ? (Models.JsonString.Source)token : default,
-                    cancellationToken: cancellationToken);
-                int rc = response.MatchResult(
-                    list =>
-                    {
-                        next = list.NextPageToken.IsNotUndefined() ? (string)list.NextPageToken : null;
-                        foreach (Models.AccessRequestView view in list.AccessRequests.EnumerateArray())
-                        {
-                            items.Add(view.ToString());
-                        }
-
-                        return 0;
-                    },
-                    Output.Problem,
-                    Output.Unexpected);
-                if (rc != 0)
-                {
-                    return rc;
-                }
-
-                pageToken = next;
-            }
-            while (pageToken is not null);
-
-            string combined = $"{{\"accessRequests\":[{string.Join(",", items)}]}}";
-            if (settings.Output.Equals("json", StringComparison.OrdinalIgnoreCase))
-            {
-                return Output.Print(combined);
-            }
-
-            using ParsedJsonDocument<Models.AccessRequestList> rendered = ParsedJsonDocument<Models.AccessRequestList>.Parse(System.Text.Encoding.UTF8.GetBytes(combined).AsMemory());
-            return AccessRequestCommandHelpers.RenderTable(rendered.RootElement, settings.Workflow);
+            Models.GetAccessRequestsStatus.Source status = settings.Status is { } s ? (Models.GetAccessRequestsStatus.Source)s : default;
+            Models.JsonString.Source workflow = settings.Workflow is { } w ? (Models.JsonString.Source)w : default;
+            await using ListAccessRequestsResponse response = await client.ListAccessRequestsAsync(status, workflow, cancellationToken);
+            bool asJson = settings.Output.Equals("json", StringComparison.OrdinalIgnoreCase);
+            return response.MatchResult(
+                list => asJson ? Output.Print(list.ToString()) : AccessRequestCommandHelpers.RenderTable(list, settings.Workflow),
+                Output.Problem,
+                Output.Unexpected);
         }
     }
 }
@@ -254,19 +218,16 @@ internal static class AccessRequestCommandHelpers
             reason: settings.Reason is { } reason ? (Models.JsonString.Source)reason : default,
             requestedDurationSeconds: settings.DurationSeconds is { } duration ? (Models.AccessRequestSubmit.RequestedDurationSecondsEntity.Source)duration : default));
 
-    // With a reason, builds the note object; without one, a default (undefined) Source so the generated client
-    // sends NO body (the decision endpoints' request body is optional, and the client omits an undefined body).
+    // Always builds an object (an empty {} when there is no reason). The generated client serializes the optional
+    // body unconditionally, so a default (undefined) Source would assert; an empty note is equivalent to no note.
     public static Models.AccessRequestDecisionNote.Source Note(string? reason)
-        => reason is { } r
-            ? new((ref Models.AccessRequestDecisionNote.Builder b) => b.Create(reason: (Models.JsonString.Source)r))
-            : default;
+        => new((ref Models.AccessRequestDecisionNote.Builder b) => b.Create(
+            reason: reason is { } r ? (Models.JsonString.Source)r : default));
 
     public static Models.AccessRequestEligibilityNote.Source EligibilityNote(string? reason, long? windowSeconds)
-        => reason is null && windowSeconds is null
-            ? default
-            : new((ref Models.AccessRequestEligibilityNote.Builder b) => b.Create(
-                eligibilityWindowSeconds: windowSeconds is { } window ? (Models.AccessRequestEligibilityNote.EligibilityWindowSecondsEntity.Source)window : default,
-                reason: reason is { } r ? (Models.JsonString.Source)r : default));
+        => new((ref Models.AccessRequestEligibilityNote.Builder b) => b.Create(
+            eligibilityWindowSeconds: windowSeconds is { } window ? (Models.AccessRequestEligibilityNote.EligibilityWindowSecondsEntity.Source)window : default,
+            reason: reason is { } r ? (Models.JsonString.Source)r : default));
 
     public static int RenderTable(Models.AccessRequestList list, string? workflow)
     {

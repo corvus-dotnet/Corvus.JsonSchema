@@ -1196,7 +1196,7 @@
         "tags": ["credentials"],
         "summary": "Get a source credential binding",
         "parameters": [
-          { "$ref": "#/components/parameters/SourceNamePath" },
+          { "$ref": "#/components/parameters/CredentialSourceNamePath" },
           { "$ref": "#/components/parameters/EnvironmentPath" }
         ],
         "responses": {
@@ -1222,7 +1222,7 @@
         "summary": "Update a source credential binding",
         "description": "Replaces the references and non-secret metadata of an existing binding; the (sourceName, environment) identity and the created-* audit fields are immutable. Rotation is by changing the reference. A value that is not a well-formed SecretRef is rejected (400).",
         "parameters": [
-          { "$ref": "#/components/parameters/SourceNamePath" },
+          { "$ref": "#/components/parameters/CredentialSourceNamePath" },
           { "$ref": "#/components/parameters/EnvironmentPath" }
         ],
         "requestBody": {
@@ -1256,7 +1256,7 @@
         "tags": ["credentials"],
         "summary": "Delete a source credential binding",
         "parameters": [
-          { "$ref": "#/components/parameters/SourceNamePath" },
+          { "$ref": "#/components/parameters/CredentialSourceNamePath" },
           { "$ref": "#/components/parameters/EnvironmentPath" }
         ],
         "responses": {
@@ -1598,7 +1598,7 @@
         "description": "The run id.",
         "schema": { "type": "string" }
       },
-      "SourceNamePath": {
+      "CredentialSourceNamePath": {
         "name": "sourceName",
         "in": "path",
         "required": true,

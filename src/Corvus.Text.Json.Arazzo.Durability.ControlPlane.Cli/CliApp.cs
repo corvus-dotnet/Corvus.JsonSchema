@@ -110,6 +110,19 @@ public static class CliApp
                 administrators.AddCommand<AdministratorRemoveCommand>("remove").WithDescription("Remove an administrator identity (the set may not be left empty).");
                 administrators.AddCommand<AdministratorTransferCommand>("transfer").WithDescription("Replace the whole administrator set (--admin dimension=value, repeatable).");
             });
+
+            c.AddBranch<CommandSettings>("access-requests", accessRequests =>
+            {
+                accessRequests.SetDescription("Request elevated capability on a workflow, and — as a §15 administrator — decide requests (§16.5): submit, the approver queue, approve / approve-as-eligible / deny / withdraw / revoke.");
+                accessRequests.AddCommand<AccessRequestSubmitCommand>("submit").WithDescription("Submit a request for capability on a workflow (--scope, repeatable; --reason; --duration-seconds).");
+                accessRequests.AddCommand<AccessRequestListCommand>("list").WithDescription("List your own requests, or a workflow's approver queue (--workflow); --status filter; --output json.");
+                accessRequests.AddCommand<AccessRequestGetCommand>("get").WithDescription("Show one access request.");
+                accessRequests.AddCommand<AccessRequestApproveCommand>("approve").WithDescription("Approve a pending request, writing the time-boxed grant (administrator only).");
+                accessRequests.AddCommand<AccessRequestApproveAsEligibleCommand>("approve-as-eligible").WithDescription("Approve a request as durable eligibility for JIT self-elevation (--window-seconds); administrator only.");
+                accessRequests.AddCommand<AccessRequestDenyCommand>("deny").WithDescription("Deny a pending request (administrator only).");
+                accessRequests.AddCommand<AccessRequestWithdrawCommand>("withdraw").WithDescription("Withdraw your own pending request.");
+                accessRequests.AddCommand<AccessRequestRevokeCommand>("revoke").WithDescription("Revoke an approved grant or eligibility assignment early (administrator only).");
+            });
         });
 
         return app;

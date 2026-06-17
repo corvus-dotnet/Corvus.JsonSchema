@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client;
 /// <summary>
 /// Request type for the ListAccessRequests operation.
 /// </summary>
-/// <remarks>Lists access requests visible to the caller, oldest first. With baseWorkflowId, returns that workflow's request queue — the caller must be an administrator of it (403 otherwise). Without baseWorkflowId, scope selects the view: 'mine' (default) the caller's own requests; 'queue' the approver inbox — every request across the workflows the caller administers. Optionally filtered by status.</remarks>
+/// <remarks>Lists access requests visible to the caller, oldest first. Without baseWorkflowId, returns the caller's own requests; with baseWorkflowId, returns that workflow's request queue — the caller must be an administrator of it (403 otherwise). Optionally filtered by status.</remarks>
 public readonly struct ListAccessRequestsRequest : IApiRequest<ListAccessRequestsRequest>
 {
 
@@ -30,21 +30,6 @@ public readonly struct ListAccessRequestsRequest : IApiRequest<ListAccessRequest
     /// Gets the baseWorkflowId parameter.
     /// </summary>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString BaseWorkflowId { get; init; }
-
-    /// <summary>
-    /// Gets the scope parameter.
-    /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetAccessRequestsScope Scope { get; init; }
-
-    /// <summary>
-    /// Gets the limit parameter.
-    /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit Limit { get; init; }
-
-    /// <summary>
-    /// Gets the pageToken parameter.
-    /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString PageToken { get; init; }
 
     /// <inheritdoc/>
     public static ReadOnlySpan<byte> PathTemplateUtf8 => "/accessRequests"u8;
@@ -118,66 +103,6 @@ public readonly struct ListAccessRequestsRequest : IApiRequest<ListAccessRequest
             first = false;
         }
 
-        if (this.Scope.IsNotUndefined())
-        {
-            if (!first)
-            {
-                writer.Write("&"u8);
-                totalWritten++;
-            }
-
-            writer.Write("scope="u8);
-            totalWritten += 6;
-            using UnescapedUtf8JsonString utf8Scope = ((JsonElement)this.Scope).GetUtf8String();
-            Span<byte> escScope = stackalloc byte[utf8Scope.Span.Length * 3];
-            if (Utf8Uri.TryEscapeDataString(utf8Scope.Span, escScope, out int ewScope))
-            {
-                writer.Write(escScope[..ewScope]);
-                totalWritten += ewScope;
-            }
-
-            first = false;
-        }
-
-        if (this.Limit.IsNotUndefined())
-        {
-            if (!first)
-            {
-                writer.Write("&"u8);
-                totalWritten++;
-            }
-
-            writer.Write("limit="u8);
-            totalWritten += 6;
-            Span<byte> bufLimit = stackalloc byte[11];
-            this.Limit.TryFormat(bufLimit, out int bwLimit, default, default);
-            writer.Write(bufLimit[..bwLimit]);
-            totalWritten += bwLimit;
-
-            first = false;
-        }
-
-        if (this.PageToken.IsNotUndefined())
-        {
-            if (!first)
-            {
-                writer.Write("&"u8);
-                totalWritten++;
-            }
-
-            writer.Write("pageToken="u8);
-            totalWritten += 10;
-            using UnescapedUtf8JsonString utf8PageToken = ((JsonElement)this.PageToken).GetUtf8String();
-            Span<byte> escPageToken = stackalloc byte[utf8PageToken.Span.Length * 3];
-            if (Utf8Uri.TryEscapeDataString(utf8PageToken.Span, escPageToken, out int ewPageToken))
-            {
-                writer.Write(escPageToken[..ewPageToken]);
-                totalWritten += ewPageToken;
-            }
-
-            first = false;
-        }
-
         return totalWritten;
     }
 
@@ -222,33 +147,6 @@ public readonly struct ListAccessRequestsRequest : IApiRequest<ListAccessRequest
                 }
             }
 
-            if (this.Scope.IsNotUndefined())
-            {
-                using JsonSchemaResultsCollector collectorScope = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-                if (!this.Scope.EvaluateSchema(collectorScope))
-                {
-                    ThrowHelper.ThrowRequestParameterValidationFailed("scope", SchemaValidationDetail.FormatResults(collectorScope));
-                }
-            }
-
-            if (this.Limit.IsNotUndefined())
-            {
-                using JsonSchemaResultsCollector collectorLimit = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-                if (!this.Limit.EvaluateSchema(collectorLimit))
-                {
-                    ThrowHelper.ThrowRequestParameterValidationFailed("limit", SchemaValidationDetail.FormatResults(collectorLimit));
-                }
-            }
-
-            if (this.PageToken.IsNotUndefined())
-            {
-                using JsonSchemaResultsCollector collectorPageToken = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-                if (!this.PageToken.EvaluateSchema(collectorPageToken))
-                {
-                    ThrowHelper.ThrowRequestParameterValidationFailed("pageToken", SchemaValidationDetail.FormatResults(collectorPageToken));
-                }
-            }
-
         }
         else
         {
@@ -260,21 +158,6 @@ public readonly struct ListAccessRequestsRequest : IApiRequest<ListAccessRequest
             if (this.BaseWorkflowId.IsNotUndefined() && !this.BaseWorkflowId.EvaluateSchema())
             {
                 ThrowHelper.ThrowRequestParameterValidationFailed("baseWorkflowId");
-            }
-
-            if (this.Scope.IsNotUndefined() && !this.Scope.EvaluateSchema())
-            {
-                ThrowHelper.ThrowRequestParameterValidationFailed("scope");
-            }
-
-            if (this.Limit.IsNotUndefined() && !this.Limit.EvaluateSchema())
-            {
-                ThrowHelper.ThrowRequestParameterValidationFailed("limit");
-            }
-
-            if (this.PageToken.IsNotUndefined() && !this.PageToken.EvaluateSchema())
-            {
-                ThrowHelper.ThrowRequestParameterValidationFailed("pageToken");
             }
 
         }
