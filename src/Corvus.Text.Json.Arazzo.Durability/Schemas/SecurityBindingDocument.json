@@ -30,6 +30,10 @@
       "format": "date-time",
       "description": "When this grant expires (design §16.5.2, time-bound/PIM): the resolver excludes the binding once now >= expiresAt (fail-safe), and a reaper deletes it as housekeeping. Absent is a standing grant that never expires."
     },
+    "eligibleOnly": {
+      "type": "boolean",
+      "description": "When true, this is an eligibility assignment (design §16.5.3/§16.5.4), not an active grant: the resolver IGNORES it (it confers no ambient capability or reach), and the self-elevation strategy reads it as 'this subject may self-elevate these scopes on this reach'. Absent/false is a normal active grant."
+    },
     "order": {
       "type": "integer",
       "format": "int32",

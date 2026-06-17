@@ -268,6 +268,27 @@ public sealed class PersistentRowSecurityPolicyTests
         policy.Resolve(alice).Admits(AccessVerb.Write, SecurityTagSet.FromTags([new("domain", "payments")])).ShouldBeTrue();
     }
 
+    [TestMethod]
+    public async Task An_eligible_only_binding_confers_no_active_capability_or_reach()
+    {
+        var store = new InMemorySecurityPolicyStore();
+        await store.AddRuleAsync("payments-domain", new SecurityRuleDefinition("domain == 'payments'"), "admin", default);
+
+        // An eligibility assignment (§16.5.3/§16.5.4): it carries a scope + reach, but eligibleOnly means the resolver
+        // must ignore it entirely — eligibility confers nothing active (the self-elevation strategy reads it instead).
+        await store.AddBindingAsync(
+            new SecurityBindingDefinition("sub", "alice", VerbGrant.Rules("payments-domain"), VerbGrant.Rules("payments-domain"), VerbGrant.None, Scopes: [ControlPlaneScopes.RunsWrite], EligibleOnly: true),
+            "approver",
+            default);
+
+        var policy = new PersistentRowSecurityPolicy(store);
+        await policy.RefreshAsync();
+
+        ClaimsPrincipal alice = Principal(("sub", "alice"));
+        policy.ResolveGrantedScopes(alice).ShouldBeEmpty(); // no active capability
+        policy.Resolve(alice).Admits(AccessVerb.Write, SecurityTagSet.FromTags([new("domain", "payments")])).ShouldBeFalse(); // nor reach
+    }
+
     private static readonly DateTimeOffset ClockNow = new(2026, 6, 15, 12, 0, 0, TimeSpan.Zero);
 
     // A clock fixed at a known instant so a binding's expiry is deterministic relative to "now".
