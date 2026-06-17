@@ -5909,6 +5909,10 @@ public sealed class OpenApi30CodeGenerator
                 // (mirrors client response pattern: workspace manages param/header document lifetimes)
                 bool isRawStreamBody = hasBody && IsRawStreamRequestBody(op.RequestBody!.Value);
                 string? bodyTypeName = hasBody && !isRawStreamBody ? this.ResolveRequestBodyTypeName(op.RequestBody!.Value) : null;
+
+                // An optional (required: false) non-raw-stream request body is read only when the request actually
+                // carries one; an absent body must leave the body parameter undefined, not fail on an empty stream.
+                bool bodyOptional = hasBody && !isRawStreamBody && !op.RequestBody!.Value.IsRequired;
                 w.WriteLine("JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
                 if (hasBody && !isRawStreamBody)
                 {
@@ -5971,6 +5975,14 @@ public sealed class OpenApi30CodeGenerator
                     if (op.Parameters.Length > 0)
                     {
                         w.WriteLine();
+                    }
+
+                    if (bodyOptional)
+                    {
+                        w.WriteLine("// An optional request body is read only when the request actually carries one;");
+                        w.WriteLine("// an absent body leaves the body parameter undefined rather than failing to parse.");
+                        w.WriteLine("if ((context.Request.ContentLength ?? 0) > 0 || context.Request.Headers.ContainsKey(\"Transfer-Encoding\"))");
+                        w.OpenBrace();
                     }
 
                     if (IsRawStreamRequestBody(op.RequestBody!.Value))
@@ -6049,6 +6061,11 @@ public sealed class OpenApi30CodeGenerator
                         w.WriteLine();
                         EmitRequestBodySchemaValidation(w, bodyTypeName);
                     }
+
+                    if (bodyOptional)
+                    {
+                        w.CloseBrace();
+                    }
                 }
 
                 w.WriteLine();
@@ -6070,6 +6087,10 @@ public sealed class OpenApi30CodeGenerator
                         if (isRawStreamBody)
                         {
                             w.WriteLine("Body = context.Request.Body,");
+                        }
+                        else if (bodyOptional)
+                        {
+                            w.WriteLine("Body = bodyDoc is null ? default : bodyDoc.RootElement,");
                         }
                         else
                         {
