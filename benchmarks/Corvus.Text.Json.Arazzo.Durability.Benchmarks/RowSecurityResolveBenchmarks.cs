@@ -43,7 +43,9 @@ public class RowSecurityResolveBenchmarks
         this.noGrantPolicy = new PersistentRowSecurityPolicy(noGrantStore);
         await this.noGrantPolicy.RefreshAsync();
 
-        // The same, plus the per-principal capability grant an access-request approval writes (the elevated state).
+        // The same, plus the per-principal, time-bound capability grant an access-request approval writes (the
+        // elevated state). The far-future expiry makes the grant active while forcing the resolver's time-bound path
+        // (AnyExpiringBindings → a single clock read) — proving that path stays allocation-free.
         var grantedStore = new InMemorySecurityPolicyStore();
         await grantedStore.AddRuleAsync("team-payments", new SecurityRuleDefinition("team == 'payments'"), "admin", default);
         await grantedStore.AddBindingAsync(
@@ -51,7 +53,7 @@ public class RowSecurityResolveBenchmarks
             "admin",
             default);
         await grantedStore.AddBindingAsync(
-            new SecurityBindingDefinition("sub", "alice", VerbGrant.Rules("team-payments"), VerbGrant.Rules("team-payments"), VerbGrant.None, Scopes: [ControlPlaneScopes.RunsWrite]),
+            new SecurityBindingDefinition("sub", "alice", VerbGrant.Rules("team-payments"), VerbGrant.Rules("team-payments"), VerbGrant.None, Scopes: [ControlPlaneScopes.RunsWrite], ExpiresAt: new DateTimeOffset(2999, 1, 1, 0, 0, 0, TimeSpan.Zero)),
             "approver",
             default);
         this.grantedPolicy = new PersistentRowSecurityPolicy(grantedStore);

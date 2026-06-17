@@ -25,6 +25,11 @@
       "description": "Capability scopes (design §14.1) this binding grants the matched principal, unioned into the principal's effective scopes at authentication time. Absent or empty grants no capability (a reach-only binding).",
       "items": { "type": "string" }
     },
+    "expiresAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this grant expires (design §16.5.2, time-bound/PIM): the resolver excludes the binding once now >= expiresAt (fail-safe), and a reaper deletes it as housekeeping. Absent is a standing grant that never expires."
+    },
     "order": {
       "type": "integer",
       "format": "int32",
