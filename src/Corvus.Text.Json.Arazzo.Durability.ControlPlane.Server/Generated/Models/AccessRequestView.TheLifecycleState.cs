@@ -24,23 +24,28 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A list of access requests (design &#167;16.5), oldest first.
+/// An access request and its decision state (design &#167;16.5).
 /// </para>
 /// </remarks>
-public readonly partial struct AccessRequestList
+public readonly partial struct AccessRequestView
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The lifecycle state.
+    /// </para>
+    /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct AccessRequestViewArray
+    public readonly partial struct TheLifecycleState
 #if NET8_0_OR_GREATER
-        : IJsonElement<AccessRequestViewArray>,
+        : IJsonElement<TheLifecycleState>,
           IFormattable,
           ISpanFormattable,
           IUtf8SpanFormattable
 #else
-        : IJsonElement<AccessRequestViewArray>,
+        : IJsonElement<TheLifecycleState>,
           IFormattable
 #endif
     {
@@ -50,10 +55,10 @@ public readonly partial struct AccessRequestList
 
         #pragma warning restore CS8618 // JsonDocument nullability
         /// <summary>
-        /// Initializes a new instance of the <see cref="AccessRequestViewArray"/> struct.
+        /// Initializes a new instance of the <see cref="TheLifecycleState"/> struct.
         /// </summary>
         /// <param name="value">The value from which to construct the instance.</param>
-        internal AccessRequestViewArray(IJsonDocument parent, int idx)
+        internal TheLifecycleState(IJsonDocument parent, int idx)
         {
             Debug.Assert(idx >= 0);
             _parent = parent;
@@ -63,54 +68,28 @@ public readonly partial struct AccessRequestList
         /// <summary>
         /// Gets the default instance.
         /// </summary>
-        public static AccessRequestViewArray DefaultInstance { get; }
+        public static TheLifecycleState DefaultInstance { get; }
 
-        /// <summary>
-        /// Gets the rank of the array.
-        /// </summary>
-        public static int Rank => 1;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetValue(out string? value) { CheckValidInstance(); return _parent.TryGetString(_idx, JsonTokenType.String, out value); }
 
-        /// <summary>
-        /// Gets the item at the given index.
-        /// </summary>
-        /// <param name="index">The index at which to retrieve the item.</param>
-        /// <returns>The item at the given index.</returns>
-        /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
-        /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView this[int index]
-        {
-            get
-            {
-                CheckValidInstance();
-                return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView>(_idx, index);
-            }
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public UnescapedUtf8JsonString GetUtf8String() { CheckValidInstance(); return _parent.GetUtf8JsonString(_idx, JsonTokenType.String); }
 
-        /// <summary>
-        /// Gets the array length.
-        /// </summary>
-        /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public int GetArrayLength()
-        {
-            CheckValidInstance();
-            return _parent.GetArrayLength(_idx);
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public UnescapedUtf16JsonString GetUtf16String() { CheckValidInstance(); return _parent.GetUtf16JsonString(_idx, JsonTokenType.String); }
 
-        /// <summary>
-        /// Enumerates the array.
-        /// </summary>
-        /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView> EnumerateArray()
-        {
-            CheckValidInstance();
-            return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView>(_parent, _idx);
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public string? GetString() { CheckValidInstance(); return _parent.GetString(_idx, JsonTokenType.String); }
 
         /// <inheritdoc/>
         public JsonValueKind ValueKind => TokenType.ToValueKind();
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator string(TheLifecycleState value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 
         /// <summary>
         /// Operator ==.
@@ -120,7 +99,7 @@ public readonly partial struct AccessRequestList
         /// <returns>
         /// <c>True</c> if the values are equal.
         /// </returns>
-        public static bool operator ==(in AccessRequestViewArray left, in AccessRequestViewArray right)
+        public static bool operator ==(in TheLifecycleState left, in TheLifecycleState right)
         {
             return left.Equals(right);
         }
@@ -133,7 +112,7 @@ public readonly partial struct AccessRequestList
         /// <returns>
         /// <c>True</c> if the values are not equal.
         /// </returns>
-        public static bool operator !=(in AccessRequestViewArray left, in AccessRequestViewArray right)
+        public static bool operator !=(in TheLifecycleState left, in TheLifecycleState right)
         {
             return !left.Equals(right);
         }
@@ -146,7 +125,7 @@ public readonly partial struct AccessRequestList
         /// <returns>
         /// <c>True</c> if the values are equal.
         /// </returns>
-        public static bool operator ==(in AccessRequestViewArray left, in JsonElement right)
+        public static bool operator ==(in TheLifecycleState left, in JsonElement right)
         {
             return left.Equals(right);
         }
@@ -159,7 +138,7 @@ public readonly partial struct AccessRequestList
         /// <returns>
         /// <c>True</c> if the values are not equal.
         /// </returns>
-        public static bool operator !=(in AccessRequestViewArray left, in JsonElement right)
+        public static bool operator !=(in TheLifecycleState left, in JsonElement right)
         {
             return !left.Equals(right);
         }
@@ -170,7 +149,7 @@ public readonly partial struct AccessRequestList
         /// <param name="value">The instance of this type.</param>
         /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator JsonElement(AccessRequestViewArray instance)
+        public static implicit operator JsonElement(TheLifecycleState instance)
         {
             return JsonElement.From(instance);
         }
@@ -181,9 +160,9 @@ public readonly partial struct AccessRequestList
         /// <param name="value">The instance of this type as a JsonElement.</param>
         /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator AccessRequestViewArray(JsonElement instance)
+        public static implicit operator TheLifecycleState(JsonElement instance)
         {
-            return AccessRequestViewArray.From(instance);
+            return TheLifecycleState.From(instance);
         }
 
         /// <summary>
@@ -192,7 +171,7 @@ public readonly partial struct AccessRequestList
         /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the JSON element.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static AccessRequestViewArray From<T>(in T instance)
+        public static TheLifecycleState From<T>(in T instance)
             where T : struct, IJsonElement<T>
         {
             return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -217,10 +196,10 @@ public readonly partial struct AccessRequestList
         /// </exception>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static AccessRequestViewArray ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+        public static TheLifecycleState ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<AccessRequestViewArray>(utf8Json, options);
+            return JsonElementHelpers.ParseValue<TheLifecycleState>(utf8Json, options);
             #pragma warning restore CS0618
         }
 
@@ -243,10 +222,10 @@ public readonly partial struct AccessRequestList
         /// </exception>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static AccessRequestViewArray ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+        public static TheLifecycleState ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<AccessRequestViewArray>(json, options);
+            return JsonElementHelpers.ParseValue<TheLifecycleState>(json, options);
             #pragma warning restore CS0618
         }
 
@@ -269,10 +248,10 @@ public readonly partial struct AccessRequestList
         /// </exception>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static AccessRequestViewArray ParseValue(string json, JsonDocumentOptions options = default)
+        public static TheLifecycleState ParseValue(string json, JsonDocumentOptions options = default)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<AccessRequestViewArray>(json, options);
+            return JsonElementHelpers.ParseValue<TheLifecycleState>(json, options);
             #pragma warning restore CS0618
         }
 
@@ -312,10 +291,10 @@ public readonly partial struct AccessRequestList
         ///   A value could not be read from the reader.
         /// </exception>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-        public static AccessRequestViewArray ParseValue(ref Utf8JsonReader reader)
+        public static TheLifecycleState ParseValue(ref Utf8JsonReader reader)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<AccessRequestViewArray>(ref reader);
+            return JsonElementHelpers.ParseValue<TheLifecycleState>(ref reader);
             #pragma warning restore CS0618
         }
 
@@ -357,16 +336,16 @@ public readonly partial struct AccessRequestList
         /// <exception cref="JsonException">
         ///   A value could not be read from the reader.
         /// </exception>
-        public static bool TryParseValue(ref Utf8JsonReader reader, out AccessRequestViewArray? result)
+        public static bool TryParseValue(ref Utf8JsonReader reader, out TheLifecycleState? result)
         {
-            return JsonElementHelpers.TryParseValue<AccessRequestViewArray>(ref reader, out result);
+            return JsonElementHelpers.TryParseValue<TheLifecycleState>(ref reader, out result);
         }
 
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonElement value && Equals(new AccessRequestViewArray(value.ParentDocument, value.ParentDocumentIndex))) ||
+                (obj is IJsonElement value && Equals(new TheLifecycleState(value.ParentDocument, value.ParentDocumentIndex))) ||
                 (obj is null && this.IsNull());
         }
 
@@ -379,6 +358,57 @@ public readonly partial struct AccessRequestList
             where T : struct, IJsonElement
         {
             return JsonElementHelpers.DeepEquals(this, other);
+        }
+
+        /// <summary>
+        /// Compare with a UTF-8 string.
+        /// </summary>
+        /// <param ref="utf8Text">The UTF-8 text to compare with.</param>
+        /// <returns><see langword="true"/> if the values are equal.</returns>
+        public bool ValueEquals(ReadOnlySpan<byte> utf8Text)
+        {
+            CheckValidInstance();
+
+            if (TokenType != JsonTokenType.String)
+            {
+                return false;
+            }
+
+            return _parent.TextEquals(_idx, utf8Text, isPropertyName: false, shouldUnescape: true);
+        }
+
+        /// <summary>
+        /// Compare with a string.
+        /// </summary>
+        /// <param ref="utf8Text">The text to compare with.</param>
+        /// <returns><see langword="true"/> if the values are equal.</returns>
+        public bool ValueEquals(ReadOnlySpan<char> text)
+        {
+            CheckValidInstance();
+
+            if (TokenType != JsonTokenType.String)
+            {
+                return false;
+            }
+
+            return _parent.TextEquals(_idx, text, isPropertyName: false);
+        }
+
+        /// <summary>
+        /// Compare with a string.
+        /// </summary>
+        /// <param ref="utf8Text">The text to compare with.</param>
+        /// <returns><see langword="true"/> if the values are equal.</returns>
+        public bool ValueEquals(string text)
+        {
+            CheckValidInstance();
+
+            if (TokenType != JsonTokenType.String)
+            {
+                return false;
+            }
+
+            return _parent.TextEquals(_idx, text, isPropertyName: false);
         }
 
         /// <inheritdoc/>
@@ -456,11 +486,11 @@ public readonly partial struct AccessRequestList
         void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-        static AccessRequestViewArray IJsonElement<AccessRequestViewArray>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+        static TheLifecycleState IJsonElement<TheLifecycleState>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebuggerDisplay => $"AccessRequestViewArray: ValueKind = {ValueKind} : \"{ToString()}\"";
+        private string DebuggerDisplay => $"TheLifecycleState: ValueKind = {ValueKind} : \"{ToString()}\"";
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -475,11 +505,11 @@ public readonly partial struct AccessRequestList
         JsonValueKind IJsonElement.ValueKind => ValueKind;
 
         /// <summary>
-        /// Gets a <see cref="AccessRequestViewArray"/> which can be safely stored beyond the lifetime of the
+        /// Gets a <see cref="TheLifecycleState"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </summary>
         /// <returns>
-        /// A <see cref="AccessRequestViewArray"/> which can be safely stored beyond the lifetime of the
+        /// A <see cref="TheLifecycleState"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </returns>
         /// <remarks>
@@ -488,10 +518,10 @@ public readonly partial struct AccessRequestList
         /// this method returns the same instance without additional allocation.
         /// </para>
         /// </remarks>
-        public AccessRequestViewArray Clone()
+        public TheLifecycleState Clone()
         {
             CheckValidInstance();
-            return _parent.CloneElement<AccessRequestViewArray>(_idx);
+            return _parent.CloneElement<TheLifecycleState>(_idx);
         }
 
         /// <summary>
@@ -499,7 +529,7 @@ public readonly partial struct AccessRequestList
         /// or returns this instance if it is already immutable.
         /// </summary>
         /// <returns>
-        /// An immutable <see cref="AccessRequestViewArray"/> that lives for the lifetime of its
+        /// An immutable <see cref="TheLifecycleState"/> that lives for the lifetime of its
         /// workspace and its associated documents.
         /// </returns>
         /// <remarks>
@@ -513,15 +543,115 @@ public readonly partial struct AccessRequestList
         /// If this instance is already backed by an immutable document, it is returned as-is.
         /// </para>
         /// </remarks>
-        public AccessRequestViewArray Freeze()
+        public TheLifecycleState Freeze()
         {
             CheckValidInstance();
             if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
             {
-                return mutable.FreezeElement<AccessRequestViewArray>(_idx);
+                return mutable.FreezeElement<TheLifecycleState>(_idx);
             }
 
             return this;
+        }
+
+        /// <summary>
+        /// Matches the value against the constant values, and returns the result of calling the provided match function for the first match found.
+        /// </summary>
+        /// <typeparam name="TContext">The immutable context to pass in to the match function.</typeparam>
+        /// <typeparam name="TResult">The result of calling the match function.</typeparam>
+        /// <param name="context">The context to pass to the match function.</param>
+        /// <param name="matchPending">Match 1st item.</param>
+        /// <param name="matchApproved">Match 2nd item.</param>
+        /// <param name="matchDenied">Match 3rd item.</param>
+        /// <param name="matchWithdrawn">Match 4th item.</param>
+        /// <param name="matchRevoked">Match 5th item.</param>
+        /// <param name="defaultMatch">Match any other value.</param>
+        /// <returns>An instance of the value returned by the match function.</returns>
+        public TResult Match<TContext, TResult>(
+            in TContext context,
+            Func<TContext, TResult> matchPending,
+            Func<TContext, TResult> matchApproved,
+            Func<TContext, TResult> matchDenied,
+            Func<TContext, TResult> matchWithdrawn,
+            Func<TContext, TResult> matchRevoked,
+            Func<TContext, TResult> defaultMatch)
+#if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+#endif
+        {
+            if (this.ValueEquals(Constants.Enum1))
+            {
+                return matchPending(context);
+            }
+
+            if (this.ValueEquals(Constants.Enum2))
+            {
+                return matchApproved(context);
+            }
+
+            if (this.ValueEquals(Constants.Enum3))
+            {
+                return matchDenied(context);
+            }
+
+            if (this.ValueEquals(Constants.Enum4))
+            {
+                return matchWithdrawn(context);
+            }
+
+            if (this.ValueEquals(Constants.Enum5))
+            {
+                return matchRevoked(context);
+            }
+
+            return defaultMatch(context);
+        }
+
+        /// <summary>
+        /// Matches the value against the constant values, and returns the result of calling the provided match function for the first match found.
+        /// </summary>
+        /// <typeparam name="TResult">The result of calling the match function.</typeparam>
+        /// <param name="matchPending">Match 1st item.</param>
+        /// <param name="matchApproved">Match 2nd item.</param>
+        /// <param name="matchDenied">Match 3rd item.</param>
+        /// <param name="matchWithdrawn">Match 4th item.</param>
+        /// <param name="matchRevoked">Match 5th item.</param>
+        /// <param name="defaultMatch">Match any other value.</param>
+        /// <returns>An instance of the value returned by the match function.</returns>
+        public TResult Match<TResult>(
+            Func<TResult> matchPending,
+            Func<TResult> matchApproved,
+            Func<TResult> matchDenied,
+            Func<TResult> matchWithdrawn,
+            Func<TResult> matchRevoked,
+            Func<TResult> defaultMatch)
+        {
+            if (this.ValueEquals(Constants.Enum1))
+            {
+                return matchPending();
+            }
+
+            if (this.ValueEquals(Constants.Enum2))
+            {
+                return matchApproved();
+            }
+
+            if (this.ValueEquals(Constants.Enum3))
+            {
+                return matchDenied();
+            }
+
+            if (this.ValueEquals(Constants.Enum4))
+            {
+                return matchWithdrawn();
+            }
+
+            if (this.ValueEquals(Constants.Enum5))
+            {
+                return matchRevoked();
+            }
+
+            return defaultMatch();
         }
     }
 }

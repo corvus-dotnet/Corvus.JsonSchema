@@ -62,44 +62,6 @@ public sealed class ControlPlaneAccessRequestsApiTests
     }
 
     [TestMethod]
-    public async Task The_request_queue_keyset_pages_over_http()
-    {
-        await using Scoped host = await StartAsync();
-        await EstablishAsync(host.Catalog, "flow", "boss");
-
-        var submitted = new List<string>();
-        foreach (string who in new[] { "alice", "bob", "carol" })
-        {
-            using Stj.JsonDocument s = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/accessRequests", """{"baseWorkflowId":"flow","requestedScopes":["runs:write"]}""", Auth, who));
-            submitted.Add(s.RootElement.GetProperty("id").GetString()!);
-        }
-
-        // First page (limit 2): two of the three, oldest-first by (createdAt, id), plus a continuation token.
-        var seen = new List<string>();
-        string token;
-        using (Stj.JsonDocument page1 = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/accessRequests?baseWorkflowId=flow&limit=2", Auth, "boss")))
-        {
-            List<string> ids = page1.RootElement.GetProperty("accessRequests").EnumerateArray().Select(r => r.GetProperty("id").GetString()!).ToList();
-            ids.Count.ShouldBe(2);
-            seen.AddRange(ids);
-            token = page1.RootElement.GetProperty("nextPageToken").GetString()!;
-            token.ShouldNotBeNullOrEmpty();
-        }
-
-        // Following the token returns the remainder; the last page omits nextPageToken.
-        using (Stj.JsonDocument page2 = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, $"/accessRequests?baseWorkflowId=flow&limit=2&pageToken={token}", Auth, "boss")))
-        {
-            List<string> ids = page2.RootElement.GetProperty("accessRequests").EnumerateArray().Select(r => r.GetProperty("id").GetString()!).ToList();
-            ids.Count.ShouldBe(1);
-            seen.AddRange(ids);
-            page2.RootElement.TryGetProperty("nextPageToken", out _).ShouldBeFalse();
-        }
-
-        // No gaps or duplicates across the page boundary — every submitted request appears exactly once.
-        seen.OrderBy(x => x, StringComparer.Ordinal).ShouldBe(submitted.OrderBy(x => x, StringComparer.Ordinal).ToList());
-    }
-
-    [TestMethod]
     public async Task A_non_administrator_cannot_approve()
     {
         await using Scoped host = await StartAsync();
@@ -152,84 +114,10 @@ public sealed class ControlPlaneAccessRequestsApiTests
             .StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 
-    [TestMethod]
-    public async Task An_administrator_grants_eligibility_then_the_requester_self_elevates()
-    {
-        await using Scoped host = await StartAsync();
-        await EstablishAsync(host.Catalog, "flow", "boss");
-
-        // alice requests run access; it is pending (she is not eligible to self-elevate by claims).
-        string id;
-        using (Stj.JsonDocument submitted = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/accessRequests", """{"baseWorkflowId":"flow","requestedScopes":["runs:write"]}""", Auth, "alice")))
-        {
-            submitted.RootElement.GetProperty("status").GetString().ShouldBe("Pending");
-            id = submitted.RootElement.GetProperty("id").GetString()!;
-        }
-
-        // alice (not an administrator) cannot grant eligibility → 403.
-        (await host.SendAsync(HttpMethod.Post, $"/accessRequests/{id}/approveAsEligible", Auth, "alice")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-
-        // boss grants durable eligibility (no live grant) — a bodyless POST (the window is optional).
-        using (Stj.JsonDocument eligible = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, $"/accessRequests/{id}/approveAsEligible", Auth, "boss")))
-        {
-            eligible.RootElement.GetProperty("status").GetString().ShouldBe("Eligible");
-            eligible.RootElement.GetProperty("decidedBy").GetString().ShouldBe("boss");
-            eligible.RootElement.TryGetProperty("grantedBindingId", out _).ShouldBeTrue();
-        }
-
-        // alice now self-elevates: a fresh request is auto-approved against the stored eligibility — no human approver.
-        using (Stj.JsonDocument activated = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/accessRequests", """{"baseWorkflowId":"flow","requestedScopes":["runs:write"]}""", Auth, "alice")))
-        {
-            activated.RootElement.GetProperty("status").GetString().ShouldBe("Approved");
-            activated.RootElement.TryGetProperty("grantedUntil", out _).ShouldBeTrue();
-        }
-    }
-
-    [TestMethod]
-    public async Task The_approver_inbox_lists_requests_across_every_administered_workflow()
-    {
-        await using Scoped host = await StartAsync();
-        await EstablishAsync(host.Catalog, "flow-a", "boss");
-        await EstablishAsync(host.Catalog, "flow-b", "boss");
-        await EstablishAsync(host.Catalog, "flow-c", "carol"); // boss does NOT administer this one
-
-        string aId = await SubmitAsync(host, "flow-a", "alice");
-        string bId = await SubmitAsync(host, "flow-b", "dave");
-        string cId = await SubmitAsync(host, "flow-c", "eve");
-
-        // boss's inbox (scope=queue, no baseWorkflowId): every request across the workflows boss administers (flow-a +
-        // flow-b), regardless of submitter — but never flow-c, which boss does not administer.
-        using (Stj.JsonDocument inbox = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/accessRequests?scope=queue", Auth, "boss")))
-        {
-            var ids = inbox.RootElement.GetProperty("accessRequests").EnumerateArray().Select(r => r.GetProperty("id").GetString()).ToList();
-            ids.ShouldContain(aId);
-            ids.ShouldContain(bId);
-            ids.ShouldNotContain(cId);
-        }
-
-        // carol's inbox is just flow-c's request.
-        using (Stj.JsonDocument inbox = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/accessRequests?scope=queue", Auth, "carol")))
-        {
-            inbox.RootElement.GetProperty("accessRequests").EnumerateArray().Select(r => r.GetProperty("id").GetString()).ShouldBe([cId]);
-        }
-
-        // A caller who administers nothing gets an empty inbox (not a 403).
-        using (Stj.JsonDocument inbox = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/accessRequests?scope=queue", Auth, "nobody")))
-        {
-            inbox.RootElement.GetProperty("accessRequests").EnumerateArray().Count().ShouldBe(0);
-        }
-    }
-
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)
         => Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 
-    private static async Task<string> SubmitAsync(Scoped host, string workflowId, string who)
-    {
-        using Stj.JsonDocument submitted = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/accessRequests", $$"""{"baseWorkflowId":"{{workflowId}}","requestedScopes":["runs:write"]}""", Auth, who));
-        return submitted.RootElement.GetProperty("id").GetString()!;
-    }
-
-    private static async Task EstablishAsync(SecuredWorkflowCatalog catalog, string workflowId, string founder)
+    private static async Task EstablishAsync(WorkflowCatalogClient catalog, string workflowId, string founder)
     {
         SecurityTagSet founderIdentity = SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", founder)]);
         await catalog.AddAsync(Package(workflowId), new CatalogOwner("Team", "team@example.com", null, null), default, founderIdentity, default);
@@ -250,8 +138,8 @@ public sealed class ControlPlaneAccessRequestsApiTests
     private static async Task<Scoped> StartAsync()
     {
         var store = new InMemoryWorkflowStateStore();
-        var management = new SecuredWorkflowManagement(store, "ops");
-        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops", credentials: null, administrators: new InMemoryWorkflowAdministratorStore());
+        var management = new WorkflowManagementClient(store, "ops");
+        var catalog = new WorkflowCatalogClient(new InMemoryWorkflowCatalogStore(), store, "ops", credentials: null, administrators: new InMemoryWorkflowAdministratorStore());
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -267,7 +155,7 @@ public sealed class ControlPlaneAccessRequestsApiTests
         app.UseAuthorization();
 
         // The test identity (the 'tenant' claim) doubles as the requesting subject, so an approval keys the grant on it.
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), accessRequestSubjectClaimType: "tenant");
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), requireAuthorization: true, rowSecurity: new TenantIdentityPolicy(), accessRequestSubjectClaimType: "tenant");
         await app.StartAsync();
 
         return new Scoped(app, app.GetTestClient(), catalog);
@@ -284,9 +172,9 @@ public sealed class ControlPlaneAccessRequestsApiTests
         }
     }
 
-    private sealed class Scoped(WebApplication app, HttpClient client, SecuredWorkflowCatalog catalog) : IAsyncDisposable
+    private sealed class Scoped(WebApplication app, HttpClient client, WorkflowCatalogClient catalog) : IAsyncDisposable
     {
-        public SecuredWorkflowCatalog Catalog => catalog;
+        public WorkflowCatalogClient Catalog => catalog;
 
         public Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, string? scope, string? identity = null)
             => this.SendCoreAsync(new HttpRequestMessage(method, path), scope, identity);

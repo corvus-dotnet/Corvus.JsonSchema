@@ -24,36 +24,160 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A list of access requests (design &#167;16.5), oldest first.
+/// An access request and its decision state (design &#167;16.5).
 /// </para>
 /// </remarks>
-public readonly partial struct AccessRequestList
+public readonly partial struct AccessRequestView
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The lifecycle state.
+    /// </para>
+    /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct AccessRequestViewArray
-        : IJsonElement<AccessRequestViewArray>
+    public readonly partial struct TheLifecycleState
+        : IJsonElement<TheLifecycleState>
     {
+        /// <summary>
+        /// Provides accesors for enumerated values
+        /// </summary>
+        private static class Constants
+        {
+            /// <summary>
+            /// A constant for the <c>enum</c> keyword.
+            /// </summary>
+            public static readonly byte[] Enum1 = "Pending"u8.ToArray();
+            /// <summary>
+            /// A constant for the <c>enum</c> keyword.
+            /// </summary>
+            public static readonly TheLifecycleState EnumJson1 = ParsedJsonDocument<TheLifecycleState>.StringConstant([.."\"Pending\""u8]);
+            /// <summary>
+            /// A constant for the <c>enum</c> keyword.
+            /// </summary>
+            public static readonly byte[] Enum2 = "Approved"u8.ToArray();
+            /// <summary>
+            /// A constant for the <c>enum</c> keyword.
+            /// </summary>
+            public static readonly TheLifecycleState EnumJson2 = ParsedJsonDocument<TheLifecycleState>.StringConstant([.."\"Approved\""u8]);
+            /// <summary>
+            /// A constant for the <c>enum</c> keyword.
+            /// </summary>
+            public static readonly byte[] Enum3 = "Denied"u8.ToArray();
+            /// <summary>
+            /// A constant for the <c>enum</c> keyword.
+            /// </summary>
+            public static readonly TheLifecycleState EnumJson3 = ParsedJsonDocument<TheLifecycleState>.StringConstant([.."\"Denied\""u8]);
+            /// <summary>
+            /// A constant for the <c>enum</c> keyword.
+            /// </summary>
+            public static readonly byte[] Enum4 = "Withdrawn"u8.ToArray();
+            /// <summary>
+            /// A constant for the <c>enum</c> keyword.
+            /// </summary>
+            public static readonly TheLifecycleState EnumJson4 = ParsedJsonDocument<TheLifecycleState>.StringConstant([.."\"Withdrawn\""u8]);
+            /// <summary>
+            /// A constant for the <c>enum</c> keyword.
+            /// </summary>
+            public static readonly byte[] Enum5 = "Revoked"u8.ToArray();
+            /// <summary>
+            /// A constant for the <c>enum</c> keyword.
+            /// </summary>
+            public static readonly TheLifecycleState EnumJson5 = ParsedJsonDocument<TheLifecycleState>.StringConstant([.."\"Revoked\""u8]);
+        }
+
+        /// <summary>
+        /// Provides named constants for enum values.
+        /// </summary>
+        public static class EnumValues
+        {
+            /// <summary>
+            /// Gets the string "Pending"
+            /// as a <see cref="TheLifecycleState"/>.
+            /// </summary>
+            public static TheLifecycleState Pending { get; } = Constants.EnumJson1;
+            /// <summary>
+            /// Gets the string "Pending"
+            /// as a UTF8 byte array.
+            /// </summary>
+            public static ReadOnlySpan<byte> PendingUtf8 => Constants.Enum1;
+
+            /// <summary>
+            /// Gets the string "Approved"
+            /// as a <see cref="TheLifecycleState"/>.
+            /// </summary>
+            public static TheLifecycleState Approved { get; } = Constants.EnumJson2;
+            /// <summary>
+            /// Gets the string "Approved"
+            /// as a UTF8 byte array.
+            /// </summary>
+            public static ReadOnlySpan<byte> ApprovedUtf8 => Constants.Enum2;
+
+            /// <summary>
+            /// Gets the string "Denied"
+            /// as a <see cref="TheLifecycleState"/>.
+            /// </summary>
+            public static TheLifecycleState Denied { get; } = Constants.EnumJson3;
+            /// <summary>
+            /// Gets the string "Denied"
+            /// as a UTF8 byte array.
+            /// </summary>
+            public static ReadOnlySpan<byte> DeniedUtf8 => Constants.Enum3;
+
+            /// <summary>
+            /// Gets the string "Withdrawn"
+            /// as a <see cref="TheLifecycleState"/>.
+            /// </summary>
+            public static TheLifecycleState Withdrawn { get; } = Constants.EnumJson4;
+            /// <summary>
+            /// Gets the string "Withdrawn"
+            /// as a UTF8 byte array.
+            /// </summary>
+            public static ReadOnlySpan<byte> WithdrawnUtf8 => Constants.Enum4;
+
+            /// <summary>
+            /// Gets the string "Revoked"
+            /// as a <see cref="TheLifecycleState"/>.
+            /// </summary>
+            public static TheLifecycleState Revoked { get; } = Constants.EnumJson5;
+            /// <summary>
+            /// Gets the string "Revoked"
+            /// as a UTF8 byte array.
+            /// </summary>
+            public static ReadOnlySpan<byte> RevokedUtf8 => Constants.Enum5;
+        }
+
         public static partial class JsonSchema
         {
-            private static readonly JsonSchemaPathProvider ItemsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/items/$ref"u8, buffer, out written);
+            private static EnumStringSet BuildEnumStringSet()
+            {
+                return new EnumStringSet([
+                    static () => "Pending"u8,
+                    static () => "Approved"u8,
+                    static () => "Denied"u8,
+                    static () => "Withdrawn"u8,
+                    static () => "Revoked"u8,
+                ]);
+            }
+
+            private static EnumStringSet EnumStringSet { get; } = BuildEnumStringSet();
 
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/AccessRequestList/properties/accessRequests"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/AccessRequestView/properties/status"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "/components/schemas/AccessRequestList/properties/accessRequests";
+            public const string SchemaLocation = "/components/schemas/AccessRequestView/properties/status";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/AccessRequestList/properties/accessRequests"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/AccessRequestView/properties/status"u8;
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -74,48 +198,35 @@ public readonly partial struct AccessRequestList
                     JsonTokenType.EndObject or
                     JsonTokenType.EndArray));
 
-                if (!JsonSchemaEvaluation.MatchTypeArray(tokenType,"type"u8, ref context))
+                if (!JsonSchemaEvaluation.MatchTypeString(tokenType,"type"u8, ref context))
                 {
                     if (!context.HasCollector)
                     {
                         return;
                     }
-                    context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeArray, "items"u8);
                 }
                 else
                 {
-                    int arrayValidation_itemCount = 0;
+                    using UnescapedUtf8JsonString unescapedUtf8JsonString = parentDocument.GetUtf8JsonString(parentIndex, JsonTokenType.String);
 
-                    var arrayValidation_enumerator = new ArrayEnumerator(parentDocument, parentIndex);
-                    while (arrayValidation_enumerator.MoveNext())
+                    if (EnumStringSet.Contains(unescapedUtf8JsonString.Span))
                     {
-                        int arrayValidation_currentIndex = arrayValidation_enumerator.CurrentIndex;
-
-                        JsonSchemaContext childContext = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.JsonSchema.PushChildContext(
-                            parentDocument,
-                            arrayValidation_currentIndex,
-                            ref context,
-                            itemIndex: arrayValidation_itemCount,
-                            evaluationPath: ItemsSchemaEvaluationPath);
-
-                        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext);
-                        if (!childContext.IsMatch)
-                        {
-                            context.CommitChildContext(false, ref childContext);
-
-                            if (!context.HasCollector)
-                            {
-                                return;
-                            }
-                        }
-                        else
-                        {
-                            context.CommitChildContext(true, ref childContext);
-                            context.AddLocalEvaluatedItem(arrayValidation_itemCount);
-                        }
-
-                        arrayValidation_itemCount++;
+                        goto enumShortCircuitSuccess;
                     }
+
+                    context.EvaluatedKeyword(false, messageProvider: JsonSchemaEvaluation.DidNotMatchAtLeastOneConstantValue, "enum"u8);
+
+                    if (!context.HasCollector)
+                    {
+                        return;
+                    }
+
+                    goto enumAfterFailure;
+
+enumShortCircuitSuccess:
+                    context.EvaluatedKeyword(true, messageProvider: JsonSchemaEvaluation.MatchedAtLeastOneConstantValue, ", formattedKeyword, "u8);
+
+enumAfterFailure:;
                 }
             }
 

@@ -28,10 +28,10 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
 
     private readonly IAccessRequestApprovalService approval;
     private readonly IAccessRequestStore requests;
-    private readonly ISecuredWorkflowCatalog catalog;
+    private readonly IWorkflowCatalogClient catalog;
     private readonly ControlPlaneAccess access;
     private readonly string subjectClaimType;
-    private readonly Func<ClaimsPrincipal, AccessRequest, bool>? eligibility;
+    private readonly Func<ClaimsPrincipal, AccessRequestDefinition, bool>? eligibility;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneAccessRequestsHandler"/> class.</summary>
     /// <param name="approval">The approval service the submit/approve/deny/withdraw/revoke operations delegate to.</param>
@@ -43,10 +43,10 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
     internal ArazzoControlPlaneAccessRequestsHandler(
         IAccessRequestApprovalService approval,
         IAccessRequestStore requests,
-        ISecuredWorkflowCatalog catalog,
+        IWorkflowCatalogClient catalog,
         ControlPlaneAccess access,
         string subjectClaimType = "sub",
-        Func<ClaimsPrincipal, AccessRequest, bool>? eligibility = null)
+        Func<ClaimsPrincipal, AccessRequestDefinition, bool>? eligibility = null)
     {
         ArgumentNullException.ThrowIfNull(approval);
         ArgumentNullException.ThrowIfNull(requests);
@@ -71,23 +71,25 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
             return SubmitAccessRequestResult.BadRequest(Problem("no-subject", "No requesting subject", 400, $"The caller has no '{this.subjectClaimType}' claim to scope a grant to."), workspace);
         }
 
-        // The draft request the approval pipeline + store carry: the body's already-parsed JSON values
-        // (baseWorkflowId/requestedScopes/reason) copied bytes-to-bytes — no List<string>, no per-field strings — plus the
-        // principal-derived subject/label. It is a pooled, disposable document the eligibility predicate and SubmitAsync
-        // read; the store stamps id/etag/created.
-        using ParsedJsonDocument<AccessRequest> draft = AccessRequest.Draft(
-            (JsonElement)parameters.Body.BaseWorkflowId,
-            (JsonElement)parameters.Body.RequestedScopes,
+        var scopes = new List<string>();
+        foreach (Models.JsonString scope in parameters.Body.RequestedScopes.EnumerateArray())
+        {
+            scopes.Add((string)scope);
+        }
+
+        var definition = new AccessRequestDefinition(
+            (string)parameters.Body.BaseWorkflowId,
+            scopes,
             this.subjectClaimType,
             subject,
             principal.Identity?.Name,
-            (JsonElement)parameters.Body.Reason,
+            parameters.Body.Reason.IsNotUndefined() ? (string)parameters.Body.Reason : null,
             parameters.Body.RequestedDurationSeconds.IsNotUndefined() ? (long)parameters.Body.RequestedDurationSeconds : null);
 
-        bool eligible = this.eligibility?.Invoke(principal, draft.RootElement) ?? false;
+        bool eligible = this.eligibility?.Invoke(principal, definition) ?? false;
         try
         {
-            ParsedJsonDocument<AccessRequest> created = await this.approval.SubmitAsync(draft.RootElement, ActorOf(principal), eligible, cancellationToken).ConfigureAwait(false);
+            ParsedJsonDocument<AccessRequest> created = await this.approval.SubmitAsync(definition, ActorOf(principal), eligible, cancellationToken).ConfigureAwait(false);
             workspace.TakeOwnership(created);
             return SubmitAccessRequestResult.Created(ToView(created.RootElement), workspace);
         }
@@ -112,22 +114,7 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
                 return ListAccessRequestsResult.Forbidden(NotAdministratorProblem(baseWorkflowId), workspace);
             }
 
-            // Carry the base workflow id to the store as its request JSON value (reified only inside the store at its own
-            // leaf — a DB parameter / a span compare); the string above is the handler's own leaf for the admin check + error.
-            query = new AccessRequestQuery(status, JsonString.From(parameters.BaseWorkflowId));
-        }
-        else if (IsQueueScope(parameters.Scope))
-        {
-            // The approver inbox (§16.5): every request across the workflows the caller administers, resolved from the
-            // reverse administration index (§15.4). A caller who administers nothing gets an empty page — so the store
-            // never sees an empty administered set. The set is a server-derived leaf, reified per backend at its own seam.
-            IReadOnlyList<string> administered = await this.catalog.ListAdministeredWorkflowsAsync(this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
-            if (administered.Count == 0)
-            {
-                return ListAccessRequestsResult.Ok(EmptyList(), workspace);
-            }
-
-            query = new AccessRequestQuery(status, AdministeredBaseWorkflowIds: administered);
+            query = new AccessRequestQuery(status, baseWorkflowId);
         }
         else
         {
@@ -138,29 +125,11 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
                 return ListAccessRequestsResult.Ok(EmptyList(), workspace);
             }
 
-            query = new AccessRequestQuery(status, default, this.subjectClaimType, subject);
+            query = new AccessRequestQuery(status, null, this.subjectClaimType, subject);
         }
 
-        // An absent limit passes 0 — the contract's "use the store's default page size" sentinel; the page token flows to
-        // the store as its JSON value (From() rewraps parameters.PageToken — free, no managed string), decoded
-        // bytes-native into one keyset page (bounded — never the whole queue).
-        int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 0;
-        JsonString pageToken = JsonString.From(parameters.PageToken);
-        using AccessRequestPage page = await this.requests.ListAsync(query, limit, pageToken, cancellationToken).ConfigureAwait(false);
-
-        // Each item is a whole-document AccessRequestView.From wrap (the congruent projection ToView uses), so it
-        // references its pooled document; the body is validated/serialized after this handler returns, so hand the
-        // documents to the workspace (it disposes them at request end; `using page` then only returns the batch's backing
-        // array + the token buffer). The list body is built closure-free; the continuation token is copied verbatim from
-        // the page's UTF-8 (the Ok materialisation copies the scalar before dispose).
-        page.Requests.TransferOwnershipTo(workspace);
-        IReadOnlyList<AccessRequest> requestList = page.Requests;
-        ReadOnlyMemory<byte> nextPageToken = page.NextPageToken;
-        Models.AccessRequestList.Source<IReadOnlyList<AccessRequest>> body = Models.AccessRequestList.Build(
-            in requestList,
-            accessRequests: Models.AccessRequestList.AccessRequestViewArray.Build(in requestList, BuildAccessRequestViews),
-            nextPageToken: nextPageToken.IsEmpty ? default : (Models.JsonString.Source)nextPageToken.Span);
-        return ListAccessRequestsResult.Ok(body, workspace);
+        using PooledDocumentList<AccessRequest> list = await this.requests.ListAsync(query, cancellationToken).ConfigureAwait(false);
+        return ListAccessRequestsResult.Ok(ToList(list), workspace);
     }
 
     /// <inheritdoc/>
@@ -207,31 +176,6 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
         catch (AccessRequestStateException ex)
         {
             return ApproveAccessRequestResult.Conflict(Problem("invalid-state", "Cannot approve the request", 409, ex.Message), workspace);
-        }
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<ApproveAccessRequestAsEligibleResult> HandleApproveAccessRequestAsEligibleAsync(ApproveAccessRequestAsEligibleParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
-    {
-        string id = (string)parameters.RequestId;
-        try
-        {
-            ParsedJsonDocument<AccessRequest>? result = await this.approval.ApproveAsEligibleAsync(id, this.CallerIdentity(), this.CallerActor(), EligibilityReason(parameters.Body), EligibilityWindow(parameters.Body), cancellationToken).ConfigureAwait(false);
-            if (result is null)
-            {
-                return ApproveAccessRequestAsEligibleResult.NotFound(NotFoundProblem(id), workspace);
-            }
-
-            workspace.TakeOwnership(result);
-            return ApproveAccessRequestAsEligibleResult.Ok(ToView(result.RootElement), workspace);
-        }
-        catch (WorkflowAdministrationException)
-        {
-            return ApproveAccessRequestAsEligibleResult.Forbidden(NotAdministratorProblem(id), workspace);
-        }
-        catch (AccessRequestStateException ex)
-        {
-            return ApproveAccessRequestAsEligibleResult.Conflict(Problem("invalid-state", "Cannot grant eligibility for the request", 409, ex.Message), workspace);
         }
     }
 
@@ -329,18 +273,8 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
     private static AccessRequestStatus? ParseStatus(Models.GetAccessRequestsStatus status)
         => status.IsNotUndefined() && Enum.TryParse((string)status, out AccessRequestStatus parsed) ? parsed : null;
 
-    // Whether the caller asked for the approver inbox (scope=queue) rather than their own requests (scope=mine/absent).
-    private static bool IsQueueScope(Models.GetAccessRequestsScope scope)
-        => scope.IsNotUndefined() && string.Equals((string)scope, "queue", StringComparison.Ordinal);
-
     private static string? NoteReason(Models.AccessRequestDecisionNote body)
         => body.IsNotUndefined() && body.Reason.IsNotUndefined() ? (string)body.Reason : null;
-
-    private static string? EligibilityReason(Models.AccessRequestEligibilityNote body)
-        => body.IsNotUndefined() && body.Reason.IsNotUndefined() ? (string)body.Reason : null;
-
-    private static TimeSpan? EligibilityWindow(Models.AccessRequestEligibilityNote body)
-        => body.IsNotUndefined() && body.EligibilityWindowSeconds.IsNotUndefined() ? TimeSpan.FromSeconds((long)body.EligibilityWindowSeconds) : null;
 
     // The audit actor recorded on a request (createdBy / decidedBy): the principal's configured subject claim — the
     // same canonical identity the grant keys on — falling back to the authentication name, then "anonymous". (The
@@ -354,18 +288,97 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
     // caller hands that document to the workspace (TakeOwnership) for the response's lifetime.
     private static Models.AccessRequestView ToView(AccessRequest request) => Models.AccessRequestView.From(request);
 
-    // AccessRequestView is congruent with the stored AccessRequest (see ToView), so a list item is the same whole-document
-    // AccessRequestView.From wrap — no field-copy, no per-field From() ternary, no requestedScopes rebuild. Each wrap
-    // references its pooled document, so HandleListAccessRequestsAsync hands the batch to the workspace
-    // (TransferOwnershipTo) for the response's lifetime. The build is closure-free (the request list is threaded as the
-    // context) and inlined in the handler (the list Build is ref-scoped to its `in` argument).
-    private static void BuildAccessRequestViews(in IReadOnlyList<AccessRequest> requests, ref Models.AccessRequestList.AccessRequestViewArray.Builder array)
-    {
-        foreach (AccessRequest request in requests)
+    // A list response is built from a PooledDocumentList whose documents are disposed when the handler returns, so
+    // each item is materialized into the list builder's own arena as it is added — the security/credentials list
+    // pattern (ArazzoControlPlaneSecurityHandler.ToRuleSource, ...CredentialsHandler.ToSummary). A whole-document
+    // From() wrap cannot be used here: AddItem stores it as a reference into the pooled buffers, which the array's
+    // validation/serialization (run after the handler returns and the batch is disposed) would then read.
+    private static Models.AccessRequestView.Source ToViewSource(AccessRequest request)
+        => new((ref Models.AccessRequestView.Builder b) =>
         {
-            array.AddItem(Models.AccessRequestView.From(request));
-        }
-    }
+            Models.JsonDateTime.Source decidedAt = default;
+            if (request.DecidedAtValue is { } decidedAtValue)
+            {
+                decidedAt = decidedAtValue;
+            }
+
+            Models.JsonString.Source decidedBy = default;
+            if (request.DecidedByOrNull is { } decidedByValue)
+            {
+                decidedBy = decidedByValue;
+            }
+
+            Models.JsonString.Source decisionReason = default;
+            if (request.DecisionReasonOrNull is { } decisionReasonValue)
+            {
+                decisionReason = decisionReasonValue;
+            }
+
+            Models.JsonString.Source grantedBindingId = default;
+            if (request.GrantedBindingIdOrNull is { } grantedBindingIdValue)
+            {
+                grantedBindingId = grantedBindingIdValue;
+            }
+
+            Models.JsonDateTime.Source grantedUntil = default;
+            if (request.GrantedUntilValue is { } grantedUntilValue)
+            {
+                grantedUntil = grantedUntilValue;
+            }
+
+            Models.JsonString.Source reason = default;
+            if (request.ReasonOrNull is { } reasonValue)
+            {
+                reason = reasonValue;
+            }
+
+            Models.JsonInt64.Source requestedDurationSeconds = default;
+            if (request.RequestedDurationSecondsOrNull is { } durationValue)
+            {
+                requestedDurationSeconds = durationValue;
+            }
+
+            Models.JsonString.Source requesterLabel = default;
+            if (request.RequesterLabelOrNull is { } requesterLabelValue)
+            {
+                requesterLabel = requesterLabelValue;
+            }
+
+            b.Create(
+                baseWorkflowId: request.BaseWorkflowIdValue,
+                createdAt: request.CreatedAtValue,
+                createdBy: request.CreatedByValue,
+                etag: request.EtagValue.Value ?? string.Empty,
+                id: request.IdValue,
+                requestedScopes: new Models.AccessRequestView.JsonStringArray.Source((ref Models.AccessRequestView.JsonStringArray.Builder array) =>
+                {
+                    foreach (JsonString scope in request.RequestedScopes.EnumerateArray())
+                    {
+                        array.AddItem((string)scope);
+                    }
+                }),
+                status: request.StatusValue,
+                subjectClaimType: request.SubjectClaimTypeValue,
+                subjectClaimValue: request.SubjectClaimValueValue,
+                decidedAt: decidedAt,
+                decidedBy: decidedBy,
+                decisionReason: decisionReason,
+                grantedBindingId: grantedBindingId,
+                grantedUntil: grantedUntil,
+                reason: reason,
+                requestedDurationSeconds: requestedDurationSeconds,
+                requesterLabel: requesterLabel);
+        });
+
+    private static Models.AccessRequestList.Source ToList(PooledDocumentList<AccessRequest> list)
+        => new((ref Models.AccessRequestList.Builder b) => b.Create(
+            accessRequests: new Models.AccessRequestList.AccessRequestViewArray.Source((ref Models.AccessRequestList.AccessRequestViewArray.Builder array) =>
+            {
+                foreach (AccessRequest request in list)
+                {
+                    array.AddItem(ToViewSource(request));
+                }
+            })));
 
     private static Models.AccessRequestList.Source EmptyList()
         => new((ref Models.AccessRequestList.Builder b) => b.Create(
@@ -397,13 +410,22 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
     {
         string? subject = this.SubjectOf(this.access.CurrentPrincipal);
         return subject is not null
-            && request.SubjectClaimTypeEquals(this.subjectClaimType)
-            && request.SubjectClaimValueEquals(subject);
+            && string.Equals(request.SubjectClaimTypeValue, this.subjectClaimType, StringComparison.Ordinal)
+            && string.Equals(request.SubjectClaimValueValue, subject, StringComparison.Ordinal);
     }
 
     private async ValueTask<bool> IsAdministratorAsync(string baseWorkflowId, CancellationToken cancellationToken)
     {
-        using ParsedJsonDocument<WorkflowAdministrators>? record = await this.catalog.GetAdministratorsAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
-        return record?.RootElement.IsAdministeredBy(this.CallerIdentity()) == true;
+        SecurityTagSet caller = this.CallerIdentity();
+        IReadOnlyList<SecurityTagSet> administrators = await this.catalog.GetAdministratorsAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
+        foreach (SecurityTagSet administrator in administrators)
+        {
+            if (WorkflowIdentity.SameAdministrator(administrator, caller))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

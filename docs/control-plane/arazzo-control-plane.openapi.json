@@ -40,6 +40,10 @@
   {
     "name": "administrators",
     "description": "Manage who may publish and administer a base workflow id (design §15): the set of deployment-stamped administrator identities. Identities are named via the deployment-mapped grant {dimension,value} vocabulary, never raw internal tags; mutations are authorized by current-administrator membership (capability scopes administrators:read / administrators:write)."
+  },
+  {
+    "name": "accessRequests",
+    "description": "Request and approve elevated, time-bound access to a workflow (design §16.5). Any authenticated principal may submit a request and withdraw their own; an administrator of the target workflow (§15) approves, denies, or revokes. An approval writes a single capped, time-boxed grant (run access only, scoped to the workflow); an eligible requester self-elevates without a human approver. These operations are authorized by the per-workflow administrator gate, not a global capability scope."
   }
   ],
   "paths": {
@@ -1364,6 +1368,153 @@
           "409": { "$ref": "#/components/responses/Conflict" }
         }
       }
+    },
+    "/accessRequests": {
+      "post": {
+        "operationId": "submitAccessRequest",
+        "security": [{ "oauth2": [] }, { "openIdConnect": [] }, { "mtls": [] }],
+        "tags": ["accessRequests"],
+        "summary": "Submit an access request",
+        "description": "Submits a request for elevated, time-bound access to a workflow (design §16.5). Any authenticated principal may submit; the requesting subject is taken from the caller, so a grant can never target a third party. If the requester is eligible to self-elevate exactly this, the request is auto-approved (self-elevation); otherwise it is created pending an administrator's decision.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessRequestSubmit" } } }
+        },
+        "responses": {
+          "201": {
+            "description": "The created request (pending, or already approved when self-elevated).",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessRequestView" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      },
+      "get": {
+        "operationId": "listAccessRequests",
+        "security": [{ "oauth2": [] }, { "openIdConnect": [] }, { "mtls": [] }],
+        "tags": ["accessRequests"],
+        "summary": "List access requests",
+        "description": "Lists access requests visible to the caller, oldest first. Without baseWorkflowId, returns the caller's own requests; with baseWorkflowId, returns that workflow's request queue — the caller must be an administrator of it (403 otherwise). Optionally filtered by status.",
+        "parameters": [
+          { "name": "status", "in": "query", "required": false, "schema": { "type": "string", "enum": ["Pending", "Approved", "Denied", "Withdrawn", "Revoked"] }, "description": "Only requests in this state." },
+          { "name": "baseWorkflowId", "in": "query", "required": false, "schema": { "type": "string" }, "description": "The target workflow whose request queue to list (requires administrator of it); absent lists the caller's own requests." }
+        ],
+        "responses": {
+          "200": {
+            "description": "The visible access requests.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessRequestList" } } }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/accessRequests/{requestId}": {
+      "parameters": [
+        { "name": "requestId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The access request id." }
+      ],
+      "get": {
+        "operationId": "getAccessRequest",
+        "security": [{ "oauth2": [] }, { "openIdConnect": [] }, { "mtls": [] }],
+        "tags": ["accessRequests"],
+        "summary": "Get an access request",
+        "description": "Returns a single access request. The caller must be its requester or an administrator of its target workflow (403 otherwise).",
+        "responses": {
+          "200": {
+            "description": "The access request.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessRequestView" } } }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/accessRequests/{requestId}/approve": {
+      "parameters": [
+        { "name": "requestId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The access request id." }
+      ],
+      "post": {
+        "operationId": "approveAccessRequest",
+        "security": [{ "oauth2": [] }, { "openIdConnect": [] }, { "mtls": [] }],
+        "tags": ["accessRequests"],
+        "summary": "Approve an access request",
+        "description": "Approves a pending request, writing the capped, time-boxed grant (run access only, scoped to the workflow). The caller must be an administrator of the target workflow (403 otherwise). A request that is not pending conflicts (409); a request whose scopes are not grantable is rejected (400).",
+        "requestBody": {
+          "required": false,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessRequestDecisionNote" } } }
+        },
+        "responses": {
+          "200": { "description": "The approved request.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessRequestView" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/accessRequests/{requestId}/deny": {
+      "parameters": [
+        { "name": "requestId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The access request id." }
+      ],
+      "post": {
+        "operationId": "denyAccessRequest",
+        "security": [{ "oauth2": [] }, { "openIdConnect": [] }, { "mtls": [] }],
+        "tags": ["accessRequests"],
+        "summary": "Deny an access request",
+        "description": "Denies a pending request. The caller must be an administrator of the target workflow (403 otherwise). A request that is not pending conflicts (409).",
+        "requestBody": {
+          "required": false,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessRequestDecisionNote" } } }
+        },
+        "responses": {
+          "200": { "description": "The denied request.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessRequestView" } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/accessRequests/{requestId}/withdraw": {
+      "parameters": [
+        { "name": "requestId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The access request id." }
+      ],
+      "post": {
+        "operationId": "withdrawAccessRequest",
+        "security": [{ "oauth2": [] }, { "openIdConnect": [] }, { "mtls": [] }],
+        "tags": ["accessRequests"],
+        "summary": "Withdraw an access request",
+        "description": "Withdraws a pending request. Only the requester (the request's own subject) may withdraw it (403 otherwise); a request that is not pending conflicts (409).",
+        "requestBody": {
+          "required": false,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessRequestDecisionNote" } } }
+        },
+        "responses": {
+          "200": { "description": "The withdrawn request.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessRequestView" } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/accessRequests/{requestId}/revoke": {
+      "parameters": [
+        { "name": "requestId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The access request id." }
+      ],
+      "post": {
+        "operationId": "revokeAccessRequest",
+        "security": [{ "oauth2": [] }, { "openIdConnect": [] }, { "mtls": [] }],
+        "tags": ["accessRequests"],
+        "summary": "Revoke an approved grant",
+        "description": "Revokes an approved grant early: the entitlement is deleted (access stops at the next resolution, fail-safe) and the request is marked revoked. The caller must be an administrator of the target workflow (403 otherwise). A request that is not an approved grant conflicts (409).",
+        "requestBody": {
+          "required": false,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessRequestDecisionNote" } } }
+        },
+        "responses": {
+          "200": { "description": "The revoked request.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessRequestView" } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
     }
   },
   "components": {
@@ -2583,6 +2734,56 @@
           }
         },
         "required": ["administrators"]
+      },
+      "AccessRequestSubmit": {
+        "type": "object",
+        "description": "A request for elevated, time-bound access to a workflow (design §16.5). The requesting subject is taken from the caller, not this body.",
+        "properties": {
+          "baseWorkflowId": { "type": "string", "description": "The base workflow id to request access to." },
+          "requestedScopes": { "type": "array", "minItems": 1, "items": { "type": "string" }, "description": "The capability scopes requested (e.g. runs:write). An approval grants at most these, capped to run access." },
+          "reason": { "type": "string", "description": "An optional justification." },
+          "requestedDurationSeconds": { "type": "integer", "format": "int64", "minimum": 1, "description": "The proposed time-bound duration in seconds; capped at the deployment maximum. Absent defaults to the maximum." }
+        },
+        "required": ["baseWorkflowId", "requestedScopes"]
+      },
+      "AccessRequestView": {
+        "type": "object",
+        "description": "An access request and its decision state (design §16.5).",
+        "properties": {
+          "id": { "type": "string", "description": "The request's stable id." },
+          "baseWorkflowId": { "type": "string", "description": "The target workflow." },
+          "requestedScopes": { "type": "array", "items": { "type": "string" }, "description": "The capability scopes requested." },
+          "subjectClaimType": { "type": "string", "description": "The claim type the requester is identified by (and the grant keys on)." },
+          "subjectClaimValue": { "type": "string", "description": "The requester's subject value." },
+          "requesterLabel": { "type": "string", "description": "An optional human-friendly requester label." },
+          "reason": { "type": "string", "description": "The optional justification supplied with the request." },
+          "requestedDurationSeconds": { "type": "integer", "format": "int64", "description": "The proposed time-bound duration in seconds, if any." },
+          "status": { "type": "string", "enum": ["Pending", "Approved", "Denied", "Withdrawn", "Revoked"], "description": "The lifecycle state." },
+          "createdBy": { "type": "string", "description": "The requester's audit identity." },
+          "createdAt": { "type": "string", "format": "date-time", "description": "When the request was created." },
+          "decidedBy": { "type": "string", "description": "The deciding identity, if decided." },
+          "decidedAt": { "type": "string", "format": "date-time", "description": "When the request was decided, if decided." },
+          "decisionReason": { "type": "string", "description": "An optional note recorded with the decision." },
+          "grantedBindingId": { "type": "string", "description": "On approval, the id of the security-policy binding that backs the grant (audit)." },
+          "grantedUntil": { "type": "string", "format": "date-time", "description": "When the granted entitlement expires (approved grants only)." },
+          "etag": { "type": "string", "description": "The request's optimistic-concurrency token." }
+        },
+        "required": ["id", "baseWorkflowId", "requestedScopes", "subjectClaimType", "subjectClaimValue", "status", "createdBy", "createdAt", "etag"]
+      },
+      "AccessRequestList": {
+        "type": "object",
+        "description": "A list of access requests (design §16.5), oldest first.",
+        "properties": {
+          "accessRequests": { "type": "array", "items": { "$ref": "#/components/schemas/AccessRequestView" } }
+        },
+        "required": ["accessRequests"]
+      },
+      "AccessRequestDecisionNote": {
+        "type": "object",
+        "description": "An optional note recorded with an approve/deny/withdraw/revoke decision (design §16.5).",
+        "properties": {
+          "reason": { "type": "string", "description": "An optional note explaining the decision." }
+        }
       }
     }
   }

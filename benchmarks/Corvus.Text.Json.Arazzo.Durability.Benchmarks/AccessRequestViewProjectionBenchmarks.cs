@@ -37,7 +37,7 @@ public class AccessRequestViewProjectionBenchmarks
     public void Setup()
     {
         // A decided (approved) request with every optional field populated — the largest realistic projection.
-        using ParsedJsonDocument<AccessRequest> draft = AccessRequest.Draft(
+        var definition = new AccessRequestDefinition(
             "orders-export",
             ["runs:write"],
             "sub",
@@ -45,10 +45,9 @@ public class AccessRequestViewProjectionBenchmarks
             "Alice Smith",
             "Need to run the nightly export ad hoc.",
             3600);
-        byte[] pending = AccessRequestSerialization.SerializeNew("req-7f3c", draft.RootElement, "alice", DateTimeOffset.UnixEpoch, new WorkflowEtag("etag-1"));
+        byte[] pending = AccessRequestSerialization.SerializeNew("req-7f3c", definition, "alice", DateTimeOffset.UnixEpoch, new WorkflowEtag("etag-1"));
         var decision = new AccessRequestDecision(AccessRequestStatus.Approved, "Approved for the export window.", "binding-42", DateTimeOffset.UnixEpoch.AddHours(8));
-        using ParsedJsonDocument<AccessRequest> pendingDoc = ParsedJsonDocument<AccessRequest>.Parse(pending.AsMemory());
-        byte[] stored = AccessRequestSerialization.SerializeDecision(pendingDoc.RootElement, "req-7f3c", new WorkflowEtag("etag-1"), decision, "boss", DateTimeOffset.UnixEpoch.AddMinutes(5), new WorkflowEtag("etag-2"));
+        byte[] stored = AccessRequestSerialization.SerializeDecision(pending, "req-7f3c", new WorkflowEtag("etag-1"), decision, "boss", DateTimeOffset.UnixEpoch.AddMinutes(5), new WorkflowEtag("etag-2"));
 
         this.document = ParsedJsonDocument<AccessRequest>.Parse(stored);
         this.workspace = JsonWorkspace.Create();
