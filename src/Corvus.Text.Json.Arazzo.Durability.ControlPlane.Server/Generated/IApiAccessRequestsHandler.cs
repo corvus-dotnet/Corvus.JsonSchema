@@ -57,6 +57,15 @@ public interface IApiAccessRequestsHandler
     ValueTask<ApproveAccessRequestResult> HandleApproveAccessRequestAsync(ApproveAccessRequestParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Handles POST /accessRequests/{requestId}/approve-as-eligible — Approve an access request as durable eligibility
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<ApproveAccessRequestAsEligibleResult> HandleApproveAccessRequestAsEligibleAsync(ApproveAccessRequestAsEligibleParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Handles POST /accessRequests/{requestId}/deny — Deny an access request
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>

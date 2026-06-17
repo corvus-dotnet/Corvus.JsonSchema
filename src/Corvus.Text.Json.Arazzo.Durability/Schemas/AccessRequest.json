@@ -49,7 +49,7 @@
     "status": {
       "type": "string",
       "description": "The request's lifecycle state.",
-      "enum": ["Pending", "Approved", "Denied", "Withdrawn", "Revoked"]
+      "enum": ["Pending", "Approved", "Denied", "Withdrawn", "Revoked", "Eligible"]
     },
     "createdBy": {
       "type": "string",

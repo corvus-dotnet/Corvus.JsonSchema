@@ -114,6 +114,39 @@ public sealed class ControlPlaneAccessRequestsApiTests
             .StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 
+    [TestMethod]
+    public async Task An_administrator_grants_eligibility_then_the_requester_self_elevates()
+    {
+        await using Scoped host = await StartAsync();
+        await EstablishAsync(host.Catalog, "flow", "boss");
+
+        // alice requests run access; it is pending (she is not eligible to self-elevate by claims).
+        string id;
+        using (Stj.JsonDocument submitted = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/accessRequests", """{"baseWorkflowId":"flow","requestedScopes":["runs:write"]}""", Auth, "alice")))
+        {
+            submitted.RootElement.GetProperty("status").GetString().ShouldBe("Pending");
+            id = submitted.RootElement.GetProperty("id").GetString()!;
+        }
+
+        // alice (not an administrator) cannot grant eligibility → 403.
+        (await host.SendAsync(HttpMethod.Post, $"/accessRequests/{id}/approve-as-eligible", Auth, "alice")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        // boss grants durable eligibility (no live grant) — a bodyless POST (the window is optional).
+        using (Stj.JsonDocument eligible = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, $"/accessRequests/{id}/approve-as-eligible", Auth, "boss")))
+        {
+            eligible.RootElement.GetProperty("status").GetString().ShouldBe("Eligible");
+            eligible.RootElement.GetProperty("decidedBy").GetString().ShouldBe("boss");
+            eligible.RootElement.TryGetProperty("grantedBindingId", out _).ShouldBeTrue();
+        }
+
+        // alice now self-elevates: a fresh request is auto-approved against the stored eligibility — no human approver.
+        using (Stj.JsonDocument activated = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/accessRequests", """{"baseWorkflowId":"flow","requestedScopes":["runs:write"]}""", Auth, "alice")))
+        {
+            activated.RootElement.GetProperty("status").GetString().ShouldBe("Approved");
+            activated.RootElement.TryGetProperty("grantedUntil", out _).ShouldBeTrue();
+        }
+    }
+
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)
         => Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 

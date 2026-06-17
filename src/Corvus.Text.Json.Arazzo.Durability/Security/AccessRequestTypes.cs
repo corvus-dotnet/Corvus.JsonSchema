@@ -21,6 +21,11 @@ public enum AccessRequestStatus
 
     /// <summary>An approved grant revoked early by an administrator (the entitlement was deleted).</summary>
     Revoked,
+
+    /// <summary>Approved as durable eligibility (§16.5.3): an eligibility assignment was written (no active grant), so
+    /// the requester may self-elevate this capability JIT without re-approval. Distinct from <see cref="Approved"/>,
+    /// which writes a live, time-boxed grant.</summary>
+    Eligible,
 }
 
 /// <summary>The content of a new access request (supplied on create).</summary>
@@ -40,11 +45,11 @@ public readonly record struct AccessRequestDefinition(
     string? Reason = null,
     long? RequestedDurationSeconds = null);
 
-/// <summary>A decision applied to a pending request (a terminal transition).</summary>
-/// <param name="Status">The terminal status (<see cref="AccessRequestStatus.Approved"/>, <see cref="AccessRequestStatus.Denied"/>, or <see cref="AccessRequestStatus.Withdrawn"/>).</param>
+/// <summary>A decision applied to a request (a terminal transition).</summary>
+/// <param name="Status">The terminal status — <see cref="AccessRequestStatus.Approved"/>, <see cref="AccessRequestStatus.Eligible"/>, <see cref="AccessRequestStatus.Denied"/>, <see cref="AccessRequestStatus.Withdrawn"/>, or <see cref="AccessRequestStatus.Revoked"/>.</param>
 /// <param name="DecisionReason">An optional note recorded with the decision.</param>
-/// <param name="GrantedBindingId">On approval, the id of the security-policy binding written to confer the grant.</param>
-/// <param name="GrantedUntil">On approval of a time-bound grant, when it expires; <see langword="null"/> for a standing grant.</param>
+/// <param name="GrantedBindingId">The id of the security-policy binding written to confer the grant (active) or the eligibility assignment.</param>
+/// <param name="GrantedUntil">When the grant (or eligibility window) expires; <see langword="null"/> for a standing grant/eligibility.</param>
 public readonly record struct AccessRequestDecision(
     AccessRequestStatus Status,
     string? DecisionReason = null,
@@ -80,6 +85,9 @@ public static class AccessRequestStatusNames
     /// <summary>The persisted name for <see cref="AccessRequestStatus.Revoked"/>.</summary>
     public const string Revoked = "Revoked";
 
+    /// <summary>The persisted name for <see cref="AccessRequestStatus.Eligible"/>.</summary>
+    public const string Eligible = "Eligible";
+
     /// <summary>Gets the persisted wire name for a status.</summary>
     /// <param name="status">The status.</param>
     /// <returns>The wire name.</returns>
@@ -90,6 +98,7 @@ public static class AccessRequestStatusNames
         AccessRequestStatus.Denied => Denied,
         AccessRequestStatus.Withdrawn => Withdrawn,
         AccessRequestStatus.Revoked => Revoked,
+        AccessRequestStatus.Eligible => Eligible,
         _ => throw new ArgumentOutOfRangeException(nameof(status)),
     };
 }
