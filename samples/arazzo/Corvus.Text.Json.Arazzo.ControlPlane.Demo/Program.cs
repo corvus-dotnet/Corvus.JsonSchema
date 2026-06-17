@@ -25,8 +25,15 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 // still works exactly as before.
 builder.AddServiceDefaults();
 
-// A fresh SQLite database file each run — deleted on startup, so the demo always starts from the seed.
-string dbPath = Path.Combine(Path.GetTempPath(), "arazzo-control-plane-demo.db");
+// The shared durability store. The AppHost injects ConnectionStrings:workflowstore so the control plane and the
+// runner open the same store (the SQLite file is the local stand-in for the production shared store, e.g.
+// Postgres later); the temp-file fallback keeps this host runnable standalone.
+string connectionString = builder.Configuration.GetConnectionString("workflowstore")
+    ?? $"Data Source={Path.Combine(Path.GetTempPath(), "arazzo-control-plane-demo.db")}";
+
+// The control plane owns reset + seed: delete the store the connection string points at, so the demo always
+// starts from the seed. (The runner waits for this host's health before connecting, so it never races the wipe.)
+string dbPath = new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder(connectionString).DataSource;
 foreach (string path in new[] { dbPath, dbPath + "-wal", dbPath + "-shm" })
 {
     if (File.Exists(path))
@@ -35,8 +42,6 @@ foreach (string path in new[] { dbPath, dbPath + "-wal", dbPath + "-shm" })
     }
 }
 
-string connectionString = $"Data Source={dbPath}";
-
 // The catalog store bakes typed-shape + validation metadata at add time via the code-generation provider.
 var metadata = new WorkflowSchemaMetadataProvider();
 SqliteWorkflowStateStore stateStore = await SqliteWorkflowStateStore.ConnectAsync(connectionString);
@@ -44,7 +49,10 @@ SqliteWorkflowCatalogStore catalogStore = await SqliteWorkflowCatalogStore.Conne
 
 var management = new WorkflowManagementClient(stateStore, "demo", DemoData.CompleteResumer);
 var catalog = new WorkflowCatalogClient(catalogStore, stateStore, "demo");
-var runners = new InMemoryRunnerRegistry();
+
+// The runner registry is store-backed and shared, so a runner registering in its own process is visible to this
+// control plane's GET /runners (§5.4) — not an in-memory table only this process can see.
+SqliteRunnerRegistry runners = await SqliteRunnerRegistry.ConnectAsync(connectionString);
 
 // The row-security authoring API (§14.2) is served from a security-policy store, seeded with the editable
 // bootstrap rules (tenant-scoped / ABAC superset / intersection) so /security/* is populated out of the box.

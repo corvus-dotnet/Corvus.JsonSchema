@@ -1,0 +1,111 @@
+# Note: this file was added to your solution as a result of one or more projects using the Endjin.RecommendedPractices.Build.Common NuGet package.
+# You can edit this file (e.g., to remove these comments), and it will not be updated - the package just checks for its presence, and copies
+# this file. If you don't want this file (but you want to use the NuGet package that puts it here), add this setting to all projects
+# using Endjin.RecommendedPractices.Build.Common:
+#  <EndjinDisableCodeAnalysis>true</EndjinDisableCodeAnalysis>
+# and then delete this file. That setting will prevent the package from recreating this file.
+
+# Code style rules for enforcing the endjin house style
+# See: https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference
+
+# XML project files
+[*.{csproj,vbproj,vcxproj,vcxproj.filters,proj,projitems,shproj}]
+indent_size = 2
+
+# XML config files
+[*.{props,targets,ruleset,config,nuspec,resx,vsixmanifest,vsct}]
+indent_size = 2
+
+# C# files
+[*.{cs,csx}]
+indent_size = 4
+insert_final_newline  = false
+
+# Core editorconfig formatting - indentation
+
+# use soft tabs (spaces) for indentation
+indent_style = space
+
+# Formatting - indentation options
+
+csharp_indent_case_contents = true
+csharp_indent_switch_labels = true
+
+# Formatting - new line options
+
+csharp_new_line_before_catch = true
+csharp_new_line_before_else = true
+csharp_new_line_before_open_brace = object_collection, object_collection_array_initalizers, accessors, lambdas, control_blocks, methods, properties, types
+
+# Formatting - spacing options
+
+csharp_space_after_cast = false
+csharp_space_after_colon_in_inheritance_clause = true
+csharp_space_after_keywords_in_control_flow_statements = true
+csharp_space_before_colon_in_inheritance_clause = true
+csharp_space_between_method_call_empty_parameter_list_parentheses = false
+csharp_space_between_method_call_name_and_opening_parenthesis = false
+csharp_space_between_method_call_parameter_list_parentheses = false
+csharp_space_between_method_declaration_empty_parameter_list_parentheses = false
+csharp_space_between_method_declaration_parameter_list_parentheses = false
+
+# Formatting - wrapping options
+
+csharp_preserve_single_line_blocks = true
+csharp_preserve_single_line_statements = true
+
+
+# Style - expression bodied member options
+
+csharp_style_expression_bodied_accessors = false:none
+csharp_style_expression_bodied_constructors = false:none
+csharp_style_expression_bodied_methods = false:none
+csharp_style_expression_bodied_properties = false:none
+
+# Style - expression level options
+
+csharp_style_inlined_variable_declaration = true:suggestion
+dotnet_style_predefined_type_for_member_access = true:suggestion
+
+# Style - implicit and explicit types
+
+csharp_style_var_for_built_in_types = false:warning
+csharp_style_var_when_type_is_apparent = true:warning
+csharp_style_var_elsewhere = false:warning
+
+# Style - language keyword and framework type options
+
+dotnet_style_predefined_type_for_locals_parameters_members = true:suggestion
+
+# Style - qualification options
+
+dotnet_style_qualification_for_field = true:suggestion
+dotnet_style_qualification_for_method = true:suggestion
+dotnet_style_qualification_for_property = true:suggestion
+dotnet_style_qualification_for_event = true:suggestion
+
+# Style - using directives and namespace declarations
+csharp_using_directive_placement = outside_namespace:warning
+dotnet_sort_system_directives_first = true
+csharp_style_namespace_declarations = file_scoped:warning
+
+# Code analyzer rules (formerly in StyleCop.ruleset)
+# SA1025 makes it impossible to write decent-looking switch expressions because it
+# doesn't allow multiple whitespace characters in a row. There seems to be no way to
+# disable this rule just inside switch expressions, so we reluctantly live without it.
+dotnet_diagnostic.SA1025.severity = None
+# StyleCop's insistence that constructors' summaries must always start with exactly
+# the same boilerplate text is not deeply helpful. Saying "Creates a Foo"
+# is in most cases better than the "Initializes a new instance of the Foo type"
+# that this rule insists on.
+dotnet_diagnostic.SA1642.severity = None
+
+# CLS Compliance - not relevant for most of what we work on.
+dotnet_diagnostic.CA1014.severity = None
+
+# Standard exception constructors - not helpful when the exception absolutely needs certain information
+dotnet_diagnostic.CA1032.severity = None
+dotnet_diagnostic.RCS1194.severity = None
+
+# Localize string constants - apps that want localization can turn this back on
+dotnet_diagnostic.CA1303.severity = None
