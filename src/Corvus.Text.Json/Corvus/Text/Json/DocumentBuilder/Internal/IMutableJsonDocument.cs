@@ -34,6 +34,27 @@ public interface IMutableJsonDocument : IWorkspaceManagedDocument
         where TElement : struct, IJsonElement<TElement>;
 
     /// <summary>
+    /// Creates a fresh element of type <typeparamref name="TElement"/> for the element at the
+    /// specified index, capturing the document's current version.
+    /// </summary>
+    /// <typeparam name="TElement">The element type to return.</typeparam>
+    /// <param name="index">The metadata index of the element.</param>
+    /// <returns>A new element pointing at <paramref name="index"/>, stamped with the document's
+    /// current <see cref="Version"/>.</returns>
+    /// <remarks>
+    /// <para>
+    /// This is an <strong>unsafe</strong> operation: it does not validate that <paramref name="index"/>
+    /// still addresses the same logical element. It exists to refresh a held element after mutations
+    /// that are known to have affected only that element's descendant nodes (so its own start index —
+    /// which precedes all of its content — is unchanged), bringing its cached version up to date so
+    /// subsequent staleness checks pass. For example, RFC 7396 merge-patch application re-mints the
+    /// parent element after recursively merging into one of its child objects.
+    /// </para>
+    /// </remarks>
+    TElement RefreshElementUnsafe<TElement>(int index)
+        where TElement : struct, IJsonElement<TElement>;
+
+    /// <summary>
     /// Gets the array element at the specified index as a mutable JSON element.
     /// </summary>
     /// <param name="currentIndex">The current index in the document.</param>

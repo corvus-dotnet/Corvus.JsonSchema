@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Patch;
@@ -65,6 +66,12 @@ public static class JsonMergePatchExtensions
                 }
 
                 ApplyMergePatch(ref child, in patchValue);
+
+                // The recursive merge mutated only `child`'s subtree, so `target`'s start index is
+                // still valid, but its cached document version is now stale. Mint a fresh handle for
+                // the same element so the next property's staleness check — and any read of `target`
+                // after this method returns — succeeds.
+                target = JsonMarshal.RefreshUnsafe(in target);
             }
             else
             {
