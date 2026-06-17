@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Security.Claims;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.AspNetCore.Http;
@@ -50,13 +51,26 @@ public static class ControlPlaneEndpointExtensions
     /// only — it never reads, returns, or resolves secret material. When <see langword="null"/> (the default) an empty
     /// in-memory store is used so the endpoints function in development.
     /// </param>
+    /// <param name="accessRequestStore">
+    /// The persistent store backing the access-request API (<c>/accessRequests</c>, design §16.5). When
+    /// <see langword="null"/> (the default) an empty in-memory store is used so the endpoints function in development.
+    /// </param>
+    /// <param name="accessRequestApprovalOptions">
+    /// The platform cap an approval applies (max TTL + grantable scopes, §16.5 guardrail 2). Defaults to run access
+    /// only, eight hours.
+    /// </param>
+    /// <param name="accessRequestSubjectClaimType">The claim type identifying the requesting subject (and that a grant keys on); default <c>sub</c>.</param>
+    /// <param name="selfElevationEligibility">
+    /// An optional predicate deciding whether a requester is eligible to self-elevate a request (§16.5.3); when it
+    /// returns <see langword="true"/> the request is auto-approved without a human approver. Default: never eligible.
+    /// </param>
     /// <returns>The same endpoint route builder, for chaining.</returns>
     /// <remarks>
     /// Authentication is always the host's concern: the control plane depends only on a <c>ClaimsPrincipal</c>
     /// and the named scope policies, so a deployment supplies any ASP.NET Core scheme (JWT bearer, OIDC, mTLS,
     /// a dev key) and how a principal acquires scopes.
     /// </remarks>
-    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, IWorkflowManagementClient management, IWorkflowCatalogClient catalog, IRunnerRegistry runners, bool requireAuthorization = false, ControlPlaneRowSecurityPolicy? rowSecurity = null, ISecurityPolicyStore? securityPolicyStore = null, ISourceCredentialStore? sourceCredentialStore = null)
+    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, IWorkflowManagementClient management, IWorkflowCatalogClient catalog, IRunnerRegistry runners, bool requireAuthorization = false, ControlPlaneRowSecurityPolicy? rowSecurity = null, ISecurityPolicyStore? securityPolicyStore = null, ISourceCredentialStore? sourceCredentialStore = null, IAccessRequestStore? accessRequestStore = null, AccessRequestApprovalOptions? accessRequestApprovalOptions = null, string accessRequestSubjectClaimType = "sub", Func<ClaimsPrincipal, AccessRequestDefinition, bool>? selfElevationEligibility = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
@@ -86,6 +100,13 @@ public static class ControlPlaneEndpointExtensions
         // names administrators by deployment-mapped grants rather than raw internal tags.
         var administratorsHandler = new ArazzoControlPlaneAdministratorsHandler(catalog, access);
 
+        // The access-request API (§16.5): requests route to the target workflow's §15 administrators (or self-elevate
+        // when eligible); an approval writes a single capped, time-boxed grant to the security-policy store (refreshed
+        // in-process when the deployment's policy is the persistent one).
+        IAccessRequestStore requestStore = accessRequestStore ?? new InMemoryAccessRequestStore();
+        var approvalService = new AccessRequestApprovalService(requestStore, policyStore, catalog, options: accessRequestApprovalOptions, rowSecurity: rowSecurity as PersistentRowSecurityPolicy);
+        var accessRequestsHandler = new ArazzoControlPlaneAccessRequestsHandler(approvalService, requestStore, catalog, access, accessRequestSubjectClaimType, selfElevationEligibility);
+
         return endpoints.MapApiEndpoints(
             new ArazzoControlPlaneHandler(management, access),
             new ArazzoControlPlaneRunnersHandler(runners),
@@ -93,6 +114,7 @@ public static class ControlPlaneEndpointExtensions
             securityHandler,
             credentialsHandler,
             administratorsHandler,
+            accessRequestsHandler,
             requireAuthorization ? ControlPlaneAuthorization.RequireDeclaredScopes : null);
     }
 }
