@@ -1,5 +1,17 @@
 # Version History
 
+## V5.1.17
+
+V5.1.17 fixes an RFC 7396 JSON Merge Patch bug where merging a nested object corrupted the parent element handle.
+
+### Bug fixes
+
+- **`ApplyMergePatch` no longer leaves the parent element stale when merging a nested object** — When a merge patch recursed into a nested object (`JsonMergePatchExtensions.ApplyMergePatch`), the recursion mutated the document but the parent `JsonElement.Mutable` it was iterating kept its now-stale cached document version. Processing any further property of that same (non-root) parent then failed its staleness check, and a frozen patch document copied into the merge could appear disposed on a subsequent read — surfacing as `InvalidOperationException` ("Operation is not valid due to the current state of the object") during the merge or `ObjectDisposedException: 'JsonDocument'` when the patch was read afterwards. Because a recursive merge only mutates the child's own subtree, the parent element's start index is still valid; the merge now re-mints the parent handle with the current version after each nested merge so subsequent siblings and reads succeed. Simple single-property-per-level merges were unaffected, which is why the existing RFC 7396 suite did not catch it. See [#820](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/820).
+
+### New features
+
+- **`JsonMarshal.RefreshUnsafe<T>(in T)`** — Returns a fresh handle to a mutable JSON element whose cached document version is brought up to date with its parent document's current version, without re-validating the element's position. This is a deliberately **dangerous** marshalling helper: it must only be called when the caller knows the element's start index is still valid — i.e. the document has been mutated only *within that element's own subtree* (descendant nodes). It backs the RFC 7396 merge-patch fix above, where a recursive merge into a child object leaves the (structurally still valid) parent element version-stale. See [#820](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/820).
+
 ## V5.1.16
 
 V5.1.16 fixes schema reference resolution for `$ref`s expressed as `file://` URIs.

@@ -967,11 +967,12 @@ main-docs:
       - {index: 38, language: csharp, lines: [1331, 1337], category: compilable, verified: false}
       - {index: 39, language: csharp, lines: [1340, 1348], category: compilable, verified: false}
       - {index: 40, language: csharp, lines: [1351, 1358], category: compilable, verified: false}
-      - {index: 41, language: csharp, lines: [1401, 1407], category: compilable, verified: false}
-      - {index: 42, language: csharp, lines: [1410, 1417], category: compilable, verified: false}
-      - {index: 43, language: csharp, lines: [1441, 1445], category: compilable, verified: false}
-      - {index: 44, language: csharp, lines: [1448, 1452], category: compilable, verified: false}
-      - {index: 45, language: csharp, lines: [1455, 1459], category: compilable, verified: false}
+      - {index: 41, language: csharp, lines: [1377, 1392], category: compilable, verified: false}
+      - {index: 42, language: csharp, lines: [1430, 1436], category: compilable, verified: false}
+      - {index: 43, language: csharp, lines: [1439, 1446], category: compilable, verified: false}
+      - {index: 44, language: csharp, lines: [1470, 1474], category: compilable, verified: false}
+      - {index: 45, language: csharp, lines: [1477, 1481], category: compilable, verified: false}
+      - {index: 46, language: csharp, lines: [1484, 1488], category: compilable, verified: false}
   - path: "docs/JsonLogic.md"
     blocks:
       - {index: 0, language: bash, lines: [29, 32]}

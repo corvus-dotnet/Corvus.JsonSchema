@@ -2119,6 +2119,17 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
 #endif
     }
 
+    /// <inheritdoc />
+    TElement IMutableJsonDocument.RefreshElementUnsafe<TElement>(int index)
+    {
+        CheckNotDisposed();
+#if NET
+        return TElement.CreateInstance(this, index);
+#else
+        return JsonElementHelpers.CreateInstance<TElement>(this, index);
+#endif
+    }
+
     /// <summary>
     /// Initializes this builder as a frozen (immutable) copy of a segment of the
     /// source builder's metadb and value backing.

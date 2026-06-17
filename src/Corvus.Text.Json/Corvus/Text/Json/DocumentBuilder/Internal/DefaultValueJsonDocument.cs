@@ -85,6 +85,15 @@ public sealed class DefaultValueJsonDocument(IJsonDocument inner) : IMutableJson
 #endif
 
     /// <inheritdoc />
+    public TElement RefreshElementUnsafe<TElement>(int index)
+        where TElement : struct, IJsonElement<TElement>
+#if NET
+        => TElement.CreateInstance(this, index);
+#else
+        => JsonElementHelpers.CreateInstance<TElement>(this, index);
+#endif
+
+    /// <inheritdoc />
     public JsonElement.Mutable GetArrayIndexElement(int currentIndex, int arrayIndex)
     {
         this.inner.GetArrayIndexElement(currentIndex, arrayIndex, out _, out int valueIndex);
