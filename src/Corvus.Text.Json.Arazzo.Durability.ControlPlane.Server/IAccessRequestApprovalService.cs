@@ -32,6 +32,17 @@ public interface IAccessRequestApprovalService
     /// <returns>The approved request, or <see langword="null"/> if absent.</returns>
     ValueTask<ParsedJsonDocument<AccessRequest>?> ApproveAsync(string requestId, SecurityTagSet approverIdentity, string actor, string? reason, CancellationToken cancellationToken);
 
+    /// <summary>Approves a pending request as durable eligibility (§16.5.3) rather than a live grant — the requester may
+    /// thereafter self-elevate JIT without re-approval (the approver must be a §15 administrator of the target workflow).</summary>
+    /// <param name="requestId">The request id.</param>
+    /// <param name="approverIdentity">The approver's unforgeable identity tags.</param>
+    /// <param name="actor">The approver's audit identity.</param>
+    /// <param name="reason">An optional approval note.</param>
+    /// <param name="eligibilityWindow">How long the eligibility itself lasts; <see langword="null"/> is standing eligibility.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The request marked <see cref="AccessRequestStatus.Eligible"/>, or <see langword="null"/> if absent.</returns>
+    ValueTask<ParsedJsonDocument<AccessRequest>?> ApproveAsEligibleAsync(string requestId, SecurityTagSet approverIdentity, string actor, string? reason, TimeSpan? eligibilityWindow, CancellationToken cancellationToken);
+
     /// <summary>Denies a pending request (the decider must be a §15 administrator of the target workflow).</summary>
     /// <param name="requestId">The request id.</param>
     /// <param name="approverIdentity">The administrator's unforgeable identity tags.</param>

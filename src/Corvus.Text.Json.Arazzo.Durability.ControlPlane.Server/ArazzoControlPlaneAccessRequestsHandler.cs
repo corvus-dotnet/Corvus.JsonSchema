@@ -180,6 +180,31 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
     }
 
     /// <inheritdoc/>
+    public async ValueTask<ApproveAccessRequestAsEligibleResult> HandleApproveAccessRequestAsEligibleAsync(ApproveAccessRequestAsEligibleParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string id = (string)parameters.RequestId;
+        try
+        {
+            ParsedJsonDocument<AccessRequest>? result = await this.approval.ApproveAsEligibleAsync(id, this.CallerIdentity(), this.CallerActor(), EligibilityReason(parameters.Body), EligibilityWindow(parameters.Body), cancellationToken).ConfigureAwait(false);
+            if (result is null)
+            {
+                return ApproveAccessRequestAsEligibleResult.NotFound(NotFoundProblem(id), workspace);
+            }
+
+            workspace.TakeOwnership(result);
+            return ApproveAccessRequestAsEligibleResult.Ok(ToView(result.RootElement), workspace);
+        }
+        catch (WorkflowAdministrationException)
+        {
+            return ApproveAccessRequestAsEligibleResult.Forbidden(NotAdministratorProblem(id), workspace);
+        }
+        catch (AccessRequestStateException ex)
+        {
+            return ApproveAccessRequestAsEligibleResult.Conflict(Problem("invalid-state", "Cannot grant eligibility for the request", 409, ex.Message), workspace);
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<DenyAccessRequestResult> HandleDenyAccessRequestAsync(DenyAccessRequestParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string id = (string)parameters.RequestId;
@@ -275,6 +300,12 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
 
     private static string? NoteReason(Models.AccessRequestDecisionNote body)
         => body.IsNotUndefined() && body.Reason.IsNotUndefined() ? (string)body.Reason : null;
+
+    private static string? EligibilityReason(Models.AccessRequestEligibilityNote body)
+        => body.IsNotUndefined() && body.Reason.IsNotUndefined() ? (string)body.Reason : null;
+
+    private static TimeSpan? EligibilityWindow(Models.AccessRequestEligibilityNote body)
+        => body.IsNotUndefined() && body.EligibilityWindowSeconds.IsNotUndefined() ? TimeSpan.FromSeconds((long)body.EligibilityWindowSeconds) : null;
 
     // The audit actor recorded on a request (createdBy / decidedBy): the principal's configured subject claim — the
     // same canonical identity the grant keys on — falling back to the authentication name, then "anonymous". (The

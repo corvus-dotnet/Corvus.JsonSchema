@@ -364,14 +364,14 @@ public readonly partial struct AccessRequestView
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext14 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.TheLifecycleState.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.StatusEntity.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.StatusUtf8,
                     evaluationPath: StatusSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.TheLifecycleState.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext14);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.StatusEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext14);
             context.CommitChildContext(childContext14.IsMatch, ref childContext14);
 
             if (!context.HasCollector && !context.IsMatch)

@@ -1170,6 +1170,21 @@ granted stored eligibility + self-elevation-against-it is 3c**. The `eligibleOnl
 (in step 3) with the resolver already excluding such bindings — so the field is sound and inert until 3c writes/reads
 it (no later migration).
 
+**3c — as built (settled).** (a) A new terminal request status **`Eligible`**, distinct from `Approved` (a live
+grant): the request records that it was satisfied by an *eligibility assignment*, not an active grant. (b)
+**Approve-as-eligible is a dedicated operation** — `POST /accessRequests/{id}/approve-as-eligible` (optional
+`AccessRequestEligibilityNote` = note + eligibility window), symmetric with approve/deny/withdraw/revoke — writing
+the `eligibleOnly` binding (subject + the per-workflow reach rule + scopes capped to the run-access allowlist + an
+optional eligibility window); the resolver ignores it, so it confers nothing active and no in-process refresh is
+needed. (c) **Self-elevation reads stored eligibility** in `SubmitAsync` (eligibility = claims ∪ stored): a cold
+store scan matches an `eligibleOnly` binding on subject + the workflow rule + scope-cover + not-lapsed, auto-approving
+into a fresh active grant via the existing grant path (a by-claim store query is a later refinement). (d) The
+**per-activation cap is the deployment max TTL** — the eligibility window bounds the *eligibility*; each *activation*
+is independently capped at the max TTL (no new binding field). (e) **Revoke accepts an `Eligible` request**, deleting
+the assignment so future activations are denied. The "make eligible *and* activate once now" convenience is deferred
+(it is eligibility followed by an immediate self-elevation); the demo claims-mapping change (`arazzo-admins →
+eligible-for-All`) remains step 6.
+
 ### 16.6 Decisions (§16)
 
 - **Identity lives in the IdP; Arazzo authorizes claims** — no user table, no credential issuance.
