@@ -1141,7 +1141,17 @@
         ],
         "tags": ["credentials"],
         "summary": "List source credential bindings",
-        "description": "Returns all source credential bindings (references and non-secret metadata only), ordered by sourceName then environment.",
+        "description": "Returns a page of source credential bindings (references and non-secret metadata only), ordered by sourceName then environment. Page with `limit` and the opaque `pageToken` from a previous page's `nextPageToken`.",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "The maximum number of bindings to return in the page.",
+            "schema": { "$ref": "#/components/schemas/PageLimit" }
+          },
+          { "$ref": "#/components/parameters/PageTokenQuery" }
+        ],
         "responses": {
           "200": {
             "description": "The bindings.",
@@ -2717,11 +2727,15 @@
       },
       "CredentialBindingList": {
         "type": "object",
-        "description": "All source credential bindings.",
+        "description": "A page of source credential bindings, ordered by sourceName then environment.",
         "properties": {
           "credentials": {
             "type": "array",
             "items": { "$ref": "#/components/schemas/CredentialBindingSummary" }
+          },
+          "nextPageToken": {
+            "type": "string",
+            "description": "An opaque token to fetch the next page, or null/absent if this is the last page."
           }
         },
         "required": ["credentials"]

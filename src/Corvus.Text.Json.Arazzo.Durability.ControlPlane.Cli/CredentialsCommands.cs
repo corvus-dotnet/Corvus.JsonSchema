@@ -125,70 +125,94 @@ internal sealed class CredentialListCommand : AsyncCommand<CredentialListSetting
         using (http)
         await using (transport)
         {
-            await using ListCredentialsResponse response = await client.ListCredentialsAsync(cancellationToken);
             bool asJson = settings.Output.Equals("json", StringComparison.OrdinalIgnoreCase);
-            return response.MatchResult(
-                list => asJson ? Output.Print(list.ToString()) : RenderTable(list, settings),
-                Output.Unexpected);
+            string? wantStatus = CredentialCommandHelpers.NormalizeStatus(settings.Status);
+
+            // A status-first table — the operator's real question is "what's about to break?". Status is
+            // colour-coded and a footer counts the expiring/expired bindings; --status / --source filter client-side.
+            var table = new Table().Border(TableBorder.Rounded);
+            table.AddColumn("Source");
+            table.AddColumn("Environment");
+            table.AddColumn("AuthKind");
+            table.AddColumn("Status");
+            table.AddColumn("Expires");
+            table.AddColumn("Grants");
+            List<string>? jsonItems = asJson ? [] : null;
+            int expiring = 0;
+            int expired = 0;
+
+            // Walk every keyset page (the store pages server-side) so the table shows the complete set.
+            string? pageToken = null;
+            do
+            {
+                string? next = null;
+                await using ListCredentialsResponse response = await client.ListCredentialsAsync(
+                    pageToken: pageToken is { } token ? (Models.JsonString.Source)token : default,
+                    cancellationToken: cancellationToken);
+                int rc = response.MatchResult(
+                    list =>
+                    {
+                        next = list.NextPageToken.IsNotUndefined() ? (string)list.NextPageToken : null;
+                        foreach (Models.CredentialBindingSummary summary in list.Credentials.EnumerateArray())
+                        {
+                            string status = (string)summary.CredentialStatus;
+                            string source = (string)summary.SourceName;
+                            if ((wantStatus is not null && !string.Equals(status, wantStatus, StringComparison.Ordinal))
+                                || (settings.Source is { } s && !string.Equals(source, s, StringComparison.Ordinal)))
+                            {
+                                continue;
+                            }
+
+                            if (jsonItems is not null)
+                            {
+                                jsonItems.Add(summary.ToString());
+                                continue;
+                            }
+
+                            if (string.Equals(status, "expiringSoon", StringComparison.Ordinal))
+                            {
+                                expiring++;
+                            }
+                            else if (string.Equals(status, "expired", StringComparison.Ordinal))
+                            {
+                                expired++;
+                            }
+
+                            table.AddRow(
+                                Markup.Escape(source),
+                                Markup.Escape((string)summary.Environment),
+                                Markup.Escape((string)summary.AuthKind),
+                                CredentialCommandHelpers.StatusMarkup(status),
+                                Markup.Escape(CredentialCommandHelpers.FormatDate(summary.ExpiresAt)),
+                                Markup.Escape(CredentialCommandHelpers.GrantSummary(summary)));
+                        }
+
+                        return 0;
+                    },
+                    Output.Unexpected);
+                if (rc != 0)
+                {
+                    return rc;
+                }
+
+                pageToken = next;
+            }
+            while (pageToken is not null);
+
+            if (jsonItems is not null)
+            {
+                return Output.Print($"{{\"credentials\":[{string.Join(",", jsonItems)}]}}");
+            }
+
+            IAnsiConsole console = AnsiConsole.Create(new AnsiConsoleSettings { Out = new AnsiConsoleOutput(Console.Out) });
+            console.Write(table);
+            if (expiring > 0 || expired > 0)
+            {
+                console.MarkupLine($"[yellow]{expiring} expiring soon[/], [red]{expired} expired[/].");
+            }
+
+            return 0;
         }
-    }
-
-    // A status-first table — the operator's real question is "what's about to break?". Status is colour-coded and a
-    // footer counts the expiring/expired bindings; --status / --source filter client-side.
-    private static int RenderTable(Models.CredentialBindingList list, CredentialListSettings settings)
-    {
-        string? wantStatus = CredentialCommandHelpers.NormalizeStatus(settings.Status);
-        IAnsiConsole console = AnsiConsole.Create(new AnsiConsoleSettings { Out = new AnsiConsoleOutput(Console.Out) });
-
-        var table = new Table().Border(TableBorder.Rounded);
-        table.AddColumn("Source");
-        table.AddColumn("Environment");
-        table.AddColumn("AuthKind");
-        table.AddColumn("Status");
-        table.AddColumn("Expires");
-        table.AddColumn("Grants");
-
-        int expiring = 0;
-        int expired = 0;
-        foreach (Models.CredentialBindingSummary summary in list.Credentials.EnumerateArray())
-        {
-            string status = (string)summary.CredentialStatus;
-            if (wantStatus is not null && !string.Equals(status, wantStatus, StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            string source = (string)summary.SourceName;
-            if (settings.Source is { } s && !string.Equals(source, s, StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            if (string.Equals(status, "expiringSoon", StringComparison.Ordinal))
-            {
-                expiring++;
-            }
-            else if (string.Equals(status, "expired", StringComparison.Ordinal))
-            {
-                expired++;
-            }
-
-            table.AddRow(
-                Markup.Escape(source),
-                Markup.Escape((string)summary.Environment),
-                Markup.Escape((string)summary.AuthKind),
-                CredentialCommandHelpers.StatusMarkup(status),
-                Markup.Escape(CredentialCommandHelpers.FormatDate(summary.ExpiresAt)),
-                Markup.Escape(CredentialCommandHelpers.GrantSummary(summary)));
-        }
-
-        console.Write(table);
-        if (expiring > 0 || expired > 0)
-        {
-            console.MarkupLine($"[yellow]{expiring} expiring soon[/], [red]{expired} expired[/].");
-        }
-
-        return 0;
     }
 }
 

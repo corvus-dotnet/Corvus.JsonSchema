@@ -167,16 +167,44 @@ public sealed class RedisSourceCredentialStore : ISourceCredentialStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask<PooledDocumentList<SourceCredentialBinding>> ListAsync(AccessContext context, CancellationToken cancellationToken)
+    public async ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, string? pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         cancellationToken.ThrowIfCancellationRequested();
-        var docs = new PooledDocumentList<SourceCredentialBinding>();
+        int pageSize = limit > 0 ? limit : 1;
+        bool hasCursor = SourceCredentialContinuationToken.TryDecode(pageToken, out (string SourceName, string Environment, string TieBreaker) cursor);
+
+        // Redis has no server-side ordering for a SET, so the keyset scan runs over the all-index members in memory: the
+        // members are the small identity tuples (no documents), so sort them into the stable total order
+        // (sourceName, environment, discriminator), seek past the cursor, then fetch each candidate's document lazily —
+        // only up to what the page needs, never the whole table.
+        RedisValue[] rawMembers = await this.database.SetMembersAsync(AllIndexKey).ConfigureAwait(false);
+        var members = new (string Source, string Environment, string Discriminator)[rawMembers.Length];
+        for (int i = 0; i < rawMembers.Length; i++)
+        {
+            members[i] = SplitAllIndexMember((string)rawMembers[i]!);
+        }
+
+        Array.Sort(members, ByIdentity);
+
+        // Index of the first member strictly past the cursor in (source, environment, discriminator) order.
+        int start = 0;
+        if (hasCursor)
+        {
+            while (start < members.Length && ByIdentity.Compare(members[start], (cursor.SourceName, cursor.Environment, cursor.TieBreaker)) <= 0)
+            {
+                start++;
+            }
+        }
+
+        var docs = new PooledDocumentList<SourceCredentialBinding>(pageSize);
+        string? nextToken = null;
         try
         {
-            foreach (RedisValue member in await this.database.SetMembersAsync(AllIndexKey).ConfigureAwait(false))
+            string lastSource = string.Empty, lastEnv = string.Empty, lastDisc = string.Empty;
+            for (int i = start; i < members.Length; i++)
             {
-                (string src, string env, string discriminator) = SplitAllIndexMember((string)member!);
+                (string src, string env, string discriminator) = members[i];
                 RedisValue value = await this.database.StringGetAsync(BindKey(src, env, discriminator)).ConfigureAwait(false);
                 if (value.IsNullOrEmpty)
                 {
@@ -185,14 +213,25 @@ public sealed class RedisSourceCredentialStore : ISourceCredentialStore, IAsyncD
 
                 byte[] json = (byte[])value!;
                 using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
-                if (context.Admits(AccessVerb.Read, candidate.RootElement.ManagementTagsValue))
+                if (!context.Admits(AccessVerb.Read, candidate.RootElement.ManagementTagsValue))
                 {
-                    docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(json));
+                    continue;
                 }
+
+                if (docs.Count == pageSize)
+                {
+                    // A further visible row beyond the page exists: stop and hand back a cursor at the last included row.
+                    nextToken = SourceCredentialContinuationToken.Encode(lastSource, lastEnv, lastDisc);
+                    break;
+                }
+
+                docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(json));
+                lastSource = src;
+                lastEnv = env;
+                lastDisc = discriminator;
             }
 
-            docs.Sort(BySourceThenEnvironment);
-            return docs;
+            return new SourceCredentialPage(docs, nextToken);
         }
         catch
         {
@@ -321,12 +360,20 @@ public sealed class RedisSourceCredentialStore : ISourceCredentialStore, IAsyncD
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
-    // Orders the client-side snapshot for ListAsync: by source name then environment, since the index set is unordered.
-    private static readonly IComparer<ParsedJsonDocument<SourceCredentialBinding>> BySourceThenEnvironment =
-        Comparer<ParsedJsonDocument<SourceCredentialBinding>>.Create(static (a, b) =>
+    // Orders the (unordered) all-index members into the stable total keyset order for ListAsync: the contractual
+    // (sourceName, environment) primary order, made total by the discriminator tie-breaker — all compared ordinally to
+    // match the token's byte order.
+    private static readonly IComparer<(string Source, string Environment, string Discriminator)> ByIdentity =
+        Comparer<(string Source, string Environment, string Discriminator)>.Create(static (a, b) =>
         {
-            int bySource = string.CompareOrdinal(a.RootElement.SourceNameValue, b.RootElement.SourceNameValue);
-            return bySource != 0 ? bySource : string.CompareOrdinal(a.RootElement.EnvironmentValue, b.RootElement.EnvironmentValue);
+            int bySource = string.CompareOrdinal(a.Source, b.Source);
+            if (bySource != 0)
+            {
+                return bySource;
+            }
+
+            int byEnv = string.CompareOrdinal(a.Environment, b.Environment);
+            return byEnv != 0 ? byEnv : string.CompareOrdinal(a.Discriminator, b.Discriminator);
         });
 
     private static RedisKey BindKey(string sourceName, string environment, string discriminator)

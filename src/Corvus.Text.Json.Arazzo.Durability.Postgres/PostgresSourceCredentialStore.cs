@@ -123,27 +123,63 @@ public sealed class PostgresSourceCredentialStore : ISourceCredentialStore, IAsy
     }
 
     /// <inheritdoc/>
-    public async ValueTask<PooledDocumentList<SourceCredentialBinding>> ListAsync(AccessContext context, CancellationToken cancellationToken)
+    public async ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, string? pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        var docs = new PooledDocumentList<SourceCredentialBinding>();
+        int pageSize = limit > 0 ? limit : 1;
+        bool hasCursor = SourceCredentialContinuationToken.TryDecode(pageToken, out (string SourceName, string Environment, string TieBreaker) cursor);
+
+        await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        var docs = new PooledDocumentList<SourceCredentialBinding>(pageSize);
+        string? nextToken = null;
         try
         {
-            await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+            // Keyset seek past the cursor in (SourceName, Environment, Tags) order — an indexed range scan, not a
+            // table load. Reach is a per-row predicate applied in memory as we stream; the reader is consumed only
+            // until the page fills, so we read ≈ pageSize / selectivity rows, never the whole table.
             await using NpgsqlCommand select = connection.CreateCommand();
-            select.CommandText = "SELECT Document FROM SourceCredentials ORDER BY SourceName, Environment;";
-            await using NpgsqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            if (hasCursor)
             {
-                byte[] json = reader.GetFieldValue<byte[]>(0);
-                using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
-                if (context.Admits(AccessVerb.Read, candidate.RootElement.ManagementTagsValue))
-                {
-                    docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(json));
-                }
+                select.CommandText =
+                    "SELECT SourceName, Environment, Tags, Document FROM SourceCredentials " +
+                    "WHERE SourceName > @s OR (SourceName = @s AND Environment > @e) OR (SourceName = @s AND Environment = @e AND Tags > @t) " +
+                    "ORDER BY SourceName, Environment, Tags;";
+                select.Parameters.AddWithValue("s", cursor.SourceName);
+                select.Parameters.AddWithValue("e", cursor.Environment);
+                select.Parameters.AddWithValue("t", cursor.TieBreaker);
+            }
+            else
+            {
+                select.CommandText = "SELECT SourceName, Environment, Tags, Document FROM SourceCredentials ORDER BY SourceName, Environment, Tags;";
             }
 
-            return docs;
+            await using NpgsqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+            string lastSource = string.Empty, lastEnv = string.Empty, lastTags = string.Empty;
+            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                string source = reader.GetString(0);
+                string environment = reader.GetString(1);
+                string tags = reader.GetString(2);
+                byte[] json = reader.GetFieldValue<byte[]>(3);
+                using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
+                if (!context.Admits(AccessVerb.Read, candidate.RootElement.ManagementTagsValue))
+                {
+                    continue;
+                }
+
+                if (docs.Count == pageSize)
+                {
+                    nextToken = SourceCredentialContinuationToken.Encode(lastSource, lastEnv, lastTags);
+                    break;
+                }
+
+                docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(json));
+                lastSource = source;
+                lastEnv = environment;
+                lastTags = tags;
+            }
+
+            return new SourceCredentialPage(docs, nextToken);
         }
         catch
         {

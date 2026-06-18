@@ -139,26 +139,64 @@ public sealed class MongoSourceCredentialStore : ISourceCredentialStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask<PooledDocumentList<SourceCredentialBinding>> ListAsync(AccessContext context, CancellationToken cancellationToken)
+    public async ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, string? pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        var docs = new PooledDocumentList<SourceCredentialBinding>();
+        int pageSize = limit > 0 ? limit : 1;
+        bool hasCursor = SourceCredentialContinuationToken.TryDecode(pageToken, out (string SourceName, string Environment, string TieBreaker) cursor);
+
+        // Keyset seek past the cursor in composite _id (s, e, t) order — an indexed range scan over the unique _id, not a
+        // collection load. The standard 3-field keyset predicate ("strictly after" the cursor) plus a matching ascending
+        // sort makes _id both the seek key and the stable total order, so the page boundary is the row key we hand back.
+        FilterDefinitionBuilder<BsonDocument> b = Builders<BsonDocument>.Filter;
+        FilterDefinition<BsonDocument> filter = b.Empty;
+        if (hasCursor)
+        {
+            filter = b.Or(
+                b.Gt("_id.s", cursor.SourceName),
+                b.And(b.Eq("_id.s", cursor.SourceName), b.Gt("_id.e", cursor.Environment)),
+                b.And(b.Eq("_id.s", cursor.SourceName), b.Eq("_id.e", cursor.Environment), b.Gt("_id.t", cursor.TieBreaker)));
+        }
+
+        SortDefinition<BsonDocument> sort = Builders<BsonDocument>.Sort.Ascending("_id.s").Ascending("_id.e").Ascending("_id.t");
+
+        var docs = new PooledDocumentList<SourceCredentialBinding>(pageSize);
+        string? nextToken = null;
         try
         {
-            List<BsonDocument> documents = await this.credentials.Find(Builders<BsonDocument>.Filter.Empty)
-                .Sort(Builders<BsonDocument>.Sort.Ascending("sourceName").Ascending("environment"))
-                .ToListAsync(cancellationToken).ConfigureAwait(false);
-            foreach (BsonDocument document in documents)
+            // Reach (§14.2) is a per-row predicate applied in memory as we stream; the cursor is consumed only until the
+            // page fills, so we read ≈ pageSize / selectivity rows rather than the whole collection. A FURTHER visible row
+            // beyond the page is the signal to emit a continuation token — the row key of the last *included* binding.
+            using IAsyncCursor<BsonDocument> mongoCursor = await this.credentials.Find(filter).Sort(sort).ToCursorAsync(cancellationToken).ConfigureAwait(false);
+            string lastSource = string.Empty, lastEnv = string.Empty, lastTags = string.Empty;
+            bool stop = false;
+            while (!stop && await mongoCursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
             {
-                byte[] json = document["doc"].AsBsonBinaryData.Bytes;
-                using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
-                if (context.Admits(AccessVerb.Read, candidate.RootElement.ManagementTagsValue))
+                foreach (BsonDocument document in mongoCursor.Current)
                 {
+                    byte[] json = document["doc"].AsBsonBinaryData.Bytes;
+                    using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
+                    if (!context.Admits(AccessVerb.Read, candidate.RootElement.ManagementTagsValue))
+                    {
+                        continue;
+                    }
+
+                    if (docs.Count == pageSize)
+                    {
+                        nextToken = SourceCredentialContinuationToken.Encode(lastSource, lastEnv, lastTags);
+                        stop = true;
+                        break;
+                    }
+
+                    BsonDocument id = document["_id"].AsBsonDocument;
                     docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(json));
+                    lastSource = id["s"].AsString;
+                    lastEnv = id["e"].AsString;
+                    lastTags = id["t"].AsString;
                 }
             }
 
-            return docs;
+            return new SourceCredentialPage(docs, nextToken);
         }
         catch
         {
