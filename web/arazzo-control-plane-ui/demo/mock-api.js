@@ -527,7 +527,7 @@ function seedCredentials() {
     b('petstore', 'production', 'apiKey', [{ name: 'value', ref: 'keyvault://petstore-key#3' }], { config: [{ key: 'parameterName', value: 'X-Api-Key' }], expiresAt: iso(20 * day), description: 'Petstore API key.' }),
     b('billing', 'production', 'oauth2ClientCredentials', [{ name: 'clientSecret', ref: 'vault://kv/billing#secret' }], { usageGrants: [{ dimension: 'workflow', value: 'nightly-reconcile' }], expiresAt: iso(3 * day) }),
     b('legacy', 'production', 'basic', [{ name: 'password', ref: 'env://LEGACY_PW' }], { expiresAt: iso(-2 * day) }),
-    b('events', 'staging', 'bearer', [{ name: 'token', ref: 'awssm://events-token' }], {}),
+    b('events', 'staging', 'bearer', [{ name: 'value', ref: 'awssm://events-token' }], {}),
   ];
 }
 
@@ -630,7 +630,7 @@ export function createMockControlPlane(options = {}) {
     const catalogResponse = await handleCatalog(path, method, u.searchParams, body, isForm ? init.body : null);
     if (catalogResponse) return catalogResponse;
 
-    const credentialsResponse = handleCredentials(path, method, body);
+    const credentialsResponse = handleCredentials(path, method, u.searchParams, body);
     if (credentialsResponse) return credentialsResponse;
 
     const administratorsResponse = handleAdministrators(path, method, body);
@@ -924,13 +924,13 @@ export function createMockControlPlane(options = {}) {
 
   // ---- source credentials (§13) -----------------------------------------------------------------
 
-  function handleCredentials(fullPath, method, body) {
+  function handleCredentials(fullPath, method, params, body) {
     const idx = fullPath.indexOf('/credentials');
     if (idx < 0) return null;
     const path = fullPath.slice(idx);
 
     if (/^\/credentials\/?$/.test(path)) {
-      if (method === 'GET') return json({ credentials: credentials.map(toCredentialSummary) });
+      if (method === 'GET') return listCredentialsPage(params);
       if (method === 'POST') return createCredential(body);
       return problem(405, 'Method not allowed');
     }
@@ -945,6 +945,22 @@ export function createMockControlPlane(options = {}) {
       return problem(405, 'Method not allowed');
     }
     return null;
+  }
+
+  // Keyset pagination over (sourceName, environment) — the same contract the durable stores implement: order, seek
+  // strictly past the opaque token, take `limit`, and emit a nextPageToken when more remain.
+  function listCredentialsPage(params) {
+    const limit = Math.max(1, Number(params.get('limit')) || 100);
+    const key = (c) => `${c.sourceName} ${c.environment}`;
+    const after = params.get('pageToken') ? atobSafe(params.get('pageToken')) : null;
+    const sorted = [...credentials].sort((a, b) => (key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0));
+    const start = after ? sorted.findIndex((c) => key(c) > after) : 0;
+    const from = start < 0 ? sorted.length : start;
+    const pageItems = sorted.slice(from, from + limit);
+    const more = from + limit < sorted.length;
+    const last = pageItems[pageItems.length - 1];
+    const nextPageToken = more && last ? btoaSafe(key(last)) : null;
+    return json({ credentials: pageItems.map(toCredentialSummary), nextPageToken });
   }
 
   // A secretRef must be a reference, never inline secret material — the boundary that keeps secrets out.

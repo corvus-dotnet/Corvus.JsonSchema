@@ -16,48 +16,119 @@ function dialogWith(client) {
 }
 
 const $ = (el, sel) => el.shadowRoot.querySelector(sel);
+const $$ = (el, sel) => [...el.shadowRoot.querySelectorAll(sel)];
+
+// Set the auth kind, which (re)builds the secret-reference slots for that kind.
+function setAuthKind(el, kind) {
+  const input = $(el, '#authKind');
+  input.value = kind;
+  input.dispatchEvent(new Event('change'));
+}
+
+// Drive a reference slot row: pick its store (rebuilds the per-store fields), then fill them.
+function setRef(row, { scheme, fields = {} }) {
+  if (scheme) {
+    const sel = row.querySelector('.scheme');
+    sel.value = scheme;
+    sel.dispatchEvent(new Event('change'));
+  }
+  for (const [key, value] of Object.entries(fields)) {
+    const input = scheme === 'raw' ? row.querySelector('.rawref') : row.querySelector(`[data-key="${key}"]`);
+    input.value = value;
+  }
+  return row;
+}
 
 describe('<arazzo-credential-dialog>', () => {
   let el;
   afterEach(() => el?.remove());
 
-  it('refuses an inline secret before sending (shows a banner)', async () => {
+  it('drives the reference slots from the auth kind (count + label, no free-text role, no "+ Add")', async () => {
+    el = dialogWith(clientWithMock());
+    mount(el);
+    el.open();
+    // Default apiKey → exactly one slot, labelled "API key".
+    equal($$(el, '.refs .refrow').length, 1, 'apiKey has one secret slot');
+    ok($(el, '.refs .refrow .slot-label').textContent.includes('API key'), 'the slot is labelled');
+    ok(!$(el, '.refs .refrow .role'), 'no free-text role input');
+    ok(!$(el, '.addref'), 'no open-ended "+ Add reference"');
+    // Switch to basic → one slot, now labelled "Password" (+ a Config hint about username).
+    setAuthKind(el, 'basic');
+    equal($$(el, '.refs .refrow').length, 1, 'basic has one secret slot');
+    ok($(el, '.refs .refrow .slot-label').textContent.includes('Password'), 'relabelled for basic');
+    ok($(el, '.kindhint').textContent.toLowerCase().includes('username'), 'hints that basic needs a username in Config');
+  });
+
+  it('refuses an inline secret entered via the raw escape hatch (shows a banner)', async () => {
     el = dialogWith(clientWithMock());
     mount(el);
     el.open();
     $(el, '#sourceName').value = 'newsrc';
     $(el, '#environment').value = 'production';
-    $(el, '#authKind').value = 'apiKey';
-    $(el, '.refs .row .b').value = 'hunter2-the-actual-secret'; // no scheme — not a reference
+    setRef($(el, '.refs .refrow'), { scheme: 'raw', fields: { raw: 'hunter2-the-actual-secret' } });
     el.submit();
     await waitFor(() => !$(el, '.error-banner').hidden);
     ok($(el, '.error-banner').textContent.toLowerCase().includes('reference'), 'explains it must be a reference');
   });
 
-  it('creates a binding from references and emits credential-saved', async () => {
+  it('composes a Key Vault reference from guided fields and emits credential-saved', async () => {
     el = dialogWith(clientWithMock());
     mount(el);
     el.open();
     $(el, '#sourceName').value = 'newsrc';
-    $(el, '#environment').value = 'production';
-    $(el, '#authKind').value = 'apiKey';
-    $(el, '.refs .row .a').value = 'value';
-    $(el, '.refs .row .b').value = 'keyvault://newsrc-key';
+    $(el, '#environment').value = 'production'; // authKind defaults to apiKey → role "value"
+    setRef($(el, '.refs .refrow'), { fields: { host: 'newsrc-kv', name: 'api-key' } });
     const saved = nextEvent(el, 'credential-saved');
     el.submit();
     const e = await saved;
     equal(e.detail.binding.sourceName, 'newsrc', 'created the binding');
+    equal(e.detail.binding.secretRefs[0].name, 'value', 'the slot fixed the role to the kind it belongs to');
+    equal(e.detail.binding.secretRefs[0].ref, 'keyvault://newsrc-kv/api-key', 'guided fields composed the canonical ref');
     equal(e.detail.binding.credentialStatus, 'valid', 'derived status comes back');
   });
 
-  it('edit/rotate locks the identity, re-points a reference, and stamps rotatedAt', async () => {
+  it('composes the canonical reference for each store (OAuth2 client secret via Vault)', async () => {
+    el = dialogWith(clientWithMock());
+    mount(el);
+    el.open();
+    $(el, '#sourceName').value = 'vaultsrc';
+    $(el, '#environment').value = 'production';
+    setAuthKind(el, 'oauth2ClientCredentials'); // → one "Client secret" slot, role "clientSecret"
+    setRef($(el, '.refs .refrow'), { scheme: 'vault', fields: { mount: 'secret', path: 'arazzo/petstore', field: 'api-key' } });
+    equal($(el, '.refs .refrow .refpreview code').textContent, 'vault://secret/arazzo/petstore#api-key', 'preview shows the composed ref');
+    const saved = nextEvent(el, 'credential-saved');
+    el.submit();
+    const e = await saved;
+    equal(e.detail.binding.secretRefs[0].name, 'clientSecret', 'role fixed to the OAuth2 client secret');
+    equal(e.detail.binding.secretRefs[0].ref, 'vault://secret/arazzo/petstore#api-key', 'composed the canonical vault KV-v2 ref');
+  });
+
+  it('rejects an incomplete guided slot with a store-specific message', async () => {
+    el = dialogWith(clientWithMock());
+    mount(el);
+    el.open();
+    $(el, '#sourceName').value = 'x';
+    $(el, '#environment').value = 'y';
+    setRef($(el, '.refs .refrow'), { scheme: 'vault', fields: { mount: 'secret' } }); // path + field missing
+    el.submit();
+    await waitFor(() => !$(el, '.error-banner').hidden);
+    ok($(el, '.error-banner').textContent.toLowerCase().includes('incomplete'), 'flags the incomplete reference');
+  });
+
+  it('edit/rotate: a legacy single-segment ref opens in raw mode, re-points, and stamps rotatedAt', async () => {
     const client = clientWithMock();
     el = dialogWith(client);
     mount(el);
     const binding = await client.getCredential('petstore', 'production');
     el.open(binding);
     ok($(el, '#sourceName').readOnly, 'source is locked when editing');
-    $(el, '.refs .row .b').value = 'keyvault://petstore-key#4';
+    const row = $(el, '.refs .refrow');
+    equal(row.dataset.role, 'value', 'the apiKey slot');
+    // petstore's seeded `keyvault://petstore-key#3` has no host/name slash, so it cannot be represented by the
+    // guided Key Vault fields — it falls back to raw, preserved verbatim (never silently mutated).
+    equal(row.querySelector('.scheme').value, 'raw', 'an unrepresentable legacy ref opens in raw mode');
+    equal(row.querySelector('.rawref').value, 'keyvault://petstore-key#3', 'the raw ref is preserved');
+    row.querySelector('.rawref').value = 'keyvault://petstore-key#4';
     const saved = nextEvent(el, 'credential-saved');
     el.submit();
     const e = await saved;

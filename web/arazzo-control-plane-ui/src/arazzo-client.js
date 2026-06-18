@@ -398,15 +398,33 @@ export class ArazzoControlPlaneClient {
   // ---- credentials:read -------------------------------------------------------------------------
 
   /**
-   * `listCredentials` — every source credential binding (references and non-secret metadata only — never
+   * `listCredentials` — one page of source credential bindings (references and non-secret metadata only — never
    * secret material), ordered by sourceName then environment. Each summary carries a derived `credentialStatus`
-   * (`valid` | `expiringSoon` | `expired`).
-   * @param {{ signal?: AbortSignal }} [opts]
-   * @returns {Promise<{ credentials: object[] }>} A {@link CredentialBindingList}.
+   * (`valid` | `expiringSoon` | `expired`). Page with `limit` and the opaque `pageToken` from a previous page's
+   * `nextPageToken`.
+   * @param {{ limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ credentials: object[], nextPageToken: (string|null) }>} A {@link CredentialBindingList}.
    */
-  async listCredentials(opts = {}) {
-    const result = await this._request('GET', '/credentials', { signal: opts.signal });
-    return { credentials: result.credentials ?? [] };
+  async listCredentials(query = {}) {
+    const search = new URLSearchParams();
+    if (query.limit != null) search.set('limit', String(query.limit));
+    if (query.pageToken) search.set('pageToken', query.pageToken);
+    const result = await this._request('GET', `/credentials${qs(search)}`, { signal: query.signal });
+    return { credentials: result.credentials ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
+   * `listCredentials`, as an async iterator that walks every page via the keyset `nextPageToken`.
+   * @param {{ limit?: number, signal?: AbortSignal }} [query]
+   * @returns {AsyncGenerator<{ credentials: object[], nextPageToken: (string|null) }>}
+   */
+  async *listCredentialsPaged(query = {}) {
+    let pageToken;
+    do {
+      const page = await this.listCredentials({ ...query, pageToken });
+      yield page;
+      pageToken = page.nextPageToken || undefined;
+    } while (pageToken);
   }
 
   /**

@@ -5,13 +5,15 @@
 //
 // Attributes : base-url, base-workflow-id, version-number, scopes (space-separated), show-forbidden
 // Properties : .client, .version (inject a summary to skip the fetch)
-// Events     : version-changed {version}, version-deleted {baseWorkflowId, versionNumber}, error {problem}, close
+// Events     : version-changed {version}, version-deleted {baseWorkflowId, versionNumber}, access-requested {request}, error {problem}, close
 // Parts      : panel, header, status, meta, owner, sources, actions
 //
 // Standalone-capable: it renders metadata + governance (obsolete / delete) itself and offers download links
 // for the package, workflow and each source document. Layer 2 listens to its events to keep the table in sync.
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, copyToClipboard, define } from './base.js';
+import './administrators-panel.js';
+import './access-request-dialog.js';
 
 const STATUS_COLOR = {
   Active: 'var(--arazzo-status-completed, #2a8a4a)',
@@ -158,6 +160,8 @@ class ArazzoCatalogDetail extends ArazzoElement {
         .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
         @keyframes pulse { 50% { opacity: 0.45; } }
         .pad { padding: 14px; }
+        .security { padding: 0 14px 14px; }
+        .security h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); }
       </style>
       <div class="panel" part="panel">
         <header part="header">
@@ -169,6 +173,7 @@ class ArazzoCatalogDetail extends ArazzoElement {
           <button class="close ghost" type="button" title="Close" aria-label="Close">✕</button>
         </header>
         <div class="body"></div>
+        <div class="security" part="security" hidden></div>
       </div>
     `;
     this.$('.close').addEventListener('click', () => this.emit('close'));
@@ -198,6 +203,10 @@ class ArazzoCatalogDetail extends ArazzoElement {
     const body = this.$('.body');
     if (!body) return;
     this.renderVersionSwitch();
+
+    // The Security section is a persistent sibling of the body (not rebuilt here), so it is hidden until a
+    // version has loaded; renderSecurity shows + configures it on the success path.
+    if (this._error || (this._loading && !this._version)) this.$('.security').hidden = true;
 
     if (this._error) {
       badge.style.display = 'none';
@@ -250,6 +259,29 @@ class ArazzoCatalogDetail extends ArazzoElement {
     });
     this.wireDownloads(v);
     this.renderActions(v);
+    this.renderSecurity(v);
+  }
+
+  /**
+   * Configure the persistent §15 administrator panel for this version's base workflow id. It is keyed by base id
+   * (administration is per workflow, not per version) and gated by this detail's scopes — editable with
+   * `administrators:write`, read-only otherwise (the panel itself surfaces a 403 as a plain banner). Kept as a
+   * persistent element (not rebuilt with the body), so switching version doesn't reload it; only a base-id change does.
+   */
+  renderSecurity(v) {
+    const host = this.$('.security');
+    if (!host || !v?.baseWorkflowId) return;
+    host.hidden = false;
+    let panel = host.querySelector('arazzo-administrators-panel');
+    if (!panel) {
+      host.innerHTML = '<h4>Security — administrators (§15)</h4>';
+      panel = document.createElement('arazzo-administrators-panel');
+      host.appendChild(panel);
+    }
+    const scopes = this.getAttribute('scopes') || '';
+    if (scopes) panel.setAttribute('scopes', scopes); else panel.removeAttribute('scopes');
+    if (this.client && panel.client !== this.client) panel.client = this.client;
+    if (panel.getAttribute('base-workflow-id') !== v.baseWorkflowId) panel.setAttribute('base-workflow-id', v.baseWorkflowId);
   }
 
   renderOwner(v) {
@@ -338,9 +370,25 @@ class ArazzoCatalogDetail extends ArazzoElement {
       buttons.push(`<button class="delete danger" type="button" ${canPurge ? '' : 'disabled title="Requires catalog:purge"'}>Delete…</button>`);
     }
 
+    // Request access — self-service (§16.5), available to any authenticated user, pre-filled to this workflow.
+    buttons.push('<button class="request-access ghost" type="button">Request access…</button>');
+
     host.innerHTML = buttons.join('');
     host.querySelector('.obsolete')?.addEventListener('click', () => this.confirmObsolete(v));
     host.querySelector('.delete')?.addEventListener('click', () => this.confirmDelete(v));
+    host.querySelector('.request-access')?.addEventListener('click', () => this.requestAccess(v));
+  }
+
+  /** Open the §16.5 "request access" dialog locked to this workflow's base id (the catalog entry's governance hub). */
+  requestAccess(v) {
+    let dlg = this.$('arazzo-access-request-dialog');
+    if (!dlg) {
+      dlg = document.createElement('arazzo-access-request-dialog');
+      dlg.addEventListener('access-request-submitted', (e) => this.emit('access-requested', e.detail));
+      this.$('.panel').appendChild(dlg);
+    }
+    dlg.client = this.client;
+    dlg.open({ baseWorkflowId: v.baseWorkflowId, lockWorkflow: true });
   }
 
   async confirmObsolete(v) {

@@ -15,18 +15,11 @@
 // (§16.5.2), so the form offers exactly the run verbs.
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
-import './workflow-picker.js';
+import './workflow-id-input.js';
 
-// The three grant surfaces (§17.3): View (catalog:read — see the workflow's catalog entry; the least-privilege
-// default), Read runs (runs:read), and Operate (runs:write). runs:write *requires* runs:read — the grant maps the
-// run scopes to independent read/write reach (write does not imply read server-side), so a write-without-read grant
-// would let you resume/cancel a run you can neither list nor inspect; the dialog forbids that incoherent combination
-// by forcing (and locking) read on whenever write is requested. Granting more than View never implies View, and vice
-// versa — the surfaces are orthogonal, capped to this allowlist on approval.
 const REQUESTABLE_SCOPES = [
-  { scope: 'catalog:read', label: 'View the workflow (catalog:read)', default: true },
+  { scope: 'runs:write', label: 'Trigger / resume / cancel runs (runs:write)' },
   { scope: 'runs:read', label: 'Read runs (runs:read)' },
-  { scope: 'runs:write', label: 'Trigger / resume / cancel runs (runs:write)', requires: 'runs:read' },
 ];
 
 class ArazzoAccessRequestDialog extends ArazzoElement {
@@ -78,7 +71,7 @@ class ArazzoAccessRequestDialog extends ArazzoElement {
   render() {
     const wfRow = this._lock
       ? `<div><div class="sub" style="margin-bottom:4px">Workflow</div><div class="locked-wf">${escapeHtml(this._baseWorkflowId)}</div></div>`
-      : `<label>Workflow<arazzo-workflow-picker class="sub-wf" placeholder="Find a workflow…"></arazzo-workflow-picker></label>`;
+      : `<label>Workflow<arazzo-workflow-id-input class="sub-wf" placeholder="Workflow id…"></arazzo-workflow-id-input></label>`;
     this.shadowRoot.innerHTML = `
       <style>
         ${SHARED_CSS}
@@ -105,7 +98,7 @@ class ArazzoAccessRequestDialog extends ArazzoElement {
             <div>
               <div class="sub" style="margin-bottom:6px">Scopes (capped to run access on approval)</div>
               <div class="checks">
-                ${REQUESTABLE_SCOPES.map((s) => `<label><input type="checkbox" class="scope-cb" value="${s.scope}"${s.default ? ' checked' : ''}> ${escapeHtml(s.label)}</label>`).join('')}
+                ${REQUESTABLE_SCOPES.map((s, i) => `<label><input type="checkbox" class="scope-cb" value="${s.scope}"${i === 0 ? ' checked' : ''}> ${escapeHtml(s.label)}</label>`).join('')}
               </div>
             </div>
             <label>Reason (optional)
@@ -128,18 +121,6 @@ class ArazzoAccessRequestDialog extends ArazzoElement {
     this.$('.cancel').addEventListener('click', () => this.close());
     this.$('dialog').addEventListener('cancel', (e) => { e.preventDefault(); this.close(); });
     this.$('.ok').addEventListener('click', () => this.submit());
-    this.$$('.scope-cb').forEach((cb) => cb.addEventListener('change', () => this.enforceScopeImplications()));
-    this.enforceScopeImplications();
-  }
-
-  /** A prerequisite scope is forced on and locked while any checked scope `requires` it (write ⇒ read). */
-  enforceScopeImplications() {
-    const forced = new Set(
-      REQUESTABLE_SCOPES.filter((s) => s.requires && this.$(`.scope-cb[value="${s.scope}"]`)?.checked).map((s) => s.requires));
-    for (const cb of this.$$('.scope-cb')) {
-      if (forced.has(cb.value)) { cb.checked = true; cb.disabled = true; cb.title = 'Included automatically — you cannot operate on runs you cannot read.'; }
-      else { cb.disabled = false; cb.title = ''; }
-    }
   }
 }
 

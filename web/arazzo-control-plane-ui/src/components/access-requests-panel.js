@@ -19,13 +19,7 @@
 import { ArazzoControlPlaneClient } from '../arazzo-client.js';
 import { ArazzoElement, SHARED_CSS, escapeHtml, absoluteTime, relativeTime, countdown, confirmDialog, define } from './base.js';
 import './workflow-id-input.js';
-
-// The capability scopes a request may ask for. An approval is capped to run access (design §16.5.2), so the
-// submit form offers exactly the run verbs; other capabilities are not requestable through this self-service path.
-const REQUESTABLE_SCOPES = [
-  { scope: 'runs:write', label: 'Trigger / resume / cancel runs (runs:write)' },
-  { scope: 'runs:read', label: 'Read runs (runs:read)' },
-];
+import './access-request-dialog.js';
 
 const STATUS_COLOR = {
   Pending: 'var(--arazzo-status-suspended, #b07d18)',
@@ -146,20 +140,6 @@ class ArazzoAccessRequests extends ArazzoElement {
   }
 
   // ---- mutations --------------------------------------------------------------------------------
-
-  async submit(fields) {
-    const client = this.buildClient();
-    try {
-      const request = await client.submitAccessRequest(fields);
-      this._error = null;
-      this.emit('access-request-submitted', { request });
-      await this.load();
-      return request;
-    } catch (err) {
-      this.showError(err.problem || { title: err.message }, err);
-      return null;
-    }
-  }
 
   async decide(request, action) {
     const client = this.buildClient();
@@ -426,58 +406,16 @@ class ArazzoAccessRequests extends ArazzoElement {
   // ---- dialogs ----------------------------------------------------------------------------------
 
   openSubmitDialog() {
-    const dlg = document.createElement('dialog');
-    dlg.className = 'submit-dialog';
-    dlg.innerHTML = `
-      <form method="dialog">
-        <div class="dhead">Request access</div>
-        <div class="dbody">
-          <label>Workflow
-            <arazzo-workflow-id-input class="sub-wf" placeholder="Workflow id…"></arazzo-workflow-id-input>
-          </label>
-          <div>
-            <div class="sub" style="margin-bottom:6px">Scopes (capped to run access on approval)</div>
-            <div class="checks">
-              ${REQUESTABLE_SCOPES.map((s, i) => `<label><input type="checkbox" class="scope-cb" value="${s.scope}"${i === 0 ? ' checked' : ''}> ${escapeHtml(s.label)}</label>`).join('')}
-            </div>
-          </div>
-          <label>Reason (optional)
-            <textarea class="reason-in" placeholder="Why you need this access…"></textarea>
-          </label>
-          <div class="dur">
-            <label>Duration (hours)
-              <input class="dur-in" type="number" min="1" step="1" placeholder="default">
-            </label>
-            <span class="sub">Absent = the deployment maximum.</span>
-          </div>
-        </div>
-        <div class="dfoot">
-          <button class="cancel ghost" type="button">Cancel</button>
-          <button class="ok primary" type="button">Submit request</button>
-        </div>
-      </form>`;
-    this.shadowRoot.querySelector('[part="panel"]').appendChild(dlg);
-    const wf = dlg.querySelector('.sub-wf');
-    wf.client = this.buildClient();
-    if (this.view === 'queue' && this.baseWorkflowId) wf.value = this.baseWorkflowId;
-    const close = () => { dlg.close(); dlg.remove(); };
-    dlg.querySelector('.cancel').addEventListener('click', close);
-    dlg.addEventListener('cancel', (e) => { e.preventDefault(); close(); });
-    dlg.querySelector('.ok').addEventListener('click', async () => {
-      const baseWorkflowId = wf.value.trim();
-      const requestedScopes = [...dlg.querySelectorAll('.scope-cb')].filter((c) => c.checked).map((c) => c.value);
-      const reason = dlg.querySelector('.reason-in').value.trim() || undefined;
-      const hours = Number(dlg.querySelector('.dur-in').value);
-      const requestedDurationSeconds = hours > 0 ? Math.round(hours * 3600) : undefined;
-      if (!baseWorkflowId || requestedScopes.length === 0) {
-        this.showError({ title: 'A workflow and at least one scope are required.' });
-        return;
-      }
-      const request = await this.submit({ baseWorkflowId, requestedScopes, reason, requestedDurationSeconds });
-      if (request) close();
-    });
-    dlg.showModal();
-    wf.shadowRoot?.querySelector('input')?.focus();
+    let dlg = this.$('arazzo-access-request-dialog');
+    if (!dlg) {
+      dlg = document.createElement('arazzo-access-request-dialog');
+      // The dialog submits and emits access-request-submitted (which bubbles to the host); reload our own list.
+      dlg.addEventListener('access-request-submitted', () => this.load());
+      this.shadowRoot.querySelector('[part="panel"]').appendChild(dlg);
+    }
+    dlg.client = this.buildClient();
+    // In the approver-queue view a workflow is already chosen — prefill it, but still let the requester change it.
+    dlg.open({ baseWorkflowId: this.view === 'queue' ? this.baseWorkflowId : '' });
   }
 
   /** A small approve/deny/make-eligible dialog capturing an optional reason (+ eligibility window). Null = cancelled. */

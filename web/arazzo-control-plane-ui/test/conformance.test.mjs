@@ -165,9 +165,12 @@ test('the contract declares the credential and administration operations', () =>
 
 test('credentials: each client method emits the contract method + templated path + body', async () => {
   const { client, calls } = capturing();
-  await client.listCredentials();
+  await client.listCredentials({ limit: 25, pageToken: 'tok' });
   assert.equal(calls[0].method, OPS.listCredentials.method);
   assert.equal(calls[0].path, OPS.listCredentials.path);
+  for (const key of calls[0].query.keys()) {
+    assert.ok(OPS.listCredentials.queryParams.has(key), `credentials query param '${key}' is declared in the contract`);
+  }
 
   await client.getCredential('petstore', 'production');
   assert.equal(calls[1].method, OPS.getCredential.method);

@@ -73,4 +73,22 @@ describe('<arazzo-credentials-table>', () => {
     el.shadowRoot.querySelector('.new').click();
     await ev;
   });
+
+  it('keyset-pages with "Load more" when the store returns more than one page', async () => {
+    const many = Array.from({ length: 55 }, (_, i) => {
+      const k = String(i).padStart(3, '0');
+      return { id: `cred-src${k}`, sourceName: `src${k}`, environment: 'production', authKind: 'apiKey', secretRefs: [{ name: 'value', ref: `keyvault://kv/secret${k}` }], createdBy: 'demo', createdAt: new Date(0).toISOString(), etag: `"e${k}"` };
+    });
+    const mock = createMockControlPlane({ latencyMs: 0, credentialsSeed: many });
+    el = document.createElement('arazzo-credentials-table');
+    el.client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    equal(rowCount(el), 50, 'first page is one keyset page of 50');
+    const more = el.shadowRoot.querySelector('.foot .more');
+    ok(more, 'a Load more control while more pages remain');
+    more.click();
+    await waitFor(() => rowCount(el) === 55);
+    ok(!el.shadowRoot.querySelector('.foot .more'), 'Load more disappears on the last page');
+  });
 });
