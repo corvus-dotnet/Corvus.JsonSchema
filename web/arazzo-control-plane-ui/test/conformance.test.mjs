@@ -207,3 +207,52 @@ test('administrators: each client method emits the contract method + templated p
   assert.equal(calls[3].path, OPS.transferAdministration.path.replace('{baseWorkflowId}', 'flow'));
   assert.equal(calls[3].body.administrators[0].value, 'acme');
 });
+
+test('the contract declares the access-request operations', () => {
+  for (const id of ['submitAccessRequest', 'listAccessRequests', 'getAccessRequest', 'approveAccessRequest',
+                    'approveAccessRequestAsEligible', 'denyAccessRequest', 'withdrawAccessRequest', 'revokeAccessRequest']) {
+    assert.ok(OPS[id], `operation ${id} present in the OpenAPI document`);
+  }
+});
+
+test('access requests: each client method emits the contract method + templated path + body', async () => {
+  const { client, calls } = capturing();
+  await client.submitAccessRequest({ baseWorkflowId: 'flow', requestedScopes: ['runs:write'], reason: 'on-call', requestedDurationSeconds: 3600 });
+  assert.equal(calls[0].method, OPS.submitAccessRequest.method);
+  assert.equal(calls[0].path, OPS.submitAccessRequest.path);
+  assert.deepEqual(calls[0].body.requestedScopes, ['runs:write']);
+  assert.equal(calls[0].body.requestedDurationSeconds, 3600);
+
+  await client.listAccessRequests({ status: 'Pending', baseWorkflowId: 'flow' });
+  assert.equal(calls[1].method, OPS.listAccessRequests.method);
+  assert.equal(calls[1].path, OPS.listAccessRequests.path);
+  for (const key of calls[1].query.keys()) {
+    assert.ok(OPS.listAccessRequests.queryParams.has(key), `query param '${key}' is declared`);
+  }
+
+  await client.getAccessRequest('req-1');
+  assert.equal(calls[2].method, OPS.getAccessRequest.method);
+  assert.equal(calls[2].path, OPS.getAccessRequest.path.replace('{requestId}', 'req-1'));
+
+  await client.approveAccessRequest('req-1', { reason: 'ok' });
+  assert.equal(calls[3].method, OPS.approveAccessRequest.method);
+  assert.equal(calls[3].path, OPS.approveAccessRequest.path.replace('{requestId}', 'req-1'));
+  assert.equal(calls[3].body.reason, 'ok');
+
+  await client.approveAccessRequestAsEligible('req-1', { reason: 'jit', eligibilityWindowSeconds: 86400 });
+  assert.equal(calls[4].method, OPS.approveAccessRequestAsEligible.method);
+  assert.equal(calls[4].path, OPS.approveAccessRequestAsEligible.path.replace('{requestId}', 'req-1'));
+  assert.equal(calls[4].body.eligibilityWindowSeconds, 86400);
+
+  await client.denyAccessRequest('req-1', { reason: 'no' });
+  assert.equal(calls[5].method, OPS.denyAccessRequest.method);
+  assert.equal(calls[5].path, OPS.denyAccessRequest.path.replace('{requestId}', 'req-1'));
+
+  await client.withdrawAccessRequest('req-1');
+  assert.equal(calls[6].method, OPS.withdrawAccessRequest.method);
+  assert.equal(calls[6].path, OPS.withdrawAccessRequest.path.replace('{requestId}', 'req-1'));
+
+  await client.revokeAccessRequest('req-1');
+  assert.equal(calls[7].method, OPS.revokeAccessRequest.method);
+  assert.equal(calls[7].path, OPS.revokeAccessRequest.path.replace('{requestId}', 'req-1'));
+});

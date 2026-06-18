@@ -533,6 +533,116 @@ export class ArazzoControlPlaneClient {
     return `/administrators/${encodeURIComponent(baseWorkflowId)}`;
   }
 
+  // ---- access requests (§16.5) ------------------------------------------------------------------
+
+  /**
+   * `submitAccessRequest` — request elevated, time-bound access to a workflow. The requesting subject is taken
+   * from the caller (a request can never target a third party). If the caller is eligible to self-elevate exactly
+   * this, the request is auto-approved; otherwise it is created `Pending` an administrator's decision.
+   * @param {{ baseWorkflowId: string, requestedScopes: string[], reason?: string, requestedDurationSeconds?: number, signal?: AbortSignal }} request
+   *   `requestedScopes` must hold at least one scope; an approval grants at most these, capped to run access.
+   * @returns {Promise<object>} The created {@link AccessRequestView}. Throws {@link ProblemError} `400`.
+   */
+  submitAccessRequest(request) {
+    if (!request || !request.baseWorkflowId || !Array.isArray(request.requestedScopes) || request.requestedScopes.length === 0) {
+      throw new TypeError('submitAccessRequest requires a baseWorkflowId and at least one requestedScope.');
+    }
+    const body = { baseWorkflowId: request.baseWorkflowId, requestedScopes: request.requestedScopes };
+    if (request.reason) body.reason = request.reason;
+    if (request.requestedDurationSeconds != null) body.requestedDurationSeconds = request.requestedDurationSeconds;
+    return this._request('POST', '/accessRequests', { body, signal: request.signal });
+  }
+
+  /**
+   * `listAccessRequests` — without `baseWorkflowId`, the caller's own requests; with it, that workflow's request
+   * queue (the caller must be an administrator of it, `403` otherwise). Optionally filtered by `status`.
+   * @param {{ status?: string, baseWorkflowId?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ accessRequests: object[] }>} An {@link AccessRequestList}, oldest first.
+   */
+  async listAccessRequests(query = {}) {
+    const search = new URLSearchParams();
+    if (query.status) search.set('status', query.status);
+    if (query.baseWorkflowId) search.set('baseWorkflowId', query.baseWorkflowId);
+    const result = await this._request('GET', `/accessRequests${qs(search)}`, { signal: query.signal });
+    return { accessRequests: result.accessRequests ?? [] };
+  }
+
+  /**
+   * `getAccessRequest` — a single request. The caller must be its requester or an administrator of its workflow.
+   * @param {string} requestId
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} An {@link AccessRequestView}. Throws {@link ProblemError} `403`/`404`.
+   */
+  getAccessRequest(requestId, opts = {}) {
+    return this._request('GET', this._accessRequestPath(requestId), { signal: opts.signal });
+  }
+
+  /**
+   * `approveAccessRequest` — approve a pending request, writing the capped, time-boxed grant (run access only,
+   * scoped to the workflow). The caller must be an administrator of the target workflow.
+   * @param {string} requestId
+   * @param {{ reason?: string }} [note]
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The updated {@link AccessRequestView}. Throws {@link ProblemError} `400`/`403`/`404`/`409`.
+   */
+  approveAccessRequest(requestId, note = {}, opts = {}) {
+    return this._request('POST', `${this._accessRequestPath(requestId)}/approve`, { body: decisionNote(note), signal: opts.signal });
+  }
+
+  /**
+   * `approveAccessRequestAsEligible` — approve a pending request as durable eligibility (§16.5.3): the requester
+   * may self-elevate it JIT rather than receiving a live grant now. The caller must be an administrator.
+   * @param {string} requestId
+   * @param {{ reason?: string, eligibilityWindowSeconds?: number }} [note] `eligibilityWindowSeconds` bounds how
+   *   long the eligibility lasts; absent means standing eligibility.
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The updated {@link AccessRequestView}. Throws {@link ProblemError} `400`/`403`/`404`/`409`.
+   */
+  approveAccessRequestAsEligible(requestId, note = {}, opts = {}) {
+    const body = decisionNote(note);
+    if (note && note.eligibilityWindowSeconds != null) body.eligibilityWindowSeconds = note.eligibilityWindowSeconds;
+    return this._request('POST', `${this._accessRequestPath(requestId)}/approve-as-eligible`, { body, signal: opts.signal });
+  }
+
+  /**
+   * `denyAccessRequest` — deny a pending request. The caller must be an administrator of the target workflow.
+   * @param {string} requestId
+   * @param {{ reason?: string }} [note]
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The updated {@link AccessRequestView}. Throws {@link ProblemError} `403`/`404`/`409`.
+   */
+  denyAccessRequest(requestId, note = {}, opts = {}) {
+    return this._request('POST', `${this._accessRequestPath(requestId)}/deny`, { body: decisionNote(note), signal: opts.signal });
+  }
+
+  /**
+   * `withdrawAccessRequest` — withdraw a pending request. Only the requester (its own subject) may withdraw it.
+   * @param {string} requestId
+   * @param {{ reason?: string }} [note]
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The updated {@link AccessRequestView}. Throws {@link ProblemError} `403`/`404`/`409`.
+   */
+  withdrawAccessRequest(requestId, note = {}, opts = {}) {
+    return this._request('POST', `${this._accessRequestPath(requestId)}/withdraw`, { body: decisionNote(note), signal: opts.signal });
+  }
+
+  /**
+   * `revokeAccessRequest` — revoke an approved grant early: the entitlement is deleted (access stops at the next
+   * resolution, fail-safe) and the request is marked revoked. The caller must be an administrator.
+   * @param {string} requestId
+   * @param {{ reason?: string }} [note]
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The updated {@link AccessRequestView}. Throws {@link ProblemError} `403`/`404`/`409`.
+   */
+  revokeAccessRequest(requestId, note = {}, opts = {}) {
+    return this._request('POST', `${this._accessRequestPath(requestId)}/revoke`, { body: decisionNote(note), signal: opts.signal });
+  }
+
+  /** @private */
+  _accessRequestPath(requestId) {
+    return `/accessRequests/${encodeURIComponent(requestId)}`;
+  }
+
   // ---- internals --------------------------------------------------------------------------------
 
   /**
@@ -594,6 +704,13 @@ function qs(search) {
 /** Normalise a `Date` or date-ish string to an RFC 3339 / ISO 8601 instant for a query parameter. */
 function toInstant(value) {
   return value instanceof Date ? value.toISOString() : String(value);
+}
+
+/** Build the optional `AccessRequestDecisionNote` body — `{ reason }` when supplied, else an empty object. */
+function decisionNote(note) {
+  const body = {};
+  if (note && note.reason) body.reason = note.reason;
+  return body;
 }
 
 /**
