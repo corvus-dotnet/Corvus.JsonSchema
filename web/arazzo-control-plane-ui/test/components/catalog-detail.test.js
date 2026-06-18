@@ -79,6 +79,38 @@ describe('<arazzo-catalog-detail>', () => {
     ok(!el.shadowRoot.querySelector('.delete'), 'no delete button without catalog:purge');
   });
 
+  it('shows an editable Security (administrators §15) section keyed by the base workflow', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'nightly-reconcile', 'version-number': '1', scopes: 'catalog:read administrators:read administrators:write' });
+    mount(el);
+    const sec = await waitFor(() => el.shadowRoot.querySelector('.security:not([hidden]) arazzo-administrators-panel'));
+    equal(sec.getAttribute('base-workflow-id'), 'nightly-reconcile', 'the admin panel is keyed by the version’s base id');
+    await waitFor(() => sec.shadowRoot.querySelector('.arow')); // the seeded administrator loads
+    ok(!sec.shadowRoot.querySelector('.add').hidden, 'editable with administrators:write');
+    ok(sec.shadowRoot.querySelector('.rm'), 'remove control present when editable');
+  });
+
+  it('keeps the Security section read-only without administrators:write', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'nightly-reconcile', 'version-number': '1', scopes: 'catalog:read' });
+    mount(el);
+    const sec = await waitFor(() => el.shadowRoot.querySelector('.security:not([hidden]) arazzo-administrators-panel'));
+    await waitFor(() => sec.shadowRoot.querySelector('.arow'));
+    ok(sec.shadowRoot.querySelector('.add').hidden, 'add form hidden without administrators:write');
+    ok(!sec.shadowRoot.querySelector('.rm'), 'no remove buttons read-only');
+  });
+
+  it('offers Request access from the catalog entry, locked to this workflow, and emits access-requested', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'nightly-reconcile', 'version-number': '1', scopes: 'catalog:read' });
+    mount(el);
+    const btn = await waitFor(() => el.shadowRoot.querySelector('.request-access'));
+    btn.click();
+    const dlg = await waitFor(() => el.shadowRoot.querySelector('arazzo-access-request-dialog'));
+    ok(dlg.shadowRoot.querySelector('.locked-wf')?.textContent.includes('nightly-reconcile'), 'the dialog is locked to this workflow');
+    const requested = nextEvent(el, 'access-requested');
+    dlg.shadowRoot.querySelector('.ok').click();
+    const e = await requested;
+    equal(e.detail.request.baseWorkflowId, 'nightly-reconcile', 'emits access-requested for the workflow');
+  });
+
   it('obsoletes an active version and emits version-changed', async () => {
     el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read catalog:write' });
     mount(el);

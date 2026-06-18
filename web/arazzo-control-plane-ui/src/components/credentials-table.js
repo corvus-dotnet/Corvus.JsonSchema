@@ -13,6 +13,9 @@
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, absoluteTime, countdown, define } from './base.js';
 
+// One keyset page fetched at a time; the store pages server-side and "Load more" appends the next page.
+const PAGE_SIZE = 50;
+
 const STATUS = {
   valid: { label: 'valid', color: 'var(--arazzo-status-completed, #2a8a4a)' },
   expiringSoon: { label: 'expiring soon', color: 'var(--arazzo-status-suspended, #b07d18)' },
@@ -89,17 +92,43 @@ class ArazzoCredentialsTable extends ArazzoElement {
     const seq = ++this._reqSeq;
     this._loading = true;
     this._error = null;
+    this._bindings = [];
+    this._nextPageToken = null;
     this.renderBody();
 
     try {
-      const { credentials } = await client.listCredentials();
+      const { credentials, nextPageToken } = await client.listCredentials({ limit: PAGE_SIZE });
       if (seq !== this._reqSeq) return;
       this._bindings = credentials;
+      this._nextPageToken = nextPageToken;
       this._loading = false;
       this.renderBody();
     } catch (err) {
       if (seq !== this._reqSeq) return;
       this._loading = false;
+      this._error = err.problem || { title: err.message };
+      this.renderBody();
+      this.emit('error', { problem: this._error, error: err });
+    }
+  }
+
+  /** Append the next keyset page (the store pages server-side; this never re-fetches the loaded ones). */
+  async loadMore() {
+    const client = this.client;
+    if (!client || !this._nextPageToken || this._loadingMore) return;
+    const seq = this._reqSeq;
+    this._loadingMore = true;
+    this.renderFoot(0, 0);
+    try {
+      const { credentials, nextPageToken } = await client.listCredentials({ limit: PAGE_SIZE, pageToken: this._nextPageToken });
+      if (seq !== this._reqSeq) return; // a fresh load() superseded this page
+      this._bindings = [...this._bindings, ...credentials];
+      this._nextPageToken = nextPageToken;
+      this._loadingMore = false;
+      this.renderBody();
+    } catch (err) {
+      if (seq !== this._reqSeq) return;
+      this._loadingMore = false;
       this._error = err.problem || { title: err.message };
       this.renderBody();
       this.emit('error', { problem: this._error, error: err });
@@ -247,10 +276,14 @@ class ArazzoCredentialsTable extends ArazzoElement {
     if (!foot) return;
     if (this._loading) { foot.textContent = 'Loading…'; return; }
     const total = this.visibleBindings().length;
-    const parts = [`${total} binding${total === 1 ? '' : 's'}`];
+    const parts = [`${total} binding${total === 1 ? '' : 's'}${this._nextPageToken ? '+' : ''}`];
     if (expiring > 0) parts.push(`<span class="pill amber">${expiring} expiring soon</span>`);
     if (expired > 0) parts.push(`<span class="pill red">${expired} expired</span>`);
-    foot.innerHTML = parts.join(' · ');
+    const more = this._nextPageToken
+      ? ` <button class="more ghost" type="button"${this._loadingMore ? ' disabled' : ''}>${this._loadingMore ? 'Loading…' : 'Load more'}</button>`
+      : '';
+    foot.innerHTML = parts.join(' · ') + more;
+    foot.querySelector('.more')?.addEventListener('click', () => this.loadMore());
   }
 
   /** Select a binding by `source@environment` (highlights the row and emits `credential-selected`). */

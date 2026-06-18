@@ -42,10 +42,11 @@ describe('<arazzo-access-requests>', () => {
     mount(el);
     await nextEvent(el, 'loaded');
     el.shadowRoot.querySelector('.new').click();
-    const dlg = await waitFor(() => el.shadowRoot.querySelector('.submit-dialog'));
-    dlg.querySelector('.sub-wf').value = 'nightly-reconcile';
+    // The submit form is the shared <arazzo-access-request-dialog>, with its own shadow root.
+    const dlg = await waitFor(() => el.shadowRoot.querySelector('arazzo-access-request-dialog'));
+    dlg.shadowRoot.querySelector('.sub-wf').value = 'nightly-reconcile';
     const submitted = nextEvent(el, 'access-request-submitted');
-    dlg.querySelector('.ok').click();
+    dlg.shadowRoot.querySelector('.ok').click();
     const e = await submitted;
     equal(e.detail.request.baseWorkflowId, 'nightly-reconcile', 'the new request targets the chosen workflow');
     await waitFor(() => rows(el).length === 4);

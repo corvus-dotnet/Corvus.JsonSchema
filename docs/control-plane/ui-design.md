@@ -451,3 +451,50 @@ builds matches the spec, so the JS client and the generated .NET client can't dr
 4. **Packaging step (optional, later)** — ship as loose ESM only, or *also* publish a single concatenated
    `arazzo-kit.min.js` for one-tag adoption. *Recommendation: loose ESM now; add the concat build only if
    asked.*
+
+## Planned work — review feedback (agreed order: #2 → #1 → #5, plus #6)
+
+**Status:** #2 done · #6 done · #1 done (store-level keyset pagination across all 10 backends + handler + spec +
+regen + JS client/table/mock + conformance; in-process backends InMemory/SQLite validated, container backends
+compile and await the podman conformance pass) · #5 next. Per-backend tie-breaker: the tag *discriminator* column
+for SQLite/Postgres/Mongo(`_id.t`)/Redis/NATS/AzureStorage; the indexed `TagsHash` for SqlServer/MySql (Tags is
+unindexable there); Cosmos orders `(sourceName, environment)` server-side and resolves the discriminator tie-break
+in-memory (no stored discriminator property). The continuation token is opaque + backend-scoped, so each backend
+keysets on whatever it can order.
+
+
+From a UI review of the source-credential + governance surfaces. The governing IA decision: **the per-workflow
+detail page is the governance hub** — a workflow's administrators (§15) and its source credential bindings (§13)
+live *on the workflow*, not in standalone, deployment-wide tabs.
+
+1. **#2 — Administrators move onto the workflow detail (DONE first).** The standalone "Administrators" tab (with
+   a workflow dropdown that does not scale) is removed; the §15 administrator set is an authz-gated **Security**
+   section on `<arazzo-catalog-detail>`, keyed by the version's `baseWorkflowId`, editable only with
+   `administrators:write` (read-only / `403` otherwise — the panel already degrades).
+2. **#1 — Pagination for the Sources (`/credentials`) list — IN THE STORES (keyset).** Unlike Runs/Catalog (which
+   keyset-page in the store), `/credentials` returns everything in one call; at the thousands-to-millions of
+   bindings a deployment accrues over time that does not scale. **Design decision (corrected) — pagination is
+   pushed into every backend, not layered in the handler.** Reach is evaluated in-memory, but it is a *per-row
+   predicate*, so each backend does the standard keyset **scan-and-filter-until-the-page-is-full**: seek past the
+   cursor (`WHERE (sourceName, environment, discriminator) > @cursor ORDER BY … LIMIT batch`, an indexed range
+   seek), stream rows applying the reach predicate, stop once `limit` pass, and emit a `nextPageToken` = the last
+   included row's key. This reads ≈ `limit / selectivity` rows per page, not the whole table; handler-level
+   load-all-then-slice would be O(N) per page / O(N²) to traverse. Changes: `ISourceCredentialStore` list becomes
+   paged (`limit` + `pageToken` → page + `nextPageToken`; recommend changing `ListAsync` — the list endpoint is
+   its only consumer); **all 10 backends** (InMemory, SQLite, Postgres, SqlServer, MySql, Mongo, Cosmos, Redis,
+   NATS, AzureStorage) order by the **logical** key `(sourceName, environment, discriminator)` — for the hash-PK
+   backends (SqlServer/MySql), order on the real columns/discriminator, **not** the tag hash, so order + token are
+   consistent; `SourceCredentialStoreConformance` gains pagination cases (boundaries, stable order, reach
+   interaction, token round-trip); OpenAPI (`limit` + `pageToken` query, `nextPageToken` on `CredentialBindingList`)
+   + regenerate stubs + handler threads it through + JS client + `<arazzo-credentials-table>` + mock.
+6. **#6 — Request access from the catalog entry (new).** On the workflow's catalog detail (the governance hub),
+   add a **Request access** action opening the §16.5 submit flow pre-filled with that `baseWorkflowId`, so an
+   operator can request run access to a workflow directly where they are looking at it.
+3. **#5 — Source bindings in the New Workflow dialog.** When a version is added, its package declares named
+   sources; the add dialog lets the operator set up a credential binding per source (reusing the auth-kind-driven
+   slot UI) and creates them via `/credentials` after the version lands — completing the per-workflow governance
+   hub (Security + Sources together).
+
+Also captured as work items: **mTLS source credentials** (design §13.1) and the **per-kind guided Config** fields
+(the non-secret config each auth kind reads — `apiKey` header-name/location, `basic` username, `oauth2`
+tokenUrl/clientId/scope), the analogue of the guided `secretRef` slots.
