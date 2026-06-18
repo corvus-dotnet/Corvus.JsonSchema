@@ -9,21 +9,23 @@
 // Parts      : panel, tabs, toolbar, table, row
 //
 // Two views over the same identity-gated API:
-//   • "My requests" — GET /accessRequests?scope=mine returns the caller's own; submit a new request, or withdraw a
-//     pending one.
-//   • "Approver queue" — an INBOX of everything the caller can act on: GET /accessRequests?scope=queue returns every
-//     request across the workflows the caller administers (§15.4 reverse index), defaulting to Pending (the actionable
-//     to-do), oldest-first. Status and a single workflow are OPTIONAL filters, never a gate — choosing a workflow
-//     switches to GET /accessRequests?baseWorkflowId=… (that one workflow's queue; 403 if not its administrator, shown
-//     as a plain banner). Approve / approve-as-eligible / deny a pending request; revoke an approved grant.
-// Both views page with explicit Prev/Next keyset pagination (server-side status filter) rather than loading the whole queue.
+//   • "My requests" — GET /accessRequests (no workflow) returns the caller's own; submit a new request, or
+//     withdraw a pending one.
+//   • "Approver queue" — GET /accessRequests?baseWorkflowId=… returns that workflow's queue (the caller must
+//     administer it, 403 otherwise, shown as a plain banner). Approve / approve-as-eligible / deny a pending
+//     request; revoke an approved grant.
 // Capability is never ambient (§16.5.3): a grant is what lets a principal act, and only on the workflow it names.
 
 import { ArazzoControlPlaneClient } from '../arazzo-client.js';
-import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, absoluteTime, relativeTime, countdown, confirmDialog, define } from './base.js';
-import './pager.js';
+import { ArazzoElement, SHARED_CSS, escapeHtml, absoluteTime, relativeTime, countdown, confirmDialog, define } from './base.js';
 import './workflow-id-input.js';
-import './access-request-dialog.js';
+
+// The capability scopes a request may ask for. An approval is capped to run access (design §16.5.2), so the
+// submit form offers exactly the run verbs; other capabilities are not requestable through this self-service path.
+const REQUESTABLE_SCOPES = [
+  { scope: 'runs:write', label: 'Trigger / resume / cancel runs (runs:write)' },
+  { scope: 'runs:read', label: 'Read runs (runs:read)' },
+];
 
 const STATUS_COLOR = {
   Pending: 'var(--arazzo-status-suspended, #b07d18)',
@@ -38,7 +40,7 @@ const STATUS_FILTERS = ['', 'Pending', 'Approved', 'Eligible', 'Denied', 'Withdr
 
 class ArazzoAccessRequests extends ArazzoElement {
   static get observedAttributes() {
-    return ['base-url', 'view', 'base-workflow-id', 'theme', 'page-size'];
+    return ['base-url', 'view', 'base-workflow-id', 'theme'];
   }
 
   constructor() {
@@ -48,43 +50,28 @@ class ArazzoAccessRequests extends ArazzoElement {
     /** @private */ this._requests = [];
     /** @private */ this._loading = false;
     /** @private */ this._error = null;
-    // null = "use the view's default status" (Pending for the approver inbox — the actionable to-do; all for My requests).
-    /** @private */ this._statusFilter = null;
-    /** @private */ this._history = [];          // pageTokens of pages before the current one
-    /** @private */ this._currentToken = undefined;
-    /** @private */ this._nextPageToken = null;
-    /** @private */ this._query = {};
+    /** @private */ this._statusFilter = '';
     /** @private */ this._reqSeq = 0;
   }
 
   connectedCallback() {
     this.renderShell();
-    this.reload();
+    this.load();
   }
 
-  attributeChangedCallback(name, oldValue, newValue) {
+  attributeChangedCallback(name) {
     if (!this.isConnected) return;
-    if (name === 'base-url') { this._client = undefined; this.reload(); }
-    else if (name === 'base-workflow-id') { if (this.view === 'queue') this.reload(); }
-    else if (name === 'view' && oldValue !== newValue) {
-      // Switching tabs resets the status filter to the new view's default (Pending for the inbox, all for mine).
-      this._statusFilter = null;
-      this.renderShell();
-      this.reload();
-    }
-    else { this.renderShell(); this.reload(); }
+    if (name === 'base-url') { this._client = undefined; this.load(); }
+    else if (name === 'base-workflow-id') { if (this.view === 'queue') this.load(); }
+    else { this.renderShell(); this.load(); }
   }
 
   /** A `fetch`-compatible override (the BFF cookie/CSRF fetch); rebuilds the client. */
-  set fetch(fn) { this._fetch = fn; this._client = undefined; if (this.isConnected) this.reload(); }
+  set fetch(fn) { this._fetch = fn; this._client = undefined; if (this.isConnected) this.load(); }
 
   /** A function returning the `Authorization` header value (when not using a cookie `fetch`). */
-  set authProvider(fn) { this._authProvider = fn; this._client = undefined; if (this.isConnected) this.reload(); }
+  set authProvider(fn) { this._authProvider = fn; this._client = undefined; if (this.isConnected) this.load(); }
   get authProvider() { return this._authProvider; }
-
-  get pageSize() {
-    return Number(this.getAttribute('page-size')) || 50;
-  }
 
   get view() {
     return this.getAttribute('view') === 'queue' ? 'queue' : 'mine';
@@ -112,32 +99,9 @@ class ArazzoAccessRequests extends ArazzoElement {
     return this._client;
   }
 
-  requestRender() { this.reload(); }
+  requestRender() { this.load(); }
 
-  refresh() { this.reload(); }
-
-  /** The status filter actually in effect: the explicit choice, or the view default (Pending for the inbox, all for mine). */
-  effectiveStatus() {
-    return this._statusFilter ?? (this.view === 'queue' ? 'Pending' : '');
-  }
-
-  /** The server query for the current view + filters (status server-side; the approver inbox is scope=queue unless a
-   *  single workflow is chosen, which narrows to that workflow's admin-checked queue). */
-  buildQuery() {
-    const query = this.view === 'queue'
-      ? (this.baseWorkflowId ? { baseWorkflowId: this.baseWorkflowId } : { scope: 'queue' })
-      : { scope: 'mine' };
-    const status = this.effectiveStatus();
-    if (status) query.status = status;
-    return query;
-  }
-
-  /** Reload from page 1 (resets the keyset cursor). Every view/filter change and every mutation lands here. */
-  reload() {
-    this._history = [];
-    this._currentToken = undefined;
-    this.load();
-  }
+  refresh() { this.load(); }
 
   async load() {
     const client = this.buildClient();
@@ -147,23 +111,27 @@ class ArazzoAccessRequests extends ArazzoElement {
       return;
     }
 
+    // The approver queue is per-workflow; without one chosen there is nothing to fetch.
+    if (this.view === 'queue' && !this.baseWorkflowId) {
+      this._requests = [];
+      this._error = null;
+      this._loading = false;
+      this.renderBody();
+      return;
+    }
+
     const seq = ++this._reqSeq;
     this._loading = true;
     this._error = null;
-    this._nextPageToken = null;
-    // The static server query (view + server-side status filter); the keyset cursor is passed explicitly, never stored in it.
-    this._query = this.buildQuery();
     this.renderBody();
     try {
-      // One keyset page; Prev/Next walk the cursor. Status is filtered server-side, so a page never hides matches on a later
-      // page (the old client-side status filter over an accumulate-all read could).
-      const page = await client.listAccessRequests({ ...this._query, pageToken: this._currentToken, limit: this.pageSize });
+      const query = this.view === 'queue' ? { baseWorkflowId: this.baseWorkflowId } : {};
+      const { accessRequests } = await client.listAccessRequests(query);
       if (seq !== this._reqSeq) return;
-      this._requests = page.accessRequests;
-      this._nextPageToken = page.nextPageToken;
+      this._requests = accessRequests;
       this._loading = false;
       this.renderBody();
-      this.emit('loaded', { count: this._requests.length, view: this.view, hasMore: !!this._nextPageToken });
+      this.emit('loaded', { count: accessRequests.length, view: this.view });
     } catch (err) {
       if (seq !== this._reqSeq) return;
       this._loading = false;
@@ -173,20 +141,25 @@ class ArazzoAccessRequests extends ArazzoElement {
     }
   }
 
-  nextPage() {
-    if (!this._nextPageToken) return;
-    this._history.push(this._currentToken);
-    this._currentToken = this._nextPageToken;
-    this.load();
-  }
-
-  prevPage() {
-    if (this._history.length === 0) return;
-    this._currentToken = this._history.pop();
-    this.load();
+  visibleRequests() {
+    return this._statusFilter ? this._requests.filter((r) => r.status === this._statusFilter) : this._requests;
   }
 
   // ---- mutations --------------------------------------------------------------------------------
+
+  async submit(fields) {
+    const client = this.buildClient();
+    try {
+      const request = await client.submitAccessRequest(fields);
+      this._error = null;
+      this.emit('access-request-submitted', { request });
+      await this.load();
+      return request;
+    } catch (err) {
+      this.showError(err.problem || { title: err.message }, err);
+      return null;
+    }
+  }
 
   async decide(request, action) {
     const client = this.buildClient();
@@ -204,7 +177,7 @@ class ArazzoAccessRequests extends ArazzoElement {
       const updated = await call(note);
       this._error = null;
       this.emit('access-request-decided', { request: updated, action });
-      await this.reload();
+      await this.load();
     } catch (err) {
       this.showError(err.problem || { title: err.message }, err);
     }
@@ -267,7 +240,7 @@ class ArazzoAccessRequests extends ArazzoElement {
         .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
         @keyframes pulse { 50% { opacity: 0.45; } }
         .err { margin: 10px 12px; }
-        ${PAGER_CSS}
+        .foot { display: flex; align-items: center; gap: 12px; padding: 9px 12px; background: var(--_surface); border-top: 1px solid var(--_border); font-size: 12px; color: var(--_muted); }
         dialog { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); padding: 0; width: min(480px, 94vw); }
         dialog::backdrop { background: rgba(0,0,0,0.4); }
         dialog .dhead { padding: 14px 16px; font-weight: 700; border-bottom: 1px solid var(--_border); }
@@ -293,14 +266,12 @@ class ArazzoAccessRequests extends ArazzoElement {
             <thead></thead>
             <tbody part="rows"></tbody>
           </table>
-          <arazzo-pager class="pager" part="foot"></arazzo-pager>
+          <div class="foot" part="foot"></div>
         </div>
       </div>
     `;
     this.$('.tab-mine').addEventListener('click', () => { if (this.view !== 'mine') this.view = 'mine'; });
     this.$('.tab-queue').addEventListener('click', () => { if (this.view !== 'queue') this.view = 'queue'; });
-    this.$('arazzo-pager').addEventListener('prev', () => this.prevPage());
-    this.$('arazzo-pager').addEventListener('next', () => this.nextPage());
     this.renderToolbar();
     this.renderHead();
   }
@@ -308,9 +279,8 @@ class ArazzoAccessRequests extends ArazzoElement {
   renderToolbar() {
     const toolbar = this.$('.toolbar');
     if (!toolbar) return;
-    const current = this.effectiveStatus();
     const statusOptions = STATUS_FILTERS.map((s) =>
-      `<option value="${s}"${s === current ? ' selected' : ''}>${s || 'all statuses'}</option>`).join('');
+      `<option value="${s}"${s === this._statusFilter ? ' selected' : ''}>${s || 'all statuses'}</option>`).join('');
     if (this.view === 'mine') {
       toolbar.innerHTML = `
         <button class="new primary" type="button">Request access…</button>
@@ -319,9 +289,8 @@ class ArazzoAccessRequests extends ArazzoElement {
         <button class="refresh ghost" type="button" title="Refresh">↻</button>`;
       this.$('.new').addEventListener('click', () => this.openSubmitDialog());
     } else {
-      // The approver inbox: a single workflow is an OPTIONAL filter (absent = every workflow you administer), never a gate.
       toolbar.innerHTML = `
-        <arazzo-workflow-id-input class="wf" placeholder="All workflows you administer"></arazzo-workflow-id-input>
+        <arazzo-workflow-id-input class="wf" placeholder="Workflow you administer…"></arazzo-workflow-id-input>
         <span class="grow"></span>
         <label class="sub">Status <select class="status">${statusOptions}</select></label>
         <button class="refresh ghost" type="button" title="Refresh">↻</button>`;
@@ -334,9 +303,8 @@ class ArazzoAccessRequests extends ArazzoElement {
         this._wfTimer = setTimeout(() => { this.baseWorkflowId = value; }, 300);
       });
     }
-    // Status is a server-side filter now, so a change reloads from page 1 (it cannot just re-filter a partial page).
-    this.$('.status').addEventListener('change', (e) => { this._statusFilter = e.target.value; this.reload(); });
-    this.$('.refresh').addEventListener('click', () => this.reload());
+    this.$('.status').addEventListener('change', (e) => { this._statusFilter = e.target.value; this.renderBody(); });
+    this.$('.refresh').addEventListener('click', () => this.load());
   }
 
   renderHead() {
@@ -344,40 +312,13 @@ class ArazzoAccessRequests extends ArazzoElement {
     if (!thead) return;
     thead.innerHTML = this.view === 'mine'
       ? '<tr><th>Workflow</th><th>Scopes</th><th>Status</th><th>Requested</th><th>Expires</th><th></th></tr>'
-      : '<tr><th>Workflow</th><th>Requester</th><th>Scopes</th><th>Status</th><th>Requested</th><th>Decision</th><th></th></tr>';
-  }
-
-  /** The number of table columns for the current view (My requests: 6; the approver inbox adds a Workflow column: 7). */
-  columnCount() {
-    return this.view === 'mine' ? 6 : 7;
-  }
-
-  /** A contextual empty-state message for the current view + filters. */
-  emptyMessage() {
-    const status = this.effectiveStatus();
-    if (this.view === 'mine') {
-      return status
-        ? `You have no ${status.toLowerCase()} requests.`
-        : 'You have no access requests. Use “Request access…” to ask for run access to a workflow.';
-    }
-    if (this.baseWorkflowId) {
-      return status
-        ? `No ${status.toLowerCase()} requests for ‘${this.baseWorkflowId}’.`
-        : `No access requests for ‘${this.baseWorkflowId}’.`;
-    }
-    // The inbox: a positive "inbox zero" when nothing is pending, else a plain no-match for a broader filter.
-    return status === 'Pending'
-      ? '🎉 You’re all caught up — no pending requests across the workflows you administer.'
-      : status
-        ? `No ${status.toLowerCase()} requests across the workflows you administer.`
-        : 'No access requests across the workflows you administer.';
+      : '<tr><th>Requester</th><th>Scopes</th><th>Status</th><th>Requested</th><th>Decision</th><th></th></tr>';
   }
 
   renderBody() {
     const tbody = this.$('tbody');
     if (!tbody) return;
     this.renderHead();
-    const cols = this.columnCount();
 
     const err = this.$('.err');
     if (err) {
@@ -387,18 +328,28 @@ class ArazzoAccessRequests extends ArazzoElement {
     }
 
     if (this._loading && this._requests.length === 0) {
-      tbody.innerHTML = Array.from({ length: 3 }, () => `<tr>${'<td><div class="skl"></div></td>'.repeat(cols)}</tr>`).join('');
+      tbody.innerHTML = Array.from({ length: 3 }, () => `<tr>${'<td><div class="skl"></div></td>'.repeat(6)}</tr>`).join('');
       this.renderFoot();
       return;
     }
 
-    if (this._requests.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="${cols}"><div class="empty">${escapeHtml(this.emptyMessage())}</div></td></tr>`;
+    if (this.view === 'queue' && !this.baseWorkflowId) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty">Choose a workflow you administer to see its access-request queue.</div></td></tr>`;
       this.renderFoot();
       return;
     }
 
-    tbody.innerHTML = this._requests.map((r) => this.view === 'mine' ? this.renderMineRow(r) : this.renderQueueRow(r)).join('');
+    const rows = this.visibleRequests();
+    if (rows.length === 0) {
+      const msg = this.view === 'mine'
+        ? 'You have no access requests. Use “Request access…” to ask for run access to a workflow.'
+        : 'No access requests for this workflow match the current filter.';
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty">${escapeHtml(msg)}</div></td></tr>`;
+      this.renderFoot();
+      return;
+    }
+
+    tbody.innerHTML = rows.map((r) => this.view === 'mine' ? this.renderMineRow(r) : this.renderQueueRow(r)).join('');
     this.wireRowActions();
     this.renderFoot();
   }
@@ -436,7 +387,6 @@ class ArazzoAccessRequests extends ArazzoElement {
     }
     return `
       <tr part="row" data-id="${escapeHtml(r.id)}">
-        <td><span class="wf-id">${escapeHtml(r.baseWorkflowId)}</span></td>
         <td><span class="who">${escapeHtml(r.requesterLabel || r.subjectClaimValue)}</span><div class="sub">${escapeHtml(r.subjectClaimType)}=${escapeHtml(r.subjectClaimValue)}</div>${r.reason ? `<div class="reason">${escapeHtml(r.reason)}</div>` : ''}</td>
         <td>${this.scopeChips(r.requestedScopes)}</td>
         <td>${this.statusBadge(r)}</td>
@@ -463,35 +413,71 @@ class ArazzoAccessRequests extends ArazzoElement {
   }
 
   renderFoot() {
-    let info;
-    if (this._loading) {
-      info = 'Loading…';
-    } else {
-      // The keyset page count is not a total; show what's on this page, with a Prev/Next pager over the store cursor. When
-      // the status filter is not Pending, surface the pending count among the shown rows as the actionable subset.
-      const total = this._requests.length;
-      const paged = this._history.length > 0 || this._nextPageToken;
-      const parts = [`${total} request${total === 1 ? '' : 's'}${paged ? ` · page ${this._history.length + 1}` : ''}`];
-      const pending = this.effectiveStatus() !== 'Pending' ? this._requests.filter((r) => r.status === 'Pending').length : 0;
-      if (pending > 0) parts.push(`${pending} pending`);
-      info = escapeHtml(parts.join(' · '));
-    }
-    this.$('arazzo-pager')?.update({ hasPrev: this._history.length > 0, hasNext: !!this._nextPageToken, loading: this._loading, info });
+    const foot = this.$('.foot');
+    if (!foot) return;
+    if (this._loading) { foot.textContent = 'Loading…'; return; }
+    const total = this.visibleRequests().length;
+    const pending = this.visibleRequests().filter((r) => r.status === 'Pending').length;
+    const parts = [`${total} request${total === 1 ? '' : 's'}`];
+    if (pending > 0) parts.push(`${pending} pending`);
+    foot.textContent = parts.join(' · ');
   }
 
   // ---- dialogs ----------------------------------------------------------------------------------
 
   openSubmitDialog() {
-    let dlg = this.$('arazzo-access-request-dialog');
-    if (!dlg) {
-      dlg = document.createElement('arazzo-access-request-dialog');
-      // The dialog submits and emits access-request-submitted (which bubbles to the host); reload our own list from page 1.
-      dlg.addEventListener('access-request-submitted', () => this.reload());
-      this.shadowRoot.querySelector('[part="panel"]').appendChild(dlg);
-    }
-    dlg.client = this.buildClient();
-    // In the approver-queue view a workflow is already chosen — prefill it, but still let the requester change it.
-    dlg.open({ baseWorkflowId: this.view === 'queue' ? this.baseWorkflowId : '' });
+    const dlg = document.createElement('dialog');
+    dlg.className = 'submit-dialog';
+    dlg.innerHTML = `
+      <form method="dialog">
+        <div class="dhead">Request access</div>
+        <div class="dbody">
+          <label>Workflow
+            <arazzo-workflow-id-input class="sub-wf" placeholder="Workflow id…"></arazzo-workflow-id-input>
+          </label>
+          <div>
+            <div class="sub" style="margin-bottom:6px">Scopes (capped to run access on approval)</div>
+            <div class="checks">
+              ${REQUESTABLE_SCOPES.map((s, i) => `<label><input type="checkbox" class="scope-cb" value="${s.scope}"${i === 0 ? ' checked' : ''}> ${escapeHtml(s.label)}</label>`).join('')}
+            </div>
+          </div>
+          <label>Reason (optional)
+            <textarea class="reason-in" placeholder="Why you need this access…"></textarea>
+          </label>
+          <div class="dur">
+            <label>Duration (hours)
+              <input class="dur-in" type="number" min="1" step="1" placeholder="default">
+            </label>
+            <span class="sub">Absent = the deployment maximum.</span>
+          </div>
+        </div>
+        <div class="dfoot">
+          <button class="cancel ghost" type="button">Cancel</button>
+          <button class="ok primary" type="button">Submit request</button>
+        </div>
+      </form>`;
+    this.shadowRoot.querySelector('[part="panel"]').appendChild(dlg);
+    const wf = dlg.querySelector('.sub-wf');
+    wf.client = this.buildClient();
+    if (this.view === 'queue' && this.baseWorkflowId) wf.value = this.baseWorkflowId;
+    const close = () => { dlg.close(); dlg.remove(); };
+    dlg.querySelector('.cancel').addEventListener('click', close);
+    dlg.addEventListener('cancel', (e) => { e.preventDefault(); close(); });
+    dlg.querySelector('.ok').addEventListener('click', async () => {
+      const baseWorkflowId = wf.value.trim();
+      const requestedScopes = [...dlg.querySelectorAll('.scope-cb')].filter((c) => c.checked).map((c) => c.value);
+      const reason = dlg.querySelector('.reason-in').value.trim() || undefined;
+      const hours = Number(dlg.querySelector('.dur-in').value);
+      const requestedDurationSeconds = hours > 0 ? Math.round(hours * 3600) : undefined;
+      if (!baseWorkflowId || requestedScopes.length === 0) {
+        this.showError({ title: 'A workflow and at least one scope are required.' });
+        return;
+      }
+      const request = await this.submit({ baseWorkflowId, requestedScopes, reason, requestedDurationSeconds });
+      if (request) close();
+    });
+    dlg.showModal();
+    wf.shadowRoot?.querySelector('input')?.focus();
   }
 
   /** A small approve/deny/make-eligible dialog capturing an optional reason (+ eligibility window). Null = cancelled. */

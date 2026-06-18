@@ -46,6 +46,7 @@
     <div class="tabs" role="tablist">
       <button id="tab-runs" role="tab" aria-selected="true" aria-controls="view-runs">Runs</button>
       <button id="tab-catalog" role="tab" aria-selected="false" aria-controls="view-catalog">Catalog</button>
+      <button id="tab-access" role="tab" aria-selected="false" aria-controls="view-access">Access</button>
     </div>
 
     <div id="view-runs" role="tabpanel">
@@ -54,6 +55,10 @@
 
     <div id="view-catalog" role="tabpanel" hidden>
       <arazzo-catalog base-url="/arazzo/v1" scopes="catalog:read catalog:write catalog:purge" theme="auto"></arazzo-catalog>
+    </div>
+
+    <div id="view-access" role="tabpanel" hidden>
+      <arazzo-access-requests base-url="/arazzo/v1" theme="auto"></arazzo-access-requests>
     </div>
 
     <p class="note">
@@ -66,9 +71,11 @@
   <script type="module">
     import '/ui/src/arazzo-control-plane.js';
     import '/ui/src/arazzo-catalog.js';
+    import '/ui/src/components/access-requests-panel.js';
 
     const panel = document.querySelector('arazzo-control-plane');
     const catalog = document.querySelector('arazzo-catalog');
+    const access = document.querySelector('arazzo-access-requests');
 
     // BFF auth (§16.3). When the host runs with authorization on, an API 401 means "not signed in" — bounce the
     // browser to /login (the OIDC challenge). When the host runs open (the default), the API returns 200 and
@@ -85,6 +92,7 @@
     };
     panel.fetch = authFetch;
     catalog.fetch = authFetch;
+    access.fetch = authFetch;
 
     // Sign-in bar: show who is signed in (from /me) with a sign-out, or a sign-in link; hidden when auth is off.
     const authEl = document.getElementById('auth');
@@ -121,6 +129,7 @@
     const applyTheme = (v) => {
       panel.setAttribute('theme', v);
       catalog.setAttribute('theme', v);
+      access.setAttribute('theme', v);
       if (v === 'auto') document.documentElement.removeAttribute('data-theme');
       else document.documentElement.setAttribute('data-theme', v);
     };
@@ -129,8 +138,8 @@
     applyTheme(themeSel.value);
 
     // Tabs.
-    const tabs = { runs: document.getElementById('tab-runs'), catalog: document.getElementById('tab-catalog') };
-    const views = { runs: document.getElementById('view-runs'), catalog: document.getElementById('view-catalog') };
+    const tabs = { runs: document.getElementById('tab-runs'), catalog: document.getElementById('tab-catalog'), access: document.getElementById('tab-access') };
+    const views = { runs: document.getElementById('view-runs'), catalog: document.getElementById('view-catalog'), access: document.getElementById('view-access') };
     const selectTab = (name) => {
       for (const key of Object.keys(tabs)) {
         tabs[key].setAttribute('aria-selected', String(key === name));
@@ -139,6 +148,7 @@
     };
     tabs.runs.addEventListener('click', () => selectTab('runs'));
     tabs.catalog.addEventListener('click', () => selectTab('catalog'));
+    tabs.access.addEventListener('click', () => selectTab('access'));
   </script>
 </body>
 </html>
