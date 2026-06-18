@@ -534,6 +534,27 @@ any control-plane response.
   plane and the durability stores still never hold a resolver, and a scheme with no registered resolver still
   fails closed.
 
+> **Work item — mTLS source credentials (NOT yet implemented; required before this epic closes).** The `kind`
+> enumeration above lists `mtls`, but it is **not built**: `SourceCredentialKind` has only `ApiKey`/`Bearer`/
+> `Basic`/`OAuth2ClientCredentials`, `SourceCredentialKindExtensions.Parse` *throws* on `"mtls"` (so a binding
+> with `authKind: mtls` is rejected `400`), and `SourceCredentialProviderFactory.CreateAsync` falls through to
+> `_ => throw "Unsupported source credential kind"`. Every other supported kind resolves **exactly one** secret
+> reference (`apiKey`/`bearer` → `value`, `basic` → `password`, `oauth2ClientCredentials` → `clientSecret`); mTLS
+> is the one kind that genuinely needs **more than one** secret slot (a client **certificate**, plus a **private
+> key**/passphrase where they are separate). The slice to implement:
+> 1. add `SourceCredentialKind.Mtls` (+ `"mtls"` JSON token, `Parse`/`ToJsonToken`);
+> 2. add a multi-secret branch to `SourceCredentialProviderFactory` resolving the certificate (and key/passphrase)
+>    roles into a client-certificate `IHttpAuthenticationProvider` / `HttpClientHandler.ClientCertificates` wiring
+>    (the existing AsyncApi `CertificateAuthenticationProvider` reads a base64 PFX + optional password — reuse the
+>    shape, but via §13 secret **references**, never inline);
+> 3. extend the §13 conformance to cover it; surface it in the control-plane/CLI/UI only once it resolves.
+>
+> **Until this lands, `mtls` MUST NOT be offered by the control-plane/CLI/UI** (it would fail at validation), and
+> the credential UI shows exactly the one secret slot each *supported* kind consumes — see the auth-kind-driven
+> reference slots in `web/arazzo-control-plane-ui` (`credential-dialog.js`). This is the data model's only use of
+> the multi-`secretRef` capability today; the binding remains a *set* of role-tagged references precisely so this
+> slice (and future multi-secret kinds) drop in without a schema change.
+
 ### 13.2 Expiry tracking, states, and telemetry
 
 - Each `SourceCredentialBinding` carries `expiresAt` when knowable (cert `NotAfter`, API-key/refresh-token

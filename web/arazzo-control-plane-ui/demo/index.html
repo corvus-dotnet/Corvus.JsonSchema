@@ -51,8 +51,7 @@
     <div class="tabs" role="tablist">
       <button id="tab-runs" role="tab" aria-selected="true" aria-controls="view-runs">Runs</button>
       <button id="tab-catalog" role="tab" aria-selected="false" aria-controls="view-catalog">Catalog</button>
-      <button id="tab-credentials" role="tab" aria-selected="false" aria-controls="view-credentials">Credentials</button>
-      <button id="tab-administrators" role="tab" aria-selected="false" aria-controls="view-administrators">Administrators</button>
+      <button id="tab-credentials" role="tab" aria-selected="false" aria-controls="view-credentials">Sources</button>
       <button id="tab-access" role="tab" aria-selected="false" aria-controls="view-access">Access</button>
     </div>
 
@@ -61,17 +60,12 @@
     </div>
 
     <div id="view-catalog" role="tabpanel" hidden>
-      <arazzo-catalog base-url="https://mock/arazzo/v1" scopes="catalog:read catalog:write catalog:purge" theme="auto"></arazzo-catalog>
+      <arazzo-catalog base-url="https://mock/arazzo/v1" scopes="catalog:read catalog:write catalog:purge administrators:read administrators:write" theme="auto"></arazzo-catalog>
     </div>
 
     <div id="view-credentials" role="tabpanel" hidden>
       <arazzo-credentials-table base-url="https://mock/arazzo/v1" scopes="credentials:read credentials:write" selectable></arazzo-credentials-table>
       <arazzo-credential-dialog></arazzo-credential-dialog>
-    </div>
-
-    <div id="view-administrators" role="tabpanel" hidden>
-      <div class="controls"><label>Workflow <select id="admin-base"></select></label></div>
-      <arazzo-administrators-panel base-url="https://mock/arazzo/v1" scopes="administrators:read administrators:write"></arazzo-administrators-panel>
     </div>
 
     <div id="view-access" role="tabpanel" hidden>
@@ -92,7 +86,6 @@
     import '../src/arazzo-catalog.js';
     import '../src/components/credentials-table.js';
     import '../src/components/credential-dialog.js';
-    import '../src/components/administrators-panel.js';
     import '../src/components/access-requests-panel.js';
 
     const mock = createMockControlPlane();
@@ -106,11 +99,9 @@
     const client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
     const credTable = document.querySelector('arazzo-credentials-table');
     const credDialog = document.querySelector('arazzo-credential-dialog');
-    const admins = document.querySelector('arazzo-administrators-panel');
     const access = document.querySelector('arazzo-access-requests');
     credTable.client = client;
     credDialog.client = client;
-    admins.client = client;
     access.client = client;
 
     // Credentials: the table emits; wire its new/select to the dialog, and the dialog's save back to a refresh.
@@ -118,13 +109,8 @@
     credTable.addEventListener('credential-selected', (e) => credDialog.open(e.detail.binding));
     credDialog.addEventListener('credential-saved', () => credTable.refresh());
 
-    // Administrators: a workflow selector drives the panel's base id.
-    const adminBase = document.getElementById('admin-base');
-    for (const id of ['nightly-reconcile', 'onboard-customer', 'adopt-pet', 'ghost']) {
-      const o = document.createElement('option'); o.value = id; o.textContent = id; adminBase.appendChild(o);
-    }
-    admins.baseWorkflowId = adminBase.value;
-    adminBase.addEventListener('change', () => { admins.baseWorkflowId = adminBase.value; });
+    // The §15 administrator set now lives on each workflow's detail page (the catalog's Security section), not a
+    // standalone tab — pick a workflow in the Catalog tab and open it to administer it.
 
     // Theme drives the panels (their `theme` attribute) and the surrounding page (arazzo-kit.css honours
     // data-theme on <html>); 'auto' falls back to the OS preference for both.
@@ -144,13 +130,13 @@
     document.getElementById('scopes').addEventListener('change', (e) => {
       const all = e.target.value;
       panel.setAttribute('scopes', prefixed(all, 'runs:'));
-      catalog.setAttribute('scopes', prefixed(all, 'catalog:'));
+      // The catalog detail hosts the Security (administrators) section, so it carries both scope families.
+      catalog.setAttribute('scopes', `${prefixed(all, 'catalog:')} ${prefixed(all, 'administrators:')}`.trim());
       credTable.setAttribute('scopes', prefixed(all, 'credentials:'));
-      admins.setAttribute('scopes', prefixed(all, 'administrators:'));
     });
 
     // Tabs.
-    const tabNames = ['runs', 'catalog', 'credentials', 'administrators', 'access'];
+    const tabNames = ['runs', 'catalog', 'credentials', 'access'];
     const tabs = Object.fromEntries(tabNames.map((n) => [n, document.getElementById(`tab-${n}`)]));
     const views = Object.fromEntries(tabNames.map((n) => [n, document.getElementById(`view-${n}`)]));
     const selectTab = (name) => {
@@ -171,7 +157,6 @@
     for (const type of ['credential-selected', 'credential-new', 'credential-saved', 'loaded', 'error']) {
       credTable.addEventListener(type, (e) => console.log(`[arazzo:credentials] ${type}`, e.detail));
     }
-    admins.addEventListener('administrators-changed', (e) => console.log('[arazzo:administrators] changed', e.detail));
     for (const type of ['access-request-submitted', 'access-request-decided', 'loaded', 'error']) {
       access.addEventListener(type, (e) => console.log(`[arazzo:access] ${type}`, e.detail));
     }

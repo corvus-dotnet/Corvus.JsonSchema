@@ -324,6 +324,23 @@ test('listCredentials returns the seeded bindings with a derived credentialStatu
   assert.ok(credentials.every((c) => c.secretRefs.every((r) => /:\/\//.test(r.ref))));
 });
 
+test('listCredentials keyset-pages: limit + the opaque nextPageToken walk every binding once, in order', async () => {
+  const c = makeClient();
+  const first = await c.listCredentials({ limit: 2 });
+  assert.equal(first.credentials.length, 2, 'a page respects the limit');
+  assert.ok(first.nextPageToken, 'a next-page token when more remain');
+
+  // Walk every page via the iterator and assert no gaps/duplicates and (sourceName, environment) order.
+  const seen = [];
+  for await (const page of c.listCredentialsPaged({ limit: 2 })) {
+    assert.ok(page.credentials.length <= 2, 'each page respects the limit');
+    for (const b of page.credentials) seen.push(`${b.sourceName}@${b.environment}`);
+  }
+  assert.equal(seen.length, 4, 'all four bindings, exactly once');
+  assert.equal(new Set(seen).size, 4, 'no duplicates across page boundaries');
+  assert.deepEqual(seen, [...seen].sort(), 'ordered by sourceName then environment');
+});
+
 test('getCredential returns one binding and 404s for an unknown key', async () => {
   const c = makeClient();
   const b = await c.getCredential('petstore', 'production');
