@@ -12,6 +12,8 @@ function dialogWithMock() {
 }
 
 const $ = (el, sel) => el.shadowRoot.querySelector(sel);
+const $$ = (el, sel) => [...el.shadowRoot.querySelectorAll(sel)];
+const cb = (el, scope) => $$(el, '.scope-cb').find((c) => c.value === scope);
 
 describe('<arazzo-access-request-dialog>', () => {
   let el;
@@ -22,12 +24,38 @@ describe('<arazzo-access-request-dialog>', () => {
     mount(el);
     el.open();
     ok($(el, '.sub-wf'), 'offers a workflow picker when not locked');
-    $(el, '.sub-wf').value = 'onboard-customer'; // the runs:write scope is checked by default
+    // runs:read is the least-privilege default; runs:write is opt-in.
+    ok(cb(el, 'runs:read').checked, 'runs:read is checked by default');
+    ok(!cb(el, 'runs:write').checked, 'runs:write is opt-in, not on by default');
+    $(el, '.sub-wf').value = 'onboard-customer';
     const submitted = nextEvent(el, 'access-request-submitted');
     $(el, '.ok').click();
     const e = await submitted;
     equal(e.detail.request.baseWorkflowId, 'onboard-customer', 'submits for the chosen workflow');
-    ok(e.detail.request.requestedScopes.includes('runs:write'), 'requests the default run scope');
+    ok(e.detail.request.requestedScopes.includes('runs:read'), 'requests the least-privilege read scope by default');
+    ok(!e.detail.request.requestedScopes.includes('runs:write'), 'does not request write unless asked');
+  });
+
+  it('forces read on (and locks it) whenever write is requested — you cannot operate on runs you cannot read', async () => {
+    el = dialogWithMock();
+    mount(el);
+    el.open();
+    // Ticking write pulls read on and disables it so it cannot be unticked.
+    cb(el, 'runs:write').checked = true;
+    cb(el, 'runs:write').dispatchEvent(new Event('change'));
+    ok(cb(el, 'runs:read').checked, 'read is forced on by write');
+    ok(cb(el, 'runs:read').disabled, 'read is locked while write is selected');
+    $(el, '.sub-wf').value = 'onboard-customer';
+    const submitted = nextEvent(el, 'access-request-submitted');
+    $(el, '.ok').click();
+    const e = await submitted;
+    const scopes = e.detail.request.requestedScopes;
+    ok(scopes.includes('runs:read') && scopes.includes('runs:write'), 'write requests carry read too');
+
+    // Releasing write re-enables read so it can be deselected again.
+    cb(el, 'runs:write').checked = false;
+    cb(el, 'runs:write').dispatchEvent(new Event('change'));
+    ok(!cb(el, 'runs:read').disabled, 'read is editable again once write is cleared');
   });
 
   it('locks the workflow when opened from a catalog entry', async () => {

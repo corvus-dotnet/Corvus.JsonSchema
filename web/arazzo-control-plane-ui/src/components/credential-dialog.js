@@ -37,11 +37,24 @@ const SLOTS = {
 };
 const AUTH_KINDS = Object.keys(SLOTS);
 
-// The non-secret config each kind also reads (shown as a hint so the operator knows what belongs in Config).
-const KIND_CONFIG_HINT = {
-  apiKey: 'Optionally set in Config: parameterName / headerName, and location (header, query, or cookie).',
-  basic: 'Also set the username in Config (it is not a secret).',
-  oauth2ClientCredentials: 'Also set tokenUrl and clientId in Config (and optionally scope).',
+// The non-secret config each auth kind reads (the runner-side SourceCredentialProviderFactory). Like the secret
+// slots, the Config section is driven by the auth kind — exactly these labelled fields — with an "additional
+// config" escape hatch for anything else. `options` renders a <select> (empty = the runner's default).
+const CONFIG = {
+  apiKey: [
+    { key: 'parameterName', label: 'Header / parameter name', placeholder: 'X-API-Key', required: false },
+    { key: 'location', label: 'Location', options: ['header', 'query', 'cookie'], required: false },
+  ],
+  bearer: [],
+  basic: [
+    { key: 'username', label: 'Username', placeholder: 'svc-account', required: true },
+  ],
+  oauth2ClientCredentials: [
+    { key: 'tokenUrl', label: 'Token URL', placeholder: 'https://idp.example.com/oauth/token', required: true },
+    { key: 'clientId', label: 'Client id', placeholder: 'my-client', required: true },
+    { key: 'scope', label: 'Scope', placeholder: 'optional', required: false },
+    { key: 'clientAuthentication', label: 'Client authentication', options: ['body', 'basic'], required: false },
+  ],
 };
 
 // The per-store reference grammar (authoritative — matches the runner-side resolvers). Each scheme declares the
@@ -164,8 +177,7 @@ class ArazzoCredentialDialog extends ArazzoElement {
     for (const r of b?.secretRefs || []) refsByRole.set(r.name, r.ref);
     this.renderRefs(refsByRole);
 
-    this.$('.config').innerHTML = '';
-    for (const c of b?.config || []) this.addRow('.config', 'cfg', c.key, c.value);
+    this.renderConfig(new Map((b?.config || []).map((c) => [c.key, c.value])));
 
     // Usage grants + management tags are set at create and immutable on update — show read-only when editing.
     this.$('fieldset.create-only').hidden = ro;
@@ -186,7 +198,6 @@ class ArazzoCredentialDialog extends ArazzoElement {
     const slots = SLOTS[kind];
     const refs = this.$('.refs');
     refs.innerHTML = '';
-    this.$('.kindhint').textContent = (slots && KIND_CONFIG_HINT[kind]) || '';
 
     if (!slots) {
       refs.innerHTML = `<div class="muted refhint">Choose a supported auth kind (${AUTH_KINDS.join(', ')}) to enter its secret.</div>`;
@@ -289,6 +300,50 @@ class ArazzoCredentialDialog extends ArazzoElement {
     return map;
   }
 
+  /** Render the non-secret config fields for the current auth kind, filling each from `configByKey`, plus any extras. */
+  renderConfig(configByKey = new Map()) {
+    const kind = this.authKind;
+    const fields = CONFIG[kind] || [];
+    const host = this.$('.config-fields');
+    host.innerHTML = fields.map((f) => {
+      const val = configByKey.get(f.key) || '';
+      const control = f.options
+        ? `<select data-cfg="${f.key}"><option value=""${val ? '' : ' selected'}>(default)</option>${f.options.map((o) => `<option value="${escapeHtml(o)}"${o === val ? ' selected' : ''}>${escapeHtml(o)}</option>`).join('')}</select>`
+        : `<input data-cfg="${f.key}" type="text" placeholder="${escapeHtml(f.placeholder || '')}" aria-label="${escapeHtml(f.label)}" value="${escapeHtml(val)}">`;
+      return `<div class="cfg-field"><label>${escapeHtml(f.label)}${f.required ? ' *' : ''}</label>${control}</div>`;
+    }).join('') || '<div class="muted">This auth kind needs no extra config.</div>';
+
+    // Preserve any config keys this kind does not define (legacy / custom) as editable key/value rows.
+    const known = new Set(fields.map((f) => f.key));
+    this.$('.config-extra').innerHTML = '';
+    for (const [key, value] of configByKey) {
+      if (!known.has(key)) this.addRow('.config-extra', 'cfg', key, value);
+    }
+  }
+
+  /** Snapshot the current config (kind fields + extras) as key → value, so values survive an auth-kind switch. */
+  snapshotConfig() {
+    const map = new Map();
+    for (const el of this.$$('.config-fields [data-cfg]')) {
+      const v = el.value.trim();
+      if (v) map.set(el.dataset.cfg, v);
+    }
+    for (const [key, value] of this.collect('.config-extra')) map.set(key, value);
+    return map;
+  }
+
+  /** Gather the config entries, requiring the kind's required fields. */
+  collectConfig() {
+    const out = [];
+    for (const f of CONFIG[this.authKind] || []) {
+      const value = (this.$(`.config-fields [data-cfg="${f.key}"]`)?.value || '').trim();
+      if (f.required && !value) throw new Error(`${f.label} is required for ${this.authKind}.`);
+      if (value) out.push({ key: f.key, value });
+    }
+    for (const [key, value] of this.collect('.config-extra')) out.push({ key, value });
+    return out;
+  }
+
   /** Append a removable two-input row (key/value) to a list container (config / grants / management tags). */
   addRow(container, kind, a = '', b = '') {
     const placeholders = {
@@ -350,7 +405,7 @@ class ArazzoCredentialDialog extends ArazzoElement {
     const secretRefs = this.collectRefs();
     if (secretRefs.length === 0) throw new Error('At least one secret reference is required.');
 
-    const config = this.collect('.config').map(([key, value]) => ({ key, value }));
+    const config = this.collectConfig();
     const description = this.$('#description').value.trim() || undefined;
     const expiresAtDate = this.$('#expiresAt').value;
     const expiresAt = expiresAtDate ? new Date(`${expiresAtDate}T00:00:00Z`).toISOString() : undefined;
@@ -432,8 +487,13 @@ class ArazzoCredentialDialog extends ArazzoElement {
         .reffield label { margin-bottom: 2px; }
         .refpreview { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: var(--_muted); word-break: break-all; }
         .refpreview code { background: var(--_surface); padding: 1px 4px; border-radius: 4px; }
-        .kindhint { font-size: 12px; color: var(--_muted); }
         .refhint { padding: 8px 2px; }
+        .config-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .config-fields:empty { display: none; }
+        .cfg-field { display: grid; gap: 4px; }
+        .cfg-field label { margin-bottom: 0; }
+        .config-extra { display: grid; gap: 8px; }
+        .config-extra:empty { display: none; }
         .add { justify-self: start; font-size: 12px; }
         .ro-label { color: var(--_muted); font-size: 12px; margin-right: 6px; }
         .scopes-readonly { display: grid; gap: 4px; font-size: 13px; }
@@ -462,14 +522,15 @@ class ArazzoCredentialDialog extends ArazzoElement {
             <fieldset>
               <legend>Secret references *</legend>
               <div class="subhead">The auth kind sets which secret(s) are needed. Pick each secret's store and fill its fields — the canonical <code>secretRef</code> is composed and previewed. The control plane stores the reference only; it never reads the secret.</div>
-              <div class="kindhint"></div>
               <div class="refs"></div>
             </fieldset>
 
             <fieldset>
               <legend>Config (non-secret)</legend>
-              <div class="config"></div>
-              <button class="add ghost addcfg" type="button">+ Add config entry</button>
+              <div class="subhead">The settings the auth kind needs alongside its secret — endpoint URLs, header names, usernames. Non-secret; stored as-is.</div>
+              <div class="config-fields"></div>
+              <div class="config-extra"></div>
+              <button class="add ghost addcfg" type="button">+ Add another config entry</button>
             </fieldset>
 
             <fieldset class="create-only">
@@ -489,9 +550,12 @@ class ArazzoCredentialDialog extends ArazzoElement {
         </form>
       </dialog>
     `;
-    // The auth kind drives the reference slots; re-render on change, preserving already-entered references.
-    this.$('#authKind').addEventListener('change', () => this.renderRefs(this.snapshotRefs()));
-    this.$('.addcfg').addEventListener('click', () => this.addRow('.config', 'cfg'));
+    // The auth kind drives both the secret slots and the config fields; re-render on change, preserving entries.
+    this.$('#authKind').addEventListener('change', () => {
+      this.renderRefs(this.snapshotRefs());
+      this.renderConfig(this.snapshotConfig());
+    });
+    this.$('.addcfg').addEventListener('click', () => this.addRow('.config-extra', 'cfg'));
     this.$('.addgrant').addEventListener('click', () => this.addRow('.grants', 'grant'));
     this.$('.addmgmt').addEventListener('click', () => this.addRow('.mgmt', 'mgmt'));
     this.$('form').addEventListener('submit', (e) => {
