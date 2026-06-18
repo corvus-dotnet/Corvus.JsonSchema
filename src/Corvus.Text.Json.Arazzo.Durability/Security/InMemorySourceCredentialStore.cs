@@ -69,25 +69,59 @@ public sealed class InMemorySourceCredentialStore : ISourceCredentialStore
     }
 
     /// <inheritdoc/>
-    public ValueTask<PooledDocumentList<SourceCredentialBinding>> ListAsync(AccessContext context, CancellationToken cancellationToken)
+    public ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, string? pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
+        int pageSize = limit > 0 ? limit : 1;
+        bool hasCursor = SourceCredentialContinuationToken.TryDecode(pageToken, out (string SourceName, string Environment, string TieBreaker) cursor);
+
         lock (this.gate)
         {
-            var docs = new PooledDocumentList<SourceCredentialBinding>(this.bindings.Count);
+            // Materialise the keyset (sourceName, environment, discriminator) for the in-memory set and order it — the
+            // same total order every backend pages by, just without a DB index. Then scan past the cursor, applying the
+            // per-row reach predicate, until the page is full (or the data is exhausted).
+            var ordered = new List<(string Source, string Env, string Disc, byte[] Json)>(this.bindings.Count);
+            foreach (byte[] json in this.bindings.Values)
+            {
+                using ParsedJsonDocument<SourceCredentialBinding> d = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
+                SourceCredentialBinding b = d.RootElement;
+                ordered.Add((b.SourceNameValue, b.EnvironmentValue, SourceCredentialKey.Discriminator(b.ManagementTagsValue, b.UsageTagsValue), json));
+            }
+
+            ordered.Sort(static (x, y) => CompareKey(x.Source, x.Env, x.Disc, y.Source, y.Env, y.Disc));
+
+            var docs = new PooledDocumentList<SourceCredentialBinding>(Math.Min(pageSize, ordered.Count));
+            string? nextToken = null;
+            string lastSource = string.Empty, lastEnv = string.Empty, lastDisc = string.Empty;
             try
             {
-                foreach (byte[] json in this.bindings.Values)
+                foreach ((string Source, string Env, string Disc, byte[] Json) row in ordered)
                 {
-                    using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
-                    if (context.Admits(AccessVerb.Read, candidate.RootElement.ManagementTagsValue))
+                    if (hasCursor && CompareKey(row.Source, row.Env, row.Disc, cursor.SourceName, cursor.Environment, cursor.TieBreaker) <= 0)
                     {
-                        docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(json));
+                        continue; // at or before the cursor — already returned in an earlier page
                     }
+
+                    using ParsedJsonDocument<SourceCredentialBinding> cand = PersistedJson.ToPooledDocument<SourceCredentialBinding>(row.Json);
+                    if (!context.Admits(AccessVerb.Read, cand.RootElement.ManagementTagsValue))
+                    {
+                        continue; // not reach-visible to this caller
+                    }
+
+                    if (docs.Count == pageSize)
+                    {
+                        // A further visible row exists → there is a next page; the token resumes after the last included row.
+                        nextToken = SourceCredentialContinuationToken.Encode(lastSource, lastEnv, lastDisc);
+                        break;
+                    }
+
+                    docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(row.Json));
+                    lastSource = row.Source;
+                    lastEnv = row.Env;
+                    lastDisc = row.Disc;
                 }
 
-                docs.Sort(BySourceThenEnvironment);
-                return new ValueTask<PooledDocumentList<SourceCredentialBinding>>(docs);
+                return new ValueTask<SourceCredentialPage>(new SourceCredentialPage(docs, nextToken));
             }
             catch
             {
@@ -95,6 +129,19 @@ public sealed class InMemorySourceCredentialStore : ISourceCredentialStore
                 throw;
             }
         }
+    }
+
+    // The stable total order every backend pages by: sourceName, then environment, then the tag discriminator.
+    private static int CompareKey(string s1, string e1, string d1, string s2, string e2, string d2)
+    {
+        int c = string.CompareOrdinal(s1, s2);
+        if (c != 0)
+        {
+            return c;
+        }
+
+        c = string.CompareOrdinal(e1, e2);
+        return c != 0 ? c : string.CompareOrdinal(d1, d2);
     }
 
     /// <inheritdoc/>
@@ -224,13 +271,4 @@ public sealed class InMemorySourceCredentialStore : ISourceCredentialStore
     private WorkflowEtag NextEtag() => new((++this.etagSequence).ToString(CultureInfo.InvariantCulture));
 
     private string NextId() => $"scred-{++this.idSequence}";
-
-    // Order the listing by sourceName then environment — stable, deterministic, and materializing only the two strings
-    // each document already carries.
-    private static readonly IComparer<ParsedJsonDocument<SourceCredentialBinding>> BySourceThenEnvironment =
-        Comparer<ParsedJsonDocument<SourceCredentialBinding>>.Create(static (a, b) =>
-        {
-            int bySource = string.CompareOrdinal(a.RootElement.SourceNameValue, b.RootElement.SourceNameValue);
-            return bySource != 0 ? bySource : string.CompareOrdinal(a.RootElement.EnvironmentValue, b.RootElement.EnvironmentValue);
-        });
 }

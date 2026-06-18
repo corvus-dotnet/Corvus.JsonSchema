@@ -73,9 +73,9 @@ public abstract class SourceCredentialStoreConformance
             secretRef.Version.ShouldBe("3");
         }
 
-        using (PooledDocumentList<SourceCredentialBinding> list = await store.ListAsync(AccessContext.System, default))
+        using (SourceCredentialPage page = await store.ListAsync(AccessContext.System, 1000, null, default))
         {
-            list.Select(b => b.SourceNameValue).ShouldBe(["petstore"]);
+            page.Bindings.Select(b => b.SourceNameValue).ShouldBe(["petstore"]);
         }
 
         (await store.GetAsync("petstore", "staging", AccessContext.System, default)).ShouldBeNull();
@@ -98,8 +98,8 @@ public abstract class SourceCredentialStoreConformance
         {
         }
 
-        using PooledDocumentList<SourceCredentialBinding> list = await store.ListAsync(AccessContext.System, default);
-        list.Select(b => b.EnvironmentValue).ShouldBe(["production", "staging"]);
+        using SourceCredentialPage page = await store.ListAsync(AccessContext.System, 1000, null, default);
+        page.Bindings.Select(b => b.EnvironmentValue).ShouldBe(["production", "staging"]);
     }
 
     [TestMethod]
@@ -177,8 +177,58 @@ public abstract class SourceCredentialStoreConformance
         {
         }
 
-        using PooledDocumentList<SourceCredentialBinding> list = await store.ListAsync(AccessContext.System, default);
-        list.Select(b => $"{b.SourceNameValue}@{b.EnvironmentValue}").ShouldBe(["alpha@production", "alpha@staging", "zeta@production"]);
+        using SourceCredentialPage page = await store.ListAsync(AccessContext.System, 1000, null, default);
+        page.Bindings.Select(b => $"{b.SourceNameValue}@{b.EnvironmentValue}").ShouldBe(["alpha@production", "alpha@staging", "zeta@production"]);
+    }
+
+    [TestMethod]
+    public async Task Listing_keyset_pages_in_source_environment_order_without_gaps_or_duplicates()
+    {
+        ISourceCredentialStore store = await this.NewStoreAsync();
+        (string Source, string Env)[] keys =
+        [
+            ("petstore", "production"), ("petstore", "staging"), ("ledger", "production"),
+            ("ledger", "staging"), ("ledger", "qa"), ("alpha", "production"), ("zeta", "production"), ("mid", "production"),
+        ];
+
+        // Add out of order, to prove the store (not insertion order) establishes the page order.
+        foreach ((string source, string env) in keys.OrderByDescending(k => k.Source, StringComparer.Ordinal).ThenByDescending(k => k.Env, StringComparer.Ordinal))
+        {
+            using (await store.AddAsync(ApiKey(source, env), "system", default))
+            {
+            }
+        }
+
+        // Walk every page via the continuation token with a small limit; collect the keys in page order.
+        var seen = new List<string>();
+        string? token = null;
+        int pages = 0;
+        do
+        {
+            using SourceCredentialPage page = await store.ListAsync(AccessContext.System, 3, token, default);
+            page.Bindings.Count.ShouldBeLessThanOrEqualTo(3);
+            foreach (SourceCredentialBinding b in page.Bindings)
+            {
+                seen.Add($"{b.SourceNameValue}@{b.EnvironmentValue}");
+            }
+
+            token = page.NextPageToken;
+            pages++;
+        }
+        while (token is not null);
+
+        // 8 items, 3 per page → 3 pages; no duplicates or gaps across boundaries; contractual (source, env) order.
+        pages.ShouldBe(3);
+        string[] expected = keys
+            .OrderBy(k => k.Source, StringComparer.Ordinal).ThenBy(k => k.Env, StringComparer.Ordinal)
+            .Select(k => $"{k.Source}@{k.Env}").ToArray();
+        seen.ShouldBe(expected);
+
+        // A malformed token is rejected (rather than silently restarting).
+        await Should.ThrowAsync<FormatException>(async () =>
+        {
+            using SourceCredentialPage bad = await store.ListAsync(AccessContext.System, 3, "this~is~not~a~token", default);
+        });
     }
 
     [TestMethod]
@@ -268,9 +318,9 @@ public abstract class SourceCredentialStoreConformance
             fetched!.RootElement.ManagementTagsValue.ToList().Single().ShouldBe(new SecurityTag("tenant", "acme"));
         }
 
-        using (PooledDocumentList<SourceCredentialBinding> list = await store.ListAsync(acme, default))
+        using (SourceCredentialPage page = await store.ListAsync(acme, 1000, null, default))
         {
-            list.Select(b => b.ManagementTagsValue.ToList().Single().Value).ShouldBe(["acme"]);
+            page.Bindings.Select(b => b.ManagementTagsValue.ToList().Single().Value).ShouldBe(["acme"]);
         }
 
         // acme cannot delete globex's binding (out of write reach) — reported as absent.

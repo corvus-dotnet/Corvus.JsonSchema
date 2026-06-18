@@ -17,9 +17,19 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client;
 /// <summary>
 /// Request type for the ListCredentials operation.
 /// </summary>
-/// <remarks>Returns all source credential bindings (references and non-secret metadata only), ordered by sourceName then environment.</remarks>
+/// <remarks>Returns a page of source credential bindings (references and non-secret metadata only), ordered by sourceName then environment. Page with `limit` and the opaque `pageToken` from a previous page's `nextPageToken`.</remarks>
 public readonly struct ListCredentialsRequest : IApiRequest<ListCredentialsRequest>
 {
+
+    /// <summary>
+    /// Gets the limit parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit Limit { get; init; }
+
+    /// <summary>
+    /// Gets the pageToken parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString PageToken { get; init; }
 
     /// <inheritdoc/>
     public static ReadOnlySpan<byte> PathTemplateUtf8 => "/credentials"u8;
@@ -31,7 +41,7 @@ public readonly struct ListCredentialsRequest : IApiRequest<ListCredentialsReque
     public static bool HasPathParameters => false;
 
     /// <inheritdoc/>
-    public static bool HasQueryParameters => false;
+    public static bool HasQueryParameters => true;
 
     /// <inheritdoc/>
     public static bool HasHeaderParameters => true;
@@ -48,8 +58,49 @@ public readonly struct ListCredentialsRequest : IApiRequest<ListCredentialsReque
     /// <inheritdoc/>
     public int WriteQueryString(IBufferWriter<byte> writer)
     {
-        ThrowHelper.ThrowNoQueryParameters();
-        return default;
+        int totalWritten = 0;
+        bool first = true;
+
+        if (this.Limit.IsNotUndefined())
+        {
+            if (!first)
+            {
+                writer.Write("&"u8);
+                totalWritten++;
+            }
+
+            writer.Write("limit="u8);
+            totalWritten += 6;
+            Span<byte> bufLimit = stackalloc byte[11];
+            this.Limit.TryFormat(bufLimit, out int bwLimit, default, default);
+            writer.Write(bufLimit[..bwLimit]);
+            totalWritten += bwLimit;
+
+            first = false;
+        }
+
+        if (this.PageToken.IsNotUndefined())
+        {
+            if (!first)
+            {
+                writer.Write("&"u8);
+                totalWritten++;
+            }
+
+            writer.Write("pageToken="u8);
+            totalWritten += 10;
+            using UnescapedUtf8JsonString utf8PageToken = ((JsonElement)this.PageToken).GetUtf8String();
+            Span<byte> escPageToken = stackalloc byte[utf8PageToken.Span.Length * 3];
+            if (Utf8Uri.TryEscapeDataString(utf8PageToken.Span, escPageToken, out int ewPageToken))
+            {
+                writer.Write(escPageToken[..ewPageToken]);
+                totalWritten += ewPageToken;
+            }
+
+            first = false;
+        }
+
+        return totalWritten;
     }
 
     /// <inheritdoc/>
@@ -69,6 +120,44 @@ public readonly struct ListCredentialsRequest : IApiRequest<ListCredentialsReque
     /// <inheritdoc/>
     public void Validate(ValidationMode mode = ValidationMode.Basic)
     {
+        if (mode == ValidationMode.None)
+        {
+            return;
+        }
+        else if (mode == ValidationMode.Detailed)
+        {
+            if (this.Limit.IsNotUndefined())
+            {
+                using JsonSchemaResultsCollector collectorLimit = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!this.Limit.EvaluateSchema(collectorLimit))
+                {
+                    ThrowHelper.ThrowRequestParameterValidationFailed("limit", SchemaValidationDetail.FormatResults(collectorLimit));
+                }
+            }
+
+            if (this.PageToken.IsNotUndefined())
+            {
+                using JsonSchemaResultsCollector collectorPageToken = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!this.PageToken.EvaluateSchema(collectorPageToken))
+                {
+                    ThrowHelper.ThrowRequestParameterValidationFailed("pageToken", SchemaValidationDetail.FormatResults(collectorPageToken));
+                }
+            }
+
+        }
+        else
+        {
+            if (this.Limit.IsNotUndefined() && !this.Limit.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestParameterValidationFailed("limit");
+            }
+
+            if (this.PageToken.IsNotUndefined() && !this.PageToken.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestParameterValidationFailed("pageToken");
+            }
+
+        }
     }
 
     /// <summary>

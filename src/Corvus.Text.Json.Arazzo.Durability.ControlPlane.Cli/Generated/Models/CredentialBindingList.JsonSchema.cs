@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// All source credential bindings.
+/// A page of source credential bindings, ordered by sourceName then environment.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -41,6 +41,7 @@ public readonly partial struct CredentialBindingList
         private const uint RequiredBitMask0 =
             RequiredBitForCredentials;
         private static readonly JsonSchemaPathProvider CredentialsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/credentials"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider NextPageTokenSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/nextPageToken"u8, buffer, out written);
 
         private static void MatchCredentials(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
         {
@@ -64,20 +65,38 @@ public readonly partial struct CredentialBindingList
             requiredBitBuffer[RequiredOffsetForCredentials] |= RequiredBitForCredentials;
         }
 
+        private static void MatchNextPageToken(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        {
+            context.AddLocalEvaluatedProperty(propertyCount);
+            JsonSchemaContext childContext1 =
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.PushChildContextUnescaped(
+                    parentDocument,
+                    parentDocumentIndex,
+                    ref context,
+                    JsonPropertyNames.NextPageTokenUtf8,
+                    evaluationPath: NextPageTokenSchemaEvaluationPath);
+
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+            context.CommitChildContext(childContext1.IsMatch, ref childContext1);
+        }
+
+        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator1> MatchersBuilder()
+        {
+            return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator1>([
+                (static () => JsonPropertyNames.CredentialsUtf8, MatchCredentials),
+                (static () => JsonPropertyNames.NextPageTokenUtf8, MatchNextPageToken),
+            ]);
+        }
+
+        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator1> Matchers { get; } = MatchersBuilder();
+
         private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
 #if NET
         [NotNullWhen(true)]
 #endif
         out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator1? matcher)
         {
-            if (span.SequenceEqual(JsonPropertyNames.CredentialsUtf8))
-            {
-                matcher = MatchCredentials;
-                return true;
-            }
-
-            matcher = default;
-            return false;
+            return Matchers.TryGetNamedMatcher(span, out matcher);
         }
 
         /// <summary>
