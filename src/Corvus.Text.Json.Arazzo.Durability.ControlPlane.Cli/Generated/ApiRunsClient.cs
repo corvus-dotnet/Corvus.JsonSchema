@@ -152,26 +152,35 @@ public sealed class ApiRunsClient : IApiRunsClient
     public ValueTask<ResumeRunResponse> ResumeRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest.CreateBuilder(workspace, body, 30).RootElement;
+        bool hasBodyValue = !body.IsUndefined;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest.CreateBuilder(workspace, body, 30).RootElement : default;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, runId, 30).RootElement;
         ResumeRunRequest request = new(RunIdValue);
 
         request.Validate(validationMode);
 
-        if (validationMode == ValidationMode.Detailed)
+        if (hasBodyValue)
         {
-            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-            if (!bodyValue.EvaluateSchema(bodyCollector))
+            if (validationMode == ValidationMode.Detailed)
             {
-                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+                using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!bodyValue.EvaluateSchema(bodyCollector))
+                {
+                    ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+                }
+            }
+            else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed();
             }
         }
-        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+
+        if (hasBodyValue)
         {
-            ThrowHelper.ThrowRequestBodyValidationFailed();
+            return SendWithBodyAsyncCore<ResumeRunRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest, ResumeRunResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
         }
 
-        return SendWithBodyAsyncCore<ResumeRunRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest, ResumeRunResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+        return SendAsyncCore<ResumeRunRequest, ResumeRunResponse>(workspace, request, responseValidationMode, cancellationToken);
     }
 
     /// <summary>

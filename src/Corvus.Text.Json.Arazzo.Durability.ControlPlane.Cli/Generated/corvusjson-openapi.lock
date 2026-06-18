@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-06-17T22:53:53.1944918\u002B00:00",
+  "generatedAt": "2026-06-18T05:39:52.5049533\u002B00:00",
   "generatedFiles": [
     "ListRunsRequest.cs",
     "ListRunsResponse.cs",
@@ -455,9 +455,10 @@
     "Models/PostCatalogBody.JsonStringArray.JsonSchema.cs",
     "Models/Corvus__GlobalDeclarations.cs"
   ],
-  "generatorVersion": "1.0.0\u002B22703c1b9e3af195675ea599c3f3adeb49b5cdc9",
+  "generatorVersion": "1.0.0\u002B10626c8bd77fece330ab4d731fc07734a70bbddd",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
   "specFileHash": "94d7643956fca79b6544c39cbde88daded2f1df3267b86910386045cbd111e5b",
-  "specVersion": "3.2"
+  "specVersion": "3.2",
+  "clientName": "Api"
 }

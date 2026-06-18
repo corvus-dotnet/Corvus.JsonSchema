@@ -388,6 +388,45 @@
         }
       }
     },
+    "/items/{itemId}/note": {
+      "post": {
+        "operationId": "addItemNote",
+        "summary": "Optional request body — omitting it must send no body",
+        "tags": [
+          "items"
+        ],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "note": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
     "/items/{itemId}/details": {
       "get": {
         "operationId": "getItemDetails",
