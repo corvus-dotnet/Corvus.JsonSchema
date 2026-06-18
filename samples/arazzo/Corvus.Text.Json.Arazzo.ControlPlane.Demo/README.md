@@ -49,6 +49,40 @@ generator and `Corvus.Text.Json.Validator`. In particular:
   a `prefixItems` **tuple** (`flagDiscrepancies.range`), and an `additionalProperties` **map**
   (`provisionResources.tags`) — and validates them against the true JSON Schema as you type.
 
+## Access requests &amp; approval (§16.5) — a worked example
+
+By default the demo is **open** (no authentication), so the build-free UI just works. Turn on the real
+authorization model — Keycloak OIDC + the §16.5 access-request flow — with `ControlPlane__RequireAuthorization=true`
+(the Aspire AppHost sets this for you once Keycloak is wired). With it on, the demo demonstrates the design's
+**least-privilege** stance end to end:
+
+- **Read is universal; acting is earned.** A bootstrap binding grants every authenticated principal *read* over the
+  whole control plane. Write / run reach is **deny-by-default** — a principal can browse the catalog and runs but
+  cannot trigger, resume, or administer anything until it holds a **stored grant**.
+- **Capability = `claims ∪ stored entitlements`.** The [`KeycloakClaimsTransformer`](./KeycloakClaimsTransformer.cs)
+  maps a principal's Keycloak `groups` to a standing **read** baseline, then *unions in the capability scopes of its
+  active, time-boxed per-principal grants* (the §16.5.2 Decision-A resolution, read from the one
+  `PersistentRowSecurityPolicy` the durable server also uses for row reach). Elevated capability is **never ambient**:
+  no group — not even `arazzo-admins` — confers standing write. It arrives solely through an approved request (or, for
+  an eligible principal, JIT self-elevation).
+- **Administrators are the workflow's own.** Each workflow's §15 administrator set is established by the submitter of
+  its first version — here the `arazzo-admins` group (see [`DemoData`](./DemoData.cs)). Only an administrator of the
+  *target* workflow may approve a request for it, and `arazzo-admins` members are additionally **eligible to
+  self-elevate** (JIT activation, no human approver).
+
+**The story.** *alice* (Keycloak group `payments`) wants to trigger `onboard-customer`. She signs in through the BFF
+and can read the catalog — but `Trigger` is denied. She submits an access request for run access to that workflow. A
+member of `arazzo-admins` (an administrator of `onboard-customer`) approves it. The approval writes a stored grant
+keyed on alice's subject, carrying the `runs:write` scope and a **per-workflow reach rule** (`sys:workflow ==
+'onboard-customer'`) that matches because the catalog stamps each version with that internal tag. On alice's next
+request the transformer unions `runs:write` into her scopes and the row policy scopes her reach to exactly that one
+workflow — *alice may trigger `onboard-customer`, and only it*. An `arazzo-admins` member skips the queue: they
+self-elevate the same grant on demand.
+
+That `claims ∪ stored entitlements` mapping — and the no-ambient-elevation invariant — is pinned by
+[`KeycloakClaimsTransformerTests`](../Corvus.Text.Json.Arazzo.ControlPlane.Demo.Tests/KeycloakClaimsTransformerTests.cs),
+which exercises it against the real resolver.
+
 ## How it's wired
 
 `Program.cs` deletes the temp SQLite file, connects the SQLite state + catalog stores (the catalog store bakes

@@ -3,6 +3,7 @@
 // </copyright>
 
 using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 
 namespace Corvus.Text.Json.Arazzo.ControlPlane.Demo;
 
@@ -40,9 +41,13 @@ public static class DemoData
         ReadOnlyMemory<byte> reconcile = Package(specsDir, "nightly-reconcile.arazzo.json", ("ledger", "ledger.openapi.json"));
 
         // Catalog: onboarding (one active version) and nightly-reconcile (a v1 that we obsolete, plus an active v2).
-        await catalog.AddAsync(onboarding, OnboardingOwner, TagSet.FromTags(["prod", "kyc"]), default).ConfigureAwait(false);
-        await catalog.AddAsync(reconcile, ReconcileOwner, TagSet.FromTags(["prod", "billing"]), default).ConfigureAwait(false);
-        await catalog.AddAsync(reconcile, ReconcileOwner, TagSet.FromTags(["prod", "billing", "beta"]), default).ConfigureAwait(false);
+        // Version 1's submitter identity establishes the workflow's §15 administrator set (design §15) — here the
+        // arazzo-admins group, so any arazzo-admins member may approve access requests for these workflows (and the
+        // grant's reach matches because the catalog stamps each version with its sys:workflow tag).
+        SecurityTagSet adminFounder = SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "group", "arazzo-admins")]);
+        await catalog.AddAsync(onboarding, OnboardingOwner, TagSet.FromTags(["prod", "kyc"]), adminFounder, default).ConfigureAwait(false);
+        await catalog.AddAsync(reconcile, ReconcileOwner, TagSet.FromTags(["prod", "billing"]), adminFounder, default).ConfigureAwait(false);
+        await catalog.AddAsync(reconcile, ReconcileOwner, TagSet.FromTags(["prod", "billing", "beta"]), adminFounder, default).ConfigureAwait(false);
         await catalog.UpdateAsync("nightly-reconcile", 1, owner: null, tags: null, status: CatalogStatus.Obsolete, AccessContext.System, default).ConfigureAwait(false);
 
         // Runs across statuses. Faulted runs sit on the steps whose outputs carry the rich shapes, so the

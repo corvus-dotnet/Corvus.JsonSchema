@@ -15,15 +15,19 @@ namespace Corvus.Text.Json.Arazzo.ControlPlane.Demo;
 /// §14.1 leaves open — a real deployment maps its own groups/roles, possibly from realm/client roles instead.
 /// </summary>
 /// <remarks>
-/// Membership in <c>arazzo-admins</c> grants every scope (the §16.2 bootstrap system admin). A domain group
-/// (e.g. <c>payments</c>) grants the read scopes only — elevated scopes (run/admin) arrive through the
-/// access-request → approval flow (§16.5), not from mere membership. DevApiKey principals carry no <c>groups</c>
-/// claim and already supply their own <c>scope</c> claim, so this is a no-op for them.
+/// No capability is ever ambient (§16.5.3): every group member — <em>including</em> <c>arazzo-admins</c> — gets only
+/// the standing <em>read</em> scopes from membership. Elevated capability (run/admin/security write) arrives solely
+/// through the access-request → approval flow (or, for an eligible principal, JIT self-elevation), so the effective
+/// scopes are the read baseline <b>unioned with this principal's stored per-principal grants</b> — the §16.5.2
+/// Decision-A entitlement resolution (<c>claims ∪ stored entitlements → effective scopes</c>), consulted here exactly
+/// as the durable server consults it. DevApiKey principals carry no <c>groups</c> claim and already supply their own
+/// <c>scope</c> claim, so this is a no-op for them.
 /// </remarks>
-public sealed class KeycloakClaimsTransformer : IClaimsTransformation
+public sealed class KeycloakClaimsTransformer(PersistentRowSecurityPolicy entitlements) : IClaimsTransformation
 {
-    private const string AdminsGroup = "arazzo-admins";
     private const string MappedMarker = "arazzo:scopes-mapped";
+
+    private readonly PersistentRowSecurityPolicy entitlements = entitlements;
 
     private static readonly string[] DomainReadScopes =
     [
@@ -52,7 +56,14 @@ public sealed class KeycloakClaimsTransformer : IClaimsTransformation
             return Task.FromResult(principal);
         }
 
-        IReadOnlyList<string> scopes = groups.Contains(AdminsGroup) ? ControlPlaneScopes.All : DomainReadScopes;
+        // The read baseline (membership) unioned with this principal's stored per-principal grants (the active,
+        // time-boxed entitlements an approval/self-elevation wrote). No group — not even arazzo-admins — confers
+        // standing elevated scopes; those are only ever held via a stored grant.
+        var scopes = new HashSet<string>(DomainReadScopes, StringComparer.Ordinal);
+        foreach (string granted in this.entitlements.ResolveGrantedScopes(principal))
+        {
+            scopes.Add(granted);
+        }
 
         var mapped = new ClaimsIdentity();
         mapped.AddClaim(new Claim("scope", string.Join(' ', scopes)));
