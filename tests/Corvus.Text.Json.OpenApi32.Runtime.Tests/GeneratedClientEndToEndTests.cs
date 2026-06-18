@@ -3780,6 +3780,41 @@ public class GeneratedClientEndToEndTests
     }
 
     [TestMethod]
+    public async Task Client_ApiItemsClient_AddItemNoteAsync_OmittedOptionalBody_SendsNoBody()
+    {
+        using var harness = new TestHarness(HttpStatusCode.NoContent, string.Empty);
+        var client = new ApiItemsClient(harness.Transport);
+
+        // The optional request body is omitted → the request must go out with NO body (the server treats the body
+        // as optional too). Regression for the client-side optional request-body generator fix: previously the
+        // generated client always materialised + sent a body, faulting on the undefined Source.
+        await using AddItemNoteResponse response = await client.AddItemNoteAsync("item-1");
+
+        Assert.AreEqual(204, response.StatusCode);
+        Assert.AreEqual(HttpMethod.Post, harness.CapturedRequest!.Method);
+        Assert.AreEqual("http://localhost/items/item-1/note", harness.CapturedRequest.RequestUri!.OriginalString);
+        Assert.IsNull(harness.CapturedRequest.Content, "an omitted optional body must not send a request body");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiItemsClient_AddItemNoteAsync_SuppliedOptionalBody_SendsJsonBody()
+    {
+        using var harness = new TestHarness(HttpStatusCode.NoContent, string.Empty);
+        var client = new ApiItemsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostItemsByItemIdNoteBody>.Parse("""{"note":"ship it"}""");
+
+        // The same optional-body operation still sends the body when one IS supplied.
+        await using AddItemNoteResponse response = await client.AddItemNoteAsync("item-1", bodyDoc.RootElement);
+
+        Assert.AreEqual(204, response.StatusCode);
+        Assert.AreEqual(HttpMethod.Post, harness.CapturedRequest!.Method);
+        Assert.AreEqual("application/json", harness.CapturedRequest.Content?.Headers.ContentType?.MediaType);
+        byte[] sent = await harness.CapturedRequest.Content!.ReadAsByteArrayAsync();
+        Assert.IsTrue(Encoding.UTF8.GetString(sent).Contains("\"note\":\"ship it\"", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public async Task Client_ApiSearchClient_QuerySearchAsync()
     {
         using var harness = new TestHarness(HttpStatusCode.OK, """{"results":[],"total":0}""");
