@@ -122,15 +122,22 @@ class ArazzoCredentialDialog extends ArazzoElement {
     if (!this._built) this.render();
   }
 
-  /** Open to create (no argument) or edit/rotate (a {@link CredentialBindingSummary}). */
-  open(binding = null) {
+  /**
+   * Open to create (no argument), edit/rotate (a {@link CredentialBindingSummary}), or create for a fixed source
+   * (`open(null, { sourceName, lockSource: true })`) — the source-credential setup launched from adding a workflow.
+   */
+  open(binding = null, { sourceName, lockSource = false } = {}) {
     if (!this._built) this.render();
     this._editing = binding || null;
+    this._prefillSource = binding ? null : (sourceName || null);
+    this._lockSource = !binding && lockSource && !!sourceName;
     this._originalRefs = binding ? (binding.secretRefs || []).map((r) => `${r.name}=${r.ref}`).sort().join('\n') : '';
     this.$('form').reset();
     this.$('.error-banner').hidden = true;
     this.fill(binding);
-    this.$('.title').textContent = binding ? `Edit ${binding.sourceName}@${binding.environment}` : 'New credential binding';
+    this.$('.title').textContent = binding
+      ? `Edit ${binding.sourceName}@${binding.environment}`
+      : (this._prefillSource ? `New credential for ${this._prefillSource}` : 'New credential binding');
     this.$('.confirm').textContent = binding ? 'Save' : 'Create';
     this.$('dialog').showModal();
   }
@@ -145,9 +152,9 @@ class ArazzoCredentialDialog extends ArazzoElement {
 
   fill(b) {
     const ro = !!b; // source/env are the immutable identity when editing
-    this.$('#sourceName').value = b?.sourceName || '';
+    this.$('#sourceName').value = b?.sourceName || this._prefillSource || '';
     this.$('#environment').value = b?.environment || '';
-    this.$('#sourceName').readOnly = ro;
+    this.$('#sourceName').readOnly = ro || this._lockSource; // locked when creating for a fixed source
     this.$('#environment').readOnly = ro;
     this.$('#authKind').value = b?.authKind || 'apiKey';
     this.$('#description').value = b?.description || '';
@@ -490,6 +497,9 @@ class ArazzoCredentialDialog extends ArazzoElement {
     this.$('form').addEventListener('submit', (e) => {
       if (e.submitter?.value === 'confirm') { e.preventDefault(); this.submit(); }
     });
+    // A close signal (save or cancel) so a caller can sequence dialogs — e.g. set up one source's credentials
+    // after another when adding a workflow.
+    this.$('dialog').addEventListener('close', () => this.emit('credential-dialog-closed'));
   }
 }
 

@@ -30,7 +30,8 @@ package `exports` — `@corvus-dotnet/arazzo-control-plane-ui`, `.../client`, `.
   strongly-typed form built from a step's precomputed schema metadata — the output editor for Skip's
   `skipOutputs`) for runs;
   `<arazzo-catalog-table>`,
-  `<arazzo-catalog-detail>`, `<arazzo-catalog-add-dialog>` for the workflow catalog;
+  `<arazzo-catalog-detail>`, `<arazzo-catalog-add-dialog>` (which can also set up a credential binding §13 per
+  declared source as the workflow is added) for the workflow catalog;
   `<arazzo-credentials-table>` (a status-first rotation worklist), `<arazzo-credential-dialog>` (create/edit; the
   auth kind drives which secret slot(s) are shown — fixed role + plain label — and each slot has guided per-store
   `secretRef` fields that compose + preview the canonical reference; the control plane never reads the secret

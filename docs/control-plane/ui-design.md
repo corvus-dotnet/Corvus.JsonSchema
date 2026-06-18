@@ -454,9 +454,10 @@ builds matches the spec, so the JS client and the generated .NET client can't dr
 
 ## Planned work — review feedback (agreed order: #2 → #1 → #5, plus #6)
 
-**Status:** #2 done · #6 done · #1 done (store-level keyset pagination across all 10 backends + handler + spec +
-regen + JS client/table/mock + conformance; in-process backends InMemory/SQLite validated, container backends
-compile and await the podman conformance pass) · #5 next. Per-backend tie-breaker: the tag *discriminator* column
+**Status:** ALL DONE — #2 · #6 · #1 (store-level keyset pagination across all 10 backends + handler + spec + regen
++ JS client/table/mock + conformance; **every backend validated** — InMemory/SQLite in-process and all 8 container
+backends 13/13 each via the podman tunnel) · #5 (the New Workflow dialog can set up a credential binding per
+declared source after the version lands, reusing the guided credential dialog locked to each source). Per-backend tie-breaker: the tag *discriminator* column
 for SQLite/Postgres/Mongo(`_id.t`)/Redis/NATS/AzureStorage; the indexed `TagsHash` for SqlServer/MySql (Tags is
 unindexable there); Cosmos orders `(sourceName, environment)` server-side and resolves the discriminator tie-break
 in-memory (no stored discriminator property). The continuation token is opaque + backend-scoped, so each backend
@@ -490,10 +491,10 @@ live *on the workflow*, not in standalone, deployment-wide tabs.
 6. **#6 — Request access from the catalog entry (new).** On the workflow's catalog detail (the governance hub),
    add a **Request access** action opening the §16.5 submit flow pre-filled with that `baseWorkflowId`, so an
    operator can request run access to a workflow directly where they are looking at it.
-3. **#5 — Source bindings in the New Workflow dialog.** When a version is added, its package declares named
-   sources; the add dialog lets the operator set up a credential binding per source (reusing the auth-kind-driven
-   slot UI) and creates them via `/credentials` after the version lands — completing the per-workflow governance
-   hub (Security + Sources together).
+3. **#5 — Source bindings in the New Workflow dialog (DONE).** When a version is added, its package declares named
+   sources; each source row has a "Set up a credential binding" checkbox, and after the version lands the guided
+   credential dialog (auth-kind-driven slots) opens locked to each flagged source in turn, creating them via
+   `/credentials` — completing the per-workflow governance hub (Security + Sources together).
 
 Also captured as work items: **mTLS source credentials** (design §13.1) and the **per-kind guided Config** fields
 (the non-secret config each auth kind reads — `apiKey` header-name/location, `basic` username, `oauth2`
