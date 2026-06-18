@@ -117,26 +117,35 @@ public sealed class ApiAccessRequestsClient : IApiAccessRequestsClient
     public ValueTask<ApproveAccessRequestResponse> ApproveAccessRequestAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.CreateBuilder(workspace, body, 30).RootElement;
+        bool hasBodyValue = !body.IsUndefined;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.CreateBuilder(workspace, body, 30).RootElement : default;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RequestIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, requestId, 30).RootElement;
         ApproveAccessRequestRequest request = new(RequestIdValue);
 
         request.Validate(validationMode);
 
-        if (validationMode == ValidationMode.Detailed)
+        if (hasBodyValue)
         {
-            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-            if (!bodyValue.EvaluateSchema(bodyCollector))
+            if (validationMode == ValidationMode.Detailed)
             {
-                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+                using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!bodyValue.EvaluateSchema(bodyCollector))
+                {
+                    ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+                }
+            }
+            else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed();
             }
         }
-        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+
+        if (hasBodyValue)
         {
-            ThrowHelper.ThrowRequestBodyValidationFailed();
+            return SendWithBodyAsyncCore<ApproveAccessRequestRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote, ApproveAccessRequestResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
         }
 
-        return SendWithBodyAsyncCore<ApproveAccessRequestRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote, ApproveAccessRequestResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+        return SendAsyncCore<ApproveAccessRequestRequest, ApproveAccessRequestResponse>(workspace, request, responseValidationMode, cancellationToken);
     }
 
     /// <summary>
@@ -151,26 +160,35 @@ public sealed class ApiAccessRequestsClient : IApiAccessRequestsClient
     public ValueTask<ApproveAccessRequestAsEligibleResponse> ApproveAccessRequestAsEligibleAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestEligibilityNote.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestEligibilityNote bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestEligibilityNote.CreateBuilder(workspace, body, 30).RootElement;
+        bool hasBodyValue = !body.IsUndefined;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestEligibilityNote bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestEligibilityNote.CreateBuilder(workspace, body, 30).RootElement : default;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RequestIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, requestId, 30).RootElement;
         ApproveAccessRequestAsEligibleRequest request = new(RequestIdValue);
 
         request.Validate(validationMode);
 
-        if (validationMode == ValidationMode.Detailed)
+        if (hasBodyValue)
         {
-            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-            if (!bodyValue.EvaluateSchema(bodyCollector))
+            if (validationMode == ValidationMode.Detailed)
             {
-                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+                using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!bodyValue.EvaluateSchema(bodyCollector))
+                {
+                    ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+                }
+            }
+            else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed();
             }
         }
-        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+
+        if (hasBodyValue)
         {
-            ThrowHelper.ThrowRequestBodyValidationFailed();
+            return SendWithBodyAsyncCore<ApproveAccessRequestAsEligibleRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestEligibilityNote, ApproveAccessRequestAsEligibleResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
         }
 
-        return SendWithBodyAsyncCore<ApproveAccessRequestAsEligibleRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestEligibilityNote, ApproveAccessRequestAsEligibleResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+        return SendAsyncCore<ApproveAccessRequestAsEligibleRequest, ApproveAccessRequestAsEligibleResponse>(workspace, request, responseValidationMode, cancellationToken);
     }
 
     /// <summary>
@@ -185,26 +203,35 @@ public sealed class ApiAccessRequestsClient : IApiAccessRequestsClient
     public ValueTask<DenyAccessRequestResponse> DenyAccessRequestAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.CreateBuilder(workspace, body, 30).RootElement;
+        bool hasBodyValue = !body.IsUndefined;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.CreateBuilder(workspace, body, 30).RootElement : default;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RequestIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, requestId, 30).RootElement;
         DenyAccessRequestRequest request = new(RequestIdValue);
 
         request.Validate(validationMode);
 
-        if (validationMode == ValidationMode.Detailed)
+        if (hasBodyValue)
         {
-            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-            if (!bodyValue.EvaluateSchema(bodyCollector))
+            if (validationMode == ValidationMode.Detailed)
             {
-                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+                using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!bodyValue.EvaluateSchema(bodyCollector))
+                {
+                    ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+                }
+            }
+            else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed();
             }
         }
-        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+
+        if (hasBodyValue)
         {
-            ThrowHelper.ThrowRequestBodyValidationFailed();
+            return SendWithBodyAsyncCore<DenyAccessRequestRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote, DenyAccessRequestResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
         }
 
-        return SendWithBodyAsyncCore<DenyAccessRequestRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote, DenyAccessRequestResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+        return SendAsyncCore<DenyAccessRequestRequest, DenyAccessRequestResponse>(workspace, request, responseValidationMode, cancellationToken);
     }
 
     /// <summary>
@@ -219,26 +246,35 @@ public sealed class ApiAccessRequestsClient : IApiAccessRequestsClient
     public ValueTask<WithdrawAccessRequestResponse> WithdrawAccessRequestAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.CreateBuilder(workspace, body, 30).RootElement;
+        bool hasBodyValue = !body.IsUndefined;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.CreateBuilder(workspace, body, 30).RootElement : default;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RequestIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, requestId, 30).RootElement;
         WithdrawAccessRequestRequest request = new(RequestIdValue);
 
         request.Validate(validationMode);
 
-        if (validationMode == ValidationMode.Detailed)
+        if (hasBodyValue)
         {
-            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-            if (!bodyValue.EvaluateSchema(bodyCollector))
+            if (validationMode == ValidationMode.Detailed)
             {
-                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+                using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!bodyValue.EvaluateSchema(bodyCollector))
+                {
+                    ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+                }
+            }
+            else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed();
             }
         }
-        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+
+        if (hasBodyValue)
         {
-            ThrowHelper.ThrowRequestBodyValidationFailed();
+            return SendWithBodyAsyncCore<WithdrawAccessRequestRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote, WithdrawAccessRequestResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
         }
 
-        return SendWithBodyAsyncCore<WithdrawAccessRequestRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote, WithdrawAccessRequestResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+        return SendAsyncCore<WithdrawAccessRequestRequest, WithdrawAccessRequestResponse>(workspace, request, responseValidationMode, cancellationToken);
     }
 
     /// <summary>
@@ -253,26 +289,35 @@ public sealed class ApiAccessRequestsClient : IApiAccessRequestsClient
     public ValueTask<RevokeAccessRequestResponse> RevokeAccessRequestAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.CreateBuilder(workspace, body, 30).RootElement;
+        bool hasBodyValue = !body.IsUndefined;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.CreateBuilder(workspace, body, 30).RootElement : default;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RequestIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, requestId, 30).RootElement;
         RevokeAccessRequestRequest request = new(RequestIdValue);
 
         request.Validate(validationMode);
 
-        if (validationMode == ValidationMode.Detailed)
+        if (hasBodyValue)
         {
-            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-            if (!bodyValue.EvaluateSchema(bodyCollector))
+            if (validationMode == ValidationMode.Detailed)
             {
-                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+                using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!bodyValue.EvaluateSchema(bodyCollector))
+                {
+                    ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+                }
+            }
+            else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed();
             }
         }
-        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+
+        if (hasBodyValue)
         {
-            ThrowHelper.ThrowRequestBodyValidationFailed();
+            return SendWithBodyAsyncCore<RevokeAccessRequestRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote, RevokeAccessRequestResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
         }
 
-        return SendWithBodyAsyncCore<RevokeAccessRequestRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote, RevokeAccessRequestResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+        return SendAsyncCore<RevokeAccessRequestRequest, RevokeAccessRequestResponse>(workspace, request, responseValidationMode, cancellationToken);
     }
 
     /// <inheritdoc/>

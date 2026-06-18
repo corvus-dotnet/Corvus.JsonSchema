@@ -218,16 +218,19 @@ internal static class AccessRequestCommandHelpers
             reason: settings.Reason is { } reason ? (Models.JsonString.Source)reason : default,
             requestedDurationSeconds: settings.DurationSeconds is { } duration ? (Models.AccessRequestSubmit.RequestedDurationSecondsEntity.Source)duration : default));
 
-    // Always builds an object (an empty {} when there is no reason). The generated client serializes the optional
-    // body unconditionally, so a default (undefined) Source would assert; an empty note is equivalent to no note.
+    // With a reason, builds the note object; without one, a default (undefined) Source so the generated client
+    // sends NO body (the decision endpoints' request body is optional, and the client omits an undefined body).
     public static Models.AccessRequestDecisionNote.Source Note(string? reason)
-        => new((ref Models.AccessRequestDecisionNote.Builder b) => b.Create(
-            reason: reason is { } r ? (Models.JsonString.Source)r : default));
+        => reason is { } r
+            ? new((ref Models.AccessRequestDecisionNote.Builder b) => b.Create(reason: (Models.JsonString.Source)r))
+            : default;
 
     public static Models.AccessRequestEligibilityNote.Source EligibilityNote(string? reason, long? windowSeconds)
-        => new((ref Models.AccessRequestEligibilityNote.Builder b) => b.Create(
-            eligibilityWindowSeconds: windowSeconds is { } window ? (Models.AccessRequestEligibilityNote.EligibilityWindowSecondsEntity.Source)window : default,
-            reason: reason is { } r ? (Models.JsonString.Source)r : default));
+        => reason is null && windowSeconds is null
+            ? default
+            : new((ref Models.AccessRequestEligibilityNote.Builder b) => b.Create(
+                eligibilityWindowSeconds: windowSeconds is { } window ? (Models.AccessRequestEligibilityNote.EligibilityWindowSecondsEntity.Source)window : default,
+                reason: reason is { } r ? (Models.JsonString.Source)r : default));
 
     public static int RenderTable(Models.AccessRequestList list, string? workflow)
     {
