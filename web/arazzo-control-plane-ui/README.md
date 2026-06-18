@@ -33,7 +33,9 @@ package `exports` — `@corvus-dotnet/arazzo-control-plane-ui`, `.../client`, `.
   `<arazzo-catalog-detail>`, `<arazzo-catalog-add-dialog>` for the workflow catalog;
   `<arazzo-credentials-table>` (a status-first rotation worklist), `<arazzo-credential-dialog>` (create/edit;
   re-pointing a reference rotates), and `<arazzo-administrators-panel>` for the source-credential (§13) and
-  workflow-administration (§15) surfaces. Each works alone. The
+  workflow-administration (§15) surfaces; and `<arazzo-access-requests>` (request run access, withdraw your own
+  pending requests, and — for workflows you administer — approve / make-eligible / deny / revoke) for the
+  access-request + approval (§16.5) surface. Each works alone. The
   add dialog can build the package archive in-browser from a workflow + its sources (`./workflow-package` ·
   [`src/workflow-package.js`](./src/workflow-package.js)) or upload a pre-built one; the catalog assigns the
   version number server-side. The credential components move **references and non-secret metadata only — never
@@ -109,6 +111,7 @@ The kit never embeds an IdP flow. Configure credentials one of three ways (prece
 | `<arazzo-credentials-table>` | `base-url`, `status`, `source`, `selectable`, `scopes` | `credential-selected`, `credential-new`, `loaded`, `error` |
 | `<arazzo-credential-dialog>` | (`.client`, `.open(binding?)`) | `credential-saved`, `error` |
 | `<arazzo-administrators-panel>` | `base-url`, `base-workflow-id`, `scopes` | `administrators-changed`, `error` |
+| `<arazzo-access-requests>` | `base-url`, `view` (`mine`\|`queue`), `base-workflow-id`, `theme` (`.fetch`, `.authProvider`) | `access-request-submitted`, `access-request-decided`, `loaded`, `error` |
 | `<arazzo-control-plane>` | `base-url`, `scopes`, `theme`, `poll` | re-emits the above |
 
 The runs table / panel filter server-side by status, workflowId, and a **time window** — `created-after` /

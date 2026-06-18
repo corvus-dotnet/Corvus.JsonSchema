@@ -567,6 +567,33 @@ function sameIdentity(a, b) {
   return a.dimension === b.dimension && a.value === b.value;
 }
 
+function seedAccessRequests() {
+  const hr = 60 * 60 * 1000;
+  return [
+    {
+      id: 'req-2001', baseWorkflowId: 'onboard-customer', requestedScopes: ['runs:write'],
+      subjectClaimType: 'preferred_username', subjectClaimValue: 'alice', requesterLabel: 'alice',
+      reason: 'On-call: need to retry a faulted onboarding.', requestedDurationSeconds: 4 * 3600,
+      status: 'Pending', createdBy: 'alice', createdAt: iso(-2 * hr), etag: nextEtag(),
+    },
+    {
+      id: 'req-2002', baseWorkflowId: 'nightly-reconcile', requestedScopes: ['runs:write'],
+      subjectClaimType: 'preferred_username', subjectClaimValue: 'bob', requesterLabel: 'bob',
+      reason: 'Re-run the overnight reconcile after the ledger fix.',
+      status: 'Approved', createdBy: 'bob', createdAt: iso(-26 * hr),
+      decidedBy: 'boss', decidedAt: iso(-25 * hr), grantedBindingId: 'bind-9001', grantedUntil: iso(6 * hr),
+      etag: nextEtag(),
+    },
+    {
+      id: 'req-2003', baseWorkflowId: 'onboard-customer', requestedScopes: ['runs:write'],
+      subjectClaimType: 'preferred_username', subjectClaimValue: 'carol', requesterLabel: 'carol',
+      reason: 'Investigating a stuck run.', status: 'Denied', createdBy: 'carol', createdAt: iso(-50 * hr),
+      decidedBy: 'boss', decidedAt: iso(-49 * hr), decisionReason: 'Use the shared service account for read-only triage.',
+      etag: nextEtag(),
+    },
+  ];
+}
+
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 }
@@ -587,6 +614,7 @@ export function createMockControlPlane(options = {}) {
   const catalog = options.catalogSeed ? structuredClone(options.catalogSeed) : seedCatalog();
   const credentials = options.credentialsSeed ? structuredClone(options.credentialsSeed) : seedCredentials();
   const administrators = options.administratorsSeed ? structuredClone(options.administratorsSeed) : seedAdministrators();
+  const accessRequests = options.accessRequestsSeed ? structuredClone(options.accessRequestsSeed) : seedAccessRequests();
   const latency = options.latencyMs ?? 250;
   const find = (id) => runs.find((r) => r.id === id);
   const findVersion = (base, n) => catalog.find((v) => v.baseWorkflowId === base && v.versionNumber === Number(n));
@@ -607,6 +635,9 @@ export function createMockControlPlane(options = {}) {
 
     const administratorsResponse = handleAdministrators(path, method, body);
     if (administratorsResponse) return administratorsResponse;
+
+    const accessRequestsResponse = handleAccessRequests(path, method, u.searchParams, body);
+    if (accessRequestsResponse) return accessRequestsResponse;
 
     // /runs collection
     if (/\/runs\/?$/.test(path)) {
@@ -1027,11 +1058,101 @@ export function createMockControlPlane(options = {}) {
     return json({ administrators: deduped });
   }
 
+  // ---- access requests (§16.5) ------------------------------------------------------------------
+  // The mock is identity-less, so "my requests" (no baseWorkflowId) returns the whole list and the workflow
+  // queue (with baseWorkflowId) filters to that workflow; the requester-only / administrator-only 403s are
+  // exercised by the server/CLI tests and by component tests with a fake client. State transitions ARE modelled
+  // (a non-pending request conflicts, etc.) so the UI's optimistic flows and conflict banners are exercised.
+
+  function handleAccessRequests(fullPath, method, params, body) {
+    const idx = fullPath.indexOf('/accessRequests');
+    if (idx < 0) return null;
+    const path = fullPath.slice(idx);
+
+    if (/^\/accessRequests\/?$/.test(path)) {
+      if (method === 'GET') return listAccessRequests(params);
+      if (method === 'POST') return submitAccessRequest(body);
+      return problem(405, 'Method not allowed');
+    }
+    const actionMatch = path.match(/^\/accessRequests\/([^/]+)\/(approve|approve-as-eligible|deny|withdraw|revoke)$/);
+    if (actionMatch && method === 'POST') {
+      return decideAccessRequest(decodeURIComponent(actionMatch[1]), actionMatch[2], body);
+    }
+    const idMatch = path.match(/^\/accessRequests\/([^/]+)$/);
+    if (idMatch && method === 'GET') {
+      const r = accessRequests.find((x) => x.id === decodeURIComponent(idMatch[1]));
+      return r ? json(r) : notFoundAccessRequest(decodeURIComponent(idMatch[1]));
+    }
+    return null;
+  }
+
+  function listAccessRequests(params) {
+    const status = params.get('status');
+    const base = params.get('baseWorkflowId');
+    let rows = [...accessRequests].sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt));
+    if (base) rows = rows.filter((r) => r.baseWorkflowId === base);
+    if (status) rows = rows.filter((r) => r.status === status);
+    return json({ accessRequests: rows });
+  }
+
+  function submitAccessRequest(body) {
+    if (!body?.baseWorkflowId || !Array.isArray(body.requestedScopes) || body.requestedScopes.length === 0) {
+      return problem(400, 'Invalid access request', 'A baseWorkflowId and at least one requestedScope are required.');
+    }
+    const r = {
+      id: `req-${++etagSeq}`, baseWorkflowId: body.baseWorkflowId, requestedScopes: body.requestedScopes,
+      subjectClaimType: 'preferred_username', subjectClaimValue: 'demo-user', requesterLabel: 'demo-user',
+      reason: body.reason, requestedDurationSeconds: body.requestedDurationSeconds,
+      status: 'Pending', createdBy: 'demo-user', createdAt: iso(0), etag: nextEtag(),
+    };
+    accessRequests.push(r);
+    return json(r, 201);
+  }
+
+  function decideAccessRequest(id, action, body) {
+    const r = accessRequests.find((x) => x.id === id);
+    if (!r) return notFoundAccessRequest(id);
+    const reason = body?.reason;
+    const requirePending = (verb) => r.status === 'Pending' ? null
+      : problem(409, 'Invalid access-request state', `Request '${id}' is ${r.status}; only a pending request can be ${verb}.`);
+
+    if (action === 'approve' || action === 'approve-as-eligible') {
+      const conflict = requirePending('approved');
+      if (conflict) return conflict;
+      const eligible = action === 'approve-as-eligible';
+      r.status = eligible ? 'Eligible' : 'Approved';
+      r.decidedBy = 'boss'; r.decidedAt = iso(0); r.decisionReason = reason;
+      r.grantedBindingId = `bind-${++etagSeq}`;
+      const windowSeconds = eligible ? body?.eligibilityWindowSeconds : (r.requestedDurationSeconds ?? 8 * 3600);
+      r.grantedUntil = windowSeconds ? iso(windowSeconds * 1000) : undefined;
+    } else if (action === 'deny') {
+      const conflict = requirePending('denied');
+      if (conflict) return conflict;
+      r.status = 'Denied'; r.decidedBy = 'boss'; r.decidedAt = iso(0); r.decisionReason = reason;
+    } else if (action === 'withdraw') {
+      const conflict = requirePending('withdrawn');
+      if (conflict) return conflict;
+      r.status = 'Withdrawn'; r.decidedAt = iso(0); r.decisionReason = reason;
+    } else if (action === 'revoke') {
+      if (r.status !== 'Approved') {
+        return problem(409, 'Invalid access-request state', `Request '${id}' is ${r.status}; only an approved grant can be revoked.`);
+      }
+      r.status = 'Revoked'; r.decidedBy = 'boss'; r.decidedAt = iso(0); r.decisionReason = reason; r.grantedUntil = undefined;
+    }
+    r.etag = nextEtag();
+    return json(r);
+  }
+
+  function notFoundAccessRequest(id) {
+    return problem(404, 'Access request not found', `No access request with id '${id}'.`);
+  }
+
   return {
     runs,
     catalog,
     credentials,
     administrators,
+    accessRequests,
     fetch: async (url, init) => {
       if (latency) await new Promise((r) => setTimeout(r, latency));
       return handle(url, init);

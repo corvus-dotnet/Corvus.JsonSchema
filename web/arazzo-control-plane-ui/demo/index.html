@@ -53,6 +53,7 @@
       <button id="tab-catalog" role="tab" aria-selected="false" aria-controls="view-catalog">Catalog</button>
       <button id="tab-credentials" role="tab" aria-selected="false" aria-controls="view-credentials">Credentials</button>
       <button id="tab-administrators" role="tab" aria-selected="false" aria-controls="view-administrators">Administrators</button>
+      <button id="tab-access" role="tab" aria-selected="false" aria-controls="view-access">Access</button>
     </div>
 
     <div id="view-runs" role="tabpanel">
@@ -73,6 +74,10 @@
       <arazzo-administrators-panel base-url="https://mock/arazzo/v1" scopes="administrators:read administrators:write"></arazzo-administrators-panel>
     </div>
 
+    <div id="view-access" role="tabpanel" hidden>
+      <arazzo-access-requests base-url="https://mock/arazzo/v1" theme="auto"></arazzo-access-requests>
+    </div>
+
     <p class="note">
       The kit talks to the mock through the client’s <code>fetch</code> hook — in a real app you’d set
       <code>panel.authProvider = () =&gt; 'Bearer …'</code> instead and point <code>base-url</code> at your
@@ -88,6 +93,7 @@
     import '../src/components/credentials-table.js';
     import '../src/components/credential-dialog.js';
     import '../src/components/administrators-panel.js';
+    import '../src/components/access-requests-panel.js';
 
     const mock = createMockControlPlane();
     const panel = document.querySelector('arazzo-control-plane');
@@ -101,9 +107,11 @@
     const credTable = document.querySelector('arazzo-credentials-table');
     const credDialog = document.querySelector('arazzo-credential-dialog');
     const admins = document.querySelector('arazzo-administrators-panel');
+    const access = document.querySelector('arazzo-access-requests');
     credTable.client = client;
     credDialog.client = client;
     admins.client = client;
+    access.client = client;
 
     // Credentials: the table emits; wire its new/select to the dialog, and the dialog's save back to a refresh.
     credTable.addEventListener('credential-new', () => credDialog.open());
@@ -123,6 +131,7 @@
     const applyTheme = (v) => {
       panel.setAttribute('theme', v);
       catalog.setAttribute('theme', v);
+      access.setAttribute('theme', v);
       if (v === 'auto') document.documentElement.removeAttribute('data-theme');
       else document.documentElement.setAttribute('data-theme', v);
     };
@@ -141,7 +150,7 @@
     });
 
     // Tabs.
-    const tabNames = ['runs', 'catalog', 'credentials', 'administrators'];
+    const tabNames = ['runs', 'catalog', 'credentials', 'administrators', 'access'];
     const tabs = Object.fromEntries(tabNames.map((n) => [n, document.getElementById(`tab-${n}`)]));
     const views = Object.fromEntries(tabNames.map((n) => [n, document.getElementById(`view-${n}`)]));
     const selectTab = (name) => {
@@ -163,6 +172,9 @@
       credTable.addEventListener(type, (e) => console.log(`[arazzo:credentials] ${type}`, e.detail));
     }
     admins.addEventListener('administrators-changed', (e) => console.log('[arazzo:administrators] changed', e.detail));
+    for (const type of ['access-request-submitted', 'access-request-decided', 'loaded', 'error']) {
+      access.addEventListener(type, (e) => console.log(`[arazzo:access] ${type}`, e.detail));
+    }
   </script>
 </body>
 </html>
