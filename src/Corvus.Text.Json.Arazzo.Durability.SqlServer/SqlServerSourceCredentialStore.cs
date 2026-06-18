@@ -104,27 +104,65 @@ public sealed class SqlServerSourceCredentialStore : ISourceCredentialStore, IAs
     }
 
     /// <inheritdoc/>
-    public async ValueTask<PooledDocumentList<SourceCredentialBinding>> ListAsync(AccessContext context, CancellationToken cancellationToken)
+    public async ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, string? pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        var docs = new PooledDocumentList<SourceCredentialBinding>();
+        int pageSize = limit > 0 ? limit : 1;
+        bool hasCursor = SourceCredentialContinuationToken.TryDecode(pageToken, out (string SourceName, string Environment, string TieBreaker) cursor);
+
+        await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        var docs = new PooledDocumentList<SourceCredentialBinding>(pageSize);
+        string? nextToken = null;
         try
         {
-            await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+            // Keyset seek past the cursor in (SourceName, Environment, TagsHash) order — an indexed range scan over the
+            // primary key, not a table load. Tags is nvarchar(max) and cannot be a key/ordered column, so the orderable
+            // PK component TagsHash (binary(32)) is the tie-breaker; the token carries it as a hex string. Reach is a
+            // per-row predicate applied in memory as we stream; the reader is consumed only until the page fills, so we
+            // read ≈ pageSize / selectivity rows, never the whole table.
             await using SqlCommand select = connection.CreateCommand();
-            select.CommandText = "SELECT Document FROM SourceCredentials ORDER BY SourceName, Environment;";
-            await using SqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            if (hasCursor)
             {
-                byte[] json = reader.GetFieldValue<byte[]>(0);
-                using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
-                if (context.Admits(AccessVerb.Read, candidate.RootElement.ManagementTagsValue))
-                {
-                    docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(json));
-                }
+                select.CommandText =
+                    "SELECT SourceName, Environment, TagsHash, Document FROM SourceCredentials " +
+                    "WHERE SourceName > @s OR (SourceName = @s AND Environment > @e) OR (SourceName = @s AND Environment = @e AND TagsHash > @t) " +
+                    "ORDER BY SourceName, Environment, TagsHash;";
+                select.Parameters.AddWithValue("@s", cursor.SourceName);
+                select.Parameters.AddWithValue("@e", cursor.Environment);
+                select.Parameters.AddWithValue("@t", Convert.FromHexString(cursor.TieBreaker));
+            }
+            else
+            {
+                select.CommandText = "SELECT SourceName, Environment, TagsHash, Document FROM SourceCredentials ORDER BY SourceName, Environment, TagsHash;";
             }
 
-            return docs;
+            await using SqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+            string lastSource = string.Empty, lastEnv = string.Empty, lastTie = string.Empty;
+            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                string source = reader.GetString(0);
+                string environment = reader.GetString(1);
+                string tie = Convert.ToHexString(reader.GetFieldValue<byte[]>(2));
+                byte[] json = reader.GetFieldValue<byte[]>(3);
+                using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
+                if (!context.Admits(AccessVerb.Read, candidate.RootElement.ManagementTagsValue))
+                {
+                    continue;
+                }
+
+                if (docs.Count == pageSize)
+                {
+                    nextToken = SourceCredentialContinuationToken.Encode(lastSource, lastEnv, lastTie);
+                    break;
+                }
+
+                docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(json));
+                lastSource = source;
+                lastEnv = environment;
+                lastTie = tie;
+            }
+
+            return new SourceCredentialPage(docs, nextToken);
         }
         catch
         {

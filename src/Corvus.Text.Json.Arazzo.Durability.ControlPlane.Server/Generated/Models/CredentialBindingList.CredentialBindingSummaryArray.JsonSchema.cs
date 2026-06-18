@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// All source credential bindings.
+/// A page of source credential bindings, ordered by sourceName then environment.
 /// </para>
 /// </remarks>
 public readonly partial struct CredentialBindingList

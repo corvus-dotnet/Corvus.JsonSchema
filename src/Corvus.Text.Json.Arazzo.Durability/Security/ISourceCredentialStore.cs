@@ -48,11 +48,20 @@ public interface ISourceCredentialStore
     /// <returns>The binding as a pooled document the caller must dispose, or <see langword="null"/>.</returns>
     ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> GetAsync(string sourceName, string environment, AccessContext context, CancellationToken cancellationToken);
 
-    /// <summary>Lists the bindings the caller's read reach admits (ascending by sourceName then environment).</summary>
+    /// <summary>
+    /// Lists one keyset page of the bindings the caller's read reach admits, ascending by sourceName then environment.
+    /// Reach is a per-row predicate evaluated in-memory, so the store seeks past <paramref name="pageToken"/> in
+    /// keyset order and streams rows applying reach until <paramref name="limit"/> visible bindings accumulate (or the
+    /// data is exhausted), emitting a <see cref="SourceCredentialPage.NextPageToken"/> when more remain — it never
+    /// materialises the whole table per page. The token is opaque and backend-scoped.
+    /// </summary>
     /// <param name="context">The caller's row-access grant (use <see cref="AccessContext.System"/> for full reach).</param>
+    /// <param name="limit">The maximum number of bindings to return in the page (the store treats a non-positive value as 1).</param>
+    /// <param name="pageToken">An opaque token from a previous page's <see cref="SourceCredentialPage.NextPageToken"/>, or <see langword="null"/> for the first page.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The visible bindings, as a pooled batch the caller must dispose.</returns>
-    ValueTask<PooledDocumentList<SourceCredentialBinding>> ListAsync(AccessContext context, CancellationToken cancellationToken);
+    /// <returns>The page (visible bindings + an optional next-page token), as a disposable batch the caller must dispose.</returns>
+    /// <exception cref="FormatException"><paramref name="pageToken"/> is not a valid continuation token.</exception>
+    ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, string? pageToken, CancellationToken cancellationToken);
 
     /// <summary>Updates the binding for (<paramref name="sourceName"/>, <paramref name="environment"/>) the caller's
     /// write reach admits, under optimistic concurrency. The (sourceName, environment) identity, the security tags, and

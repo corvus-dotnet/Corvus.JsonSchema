@@ -36,15 +36,6 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
     private const string EnvironmentColumn = "Environment";
     private const string DiscriminatorColumn = "Tags";
 
-    // Singleton comparer (created once) for the client-side snapshot ordering, since Table queries are unordered:
-    // by source name then environment — the listing order every backend agrees on.
-    private static readonly IComparer<ParsedJsonDocument<SourceCredentialBinding>> BySourceThenEnvironment =
-        Comparer<ParsedJsonDocument<SourceCredentialBinding>>.Create(static (a, b) =>
-        {
-            int bySource = string.CompareOrdinal(a.RootElement.SourceNameValue, b.RootElement.SourceNameValue);
-            return bySource != 0 ? bySource : string.CompareOrdinal(a.RootElement.EnvironmentValue, b.RootElement.EnvironmentValue);
-        });
-
     private readonly TableClient credentials;
     private readonly TimeProvider timeProvider;
 
@@ -137,28 +128,81 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
     }
 
     /// <inheritdoc/>
-    public async ValueTask<PooledDocumentList<SourceCredentialBinding>> ListAsync(AccessContext context, CancellationToken cancellationToken)
+    public async ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, string? pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        var docs = new PooledDocumentList<SourceCredentialBinding>();
+        int pageSize = limit > 0 ? limit : 1;
+        bool hasCursor = SourceCredentialContinuationToken.TryDecode(pageToken, out (string SourceName, string Environment, string TieBreaker) cursor);
+
+        // The contractual order is (sourceName, environment) with the tag discriminator as the tie-breaker for a stable
+        // TOTAL order. Table storage orders by (PartitionKey, RowKey) = (Enc(source), Enc(env)_Enc(disc)), but Enc is
+        // URL-safe base64 and therefore NOT ordinal-order-preserving, so the keyset cannot be pushed as a server-side
+        // range filter. Instead the entity keys (decoded into the plain SourceName/Environment/Tags columns) are pulled,
+        // sorted in memory into the total order, paged, and only the page's Documents are fetched.
+        var keys = new List<EntityKey>();
+        await foreach (TableEntity entity in this.credentials.QueryAsync<TableEntity>(
+            select: [SourceNameColumn, EnvironmentColumn, DiscriminatorColumn], cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            if (entity.GetString(SourceNameColumn) is not { } source ||
+                entity.GetString(EnvironmentColumn) is not { } environment ||
+                entity.GetString(DiscriminatorColumn) is not { } discriminator)
+            {
+                continue;
+            }
+
+            keys.Add(new EntityKey(source, environment, discriminator));
+        }
+
+        keys.Sort(static (a, b) =>
+        {
+            int bySource = string.CompareOrdinal(a.SourceName, b.SourceName);
+            if (bySource != 0)
+            {
+                return bySource;
+            }
+
+            int byEnv = string.CompareOrdinal(a.Environment, b.Environment);
+            return byEnv != 0 ? byEnv : string.CompareOrdinal(a.Discriminator, b.Discriminator);
+        });
+
+        var docs = new PooledDocumentList<SourceCredentialBinding>(pageSize);
+        string? nextToken = null;
         try
         {
-            await foreach (TableEntity entity in this.credentials.QueryAsync<TableEntity>(cancellationToken: cancellationToken).ConfigureAwait(false))
+            EntityKey last = default;
+            foreach (EntityKey key in keys)
             {
+                // Skip entities at or before the cursor in (source, env, disc) total order.
+                if (hasCursor && Compare(key, cursor) <= 0)
+                {
+                    continue;
+                }
+
+                // Fetch the Document only now, for entities past the cursor, and only until the page fills plus one.
+                TableEntity entity = (await this.credentials.GetEntityAsync<TableEntity>(
+                    PartitionKey(key.SourceName), RowKey(key.Environment, key.Discriminator), [DocColumn], cancellationToken).ConfigureAwait(false)).Value;
                 if (entity.GetBinary(DocColumn) is not { } json)
                 {
                     continue;
                 }
 
                 using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
-                if (context.Admits(AccessVerb.Read, candidate.RootElement.ManagementTagsValue))
+                if (!context.Admits(AccessVerb.Read, candidate.RootElement.ManagementTagsValue))
                 {
-                    docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(json));
+                    continue;
                 }
+
+                if (docs.Count == pageSize)
+                {
+                    nextToken = SourceCredentialContinuationToken.Encode(last.SourceName, last.Environment, last.Discriminator);
+                    break;
+                }
+
+                docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(json));
+                last = key;
             }
 
-            docs.Sort(BySourceThenEnvironment);
-            return docs;
+            return new SourceCredentialPage(docs, nextToken);
         }
         catch
         {
@@ -263,6 +307,19 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
+    // Orders a key against a decoded keyset cursor in the contractual total order: (source, env, discriminator) ordinal.
+    private static int Compare(in EntityKey key, in (string SourceName, string Environment, string TieBreaker) cursor)
+    {
+        int bySource = string.CompareOrdinal(key.SourceName, cursor.SourceName);
+        if (bySource != 0)
+        {
+            return bySource;
+        }
+
+        int byEnv = string.CompareOrdinal(key.Environment, cursor.Environment);
+        return byEnv != 0 ? byEnv : string.CompareOrdinal(key.Discriminator, cursor.TieBreaker);
+    }
+
     // The PartitionKey is the source name; the RowKey folds environment and the tag discriminator. Both are
     // user-supplied/derived strings that may contain Table-forbidden characters (/\#? and control chars — the
     // discriminator carries a U+0001 tag-set separator), so each segment is URL-safe-base64 encoded; the encoded
@@ -298,4 +355,8 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
 
         return (null, null);
     }
+
+    // The decoded entity key columns (the plain source/environment/discriminator, not the base64 PartitionKey/RowKey),
+    // carried so the listing snapshot can be put into the contractual total order without re-decoding the keys.
+    private readonly record struct EntityKey(string SourceName, string Environment, string Discriminator);
 }

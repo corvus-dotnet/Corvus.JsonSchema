@@ -36,15 +36,6 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
 
     private static readonly byte[] DocProperty = "doc"u8.ToArray();
 
-    // The single-partition candidate set for a (sourceName, environment) is read with this projection and ordered in
-    // memory; the binding document and its tag discriminator are the two fields each store operation needs.
-    private static readonly IComparer<ParsedJsonDocument<SourceCredentialBinding>> BySourceThenEnvironment =
-        Comparer<ParsedJsonDocument<SourceCredentialBinding>>.Create(static (a, b) =>
-        {
-            int bySource = string.CompareOrdinal(a.RootElement.SourceNameValue, b.RootElement.SourceNameValue);
-            return bySource != 0 ? bySource : string.CompareOrdinal(a.RootElement.EnvironmentValue, b.RootElement.EnvironmentValue);
-        });
-
     private readonly CosmosClient client;
     private readonly Container container;
     private readonly TimeProvider timeProvider;
@@ -157,24 +148,65 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
     }
 
     /// <inheritdoc/>
-    public async ValueTask<PooledDocumentList<SourceCredentialBinding>> ListAsync(AccessContext context, CancellationToken cancellationToken)
+    public async ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, string? pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        var docs = new PooledDocumentList<SourceCredentialBinding>();
+        int pageSize = limit > 0 ? limit : 1;
+        bool hasCursor = SourceCredentialContinuationToken.TryDecode(pageToken, out (string SourceName, string Environment, string TieBreaker) cursor);
+
+        // Keyset seek in the stable total order (sourceName, environment, discriminator). Cosmos cannot push the
+        // security-reach predicate — reach is a per-row check applied in memory as we stream — and the discriminator is
+        // not a stored envelope property (it is recomputed from each binding's own immutable tags), so only the first
+        // two key parts are seekable/orderable server-side. The query seeks past the cursor's (sourceName, environment)
+        // and re-includes the cursor's exact (sourceName, environment) so the in-memory tie-breaker comparison can skip
+        // rows up to and including it; the cross-partition ORDER BY needs a composite index on (sourceName, environment)
+        // (a deployment concern). Streaming stops once a further visible row beyond the page is seen, so we read only as
+        // far as the page (plus one) requires, never the whole container.
+        QueryDefinition query = hasCursor
+            ? new QueryDefinition(
+                    "SELECT c.doc FROM c WHERE c.sourceName > @s OR (c.sourceName = @s AND c.environment >= @e) ORDER BY c.sourceName, c.environment")
+                .WithParameter("@s", cursor.SourceName)
+                .WithParameter("@e", cursor.Environment)
+            : new QueryDefinition("SELECT c.doc FROM c ORDER BY c.sourceName, c.environment");
+
+        var docs = new PooledDocumentList<SourceCredentialBinding>(pageSize);
+        string? nextToken = null;
         try
         {
-            var query = new QueryDefinition("SELECT c.doc FROM c");
+            string lastSource = string.Empty, lastEnv = string.Empty, lastTie = string.Empty;
             await foreach (ReadOnlyMemory<byte> json in this.QueryDocumentsAsync(query, partition: null, cancellationToken).ConfigureAwait(false))
             {
                 using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json.Span);
-                if (context.Admits(AccessVerb.Read, candidate.RootElement.ManagementTagsValue))
+                string source = candidate.RootElement.SourceNameValue;
+                string environment = candidate.RootElement.EnvironmentValue;
+                string tie = ItemIdSeedFor(candidate.RootElement);
+
+                // The server seek re-includes the cursor's exact (sourceName, environment), so skip any row at or before
+                // the cursor in the full (sourceName, environment, discriminator) order — the discriminator tie-break is
+                // resolved here since it is not a stored, orderable property.
+                if (hasCursor && CompareKey(source, environment, tie, cursor.SourceName, cursor.Environment, cursor.TieBreaker) <= 0)
                 {
-                    docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(json.Span));
+                    continue;
                 }
+
+                if (!context.Admits(AccessVerb.Read, candidate.RootElement.ManagementTagsValue))
+                {
+                    continue;
+                }
+
+                if (docs.Count == pageSize)
+                {
+                    nextToken = SourceCredentialContinuationToken.Encode(lastSource, lastEnv, lastTie);
+                    break;
+                }
+
+                docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(json.Span));
+                lastSource = source;
+                lastEnv = environment;
+                lastTie = tie;
             }
 
-            docs.Sort(BySourceThenEnvironment);
-            return docs;
+            return new SourceCredentialPage(docs, nextToken);
         }
         catch
         {
@@ -379,6 +411,21 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
     // than re-read from the envelope's tags field.
     private static string ItemIdSeedFor(SourceCredentialBinding binding)
         => SourceCredentialKey.Discriminator(binding.ManagementTagsValue, binding.UsageTagsValue);
+
+    // Orders two bindings by the stable total key (sourceName, environment, discriminator), ordinally — matching the
+    // Cosmos string ORDER BY — so the in-memory keyset skip past the cursor agrees with the server-side seek on the
+    // first two parts and resolves the discriminator tie-break the query cannot express.
+    private static int CompareKey(string sourceA, string envA, string tieA, string sourceB, string envB, string tieB)
+    {
+        int bySource = string.CompareOrdinal(sourceA, sourceB);
+        if (bySource != 0)
+        {
+            return bySource;
+        }
+
+        int byEnv = string.CompareOrdinal(envA, envB);
+        return byEnv != 0 ? byEnv : string.CompareOrdinal(tieA, tieB);
+    }
 
     // Yields the embedded binding document's raw UTF-8 bytes (a slice into the pooled response page) for each result —
     // no base64 decode. The slice is valid only for the duration of the consumer's iteration step; a consumer that

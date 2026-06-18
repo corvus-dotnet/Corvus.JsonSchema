@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// All source credential bindings.
+/// A page of source credential bindings, ordered by sourceName then environment.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -171,6 +171,27 @@ public readonly partial struct CredentialBindingList
         get
         {
             if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CredentialsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialBindingList.CredentialBindingSummaryArray value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>nextPageToken</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// An opaque token to fetch the next page, or null/absent if this is the last page.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NextPageToken
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NextPageTokenUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
             {
                 return value;
             }
@@ -628,9 +649,19 @@ public readonly partial struct CredentialBindingList
         public const string Credentials = "credentials";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="NextPageToken"/>.
+        /// </summary>
+        public const string NextPageToken = "nextPageToken";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Credentials"/>.
         /// </summary>
         public static ReadOnlySpan<byte> CredentialsUtf8 => "credentials"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="NextPageToken"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> NextPageTokenUtf8 => "nextPageToken"u8;
     }
 
     /// <summary>
@@ -642,6 +673,11 @@ public readonly partial struct CredentialBindingList
         /// Gets the escaped UTF-8 JSON property name for <see cref="Credentials"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Credentials => "credentials"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="NextPageToken"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> NextPageToken => "nextPageToken"u8;
     }
 
     /// <summary>
@@ -654,5 +690,10 @@ public readonly partial struct CredentialBindingList
         /// Gets the pre-baked property name blob for <see cref="Credentials"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Credentials => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x72, 0x65, 0x64, 0x65, 0x6E, 0x74, 0x69, 0x61, 0x6C, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="NextPageToken"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> NextPageToken => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x65, 0x78, 0x74, 0x50, 0x61, 0x67, 0x65, 0x54, 0x6F, 0x6B, 0x65, 0x6E, 0x22];
     }
 }

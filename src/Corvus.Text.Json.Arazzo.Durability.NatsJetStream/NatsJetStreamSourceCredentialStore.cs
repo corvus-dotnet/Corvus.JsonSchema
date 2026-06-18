@@ -35,15 +35,6 @@ public sealed class NatsJetStreamSourceCredentialStore : ISourceCredentialStore,
     private const string Bucket = "arazzo_source_credentials";
     private const string KeyPrefix = "scred.";
 
-    // Singleton comparer (created once) for the client-side list ordering, since the KV key listing is unordered:
-    // by SourceName then Environment, mirroring the relational backends' ORDER BY.
-    private static readonly IComparer<ParsedJsonDocument<SourceCredentialBinding>> BySourceThenEnvironment =
-        Comparer<ParsedJsonDocument<SourceCredentialBinding>>.Create(static (a, b) =>
-        {
-            int bySource = string.CompareOrdinal(a.RootElement.SourceNameValue, b.RootElement.SourceNameValue);
-            return bySource != 0 ? bySource : string.CompareOrdinal(a.RootElement.EnvironmentValue, b.RootElement.EnvironmentValue);
-        });
-
     private readonly NatsConnection? ownedConnection;
     private readonly INatsKVStore store;
     private readonly TimeProvider timeProvider;
@@ -147,19 +138,53 @@ public sealed class NatsJetStreamSourceCredentialStore : ISourceCredentialStore,
     }
 
     /// <inheritdoc/>
-    public async ValueTask<PooledDocumentList<SourceCredentialBinding>> ListAsync(AccessContext context, CancellationToken cancellationToken)
+    public async ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, string? pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        var docs = new PooledDocumentList<SourceCredentialBinding>();
+        int pageSize = limit > 0 ? limit : 1;
+        bool hasCursor = SourceCredentialContinuationToken.TryDecode(pageToken, out (string SourceName, string Environment, string TieBreaker) cursor);
+
+        // KV listing is unordered and there is no server-side range query, so the stable total order — the contractual
+        // (sourceName, environment) plus the discriminator as a tie-breaker — is materialised in process from the keys
+        // alone (a cheap keys-only scan). Each key is scred.{Enc(sourceName)}.{Enc(environment)}.{Enc(discriminator)},
+        // so decoding its three Base64Url parts recovers the ordering tuple without reading a single document.
+        var ordered = new List<(string SourceName, string Environment, string Discriminator, string Key)>();
+        await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            if (!key.StartsWith(KeyPrefix, StringComparison.Ordinal) || !TryParseKey(key, out (string SourceName, string Environment, string Discriminator) parts))
+            {
+                continue;
+            }
+
+            ordered.Add((parts.SourceName, parts.Environment, parts.Discriminator, key));
+        }
+
+        ordered.Sort(static (a, b) =>
+        {
+            int bySource = string.CompareOrdinal(a.SourceName, b.SourceName);
+            if (bySource != 0)
+            {
+                return bySource;
+            }
+
+            int byEnv = string.CompareOrdinal(a.Environment, b.Environment);
+            return byEnv != 0 ? byEnv : string.CompareOrdinal(a.Discriminator, b.Discriminator);
+        });
+
+        var docs = new PooledDocumentList<SourceCredentialBinding>(pageSize);
+        string? nextToken = null;
         try
         {
-            await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
+            string lastSource = string.Empty, lastEnv = string.Empty, lastDisc = string.Empty;
+            foreach ((string source, string environment, string discriminator, string key) in ordered)
             {
-                if (!key.StartsWith(KeyPrefix, StringComparison.Ordinal))
+                // Seek strictly past the cursor in (sourceName, environment, discriminator) order.
+                if (hasCursor && CompareCursor(source, environment, discriminator, cursor) <= 0)
                 {
                     continue;
                 }
 
+                // Fetch the document lazily — only for keys at/after the cursor, and only until the page fills plus one.
                 NatsKVEntry<byte[]>? entry = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
                 if (entry is not { Value: { } bytes })
                 {
@@ -167,14 +192,25 @@ public sealed class NatsJetStreamSourceCredentialStore : ISourceCredentialStore,
                 }
 
                 using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(bytes);
-                if (context.Admits(AccessVerb.Read, candidate.RootElement.ManagementTagsValue))
+                if (!context.Admits(AccessVerb.Read, candidate.RootElement.ManagementTagsValue))
                 {
-                    docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(bytes));
+                    continue;
                 }
+
+                if (docs.Count == pageSize)
+                {
+                    // A further visible row exists beyond the page: emit a token pointing at the last included row.
+                    nextToken = SourceCredentialContinuationToken.Encode(lastSource, lastEnv, lastDisc);
+                    break;
+                }
+
+                docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(bytes));
+                lastSource = source;
+                lastEnv = environment;
+                lastDisc = discriminator;
             }
 
-            docs.Sort(BySourceThenEnvironment);
-            return docs;
+            return new SourceCredentialPage(docs, nextToken);
         }
         catch
         {
@@ -294,6 +330,59 @@ public sealed class NatsJetStreamSourceCredentialStore : ISourceCredentialStore,
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
     private static string Enc(string value) => Base64Url.EncodeToString(Encoding.UTF8.GetBytes(value));
+
+    private static string Dec(string value) => Encoding.UTF8.GetString(Base64Url.DecodeFromChars(value));
+
+    // Inverts Key: splits scred.{Enc(sourceName)}.{Enc(environment)}.{Enc(discriminator)} on the dot separators and
+    // Base64Url-decodes each part back to its original string, so the ordering tuple is recovered from the key alone.
+    private static bool TryParseKey(string key, out (string SourceName, string Environment, string Discriminator) parts)
+    {
+        parts = default;
+        ReadOnlySpan<char> body = key.AsSpan(KeyPrefix.Length);
+        int firstDot = body.IndexOf('.');
+        if (firstDot < 0)
+        {
+            return false;
+        }
+
+        ReadOnlySpan<char> rest = body[(firstDot + 1)..];
+        int secondDot = rest.IndexOf('.');
+        if (secondDot < 0)
+        {
+            return false;
+        }
+
+        ReadOnlySpan<char> sourcePart = body[..firstDot];
+        ReadOnlySpan<char> envPart = rest[..secondDot];
+        ReadOnlySpan<char> discPart = rest[(secondDot + 1)..];
+        if (discPart.IndexOf('.') >= 0)
+        {
+            return false;
+        }
+
+        try
+        {
+            parts = (Dec(sourcePart.ToString()), Dec(envPart.ToString()), Dec(discPart.ToString()));
+            return true;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
+
+    // Orders a row's (sourceName, environment, discriminator) against the page cursor in the stable total order.
+    private static int CompareCursor(string source, string environment, string discriminator, (string SourceName, string Environment, string TieBreaker) cursor)
+    {
+        int bySource = string.CompareOrdinal(source, cursor.SourceName);
+        if (bySource != 0)
+        {
+            return bySource;
+        }
+
+        int byEnv = string.CompareOrdinal(environment, cursor.Environment);
+        return byEnv != 0 ? byEnv : string.CompareOrdinal(discriminator, cursor.TieBreaker);
+    }
 
     // The KV key for a single binding: the namespace, then Base64Url(sourceName), Base64Url(environment),
     // Base64Url(discriminator), dot-separated. Base64Url emits only [A-Za-z0-9_-], all valid KV key characters, so

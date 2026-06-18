@@ -34,13 +34,20 @@ public sealed class ApiCredentialsClient : IApiCredentialsClient
     /// List source credential bindings
     /// </summary>
     /// <remarks>
-    /// Returns all source credential bindings (references and non-secret metadata only), ordered by sourceName then environment.
+    /// Returns a page of source credential bindings (references and non-secret metadata only), ordered by sourceName then environment. Page with `limit` and the opaque `pageToken` from a previous page's `nextPageToken`.
     /// </remarks>
+    /// <param name="limit">The limit parameter.</param>
+    /// <param name="pageToken">The pageToken parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<ListCredentialsResponse> ListCredentialsAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<ListCredentialsResponse> ListCredentialsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        ListCredentialsRequest request = new();
+        ListCredentialsRequest request = new()
+        {
+            Limit = limit.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.CreateBuilder(workspace, limit, 30).RootElement,
+            PageToken = pageToken.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, pageToken, 30).RootElement,
+        }
+        ;
 
         request.Validate(validationMode);
 
