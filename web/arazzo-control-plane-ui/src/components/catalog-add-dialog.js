@@ -12,10 +12,13 @@
 // assigns the version (a new workflow id starts at v1, an existing one gets the next version — submit the
 // bare workflow id, NOT a `-vN`). Two ways to supply it: BUILD it in-browser from the workflow + its
 // sources (the dialog reads the workflow's `sourceDescriptions` and requires a document for each), or
-// UPLOAD a pre-built package archive (e.g. from the `arazzo catalog pack` CLI).
+// UPLOAD a pre-built package archive (e.g. from the `arazzo catalog pack` CLI). Each declared source can be
+// ticked to set up its credential binding (§13) right after the workflow lands — a guided credential dialog
+// opens locked to that source, one after another (the control plane stores the reference, never the secret).
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import { packWorkflowPackage } from '../workflow-package.js';
+import './credential-dialog.js';
 
 const SOURCES_HINT = 'Choose the workflow document above to see the source documents it requires.';
 
@@ -74,7 +77,8 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
         }
         input[type="file"] { font: inherit; font-size: 12px; }
         .sources { display: grid; gap: 8px; }
-        .source-row { display: grid; grid-template-columns: 1fr 1.3fr; gap: 10px; align-items: center; border: 1px solid var(--_border); border-radius: var(--_radius); padding: 8px 10px; }
+        .source-row { display: grid; grid-template-columns: 1fr 1.3fr; gap: 8px 10px; align-items: center; border: 1px solid var(--_border); border-radius: var(--_radius); padding: 8px 10px; }
+        .setup-cred-label { grid-column: 1 / -1; display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--_muted); margin: 0; }
         .src-meta { display: grid; gap: 1px; }
         .src-label { font-weight: 600; font-size: 13px; color: var(--_text); }
         .src-type { font-size: 11px; color: var(--_muted); text-transform: uppercase; letter-spacing: 0.03em; }
@@ -165,6 +169,7 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
           ${s.url ? `<span class="hint">${escapeHtml(s.url)}</span>` : ''}
         </div>
         <input type="file" class="src-file" data-name="${escapeHtml(s.name)}" accept=".json,application/json">
+        <label class="setup-cred-label"><input type="checkbox" class="setup-cred" data-name="${escapeHtml(s.name)}"> Set up a credential binding for this source after adding</label>
       </div>`).join('');
   }
 
@@ -232,8 +237,11 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
     confirmBtn.disabled = true;
     try {
       const version = await this.client.addCatalogVersion(request);
+      // Sources the operator ticked to configure a credential binding for (build mode only).
+      const setupSources = this.$$('.setup-cred').filter((c) => c.checked).map((c) => c.dataset.name);
       this.close();
       this.emit('workflow-added', { version });
+      if (setupSources.length) this.setupSourceCredentials(setupSources);
     } catch (err) {
       const problem = err.problem || { title: err.message };
       banner.textContent = `${problem.title || 'Add failed'}${problem.detail ? ' — ' + problem.detail : ''}`;
@@ -242,6 +250,24 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
     } finally {
       confirmBtn.disabled = false;
     }
+  }
+
+  /** Open a guided credential dialog for each flagged source in turn (each locked to its source name). */
+  setupSourceCredentials(sources) {
+    let dlg = this.$('arazzo-credential-dialog');
+    if (!dlg) {
+      dlg = document.createElement('arazzo-credential-dialog');
+      this.shadowRoot.appendChild(dlg);
+    }
+    dlg.client = this.client;
+    const queue = [...sources];
+    const openNext = () => {
+      const name = queue.shift();
+      if (!name) { dlg.removeEventListener('credential-dialog-closed', openNext); return; }
+      dlg.open(null, { sourceName: name, lockSource: true });
+    };
+    dlg.addEventListener('credential-dialog-closed', openNext);
+    openNext();
   }
 }
 
