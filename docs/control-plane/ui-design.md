@@ -496,6 +496,11 @@ live *on the workflow*, not in standalone, deployment-wide tabs.
    credential dialog (auth-kind-driven slots) opens locked to each flagged source in turn, creating them via
    `/credentials` — completing the per-workflow governance hub (Security + Sources together).
 
-Also captured as work items: **mTLS source credentials** (design §13.1) and the **per-kind guided Config** fields
-(the non-secret config each auth kind reads — `apiKey` header-name/location, `basic` username, `oauth2`
-tokenUrl/clientId/scope), the analogue of the guided `secretRef` slots.
+4. **Per-kind guided Config (DONE).** The dialog now drives the **non-secret** config fields from the auth kind,
+   the analogue of the guided `secretRef` slots: `apiKey` → header/parameter-name + location; `basic` → required
+   username; `oauth2ClientCredentials` → required tokenUrl/clientId + optional scope/clientAuthentication;
+   `bearer` → none. Known fields render as labelled inputs/selects (validated on submit), unrecognised keys are
+   preserved verbatim in a free-form extra-config list so nothing is silently dropped on edit.
+
+Still captured as a work item: **mTLS source credentials** (design §13.1) — the only auth kind the
+`SourceCredentialProviderFactory` does not yet implement; required before this security epic closes.

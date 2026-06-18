@@ -525,8 +525,8 @@ function seedCredentials() {
   });
   return [
     b('petstore', 'production', 'apiKey', [{ name: 'value', ref: 'keyvault://petstore-key#3' }], { config: [{ key: 'parameterName', value: 'X-Api-Key' }], expiresAt: iso(20 * day), description: 'Petstore API key.' }),
-    b('billing', 'production', 'oauth2ClientCredentials', [{ name: 'clientSecret', ref: 'vault://kv/billing#secret' }], { usageGrants: [{ dimension: 'workflow', value: 'nightly-reconcile' }], expiresAt: iso(3 * day) }),
-    b('legacy', 'production', 'basic', [{ name: 'password', ref: 'env://LEGACY_PW' }], { expiresAt: iso(-2 * day) }),
+    b('billing', 'production', 'oauth2ClientCredentials', [{ name: 'clientSecret', ref: 'vault://kv/billing#secret' }], { config: [{ key: 'tokenUrl', value: 'https://idp.example.com/oauth/token' }, { key: 'clientId', value: 'billing-client' }], usageGrants: [{ dimension: 'workflow', value: 'nightly-reconcile' }], expiresAt: iso(3 * day) }),
+    b('legacy', 'production', 'basic', [{ name: 'password', ref: 'env://LEGACY_PW' }], { config: [{ key: 'username', value: 'svc-legacy' }], expiresAt: iso(-2 * day) }),
     b('events', 'staging', 'bearer', [{ name: 'value', ref: 'awssm://events-token' }], {}),
   ];
 }
@@ -951,7 +951,7 @@ export function createMockControlPlane(options = {}) {
   // strictly past the opaque token, take `limit`, and emit a nextPageToken when more remain.
   function listCredentialsPage(params) {
     const limit = Math.max(1, Number(params.get('limit')) || 100);
-    const key = (c) => `${c.sourceName} ${c.environment}`;
+    const key = (c) => `${c.sourceName}\u0000${c.environment}`;
     const after = params.get('pageToken') ? atobSafe(params.get('pageToken')) : null;
     const sorted = [...credentials].sort((a, b) => (key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0));
     const start = after ? sorted.findIndex((c) => key(c) > after) : 0;
