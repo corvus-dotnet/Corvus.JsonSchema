@@ -13,6 +13,7 @@ using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Sqlite;
 using System.Security.Claims;
+using VerbGrant = Corvus.Text.Json.Arazzo.Durability.Security.SecurityBindingDocument.VerbGrantInfo;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -54,7 +55,12 @@ SqliteWorkflowStateStore stateStore = await SqliteWorkflowStateStore.ConnectAsyn
 SqliteWorkflowCatalogStore catalogStore = await SqliteWorkflowCatalogStore.ConnectAsync(connectionString, metadataProvider: metadata);
 
 var management = new WorkflowManagementClient(stateStore, "demo", DemoData.CompleteResumer);
-var catalog = new WorkflowCatalogClient(catalogStore, stateStore, "demo");
+
+// A workflow's §15 administrator set governs who may approve access requests for it (and publish further versions).
+// The submitter of version 1 establishes administration (DemoData seeds the workflows as administered by the
+// arazzo-admins group); the access-request approval flow routes a request to these administrators.
+var administrators = new InMemoryWorkflowAdministratorStore();
+var catalog = new WorkflowCatalogClient(catalogStore, stateStore, "demo", administrators: administrators);
 
 // The runner registry is store-backed and shared, so a runner registering in its own process is visible to this
 // control plane's GET /runners (§5.4) — not an in-memory table only this process can see.
@@ -69,6 +75,33 @@ SqliteSourceCredentialStore sourceCredentials = await SqliteSourceCredentialStor
 // bootstrap rules (tenant-scoped / ABAC superset / intersection) so /security/* is populated out of the box.
 var securityPolicy = new Corvus.Text.Json.Arazzo.Durability.Security.InMemorySecurityPolicyStore();
 await Corvus.Text.Json.Arazzo.Durability.Security.SecurityBootstrap.SeedAsync(securityPolicy);
+
+// Every authenticated principal may READ the whole control plane; WRITE/run reach is deny-by-default and conferred
+// per-principal only through the access-request → approval flow (§16.5). So a stored grant is what lets a principal
+// *act*, scoped to exactly the workflow it names — the worked example's "alice may trigger that workflow, and only it".
+(await securityPolicy.AddBindingAsync(
+    new SecurityBindingDefinition("*", null, Read: VerbGrant.Full, Write: VerbGrant.None, Purge: VerbGrant.None, Description: "Authenticated principals may read the whole control plane."),
+    "bootstrap",
+    default)).Dispose();
+
+// The entitlement resolver (§16.5.2 Decision-A): ONE PersistentRowSecurityPolicy over the security-policy store
+// backs both layers — the claims transformer unions its ResolveGrantedScopes into the scope claim (capability), and
+// it is passed to MapArazzoControlPlane as the row-reach policy. A grant the approval service writes is refreshed
+// into this same instance in-process, taking effect immediately. The principal's Keycloak groups become its sys:
+// identity — the §15-administrator identity and the label stamped on rows it creates.
+var entitlements = new PersistentRowSecurityPolicy(
+    securityPolicy,
+    internalTagResolver: static principal => principal?.FindAll("groups")
+        .Select(c => new SecurityTag(SecurityShell.DefaultInternalPrefix + "group", c.Value)).ToArray() ?? []);
+await entitlements.RefreshAsync();
+
+// The access-request store (§16.5). In-memory like the security policy; the demo reseeds on every start.
+var accessRequests = new Corvus.Text.Json.Arazzo.Durability.Security.InMemoryAccessRequestStore();
+
+// arazzo-admins members are eligible to self-elevate (JIT activation, no human approver, §16.5.3); everyone else
+// must submit a request and be approved by a §15 administrator of the target workflow.
+Func<ClaimsPrincipal, AccessRequestDefinition, bool> eligibleForSelfElevation =
+    static (principal, _) => principal.FindAll("groups").Any(c => c.Value == "arazzo-admins");
 
 // Control-plane authorization is per-deployment (design §14.1). The real strategy is OIDC: bearer tokens from
 // Keycloak (humans via the BFF, machines via client-credentials, §16.3), with the dev API-key kept for
@@ -146,7 +179,9 @@ if (requireAuthorization)
             options.TokenValidationParameters.NameClaimType = "preferred_username";
         });
 
-    // The demo's concrete §14.1 mapping: Keycloak `groups` → the capability scopes the policies read (§16.5).
+    // The demo's concrete §14.1 mapping: Keycloak `groups` → the capability scopes the policies read (§16.5). The
+    // transformer also unions the principal's stored grants (claims ∪ entitlements), so it shares the one resolver.
+    builder.Services.AddSingleton(entitlements);
     builder.Services.AddSingleton<IClaimsTransformation, KeycloakClaimsTransformer>();
     builder.Services.AddArazzoControlPlaneAuthorization();
 }
@@ -219,8 +254,20 @@ else
     app.Logger.LogWarning("Web UI not found at {UiRoot}; the API is still available under /arazzo/v1.", uiRoot);
 }
 
-// The real control-plane API, under a conventional base path the UI points at.
-app.MapGroup("/arazzo/v1").MapArazzoControlPlane(management, catalog, runners, requireAuthorization, securityPolicyStore: securityPolicy, sourceCredentialStore: sourceCredentials);
+// The real control-plane API, under a conventional base path the UI points at. Row security (reach scoping) is
+// applied only when authorization is on — the open, unauthenticated demo stays fully visible. The access-request
+// surface keys a grant on the requester's `preferred_username`, the same claim the resolver matches.
+app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
+    management,
+    catalog,
+    runners,
+    requireAuthorization,
+    rowSecurity: requireAuthorization ? entitlements : null,
+    securityPolicyStore: securityPolicy,
+    sourceCredentialStore: sourceCredentials,
+    accessRequestStore: accessRequests,
+    accessRequestSubjectClaimType: "preferred_username",
+    selfElevationEligibility: eligibleForSelfElevation);
 
 // The demo backend services the workflows call (generated from the same OpenAPI sources, returning sample data).
 OnboardingApi.MapApiEndpoints(app.MapGroup("/svc/onboarding"), new OnboardingService());
