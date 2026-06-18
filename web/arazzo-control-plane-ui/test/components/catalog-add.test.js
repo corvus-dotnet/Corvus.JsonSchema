@@ -97,6 +97,29 @@ describe('<arazzo-catalog-add-dialog>', () => {
     const e = await added;
     equal(e.detail.version.status, 'Active');
   });
+
+  it('opens a guided credential dialog locked to each source ticked for credential setup', async () => {
+    el = dialogWithMock();
+    mount(el);
+    el.open();
+    setFile(el.$('#workflowFile'), 'workflow.json', workflowJson('nightly-reconcile', 'Nightly Reconcile'));
+    await waitFor(() => el.$('.src-file[data-name="petstore"]'));
+    setFile(el.$('.src-file[data-name="petstore"]'), 'petstore.json', JSON.stringify({ openapi: '3.1.0' }));
+    el.$('#ownerName').value = 'Team';
+    el.$('#ownerEmail').value = 'team@example.com';
+    el.$('.setup-cred[data-name="petstore"]').checked = true; // set up this source's credentials after adding
+
+    const added = nextEvent(el, 'workflow-added');
+    el.$('.confirm').click();
+    await added;
+
+    // After the version lands, a guided credential dialog opens locked to the petstore source.
+    const cred = await waitFor(() => el.shadowRoot.querySelector('arazzo-credential-dialog'));
+    await waitFor(() => cred.shadowRoot.querySelector('dialog')?.open);
+    equal(cred.shadowRoot.querySelector('#sourceName').value, 'petstore', 'pre-filled with the source name');
+    ok(cred.shadowRoot.querySelector('#sourceName').readOnly, 'source is locked');
+    ok(!cred.shadowRoot.querySelector('#environment').readOnly, 'environment stays editable');
+  });
 });
 
 describe('<arazzo-catalog> add wiring', () => {

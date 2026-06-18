@@ -135,4 +135,20 @@ describe('<arazzo-credential-dialog>', () => {
     equal(e.detail.binding.secretRefs[0].ref, 'keyvault://petstore-key#4', 'reference re-pointed');
     ok(e.detail.binding.rotatedAt, 'a reference change stamped rotatedAt');
   });
+
+  it('creates for a fixed source when opened locked (the add-workflow source-credential flow)', async () => {
+    el = dialogWith(clientWithMock());
+    mount(el);
+    el.open(null, { sourceName: 'petstore', lockSource: true });
+    equal($(el, '#sourceName').value, 'petstore', 'the source is pre-filled');
+    ok($(el, '#sourceName').readOnly, 'the source is locked');
+    ok(!$(el, '#environment').readOnly, 'the environment stays editable');
+    $(el, '#environment').value = 'staging'; // petstore/production is already seeded; staging is fresh
+    setRef($(el, '.refs .refrow'), { fields: { host: 'petstore-kv', name: 'api-key' } });
+    const saved = nextEvent(el, 'credential-saved');
+    el.submit();
+    const e = await saved;
+    equal(e.detail.binding.sourceName, 'petstore', 'created for the locked source');
+    equal(e.detail.binding.secretRefs[0].ref, 'keyvault://petstore-kv/api-key', 'with the composed reference');
+  });
 });
