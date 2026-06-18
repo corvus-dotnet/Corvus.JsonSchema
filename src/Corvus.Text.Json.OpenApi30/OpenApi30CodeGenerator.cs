@@ -4294,6 +4294,12 @@ public sealed class OpenApi30CodeGenerator
             else if (hasBody)
             {
                 needsSendWithBody = true;
+
+                // An optional JSON body also emits a bodyless SendAsyncCore path for when the caller omits it.
+                if (!op.RequestBody!.Value.IsRequired && !HasRequestBasedExpressions(op))
+                {
+                    needsSendAsync = true;
+                }
             }
             else
             {
@@ -4339,6 +4345,14 @@ public sealed class OpenApi30CodeGenerator
         bool isFormUrlEncodedBody = hasBody && !isRawStreamBody && IsFormUrlEncodedRequestBody(op.RequestBody!.Value);
         bool isMultipartBody = hasBody && !isRawStreamBody && !isFormUrlEncodedBody && IsMultipartRequestBody(op.RequestBody!.Value);
 
+        // An OPTIONAL JSON body the caller omitted (`body` is undefined) must go out as NO body — not as an empty
+        // object — because the server treats the body as optional too. We materialise/validate/send under a runtime
+        // `hasBodyValue` guard so an undefined Source is never built (a zero-member builder would fault) and the
+        // request is sent bodyless. Scoped to plain JSON bodies without request-expression links (the common case);
+        // required bodies and form/multipart bodies are unchanged.
+        bool optionalJsonBody = hasBody && !isRawStreamBody && !isFormUrlEncodedBody && !isMultipartBody
+            && !hasRequestExprLinks && !op.RequestBody!.Value.IsRequired;
+
         w.WriteLine("JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
 
         // Materialise body from Source → immutable typed element (JSON and form-urlencoded).
@@ -4346,8 +4360,17 @@ public sealed class OpenApi30CodeGenerator
         if (hasBody && !isRawStreamBody)
         {
             bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody!.Value);
-            w.WriteLine(
-                $"{bodyTypeName} bodyValue = {bodyTypeName}.CreateBuilder(workspace, body, 30).RootElement;");
+            if (optionalJsonBody)
+            {
+                w.WriteLine("bool hasBodyValue = !body.IsUndefined;");
+                w.WriteLine(
+                    $"{bodyTypeName} bodyValue = hasBodyValue ? {bodyTypeName}.CreateBuilder(workspace, body, 30).RootElement : default;");
+            }
+            else
+            {
+                w.WriteLine(
+                    $"{bodyTypeName} bodyValue = {bodyTypeName}.CreateBuilder(workspace, body, 30).RootElement;");
+            }
         }
 
         if (hasParams)
@@ -4409,10 +4432,17 @@ public sealed class OpenApi30CodeGenerator
         // Validate parameters.
         w.WriteLine("request.Validate(validationMode);");
 
-        // Validate JSON body if present (skip text/plain and stream bodies).
+        // Validate JSON body if present (skip text/plain and stream bodies). An omitted optional body is not
+        // validated — there is nothing to validate, and the request goes out bodyless.
         if (hasBody && !isRawStreamBody)
         {
             w.WriteLine();
+            if (optionalJsonBody)
+            {
+                w.WriteLine("if (hasBodyValue)");
+                w.OpenBrace();
+            }
+
             w.WriteLine("if (validationMode == ValidationMode.Detailed)");
             w.OpenBrace();
             w.WriteLine("using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);");
@@ -4425,6 +4455,11 @@ public sealed class OpenApi30CodeGenerator
             w.OpenBrace();
             w.WriteLine("ThrowHelper.ThrowRequestBodyValidationFailed();");
             w.CloseBrace();
+
+            if (optionalJsonBody)
+            {
+                w.CloseBrace();
+            }
         }
 
         w.WriteLine();
@@ -4568,6 +4603,21 @@ public sealed class OpenApi30CodeGenerator
                     $"return CaptureRequestAsync(" +
                     $"SendWithBodyAsyncCore<{requestName}, {bodyTypeName}, " +
                     $"{responseName}>(JsonWorkspace.CreateUnrented(), request, bodyValue, responseValidationMode, cancellationToken), request, {(hasRequestBodyExprLinks ? "bodyValue, " : "")}workspace);");
+            }
+            else if (optionalJsonBody)
+            {
+                // The caller supplied a body → send it; otherwise send the request bodyless (the server's
+                // optional-body path). This is the client counterpart to the optional request-body server fix.
+                w.WriteLine("if (hasBodyValue)");
+                w.OpenBrace();
+                w.WriteLine(
+                    $"return SendWithBodyAsyncCore<{requestName}, {bodyTypeName}, " +
+                    $"{responseName}>(workspace, request, bodyValue, responseValidationMode, cancellationToken);");
+                w.CloseBrace();
+                w.WriteLine();
+                w.WriteLine(
+                    $"return SendAsyncCore<{requestName}, " +
+                    $"{responseName}>(workspace, request, responseValidationMode, cancellationToken);");
             }
             else
             {
