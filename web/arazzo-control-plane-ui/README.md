@@ -31,8 +31,12 @@ package `exports` — `@corvus-dotnet/arazzo-control-plane-ui`, `.../client`, `.
   `skipOutputs`) for runs;
   `<arazzo-catalog-table>`,
   `<arazzo-catalog-detail>`, `<arazzo-catalog-add-dialog>` for the workflow catalog;
-  `<arazzo-credentials-table>` (a status-first rotation worklist), `<arazzo-credential-dialog>` (create/edit;
-  re-pointing a reference rotates), and `<arazzo-administrators-panel>` for the source-credential (§13) and
+  `<arazzo-credentials-table>` (a status-first rotation worklist), `<arazzo-credential-dialog>` (create/edit; the
+  auth kind drives which secret slot(s) are shown — fixed role + plain label — and each slot has guided per-store
+  `secretRef` fields that compose + preview the canonical reference; the control plane never reads the secret
+  store, so it cannot browse it; re-pointing a reference rotates), and
+  `<arazzo-administrators-panel>` (the workflow-administration §15 set — composed into the catalog detail as a
+  per-workflow, authz-gated Security section rather than a standalone screen) for the source-credential (§13) and
   workflow-administration (§15) surfaces; and `<arazzo-access-requests>` (request run access, withdraw your own
   pending requests, and — for workflows you administer — approve / make-eligible / deny / revoke) for the
   access-request + approval (§16.5) surface. Each works alone. The
@@ -112,6 +116,7 @@ The kit never embeds an IdP flow. Configure credentials one of three ways (prece
 | `<arazzo-credential-dialog>` | (`.client`, `.open(binding?)`) | `credential-saved`, `error` |
 | `<arazzo-administrators-panel>` | `base-url`, `base-workflow-id`, `scopes` | `administrators-changed`, `error` |
 | `<arazzo-access-requests>` | `base-url`, `view` (`mine`\|`queue`), `base-workflow-id`, `theme` (`.fetch`, `.authProvider`) | `access-request-submitted`, `access-request-decided`, `loaded`, `error` |
+| `<arazzo-access-request-dialog>` | (`.client`, `.open({ baseWorkflowId?, lockWorkflow? })`) | `access-request-submitted`, `error` |
 | `<arazzo-control-plane>` | `base-url`, `scopes`, `theme`, `poll` | re-emits the above |
 
 The runs table / panel filter server-side by status, workflowId, and a **time window** — `created-after` /

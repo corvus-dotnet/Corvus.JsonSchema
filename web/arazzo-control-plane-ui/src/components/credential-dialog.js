@@ -14,11 +14,108 @@
 // known scheme is refused before the request (the same boundary the server enforces). On edit it is a merge
 // over the current binding — re-pointing a reference is a rotation, so it stamps `rotatedAt`. Management tags
 // and usage grants are immutable across updates, so they are shown read-only when editing.
+//
+// The secret references are DRIVEN BY THE AUTH KIND: each kind resolves a fixed set of role-named secrets (the
+// runner-side `SourceCredentialProviderFactory`), so the form shows exactly those slots, labelled, with the role
+// fixed — not a free-text role and an open-ended "+ Add". And because the control plane never connects to a
+// secret store (§13.5), the UI cannot browse it; each slot is entered through GUIDED, per-store fields (the
+// locator shape differs per store) that compose the canonical `secretRef` and preview exactly what is stored,
+// with a "Raw reference…" escape hatch for a value that does not fit the guided shape.
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 
 const SECRET_REF = /^(keyvault|awssm|vault|env|file):\/\/.+/;
-const AUTH_KINDS = ['apiKey', 'bearer', 'basic', 'oauth2ClientCredentials', 'mtls'];
+
+// The supported auth kinds and the secret slot(s) each one consumes (role = the `secretRefs[].name` the runner
+// resolves; label = plain-language name for the slot). mTLS is intentionally absent — it is not implemented (the
+// durability `SourceCredentialKind` would reject it) and needs two slots (certificate + key); see design §13.1.
+const SLOTS = {
+  apiKey: [{ role: 'value', label: 'API key' }],
+  bearer: [{ role: 'value', label: 'Bearer token' }],
+  basic: [{ role: 'password', label: 'Password' }],
+  oauth2ClientCredentials: [{ role: 'clientSecret', label: 'Client secret' }],
+};
+const AUTH_KINDS = Object.keys(SLOTS);
+
+// The non-secret config each kind also reads (shown as a hint so the operator knows what belongs in Config).
+const KIND_CONFIG_HINT = {
+  apiKey: 'Optionally set in Config: parameterName / headerName, and location (header, query, or cookie).',
+  basic: 'Also set the username in Config (it is not a secret).',
+  oauth2ClientCredentials: 'Also set tokenUrl and clientId in Config (and optionally scope).',
+};
+
+// The per-store reference grammar (authoritative — matches the runner-side resolvers). Each scheme declares the
+// fields a user fills, how they compose into `scheme://locator[#version]`, how an existing reference parses back
+// into those fields (null ⇒ cannot be represented, fall back to raw), and a worked example.
+const SCHEMES = {
+  keyvault: {
+    label: 'Azure Key Vault',
+    fields: [
+      { key: 'host', label: 'Vault host', placeholder: 'petstore-kv (or petstore-kv.vault.azure.net)', required: true },
+      { key: 'name', label: 'Secret name', placeholder: 'api-key', required: true },
+      { key: 'version', label: 'Version', placeholder: 'optional', required: false },
+    ],
+    compose: (v) => `keyvault://${v.host}/${v.name}${v.version ? `#${v.version}` : ''}`,
+    parse: (locator, version) => {
+      const slash = locator.indexOf('/');
+      return slash > 0 && slash < locator.length - 1
+        ? { host: locator.slice(0, slash), name: locator.slice(slash + 1), version }
+        : null;
+    },
+    example: 'keyvault://petstore-kv/api-key#a1b2c3',
+  },
+  awssm: {
+    label: 'AWS Secrets Manager',
+    fields: [
+      { key: 'id', label: 'Secret id or ARN', placeholder: 'petstore/api-key  (or arn:aws:secretsmanager:…)', required: true },
+      { key: 'version', label: 'Version id', placeholder: 'optional', required: false },
+    ],
+    compose: (v) => `awssm://${v.id}${v.version ? `#${v.version}` : ''}`,
+    parse: (locator, version) => (locator ? { id: locator, version } : null),
+    example: 'awssm://petstore/api-key',
+  },
+  vault: {
+    label: 'HashiCorp Vault (KV v2)',
+    fields: [
+      { key: 'mount', label: 'Mount', placeholder: 'secret', required: true },
+      { key: 'path', label: 'Path', placeholder: 'arazzo/petstore', required: true },
+      { key: 'field', label: 'Field', placeholder: 'api-key', required: true },
+    ],
+    compose: (v) => `vault://${v.mount}/${v.path}#${v.field}`,
+    parse: (locator, version) => {
+      const slash = locator.indexOf('/');
+      return slash > 0 && slash < locator.length - 1 && version
+        ? { mount: locator.slice(0, slash), path: locator.slice(slash + 1), field: version }
+        : null;
+    },
+    example: 'vault://secret/arazzo/petstore#api-key',
+  },
+  env: {
+    label: 'Environment variable',
+    fields: [{ key: 'var', label: 'Variable name', placeholder: 'PETSTORE_API_KEY', required: true }],
+    compose: (v) => `env://${v.var}`,
+    parse: (locator) => (locator ? { var: locator } : null),
+    example: 'env://PETSTORE_API_KEY',
+  },
+  file: {
+    label: 'File path',
+    fields: [{ key: 'path', label: 'File path', placeholder: '/var/run/secrets/petstore', required: true }],
+    compose: (v) => `file://${v.path}`,
+    parse: (locator) => (locator ? { path: locator } : null),
+    example: 'file:///var/run/secrets/petstore',
+  },
+};
+
+/** Split a reference into its guided scheme + field values, or `{ scheme: 'raw', raw }` when it cannot be represented. */
+function parseRef(ref) {
+  const m = /^([a-z0-9]+):\/\/(.*)$/i.exec(ref || '');
+  const spec = m && SCHEMES[m[1].toLowerCase()];
+  if (!spec) return { scheme: 'raw', raw: ref || '' };
+  const rest = m[2];
+  const hash = rest.indexOf('#');
+  const values = spec.parse(hash >= 0 ? rest.slice(0, hash) : rest, hash >= 0 ? rest.slice(hash + 1) : '');
+  return values ? { scheme: m[1].toLowerCase(), values } : { scheme: 'raw', raw: ref };
+}
 
 class ArazzoCredentialDialog extends ArazzoElement {
   connectedCallback() {
@@ -42,6 +139,10 @@ class ArazzoCredentialDialog extends ArazzoElement {
     this.$('dialog')?.close();
   }
 
+  get authKind() {
+    return this.$('#authKind').value.trim();
+  }
+
   fill(b) {
     const ro = !!b; // source/env are the immutable identity when editing
     this.$('#sourceName').value = b?.sourceName || '';
@@ -52,9 +153,9 @@ class ArazzoCredentialDialog extends ArazzoElement {
     this.$('#description').value = b?.description || '';
     this.$('#expiresAt').value = b?.expiresAt ? String(b.expiresAt).slice(0, 10) : '';
 
-    this.$('.refs').innerHTML = '';
-    const refs = b?.secretRefs?.length ? b.secretRefs : [{ name: 'value', ref: '' }];
-    for (const r of refs) this.addRow('.refs', 'ref', r.name, r.ref);
+    const refsByRole = new Map();
+    for (const r of b?.secretRefs || []) refsByRole.set(r.name, r.ref);
+    this.renderRefs(refsByRole);
 
     this.$('.config').innerHTML = '';
     for (const c of b?.config || []) this.addRow('.config', 'cfg', c.key, c.value);
@@ -72,10 +173,118 @@ class ArazzoCredentialDialog extends ArazzoElement {
     }
   }
 
-  /** Append a removable two-input row (name/ref or key/value) to a list container. */
+  /** Render the reference slots for the current auth kind, filling each from `refsByRole` and preserving extras. */
+  renderRefs(refsByRole = new Map()) {
+    const kind = this.authKind;
+    const slots = SLOTS[kind];
+    const refs = this.$('.refs');
+    refs.innerHTML = '';
+    this.$('.kindhint').textContent = (slots && KIND_CONFIG_HINT[kind]) || '';
+
+    if (!slots) {
+      refs.innerHTML = `<div class="muted refhint">Choose a supported auth kind (${AUTH_KINDS.join(', ')}) to enter its secret.</div>`;
+      return;
+    }
+
+    const used = new Set();
+    for (const slot of slots) {
+      this.addRefRow({ role: slot.role, label: slot.label, ref: refsByRole.get(slot.role) || '', required: true });
+      used.add(slot.role);
+    }
+    // Preserve any existing references this kind does not consume (legacy / wrong-role) so a save never drops them.
+    for (const [role, ref] of refsByRole) {
+      if (role && !used.has(role)) {
+        this.addRefRow({ role, label: role, ref, removable: true, note: '· not used by this auth kind' });
+      }
+    }
+  }
+
+  /** Append a guided reference slot: a fixed role + label, a per-store scheme picker, and a live canonical preview. */
+  addRefRow({ role, label, ref = '', required = false, removable = false, note = '' }) {
+    const parsed = ref ? parseRef(ref) : { scheme: 'keyvault', values: {} };
+    const row = document.createElement('div');
+    row.className = 'refrow';
+    row.dataset.role = role;
+    row.dataset.label = label;
+    if (required) row.dataset.required = 'true';
+    const schemeOptions = Object.entries(SCHEMES)
+      .map(([k, s]) => `<option value="${k}"${k === parsed.scheme ? ' selected' : ''}>${escapeHtml(s.label)}</option>`)
+      .join('') + `<option value="raw"${parsed.scheme === 'raw' ? ' selected' : ''}>Raw reference…</option>`;
+    row.innerHTML = `
+      <div class="reftop">
+        <div class="slot-label">${escapeHtml(label)}${required ? ' *' : ''}${note ? ` <span class="muted">${escapeHtml(note)}</span>` : ''}</div>
+        <select class="scheme" aria-label="secret store for ${escapeHtml(label)}">${schemeOptions}</select>
+        ${removable ? `<button class="rm ghost" type="button" title="Remove" aria-label="Remove">✕</button>` : '<span></span>'}
+      </div>
+      <div class="reffields"></div>
+      <div class="refpreview muted"></div>`;
+    if (removable) row.querySelector('.rm').addEventListener('click', () => row.remove());
+    row.querySelector('.scheme').addEventListener('change', () => this.renderRefFields(row));
+    this.$('.refs').appendChild(row);
+    this.renderRefFields(row, parsed);
+  }
+
+  /** (Re)build a reference row's fields for its selected scheme, wire live preview, and seed values when provided. */
+  renderRefFields(row, seed = null) {
+    const scheme = row.querySelector('.scheme').value;
+    const fields = row.querySelector('.reffields');
+
+    if (scheme === 'raw') {
+      const raw = seed?.scheme === 'raw' ? seed.raw : '';
+      fields.innerHTML = `<div class="reffield wide"><label>Reference</label><input class="rawref" type="text" placeholder="scheme://locator[#version]" aria-label="raw reference" value="${escapeHtml(raw)}"></div>`;
+      fields.querySelector('.rawref').addEventListener('input', () => this.updatePreview(row));
+      this.updatePreview(row);
+      return;
+    }
+
+    const spec = SCHEMES[scheme];
+    const values = seed?.scheme === scheme ? seed.values : {};
+    fields.innerHTML = spec.fields.map((f) => `
+      <div class="reffield">
+        <label>${escapeHtml(f.label)}${f.required ? ' *' : ''}</label>
+        <input data-key="${f.key}" type="text" placeholder="${escapeHtml(f.placeholder)}" aria-label="${escapeHtml(f.label)}" value="${escapeHtml(values[f.key] || '')}">
+      </div>`).join('');
+    fields.querySelectorAll('input').forEach((i) => i.addEventListener('input', () => this.updatePreview(row)));
+    this.updatePreview(row);
+  }
+
+  /** The composed reference for a row, or `null` if a guided row is missing a required field. */
+  refRowRef(row) {
+    const scheme = row.querySelector('.scheme').value;
+    if (scheme === 'raw') return row.querySelector('.rawref')?.value.trim() || '';
+    const spec = SCHEMES[scheme];
+    const values = {};
+    for (const f of spec.fields) values[f.key] = (row.querySelector(`[data-key="${f.key}"]`)?.value || '').trim();
+    if (spec.fields.some((f) => f.required && !values[f.key])) return null;
+    return spec.compose(values);
+  }
+
+  /** Show the exact reference a row will store (live), or a hint + example while it is incomplete. */
+  updatePreview(row) {
+    const preview = row.querySelector('.refpreview');
+    if (!preview) return;
+    const scheme = row.querySelector('.scheme').value;
+    if (scheme === 'raw') { preview.textContent = ''; return; }
+    const ref = this.refRowRef(row);
+    preview.innerHTML = ref
+      ? `→ <code>${escapeHtml(ref)}</code>`
+      : `Fill the fields above — e.g. <code>${escapeHtml(SCHEMES[scheme].example)}</code>`;
+  }
+
+  /** Snapshot the current reference rows as role → composed reference, so values survive an auth-kind switch. */
+  snapshotRefs() {
+    const map = new Map();
+    for (const row of this.$$('.refs .refrow')) {
+      const role = row.dataset.role;
+      const ref = this.refRowRef(row);
+      if (role && ref) map.set(role, ref);
+    }
+    return map;
+  }
+
+  /** Append a removable two-input row (key/value) to a list container (config / grants / management tags). */
   addRow(container, kind, a = '', b = '') {
     const placeholders = {
-      ref: ['role (e.g. value)', 'scheme://locator[#version]'],
       cfg: ['key', 'value'],
       grant: ['dimension (e.g. workflow)', 'value'],
       mgmt: ['key', 'value'],
@@ -101,20 +310,38 @@ class ArazzoCredentialDialog extends ArazzoElement {
     return out;
   }
 
+  /** Gather the secret references from the auth-kind slots, validating each composes to a well-formed reference. */
+  collectRefs() {
+    const out = [];
+    for (const row of this.$$('.refs .refrow')) {
+      const name = row.dataset.role;
+      if (!name) continue;
+      const ref = this.refRowRef(row);
+      if ((ref === '' || ref === null) && row.dataset.required !== 'true') continue; // an emptied, optional extra
+      if (ref === '' || ref === null) {
+        const scheme = row.querySelector('.scheme').value;
+        const missing = scheme === 'raw'
+          ? 'a reference'
+          : SCHEMES[scheme].fields.filter((f) => f.required).map((f) => f.label.toLowerCase()).join(', ');
+        throw new Error(`The ${row.dataset.label} reference is incomplete — fill ${missing}.`);
+      }
+      if (!SECRET_REF.test(ref)) {
+        throw new Error(`'${ref}' is not a reference. Use scheme://locator[#version] (keyvault, awssm, vault, env, file) — never an inline secret.`);
+      }
+      out.push({ name, ref });
+    }
+    return out;
+  }
+
   buildBody() {
     const sourceName = this.$('#sourceName').value.trim();
     const environment = this.$('#environment').value.trim();
     if (!sourceName || !environment) throw new Error('A source name and environment are required.');
-    const authKind = this.$('#authKind').value.trim();
-    if (!authKind) throw new Error('An auth kind is required.');
+    const authKind = this.authKind;
+    if (!SLOTS[authKind]) throw new Error(`Choose a supported auth kind: ${AUTH_KINDS.join(', ')}.`);
 
-    const refs = this.collect('.refs');
-    if (refs.length === 0) throw new Error('At least one secret reference is required.');
-    const secretRefs = refs.map(([name, ref]) => {
-      if (!name) throw new Error('Each secret reference needs a role name.');
-      if (!SECRET_REF.test(ref)) throw new Error(`'${ref || '(empty)'}' is not a reference. Use scheme://locator[#version] (keyvault, awssm, vault, env, file) — never an inline secret.`);
-      return { name, ref };
-    });
+    const secretRefs = this.collectRefs();
+    if (secretRefs.length === 0) throw new Error('At least one secret reference is required.');
 
     const config = this.collect('.config').map(([key, value]) => ({ key, value }));
     const description = this.$('#description').value.trim() || undefined;
@@ -188,7 +415,18 @@ class ArazzoCredentialDialog extends ArazzoElement {
         input[type="text"], input[type="date"], select { width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
         input[readonly] { background: var(--_surface); color: var(--_muted); }
         .row { display: grid; grid-template-columns: 1fr 1.4fr auto; gap: 8px; align-items: center; }
-        .row .rm { padding: 4px 10px; }
+        .row .rm, .reftop .rm { padding: 4px 10px; }
+        .refrow { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 10px; display: grid; gap: 8px; background: var(--_bg); }
+        .reftop { display: grid; grid-template-columns: 1fr 1.2fr auto; gap: 8px; align-items: center; }
+        .slot-label { font-weight: 600; font-size: 13px; }
+        .slot-label .muted { font-weight: 400; }
+        .reffields { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+        .reffield.wide { grid-column: 1 / -1; }
+        .reffield label { margin-bottom: 2px; }
+        .refpreview { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: var(--_muted); word-break: break-all; }
+        .refpreview code { background: var(--_surface); padding: 1px 4px; border-radius: 4px; }
+        .kindhint { font-size: 12px; color: var(--_muted); }
+        .refhint { padding: 8px 2px; }
         .add { justify-self: start; font-size: 12px; }
         .ro-label { color: var(--_muted); font-size: 12px; margin-right: 6px; }
         .scopes-readonly { display: grid; gap: 4px; font-size: 13px; }
@@ -216,8 +454,9 @@ class ArazzoCredentialDialog extends ArazzoElement {
 
             <fieldset>
               <legend>Secret references *</legend>
+              <div class="subhead">The auth kind sets which secret(s) are needed. Pick each secret's store and fill its fields — the canonical <code>secretRef</code> is composed and previewed. The control plane stores the reference only; it never reads the secret.</div>
+              <div class="kindhint"></div>
               <div class="refs"></div>
-              <button class="add ghost addref" type="button">+ Add reference</button>
             </fieldset>
 
             <fieldset>
@@ -243,7 +482,8 @@ class ArazzoCredentialDialog extends ArazzoElement {
         </form>
       </dialog>
     `;
-    this.$('.addref').addEventListener('click', () => this.addRow('.refs', 'ref'));
+    // The auth kind drives the reference slots; re-render on change, preserving already-entered references.
+    this.$('#authKind').addEventListener('change', () => this.renderRefs(this.snapshotRefs()));
     this.$('.addcfg').addEventListener('click', () => this.addRow('.config', 'cfg'));
     this.$('.addgrant').addEventListener('click', () => this.addRow('.grants', 'grant'));
     this.$('.addmgmt').addEventListener('click', () => this.addRow('.mgmt', 'mgmt'));
