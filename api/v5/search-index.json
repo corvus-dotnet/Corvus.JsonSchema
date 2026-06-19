@@ -23440,7 +23440,7 @@
     "Title": "Utf8YamlWriter",
     "Description": "A high-performance, low-allocation ref struct that writes YAML content to an [`IBufferWriter`](https://learn.microsoft.com/dotnet/api/system.buffers.ibufferwriter-1) or [`Stream`](https://learn.microsoft.com/dotnet/api/system.io.stream).",
     "Keywords": "Utf8YamlWriter struct Corvus.Text.Json.Yaml",
-    "Body": "A high-performance, low-allocation ref struct that writes YAML content to an [`IBufferWriter`](https://learn.microsoft.com/dotnet/api/system.buffers.ibufferwriter-1) or [`Stream`](https://learn.microsoft.com/dotnet/api/system.io.stream).\nSupports both block and flow collection styles. Block style uses indentation; flow style uses inline comma-separated syntax. When [`SkipValidation`](/api/v5/corvus-text-json-yaml-yamlwriteroptions.skipvalidation.html) is `false`, the writer validates structural correctness (e.g., property names must precede values in mappings, containers must be properly closed). This is a ref struct and must not be copied. Always pass by `ref` and dispose exactly once via a `using` declaration or explicit call to [`Dispose`](/api/v5/corvus-text-json-yaml-utf8yamlwriter.dispose.html).\nCurrentDepth: Gets the current depth (number of open containers).\nWriteStartMapping: Writes the start of a YAML mapping.\nWriteEndMapping: Writes the end of a YAML mapping.\nWriteStartSequence: Writes the start of a YAML sequence.\nWriteEndSequence: Writes the end of a YAML sequence.\nWritePropertyName: Writes a property name in a mapping.\nWriteStringValue: Writes a string value, quoting it if necessary to preserve round-trip safety.\nWriteNumberValue: Writes a raw numeric value.\nWriteBooleanValue: Writes a boolean value (`true` or `false`).\nWriteNullValue: Writes a null value.\nWriteEmptyMapping: Writes an empty mapping as `{}`.\nWriteEmptySequence: Writes an empty sequence as `[]`.\nFlush: Commits the YAML text written so far to the output destination.\nDispose: Releases resources used by this writer."
+    "Body": "A high-performance, low-allocation ref struct that writes YAML content to an [`IBufferWriter`](https://learn.microsoft.com/dotnet/api/system.buffers.ibufferwriter-1) or [`Stream`](https://learn.microsoft.com/dotnet/api/system.io.stream).\nSupports both block and flow collection styles. Block style uses indentation; flow style uses inline comma-separated syntax. When [`Format`](/api/v5/corvus-text-json-yaml-yamlwriteroptions.format.html) is [`Kyaml`](/api/v5/corvus-text-json-yaml-yamlwriterformat.kyaml.html), the writer emits KYAML — explicit `{ }` / `[ ]` delimiters laid out across indented lines with a trailing comma after every element, string values always double-quoted. When [`SkipValidation`](/api/v5/corvus-text-json-yaml-yamlwriteroptions.skipvalidation.html) is `false`, the writer validates structural correctness (e.g., property names must precede values in mappings, containers must be properly closed). This is a ref struct and must not be copied. Always pass by `ref` and dispose exactly once via a `using` declaration or explicit call to [`Dispose`](/api/v5/corvus-text-json-yaml-utf8yamlwriter.dispose.html).\nCurrentDepth: Gets the current depth (number of open containers).\nWriteStartMapping: Writes the start of a YAML mapping.\nWriteEndMapping: Writes the end of a YAML mapping.\nWriteStartSequence: Writes the start of a YAML sequence.\nWriteEndSequence: Writes the end of a YAML sequence.\nWritePropertyName: Writes a property name in a mapping.\nWriteStringValue: Writes a string value, quoting it if necessary to preserve round-trip safety.\nWriteNumberValue: Writes a raw numeric value.\nWriteBooleanValue: Writes a boolean value (`true` or `false`).\nWriteNullValue: Writes a null value.\nWriteEmptyMapping: Writes an empty mapping as `{}`.\nWriteEmptySequence: Writes an empty sequence as `[]`.\nFlush: Commits the YAML text written so far to the output destination.\nDispose: Releases resources used by this writer."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-yaml-utf8yamlwriter.ctor.html",
@@ -23821,11 +23821,18 @@
     "Body": "Specifies the YAML schema used for tag resolution and scalar type coercion."
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-yaml-yamlwriterformat.html",
+    "Title": "YamlWriterFormat",
+    "Description": "Specifies the output dialect produced by the YAML writer.",
+    "Keywords": "YamlWriterFormat enum Corvus.Text.Json.Yaml",
+    "Body": "Specifies the output dialect produced by the YAML writer."
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-yaml-yamlwriteroptions.html",
     "Title": "YamlWriterOptions",
     "Description": "Options for configuring the YAML writer.",
     "Keywords": "YamlWriterOptions struct Corvus.Text.Json.Yaml",
-    "Body": "Options for configuring the YAML writer.\nIndentSize: Gets the number of spaces to use for each indentation level. Defaults to 2.\nSkipValidation: Gets a value indicating whether to skip structural validation. When `false` (the default), the writer validates that write operations produce structurally valid YAML."
+    "Body": "Options for configuring the YAML writer.\nIndentSize: Gets the number of spaces to use for each indentation level. Defaults to 2.\nSkipValidation: Gets a value indicating whether to skip structural validation. When `false` (the default), the writer validates that write operations produce structurally valid YAML.\nFormat: Gets the output dialect produced by the writer. Defaults to [`Yaml`](/api/v5/corvus-text-json-yaml-yamlwriterformat.yaml.html)."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-yaml-yamlwriteroptions.ctor.html",
@@ -23849,6 +23856,13 @@
     "Body": "Gets a value indicating whether to skip structural validation. When `false` (the default), the writer validates that write operations produce structurally valid YAML."
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-yaml-yamlwriteroptions.format.html",
+    "Title": "YamlWriterOptions.Format",
+    "Description": "Gets the output dialect produced by the writer. Defaults to [`Yaml`](/api/v5/corvus-text-json-yaml-yamlwriterformat.yaml.html).",
+    "Keywords": "YamlWriterOptions Format property Corvus.Text.Json.Yaml",
+    "Body": "Gets the output dialect produced by the writer. Defaults to [`Yaml`](/api/v5/corvus-text-json-yaml-yamlwriterformat.yaml.html)."
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-yaml-duplicatekeybehavior.html",
     "Title": "DuplicateKeyBehavior",
     "Description": "Specifies the behavior when duplicate mapping keys are encountered.",
@@ -23860,7 +23874,7 @@
     "Title": "Utf8YamlWriter",
     "Description": "A high-performance, low-allocation ref struct that writes YAML content to an [`IBufferWriter`](https://learn.microsoft.com/dotnet/api/system.buffers.ibufferwriter-1) or [`Stream`](https://learn.microsoft.com/dotnet/api/system.io.stream).",
     "Keywords": "Utf8YamlWriter struct Corvus.Yaml",
-    "Body": "A high-performance, low-allocation ref struct that writes YAML content to an [`IBufferWriter`](https://learn.microsoft.com/dotnet/api/system.buffers.ibufferwriter-1) or [`Stream`](https://learn.microsoft.com/dotnet/api/system.io.stream).\nSupports both block and flow collection styles. Block style uses indentation; flow style uses inline comma-separated syntax. When [`SkipValidation`](/api/v5/corvus-yaml-yamlwriteroptions.skipvalidation.html) is `false`, the writer validates structural correctness (e.g., property names must precede values in mappings, containers must be properly closed). This is a ref struct and must not be copied. Always pass by `ref` and dispose exactly once via a `using` declaration or explicit call to [`Dispose`](/api/v5/corvus-yaml-utf8yamlwriter.dispose.html).\nCurrentDepth: Gets the current depth (number of open containers).\nWriteStartMapping: Writes the start of a YAML mapping.\nWriteEndMapping: Writes the end of a YAML mapping.\nWriteStartSequence: Writes the start of a YAML sequence.\nWriteEndSequence: Writes the end of a YAML sequence.\nWritePropertyName: Writes a property name in a mapping.\nWriteStringValue: Writes a string value, quoting it if necessary to preserve round-trip safety.\nWriteNumberValue: Writes a raw numeric value.\nWriteBooleanValue: Writes a boolean value (`true` or `false`).\nWriteNullValue: Writes a null value.\nWriteEmptyMapping: Writes an empty mapping as `{}`.\nWriteEmptySequence: Writes an empty sequence as `[]`.\nFlush: Commits the YAML text written so far to the output destination.\nDispose: Releases resources used by this writer."
+    "Body": "A high-performance, low-allocation ref struct that writes YAML content to an [`IBufferWriter`](https://learn.microsoft.com/dotnet/api/system.buffers.ibufferwriter-1) or [`Stream`](https://learn.microsoft.com/dotnet/api/system.io.stream).\nSupports both block and flow collection styles. Block style uses indentation; flow style uses inline comma-separated syntax. When [`Format`](/api/v5/corvus-yaml-yamlwriteroptions.format.html) is [`Kyaml`](/api/v5/corvus-yaml-yamlwriterformat.kyaml.html), the writer emits KYAML — explicit `{ }` / `[ ]` delimiters laid out across indented lines with a trailing comma after every element, string values always double-quoted. When [`SkipValidation`](/api/v5/corvus-yaml-yamlwriteroptions.skipvalidation.html) is `false`, the writer validates structural correctness (e.g., property names must precede values in mappings, containers must be properly closed). This is a ref struct and must not be copied. Always pass by `ref` and dispose exactly once via a `using` declaration or explicit call to [`Dispose`](/api/v5/corvus-yaml-utf8yamlwriter.dispose.html).\nCurrentDepth: Gets the current depth (number of open containers).\nWriteStartMapping: Writes the start of a YAML mapping.\nWriteEndMapping: Writes the end of a YAML mapping.\nWriteStartSequence: Writes the start of a YAML sequence.\nWriteEndSequence: Writes the end of a YAML sequence.\nWritePropertyName: Writes a property name in a mapping.\nWriteStringValue: Writes a string value, quoting it if necessary to preserve round-trip safety.\nWriteNumberValue: Writes a raw numeric value.\nWriteBooleanValue: Writes a boolean value (`true` or `false`).\nWriteNullValue: Writes a null value.\nWriteEmptyMapping: Writes an empty mapping as `{}`.\nWriteEmptySequence: Writes an empty sequence as `[]`.\nFlush: Commits the YAML text written so far to the output destination.\nDispose: Releases resources used by this writer."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-yaml-utf8yamlwriter.ctor.html",
@@ -24241,11 +24255,18 @@
     "Body": "Specifies the YAML schema used for tag resolution and scalar type coercion."
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-yaml-yamlwriterformat.html",
+    "Title": "YamlWriterFormat",
+    "Description": "Specifies the output dialect produced by the YAML writer.",
+    "Keywords": "YamlWriterFormat enum Corvus.Yaml",
+    "Body": "Specifies the output dialect produced by the YAML writer."
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-yaml-yamlwriteroptions.html",
     "Title": "YamlWriterOptions",
     "Description": "Options for configuring the YAML writer.",
     "Keywords": "YamlWriterOptions struct Corvus.Yaml",
-    "Body": "Options for configuring the YAML writer.\nIndentSize: Gets the number of spaces to use for each indentation level. Defaults to 2.\nSkipValidation: Gets a value indicating whether to skip structural validation. When `false` (the default), the writer validates that write operations produce structurally valid YAML."
+    "Body": "Options for configuring the YAML writer.\nIndentSize: Gets the number of spaces to use for each indentation level. Defaults to 2.\nSkipValidation: Gets a value indicating whether to skip structural validation. When `false` (the default), the writer validates that write operations produce structurally valid YAML.\nFormat: Gets the output dialect produced by the writer. Defaults to [`Yaml`](/api/v5/corvus-yaml-yamlwriterformat.yaml.html)."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-yaml-yamlwriteroptions.ctor.html",
@@ -24267,5 +24288,12 @@
     "Description": "Gets a value indicating whether to skip structural validation. When `false` (the default), the writer validates that write operations produce structurally valid YAML.",
     "Keywords": "YamlWriterOptions SkipValidation property Corvus.Yaml",
     "Body": "Gets a value indicating whether to skip structural validation. When `false` (the default), the writer validates that write operations produce structurally valid YAML."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-yaml-yamlwriteroptions.format.html",
+    "Title": "YamlWriterOptions.Format",
+    "Description": "Gets the output dialect produced by the writer. Defaults to [`Yaml`](/api/v5/corvus-yaml-yamlwriterformat.yaml.html).",
+    "Keywords": "YamlWriterOptions Format property Corvus.Yaml",
+    "Body": "Gets the output dialect produced by the writer. Defaults to [`Yaml`](/api/v5/corvus-yaml-yamlwriterformat.yaml.html)."
   }
 ]

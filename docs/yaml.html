@@ -864,10 +864,74 @@ finally
 <h3 id="yaml-writer-options">YAML writer options</h3>
 <pre><code class="language-csharp">var options = new YamlWriterOptions
 {
-    IndentSize = 2,          // Spaces per indent level (default: 2)
-    SkipValidation = false,  // Disable structural validation for max throughput
+    IndentSize = 2,                      // Spaces per indent level (default: 2)
+    SkipValidation = false,              // Disable structural validation for max throughput
+    Format = YamlWriterFormat.Yaml,      // Output dialect: Yaml (default) or Kyaml
 };
 </code></pre>
+<h2 id="kyaml-output">KYAML output</h2>
+<p><a href="https://github.com/kubernetes/enhancements/tree/master/keps/sig-cli/5295-kyaml">KYAML</a>
+(Kubernetes KEP-5295) is a <strong>strict subset of YAML 1.2</strong> designed to be unambiguous and
+free of its usual ambiguity pitfalls. Because it is a subset, any KYAML document is also valid
+YAML — it can be read back by any conforming YAML parser, including this library's reader.</p>
+<p>The library can <strong>emit</strong> KYAML from any JSON input. In KYAML mode the writer:</p>
+<ul>
+<li>renders every mapping with explicit <code>{ }</code> braces and every sequence with explicit <code>[ ]</code>
+brackets, laid out across indented lines (no reliance on significant indentation);</li>
+<li><strong>always double-quotes string values</strong>, so a value like <code>NO</code> stays a string (the &quot;Norway
+problem&quot;) and a string such as <code>&quot;123&quot;</code> or <code>&quot;true&quot;</code> is never mistaken for a number or boolean;</li>
+<li>writes numbers, booleans, and <code>null</code> bare;</li>
+<li>quotes mapping <strong>keys only when they would otherwise be ambiguous</strong> (e.g. <code>true</code>, <code>123</code>, or
+a YAML 1.1 word like <code>no</code>);</li>
+<li>writes a trailing comma after every element;</li>
+<li>renders empty collections as <code>{}</code> and <code>[]</code>.</li>
+</ul>
+<h3 id="enabling-kyaml">Enabling KYAML</h3>
+<p>Pass KYAML options to any of the <code>ConvertToYaml</code>/<code>ConvertToYamlString</code> overloads (or to a
+<code>Utf8YamlWriter</code> directly). Use the ready-made preset:</p>
+<pre><code class="language-csharp">using Corvus.Text.Json.Yaml;
+
+string json = &quot;&quot;&quot;{&quot;apiVersion&quot;:&quot;v1&quot;,&quot;kind&quot;:&quot;Service&quot;,&quot;metadata&quot;:{&quot;name&quot;:&quot;hostnames&quot;},&quot;spec&quot;:{&quot;ports&quot;:[{&quot;port&quot;:80,&quot;protocol&quot;:&quot;TCP&quot;}]}}&quot;&quot;&quot;;
+
+// Easiest: the built-in preset.
+string kyaml = YamlDocument.ConvertToYamlString(json, YamlWriterOptions.Kyaml);
+</code></pre>
+<p>…or set the format explicitly (handy when you also want to tweak <code>IndentSize</code>):</p>
+<pre><code class="language-csharp">var options = new YamlWriterOptions { Format = YamlWriterFormat.Kyaml };
+string kyaml = YamlDocument.ConvertToYamlString(json, options);
+</code></pre>
+<p>The example above produces:</p>
+<pre><code class="language-yaml">{
+  apiVersion: &quot;v1&quot;,
+  kind: &quot;Service&quot;,
+  metadata: {
+    name: &quot;hostnames&quot;,
+  },
+  spec: {
+    ports: [
+      {
+        port: 80,
+        protocol: &quot;TCP&quot;,
+      },
+    ],
+  },
+}
+</code></pre>
+<p>The same options work with the streaming overloads (<code>ConvertToYaml(..., IBufferWriter&lt;byte&gt;)</code>
+and <code>ConvertToYaml(..., Stream)</code>) and with the low-level <code>Utf8YamlWriter</code>:</p>
+<pre><code class="language-csharp">ArrayBufferWriter&lt;byte&gt; output = new(256);
+Utf8YamlWriter writer = new(output, YamlWriterOptions.Kyaml);
+// ...write mappings/sequences/values as usual; KYAML layout and quoting are applied automatically.
+</code></pre>
+<blockquote>
+<p><strong>Reading KYAML</strong> needs no special configuration — since KYAML is valid YAML 1.2, the
+standard <code>YamlDocument.Parse</code> overloads read it directly.</p>
+</blockquote>
+<blockquote>
+<p><strong>Note:</strong> Output is canonical, non-&quot;cuddled&quot; KYAML (each collection broken across its own
+lines). It is fully spec-conformant KYAML; the optional cuddled bracket layout that kubectl
+emits for compactness is not produced.</p>
+</blockquote>
 <h2 id="performance">Performance</h2>
 <p>The converter is designed for zero-allocation operation on the hot path. The <code>Utf8YamlScanner</code> is a <code>ref struct</code> that operates on <code>ReadOnlySpan&lt;byte&gt;</code> with <code>stackalloc</code>-based scratch buffers. Temporary buffers follow the standard <code>stackalloc</code>/<code>ArrayPool</code> pattern using <code>JsonConstants.StackallocByteThreshold</code> (256 bytes).</p>
 <h3 id="benchmarks-vs-yamldotnet">Benchmarks vs YamlDotNet</h3>
@@ -1249,6 +1313,11 @@ finally
 <td>⚠️ Deserialize JSON to object graph, then serialize to YAML</td>
 </tr>
 <tr>
+<td><strong>KYAML output</strong></td>
+<td>✅ <code>YamlWriterOptions.Kyaml</code> (Kubernetes KEP-5295 subset)</td>
+<td>❌</td>
+</tr>
+<tr>
 <td><strong>YAML 1.2 conformance</strong></td>
 <td>✅ 100% of yaml-test-suite JSON-comparison cases (373/373 applicable)</td>
 <td>⚠️ 68.9% (257/373) <a href="#conformance-note">*</a></td>
@@ -1339,14 +1408,14 @@ finally
 <h3 id="when-to-use-corvus.yaml">When to use Corvus.Yaml</h3>
 <ul>
 <li><strong>YAML configuration → JSON pipeline:</strong> You need to convert YAML files (Kubernetes manifests, CI configs, OpenAPI specs) into JSON for processing by <code>System.Text.Json</code>, JSON Schema validation, or the Corvus document model.</li>
-<li><strong>JSON→YAML output:</strong> You need to convert JSON data to canonical YAML for configuration generation, API responses, or human-readable output — using <code>ConvertToYamlString</code> or the low-level <code>Utf8YamlWriter</code>.</li>
+<li><strong>JSON→YAML output:</strong> You need to convert JSON data to canonical YAML — or to <a href="#kyaml-output">KYAML</a>, the unambiguous YAML 1.2 subset — for configuration generation, API responses, or human-readable output, using <code>ConvertToYamlString</code> or the low-level <code>Utf8YamlWriter</code>.</li>
 <li><strong>High-throughput / low-allocation:</strong> You're processing YAML in a hot path — an API server, a build tool, a code generator — where 7–66× speed and near-zero GC pressure matter.</li>
 <li><strong>Spec conformance:</strong> You need accurate YAML 1.2 parsing with correct type resolution (Core schema) and strict error detection.</li>
 <li><strong>Corvus ecosystem:</strong> You're already using Corvus.Text.Json for JSON Schema, JSONata, JMESPath, or JSON Patch and want YAML input to flow into the same pipeline.</li>
 </ul>
 <h3 id="when-to-use-yamldotnet">When to use YamlDotNet</h3>
 <ul>
-<li><strong>YAML round-tripping:</strong> You need to read YAML, modify it, and write it back as YAML preserving comments and formatting — Corvus.Yaml converts JSON→YAML as canonical block style only.</li>
+<li><strong>YAML round-tripping:</strong> You need to read YAML, modify it, and write it back as YAML preserving comments and formatting — Corvus.Yaml converts JSON→YAML as canonical block-style YAML or <a href="#kyaml-output">KYAML</a>, but does not preserve source comments or layout.</li>
 <li><strong>Object serialization:</strong> You need to serialize C# objects directly to/from YAML with naming conventions, type converters, and custom deserialization callbacks.</li>
 <li><strong>YAML DOM manipulation:</strong> You need to build or transform a YAML document tree (<code>YamlStream</code>, <code>YamlNode</code>) programmatically.</li>
 <li><strong>Event-level parsing with allocation:</strong> You need a materialized event stream you can store and replay — Corvus provides a zero-allocation callback-based parser, while YamlDotNet's <code>IParser</code> produces heap-allocated event objects.</li>

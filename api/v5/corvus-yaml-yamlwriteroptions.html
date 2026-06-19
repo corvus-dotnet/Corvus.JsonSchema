@@ -127,6 +127,11 @@
 </thead>
 <tbody>
 <tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-yaml-yamlwriteroptions.format.html">Format</a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-yaml-yamlwriterformat.html"><code>YamlWriterFormat</code></a></td>
+<td>Gets the output dialect produced by the writer. Defaults to <a href="/Corvus.JsonSchema/api/v5/corvus-yaml-yamlwriterformat.yaml.html"><code>Yaml</code></a>.</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-yaml-yamlwriteroptions.indentsize.html">IndentSize</a></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>Gets the number of spaces to use for each indentation level. Defaults to 2.</td>
@@ -151,7 +156,12 @@
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-yaml-yamlwriteroptions.default.html">Default</a> <code>static</code></td>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-yaml-yamlwriteroptions.html"><code>YamlWriterOptions</code></a></td>
-<td>Gets the default options: 2-space indentation, structural validation enabled.</td>
+<td>Gets the default options: canonical YAML, 2-space indentation, structural validation enabled.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-yaml-yamlwriteroptions.kyaml.html">Kyaml</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-yaml-yamlwriteroptions.html"><code>YamlWriterOptions</code></a></td>
+<td>Gets options that produce KYAML output (a strict subset of YAML 1.2; Kubernetes KEP-5295) with 2-space indentation and structural validation enabled.</td>
 </tr>
 </tbody>
 </table>
