@@ -31,6 +31,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.Benchmarks;
 /// durability-alloc campaign, shared across the control plane, not specific to this adapter). The benchmark's value is the
 /// regression guard: a change that adds a body copy, a double-parse, or an owned (non-pooled) DOM moves the number. The
 /// roles case additionally locks the mapper-drop path (Keycloak's built-in realm roles project to no <c>sys:</c> grant).
+/// <see cref="ParseUsers_Span"/> is the bytes-to-bytes path (a span mapper): ≈ 2.05 KB — ≈ 0.23× of the string path — by
+/// capturing only the value + the declared attribute (the tenant, from the `attributes` array) as UTF-8 and writing the
+/// identity straight into a pooled buffer; the per-identity FromTags build is gone (the residual that dominated the string
+/// path). A smaller relative drop than the other adapters because Keycloak's string path flattened fewer attributes and its
+/// span path also materializes the computed firstName+lastName display.
 /// </remarks>
 public class KeycloakResponseParseBenchmarks
 {
@@ -70,15 +75,32 @@ public class KeycloakResponseParseBenchmarks
         }),
         "bench-issuer");
 
+    // The span (bytes-to-bytes) mapper — writes the identity from the record's UTF-8 spans (tenant from the attributes array).
+    private static readonly DirectoryPrincipalProjector SpanProjector = new(
+        DirectorySpanIdentityMapper.FromIdentity(
+            ["tenant"],
+            static (DirectoryRecordView record, ref IdentityBuilder identity) =>
+            {
+                identity.Add("sys:tenant"u8, record.AttributeUtf8("tenant"u8));
+                identity.Add("sys:sub"u8, record.ValueUtf8);
+                return true;
+            }),
+        "bench-issuer");
+
     /// <summary>The naive shape — materialise the whole response as a <see cref="JsonDocument"/> DOM, then project. The A/B reference the production path must stay below.</summary>
     /// <returns>The resolved-principal count (prevents dead-code elimination).</returns>
     [Benchmark(Baseline = true)]
     public int ParseUsers_JsonDocumentNaive() => ProjectUsersViaDocument(UsersBody, 10);
 
-    /// <summary>The production path — the Corvus reader over the borrowed response, no DOM.</summary>
+    /// <summary>The string path — the Corvus reader, no DOM, but the mapper builds the identity through FromTags.</summary>
     /// <returns>The resolved-principal count.</returns>
     [Benchmark]
     public int ParseUsers() => KeycloakPrincipalDirectory.ProjectResponse(GranteeKind.Person, KeycloakResource.Users, UsersBody, 10, Projector).Count;
+
+    /// <summary>The bytes-to-bytes path — a span mapper captures only the value + the declared attribute (the tenant from the attributes array) and writes the identity straight from spans.</summary>
+    /// <returns>The resolved-principal count.</returns>
+    [Benchmark]
+    public int ParseUsers_Span() => KeycloakPrincipalDirectory.ProjectResponseSpan(GranteeKind.Person, KeycloakResource.Users, UsersBody, 10, SpanProjector).Count;
 
     /// <summary>The production roles path — locks the mapper-drop floor (three of five roles project to null).</summary>
     /// <returns>The resolved-principal count (2 — the built-in roles are dropped).</returns>
