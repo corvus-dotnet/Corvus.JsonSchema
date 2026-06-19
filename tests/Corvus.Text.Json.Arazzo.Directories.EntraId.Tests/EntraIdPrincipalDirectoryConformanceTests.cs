@@ -5,6 +5,7 @@
 using System.Net;
 using Corvus.Text.Json.Arazzo.Directories;
 using Corvus.Text.Json.Arazzo.Directories.Conformance;
+using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -41,15 +42,30 @@ public sealed class EntraIdPrincipalDirectoryConformanceTests : PrincipalDirecto
             },
         };
 
-        // The deployment mapper: derive each kind's exact sys: identity (the §16.5.4 seam). Persons take sys:tenant from
-        // the user's `department` and sys:sub from the mailNickname (the searchable value); teams/roles from the displayName.
-        var mapper = DirectoryIdentityMapper.FromFunc(record => record.Kind switch
-        {
-            GranteeKind.Person => new ResolvedPrincipal(GranteeKind.Person, record.Id, record.DisplayName, DirectoryFixture.Identity(("sys:tenant", record.Attribute("department") ?? string.Empty), ("sys:sub", record.Id))),
-            GranteeKind.Team => new ResolvedPrincipal(GranteeKind.Team, record.Id, record.DisplayName, DirectoryFixture.Identity(("sys:team", record.Id))),
-            GranteeKind.Role => new ResolvedPrincipal(GranteeKind.Role, record.Id, record.DisplayName, DirectoryFixture.Identity(("sys:role", record.Id))),
-            _ => (ResolvedPrincipal?)null,
-        });
+        // The deployment mapper — a SPAN mapper exercising the bytes-to-bytes path: it writes each kind's sys: tags straight
+        // into the IdentityBuilder from the record's UTF-8 spans, never materializing an attribute string (persons take
+        // sys:tenant from `department` and sys:sub from the searchable value; teams/roles from the value). The adapter
+        // appends sys:iss. Declaring `department` lets the adapter capture exactly it (plus the value/label) as spans.
+        var mapper = DirectorySpanIdentityMapper.FromIdentity(
+            ["department"],
+            static (DirectoryRecordView record, ref IdentityBuilder identity) =>
+            {
+                switch (record.Kind)
+                {
+                    case GranteeKind.Person:
+                        identity.Add("sys:tenant"u8, record.AttributeUtf8("department"u8));
+                        identity.Add("sys:sub"u8, record.ValueUtf8);
+                        return true;
+                    case GranteeKind.Team:
+                        identity.Add("sys:team"u8, record.ValueUtf8);
+                        return true;
+                    case GranteeKind.Role:
+                        identity.Add("sys:role"u8, record.ValueUtf8);
+                        return true;
+                    default:
+                        return false;
+                }
+            });
 
         var httpClient = new HttpClient(new StubHttpMessageHandler(GraphMockBackend.Respond));
         return new ValueTask<IPrincipalDirectory>(new EntraIdPrincipalDirectory(options, new FixedSecretResolver("graph-secret"), mapper, httpClient));
