@@ -10,18 +10,21 @@ namespace Corvus.Text.Json.Arazzo.Directories;
 
 /// <summary>
 /// The single projection every <see cref="IPrincipalDirectory"/> adapter funnels a fetched record through (design
-/// §16.5.4): it applies the deployment's mapper and then stamps the adapter's configured issuer. Routing every adapter
-/// through here makes the issuer dimension <strong>correct by construction</strong> — an adapter cannot return a principal
-/// whose identity is missing (or carries a forged) <c>sys:iss</c>.
+/// §16.5.4): it applies the deployment's mapper, stamps the adapter's configured issuer, and stamps any
+/// request-context ambient dimensions (§16.5.5, e.g. <c>sys:tenant</c> from a vanity host). Routing every adapter
+/// through here makes those dimensions <strong>correct by construction</strong> — an adapter cannot return a principal
+/// whose identity is missing (or carries a forged) <c>sys:iss</c>, nor one missing the ambient tenant the runtime caller
+/// will carry.
 /// </summary>
 /// <remarks>
 /// Two paths, depending on the deployment mapper. The string path (<see cref="Project"/>) applies an
-/// <see cref="IDirectoryIdentityMapper"/> to a materialized <see cref="DirectoryRecord"/> and stamps the issuer via
-/// <see cref="DirectoryIssuer.Stamp"/> — used by string-sourced adapters (LDAP) and any deployment supplying a string
+/// <see cref="IDirectoryIdentityMapper"/> to a materialized <see cref="DirectoryRecord"/>, stamps the issuer via
+/// <see cref="DirectoryIssuer.Stamp"/>, then strip-and-restamps the ambient dimensions via
+/// <see cref="AmbientIdentityStamp"/> — used by string-sourced adapters (LDAP) and any deployment supplying a string
 /// mapper. The bytes-to-bytes path (<see cref="TryProjectIdentity"/>) applies an <see cref="IDirectoryIdentitySpanMapper"/>
 /// to a <see cref="DirectoryRecordView"/>, writing the identity straight into a pooled buffer and appending the issuer
-/// span — used by UTF-8-sourced (HTTP/JSON) adapters when the supplied mapper implements the span interface, so a resolved
-/// identity is built without materializing a managed <see cref="string"/> per tag.
+/// and ambient spans — used by UTF-8-sourced (HTTP/JSON) adapters when the supplied mapper implements the span interface,
+/// so a resolved identity is built without materializing a managed <see cref="string"/> per tag.
 /// </remarks>
 public sealed class DirectoryPrincipalProjector
 {
@@ -29,11 +32,19 @@ public sealed class DirectoryPrincipalProjector
     private readonly IDirectoryIdentitySpanMapper? spanMapper;
     private readonly string issuer;
     private readonly byte[] issuerUtf8;
+    private readonly IAmbientIdentityDimensions? ambient;
 
     /// <summary>Initializes a new instance of the <see cref="DirectoryPrincipalProjector"/> class.</summary>
     /// <param name="mapper">The deployment's record→identity projection (optionally also an <see cref="IDirectoryIdentitySpanMapper"/> for the bytes-to-bytes path).</param>
     /// <param name="issuer">The adapter's configured issuer id (stamped onto every resolved principal, mapper-immutable).</param>
-    public DirectoryPrincipalProjector(IDirectoryIdentityMapper mapper, string issuer)
+    /// <param name="ambient">
+    /// An optional request-context ambient-dimension provider (§16.5.5). When supplied, every resolved principal also
+    /// carries the dimensions it resolves (e.g. <c>sys:tenant</c> derived from the request host), strip-and-restamped
+    /// mapper-immutably from the <em>same</em> provider the runtime caller is stamped from, so a grant authored in a
+    /// tenant context matches exactly the caller in that context. <see langword="null"/> (the default) leaves behaviour
+    /// unchanged.
+    /// </param>
+    public DirectoryPrincipalProjector(IDirectoryIdentityMapper mapper, string issuer, IAmbientIdentityDimensions? ambient = null)
     {
         ArgumentNullException.ThrowIfNull(mapper);
         ArgumentException.ThrowIfNullOrEmpty(issuer);
@@ -41,6 +52,7 @@ public sealed class DirectoryPrincipalProjector
         this.spanMapper = mapper as IDirectoryIdentitySpanMapper;
         this.issuer = issuer;
         this.issuerUtf8 = Encoding.UTF8.GetBytes(issuer);
+        this.ambient = ambient;
     }
 
     /// <summary>
@@ -63,7 +75,10 @@ public sealed class DirectoryPrincipalProjector
             return null;
         }
 
-        return principal with { Identity = DirectoryIssuer.Stamp(principal.Identity, this.issuer) };
+        // Stamp the issuer (mapper-immutable), then strip-and-restamp the ambient dimensions from the same provider the
+        // runtime caller is stamped from (a no-op — and no extra allocation — when no ambient provider is configured).
+        SecurityTagSet identity = AmbientIdentityStamp.Apply(this.ambient, DirectoryIssuer.Stamp(principal.Identity, this.issuer));
+        return principal with { Identity = identity };
     }
 
     /// <summary>
@@ -84,7 +99,10 @@ public sealed class DirectoryPrincipalProjector
             return null;
         }
 
-        var state = new ProjectionState(span, view, this.issuerUtf8);
+        // Resolve the ambient set once (a cached, allocation-free instance) before entering the no-closure ref callback,
+        // which appends its pre-encoded UTF-8 dimensions straight into the pooled buffer.
+        AmbientDimensionSet ambientSet = this.ambient?.Resolve() ?? AmbientDimensionSet.Empty;
+        var state = new ProjectionState(span, view, this.issuerUtf8, ambientSet);
         if (!SecurityTagSet.TryBuild(in state, BuildIdentity, out SecurityTagSet identity))
         {
             return null;
@@ -93,8 +111,9 @@ public sealed class DirectoryPrincipalProjector
         return new ResolvedPrincipal(kind, value, label, identity);
     }
 
-    // The span mapper contributes its sys: tags, then the adapter's configured issuer is appended (mapper-immutable: the
-    // contract forbids the mapper emitting sys:iss; the conformance suite enforces exactly one).
+    // The span mapper contributes its sys: tags, then the adapter's configured issuer is appended, then the request's
+    // ambient dimensions (mapper-immutable: the contract forbids the mapper emitting sys:iss or a governed ambient key;
+    // the conformance suite enforces exactly one issuer). The ambient append writes nothing when none is configured.
     private static bool BuildIdentity(ref IdentityBuilder builder, in ProjectionState state)
     {
         if (!state.Mapper.TryMapIdentity(state.View, ref builder))
@@ -103,16 +122,18 @@ public sealed class DirectoryPrincipalProjector
         }
 
         builder.Add(DirectoryIssuer.IssuerTagKeyUtf8, state.Issuer);
+        state.Ambient.WriteTo(ref builder);
         return true;
     }
 
     private readonly ref struct ProjectionState
     {
-        public ProjectionState(IDirectoryIdentitySpanMapper mapper, DirectoryRecordView view, byte[] issuer)
+        public ProjectionState(IDirectoryIdentitySpanMapper mapper, DirectoryRecordView view, byte[] issuer, AmbientDimensionSet ambient)
         {
             this.Mapper = mapper;
             this.View = view;
             this.Issuer = issuer;
+            this.Ambient = ambient;
         }
 
         public IDirectoryIdentitySpanMapper Mapper { get; }
@@ -120,5 +141,7 @@ public sealed class DirectoryPrincipalProjector
         public DirectoryRecordView View { get; }
 
         public byte[] Issuer { get; }
+
+        public AmbientDimensionSet Ambient { get; }
     }
 }

@@ -77,6 +77,14 @@ public sealed class SecurityIdentityDigestTests
         SecurityIdentityDigest.Compute(Tags([.. forward])).ShouldBe(SecurityIdentityDigest.Compute(Tags([.. reversed])));
     }
 
+    [TestMethod]
+    public void Two_principals_differing_only_by_the_ambient_tenant_do_not_collide()
+        // §16.5.5 collision-probe lock: the ambient dimension (sys:tenant) is part of the whole-set digest, so the same
+        // person resolved in two tenants does not collide in FindIdentityConflictAsync (a future digest change that
+        // dropped it would fail here).
+        => SecurityIdentityDigest.Compute(Tags(("sys:iss", "kc"), ("sys:sub", "alice"), ("sys:tenant", "acme")))
+            .ShouldNotBe(SecurityIdentityDigest.Compute(Tags(("sys:iss", "kc"), ("sys:sub", "alice"), ("sys:tenant", "globex"))));
+
     private static SecurityTagSet Tags(params (string Key, string Value)[] tags)
         => SecurityTagSet.FromTags([.. tags.Select(t => new SecurityTag(t.Key, t.Value))]);
 }

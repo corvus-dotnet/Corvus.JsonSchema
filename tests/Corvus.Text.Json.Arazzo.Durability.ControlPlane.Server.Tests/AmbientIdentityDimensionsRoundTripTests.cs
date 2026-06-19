@@ -92,8 +92,8 @@ public sealed class AmbientIdentityDimensionsRoundTripTests
     {
         (HttpContextAccessor accessor, HttpRequestAmbientIdentityDimensions provider) = HostProvider();
         var store = new InMemorySecurityPolicyStore();
-        await SeedRuleAsync(store, "team-payments", "team == 'payments'", "admin");
-        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "member", VerbGrant.Rules("team-payments"), VerbGrant.None, VerbGrant.None), "admin", default);
+        await store.AddRuleAsync("team-payments", new SecurityRuleDefinition("team == 'payments'"), "admin", default);
+        await store.AddBindingAsync(new SecurityBindingDefinition("role", "member", VerbGrant.Rules("team-payments"), VerbGrant.None, VerbGrant.None), "admin", default);
 
         // The deployment shell mandates the tenant from the caller's context: sys:tenant == $claim.tenant.
         var shell = new SecurityShell([SecurityRule.Compile("sys:tenant == $claim.tenant")]);
@@ -118,8 +118,8 @@ public sealed class AmbientIdentityDimensionsRoundTripTests
     {
         (HttpContextAccessor accessor, HttpRequestAmbientIdentityDimensions provider) = HostProvider();
         var store = new InMemorySecurityPolicyStore();
-        await SeedRuleAsync(store, "team-payments", "team == 'payments'", "admin");
-        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "member", VerbGrant.Rules("team-payments"), VerbGrant.None, VerbGrant.None), "admin", default);
+        await store.AddRuleAsync("team-payments", new SecurityRuleDefinition("team == 'payments'"), "admin", default);
+        await store.AddBindingAsync(new SecurityBindingDefinition("role", "member", VerbGrant.Rules("team-payments"), VerbGrant.None, VerbGrant.None), "admin", default);
         var shell = new SecurityShell([SecurityRule.Compile("sys:tenant == $claim.tenant")]);
         var policy = new PersistentRowSecurityPolicy(store, shell, internalTagResolver: SubTags, ambient: provider);
         await policy.RefreshAsync();
@@ -139,8 +139,8 @@ public sealed class AmbientIdentityDimensionsRoundTripTests
     {
         (HttpContextAccessor accessor, HttpRequestAmbientIdentityDimensions provider) = HostProvider();
         var store = new InMemorySecurityPolicyStore();
-        await SeedRuleAsync(store, "team-payments", "team == 'payments'", "admin");
-        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "member", VerbGrant.Rules("team-payments"), VerbGrant.None, VerbGrant.None), "admin", default);
+        await store.AddRuleAsync("team-payments", new SecurityRuleDefinition("team == 'payments'"), "admin", default);
+        await store.AddBindingAsync(new SecurityBindingDefinition("role", "member", VerbGrant.Rules("team-payments"), VerbGrant.None, VerbGrant.None), "admin", default);
         var shell = new SecurityShell([SecurityRule.Compile("sys:tenant == $claim.tenant")]);
         var policy = new PersistentRowSecurityPolicy(store, shell, internalTagResolver: SubTags, ambient: provider);
         await policy.RefreshAsync();
@@ -184,22 +184,4 @@ public sealed class AmbientIdentityDimensionsRoundTripTests
 
     private static SecurityTagSet Row(string tenant, string team)
         => SecurityTagSet.FromTags([new SecurityTag("sys:tenant", tenant), new SecurityTag("team", team)]);
-
-    // Seeds a rule from a pooled, disposable draft (the store reads it synchronously), disposing both the draft and the
-    // created document — the test asserts on resolution, not the seed record.
-    private static async Task SeedRuleAsync(InMemorySecurityPolicyStore store, string name, string expression, string actor)
-    {
-        using ParsedJsonDocument<SecurityRuleDocument> draft = SecurityRuleDocument.Draft(expression);
-        (await store.AddRuleAsync(name, draft.RootElement, actor, default)).Dispose();
-    }
-
-    // Adds the (pooled, disposable) draft binding, disposing the draft once the store has read it; the created document
-    // is returned for the caller to assert on / dispose (fire-and-forget callers ignore it).
-    private static async Task<ParsedJsonDocument<SecurityBindingDocument>> AddBindingDraftAsync(InMemorySecurityPolicyStore store, ParsedJsonDocument<SecurityBindingDocument> draft, string actor, CancellationToken cancellationToken = default)
-    {
-        using (draft)
-        {
-            return await store.AddBindingAsync(draft.RootElement, actor, cancellationToken);
-        }
-    }
 }
