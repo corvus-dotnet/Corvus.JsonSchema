@@ -1403,7 +1403,10 @@ spoofable.
   `DirectoryIssuer.Stamp` to the governed set, mapper-immutable and fail-closed) + `DirectoryPrincipalProjector`'s optional
   `ambient` constructor argument, which stamps on **both** the string path (`AmbientIdentityStamp`) and the bytes-to-bytes
   span path (`AmbientDimensionSet.WriteTo(ref IdentityBuilder)` — no string u-turn, proven by `GoogleResponseParseBenchmarks`
-  at 1.95 KB vs the 1.77 KB no-ambient span). `ResolveGranteeIdentity` (the non-directory path) consults the same provider.
+  at 1.95 KB vs the 1.77 KB no-ambient span). The issuer itself is now a *static governed dimension*
+  (`StaticAmbientIdentityDimensions([sys:iss=…])`), so the projector funnels the issuer and any ambient dimension through
+  one uniform stamp — no issuer-specific path, and one `FromTags` pass over the union on the string side.
+  `ResolveGranteeIdentity` (the non-directory path) consults the same provider.
 - **Runtime from the same provider (drift-proof).** `PersistentRowSecurityPolicy` takes the **same** `ambient` provider and
   reads it directly (not via a separate claims transformer, so the two ends cannot drift): `GetInternalTags` strip-and-restamps
   the caller's ambient `sys:` tags; `Resolve` injects the ambient dimensions into the reach claim map, prefix-stripped to
