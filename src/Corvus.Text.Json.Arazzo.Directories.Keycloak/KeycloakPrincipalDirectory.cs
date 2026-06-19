@@ -160,6 +160,10 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
 
         byte[] scratch = ArrayPool<byte>.Shared.Rent(body.Length);
         Span<DirectoryAttributeSlice> slices = stackalloc DirectoryAttributeSlice[wantedCount];
+
+        // A reusable scratch buffer for an assembled "first last" display label (rented lazily, grown if a name pair
+        // exceeds it, reused across rows since TryProjectIdentity copies the label span before the next row writes it).
+        byte[]? labelBuffer = null;
         try
         {
             while (results.Count < limit && reader.Read() && reader.TokenType == JsonTokenType.StartObject)
@@ -220,11 +224,17 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
 
                 DirectoryAttributeSlice value = slices[valueSlice];
                 ReadOnlySpan<byte> valueSpan = scratch.AsSpan(value.ValueOffset, value.ValueLength);
-                string valueText = Encoding.UTF8.GetString(valueSpan);
-                string label = (isUser ? Display(scratch, slices, firstSlice, lastSlice) : null) ?? valueText;
+
+                // The display label, bytes-to-bytes: a single name attribute is its own scratch span; a "first last"
+                // display is assembled into a reusable pooled buffer (no managed string); otherwise it falls back to the
+                // value span. The label span is copied into the principal by TryProjectIdentity before the next row reuses
+                // the buffer.
+                ReadOnlySpan<byte> labelSpan = isUser
+                    ? DisplaySpan(scratch, slices, firstSlice, lastSlice, valueSpan, ref labelBuffer)
+                    : valueSpan;
 
                 var view = new DirectoryRecordView(kind, valueSpan, scratch, slices[..captured]);
-                if (projector.TryProjectIdentity(kind, valueText, label, view) is { } principal)
+                if (projector.TryProjectIdentity(kind, valueSpan, labelSpan, hasLabel: true, view) is { } principal)
                 {
                     results.Add(principal);
                 }
@@ -233,6 +243,10 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
         finally
         {
             ArrayPool<byte>.Shared.Return(scratch);
+            if (labelBuffer is not null)
+            {
+                ArrayPool<byte>.Shared.Return(labelBuffer);
+            }
         }
 
         return results;
@@ -281,24 +295,39 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
         }
     }
 
-    // The user display computed from the captured firstName/lastName spans ("first last", or whichever is present), or null
-    // to fall back to the value.
-    private static string? Display(byte[] scratch, scoped Span<DirectoryAttributeSlice> slices, int firstSlice, int lastSlice)
+    // The user display computed from the captured firstName/lastName spans as unescaped UTF-8 ("first last", or whichever
+    // is present), or the value span when neither name is present — no managed string. A "first last" pair is assembled
+    // into the reusable pooled label buffer (grown on demand); a single name is its own scratch span (zero copy).
+    private static ReadOnlySpan<byte> DisplaySpan(byte[] scratch, scoped Span<DirectoryAttributeSlice> slices, int firstSlice, int lastSlice, ReadOnlySpan<byte> value, ref byte[]? labelBuffer)
     {
         if (firstSlice < 0 && lastSlice < 0)
         {
-            return null;
+            return value;
         }
 
         if (firstSlice >= 0 && lastSlice >= 0)
         {
-            string first = Encoding.UTF8.GetString(scratch.AsSpan(slices[firstSlice].ValueOffset, slices[firstSlice].ValueLength));
-            string last = Encoding.UTF8.GetString(scratch.AsSpan(slices[lastSlice].ValueOffset, slices[lastSlice].ValueLength));
-            return $"{first} {last}";
+            DirectoryAttributeSlice f = slices[firstSlice];
+            DirectoryAttributeSlice l = slices[lastSlice];
+            int needed = f.ValueLength + 1 + l.ValueLength;
+            if (labelBuffer is null || labelBuffer.Length < needed)
+            {
+                if (labelBuffer is not null)
+                {
+                    ArrayPool<byte>.Shared.Return(labelBuffer);
+                }
+
+                labelBuffer = ArrayPool<byte>.Shared.Rent(needed);
+            }
+
+            scratch.AsSpan(f.ValueOffset, f.ValueLength).CopyTo(labelBuffer);
+            labelBuffer[f.ValueLength] = (byte)' ';
+            scratch.AsSpan(l.ValueOffset, l.ValueLength).CopyTo(labelBuffer.AsSpan(f.ValueLength + 1));
+            return labelBuffer.AsSpan(0, needed);
         }
 
         DirectoryAttributeSlice present = firstSlice >= 0 ? slices[firstSlice] : slices[lastSlice];
-        return Encoding.UTF8.GetString(scratch.AsSpan(present.ValueOffset, present.ValueLength));
+        return scratch.AsSpan(present.ValueOffset, present.ValueLength);
     }
 
     // Projects a Keycloak Admin list response (a JSON array) to resolved principals. A pure function of (bytes, projector)

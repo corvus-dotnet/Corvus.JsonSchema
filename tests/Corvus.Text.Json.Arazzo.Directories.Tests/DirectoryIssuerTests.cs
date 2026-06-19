@@ -98,7 +98,7 @@ public sealed class DirectoryIssuerTests
         var projector = new DirectoryPrincipalProjector(SpanSubMapper(), "keycloak", Acme);
 
         // A view over the grantee value alone (no captured attributes) — the span mapper reads ValueUtf8 → sys:sub.
-        ResolvedPrincipal? mapped = projector.TryProjectIdentity(GranteeKind.Person, "alice", "alice", new DirectoryRecordView(GranteeKind.Person, "alice"u8, default, default));
+        ResolvedPrincipal? mapped = projector.TryProjectIdentity(GranteeKind.Person, "alice"u8, "alice"u8, hasLabel: true, new DirectoryRecordView(GranteeKind.Person, "alice"u8, default, default));
 
         mapped.ShouldNotBeNull();
         List<SecurityTag> tags = mapped!.Value.Identity.ToList();

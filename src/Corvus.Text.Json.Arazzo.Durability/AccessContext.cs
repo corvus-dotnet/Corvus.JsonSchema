@@ -78,5 +78,5 @@ public sealed class AccessContext
     /// <remarks>An unrestricted reach short-circuits before the holder is materialized; a scoped reach feeds the
     /// evaluator the materialized list at the leaf (the per-row filter cost retained by the design's Q0 decision).</remarks>
     public bool Admits(AccessVerb verb, SecurityTagSet securityTags)
-        => this.Reach(verb)?.IsSatisfiedBy(securityTags.ToList()) ?? true;
+        => this.Reach(verb)?.IsSatisfiedBy(securityTags) ?? true;
 }

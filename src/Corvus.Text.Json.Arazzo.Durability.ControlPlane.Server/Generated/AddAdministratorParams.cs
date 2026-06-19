@@ -29,5 +29,5 @@ public readonly struct AddAdministratorParams
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity Body { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite Body { get; init; }
 }

@@ -267,16 +267,12 @@ public sealed class ControlPlaneAdministratorsApiTests
             return string.IsNullOrEmpty(tenant) ? [] : [new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", tenant)];
         }
 
-        public override IReadOnlyList<SecurityTag> ResolveUsageGrants(IReadOnlyList<CredentialUsageGrant> grants)
+        public override void ResolveUsageGrantInto(ReadOnlySpan<byte> dimension, ReadOnlySpan<byte> value, ref IdentityBuilder builder)
         {
-            var tags = new List<SecurityTag>(grants.Count);
-            foreach (CredentialUsageGrant grant in grants)
-            {
-                string resolved = grant.Value is "real" or "alias" ? "shared" : grant.Value;
-                tags.Add(new SecurityTag(SecurityShell.DefaultInternalPrefix + grant.Dimension, resolved));
-            }
-
-            return tags;
+            // The grantee identity is resolved bytes-to-bytes; the collision is introduced by remapping the value span,
+            // then delegating to the default prefix+dimension mapping — no managed string on the path.
+            ReadOnlySpan<byte> resolved = value.SequenceEqual("real"u8) || value.SequenceEqual("alias"u8) ? "shared"u8 : value;
+            base.ResolveUsageGrantInto(dimension, resolved, ref builder);
         }
     }
 

@@ -54,20 +54,20 @@ public readonly partial struct ObservedIdentity
 
     /// <summary>Writes an observed-identity record into the caller's (pooled) writer in one pass — the upsert form.</summary>
     /// <param name="writer">The writer to serialize into.</param>
-    /// <param name="subjectKind">The grantee kind's canonical lower-case token.</param>
-    /// <param name="subjectValue">The grantee value (prefix-searched).</param>
-    /// <param name="label">An optional display label (omitted when <see langword="null"/>/empty).</param>
+    /// <param name="subjectKind">The grantee kind's canonical lower-case token (an interned literal from <see cref="GranteeKinds.ToToken"/>).</param>
+    /// <param name="subjectValue">The grantee value (prefix-searched) as unescaped UTF-8 — written bytes-to-bytes, no managed string.</param>
+    /// <param name="label">An optional display label as unescaped UTF-8 (omitted when empty) — written bytes-to-bytes.</param>
     /// <param name="identityTags">The exact <c>sys:</c> identity.</param>
     /// <param name="complete">Whether <paramref name="identityTags"/> is the principal's whole stamped identity (§17.2).</param>
     /// <param name="firstSeenAt">When this identity was first observed.</param>
     /// <param name="lastSeenAt">When this identity was most recently observed.</param>
-    /// <param name="provenance">The sighting sources (omitted when empty).</param>
-    public static void WriteNew(Utf8JsonWriter writer, string subjectKind, string subjectValue, string? label, SecurityTagSet identityTags, bool complete, DateTimeOffset firstSeenAt, DateTimeOffset lastSeenAt, IReadOnlyList<string>? provenance)
+    /// <param name="provenance">The sighting sources (interned provenance literals; omitted when empty).</param>
+    public static void WriteNew(Utf8JsonWriter writer, string subjectKind, ReadOnlySpan<byte> subjectValue, ReadOnlySpan<byte> label, SecurityTagSet identityTags, bool complete, DateTimeOffset firstSeenAt, DateTimeOffset lastSeenAt, IReadOnlyList<string>? provenance)
     {
         writer.WriteStartObject();
         writer.WriteString(JsonPropertyNames.SubjectKindUtf8, subjectKind);
         writer.WriteString(JsonPropertyNames.SubjectValueUtf8, subjectValue);
-        if (!string.IsNullOrEmpty(label))
+        if (!label.IsEmpty)
         {
             writer.WriteString(JsonPropertyNames.LabelUtf8, label);
         }
