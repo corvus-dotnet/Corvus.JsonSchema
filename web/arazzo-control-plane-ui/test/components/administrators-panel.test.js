@@ -34,17 +34,22 @@ describe('<arazzo-administrators-panel>', () => {
     equal(rows(el).length, 0, 'no administrators');
   });
 
-  it('adds an administrator and emits administrators-changed', async () => {
+  it('adds an administrator via the guided grant input and emits administrators-changed', async () => {
     el = panelWithMock({ 'base-workflow-id': 'nightly-reconcile', scopes: 'administrators:write' });
     mount(el);
     await nextEvent(el, 'loaded');
     equal(rows(el).length, 1, 'one seeded administrator');
-    el.shadowRoot.querySelector('#dimension').value = 'tenant';
-    el.shadowRoot.querySelector('#value').value = 'growth';
+    // The grant input is a nested element: choose the tenant dimension, then fill its adaptive value field.
+    const grant = el.shadowRoot.querySelector('arazzo-admin-grant-input');
+    const dim = grant.shadowRoot.querySelector('.dim');
+    dim.value = 'tenant';
+    dim.dispatchEvent(new Event('change'));
+    grant.shadowRoot.querySelector('.val-text').value = 'growth';
     const changed = nextEvent(el, 'administrators-changed');
     el.shadowRoot.querySelector('.addbtn').click();
     const e = await changed;
     equal(e.detail.administrators.length, 2, 'the set grew');
+    ok(e.detail.administrators.some((a) => a.dimension === 'tenant' && a.value === 'growth'), 'added the tenant grant');
   });
 
   it('surfaces the 409 when the last administrator would be removed', async () => {

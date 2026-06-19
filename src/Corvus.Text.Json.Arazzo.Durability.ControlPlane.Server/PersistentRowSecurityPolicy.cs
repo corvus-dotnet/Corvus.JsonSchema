@@ -31,6 +31,7 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
     private readonly SecurityShell shell;
     private readonly Func<ClaimsPrincipal?, IReadOnlyList<SecurityTag>>? internalTagResolver;
     private readonly TimeProvider timeProvider;
+    private readonly bool allowWildcardUnrestrictedReach;
     private volatile Compiled compiled = new(-1, []);
 
     /// <summary>Initializes a new instance of the <see cref="PersistentRowSecurityPolicy"/> class.</summary>
@@ -38,13 +39,21 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
     /// <param name="shell">The deployment shell (mandated wrapper rules + reserved internal-tag prefix). Defaults to a prefix-only shell with no wrapper.</param>
     /// <param name="internalTagResolver">An optional deployment hook stamping internal (e.g. <c>sys:tenant</c>) tags from the principal on row creation.</param>
     /// <param name="timeProvider">The time source used to expire time-bound (§16.5.2) grants; defaults to <see cref="TimeProvider.System"/>.</param>
-    public PersistentRowSecurityPolicy(ISecurityPolicyStore store, SecurityShell? shell = null, Func<ClaimsPrincipal?, IReadOnlyList<SecurityTag>>? internalTagResolver = null, TimeProvider? timeProvider = null)
+    /// <param name="allowWildcardUnrestrictedReach">
+    /// When <see langword="false"/> (the secure default, §17.5/F7) a binding whose claim type is the wildcard <c>*</c>
+    /// (matching every authenticated principal) may <strong>not</strong> grant <c>Unrestricted</c> (full, null) reach —
+    /// that would hand every caller operator-level access and collapse tenant isolation. Such a grant is demoted to no
+    /// reach for that verb; a wildcard binding may still grant rule-bounded reach. A single-tenant deployment that
+    /// genuinely wants "everyone is an operator" sets this to <see langword="true"/> to opt back in.
+    /// </param>
+    public PersistentRowSecurityPolicy(ISecurityPolicyStore store, SecurityShell? shell = null, Func<ClaimsPrincipal?, IReadOnlyList<SecurityTag>>? internalTagResolver = null, TimeProvider? timeProvider = null, bool allowWildcardUnrestrictedReach = false)
     {
         ArgumentNullException.ThrowIfNull(store);
         this.store = store;
         this.shell = shell ?? new SecurityShell([]);
         this.internalTagResolver = internalTagResolver;
         this.timeProvider = timeProvider ?? TimeProvider.System;
+        this.allowWildcardUnrestrictedReach = allowWildcardUnrestrictedReach;
     }
 
     /// <summary>Reloads and recompiles the rule/binding snapshot if the store's generation has advanced.</summary>
@@ -86,12 +95,17 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
             DateTimeOffset? expiresAt = binding.ExpiresAtValue;
             anyScopeGrants |= scopes.Length > 0;
             anyExpiringBindings |= expiresAt.HasValue;
+
+            // §17.5/F7: a wildcard (`*`) binding matches every authenticated principal, so an Unrestricted grant on it
+            // would make everyone an operator and collapse tenant isolation. Demote its Unrestricted verbs to no-reach
+            // (rule-bounded grants on a wildcard binding are still honoured) unless the deployment has opted in.
+            bool demoteUnrestricted = !this.allowWildcardUnrestrictedReach && string.Equals(binding.ClaimTypeValue, "*", StringComparison.Ordinal);
             bindings.Add(new BindingClauses(
                 binding.ClaimTypeValue,
                 binding.ClaimValueOrNull,
-                VerbClauseFor(binding.Read, expressions),
-                VerbClauseFor(binding.Write, expressions),
-                VerbClauseFor(binding.Purge, expressions),
+                VerbClauseFor(binding.Read, expressions, demoteUnrestricted),
+                VerbClauseFor(binding.Write, expressions, demoteUnrestricted),
+                VerbClauseFor(binding.Purge, expressions, demoteUnrestricted),
                 scopes,
                 expiresAt));
         }
@@ -212,12 +226,14 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
     }
 
     // Pre-resolves a binding's verb grant (at snapshot time) to "((expr1) && (expr2) ...)", or to a null clause if the
-    // grant is empty or references an unknown rule (fail-closed: a broken grant contributes nothing).
-    private static VerbClause VerbClauseFor(VerbGrant grant, IReadOnlyDictionary<string, string> expressions)
+    // grant is empty or references an unknown rule (fail-closed: a broken grant contributes nothing). When
+    // demoteUnrestricted is set (a wildcard binding without the F7 opt-in), an Unrestricted grant is downgraded to no
+    // reach rather than full reach.
+    private static VerbClause VerbClauseFor(VerbGrant grant, IReadOnlyDictionary<string, string> expressions, bool demoteUnrestricted)
     {
         if (grant.IsUnrestrictedValue)
         {
-            return new VerbClause(true, null);
+            return demoteUnrestricted ? new VerbClause(false, null) : new VerbClause(true, null);
         }
 
         if (!grant.HasRuleNames)

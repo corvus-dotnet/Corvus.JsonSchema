@@ -166,14 +166,14 @@ public readonly partial struct CancelRequest
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
-    /// An operator-supplied reason for the cancellation (recorded for audit).
+    /// An operator-supplied reason for the cancellation (recorded for audit). Must be non-empty.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Reason
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CancelRequest.ReasonEntity Reason
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ReasonUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ReasonUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CancelRequest.ReasonEntity value))
             {
                 return value;
             }

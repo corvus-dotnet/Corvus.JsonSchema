@@ -3,11 +3,13 @@
 // </copyright>
 
 using System.Security.Claims;
+using Corvus.Text.Json.Arazzo.Directories;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
@@ -24,19 +26,21 @@ public static class ControlPlaneEndpointExtensions
     /// <param name="management">The run control-plane client the run endpoints delegate to.</param>
     /// <param name="catalog">The catalog client the catalog endpoints delegate to.</param>
     /// <param name="runners">The runner registry the runners endpoint reads and the trigger gate consults.</param>
-    /// <param name="requireAuthorization">
-    /// When <see langword="true"/>, each endpoint demands its declared capability scope as an authorization
-    /// policy (<see cref="ControlPlaneScopes"/>); the host must register those policies (e.g.
-    /// <see cref="ControlPlaneAuthorization.AddArazzoControlPlaneAuthorization"/>) and an authentication scheme,
-    /// and call <c>UseAuthentication</c>/<c>UseAuthorization</c>. When <see langword="false"/> (the default)
-    /// the endpoints are unsecured — for tests and trusted-network deployments.
+    /// <param name="securityMode">
+    /// The control plane's security posture (§17.4) — an <strong>explicit, required</strong> choice (there is no
+    /// insecure default): <see cref="ControlPlaneSecurityMode.Open"/> (unauthenticated, unrestricted — dev only),
+    /// <see cref="ControlPlaneSecurityMode.Scoped"/> (auth + scopes + <paramref name="rowSecurity"/>, the production
+    /// posture), <see cref="ControlPlaneSecurityMode.ScopesOnly"/> (auth + scopes, System reach), or
+    /// <see cref="ControlPlaneSecurityMode.RowSecurityOnly"/> (auth + reach, no scope gating). Scope-gating modes need
+    /// the host to register the scope policies (e.g. <see cref="ControlPlaneAuthorization.AddArazzoControlPlaneAuthorization"/>)
+    /// + an authentication scheme + <c>UseAuthentication</c>/<c>UseAuthorization</c>.
     /// </param>
     /// <param name="rowSecurity">
-    /// The deployment's row-security policy (§14.2): it scopes every list/search to the rows the principal may
-    /// see, gates single-row reads/writes (an invisible row is reported as not found), scopes purge to the
-    /// principal's reach, and stamps deployment-internal tags onto created rows. When supplied, the host must also
-    /// register <c>IHttpContextAccessor</c> (<c>services.AddHttpContextAccessor()</c>) so the current principal can
-    /// be read. When <see langword="null"/> (the default) the control plane is unscoped — every row is visible.
+    /// The deployment's row-security policy (§14.2): it scopes every list/search to the rows the principal may see,
+    /// gates single-row reads/writes (an invisible row is reported as not found), scopes purge, and stamps
+    /// deployment-internal tags onto created rows. <strong>Required</strong> for <see cref="ControlPlaneSecurityMode.Scoped"/>
+    /// and <see cref="ControlPlaneSecurityMode.RowSecurityOnly"/> (and must be omitted otherwise — it would be ignored).
+    /// When supplied, the host must also register <c>IHttpContextAccessor</c> (<c>services.AddHttpContextAccessor()</c>).
     /// </param>
     /// <param name="securityPolicyStore">
     /// The persistent store backing the row-security authoring API (<c>/security/rules</c>, <c>/security/bindings</c>,
@@ -70,42 +74,70 @@ public static class ControlPlaneEndpointExtensions
     /// and the named scope policies, so a deployment supplies any ASP.NET Core scheme (JWT bearer, OIDC, mTLS,
     /// a dev key) and how a principal acquires scopes.
     /// </remarks>
-    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, IWorkflowManagementClient management, IWorkflowCatalogClient catalog, IRunnerRegistry runners, bool requireAuthorization = false, ControlPlaneRowSecurityPolicy? rowSecurity = null, ISecurityPolicyStore? securityPolicyStore = null, ISourceCredentialStore? sourceCredentialStore = null, IAccessRequestStore? accessRequestStore = null, AccessRequestApprovalOptions? accessRequestApprovalOptions = null, string accessRequestSubjectClaimType = "sub", Func<ClaimsPrincipal, AccessRequestDefinition, bool>? selfElevationEligibility = null)
+    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, IWorkflowManagementClient management, IWorkflowCatalogClient catalog, IRunnerRegistry runners, ControlPlaneSecurityMode securityMode, ControlPlaneRowSecurityPolicy? rowSecurity = null, ISecurityPolicyStore? securityPolicyStore = null, ISourceCredentialStore? sourceCredentialStore = null, IAccessRequestStore? accessRequestStore = null, AccessRequestApprovalOptions? accessRequestApprovalOptions = null, string accessRequestSubjectClaimType = "sub", Func<ClaimsPrincipal, AccessRequestDefinition, bool>? selfElevationEligibility = null, IObservedIdentityStore? observedIdentityStore = null, IPrincipalDirectory? principalDirectory = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(runners);
 
+        // §17.4 secure-by-default: derive the posture from the EXPLICIT mode — there is no insecure-by-omission path.
+        // A row policy is required exactly for the reach-enforcing modes, and forbidden for the System-reach modes (where
+        // it would be silently ignored); scope gating is applied exactly for the scope-gating modes.
+        if ((securityMode is ControlPlaneSecurityMode.Scoped or ControlPlaneSecurityMode.RowSecurityOnly) && rowSecurity is null)
+        {
+            throw new ArgumentException($"ControlPlaneSecurityMode.{securityMode} requires a row-security policy; pass rowSecurity, or use ScopesOnly (capability scopes, no row reach) or Open (unsecured).", nameof(rowSecurity));
+        }
+
+        if ((securityMode is ControlPlaneSecurityMode.Open or ControlPlaneSecurityMode.ScopesOnly) && rowSecurity is not null)
+        {
+            throw new ArgumentException($"ControlPlaneSecurityMode.{securityMode} grants full (System) row reach and would ignore a row-security policy; omit rowSecurity, or use Scoped/RowSecurityOnly to enforce it.", nameof(rowSecurity));
+        }
+
+        bool gateScopes = securityMode is ControlPlaneSecurityMode.Scoped or ControlPlaneSecurityMode.ScopesOnly;
+        ControlPlaneRowSecurityPolicy? effectivePolicy = securityMode is ControlPlaneSecurityMode.Scoped or ControlPlaneSecurityMode.RowSecurityOnly ? rowSecurity : null;
+
+        if (securityMode == ControlPlaneSecurityMode.Open)
+        {
+            endpoints.ServiceProvider.GetService<ILoggerFactory>()?.CreateLogger("Corvus.Text.Json.Arazzo.Durability.ControlPlane")
+                .LogWarning("Arazzo control plane mapped in OPEN security mode: no authentication and no row security — every operation is exposed to anonymous callers. Use this only for development or a trusted network.");
+        }
+
         // Resolve the caller's AccessContext per request (§14.2/§14.4): when a row-security policy is configured the
         // handlers gate every read/write/purge by the principal's per-verb reach — the client operations require a
-        // context, so an unscoped read cannot exist to be misused. With no policy the access binding yields
-        // AccessContext.System throughout (fully unrestricted, behaviour unchanged). The current principal is read
-        // via IHttpContextAccessor, which the host must register (services.AddHttpContextAccessor()).
-        ControlPlaneAccess access = rowSecurity is null
+        // context, so an unscoped read cannot exist to be misused. With no policy (Open/ScopesOnly) the access binding
+        // yields AccessContext.System throughout. The current principal is read via IHttpContextAccessor.
+        ControlPlaneAccess access = effectivePolicy is null
             ? new ControlPlaneAccess()
-            : new ControlPlaneAccess(endpoints.ServiceProvider.GetRequiredService<IHttpContextAccessor>(), rowSecurity);
+            : new ControlPlaneAccess(endpoints.ServiceProvider.GetRequiredService<IHttpContextAccessor>(), effectivePolicy);
 
         // The security-authoring API persists rules/bindings; if the deployment's policy is the persistent one,
         // refresh it after writes so authoring changes take effect for subsequent authorization decisions.
         ISecurityPolicyStore policyStore = securityPolicyStore ?? new InMemorySecurityPolicyStore();
-        var securityHandler = new ArazzoControlPlaneSecurityHandler(policyStore, rowSecurity as PersistentRowSecurityPolicy);
+        var securityHandler = new ArazzoControlPlaneSecurityHandler(policyStore, effectivePolicy as PersistentRowSecurityPolicy);
 
         // The source-credential management API persists references + metadata only — it never touches secret material.
         ISourceCredentialStore credentialStore = sourceCredentialStore ?? new InMemorySourceCredentialStore();
         var credentialsHandler = new ArazzoControlPlaneCredentialsHandler(credentialStore, access);
 
+        // The identity layer (§16.5.4): the store-indexed observed-identity typeahead (an in-memory reference by default
+        // so the endpoints function in development) plus an optional pluggable directory. The write paths below record
+        // observed identities into it, so the grantee typeahead is self-populating.
+        IObservedIdentityStore observedStore = observedIdentityStore ?? new InMemoryObservedIdentityStore();
+
         // The administration management API (§15) governs a base id's administrator set by current-administrator
         // membership; it delegates to the catalog client (which owns the administrator store, if one is configured) and
         // names administrators by deployment-mapped grants rather than raw internal tags.
-        var administratorsHandler = new ArazzoControlPlaneAdministratorsHandler(catalog, access);
+        var administratorsHandler = new ArazzoControlPlaneAdministratorsHandler(catalog, access, observedStore);
 
         // The access-request API (§16.5): requests route to the target workflow's §15 administrators (or self-elevate
         // when eligible); an approval writes a single capped, time-boxed grant to the security-policy store (refreshed
         // in-process when the deployment's policy is the persistent one).
         IAccessRequestStore requestStore = accessRequestStore ?? new InMemoryAccessRequestStore();
-        var approvalService = new AccessRequestApprovalService(requestStore, policyStore, catalog, options: accessRequestApprovalOptions, rowSecurity: rowSecurity as PersistentRowSecurityPolicy);
+        var approvalService = new AccessRequestApprovalService(requestStore, policyStore, catalog, options: accessRequestApprovalOptions, rowSecurity: effectivePolicy as PersistentRowSecurityPolicy);
         var accessRequestsHandler = new ArazzoControlPlaneAccessRequestsHandler(approvalService, requestStore, catalog, access, accessRequestSubjectClaimType, selfElevationEligibility);
+
+        var identityHandler = new ArazzoControlPlaneIdentityHandler(observedStore, principalDirectory, access);
 
         return endpoints.MapApiEndpoints(
             new ArazzoControlPlaneHandler(management, access),
@@ -115,6 +147,7 @@ public static class ControlPlaneEndpointExtensions
             credentialsHandler,
             administratorsHandler,
             accessRequestsHandler,
-            requireAuthorization ? ControlPlaneAuthorization.RequireDeclaredScopes : null);
+            identityHandler,
+            gateScopes ? ControlPlaneAuthorization.RequireDeclaredScopes : null);
     }
 }

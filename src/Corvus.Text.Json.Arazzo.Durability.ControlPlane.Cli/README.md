@@ -38,6 +38,7 @@ The runs commands above sit at the top level; the other control-plane resources 
 | `security` | Author the row-security policy: `rule` and claim→rule `binding` subcommands. |
 | `credentials` | Manage source credential bindings — **references and non-secret metadata only, never secret material**. `list` is a status-first table (`--status`/`--source`); `update` is a merge (re-point a `--ref` to rotate; unspecified fields are preserved). |
 | `administrators` | Manage a workflow's administrator set (`list`/`add`/`remove`/`transfer`); administrators are named by the deployment-mapped grant `{dimension, value}`. |
+| `access-requests` | Request elevated capability on a workflow, and — as a §15 administrator — decide requests (§16.5): `submit`/`list`/`get`/`approve`/`approve-as-eligible`/`deny`/`withdraw`/`revoke`. |
 
 ```bash
 arazzo-runs credentials list --status expiring --server https://host:8080

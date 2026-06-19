@@ -226,7 +226,7 @@ public sealed partial class CliIntegrationTests
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
         app.Urls.Add("http://127.0.0.1:0");
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry());
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Open);
         await app.StartAsync();
 
         string url = app.Urls.First();

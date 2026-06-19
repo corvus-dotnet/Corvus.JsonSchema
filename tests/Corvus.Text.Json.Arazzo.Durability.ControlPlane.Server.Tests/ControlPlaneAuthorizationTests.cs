@@ -36,6 +36,29 @@ public sealed class ControlPlaneAuthorizationTests
     }
 
     [TestMethod]
+    public void The_security_mode_forbids_insecure_by_omission_combinations()
+    {
+        WebApplication app = WebApplication.CreateBuilder().Build();
+        var store = new InMemoryWorkflowStateStore();
+        var management = new WorkflowManagementClient(store, "ops");
+        var catalog = new WorkflowCatalogClient(new InMemoryWorkflowCatalogStore(), store, "ops");
+        var runners = new InMemoryRunnerRegistry();
+
+        // Scoped / RowSecurityOnly REQUIRE a row-security policy — you cannot get scopes without row reach by omission (F2).
+        Should.Throw<ArgumentException>(() => app.MapArazzoControlPlane(management, catalog, runners, ControlPlaneSecurityMode.Scoped));
+        Should.Throw<ArgumentException>(() => app.MapArazzoControlPlane(management, catalog, runners, ControlPlaneSecurityMode.RowSecurityOnly));
+
+        // Open / ScopesOnly grant System reach and must NOT be handed a policy that would be silently ignored.
+        Should.Throw<ArgumentException>(() => app.MapArazzoControlPlane(management, catalog, runners, ControlPlaneSecurityMode.Open, rowSecurity: new SystemPolicy()));
+        Should.Throw<ArgumentException>(() => app.MapArazzoControlPlane(management, catalog, runners, ControlPlaneSecurityMode.ScopesOnly, rowSecurity: new SystemPolicy()));
+    }
+
+    private sealed class SystemPolicy : ControlPlaneRowSecurityPolicy
+    {
+        public override AccessContext Resolve(ClaimsPrincipal? principal) => AccessContext.System;
+    }
+
+    [TestMethod]
     public async Task A_caller_with_the_wrong_scope_is_forbidden()
     {
         await using Secured host = await StartSecuredAsync();
@@ -90,7 +113,7 @@ public sealed class ControlPlaneAuthorizationTests
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), requireAuthorization: true);
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.ScopesOnly);
         await app.StartAsync();
 
         return new Secured(app, app.GetTestClient());

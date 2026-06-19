@@ -157,7 +157,7 @@ public sealed class ControlPlaneSecurityApiTests
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), requireAuthorization: true, securityPolicyStore: new InMemorySecurityPolicyStore());
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.ScopesOnly, securityPolicyStore: new InMemorySecurityPolicyStore());
         await app.StartAsync();
 
         return new Scoped(app, app.GetTestClient());

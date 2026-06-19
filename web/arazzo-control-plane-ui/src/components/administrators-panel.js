@@ -14,6 +14,7 @@
 // administrator is refused (409).
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, confirmDialog, define } from './base.js';
+import './admin-grant-input.js';
 
 class ArazzoAdministratorsPanel extends ArazzoElement {
   static get observedAttributes() {
@@ -64,6 +65,8 @@ class ArazzoAdministratorsPanel extends ArazzoElement {
   async load() {
     const client = this.client;
     const base = this.baseWorkflowId;
+    const grantIn = this.$('.grant-in');
+    if (grantIn && client && grantIn.client !== client) grantIn.client = client;
     if (!client || !base) {
       this._error = !base ? { title: 'No workflow selected', detail: 'Set a base-workflow-id.' } : { title: 'Not configured', detail: 'Set a base-url or .client.' };
       this._admins = [];
@@ -93,13 +96,9 @@ class ArazzoAdministratorsPanel extends ArazzoElement {
   // ---- mutations --------------------------------------------------------------------------------
 
   async add() {
-    const dim = this.$('#dimension').value.trim();
-    const val = this.$('#value').value.trim();
-    if (!dim || !val) { this.showError({ title: 'Both a dimension and a value are required.' }); return; }
-    await this.mutate(() => this.client.addAdministrator(this.baseWorkflowId, { dimension: dim, value: val }), () => {
-      this.$('#dimension').value = '';
-      this.$('#value').value = '';
-    });
+    const grant = this.$('.grant-in').grant;
+    if (!grant) { this.showError({ title: 'A dimension and a value are required.' }); return; }
+    await this.mutate(() => this.client.addAdministrator(this.baseWorkflowId, grant), () => this.$('.grant-in').reset());
   }
 
   async removeMember(dimension, value) {
@@ -148,9 +147,7 @@ class ArazzoAdministratorsPanel extends ArazzoElement {
         .grant .dim { color: var(--_muted); }
         .grow { flex: 1; }
         .add { display: flex; gap: 8px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--_border); background: var(--_surface); }
-        .add input { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); }
-        .add input.dim { width: 130px; }
-        .add input.val { flex: 1; }
+        .add .grant-in { flex: 1; }
         .err { margin: 10px 12px; }
         .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 10px 12px; }
         @keyframes pulse { 50% { opacity: 0.45; } }
@@ -160,14 +157,13 @@ class ArazzoAdministratorsPanel extends ArazzoElement {
         <div class="err"></div>
         <div class="list" part="list"></div>
         <div class="add" part="add" hidden>
-          <input id="dimension" class="dim" type="text" placeholder="dimension" aria-label="dimension">
-          <input id="value" class="val" type="text" placeholder="value" aria-label="value">
+          <arazzo-admin-grant-input class="grant-in"></arazzo-admin-grant-input>
           <button class="addbtn primary" type="button">Add</button>
         </div>
       </div>
     `;
     this.$('.addbtn').addEventListener('click', () => this.add());
-    this.$('#value').addEventListener('keydown', (e) => { if (e.key === 'Enter') this.add(); });
+    this.$('.grant-in').addEventListener('keydown', (e) => { if (e.key === 'Enter') this.add(); });
   }
 
   renderBody() {

@@ -16,6 +16,14 @@ namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 /// <see cref="CompiledInterpolationTemplate"/> field; at run time the context interpolates it to a
 /// UTF-8 buffer and the result is wrapped as a JSON string. Interpolation always yields text, so the
 /// value is a JSON string regardless of the embedded expressions' types.
+/// <para><strong>Allocation ledger.</strong> The interpolation buffer is rented from the per-call
+/// <c>workspace</c> pool (<c>RentWriterAndBuffer</c>), not <c>new</c>-ed per step. Because
+/// <c>FixedJsonValueDocument.ForUnescapedString</c> <em>copies</em> the bytes into the result document
+/// (it does not reference the source span), the pooled buffer is returned <strong>synchronously</strong>
+/// in the emitted statements — before any downstream <c>await</c> — so the thread-affine pooled writer
+/// is never held across an await (issue #814). This is the fallback the <see cref="InterpolationInliner"/>
+/// defers to for non-statically-navigable fragments (<c>$url</c>, <c>$method</c>, headers, …); those are
+/// common in real workflows, so the per-step heap <c>ArrayBufferWriter</c> it replaced was on the hot path.</para>
 /// </remarks>
 internal static class InterpolationEmitter
 {
@@ -40,11 +48,18 @@ internal static class InterpolationEmitter
         fields.Append("private static readonly CompiledInterpolationTemplate ").Append(fieldName)
             .Append(" = CompiledInterpolationTemplate.Compile(").Append(EmitText.Quote(template)).AppendLine(");");
 
+        string writer = $"{resultLocal}Writer";
         string buffer = $"{resultLocal}Buffer";
-        statements.Append("var ").Append(buffer).AppendLine(" = new System.Buffers.ArrayBufferWriter<byte>();");
+
+        // Rent the interpolation buffer from the workspace pool (not a per-step `new ArrayBufferWriter`). TryInterpolate
+        // writes the UTF-8 result into it; ForUnescapedString then copies those bytes into the result document, so the
+        // pooled buffer is returned right here — synchronously, before any downstream await — keeping the thread-affine
+        // writer off the await path (#814). The resulting JsonElement carries its own copy and outlives the return.
+        statements.Append("var ").Append(writer).Append(" = workspace.RentWriterAndBuffer(256, out IByteBufferWriter ").Append(buffer).AppendLine(");");
         statements.Append("_ = ").Append(contextVariable).Append(".TryInterpolate(").Append(fieldName).Append(", ").Append(buffer).AppendLine(");");
         statements.Append("JsonElement ").Append(resultLocal)
             .Append(" = Corvus.Text.Json.Internal.FixedJsonValueDocument<JsonElement>.ForUnescapedString(")
             .Append(buffer).AppendLine(".WrittenSpan).RootElement;");
+        statements.Append("workspace.ReturnWriterAndBuffer(").Append(writer).Append(", ").Append(buffer).AppendLine(");");
     }
 }
