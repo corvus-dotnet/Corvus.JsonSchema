@@ -304,8 +304,8 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     {
         foreach (Models.CredentialUsageGrant grant in state.Grants.EnumerateArray())
         {
-            using UnescapedUtf8JsonString dimension = ((JsonElement)grant.DimensionValue).GetUtf8String();
-            using UnescapedUtf8JsonString value = ((JsonElement)grant.Value).GetUtf8String();
+            using UnescapedUtf8JsonString dimension = grant.DimensionValue.GetUtf8String();
+            using UnescapedUtf8JsonString value = grant.Value.GetUtf8String();
             state.Access.ResolveUsageGrantInto(dimension.Span, value.Span, ref builder);
         }
     }
