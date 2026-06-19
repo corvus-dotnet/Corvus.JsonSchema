@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ObservedIdentity",
+  "description": "A projection record of a security identity the control plane has OBSERVED (design §16.5.4): a distinct grantee seen via an access request, a catalogued version's author, an administrator grant, or an entitlement grant. Recorded so the control plane can offer a store-indexed, prefix-searchable typeahead of REAL identities to name as grantees (view/operate/administer), each resolving to its EXACT deployment-stamped sys: identity — so administrator/entitlement membership (exact set-equality) is never an inert or over-broad hand-typed rule. Holds only sys: identity tags (authorization metadata), never secrets, so it persists as plain JSON like every other entity. Keyed by (subjectKind, subjectValue); backends prefix-index subjectValue for typeahead and keyset-page the search.",
+  "type": "object",
+  "required": ["subjectKind", "subjectValue", "identityTags", "complete", "firstSeenAt", "lastSeenAt"],
+  "properties": {
+    "subjectKind": {
+      "$ref": "#/$defs/GranteeKind",
+      "description": "The kind of grantee this identity names."
+    },
+    "subjectValue": {
+      "type": "string",
+      "description": "The grantee value as typed/searched (a subject id, tenant name, role name, or workflow id). Prefix-indexed for typeahead; together with subjectKind it is the record key."
+    },
+    "label": {
+      "type": "string",
+      "description": "An optional human-friendly display label (e.g. a person's display name), if one was observed."
+    },
+    "identityTags": {
+      "type": "array",
+      "description": "The full, EXACT deployment-stamped sys: identity this grantee resolves to (order-independent, compared as a set) — the identity a grant or administrator entry must name to match this principal. Empty denotes the unscoped (system) identity.",
+      "items": { "$ref": "#/$defs/SecurityTagInfo" }
+    },
+    "complete": {
+      "type": "boolean",
+      "description": "Whether identityTags is the principal's WHOLE stamped identity (so an exact-equality grant will match), or a best-effort partial mapping (e.g. a single sys:sub tag for a person whose full identity the deployment also stamps with sys:tenant). A directory or self-identity sighting is complete; the policy's single-tag default for a finer-grained kind is not. The picker warns on an incomplete identity before granting (§17.2)."
+    },
+    "firstSeenAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this identity was first observed."
+    },
+    "lastSeenAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this identity was most recently observed (bumped on each sighting; used to rank typeahead results)."
+    },
+    "provenance": {
+      "type": "array",
+      "description": "Where this identity has been observed (e.g. accessRequest, catalogVersion, administrator, grant) — for audit and ranking.",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "GranteeKind": {
+      "title": "GranteeKind",
+      "type": "string",
+      "description": "A well-known kind of grantee the deployment can resolve to a sys: identity (design §16.5.4).",
+      "enum": ["person", "team", "role", "workflow"]
+    },
+    "SecurityTagInfo": {
+      "title": "ObservedSecurityTagInfo",
+      "type": "object",
+      "description": "A security label (KVP) forming part of an observed identity (§14.2).",
+      "required": ["key", "value"],
+      "properties": {
+        "key": {
+          "type": "string",
+          "description": "The label key (e.g. sys:tenant)."
+        },
+        "value": {
+          "type": "string",
+          "description": "The label value (e.g. acme)."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

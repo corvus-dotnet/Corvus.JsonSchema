@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// <summary>
 /// Parameters for the ResumeRun operation (POST /runs/{runId}/resume).
 /// </summary>
-/// <remarks>Resumes a faulted run, re-executing it from its last checkpoint (the faulted step). Only a run in the `Faulted` state can be resumed. Returns the run's new detail on success. An implementation MAY process the resume asynchronously and instead return `202 Accepted`.</remarks>
+/// <remarks>Resumes a faulted run, re-executing it from its last checkpoint (the faulted step). Only a run in the `Faulted` state can be resumed. Returns the run's new detail on success (200); a run that does not exist or is out of read reach is 404, a readable run outside write reach is 403, and a run that is not in the `Faulted` state conflicts (409).</remarks>
 public readonly struct ResumeRunParams
 {
 

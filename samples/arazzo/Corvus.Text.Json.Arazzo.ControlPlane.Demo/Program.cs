@@ -261,7 +261,7 @@ app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
     management,
     catalog,
     runners,
-    requireAuthorization,
+    requireAuthorization ? ControlPlaneSecurityMode.Scoped : ControlPlaneSecurityMode.Open,
     rowSecurity: requireAuthorization ? entitlements : null,
     securityPolicyStore: securityPolicy,
     sourceCredentialStore: sourceCredentials,

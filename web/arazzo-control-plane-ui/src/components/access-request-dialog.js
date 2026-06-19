@@ -17,12 +17,15 @@
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import './workflow-id-input.js';
 
-// runs:read is the least-privilege default and the floor everything else builds on; runs:write *requires* it —
-// the grant maps the two scopes to independent read/write reach (write does not imply read server-side), so a
-// write-without-read grant would let you resume/cancel a run you can neither list nor inspect. The dialog forbids
-// that incoherent combination by forcing (and locking) read on whenever write is requested.
+// The three grant surfaces (§17.3): View (catalog:read — see the workflow's catalog entry; the least-privilege
+// default), Read runs (runs:read), and Operate (runs:write). runs:write *requires* runs:read — the grant maps the
+// run scopes to independent read/write reach (write does not imply read server-side), so a write-without-read grant
+// would let you resume/cancel a run you can neither list nor inspect; the dialog forbids that incoherent combination
+// by forcing (and locking) read on whenever write is requested. Granting more than View never implies View, and vice
+// versa — the surfaces are orthogonal, capped to this allowlist on approval.
 const REQUESTABLE_SCOPES = [
-  { scope: 'runs:read', label: 'Read runs (runs:read)', default: true },
+  { scope: 'catalog:read', label: 'View the workflow (catalog:read)', default: true },
+  { scope: 'runs:read', label: 'Read runs (runs:read)' },
   { scope: 'runs:write', label: 'Trigger / resume / cancel runs (runs:write)', requires: 'runs:read' },
 ];
 

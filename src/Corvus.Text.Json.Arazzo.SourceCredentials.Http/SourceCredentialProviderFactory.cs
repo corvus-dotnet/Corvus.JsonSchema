@@ -26,18 +26,26 @@ public sealed class SourceCredentialProviderFactory
     private readonly ISecretResolver resolver;
     private readonly HttpClient? oauthTokenClient;
     private readonly TimeProvider timeProvider;
+    private readonly bool allowInsecureOAuthTokenEndpoint;
 
     /// <summary>Initializes a new instance of the <see cref="SourceCredentialProviderFactory"/> class.</summary>
     /// <param name="resolver">The runner-side secret resolver.</param>
     /// <param name="oauthTokenClient">An HTTP client for OAuth 2.0 token-endpoint calls; required only if an
     /// <see cref="SourceCredentialKind.OAuth2ClientCredentials"/> binding is built. The caller owns its lifetime.</param>
     /// <param name="timeProvider">The time source for token expiry; defaults to <see cref="TimeProvider.System"/>.</param>
-    public SourceCredentialProviderFactory(ISecretResolver resolver, HttpClient? oauthTokenClient = null, TimeProvider? timeProvider = null)
+    /// <param name="allowInsecureOAuthTokenEndpoint">
+    /// When <see langword="false"/> (the secure default, §17.5/F5) an OAuth2 client-credentials binding whose
+    /// <c>tokenUrl</c> is not <c>https</c> is rejected — POSTing the client secret over cleartext would expose it on the
+    /// wire. A deployment may set this to <see langword="true"/> to opt into an <c>http</c> token endpoint for local
+    /// development against a non-TLS identity provider.
+    /// </param>
+    public SourceCredentialProviderFactory(ISecretResolver resolver, HttpClient? oauthTokenClient = null, TimeProvider? timeProvider = null, bool allowInsecureOAuthTokenEndpoint = false)
     {
         ArgumentNullException.ThrowIfNull(resolver);
         this.resolver = resolver;
         this.oauthTokenClient = oauthTokenClient;
         this.timeProvider = timeProvider ?? TimeProvider.System;
+        this.allowInsecureOAuthTokenEndpoint = allowInsecureOAuthTokenEndpoint;
     }
 
     /// <summary>Builds the HTTP authentication provider for a binding.</summary>
@@ -85,6 +93,15 @@ public sealed class SourceCredentialProviderFactory
         }
 
         string tokenUrl = RequireConfig(binding, "tokenUrl");
+        var tokenEndpoint = new Uri(tokenUrl, UriKind.Absolute);
+
+        // §17.5/F5: refuse to POST the client secret over cleartext. https is mandatory unless the deployment has
+        // explicitly opted into an insecure endpoint for local development.
+        if (!this.allowInsecureOAuthTokenEndpoint && !string.Equals(tokenEndpoint.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException($"Binding '{binding.SourceNameValue}' has a non-https OAuth2 tokenUrl ('{tokenEndpoint.Scheme}://…'); the client secret would be sent in cleartext. Use an https token endpoint, or construct the factory with allowInsecureOAuthTokenEndpoint: true for local development.");
+        }
+
         string clientId = RequireConfig(binding, "clientId");
         string? scope = binding.TryGetConfigValue("scope", out string? s) ? s : binding.TryGetConfigValue("scopes", out string? ss) ? ss : null;
         OAuth2ClientAuthentication clientAuth = binding.TryGetConfigValue("clientAuthentication", out string? ca) && string.Equals(ca, "basic", StringComparison.OrdinalIgnoreCase)
@@ -94,7 +111,7 @@ public sealed class SourceCredentialProviderFactory
         using SecretMaterial material = await this.ResolveAsync(binding, "clientSecret", cancellationToken).ConfigureAwait(false);
         var options = new OAuth2ClientCredentialsOptions
         {
-            TokenEndpoint = new Uri(tokenUrl, UriKind.Absolute),
+            TokenEndpoint = tokenEndpoint,
             ClientId = clientId,
             ClientSecret = material.Reveal(),
             Scope = scope,

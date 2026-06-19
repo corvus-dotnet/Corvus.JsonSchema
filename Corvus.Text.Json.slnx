@@ -98,6 +98,9 @@
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Kms.Tests/Corvus.Text.Json.Arazzo.Durability.Kms.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.AwsSecretsManager.Tests/Corvus.Text.Json.Arazzo.Durability.AwsSecretsManager.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Vault.Tests/Corvus.Text.Json.Arazzo.Durability.Vault.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Arazzo.Directories.Conformance/Corvus.Text.Json.Arazzo.Directories.Conformance.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Arazzo.Directories.Tests/Corvus.Text.Json.Arazzo.Directories.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Arazzo.Directories.Ldap.Tests/Corvus.Text.Json.Arazzo.Directories.Ldap.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Tests/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.SourceCredentials.Http.Tests/Corvus.Text.Json.Arazzo.SourceCredentials.Http.Tests.csproj" />
@@ -148,6 +151,8 @@
     <Project Path="src/Corvus.Text.Json.Arazzo11/Corvus.Text.Json.Arazzo11.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo/Corvus.Text.Json.Arazzo.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability/Corvus.Text.Json.Arazzo.Durability.csproj" />
+    <Project Path="src/Corvus.Text.Json.Arazzo.Directories/Corvus.Text.Json.Arazzo.Directories.csproj" />
+    <Project Path="src/Corvus.Text.Json.Arazzo.Directories.Ldap/Corvus.Text.Json.Arazzo.Directories.Ldap.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Sqlite/Corvus.Text.Json.Arazzo.Durability.Sqlite.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Postgres/Corvus.Text.Json.Arazzo.Durability.Postgres.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.MySql/Corvus.Text.Json.Arazzo.Durability.MySql.csproj" />

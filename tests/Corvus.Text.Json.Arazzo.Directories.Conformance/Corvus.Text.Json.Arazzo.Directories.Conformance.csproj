@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn);CS1591;SA0001</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MSTest.TestFramework" />
+    <PackageReference Include="Shouldly" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Directories\Corvus.Text.Json.Arazzo.Directories.csproj" />
+  </ItemGroup>
+</Project>

@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// <summary>
 /// Parameters for the StartCatalogWorkflowRun operation (POST /catalog/{baseWorkflowId}/versions/{versionNumber}/runs).
 /// </summary>
-/// <remarks>Triggers a new run of this runnable version: validates the supplied inputs against the version's baked inputs schema, then creates a Pending run that a hosting runner claims and executes asynchronously and durably. Returns 202 with the run id; observe the run via the runs endpoints. 404 if the version does not exist; 409 if it is not runnable (carries no executor); 422 if the inputs fail validation.</remarks>
+/// <remarks>Triggers a new run of this runnable version: validates the supplied inputs against the version's baked inputs schema, then creates a Pending run that a hosting runner claims and executes asynchronously and durably. Returns 202 with the run id; observe the run via the runs endpoints. 404 if the version does not exist; 409 if it is not runnable (carries no executor) or no registered runner currently hosts it; 422 if the inputs fail validation.</remarks>
 public readonly struct StartCatalogWorkflowRunParams
 {
 

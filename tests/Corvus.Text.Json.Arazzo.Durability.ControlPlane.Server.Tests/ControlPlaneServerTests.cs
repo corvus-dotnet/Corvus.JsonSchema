@@ -334,6 +334,22 @@ public sealed class ControlPlaneServerTests
     }
 
     [TestMethod]
+    public async Task Cancel_with_an_empty_reason_returns_400()
+    {
+        // §17.6: cancelRun.reason has minLength 1, so an empty audit reason fails body validation (400) rather than
+        // being silently accepted.
+        Host host = await StartAsync();
+        await using (host.App)
+        {
+            await FaultRunAsync(host.Store, "r1", host.Clock);
+
+            HttpResponseMessage response = await host.Client.PostAsync("/runs/r1/cancel", Json("""{"reason":""}"""));
+
+            response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        }
+    }
+
+    [TestMethod]
     public async Task Purge_reaps_old_terminal_runs()
     {
         Host host = await StartAsync();
@@ -386,7 +402,7 @@ public sealed class ControlPlaneServerTests
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
         var runnerRegistry = new InMemoryRunnerRegistry();
-        app.MapArazzoControlPlane(management, catalog, runnerRegistry);
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open);
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
 
@@ -416,7 +432,7 @@ public sealed class ControlPlaneServerTests
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
         var runnerRegistry = new InMemoryRunnerRegistry();
-        app.MapArazzoControlPlane(management, catalog, runnerRegistry);
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open);
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
 
@@ -459,7 +475,7 @@ public sealed class ControlPlaneServerTests
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
         var runnerRegistry = new InMemoryRunnerRegistry();
-        app.MapArazzoControlPlane(management, catalog, runnerRegistry);
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open);
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
 
@@ -490,7 +506,7 @@ public sealed class ControlPlaneServerTests
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
         var runnerRegistry = new InMemoryRunnerRegistry();
-        app.MapArazzoControlPlane(management, catalog, runnerRegistry);
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open);
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
 
@@ -541,7 +557,7 @@ public sealed class ControlPlaneServerTests
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
         var runnerRegistry = new InMemoryRunnerRegistry();
-        app.MapArazzoControlPlane(management, catalog, runnerRegistry);
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open);
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
 
@@ -600,7 +616,7 @@ public sealed class ControlPlaneServerTests
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
         var runnerRegistry = new InMemoryRunnerRegistry();
-        app.MapArazzoControlPlane(management, catalog, runnerRegistry);
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open);
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
         await runnerRegistry.RegisterAsync(Runner("flow", 1), default);
@@ -641,7 +657,7 @@ public sealed class ControlPlaneServerTests
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
         var runnerRegistry = new InMemoryRunnerRegistry();
-        app.MapArazzoControlPlane(management, catalog, runnerRegistry);
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open);
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
 
@@ -669,7 +685,7 @@ public sealed class ControlPlaneServerTests
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
         var runnerRegistry = new InMemoryRunnerRegistry(); // runnable version, but no runner registered to host it
-        app.MapArazzoControlPlane(management, catalog, runnerRegistry);
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open);
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
 
@@ -694,7 +710,7 @@ public sealed class ControlPlaneServerTests
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
         var runnerRegistry = new InMemoryRunnerRegistry();
-        app.MapArazzoControlPlane(management, catalog, runnerRegistry);
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open);
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
 
@@ -764,7 +780,7 @@ public sealed class ControlPlaneServerTests
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
         var runnerRegistry = new InMemoryRunnerRegistry();
-        app.MapArazzoControlPlane(management, catalog, runnerRegistry);
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open);
         await app.StartAsync();
 
         return new Host(app, app.GetTestClient(), store, clock);

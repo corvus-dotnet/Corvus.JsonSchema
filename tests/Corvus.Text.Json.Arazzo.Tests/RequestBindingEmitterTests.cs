@@ -139,6 +139,14 @@ public class RequestBindingEmitterTests
 
         code.Fields.ShouldContain("CompiledInterpolationTemplate GetPet_PetIdTemplate = CompiledInterpolationTemplate.Compile(\"{$url}\");");
         code.NamedArguments.ShouldContain("petId: getPet_PetIdValue");
+
+        // The interpolation buffer is rented from the workspace pool — not a per-step `new ArrayBufferWriter` — and,
+        // because ForUnescapedString copies into the result document, returned synchronously here (before the client
+        // await), so the thread-affine writer is never held across an await.
+        code.Statements.ShouldNotContain("new System.Buffers.ArrayBufferWriter");
+        code.Statements.ShouldContain("var getPet_PetIdValueWriter = workspace.RentWriterAndBuffer(256, out IByteBufferWriter getPet_PetIdValueBuffer);");
+        code.Statements.ShouldContain("_ = context.TryInterpolate(GetPet_PetIdTemplate, getPet_PetIdValueBuffer);");
+        code.Statements.ShouldContain("workspace.ReturnWriterAndBuffer(getPet_PetIdValueWriter, getPet_PetIdValueBuffer);");
     }
 
     [TestMethod]

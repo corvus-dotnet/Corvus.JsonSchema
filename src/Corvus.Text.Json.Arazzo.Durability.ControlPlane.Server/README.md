@@ -4,9 +4,9 @@ An ASP.NET Core server for the [Arazzo control-plane REST API](../../docs/contro
 from its OpenAPI 3.2 description and wired to `IWorkflowManagementClient`.
 
 The generated endpoints (under `Generated/`, produced by `corvusjson openapi-server`) handle routing, parameter
-and body deserialization, schema validation, and typed response serialization. `ArazzoControlPlaneHandler`
-implements the generated `IApiRunsHandler` by delegating each operation to an `IWorkflowManagementClient` and
-projecting its result DTOs into the generated response models.
+and body deserialization, schema validation, and typed response serialization. A handler per resource group
+(e.g. `ArazzoControlPlaneHandler` implements the generated `IApiRunsHandler`) delegates each operation to the
+matching client and projects its result DTOs into the generated response models.
 
 ```csharp
 using Corvus.Text.Json.Arazzo.Durability;
@@ -16,15 +16,23 @@ WebApplication app = WebApplication.CreateBuilder(args).Build();
 
 // management: an IWorkflowManagementClient over your chosen durability store (with a resumer for ResumeAsync).
 // catalog:    an IWorkflowCatalogClient wrapping a catalog store + the run store (for referential integrity).
-app.MapArazzoControlPlane(management, catalog);
+// runners:    an IRunnerRegistry the runners endpoint reads and the trigger gate consults.
+// Optional args follow (authorization, row security, the security/credential/access-request stores, identity);
+// see MapArazzoControlPlane's parameter docs.
+app.MapArazzoControlPlane(management, catalog, runners);
 
 app.Run();
 ```
 
-This maps the run operations (`GET /runs`, `GET /runs/{runId}`, `POST /runs/{runId}/resume`,
-`POST /runs/{runId}/cancel`, `PURGE /runs`) onto the management client, and the catalog operations
-(`/catalog…`, including `GET /catalog/{baseWorkflowId}/versions/{versionNumber}/schemas` and
-`POST /catalog/{baseWorkflowId}/versions/{versionNumber}/validate`) onto the catalog client.
+This maps all eight resource groups the OpenAPI description declares — runs, runners, catalog, security,
+credentials, administrators, access-requests, and identity — each onto its handler. The run operations
+(`GET /runs`, `GET /runs/{runId}`, `POST /runs/{runId}/resume`, `POST /runs/{runId}/cancel`, `PURGE /runs`)
+delegate to the management client; the catalog operations (`/catalog…`, including
+`GET /catalog/{baseWorkflowId}/versions/{versionNumber}/schemas` and
+`POST /catalog/{baseWorkflowId}/versions/{versionNumber}/validate`) delegate to the catalog client; the runners
+endpoint reads the runner registry; and the remaining groups (security, credentials, administrators,
+access-requests, identity) are backed by the optional stores described under `MapArazzoControlPlane`'s
+parameters (an in-memory store by default so the endpoints function in development).
 
 ## Catalog schema metadata
 
@@ -45,7 +53,7 @@ var catalogStore = await PostgresWorkflowCatalogStore.ConnectAsync(
     connectionString, timeProvider: null, metadataProvider: metadata);
 
 var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
-app.MapArazzoControlPlane(management, catalog);
+app.MapArazzoControlPlane(management, catalog, runners);
 ```
 
 Omit the provider and versions are stored without baked metadata — the `schemas` endpoint then returns `404`
@@ -70,13 +78,27 @@ bounded by distinct catalogued schemas rather than request volume.
 
 ## Security
 
-The OpenAPI document declares scoped OAuth2/OIDC + mutual-TLS security (`runs:read` / `runs:write` /
-`runs:purge`), and the generator emits the scheme/requirement metadata
-(`ApiEndpointRegistration.SecuritySchemes` / `SecurityRequirements`) plus a
-`RequireDeclaredAuthorization` endpoint convention. Enforcing it is the host's responsibility — register the
-matching authentication (your IdP / client-certificate validation) and authorization policies, then apply the
-convention when mapping the endpoints. `MapArazzoControlPlane` maps the routes without imposing an auth scheme,
-so a deployment chooses its own.
+The OpenAPI document declares scoped OAuth2/OIDC + mutual-TLS security, and the generator emits the
+scheme/requirement metadata (`ApiEndpointRegistration.SecuritySchemes` / `SecurityRequirements`) plus a
+`RequireDeclaredAuthorization` endpoint convention. The endpoints demand capability scopes per operation —
+the full set (`ControlPlaneScopes.All`) is `catalog:read` / `catalog:write` / `catalog:purge`, `runs:read` /
+`runs:write` / `runs:purge`, `security:read` / `security:write`, `credentials:read` / `credentials:write`,
+and `administrators:read` / `administrators:write`. Enforcing them is the host's responsibility — register the
+matching authentication (your IdP / client-certificate validation) and a policy per scope (the shipped
+`AddArazzoControlPlaneAuthorization` registers defaults), then pass the **required** `ControlPlaneSecurityMode`
+to `MapArazzoControlPlane` (design §17.4 — there is no insecure default):
+
+- **`Open`** — unauthenticated, full reach; development / trusted-network only (logged loudly at startup). A
+  row-security policy must **not** be supplied.
+- **`Scoped`** — authentication + capability-scope gating + a **required** `ControlPlaneRowSecurityPolicy` for
+  per-row reach (the production posture; you cannot get scopes without reach by omission).
+- **`ScopesOnly`** — authentication + capability-scope gating, with full (System) reach; an explicit single-tenant
+  choice. A policy must **not** be supplied.
+- **`RowSecurityOnly`** — authentication + per-row reach with **no** capability-scope gating; a policy is
+  **required**.
+
+The mapping validates the mode/policy pairing at startup (a required policy omitted, or a policy supplied where it
+would be ignored, throws `ArgumentException`), so an insecure-by-omission combination cannot be constructed.
 
 ## Regenerating
 
