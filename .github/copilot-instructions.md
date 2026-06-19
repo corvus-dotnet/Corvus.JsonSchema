@@ -14,7 +14,7 @@ See `docs/UpstreamReview.md` for the component mapping, review process, and the 
 
 ## Skills Inventory
 
-20 skills in `.github/skills/` provide deep context on specific areas. Copilot loads them on demand.
+22 skills in `.github/skills/` provide deep context on specific areas. Copilot loads them on demand.
 
 | Skill | Area |
 |-------|------|
@@ -26,6 +26,8 @@ See `docs/UpstreamReview.md` for the component mapping, review process, and the 
 | `corvus-mutable-documents` | JsonWorkspace, JsonDocumentBuilder, mutation, JSON Patch |
 | `corvus-buffer-and-pooling` | stackalloc/ArrayPool/ThreadStatic pooling patterns |
 | `corvus-low-alloc-data-structures` | Ref-struct collections, SIMD, hash sets |
+| `corvus-bytes-to-bytes` | Killing record<->document string seams; the genuine-leaf proof; the pre-commit allocation self-audit |
+| `corvus-builder-context-threading` | Building generated models from UTF-8 spans with no closure (the `Build<TContext>` form) |
 | `corvus-numeric-types` | BigNumber, numeric parsing, format selection |
 | `corvus-ecma-regex` | ECMAScript → .NET regex translation |
 | `corvus-query-languages` | JSONata, JMESPath, JsonLogic, JSONPath |
@@ -104,6 +106,8 @@ Before every commit, verify these mandatory gates in order:
 The catalog tracks line numbers of code blocks in documentation, instructions, and skill files. Editing these files shifts line numbers, making the catalog stale. CI runs `-Check` and fails if it is stale. This applies even when the edits are incidental to non-documentation work (e.g., adding a coverage rule to copilot-instructions.md while doing test work).
 
 See the `corvus-build-and-test` skill for TFM targeting, test project mapping, and common build failure diagnosis.
+
+4. **Allocation & honest-decision self-audit.** The commit is where multi-turn work converges, so this gate lives here, not as a per-edit hope. Scan your own diff and **report** (under a `Decisions & deferrals` heading in your message, never buried in a code comment or a design-doc tier) every: (a) managed `string` / `List<string>` / `Dictionary` introduced on a path where bytes are available; (b) non-`static` builder lambda (a closure) where a `static` + `TContext` form exists; (c) reflection-based dispatch; (d) work deferred, skipped, or abandoned; (e) fix that *moved* a cost (a transcode/allocation) elsewhere rather than removing it — give the before/after `file:line`. The words **"genuine leaf"**, **"marginal"**, **"admin-rare"**, **"low-frequency"**, **"pragmatic"** require the two-ended proof in the `corvus-bytes-to-bytes` skill before they may justify a string — they are red flags for work being avoided, not justifications. Prove every warm-path allocation claim with a BenchmarkDotNet `[MemoryDiagnoser]` baseline-vs-new benchmark. "Admin-rare" is not a licence to allocate.
 
 ### Diagnostic discipline
 

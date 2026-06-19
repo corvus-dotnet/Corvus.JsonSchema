@@ -145,6 +145,8 @@ call). All of `JsonWorkspace`, `JsonDocumentBuilder<T>`, `ParsedJsonDocument<T>`
 
 ## Cross-References
 
+- `corvus-builder-context-threading` — building from UTF-8 **spans** in a loop with no closure (the `Build<TContext>` / `CreateBuilder<TContext>` form and its ref-safety gotchas); reach for it when the values are spans, not native `string`/`int`.
+- `corvus-bytes-to-bytes` — when to thread spans at all (the record<->document string-seam anti-pattern + the genuine-leaf proof).
 - `corvus-mutable-documents` — `JsonWorkspace` / `JsonDocumentBuilder` and mutating arbitrary `JsonElement` documents.
 - `ref-struct-delegates` — why builder callbacks use named `Build` delegates (ref struct params) not `Func<>`/`Action<>`.
 - `corvus-buffer-and-pooling` — the pooling that backs the workspace arena.
