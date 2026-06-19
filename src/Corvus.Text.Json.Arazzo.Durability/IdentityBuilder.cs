@@ -10,16 +10,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// <typeparam name="TState">The state type (carried by reference so the callback can be a <see langword="static"/> lambda).</typeparam>
 /// <param name="builder">The identity builder writing into a pooled buffer.</param>
 /// <param name="state">The build state.</param>
-public delegate void SecurityTagBuildAction<TState>(ref IdentityBuilder builder, in TState state)
-    where TState : allows ref struct;
-
-/// <summary>Adds an identity's tags to <paramref name="builder"/> from <paramref name="state"/>, returning whether to keep the record — the callback of <see cref="SecurityTagSet.TryBuild{TState}"/>.</summary>
-/// <typeparam name="TState">The state type (carried by reference so the callback can be a <see langword="static"/> lambda).</typeparam>
-/// <param name="builder">The identity builder writing into a pooled buffer.</param>
-/// <param name="state">The build state.</param>
-/// <returns><see langword="true"/> to seal the identity, <see langword="false"/> to drop the record (no identity is produced).</returns>
-public delegate bool SecurityTagTryBuildAction<TState>(ref IdentityBuilder builder, in TState state)
-    where TState : allows ref struct;
+public delegate void SecurityTagBuildAction<TState>(ref IdentityBuilder builder, in TState state);
 
 /// <summary>
 /// Builds a <see cref="SecurityTagSet"/> tag by tag straight into a pooled JSON buffer (design §14.2 / §16.5.4), so an
@@ -51,7 +42,7 @@ public ref struct IdentityBuilder
     /// <summary>Adds one tag from UTF-8 spans — the zero-allocation path (the value is JSON-escaped straight into the pooled buffer; no managed string is created).</summary>
     /// <param name="key">The tag key as UTF-8 (typically a <c>"sys:…"u8</c> literal).</param>
     /// <param name="value">The tag value as unescaped UTF-8 (e.g. the source reader's <c>GetUtf8String().Span</c>).</param>
-    public void Add(scoped ReadOnlySpan<byte> key, scoped ReadOnlySpan<byte> value)
+    public void Add(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value)
     {
         this.writer.WriteStartObject();
         this.writer.WriteString(KeyUtf8, key);
@@ -63,7 +54,7 @@ public ref struct IdentityBuilder
     /// <summary>Adds one tag with a UTF-8 key and a <see cref="string"/> value — the opt-in path for a value a deployment computed through a string-typed API.</summary>
     /// <param name="key">The tag key as UTF-8 (typically a <c>"sys:…"u8</c> literal).</param>
     /// <param name="value">The tag value.</param>
-    public void Add(scoped ReadOnlySpan<byte> key, string value)
+    public void Add(ReadOnlySpan<byte> key, string value)
     {
         this.writer.WriteStartObject();
         this.writer.WriteString(KeyUtf8, key);
