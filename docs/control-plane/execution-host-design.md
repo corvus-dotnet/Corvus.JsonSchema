@@ -1236,7 +1236,10 @@ eligible-for-All`) remains step 6.
 > (`Corvus.Text.Json.Arazzo.Directories.Keycloak`, Admin REST over the Corvus reader, single-flight token cache,
 > conformance-verified against a real `keycloak:26.0` container), **and a SCIM 2.0 adapter**
 > (`Corvus.Text.Json.Arazzo.Directories.Scim`, RFC 7644 filter/bearer over the Corvus reader, conformance-verified against
-> a mock SCIM provider via the shared `StubHttpMessageHandler`); the **attribute-projection seam** — a mapper may declare
+> a mock SCIM provider via the shared `StubHttpMessageHandler`), **and a Microsoft Entra ID (Graph) adapter**
+> (`Corvus.Text.Json.Arazzo.Directories.EntraId`, OAuth2 client-credentials + single-flight token cache, Graph
+> `$filter=startsWith`/`$select` over the Corvus reader, conformance-verified against a mock Graph endpoint); the
+> **attribute-projection seam** — a mapper may declare
 > the provider attributes it reads (`IDirectoryIdentityMapper.RequiredAttributes`, opt-in; empty = surface everything, the
 > safe default) and an adapter fetches only those plus the value/label attributes it needs (LDAP's native search list,
 > SCIM `attributes`, Graph `$select`, Google `fields`), so a directory search neither over-fetches over the wire nor
