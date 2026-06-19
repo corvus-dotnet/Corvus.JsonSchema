@@ -57,7 +57,7 @@ public static class ObservedIdentitySerialization
         // stays alive through the serialize, then is returned to the pool.
         if (label.IsEmpty && e.Label.IsNotUndefined())
         {
-            using UnescapedUtf8JsonString existingLabel = ((JsonElement)e.Label).GetUtf8String();
+            using UnescapedUtf8JsonString existingLabel = e.Label.GetUtf8String();
             return Serialize(kindToken, value, existingLabel.Span, identity, complete, e.FirstSeenAtValue, now, MergeProvenance(e, provenance));
         }
 

@@ -82,7 +82,7 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
         GranteeKind? kind = null;
         if (parameters.Kind.IsNotUndefined())
         {
-            using UnescapedUtf8JsonString kindToken = ((JsonElement)parameters.Kind).GetUtf8String();
+            using UnescapedUtf8JsonString kindToken = parameters.Kind.GetUtf8String();
             if (GranteeKinds.TryParse(kindToken.Span, out GranteeKind k))
             {
                 kind = k;
@@ -102,7 +102,7 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
         try
         {
             ReadOnlyMemory<byte> prefix = parameters.Q.IsNotUndefined()
-                ? ((JsonElement)parameters.Q).GetUtf8String().TakeOwnership(out prefixRented)
+                ? parameters.Q.GetUtf8String().TakeOwnership(out prefixRented)
                 : default;
 
             // The projected grantee (ResolvedGrantee.Source) is a ref struct, so it cannot be collected into a list; the
@@ -126,27 +126,19 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
 
             using ObservedIdentityPage page = await this.observed.SearchAsync(context, kind, prefix, limit, pageToken, cancellationToken).ConfigureAwait(false);
             string? nextToken = page.NextPageToken;
-            Models.GranteeList.Source body = new((ref Models.GranteeList.Builder b) =>
-            {
-                var array = new Models.GranteeList.ResolvedGranteeArray.Source((ref Models.GranteeList.ResolvedGranteeArray.Builder ab) =>
-                {
-                    foreach (ObservedIdentity identity in page.Identities)
-                    {
-                        ab.AddItem(this.ToGrantee(identity.SubjectKindValue, identity.SubjectValueValue, identity.LabelOrNull, identity.IdentityTagsValue, identity.CompleteValue, "observed"));
-                    }
-                });
 
-                if (nextToken is null)
-                {
-                    b.Create(grantees: array);
-                }
-                else
-                {
-                    b.Create(grantees: array, nextPageToken: nextToken);
-                }
-            });
-
-            return SearchGranteesResult.Ok(body, workspace);
+            // Project the observed identities BYTES-TO-BYTES with the context-threading form (mirrors the directory branch):
+            // each identity's subjectValue/subjectKind/label flow as UTF-8 spans straight into the model — no GetString, no
+            // per-grantee closure. The observed-store and response are distinct CTJ models, so the bridge between them is
+            // x.GetUtf8String() (the stored model exposes it directly). The opaque page token is a genuine string leaf, so
+            // it threads through the CreateBuilder<TContext> overload's nextPageToken parameter only when the store set it.
+            var observedState = new ObservedGranteesState(page, this.access);
+            Models.GranteeList.ResolvedGranteeArray.Source<ObservedGranteesState> observedGrantees =
+                Models.GranteeList.ResolvedGranteeArray.Build(in observedState, BuildObservedGrantees);
+            Models.GranteeList granteeList = nextToken is null
+                ? Models.GranteeList.CreateBuilder(workspace, in observedState, observedGrantees).RootElement
+                : Models.GranteeList.CreateBuilder(workspace, in observedState, observedGrantees, nextToken).RootElement;
+            return SearchGranteesResult.Ok(granteeList, workspace);
         }
         finally
         {
@@ -159,32 +151,6 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
 
     private static Models.AdministratorIdentity.Source ToIdentity(CredentialUsageGrant grant)
         => new((ref Models.AdministratorIdentity.Builder b) => b.Create(grant.Dimension, grant.Value));
-
-    // Projects a resolved grantee — its identity described as {dimension, value} grants (never raw sys: tags). `complete`
-    // is reported honestly (§17.2): the stored completeness for an observed identity, true for a directory full-resolution.
-    private Models.ResolvedGrantee.Source ToGrantee(string kindToken, string value, string? label, SecurityTagSet identity, bool complete, string source)
-    {
-        IReadOnlyList<CredentialUsageGrant> grants = this.access.DescribeUsageScope(identity);
-        return new((ref Models.ResolvedGrantee.Builder b) =>
-        {
-            var identityArray = new Models.ResolvedGrantee.AdministratorIdentityArray.Source((ref Models.ResolvedGrantee.AdministratorIdentityArray.Builder ab) =>
-            {
-                foreach (CredentialUsageGrant grant in grants)
-                {
-                    ab.AddItem(ToIdentity(grant));
-                }
-            });
-
-            if (label is null)
-            {
-                b.Create(complete: complete, identity: identityArray, kind: kindToken, source: source, value: value);
-            }
-            else
-            {
-                b.Create(complete: complete, identity: identityArray, kind: kindToken, source: source, value: value, label: label);
-            }
-        });
-    }
 
     // ── directory grantee projection (bytes-to-bytes, context-threaded — no closures, design §16.5.4) ────────────────
 
@@ -243,6 +209,61 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
     private readonly ref struct DirectoryGranteeItemState(ResolvedPrincipal principal, IReadOnlyList<CredentialUsageGrant> grants)
     {
         public ResolvedPrincipal Principal { get; } = principal;
+
+        public IReadOnlyList<CredentialUsageGrant> Grants { get; } = grants;
+    }
+
+    // ── observed-identity grantee projection (bytes-to-bytes, context-threaded — no closures, design §16.5.4) ─────────
+
+    // Builds the observed grantees array: the store already reach-filtered the page, so each identity is projected directly.
+    private static void BuildObservedGrantees(in ObservedGranteesState state, ref Models.GranteeList.ResolvedGranteeArray.Builder array)
+    {
+        foreach (ObservedIdentity identity in state.Page.Identities)
+        {
+            var item = new ObservedGranteeItemState(identity, state.Access.DescribeUsageScope(identity.IdentityTagsValue));
+            array.AddItem(Models.ResolvedGrantee.Build(in item, BuildObservedGrantee));
+        }
+    }
+
+    // Builds one observed grantee: subjectValue/subjectKind/label flow as UTF-8 straight off the stored CTJ model (its
+    // generated JsonString/enum exposes GetUtf8String() directly — no managed string, no closure). `complete` is the
+    // stored honesty flag (§17.2). The identity is described as {dimension, value} grants (the genuine response leaf).
+    private static void BuildObservedGrantee(in ObservedGranteeItemState item, ref Models.ResolvedGrantee.Builder grantee)
+    {
+        using UnescapedUtf8JsonString kind = item.Identity.SubjectKind.GetUtf8String();
+        using UnescapedUtf8JsonString value = item.Identity.SubjectValue.GetUtf8String();
+        Models.ResolvedGrantee.AdministratorIdentityArray.Source<ObservedGranteeItemState> identity =
+            Models.ResolvedGrantee.AdministratorIdentityArray.Build(in item, BuildObservedGranteeIdentity);
+
+        if (item.Identity.Label.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString label = item.Identity.Label.GetUtf8String();
+            grantee.Create(in item, complete: item.Identity.CompleteValue, identity: identity, kind: kind.Span, source: "observed"u8, value: value.Span, label: label.Span);
+        }
+        else
+        {
+            grantee.Create(in item, complete: item.Identity.CompleteValue, identity: identity, kind: kind.Span, source: "observed"u8, value: value.Span);
+        }
+    }
+
+    private static void BuildObservedGranteeIdentity(in ObservedGranteeItemState item, ref Models.ResolvedGrantee.AdministratorIdentityArray.Builder identities)
+    {
+        foreach (CredentialUsageGrant grant in item.Grants)
+        {
+            identities.AddItem(ToIdentity(grant));
+        }
+    }
+
+    private readonly ref struct ObservedGranteesState(ObservedIdentityPage page, ControlPlaneAccess access)
+    {
+        public ObservedIdentityPage Page { get; } = page;
+
+        public ControlPlaneAccess Access { get; } = access;
+    }
+
+    private readonly ref struct ObservedGranteeItemState(ObservedIdentity identity, IReadOnlyList<CredentialUsageGrant> grants)
+    {
+        public ObservedIdentity Identity { get; } = identity;
 
         public IReadOnlyList<CredentialUsageGrant> Grants { get; } = grants;
     }
