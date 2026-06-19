@@ -41,16 +41,29 @@ public sealed class ScimPrincipalDirectoryConformanceTests : PrincipalDirectoryC
             },
         };
 
-        // The deployment mapper: derive each kind's exact sys: identity (the §16.5.4 seam). Persons take sys:tenant from
-        // the enterprise extension's `organization` (flattened to `organization`) and sys:sub from the userName; teams/roles
-        // from the group/role displayName.
-        var mapper = DirectoryIdentityMapper.FromFunc(record => record.Kind switch
-        {
-            GranteeKind.Person => new ResolvedPrincipal(GranteeKind.Person, record.Id, record.DisplayName, DirectoryFixture.Identity(("sys:tenant", record.Attribute("organization") ?? string.Empty), ("sys:sub", record.Id))),
-            GranteeKind.Team => new ResolvedPrincipal(GranteeKind.Team, record.Id, record.DisplayName, DirectoryFixture.Identity(("sys:team", record.Id))),
-            GranteeKind.Role => new ResolvedPrincipal(GranteeKind.Role, record.Id, record.DisplayName, DirectoryFixture.Identity(("sys:role", record.Id))),
-            _ => (ResolvedPrincipal?)null,
-        });
+        // The deployment mapper — a SPAN mapper exercising the bytes-to-bytes path: persons take sys:tenant from the
+        // enterprise extension's `organization` (declared as its SCIM path for the wire $select; read by its leaf) and
+        // sys:sub from the userName (the searchable value); teams/roles from the value (displayName). No attribute string.
+        var mapper = DirectorySpanIdentityMapper.FromIdentity(
+            ["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:organization"],
+            static (DirectoryRecordView record, ref IdentityBuilder identity) =>
+            {
+                switch (record.Kind)
+                {
+                    case GranteeKind.Person:
+                        identity.Add("sys:tenant"u8, record.AttributeUtf8("organization"u8));
+                        identity.Add("sys:sub"u8, record.ValueUtf8);
+                        return true;
+                    case GranteeKind.Team:
+                        identity.Add("sys:team"u8, record.ValueUtf8);
+                        return true;
+                    case GranteeKind.Role:
+                        identity.Add("sys:role"u8, record.ValueUtf8);
+                        return true;
+                    default:
+                        return false;
+                }
+            });
 
         var httpClient = new HttpClient(new StubHttpMessageHandler(ScimMockBackend.Respond));
         return new ValueTask<IPrincipalDirectory>(new ScimPrincipalDirectory(options, new FixedSecretResolver(Token), mapper, httpClient));
