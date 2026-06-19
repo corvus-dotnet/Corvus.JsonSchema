@@ -43,6 +43,7 @@
     <Compile Include="$(CtjYamlSourceDir)YamlScalarStyle.cs" Link="Corvus\Yaml\YamlScalarStyle.cs" />
     <Compile Include="$(CtjYamlSourceDir)YamlSchema.cs" Link="Corvus\Yaml\YamlSchema.cs" />
     <Compile Include="$(CtjYamlSourceDir)YamlWriterOptions.cs" Link="Corvus\Yaml\YamlWriterOptions.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlWriterFormat.cs" Link="Corvus\Yaml\YamlWriterFormat.cs" />
     <Compile Include="$(CtjYamlSourceDir)YamlDocument.cs" Link="Corvus\Yaml\YamlDocument.cs" />
   </ItemGroup>
   <!-- Shared internal types from CTJ YAML project (with #if STJ namespace) -->

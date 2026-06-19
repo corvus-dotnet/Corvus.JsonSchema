@@ -54,6 +54,26 @@ YamlDocument.ConvertToYaml(jsonElement, bufferWriter);
 YamlDocument.ConvertToYaml(jsonElement, utf8Stream);
 ```
 
+### KYAML output
+
+KYAML (Kubernetes KEP-5295) is a strict subset of YAML 1.2: explicit `{ }` / `[ ]`
+delimiters laid out across indented lines, string values always double-quoted, numbers/
+booleans/null bare, keys quoted only when ambiguous, trailing comma after every element.
+Output is always valid YAML 1.2 (read it back with `YamlDocument.Parse`, no config needed).
+
+Enable it on any `ConvertToYaml*` overload (or `Utf8YamlWriter`) via the options:
+
+```csharp
+// Preset (easiest):
+string kyaml = YamlDocument.ConvertToYamlString(json, YamlWriterOptions.Kyaml);
+
+// Or set the format explicitly:
+var options = new YamlWriterOptions { Format = YamlWriterFormat.Kyaml };
+```
+
+Implemented entirely in `Utf8YamlWriter` (gated on `YamlWriterFormat.Kyaml`); the JSON→YAML
+converter is format-agnostic. Output is canonical (non-"cuddled") KYAML.
+
 ## Schema Modes
 
 Four YAML schema modes control how scalar values are interpreted:

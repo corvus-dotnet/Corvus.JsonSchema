@@ -24,7 +24,11 @@ namespace Corvus.Text.Json.Yaml;
 /// <remarks>
 /// <para>
 /// Supports both block and flow collection styles. Block style uses indentation;
-/// flow style uses inline comma-separated syntax.
+/// flow style uses inline comma-separated syntax. When
+/// <see cref="YamlWriterOptions.Format"/> is <see cref="YamlWriterFormat.Kyaml"/>,
+/// the writer emits KYAML — explicit <c>{ }</c> / <c>[ ]</c> delimiters laid out
+/// across indented lines with a trailing comma after every element, string values
+/// always double-quoted.
 /// </para>
 /// <para>
 /// When <see cref="YamlWriterOptions.SkipValidation"/> is <see langword="false"/>,
@@ -49,6 +53,7 @@ public ref struct Utf8YamlWriter
     private int _indentLevel;
     private readonly int _indentSize;
     private readonly bool _skipValidation;
+    private readonly bool _kyaml;
     private bool _wroteRootValue;
     private bool _hasWrittenAny;
     private bool _disposed;
@@ -66,6 +71,7 @@ public ref struct Utf8YamlWriter
         _arrayBufferWriter = null;
         _indentSize = options.IndentSize > 0 ? options.IndentSize : 2;
         _skipValidation = options.SkipValidation;
+        _kyaml = options.Format == YamlWriterFormat.Kyaml;
         _indentLevel = -1;
         _wroteRootValue = false;
         _hasWrittenAny = false;
@@ -95,6 +101,7 @@ public ref struct Utf8YamlWriter
         _arrayBufferWriter = new ArrayBufferWriter<byte>();
         _indentSize = options.IndentSize > 0 ? options.IndentSize : 2;
         _skipValidation = options.SkipValidation;
+        _kyaml = options.Format == YamlWriterFormat.Kyaml;
         _indentLevel = -1;
         _wroteRootValue = false;
         _hasWrittenAny = false;
@@ -112,6 +119,11 @@ public ref struct Utf8YamlWriter
     /// <param name="style">The collection style to use.</param>
     public void WriteStartMapping(YamlCollectionStyle style = YamlCollectionStyle.Block)
     {
+        if (_kyaml)
+        {
+            style = YamlCollectionStyle.Flow;
+        }
+
         if (!_skipValidation)
         {
             ValidateStartContainer();
@@ -139,6 +151,18 @@ public ref struct Utf8YamlWriter
 
         WriteContext ctx = _contextStack.Pop();
 
+        if (_kyaml)
+        {
+            if (ctx.ItemCount > 0)
+            {
+                WriteKyamlNewlineIndent();
+            }
+
+            WriteRaw("}"u8);
+            CompleteValue();
+            return;
+        }
+
         if (ctx.Style == YamlCollectionStyle.Flow)
         {
             WriteRaw("}"u8);
@@ -157,6 +181,11 @@ public ref struct Utf8YamlWriter
     /// <param name="style">The collection style to use.</param>
     public void WriteStartSequence(YamlCollectionStyle style = YamlCollectionStyle.Block)
     {
+        if (_kyaml)
+        {
+            style = YamlCollectionStyle.Flow;
+        }
+
         if (!_skipValidation)
         {
             ValidateStartContainer();
@@ -184,6 +213,18 @@ public ref struct Utf8YamlWriter
 
         WriteContext ctx = _contextStack.Pop();
 
+        if (_kyaml)
+        {
+            if (ctx.ItemCount > 0)
+            {
+                WriteKyamlNewlineIndent();
+            }
+
+            WriteRaw("]"u8);
+            CompleteValue();
+            return;
+        }
+
         if (ctx.Style == YamlCollectionStyle.Flow)
         {
             WriteRaw("]"u8);
@@ -208,6 +249,15 @@ public ref struct Utf8YamlWriter
         }
 
         ref WriteContext ctx = ref _contextStack[_contextStack.Length - 1];
+
+        if (_kyaml)
+        {
+            WriteKyamlNewlineIndent();
+            WriteScalarValue(utf8Name, isKey: true);
+            WriteRaw(": "u8);
+            ctx.State = WriteState.MappingValue;
+            return;
+        }
 
         if (ctx.Style == YamlCollectionStyle.Flow)
         {
@@ -351,6 +401,18 @@ public ref struct Utf8YamlWriter
 
         ref WriteContext ctx = ref _contextStack[_contextStack.Length - 1];
 
+        if (_kyaml)
+        {
+            if (ctx.State == WriteState.SequenceItem)
+            {
+                WriteKyamlNewlineIndent();
+            }
+
+            // For mapping values the ": " was already written by WritePropertyName;
+            // the value follows inline.
+            return;
+        }
+
         if (ctx.Style == YamlCollectionStyle.Flow)
         {
             if (ctx.State == WriteState.SequenceItem)
@@ -392,6 +454,18 @@ public ref struct Utf8YamlWriter
         }
 
         ref WriteContext ctx = ref _contextStack[_contextStack.Length - 1];
+
+        if (_kyaml)
+        {
+            if (ctx.State == WriteState.SequenceItem)
+            {
+                WriteKyamlNewlineIndent();
+            }
+
+            // For mapping values the "key: " was already written by WritePropertyName,
+            // so the container's opening bracket follows inline.
+            return;
+        }
 
         if (ctx.Style == YamlCollectionStyle.Flow)
         {
@@ -453,6 +527,29 @@ public ref struct Utf8YamlWriter
         {
             ctx.ItemCount++;
         }
+
+        if (_kyaml)
+        {
+            // KYAML writes a trailing comma after every element.
+            WriteRaw(","u8);
+        }
+    }
+
+    /// <summary>
+    /// Writes a newline followed by KYAML indentation for the current depth
+    /// (<see cref="_contextStack"/> length × indent size).
+    /// </summary>
+    private void WriteKyamlNewlineIndent()
+    {
+        WriteRaw("\n"u8);
+
+        int spaces = _contextStack.Length * _indentSize;
+        if (spaces > 0)
+        {
+            Span<byte> indent = stackalloc byte[spaces];
+            indent.Fill(YamlConstants.Space);
+            WriteRaw(indent);
+        }
     }
 
     private void WriteNewlineAndIndent()
@@ -478,6 +575,14 @@ public ref struct Utf8YamlWriter
 
     private void WriteScalarValue(scoped ReadOnlySpan<byte> utf8Value, bool isKey)
     {
+        // KYAML always double-quotes string values; keys remain conditionally
+        // quoted (only when they would otherwise be ambiguous).
+        if (_kyaml && !isKey)
+        {
+            WriteDoubleQuoted(utf8Value);
+            return;
+        }
+
         if (NeedsQuoting(utf8Value, isKey))
         {
             WriteDoubleQuoted(utf8Value);
