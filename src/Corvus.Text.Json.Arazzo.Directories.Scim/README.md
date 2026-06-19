@@ -10,6 +10,9 @@ grantee instead of hand-assembling a `{dimension, value}` tuple.
 - **Authentication.** A bearer token whose value is a `SecretRef` resolved through the deployment's
   `ISecretResolver` — never stored. The reference is resolved at the point of each search and the
   revealed material is dropped immediately (the §13 boundary).
+- **Bytes-to-bytes identity.** When the deployment supplies a span identity mapper, the adapter
+  captures only the value/label + the mapper's declared attributes as UTF-8 and builds the identity
+  straight into a pooled buffer — no managed string per attribute or tag.
 - **Issuer dimension.** Every resolved principal is stamped with the configured, mapper-immutable
   `sys:iss` (via `DirectoryPrincipalProjector`), so its identities are disjoint from every other
   provider's by construction.

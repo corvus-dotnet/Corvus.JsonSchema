@@ -374,7 +374,7 @@ own; submit a new request or withdraw a pending one) and the **Approver queue** 
 approve-as-eligible / deny a pending request, and revoke an approved grant. Emits `access-request-submitted`,
 `access-request-decided {request, action}`, `error`.
 
-**Three surfaces over one resolved identity — `catalog:read` view + resolved grantees are design-intent (§16.5.4).**
+**Three surfaces over one resolved identity — the resolved-grantee picker is the design-intent UI (§16.5.4; the server identity layer ships).**
 Membership matches a caller's *whole* stamped `sys:` identity by **exact equality**, so making an operator hand-assemble
 a `{dimension, value}` tuple or guess the deployment's grain is a hazard — a wrong value silently matches no one,
 over-grants a whole tenant, or locks the caller out. The **target design** is a single **grantee picker** that lets the
@@ -383,15 +383,20 @@ directory/IdP search** (LDAP/SCIM/OIDC/Entra/SAML), a **store-indexed typeahead 
 seen**, or a **validated well-known subject id**; it would drive three choices — **View** (`catalog:read`, reach-scoped),
 **Operate** (`runs:read`/`runs:write`, reach-scoped, via the §16.5 request path), and **Administer** (§15 governance).
 
-> **Status — what is built vs. design-intent** (consistent with `execution-host-design.md` §16.5.4). Built: **Operate**
-> (run access through the §16.5 request → approve → entitlement-write path) and **Administer** (the §15 administrator set,
-> via `<arazzo-administrators-panel>`). **Design-intent, not built:** the resolved-grantee picker, the pluggable
-> directory and capabilities/whoami endpoints, and the `catalog:read` "view" grant — `catalog:read` is **not** in the
-> server's grantable allowlist (the default cap is `runs:read`/`runs:write` only). What ships in the meantime is the
-> **interim** `<arazzo-admin-grant-input>` (currently uncommitted), which **hand-assembles** a `{dimension, value}` tuple
-> from a small, safe set of whole-identity dimensions — `workflow` (catalog autocomplete) and `tenant` (text). It is not
-> the target: per-person/role grants and the view grant wait on the server identity layer, so the interim deliberately
-> exposes only dimensions that cannot express an inert finer-grained rule.
+> **Status — what is built vs. design-intent** (consistent with `execution-host-design.md` §16.5.4). Built **on the
+> server**: the whole identity layer — `IPrincipalDirectory` with six adapters (LDAP, Keycloak, SCIM 2.0, Entra ID, Okta,
+> Google Workspace), the `GET /identity/{whoami,capabilities,grantees}` endpoints (reach-filtered, `complete`-reported,
+> with `observed` and `directory` sources), the `SupportedGranteeKinds` / `ResolveGranteeIdentity` grantee seam, and
+> §16.5.5 ambient identity dimensions; and `catalog:read` **is** a grantable "view" scope
+> (`AccessRequestApprovalService.GrantableScopes` defaults to `runs:read`/`runs:write`/`catalog:read`). Built **in the
+> UI**: **Operate** (run access through the §16.5 request → approve → entitlement-write path) and **Administer** (the §15
+> administrator set, via `<arazzo-administrators-panel>`). **Design-intent, not built — in the UI:** the resolved-grantee
+> picker that drives those endpoints, and the "view"-grant surface (the scope is grantable server-side; no picker offers
+> it yet). What ships in the meantime is the **interim** `<arazzo-admin-grant-input>`, which **hand-assembles** a
+> `{dimension, value}` tuple from a small, safe set of whole-identity dimensions — `workflow` (catalog autocomplete) and
+> `tenant` (text) — deliberately exposing only dimensions that cannot express an inert finer-grained rule. The
+> resolved-grantee picker (a `GET /identity/grantees` typeahead → resolved identity) replaces it; the remaining server gap
+> is multi-tag **person** resolution (the admin-add records a single `{dimension, value}`).
 
 ---
 

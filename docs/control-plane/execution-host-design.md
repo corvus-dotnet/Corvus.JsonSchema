@@ -1118,8 +1118,8 @@ scope-union must not regress the existing `Resolve`/`HasScope` warm path.
 
 **Platform cap (guardrail 2), enforced in the approval handler** (there is no write-time cap in the policy store
 today — the right place for it is the approval layer): an approval grants **at most** `requested ∩ a fixed
-grantable allowlist` (§16.5.3) — run capability + reach only (`runs:read`/`runs:write`; the `catalog:read` view grant is
-design-intent, not yet built), **never** `security:write`/system reach/a third party/
+grantable allowlist` (§16.5.3) — run capability + reach only (`runs:read`/`runs:write`, plus the `catalog:read` view grant,
+§17.3), **never** `security:write`/system reach/a third party/
 escalation; the subject is fixed to the requester and the reach to the target workflow's domain.
 
 **Time-bound grants (PIM / just-in-time).** Approved elevation is **time-boxed, not standing** — the privileged-
@@ -1158,11 +1158,10 @@ approval service.
 reach-scoped to the target workflow; the hard never-list is enforced **by construction** — granted scopes are the
 intersection `requested ∩ allowlist`, so anything outside the allowlist (`security:*`, `administrators:write`, any
 `*:purge`, etc.) can never be granted, and purge reach is hard-wired to `None`. The subject is fixed to the requester
-and the reach to the target workflow. **Design-intent, NOT yet built: a `catalog:read` "view" grant** — letting a
-reviewer see one workflow without joining its domain or administering it (administration §15 is orthogonal to
-visibility). Adding it requires (a) putting `catalog:read` in the allowlist and (b) mapping `catalog:read` → a *read
-reach* over the workflow's catalog rows in `WriteBindingAsync` (today only `runs:read`/`runs:write` map to reach, so a
-bare `catalog:read` grant would carry no reach and be inert). **Decision: finish it — remediation design §17.3.**
+and the reach to the target workflow. **The `catalog:read` "view" grant is now built (§17.3)** — letting a reviewer see
+one workflow without joining its domain or administering it (administration §15 is orthogonal to visibility):
+`catalog:read` is in `AccessRequestApprovalService.GrantableScopes`, and `WriteBindingAsync` maps a granted
+`catalog:read` → a *read reach* over the workflow's rows, so the grant carries reach (it is no longer inert).
 **Early revoke is in this slice** — a revoke deletes the granted security-policy binding (the grant stops at the next
 resolution, fail-safe) and marks the request `Revoked`, audited; so a grant is both time-boxed *and* cuttable short.
 
@@ -1227,8 +1226,8 @@ eligible-for-All`) remains step 6.
 
 ### 16.5.4 Naming a grantee — identity resolution (no guessing)
 
-> **Status (as built, June 2026) — this section is the *target* design; a growing slice is implemented, and it is
-> uncommitted.** BUILT: `IObservedIdentityStore` + the in-memory reference store **and all nine durability backends**
+> **Status (as built, June 2026) — this section is the *target* design; a large slice is implemented and committed.**
+> BUILT: `IObservedIdentityStore` + the in-memory reference store **and all nine durability backends**
 > (Sqlite/Postgres/MySql/SqlServer/Cosmos/Mongo/Redis/AzureStorage/NATS, reach-filtered, conformance-locked); the
 > `ControlPlaneRowSecurityPolicy` grantee seam (`SupportedGranteeKinds` / `ResolveGranteeIdentity`) and `whoami`; the
 > `IPrincipalDirectory` seam **with an LDAP/AD adapter** (`Corvus.Text.Json.Arazzo.Directories.Ldap`, Novell async,
@@ -1258,12 +1257,16 @@ eligible-for-All`) remains step 6.
 > digest-indexed, full-reach) across every store; **collision enforcement** — admin-add/transfer refuse (409) a grant
 > whose resolved identity already belongs to a different grantee; and `GET /identity/{whoami,capabilities,grantees}` with
 > the admin-add recording hook. The `IPrincipalDirectory` family is now complete — LDAP, Keycloak, SCIM 2.0, Entra ID,
-> Okta, and Google Workspace all ship. NOT YET BUILT (design-intent below): the by-subject / by-workflow entitlement
-> indexes (self-elevation still cold-scans, §16.5.3);
-> multi-tag **person** resolution (the default is a best-effort *single* tag); and the resolved-grantee UI (the UI still
-> hand-assembles `{dimension, value}` tuples). **`catalog:read` is NOT a grantable scope** (the allowlist is
-> `runs:read`/`runs:write` only — see §16.5.3). The §17.1 reach-scoping (the observed-identity store is now reach-filtered
-> like every other list surface) and §17.2 honest `complete` are **implemented**.
+> Okta, and Google Workspace all ship. `catalog:read` **is now a grantable "view" scope** (§17.3) —
+> `AccessRequestApprovalService.GrantableScopes` defaults to `runs:read`/`runs:write`/`catalog:read`, mapping a granted
+> `catalog:read` to read-reach over the workflow's rows — so a reviewer can see one workflow without operating or
+> administering it. The §17.1 reach-scoping (the observed-identity store, and the `/identity/grantees` search, are now
+> reach-filtered like every other list surface) and §17.2 honest `complete` are **implemented**, as is §16.5.5 ambient
+> identity dimensions. NOT YET BUILT (design-intent below): the by-subject / by-workflow entitlement indexes
+> (self-elevation still cold-scans, §16.5.3); multi-tag **person** resolution (the default is a best-effort *single* tag,
+> and the admin-add records a single `{dimension, value}`); and the **resolved-grantee UI** — the UI still hand-assembles
+> `{dimension, value}` tuples via the interim `<arazzo-admin-grant-input>`, rather than driving the (built)
+> `GET /identity/{whoami,capabilities,grantees}` endpoints from a grantee picker.
 
 Administration (§15) and entitlement (§16.5) both **name a security identity**, and membership is **exact set-equality**
 on the caller's whole stamped `sys:` identity (`WorkflowAdministrators.IsAdministeredBy` — *"a superset or partial match
@@ -1303,10 +1306,11 @@ resolve it to the **exact identity** — never assemble tag tuples by hand, neve
 identity by a pluggable directory seam **∪** a store-indexed observed-identity typeahead **∪** a validated free-typed
 subject id; the `{dimension, value}` tuple is never hand-assembled. The control plane separates **three surfaces** over
 one resolved identity — **operate** (`runs:read`/`runs:write`, reach-scoped — *built*), **administer** (§15 governance —
-*built*), and **view** (`catalog:read`, reach-scoped — *design-intent, not built*, §16.5.3) — so granting sight or
-operation of a workflow never implies administering it. Arazzo-owned identity/entitlement/reach queries are to be
-indexed and store-pushed-down; as built, only the observed-identity typeahead is (and it is not yet reach-filtered — see
-the status note). The directory adapters, backend stores, entitlement indexes, and resolved-grantee UI are design-intent.
+*built*), and **view** (`catalog:read`, reach-scoped — *grantable server-side*, §17.3; the UI picker that drives it is
+design-intent) — so granting sight or operation of a workflow never implies administering it. Arazzo-owned
+identity/entitlement/reach queries are to be indexed and store-pushed-down; as built, the observed-identity typeahead and
+the `/identity/grantees` search are reach-filtered. The directory adapters and backend stores **ship**; the
+by-subject/by-workflow entitlement indexes and the resolved-grantee UI remain design-intent.
 
 ### 16.5.5 Ambient identity dimensions — deriving a `sys:` tag from request context (not the IdP)
 
@@ -1429,11 +1433,12 @@ spoofable.
 - **Entitlement = IdP coarse membership (claims) + Arazzo fine-grained grants** (security-policy store, incl.
   per-principal via `sys:sub`). **Read/list is membership-driven** (standing rules); **elevated run capability goes
   through an in-app access request → §15 domain-administrator approval → entitlement write** (capped to `runs:read`/
-  `runs:write`). *Design-intent (§16.5.4, not built):* a per-subject, reach-scoped `catalog:read` "view" grant so a
-  reviewer can be granted sight of one workflow without joining its domain; and **resolved grantees** — an operator names
-  a `person`/`team`/`role`/`workflow` and the system resolves the exact `sys:` identity (directory seam ∪ store-indexed
-  observed-identity typeahead ∪ validated subject id) rather than hand-typing tuples. As built, only the observed-identity
-  typeahead exists (in-memory, not yet reach-filtered).
+  `runs:write`). **Built (§17.3):** a per-subject, reach-scoped `catalog:read` "view" grant so a reviewer can be granted
+  sight of one workflow without joining its domain. **Server-resolved grantees are built** — an operator-facing query
+  (`GET /identity/grantees`) resolves a `person`/`team`/`role`/`workflow` to its exact `sys:` identity via the directory
+  seam (six adapters) ∪ the reach-filtered store-indexed observed-identity typeahead ∪ a validated subject id, rather than
+  hand-typing tuples; the **resolved-grantee UI picker** that drives it is the remaining design-intent piece (with
+  multi-tag **person** resolution).
 - A consolidated "principals & grants" admin view is **deferred**, but the **access-request/approval surface is
   in scope** for the Keycloak slice (it is the missing piece, not a nicety).
 - **Approval is a strategy seam (§16.5.1).** A **built-in single-approver default** (route to the §15 domain
@@ -1573,7 +1578,9 @@ Azure Storage, and NATS apply reach in memory over their native ordering (matchi
 sighting upsert and search share one `ObservedIdentitySerialization` merge across every backend (including the in-memory
 reference).
 
-The `IPrincipalDirectory` seam now ships with two concrete adapters — **LDAP/AD**
-(`Corvus.Text.Json.Arazzo.Directories.Ldap`) and **Keycloak** (`Corvus.Text.Json.Arazzo.Directories.Keycloak`, Admin REST
-over the Corvus reader with a single-flight token cache), each conformance-verified against a real container. The
-remaining SaaS adapters (Entra ID / Graph, Okta, Google Workspace, SCIM 2.0) are **explicitly deferred**.
+The `IPrincipalDirectory` seam ships with **six concrete adapters** — **LDAP/AD**
+(`Corvus.Text.Json.Arazzo.Directories.Ldap`) and **Keycloak** (`Corvus.Text.Json.Arazzo.Directories.Keycloak`),
+conformance-verified against real containers, plus **SCIM 2.0** (`…Directories.Scim`), **Microsoft Entra ID / Graph**
+(`…Directories.EntraId`), **Okta** (`…Directories.Okta`), and **Google Workspace** (`…Directories.Google`), each
+conformance-verified against a mock provider via the shared `StubHttpMessageHandler`. The family is complete; the five
+HTTP adapters share the bytes-to-bytes identity path and the attribute-projection seam.
