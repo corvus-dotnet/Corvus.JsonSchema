@@ -25,6 +25,9 @@ public static class DirectoryIssuer
     /// <summary>The reserved security-tag key carrying the resolving directory's issuer id.</summary>
     public const string IssuerTagKey = "sys:iss";
 
+    /// <summary>Gets the reserved issuer key as UTF-8 (for the bytes-to-bytes span path, <c>DirectoryPrincipalProjector.TryProjectIdentity</c>).</summary>
+    public static ReadOnlySpan<byte> IssuerTagKeyUtf8 => "sys:iss"u8;
+
     /// <summary>
     /// Returns <paramref name="identity"/> with the reserved <see cref="IssuerTagKey"/> set to <paramref name="issuer"/>,
     /// replacing any issuer tag already present (so the adapter's issuer is authoritative and a mapper cannot forge it).

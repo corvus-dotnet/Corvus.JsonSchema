@@ -18,11 +18,14 @@ namespace Corvus.Text.Json.Arazzo.Durability.Benchmarks;
 /// Locks the allocation floor of <see cref="EntraIdPrincipalDirectory"/>'s Microsoft Graph collection parse (design
 /// §16.5.4) — the per-search hot operation once the access token is cached. The production path reads the response
 /// <c>byte[]</c> in place with the Corvus <c>Utf8JsonReader</c> (no STJ DOM, no second copy of the body); the naive
-/// <c>JsonDocument</c> shape is the contrast. Measured (5-user page, ShortRun): production ≈ 8.35 KB vs the naive DOM
-/// ≈ 6.04 KB (≈ 1.38×) — the gap is generality, not waste (the adapter surfaces every entity attribute, e.g. the immutable
-/// <c>id</c> a mapper may want for <c>sys:sub</c>, where the baseline hardcodes the three fields the bench mapper reads),
-/// and it is smaller than SCIM's because Graph entities are flat. No DOM, no body copy; the benchmark is the regression
-/// guard — a change that adds a copy, double-parse, or owned DOM moves the number.
+/// <c>JsonDocument</c> shape is the contrast, and <see cref="ParseUsers_Span"/> is the bytes-to-bytes path (a span mapper).
+/// Measured (5-user page, ShortRun): the string path ≈ 8.35 KB vs the naive DOM ≈ 6.04 KB — but the span path is ≈ 1.71 KB
+/// (≈ 0.20× of the string path, ≈ 0.28× of the DOM) and ≈ 2.3× faster. The span path captures only the value/label + the
+/// mapper's declared attributes as UTF-8 into a pooled scratch and writes each identity straight into a pooled buffer, so
+/// nothing per attribute or per tag is materialized — only the per-principal value/label strings (which
+/// <see cref="ResolvedPrincipal"/> requires) and the one identity <see cref="SecurityTagSet"/> byte[] escape. The string
+/// path's residual is the flatten dictionary + a string per value + the FromTags build. The benchmark is the regression
+/// guard.
 /// </summary>
 public class GraphResponseParseBenchmarks
 {
@@ -47,15 +50,32 @@ public class GraphResponseParseBenchmarks
         }),
         "bench-issuer");
 
+    // The span (bytes-to-bytes) mapper — writes the identity from the record's UTF-8 spans, no attribute string.
+    private static readonly DirectoryPrincipalProjector SpanProjector = new(
+        DirectorySpanIdentityMapper.FromIdentity(
+            ["department"],
+            static (DirectoryRecordView record, ref IdentityBuilder identity) =>
+            {
+                identity.Add("sys:tenant"u8, record.AttributeUtf8("department"u8));
+                identity.Add("sys:sub"u8, record.ValueUtf8);
+                return true;
+            }),
+        "bench-issuer");
+
     /// <summary>The naive shape — materialise the whole collection as a <see cref="StjDocument"/> DOM, then project.</summary>
     /// <returns>The resolved-principal count (prevents dead-code elimination).</returns>
     [Benchmark(Baseline = true)]
     public int ParseUsers_JsonDocumentNaive() => ProjectUsersViaDocument(UsersBody, 10);
 
-    /// <summary>The production path — the Corvus reader over the borrowed response, no DOM.</summary>
+    /// <summary>The string path — the Corvus reader, no DOM, but the mapper builds the identity through FromTags (a string per value).</summary>
     /// <returns>The resolved-principal count.</returns>
     [Benchmark]
     public int ParseUsers() => EntraIdPrincipalDirectory.ProjectResponse(GranteeKind.Person, UsersResource, UsersBody, 10, Projector).Count;
+
+    /// <summary>The bytes-to-bytes path — a span mapper builds each identity straight from the captured UTF-8 spans, no attribute string, no per-tag string, no flatten dictionary.</summary>
+    /// <returns>The resolved-principal count.</returns>
+    [Benchmark]
+    public int ParseUsers_Span() => EntraIdPrincipalDirectory.ProjectResponseSpan(GranteeKind.Person, UsersResource, UsersBody, 10, SpanProjector).Count;
 
     private static int ProjectUsersViaDocument(byte[] body, int limit)
     {
