@@ -93,7 +93,7 @@ await management.PurgeAsync(new WorkflowPurgeQuery(cutoff), ct);                
 single-owner lease and writes under optimistic concurrency, so operators can't conflict with each other or with
 a worker. `ResumeAsync` re-enters the run through the host-supplied `WorkflowResumer` (the same adapter a
 `WorkflowWorker` uses) at its last checkpoint — the faulted step — and the generated executor clears the fault
-on its next checkpoint. (Rewind/skip/state-patch resume and a CLI surface are planned; see plan §11.)
+on its next checkpoint. Richer resume modes (rewind / skip / state-patch) and a CLI surface (`arazzo-runs resume`) ship over the control-plane endpoints (see plan §11).
 
 ## Related Packages
 
