@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Globalization;
+using System.Text;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Npgsql;
 
@@ -86,27 +87,31 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
     }
 
     /// <inheritdoc/>
-    public async ValueTask SeenAsync(GranteeKind kind, string value, string? label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken)
+    public async ValueTask SeenAsync(GranteeKind kind, ReadOnlyMemory<byte> value, ReadOnlyMemory<byte> label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(value);
         ArgumentNullException.ThrowIfNull(provenance);
         string kindToken = kind.ToToken();
+
+        // The SubjectValue column is TEXT (the storage-key leaf), so the value materializes once here for the SQL params;
+        // the document body is serialized bytes-to-bytes from the value/label spans at the synchronous serialize calls
+        // below (taken after the read-await, so no span crosses an await).
+        string valueKey = Encoding.UTF8.GetString(value.Span);
         DateTimeOffset now = this.timeProvider.GetUtcNow();
 
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
 
-        byte[]? existing = await ReadDocumentAsync(connection, transaction, kindToken, value, cancellationToken).ConfigureAwait(false);
+        byte[]? existing = await ReadDocumentAsync(connection, transaction, kindToken, valueKey, cancellationToken).ConfigureAwait(false);
         byte[] json = existing is null
-            ? ObservedIdentitySerialization.SerializeNew(kindToken, value, label, identity, complete, now, provenance)
-            : ObservedIdentitySerialization.SerializeUpserted(existing, kindToken, value, label, identity, complete, now, provenance);
+            ? ObservedIdentitySerialization.SerializeNew(kindToken, value.Span, label.Span, identity, complete, now, provenance)
+            : ObservedIdentitySerialization.SerializeUpserted(existing, kindToken, value.Span, label.Span, identity, complete, now, provenance);
 
         await using (NpgsqlCommand upsert = connection.CreateCommand())
         {
             upsert.Transaction = transaction;
             upsert.CommandText = "INSERT INTO ObservedIdentities (SubjectKind, SubjectValue, Document, IdentityDigest) VALUES (@k, @v, @doc, @digest) ON CONFLICT (SubjectKind, SubjectValue) DO UPDATE SET Document = EXCLUDED.Document, IdentityDigest = EXCLUDED.IdentityDigest;";
             upsert.Parameters.AddWithValue("k", kindToken);
-            upsert.Parameters.AddWithValue("v", value);
+            upsert.Parameters.AddWithValue("v", valueKey);
             upsert.Parameters.AddWithValue("doc", json);
             upsert.Parameters.AddWithValue("digest", (object?)SecurityIdentityDigest.Compute(identity) ?? DBNull.Value);
             await upsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -118,7 +123,7 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
             clear.Transaction = transaction;
             clear.CommandText = "DELETE FROM ObservedIdentitySecurityTags WHERE SubjectKind = @k AND SubjectValue = @v;";
             clear.Parameters.AddWithValue("k", kindToken);
-            clear.Parameters.AddWithValue("v", value);
+            clear.Parameters.AddWithValue("v", valueKey);
             await clear.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
@@ -131,7 +136,7 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
                 tagInsert.Transaction = transaction;
                 tagInsert.CommandText = "INSERT INTO ObservedIdentitySecurityTags (SubjectKind, SubjectValue, TagKey, TagValue) VALUES (@k, @v, @key, @value);";
                 tagInsert.Parameters.AddWithValue("k", kindToken);
-                tagInsert.Parameters.AddWithValue("v", value);
+                tagInsert.Parameters.AddWithValue("v", valueKey);
                 tagInsert.Parameters.AddWithValue("key", tag.Key);
                 tagInsert.Parameters.AddWithValue("value", tag.Value);
                 await tagInsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -142,12 +147,14 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, GranteeKind? kind, string prefix, int limit, string? pageToken, CancellationToken cancellationToken)
+    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, GranteeKind? kind, ReadOnlyMemory<byte> prefix, int limit, string? pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        ArgumentNullException.ThrowIfNull(prefix);
         int pageSize = limit > 0 ? limit : 1;
         string? kindToken = kind?.ToToken();
+
+        // The SubjectValue column is TEXT, so the prefix materializes once for the @p lower bound + the StartsWith break.
+        string prefixStr = Encoding.UTF8.GetString(prefix.Span);
         bool hasCursor = ObservedIdentityContinuationToken.TryDecode(pageToken, out (string SubjectValue, string SubjectKind) cursor);
         SecurityFilter? readReach = context.Reach(AccessVerb.Read);
 
@@ -181,7 +188,7 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
             select.CommandText =
                 "SELECT SubjectKind, SubjectValue, Document FROM ObservedIdentities WHERE TRUE" +
                 (kindToken is not null ? " AND SubjectKind = @k" : string.Empty) +
-                (prefix.Length > 0 ? " AND SubjectValue >= @p" : string.Empty) +
+                (prefixStr.Length > 0 ? " AND SubjectValue >= @p" : string.Empty) +
                 (hasCursor ? " AND (SubjectValue > @cv OR (SubjectValue = @cv AND SubjectKind > @ck))" : string.Empty) +
                 securityPredicate +
                 " ORDER BY SubjectValue, SubjectKind LIMIT @limit;";
@@ -190,9 +197,9 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
                 select.Parameters.AddWithValue("k", kindToken);
             }
 
-            if (prefix.Length > 0)
+            if (prefixStr.Length > 0)
             {
-                select.Parameters.AddWithValue("p", prefix);
+                select.Parameters.AddWithValue("p", prefixStr);
             }
 
             if (hasCursor)
@@ -209,7 +216,7 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
             {
                 string rowKind = reader.GetString(0);
                 string rowValue = reader.GetString(1);
-                if (prefix.Length > 0 && !rowValue.StartsWith(prefix, StringComparison.Ordinal))
+                if (prefixStr.Length > 0 && !rowValue.StartsWith(prefixStr, StringComparison.Ordinal))
                 {
                     break;
                 }
@@ -235,10 +242,8 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ObservedIdentityConflict?> FindIdentityConflictAsync(GranteeKind kind, string value, SecurityTagSet identity, CancellationToken cancellationToken)
+    public async ValueTask<ObservedIdentityConflict?> FindIdentityConflictAsync(GranteeKind kind, ReadOnlyMemory<byte> value, SecurityTagSet identity, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(value);
-
         // The empty (unscoped) identity never collides; otherwise seek the indexed digest column for a row whose identity
         // is set-equal (same digest) but whose (kind, value) differs — a non-unique identity the authoring path refuses.
         // This probe runs at FULL reach (a cross-tenant collision must be visible), so unlike SearchAsync it pushes no
@@ -249,6 +254,7 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
         }
 
         string kindToken = kind.ToToken();
+        string valueKey = Encoding.UTF8.GetString(value.Span);
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlCommand select = connection.CreateCommand();
         select.CommandText =
@@ -256,7 +262,7 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
             "WHERE IdentityDigest = @d AND NOT (SubjectKind = @k AND SubjectValue = @v) LIMIT 1;";
         select.Parameters.AddWithValue("d", digest);
         select.Parameters.AddWithValue("k", kindToken);
-        select.Parameters.AddWithValue("v", value);
+        select.Parameters.AddWithValue("v", valueKey);
         await using NpgsqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         return await reader.ReadAsync(cancellationToken).ConfigureAwait(false)
             ? ToConflict(reader.GetString(0), reader.GetString(1), reader.GetFieldValue<byte[]>(2), kind)

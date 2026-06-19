@@ -353,7 +353,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
 
         // Row-security reach (§14.2): Table OData cannot match inside the serialized security tags, so apply the
         // reach filter in process over the version's persisted tags — the only correct option for this backend.
-        return query.Security is not { } security || security.IsSatisfiedBy(version.SecurityTagsValue.ToList());
+        return query.Security is not { } security || security.IsSatisfiedBy(version.SecurityTagsValue);
     }
 
     private static TableEntity BuildEntity(CatalogVersion version)

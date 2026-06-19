@@ -393,7 +393,7 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
 
             // Row-security reach (§14.2): Table OData cannot match inside the serialized security tags, so apply
             // the reach filter in process over the persisted tags — the only correct option for this backend.
-            if (query.Security is { } security && !security.IsSatisfiedBy(entry.SecurityTags.ToList()))
+            if (query.Security is { } security && !security.IsSatisfiedBy(entry.SecurityTags))
             {
                 continue;
             }

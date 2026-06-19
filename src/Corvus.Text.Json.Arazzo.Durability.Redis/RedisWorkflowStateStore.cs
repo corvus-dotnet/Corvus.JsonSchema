@@ -380,7 +380,7 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
 
             // Row-security reach (§14.2): Redis has no server-side filtering over the run set, so apply the reach
             // filter in process over the persisted security tags — the only correct option for a key/value backend.
-            if (query.Security is { } security && !security.IsSatisfiedBy(securityTags.ToList()))
+            if (query.Security is { } security && !security.IsSatisfiedBy(securityTags))
             {
                 continue;
             }

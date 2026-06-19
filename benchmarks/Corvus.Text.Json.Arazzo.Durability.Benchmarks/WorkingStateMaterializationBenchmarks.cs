@@ -22,7 +22,7 @@ public class WorkingStateMaterializationBenchmarks
     [Params(40, 200)]
     public int Steps { get; set; }
 
-    private ParsedJsonDocument<JsonElement> document;
+    private ParsedJsonDocument<JsonElement> document = null!;
     private JsonElement retryElement;
     private JsonElement correlationElement;
     private JsonElement stepOutputsElement;

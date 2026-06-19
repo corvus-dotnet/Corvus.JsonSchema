@@ -76,7 +76,7 @@ public sealed class DirectoryPrincipalProjector
         }
 
         // One strip-and-restamp pass over every governed dimension (the issuer + any ambient), mapper-immutable.
-        return principal with { Identity = AmbientIdentityStamp.Apply(this.dimensions, principal.Identity) };
+        return principal.WithIdentity(AmbientIdentityStamp.Apply(this.dimensions, principal.Identity));
     }
 
     /// <summary>
@@ -86,11 +86,12 @@ public sealed class DirectoryPrincipalProjector
     /// Only valid when <see cref="SupportsSpanProjection"/> is <see langword="true"/>.
     /// </summary>
     /// <param name="kind">The grantee kind (owned by the adapter).</param>
-    /// <param name="value">The grantee value (owned by the adapter).</param>
-    /// <param name="label">The grantee display label (owned by the adapter).</param>
+    /// <param name="value">The grantee value as unescaped UTF-8 (the adapter's parse span; copied into the principal).</param>
+    /// <param name="label">The display label as unescaped UTF-8 the adapter assembled (a single attribute span or a pooled <c>first + " " + last</c> buffer); ignored when <paramref name="hasLabel"/> is <see langword="false"/>.</param>
+    /// <param name="hasLabel">Whether a display label is present.</param>
     /// <param name="view">The captured record view the mapper reads as spans.</param>
     /// <returns>The resolved principal, or <see langword="null"/> if dropped.</returns>
-    public ResolvedPrincipal? TryProjectIdentity(GranteeKind kind, string value, string? label, DirectoryRecordView view)
+    public ResolvedPrincipal? TryProjectIdentity(GranteeKind kind, ReadOnlySpan<byte> value, ReadOnlySpan<byte> label, bool hasLabel, DirectoryRecordView view)
     {
         if (this.spanMapper is not { } span)
         {
@@ -103,7 +104,7 @@ public sealed class DirectoryPrincipalProjector
             return null;
         }
 
-        return new ResolvedPrincipal(kind, value, label, identity);
+        return new ResolvedPrincipal(kind, value, label, hasLabel, identity);
     }
 
     // The span mapper contributes its sys: tags, then each governed dimension (the issuer, then any ambient) is appended

@@ -298,13 +298,15 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
 
                     DirectoryAttributeSlice value = slices[valueSlice];
                     ReadOnlySpan<byte> valueSpan = scratch.AsSpan(value.ValueOffset, value.ValueLength);
-                    string valueText = Encoding.UTF8.GetString(valueSpan);
-                    string label = displaySlice >= 0
-                        ? Encoding.UTF8.GetString(scratch.AsSpan(slices[displaySlice].ValueOffset, slices[displaySlice].ValueLength))
-                        : valueText;
+
+                    // The display label as unescaped UTF-8: the display attribute's own scratch span, or the value span when
+                    // none — no managed string. TryProjectIdentity copies it into the principal before the next row reuses scratch.
+                    ReadOnlySpan<byte> labelSpan = displaySlice >= 0
+                        ? scratch.AsSpan(slices[displaySlice].ValueOffset, slices[displaySlice].ValueLength)
+                        : valueSpan;
 
                     var view = new DirectoryRecordView(kind, valueSpan, scratch, slices[..captured]);
-                    if (projector.TryProjectIdentity(kind, valueText, label, view) is { } principal)
+                    if (projector.TryProjectIdentity(kind, valueSpan, labelSpan, hasLabel: true, view) is { } principal)
                     {
                         results.Add(principal);
                     }

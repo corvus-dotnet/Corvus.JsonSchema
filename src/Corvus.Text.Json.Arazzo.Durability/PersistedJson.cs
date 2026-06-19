@@ -21,10 +21,11 @@ public static class PersistedJson
     private const int DefaultBufferSize = 512;
 
     /// <summary>A callback that writes JSON into a rented writer, taking its state by <see langword="in"/> context.</summary>
-    /// <typeparam name="TContext">The state type.</typeparam>
+    /// <typeparam name="TContext">The state type (may be a <see langword="ref"/> struct, so the state can carry <see cref="ReadOnlySpan{T}"/>s).</typeparam>
     /// <param name="writer">The rented writer to write into.</param>
     /// <param name="context">The caller's state.</param>
-    public delegate void WriteCallback<TContext>(Utf8JsonWriter writer, in TContext context);
+    public delegate void WriteCallback<TContext>(Utf8JsonWriter writer, in TContext context)
+        where TContext : allows ref struct;
 
     /// <summary>
     /// Serializes JSON into a pooled buffer and copies it into a single owned <see cref="byte"/> array — the one
@@ -35,6 +36,7 @@ public static class PersistedJson
     /// <param name="write">Writes the JSON (pass a <see langword="static"/> lambda to avoid a closure).</param>
     /// <returns>The owned UTF-8 JSON bytes.</returns>
     public static byte[] ToArray<TContext>(in TContext context, WriteCallback<TContext> write)
+        where TContext : allows ref struct
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         Utf8JsonWriter writer = workspace.RentWriterAndBuffer(DefaultBufferSize, out IByteBufferWriter buffer);
@@ -60,6 +62,7 @@ public static class PersistedJson
     /// <param name="context">The state passed to <paramref name="write"/>.</param>
     /// <param name="write">Writes the JSON to be base64-encoded (pass a <see langword="static"/> lambda).</param>
     public static void WriteBase64<TContext>(Utf8JsonWriter destination, ReadOnlySpan<byte> propertyName, in TContext context, WriteCallback<TContext> write)
+        where TContext : allows ref struct
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         Utf8JsonWriter writer = workspace.RentWriterAndBuffer(DefaultBufferSize, out IByteBufferWriter buffer);

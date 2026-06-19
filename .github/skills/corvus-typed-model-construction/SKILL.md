@@ -52,6 +52,33 @@ using var doc = ParsedJsonDocument<JsonElement>.Parse(File.ReadAllBytes(path));
 await client.ResumeRunAsync(runId, SkipResume.Build(skipOutputs: doc.RootElement), ct);    // JsonElement, passed directly
 ```
 
+**Don't hand-roll the `Source` constructor when `Build` covers it.** A plain field set is
+`T.Build(field: v, …)`. Reach for the raw `new T.Source((ref T.Builder b) => b.Create(…))`
+constructor only for genuine imperative logic — not to set a couple of fields. (Older code in the
+tree uses the constructor form for simple bodies; prefer `Build`.)
+
+```csharp
+// ❌ hand-rolled constructor for a plain field set
+var body = new Models.MemberWrite.Source((ref Models.MemberWrite.Builder b) => b.Create(value: v, dimension: d));
+// ✅ the Build factory
+var body = Models.MemberWrite.Build(value: v, dimension: d);
+```
+
+**`Build` takes its fields by `in`, so consume its result in place — don't return it from a
+helper.** Because `Build(in field, …)` holds a ref to each argument, its `Source` cannot escape
+the method that built it: pass it **directly** to the consumer in the same expression (the common
+case). Wrapping `Build` in a method that *returns* the `Source` fails with CS8347 / CS8156 ("may
+expose variables … outside their declaration scope" / "cannot be … returned by reference"). If you
+want a named local, build and consume it in the same scope.
+
+```csharp
+// ✅ consumed in place
+await client.AddAdministratorAsync(baseId, Models.MemberWrite.Build(value: v, dimension: d), ct);
+
+// ❌ returning Build's result escapes the in-ref (CS8347/CS8156)
+static Models.MemberWrite.Source Member(string d, string v) => Models.MemberWrite.Build(value: v, dimension: d);
+```
+
 ## The ref-safety trap (the one real gotcha)
 
 `JsonElement.Source` is a ref struct created from `in JsonElement` — it holds a **ref** to the

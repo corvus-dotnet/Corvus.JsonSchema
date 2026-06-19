@@ -168,7 +168,7 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
                     && (query.UpdatedBefore is not { } updatedBefore || kvp.Value.Index.UpdatedAt < updatedBefore)
                     && (query.CorrelationId is not { } correlationId || kvp.Value.Index.CorrelationId == correlationId)
                     && query.Tags.AllContainedIn(kvp.Value.Index.Tags)
-                    && (query.Security?.IsSatisfiedBy(kvp.Value.Index.SecurityTags.ToList()) ?? true)
+                    && (query.Security?.IsSatisfiedBy(kvp.Value.Index.SecurityTags) ?? true)
                     && (after is null || string.CompareOrdinal(kvp.Key, after) > 0))
                 .OrderBy(kvp => kvp.Key, StringComparer.Ordinal)
                 .Take(query.Limit + 1)

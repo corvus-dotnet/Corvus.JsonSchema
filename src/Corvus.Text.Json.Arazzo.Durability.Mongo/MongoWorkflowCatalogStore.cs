@@ -230,7 +230,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
                 foreach (BsonDocument document in cursor.Current)
                 {
                     CatalogVersion candidate = ReadVersion(document);
-                    if (query.Security is { } security && !security.IsSatisfiedBy(candidate.SecurityTagsValue.ToList()))
+                    if (query.Security is { } security && !security.IsSatisfiedBy(candidate.SecurityTagsValue))
                     {
                         continue;
                     }
@@ -397,14 +397,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             securityTags: ReadSecurityTags(document));
 
     private static TagSet ReadTags(BsonDocument document)
-    {
-        if (!document.TryGetValue("tags", out BsonValue value) || value.IsBsonNull)
-        {
-            return default;
-        }
-
-        return TagSet.FromTags(value.AsBsonArray.Select(static t => t.AsString));
-    }
+        => MongoTags.Read(document);
 
     private static SecurityTagSet ReadSecurityTags(BsonDocument document)
         => MongoSecurityTags.Read(document);

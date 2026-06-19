@@ -346,7 +346,7 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
 
         // Row-security reach (§14.2): Redis has no server-side filtering, so apply the reach filter in process
         // over the version's persisted security tags — the only correct option for a key/value backend.
-        if (query.Security is { } security && !security.IsSatisfiedBy(version.SecurityTagsValue.ToList()))
+        if (query.Security is { } security && !security.IsSatisfiedBy(version.SecurityTagsValue))
         {
             return false;
         }

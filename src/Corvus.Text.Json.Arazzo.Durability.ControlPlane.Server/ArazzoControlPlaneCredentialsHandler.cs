@@ -90,11 +90,21 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
 
             // usageTags are derived from the operator's usage GRANTS, which the deployment maps to UNFORGEABLE internal
             // identity tags (e.g. sys:workflow=nightly-reconcile) — never free-form labels, so usage cannot be
-            // self-granted by a workflow author. With no grants, usage defaults to the creating principal's own identity
-            // (the owner's runs). The two scopes are independent (§13/§14.2).
-            IReadOnlyList<CredentialUsageGrant> grants = ReadGrants(parameters.Body.UsageGrants);
-            IReadOnlyList<SecurityTag> usage = grants.Count > 0 ? this.access.ResolveUsageGrants(grants) : this.access.InternalTags();
-            SecurityTagSet usageTags = SecurityTagSet.FromTags(usage);
+            // self-granted by a workflow author. The grants are resolved BYTES-TO-BYTES through the span seam (the same
+            // ResolveUsageGrantInto the administrators handler uses): each grant's {dimension, value} is read as UTF-8
+            // and the resolved tag written straight into the pooled buffer — no managed string or grant list. With no
+            // grants, usage defaults to the creating principal's own identity (the owner's runs). The two scopes are
+            // independent (§13/§14.2).
+            SecurityTagSet usageTags;
+            if (parameters.Body.UsageGrants.IsNotUndefined() && parameters.Body.UsageGrants.GetArrayLength() > 0)
+            {
+                var grantsState = new UsageGrantsState(this.access, parameters.Body.UsageGrants);
+                usageTags = SecurityTagSet.Build(in grantsState, BuildUsageGrants);
+            }
+            else
+            {
+                usageTags = SecurityTagSet.FromTags(this.access.InternalTags());
+            }
 
             definition = ReadWrite(parameters.Body) with { ManagementTags = managementTags, UsageTags = usageTags };
         }
@@ -287,18 +297,24 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         return list;
     }
 
-    private static List<CredentialUsageGrant> ReadGrants(Models.CredentialBindingWrite.CredentialUsageGrantArray grants)
+    // Builds the binding's usage-identity tags from the operator's usage grants, reading each grant's {dimension, value}
+    // as UTF-8 and writing the deployment's resolved internal tag straight into the pooled buffer (the bytes-to-bytes
+    // counterpart of the string ResolveUsageGrants — a deployment that remaps grants overrides ResolveUsageGrantInto too).
+    private static void BuildUsageGrants(ref IdentityBuilder builder, in UsageGrantsState state)
     {
-        var list = new List<CredentialUsageGrant>();
-        if (grants.IsNotUndefined())
+        foreach (Models.CredentialUsageGrant grant in state.Grants.EnumerateArray())
         {
-            foreach (Models.CredentialUsageGrant grant in grants.EnumerateArray())
-            {
-                list.Add(new CredentialUsageGrant((string)grant.DimensionValue, (string)grant.Value));
-            }
+            using UnescapedUtf8JsonString dimension = ((JsonElement)grant.DimensionValue).GetUtf8String();
+            using UnescapedUtf8JsonString value = ((JsonElement)grant.Value).GetUtf8String();
+            state.Access.ResolveUsageGrantInto(dimension.Span, value.Span, ref builder);
         }
+    }
 
-        return list;
+    private readonly ref struct UsageGrantsState(ControlPlaneAccess access, Models.CredentialBindingWrite.CredentialUsageGrantArray grants)
+    {
+        public ControlPlaneAccess Access { get; } = access;
+
+        public Models.CredentialBindingWrite.CredentialUsageGrantArray Grants { get; } = grants;
     }
 
     private static Models.CredentialSecurityTag.Source ToSecurityTag(SecurityTag tag)

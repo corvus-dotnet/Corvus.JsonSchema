@@ -81,8 +81,11 @@ internal sealed class AdministratorAddCommand : AsyncCommand<AdministratorMember
         using (http)
         await using (transport)
         {
-            Models.AdministratorIdentity.Source body = AdministratorCommandHelpers.Identity(settings.Dimension, settings.Value);
-            await using AddAdministratorResponse response = await client.AddAdministratorAsync(settings.BaseWorkflowId, body, cancellationToken);
+            // Build the member body inline at the call (the value field is taken by `in`, so the Build result is consumed
+            // directly rather than returned from a helper). The interim CLI path names a single {dimension, value} grant.
+            Models.JsonString.Source value = settings.Value;
+            Models.JsonString.Source dimension = settings.Dimension;
+            await using AddAdministratorResponse response = await client.AddAdministratorAsync(settings.BaseWorkflowId, Models.AdministratorMemberWrite.Build(value: value, dimension: dimension), cancellationToken);
             return response.MatchResult(list => Output.Print(list.ToString()), Output.Problem, Output.Problem, Output.Problem, Output.Unexpected);
         }
     }

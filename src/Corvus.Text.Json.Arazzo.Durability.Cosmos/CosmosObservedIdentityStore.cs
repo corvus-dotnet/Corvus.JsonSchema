@@ -95,35 +95,40 @@ public sealed class CosmosObservedIdentityStore : IObservedIdentityStore, IAsync
     }
 
     /// <inheritdoc/>
-    public async ValueTask SeenAsync(GranteeKind kind, string value, string? label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken)
+    public async ValueTask SeenAsync(GranteeKind kind, ReadOnlyMemory<byte> value, ReadOnlyMemory<byte> label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(value);
         ArgumentNullException.ThrowIfNull(provenance);
         string kindToken = kind.ToToken();
         DateTimeOffset now = this.timeProvider.GetUtcNow();
-        string partition = PartitionKey(kindToken, value);
+
+        // subjectValue is the storage-key leaf (item id / partition key / query param / sortKey / stored column), so the
+        // value materializes once here; the document body is serialized bytes-to-bytes from the value/label spans at the
+        // synchronous serialize calls below (taken after the read-await, so no span crosses an await).
+        string valueKey = Encoding.UTF8.GetString(value.Span);
+        string partition = PartitionKey(kindToken, valueKey);
 
         // Read the existing document (single partition) to merge; then upsert the whole envelope.
-        byte[]? existing = await this.ReadDocumentAsync(kindToken, value, partition, cancellationToken).ConfigureAwait(false);
+        byte[]? existing = await this.ReadDocumentAsync(kindToken, valueKey, partition, cancellationToken).ConfigureAwait(false);
         byte[] json = existing is null
-            ? ObservedIdentitySerialization.SerializeNew(kindToken, value, label, identity, complete, now, provenance)
-            : ObservedIdentitySerialization.SerializeUpserted(existing, kindToken, value, label, identity, complete, now, provenance);
+            ? ObservedIdentitySerialization.SerializeNew(kindToken, value.Span, label.Span, identity, complete, now, provenance)
+            : ObservedIdentitySerialization.SerializeUpserted(existing, kindToken, value.Span, label.Span, identity, complete, now, provenance);
 
-        using MemoryStream stream = EnvelopeStream(ItemId(kindToken, value), partition, kindToken, value, SecurityIdentityDigest.Compute(identity), identity.ToList(), json);
+        using MemoryStream stream = EnvelopeStream(ItemId(kindToken, valueKey), partition, kindToken, valueKey, SecurityIdentityDigest.Compute(identity), identity.ToList(), json);
         using ResponseMessage response = await this.container.UpsertItemStreamAsync(stream, new PartitionKey(partition), cancellationToken: cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, GranteeKind? kind, string prefix, int limit, string? pageToken, CancellationToken cancellationToken)
+    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, GranteeKind? kind, ReadOnlyMemory<byte> prefix, int limit, string? pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        ArgumentNullException.ThrowIfNull(prefix);
         int pageSize = limit > 0 ? limit : 1;
         string? kindToken = kind?.ToToken();
         bool hasCursor = ObservedIdentityContinuationToken.TryDecode(pageToken, out (string SubjectValue, string SubjectKind) cursor);
         SecurityFilter? readReach = context.Reach(AccessVerb.Read);
 
+        // subjectValue is stored as a string column, so the prefix materializes once for the STARTSWITH @prefix param.
+        string prefixStr = Encoding.UTF8.GetString(prefix.Span);
         var conditions = new List<string>();
         var parameters = new List<(string Name, string Value)>();
         if (kindToken is not null)
@@ -132,11 +137,11 @@ public sealed class CosmosObservedIdentityStore : IObservedIdentityStore, IAsync
             parameters.Add(("@kind", kindToken));
         }
 
-        if (prefix.Length > 0)
+        if (prefixStr.Length > 0)
         {
             // Native, case-sensitive prefix (the contract is ordinal): STARTSWITH defaults to case-sensitive.
             conditions.Add("STARTSWITH(c.subjectValue, @prefix)");
-            parameters.Add(("@prefix", prefix));
+            parameters.Add(("@prefix", prefixStr));
         }
 
         // Reach (§17.1) as a native EXISTS over the embedded securityTags array; System reach emits none.
@@ -195,10 +200,8 @@ public sealed class CosmosObservedIdentityStore : IObservedIdentityStore, IAsync
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ObservedIdentityConflict?> FindIdentityConflictAsync(GranteeKind kind, string value, SecurityTagSet identity, CancellationToken cancellationToken)
+    public async ValueTask<ObservedIdentityConflict?> FindIdentityConflictAsync(GranteeKind kind, ReadOnlyMemory<byte> value, SecurityTagSet identity, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(value);
-
         // The empty (unscoped) identity never collides; otherwise seek the indexed identityDigest property for an item
         // whose identity is set-equal (same digest) but whose (kind, value) differs — a non-unique identity the authoring
         // path refuses. This probe runs at FULL reach (a cross-tenant collision must be visible), so unlike SearchAsync it
@@ -208,12 +211,14 @@ public sealed class CosmosObservedIdentityStore : IObservedIdentityStore, IAsync
             return null;
         }
 
+        // subjectValue is stored as a string column, so the value materializes once for the @v query param.
         string kindToken = kind.ToToken();
+        string valueKey = Encoding.UTF8.GetString(value.Span);
         var definition = new QueryDefinition(
             "SELECT c.subjectValue, c.subjectKind, c.doc FROM c WHERE c.identityDigest = @d AND NOT (c.subjectKind = @k AND c.subjectValue = @v) OFFSET 0 LIMIT 1")
             .WithParameter("@d", digest)
             .WithParameter("@k", kindToken)
-            .WithParameter("@v", value);
+            .WithParameter("@v", valueKey);
 
         await foreach ((string rowValue, string rowKind, ReadOnlyMemory<byte> doc) in this.QueryDocumentsAsync(definition, cancellationToken).ConfigureAwait(false))
         {

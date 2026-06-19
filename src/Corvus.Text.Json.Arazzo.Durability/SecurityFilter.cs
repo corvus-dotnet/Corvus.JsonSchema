@@ -16,7 +16,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// A <see langword="null"/> filter on a query means unrestricted (an explicit full-reach / system credential —
 /// see <see cref="AccessContext.System"/>); a non-null filter restricts the result set. A store applies the
 /// filter to each candidate row's <see cref="SecurityTag"/> labels — in memory here, and as a translated indexed
-/// predicate in the per-backend stores. A single-row read/write check uses <see cref="IsSatisfiedBy"/> directly.
+/// predicate in the per-backend stores. A single-row read/write check uses <see cref="IsSatisfiedBy(in SecurityTagSet)"/> directly.
 /// </para>
 /// <para>
 /// <b>Deny-by-default (fail-closed).</b> A non-null filter denies unless it positively admits a row: an
@@ -30,6 +30,7 @@ public sealed class SecurityFilter
 {
     private readonly IReadOnlyList<SecurityRule> rules;
     private readonly IReadOnlyDictionary<string, IReadOnlyList<string>> claims;
+    private readonly Utf8ClaimSet utf8Claims;
 
     /// <summary>Initializes a new instance of the <see cref="SecurityFilter"/> class.</summary>
     /// <param name="rules">The rules that must all hold (the deployment wrapper rule(s) plus the principal's user rule).</param>
@@ -40,36 +41,43 @@ public sealed class SecurityFilter
         ArgumentNullException.ThrowIfNull(claims);
         this.rules = rules;
         this.claims = claims;
+
+        // Encode the principal's claims to UTF-8 once (they are fixed for this filter's lifetime); every per-row scan
+        // then compares the small claim set bytes-to-bytes against each row tag, never decoding a row tag to a string.
+        this.utf8Claims = new Utf8ClaimSet(claims);
     }
 
-    /// <summary>Whether the row's security tags satisfy every rule for this principal (deny-by-default).</summary>
-    /// <param name="securityTags">The row's security-tag labels.</param>
+    /// <summary>Whether the row's security tags satisfy every rule for this principal (deny-by-default) — the
+    /// bytes-to-bytes path: the row's tags (a deferred <see cref="SecurityTagSet"/> holder) are parsed once and every
+    /// rule is evaluated over the unescaped UTF-8, materialising no managed <see cref="SecurityTag"/> per row.</summary>
+    /// <param name="securityTags">The row's security tags.</param>
     /// <returns><see langword="true"/> only if the filter positively admits the row: it has at least one rule, the
     /// row carries at least one security tag, and every rule holds. An empty rule set or an untagged row denies.</returns>
-    public bool IsSatisfiedBy(IReadOnlyList<SecurityTag> securityTags)
+    public bool IsSatisfiedBy(in SecurityTagSet securityTags)
     {
-        ArgumentNullException.ThrowIfNull(securityTags);
-
         // Fail-closed: an under-specified filter (no rules) or an unclassified row (no tags) admits nothing.
-        if (this.rules.Count == 0 || securityTags.Count == 0)
+        if (this.rules.Count == 0 || securityTags.IsEmpty)
         {
             return false;
         }
 
-        foreach (SecurityRule rule in this.rules)
-        {
-            if (!rule.IsSatisfiedBy(securityTags, this.claims))
-            {
-                return false;
-            }
-        }
+        return SecurityRule.EvaluateAll(this.rules, securityTags, in this.utf8Claims);
+    }
 
-        return true;
+    /// <summary>Whether the row's security tags (as a materialised tag list) satisfy every rule (deny-by-default). A
+    /// convenience over the deferred-holder path for callers (and tests) that already hold a list; it delegates to the
+    /// same bytes-to-bytes evaluator via <see cref="SecurityTagSet.FromTags"/>.</summary>
+    /// <param name="securityTags">The row's security-tag labels.</param>
+    /// <returns><see langword="true"/> only if the filter positively admits the row.</returns>
+    public bool IsSatisfiedBy(IReadOnlyList<SecurityTag> securityTags)
+    {
+        ArgumentNullException.ThrowIfNull(securityTags);
+        return this.IsSatisfiedBy(SecurityTagSet.FromTags(securityTags));
     }
 
     /// <summary>
     /// Translates the filter into a SQL <c>WHERE</c> boolean fragment (design §14.4) selecting exactly the rows
-    /// <see cref="IsSatisfiedBy"/> would admit — using the backend's dialect/schema fragments. Deny-by-default: an
+    /// <see cref="IsSatisfiedBy(in SecurityTagSet)"/> would admit — using the backend's dialect/schema fragments. Deny-by-default: an
     /// empty filter (no rules) selects nothing (<see cref="ISecurityRuleSqlEmitter.FalseLiteral"/>), and the
     /// conjunction of the rules' predicates is further guarded by <see cref="ISecurityRuleSqlEmitter.ExistsAnyTag"/>
     /// so an untagged row is never selected.

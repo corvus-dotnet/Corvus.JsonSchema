@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Text;
 using BenchmarkDotNet.Attributes;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 
@@ -25,6 +26,13 @@ public class ObservedIdentityStoreBenchmarks
         new SecurityTag("sys:sub", "alice"),
     ]);
 
+    // The unescaped UTF-8 value/label/prefix bytes the handler already holds (GetUtf8String().TakeOwnership) and threads
+    // to the store seam — pre-encoded here so the benchmark measures the store path, not the transcode.
+    private static readonly ReadOnlyMemory<byte> UpsertValue = "alice050"u8.ToArray();
+    private static readonly ReadOnlyMemory<byte> UpsertLabel = "Alice 50"u8.ToArray();
+    private static readonly ReadOnlyMemory<byte> SearchPrefix = "alice0"u8.ToArray();
+    private static readonly ReadOnlyMemory<byte> ConflictValue = "newgrantee"u8.ToArray();
+
     private InMemoryObservedIdentityStore store = null!;
 
     [GlobalSetup]
@@ -35,7 +43,7 @@ public class ObservedIdentityStoreBenchmarks
         // A realistic typeahead corpus so the prefix scan + keyset page does meaningful work.
         for (int i = 0; i < 100; i++)
         {
-            this.store.SeenAsync(GranteeKind.Person, $"alice{i:D3}", $"Alice {i}", Identity, true, "accessRequest", default)
+            this.store.SeenAsync(GranteeKind.Person, Encoding.UTF8.GetBytes($"alice{i:D3}"), Encoding.UTF8.GetBytes($"Alice {i}"), Identity, true, "accessRequest", default)
                 .AsTask().GetAwaiter().GetResult();
         }
     }
@@ -44,7 +52,7 @@ public class ObservedIdentityStoreBenchmarks
     /// re-serialize). A first insert is a strict subset of this (no existing read), so this bounds the write path.</summary>
     [Benchmark]
     public void Seen_Upsert()
-        => this.store.SeenAsync(GranteeKind.Person, "alice050", "Alice 50", Identity, true, "administrator", default)
+        => this.store.SeenAsync(GranteeKind.Person, UpsertValue, UpsertLabel, Identity, true, "administrator", default)
             .AsTask().GetAwaiter().GetResult();
 
     /// <summary>One keyset page of the prefix-indexed typeahead — the warm read path the grantee picker hits as the
@@ -54,7 +62,7 @@ public class ObservedIdentityStoreBenchmarks
     public int Search_Page()
     {
         using ObservedIdentityPage page =
-            this.store.SearchAsync(AccessContext.System, GranteeKind.Person, "alice0", 10, null, default).AsTask().GetAwaiter().GetResult();
+            this.store.SearchAsync(AccessContext.System, GranteeKind.Person, SearchPrefix, 10, null, default).AsTask().GetAwaiter().GetResult();
         return page.Identities.Count;
     }
 
@@ -64,5 +72,5 @@ public class ObservedIdentityStoreBenchmarks
     /// <returns>Whether a conflict was found (prevents dead-code elimination).</returns>
     [Benchmark]
     public bool Find_Conflict()
-        => this.store.FindIdentityConflictAsync(GranteeKind.Person, "newgrantee", Identity, default).AsTask().GetAwaiter().GetResult() is not null;
+        => this.store.FindIdentityConflictAsync(GranteeKind.Person, ConflictValue, Identity, default).AsTask().GetAwaiter().GetResult() is not null;
 }
