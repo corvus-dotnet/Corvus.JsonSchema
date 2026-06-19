@@ -873,7 +873,7 @@ finally
 <h2 id="kyaml-output">KYAML output</h2>
 <p><a href="https://github.com/kubernetes/enhancements/tree/master/keps/sig-cli/5295-kyaml">KYAML</a>
 (Kubernetes KEP-5295) is a <strong>strict subset of YAML 1.2</strong> designed to be unambiguous and
-free of the usual YAML footguns. Because it is a subset, any KYAML document is also valid
+free of its usual ambiguity pitfalls. Because it is a subset, any KYAML document is also valid
 YAML — it can be read back by any conforming YAML parser, including this library's reader.</p>
 <p>The library can <strong>emit</strong> KYAML from any JSON input. In KYAML mode the writer:</p>
 <ul>
