@@ -24,6 +24,7 @@ public class RowSecurityResolveBenchmarks
 {
     private PersistentRowSecurityPolicy noGrantPolicy = null!;
     private PersistentRowSecurityPolicy grantedPolicy = null!;
+    private PersistentRowSecurityPolicy ambientPolicy = null!;
     private ClaimsPrincipal principal = null!;
 
     [GlobalSetup]
@@ -58,6 +59,12 @@ public class RowSecurityResolveBenchmarks
             default);
         this.grantedPolicy = new PersistentRowSecurityPolicy(grantedStore);
         await this.grantedPolicy.RefreshAsync();
+
+        // The same common (reach-only) shape, but with a request-context ambient dimension (§16.5.5) — sys:tenant=acme.
+        // The ambient claim is injected into the reach map and the caller's internal tags are stamped from the one
+        // provider, so the per-request cost is a couple of small entries on the already-allocated reach path.
+        this.ambientPolicy = new PersistentRowSecurityPolicy(noGrantStore, ambient: new StaticAmbientIdentityDimensions([new SecurityTag("sys:tenant", "acme")]));
+        await this.ambientPolicy.RefreshAsync();
     }
 
     /// <summary>The existing per-request reach resolution — the baseline.</summary>
@@ -74,4 +81,14 @@ public class RowSecurityResolveBenchmarks
     /// <returns>The granted scopes.</returns>
     [Benchmark]
     public IReadOnlyList<string> ResolveGrantedScopes_elevatedPath() => this.grantedPolicy.ResolveGrantedScopes(this.principal);
+
+    /// <summary>Reach resolution with a request-context ambient dimension stamped (§16.5.5) — bounds the cost of injecting the ambient claim against the no-ambient <see cref="Resolve_reach"/> baseline.</summary>
+    /// <returns>The resolved access context.</returns>
+    [Benchmark]
+    public AccessContext Resolve_reach_ambient() => this.ambientPolicy.Resolve(this.principal);
+
+    /// <summary>The caller's internal-tag stamping with an ambient dimension (§16.5.5) — the small merged list the ambient append produces (the no-ambient baseline returns the shared empty array, zero allocation).</summary>
+    /// <returns>The caller's internal tags.</returns>
+    [Benchmark]
+    public IReadOnlyList<SecurityTag> GetInternalTags_ambient() => this.ambientPolicy.GetInternalTags(this.principal);
 }

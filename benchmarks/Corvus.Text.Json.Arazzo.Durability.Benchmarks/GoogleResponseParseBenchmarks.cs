@@ -60,6 +60,39 @@ public class GoogleResponseParseBenchmarks
             }),
         "bench-issuer");
 
+    // A fixed ambient-dimension provider (§16.5.5) adding sys:region=eu — stands in for a request-context tenant/region
+    // resolved per request, so the benchmark can exercise ambient stamping without an HttpContext. The two *_Ambient
+    // variants prove the ambient append preserves each path's allocation property: the span path stays bytes-to-bytes
+    // (only the one extra dimension's bytes), the string path pays one more FromTags.
+    private static readonly IAmbientIdentityDimensions Ambient = new StaticAmbientIdentityDimensions([new SecurityTag("sys:region", "eu")]);
+
+    private static readonly DirectoryPrincipalProjector ProjectorAmbient = new(
+        DirectoryIdentityMapper.FromFunc(static record => record.Kind switch
+        {
+            GranteeKind.Person => new ResolvedPrincipal(GranteeKind.Person, record.Id, record.DisplayName, SecurityTagSet.FromTags([new SecurityTag("sys:tenant", (record.Attribute("orgUnitPath") ?? string.Empty).TrimStart('/')), new SecurityTag("sys:sub", record.Id)])),
+            _ => (ResolvedPrincipal?)null,
+        }),
+        "bench-issuer",
+        Ambient);
+
+    private static readonly DirectoryPrincipalProjector SpanProjectorAmbient = new(
+        DirectorySpanIdentityMapper.FromIdentity(
+            ["orgUnitPath"],
+            static (DirectoryRecordView record, ref IdentityBuilder identity) =>
+            {
+                ReadOnlySpan<byte> orgUnit = record.AttributeUtf8("orgUnitPath"u8);
+                if (orgUnit.Length > 0 && orgUnit[0] == (byte)'/')
+                {
+                    orgUnit = orgUnit[1..];
+                }
+
+                identity.Add("sys:tenant"u8, orgUnit);
+                identity.Add("sys:sub"u8, record.ValueUtf8);
+                return true;
+            }),
+        "bench-issuer",
+        Ambient);
+
     /// <summary>The string path — flatten each entity and build the identity through FromTags (a string per value).</summary>
     /// <returns>The resolved-principal count (prevents dead-code elimination).</returns>
     [Benchmark(Baseline = true)]
@@ -69,4 +102,14 @@ public class GoogleResponseParseBenchmarks
     /// <returns>The resolved-principal count.</returns>
     [Benchmark]
     public int ParseUsers_Span() => GooglePrincipalDirectory.ProjectResponseSpan(GranteeKind.Person, UsersResource, UsersBody, 10, SpanProjector).Count;
+
+    /// <summary>The string path with an ambient dimension (§16.5.5) stamped — proves the ambient append on the string path costs only one more FromTags pass.</summary>
+    /// <returns>The resolved-principal count.</returns>
+    [Benchmark]
+    public int ParseUsers_Ambient() => GooglePrincipalDirectory.ProjectResponse(GranteeKind.Person, UsersResource, UsersBody, 10, ProjectorAmbient).Count;
+
+    /// <summary>The bytes-to-bytes path with an ambient dimension (§16.5.5) stamped — proves the ambient append stays in spans (no string u-turn), adding only the one dimension's bytes.</summary>
+    /// <returns>The resolved-principal count.</returns>
+    [Benchmark]
+    public int ParseUsers_Span_Ambient() => GooglePrincipalDirectory.ProjectResponseSpan(GranteeKind.Person, UsersResource, UsersBody, 10, SpanProjectorAmbient).Count;
 }

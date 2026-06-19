@@ -30,6 +30,7 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
     private readonly ISecurityPolicyStore store;
     private readonly SecurityShell shell;
     private readonly Func<ClaimsPrincipal?, IReadOnlyList<SecurityTag>>? internalTagResolver;
+    private readonly IAmbientIdentityDimensions? ambient;
     private readonly TimeProvider timeProvider;
     private readonly bool allowWildcardUnrestrictedReach;
     private volatile Compiled compiled = new(-1, []);
@@ -46,7 +47,16 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
     /// reach for that verb; a wildcard binding may still grant rule-bounded reach. A single-tenant deployment that
     /// genuinely wants "everyone is an operator" sets this to <see langword="true"/> to opt back in.
     /// </param>
-    public PersistentRowSecurityPolicy(ISecurityPolicyStore store, SecurityShell? shell = null, Func<ClaimsPrincipal?, IReadOnlyList<SecurityTag>>? internalTagResolver = null, TimeProvider? timeProvider = null, bool allowWildcardUnrestrictedReach = false)
+    /// <param name="ambient">
+    /// An optional request-context ambient-dimension provider (§16.5.5). When supplied, the policy stamps its dimensions
+    /// onto both runtime moments — <see cref="GetInternalTags"/> (the caller's own identity, for row creation and
+    /// administration membership) and <see cref="Resolve"/> (the reach claims, prefix-stripped so a rule
+    /// <c>sys:tenant == $claim.tenant</c> resolves the context tenant) — and onto the non-directory
+    /// <see cref="ResolveGranteeIdentity"/>. Supplying the <strong>same</strong> provider here and to the directory
+    /// projector is what makes a grantee resolved in a tenant context and the caller in that context stamp identically, so
+    /// the two can never drift (the whole point of §16.5.5). <see langword="null"/> (the default) leaves behaviour unchanged.
+    /// </param>
+    public PersistentRowSecurityPolicy(ISecurityPolicyStore store, SecurityShell? shell = null, Func<ClaimsPrincipal?, IReadOnlyList<SecurityTag>>? internalTagResolver = null, TimeProvider? timeProvider = null, bool allowWildcardUnrestrictedReach = false, IAmbientIdentityDimensions? ambient = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         this.store = store;
@@ -54,6 +64,7 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
         this.internalTagResolver = internalTagResolver;
         this.timeProvider = timeProvider ?? TimeProvider.System;
         this.allowWildcardUnrestrictedReach = allowWildcardUnrestrictedReach;
+        this.ambient = ambient;
     }
 
     /// <summary>Reloads and recompiles the rule/binding snapshot if the store's generation has advanced.</summary>
@@ -117,7 +128,7 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
     public override AccessContext Resolve(ClaimsPrincipal? principal)
     {
         Compiled current = this.compiled;
-        IReadOnlyDictionary<string, IReadOnlyList<string>> claims = CollectClaims(principal);
+        IReadOnlyDictionary<string, IReadOnlyList<string>> claims = this.CollectClaims(principal);
 
         // Read the clock only when some binding is time-bound (the common case has none → no clock read).
         DateTimeOffset now = current.AnyExpiringBindings ? this.timeProvider.GetUtcNow() : default;
@@ -179,13 +190,24 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
     }
 
     /// <inheritdoc/>
+    /// <remarks>The caller's own deployment-stamped identity (row creation + administration membership). When an ambient
+    /// provider is configured, its <c>sys:</c> dimensions are strip-and-restamped onto the resolver's output — the same
+    /// values a grantee resolved in this context carries, so membership set-equals; a no-op (and no allocation) when no
+    /// provider is configured.</remarks>
     public override IReadOnlyList<SecurityTag> GetInternalTags(ClaimsPrincipal? principal)
-        => this.internalTagResolver?.Invoke(principal) ?? base.GetInternalTags(principal);
+        => AmbientIdentityStamp.Apply(this.ambient, this.internalTagResolver?.Invoke(principal) ?? base.GetInternalTags(principal));
+
+    /// <inheritdoc/>
+    /// <remarks>The non-directory grantee resolution. When an ambient provider is configured, its dimensions are stamped
+    /// onto the base single-tag identity from the same source the runtime caller is stamped from, so a free-typed grantee
+    /// authored in a tenant context matches the caller in that context.</remarks>
+    public override SecurityTagSet ResolveGranteeIdentity(GranteeKind kind, string value)
+        => AmbientIdentityStamp.Apply(this.ambient, base.ResolveGranteeIdentity(kind, value));
 
     /// <inheritdoc/>
     public override void ValidateUserTags(IReadOnlyList<SecurityTag> userTags) => this.shell.ValidateUserTags(userTags);
 
-    private static IReadOnlyDictionary<string, IReadOnlyList<string>> CollectClaims(ClaimsPrincipal? principal)
+    private IReadOnlyDictionary<string, IReadOnlyList<string>> CollectClaims(ClaimsPrincipal? principal)
     {
         // Build the claim map in a single dictionary (the List values already satisfy IReadOnlyList<string>).
         var map = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
@@ -203,7 +225,35 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
             }
         }
 
+        this.AddAmbientClaims(map);
         return map;
+    }
+
+    // Stamps the request-context ambient dimensions (§16.5.5) into the reach claim map, prefix-stripped to claim space
+    // (sys:tenant -> the tenant claim) so a rule `sys:tenant == $claim.tenant` resolves the context tenant uniformly with
+    // a token-sourced claim. The ambient value is AUTHORITATIVE: it replaces any token-supplied claim of the same name,
+    // so a forged `tenant` claim cannot widen the context-derived reach (the trust boundary). A no-op (no extra entry)
+    // when no provider is configured or the context resolves none. Ambient keys are distinct, so each resolves to its own
+    // claim name with no accumulation needed.
+    private void AddAmbientClaims(Dictionary<string, IReadOnlyList<string>> map)
+    {
+        if (this.ambient is null)
+        {
+            return;
+        }
+
+        AmbientDimensionSet set = this.ambient.Resolve();
+        if (set.IsEmpty)
+        {
+            return;
+        }
+
+        string prefix = this.InternalTagPrefix;
+        foreach (SecurityTag tag in set.Tags)
+        {
+            string claimName = tag.Key.StartsWith(prefix, StringComparison.Ordinal) ? tag.Key[prefix.Length..] : tag.Key;
+            map[claimName] = [tag.Value];
+        }
     }
 
     private static bool Matches(BindingClauses binding, ClaimsPrincipal principal)

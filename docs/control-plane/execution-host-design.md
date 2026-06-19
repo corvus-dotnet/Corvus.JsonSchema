@@ -736,8 +736,8 @@ is standard and **per-deployment configurable**, with a concrete strategy shippe
   may synthesize claims from the request itself — a vanity host, a route prefix, an API-gateway header — through an
   `IClaimsTransformation` / middleware, so a `sys:` dimension such as `sys:tenant` need **not** come from the token.
   This is sound for the *runtime caller*, but exact-set-equality membership (§16.5.4) imposes a consistency
-  requirement at *grant-authoring* time that is easy to miss. The full treatment — the seam, the trap, and exactly
-  what must be built — is **§16.5.5**.
+  requirement at *grant-authoring* time that is easy to miss. The full treatment — the seam, the trap, and how it is
+  built — is **§16.5.5** (now implemented via the `IAmbientIdentityDimensions` provider).
 
 ### 14.2 Row-level security — security tags + rule engine
 
@@ -1310,11 +1310,9 @@ the status note). The directory adapters, backend stores, entitlement indexes, a
 
 ### 16.5.5 Ambient identity dimensions — deriving a `sys:` tag from request context (not the IdP)
 
-> **Status: design-intent, NOT built.** This section specifies a future capability and the exact work it requires. It
-> exists because the seam is already the right shape (so it reads as "free"), but there is a correctness trap that must be
-> designed for deliberately. Read it before building multi-tenancy whose tenant is *not* an IdP claim, and before the
-> remaining directory adapters (§16.5.4, #46) land — the ambient-dimension hook should be designed into the directory
-> projector, not bolted on after.
+> **Status: BUILT (2026-06).** The capability is implemented; this section is retained as the rationale and the
+> correctness trap it guards against. The seam is the `IAmbientIdentityDimensions` provider (one source of truth funnelled
+> into both stamping moments); see **"What was built"** at the end of the section for the concrete types and tests.
 
 **The scenario.** A multi-tenanted host where a `sys:` identity dimension — typically `sys:tenant`, but the argument
 generalises to any context-derived dimension — comes from somewhere *other* than the external identity provider: a
@@ -1391,6 +1389,30 @@ gateway-inserted value. A vanity-host → tenant mapping must be an **authoritat
 context against configured mappings, fail closed on a miss) so the trust decision lives in one auditable component rather
 than scattered across handlers. None of `sys:`'s correct-by-construction guarantees hold if the dimension's *source* is
 spoofable.
+
+**What was built (2026-06).** The checklist above, realised:
+
+- **The provider.** `IAmbientIdentityDimensions` (`Corvus.Text.Json.Arazzo.Durability`) — `GovernedKeys` (the `sys:`
+  dimensions it owns) + `Resolve() → AmbientDimensionSet`. `AmbientDimensionSet` carries the dimensions in both the
+  managed-`SecurityTag` form (string paths) and pre-encoded UTF-8 (the bytes-to-bytes span path), built once per context
+  and returned cached, so resolution allocates nothing. Two impls: `StaticAmbientIdentityDimensions` (fixed/single-tenant)
+  and `HttpRequestAmbientIdentityDimensions` (`…ControlPlane.Server`) which maps the request's vanity host (`ByHost`) or a
+  gateway header (`ByHeader`) to its tenant against an **authoritative allow-list**, failing closed on anything
+  unconfigured — the trust boundary in one component.
+- **Generalised `DirectoryIssuer`.** `AmbientIdentityStamp` (the string-path strip-and-restamp, generalising
+  `DirectoryIssuer.Stamp` to the governed set, mapper-immutable and fail-closed) + `DirectoryPrincipalProjector`'s optional
+  `ambient` constructor argument, which stamps on **both** the string path (`AmbientIdentityStamp`) and the bytes-to-bytes
+  span path (`AmbientDimensionSet.WriteTo(ref IdentityBuilder)` — no string u-turn, proven by `GoogleResponseParseBenchmarks`
+  at 1.95 KB vs the 1.77 KB no-ambient span). `ResolveGranteeIdentity` (the non-directory path) consults the same provider.
+- **Runtime from the same provider (drift-proof).** `PersistentRowSecurityPolicy` takes the **same** `ambient` provider and
+  reads it directly (not via a separate claims transformer, so the two ends cannot drift): `GetInternalTags` strip-and-restamps
+  the caller's ambient `sys:` tags; `Resolve` injects the ambient dimensions into the reach claim map, prefix-stripped to
+  claim space and **authoritative** (a token-supplied `tenant` claim cannot widen the context-derived reach).
+- **Regression locks.** `AmbientIdentityDimensionsRoundTripTests` proves a grantee resolved in context `T` set-equals the
+  caller in `T` (membership via `WorkflowIdentity.SameAdministrator`, reach via the resolved `AccessContext`) and not in
+  `T'`, plus the forged-claim and fail-closed cases; `SecurityIdentityDigestTests` locks that two principals differing only
+  by `sys:tenant` do not collide; the caller's whoami identity composes `GetInternalTags`, so it inherits the dimension from
+  the same provider.
 
 ### 16.6 Decisions (§16)
 
