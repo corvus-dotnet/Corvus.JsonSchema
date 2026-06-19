@@ -1,5 +1,13 @@
 # Version History
 
+## V5.1.19
+
+V5.1.19 adds a KYAML output mode to the JSON→YAML writer.
+
+### New features
+
+- **JSON→YAML conversion can now emit [KYAML](https://github.com/kubernetes/enhancements/tree/master/keps/sig-cli/5295-kyaml)** — KYAML (Kubernetes KEP-5295) is a strict subset of YAML 1.2 designed to be unambiguous: every mapping uses explicit `{ }` braces and every sequence explicit `[ ]` brackets, laid out across indented lines with a trailing comma after each element; string values (and ambiguous keys) are always double-quoted while numbers, booleans, and `null` are written bare. This eliminates the "Norway problem" and indentation-sensitivity pitfalls, and because KYAML is valid YAML 1.2 the output round-trips through any conforming parser (including this library's reader, which already accepts it with no configuration). Enable it with the new `YamlWriterOptions.Kyaml` preset (or `YamlWriterFormat.Kyaml`) on any `ConvertToYaml`/`ConvertToYamlString` overload or directly on `Utf8YamlWriter`; the default output remains canonical block-style YAML. The feature lives entirely in `Utf8YamlWriter`, so both the `Corvus.Text.Json.Yaml` and `Corvus.Yaml.SystemTextJson` packages gain it. See [#823](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/823).
+
 ## V5.1.18
 
 V5.1.18 fixes a numeric validation bug where a zero-valued bound mis-validated `number` values whose magnitude was just below `0.1`.

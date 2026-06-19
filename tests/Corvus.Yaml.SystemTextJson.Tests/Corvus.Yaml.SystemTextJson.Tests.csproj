@@ -15,6 +15,7 @@
     <Compile Include="$(CtjTestDir)ScalarTests.cs" Link="ScalarTests.cs" />
     <Compile Include="$(CtjTestDir)CollectionTests.cs" Link="CollectionTests.cs" />
     <Compile Include="$(CtjTestDir)JsonToYamlTests.cs" Link="JsonToYamlTests.cs" />
+    <Compile Include="$(CtjTestDir)KyamlTests.cs" Link="KyamlTests.cs" />
     <Compile Include="$(CtjTestDir)Utf8YamlWriterTests.cs" Link="Utf8YamlWriterTests.cs" />
     <Compile Include="$(CtjTestDir)YamlCoverageTests.cs" Link="YamlCoverageTests.cs" />
     <Compile Include="$(CtjTestDir)YamlDocumentParseOverloadTests.cs" Link="YamlDocumentParseOverloadTests.cs" />

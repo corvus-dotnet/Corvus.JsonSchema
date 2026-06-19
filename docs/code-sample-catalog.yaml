@@ -1478,8 +1478,12 @@ main-docs:
       - {index: 16, language: csharp, lines: [372, 377], category: v4-before, verified: false}
       - {index: 17, language: csharp, lines: [381, 385], category: compilable, verified: false}
       - {index: 18, language: csharp, lines: [391, 418], category: compilable, verified: false}
-      - {index: 19, language: csharp, lines: [426, 432], category: compilable, verified: false}
-      - {index: 20, language: csharp, lines: [548, 558], category: compilable, verified: false}
+      - {index: 19, language: csharp, lines: [426, 433], category: compilable, verified: false}
+      - {index: 20, language: csharp, lines: [459, 466], category: compilable, verified: false}
+      - {index: 21, language: csharp, lines: [470, 473], category: compilable, verified: false}
+      - {index: 22, language: yaml, lines: [477, 493]}
+      - {index: 23, language: csharp, lines: [498, 502], category: compilable, verified: false}
+      - {index: 24, language: csharp, lines: [626, 636], category: compilable, verified: false}
 
 v4-docs:
   - path: "docs/V4/GettingStartedWithJsonSchemaCodeGeneration.md"
@@ -1818,7 +1822,8 @@ skills:
     blocks:
       - {index: 0, language: csharp, lines: [32, 42], category: compilable, verified: false}
       - {index: 1, language: csharp, lines: [46, 55], category: compilable, verified: false}
-      - {index: 2, language: powershell, lines: [77, 79]}
+      - {index: 2, language: csharp, lines: [66, 72], category: compilable, verified: false}
+      - {index: 3, language: powershell, lines: [97, 99]}
   - path: ".github/skills/ref-struct-delegates/SKILL.md"
     blocks:
       - {index: 0, language: csharp, lines: [21, 26], category: compilable, verified: false}
