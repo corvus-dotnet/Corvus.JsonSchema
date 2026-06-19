@@ -731,6 +731,13 @@ is standard and **per-deployment configurable**, with a concrete strategy shippe
   "configurable per deployment" seam.
 - The **sample** implements one concrete strategy (JWT bearer with a `scope` claim mapped to the policies,
   plus a dev API-key scheme) to demonstrate end to end.
+- **Ambient identity dimensions (deriving a `sys:` tag from request context, not the IdP).** Because the control
+  plane keys entirely on `ClaimsPrincipal` and treats *how* claims are acquired as the host's concern, a deployment
+  may synthesize claims from the request itself — a vanity host, a route prefix, an API-gateway header — through an
+  `IClaimsTransformation` / middleware, so a `sys:` dimension such as `sys:tenant` need **not** come from the token.
+  This is sound for the *runtime caller*, but exact-set-equality membership (§16.5.4) imposes a consistency
+  requirement at *grant-authoring* time that is easy to miss. The full treatment — the seam, the trap, and exactly
+  what must be built — is **§16.5.5**.
 
 ### 14.2 Row-level security — security tags + rule engine
 
@@ -1281,6 +1288,90 @@ one resolved identity — **operate** (`runs:read`/`runs:write`, reach-scoped �
 operation of a workflow never implies administering it. Arazzo-owned identity/entitlement/reach queries are to be
 indexed and store-pushed-down; as built, only the observed-identity typeahead is (and it is not yet reach-filtered — see
 the status note). The directory adapters, backend stores, entitlement indexes, and resolved-grantee UI are design-intent.
+
+### 16.5.5 Ambient identity dimensions — deriving a `sys:` tag from request context (not the IdP)
+
+> **Status: design-intent, NOT built.** This section specifies a future capability and the exact work it requires. It
+> exists because the seam is already the right shape (so it reads as "free"), but there is a correctness trap that must be
+> designed for deliberately. Read it before building multi-tenancy whose tenant is *not* an IdP claim, and before the
+> remaining directory adapters (§16.5.4, #46) land — the ambient-dimension hook should be designed into the directory
+> projector, not bolted on after.
+
+**The scenario.** A multi-tenanted host where a `sys:` identity dimension — typically `sys:tenant`, but the argument
+generalises to any context-derived dimension — comes from somewhere *other* than the external identity provider: a
+**vanity URL / host** (`acme.host.example` → `sys:tenant=acme`), a **route prefix** (`/t/acme/...`), or an **API-gateway
+front end** that injects a header (`X-Tenant: acme`) after its own resolution. The IdP token says *who* the principal is
+(`sys:iss`, `sys:sub`); the *tenant* is a property of the request path, not the token.
+
+**The seam — everything keys on `ClaimsPrincipal`.** The control plane is deliberately ignorant of how a principal
+acquired its claims (§14.1); the single identity seam is `ControlPlaneRowSecurityPolicy`, which only ever sees a
+`ClaimsPrincipal` (read through `IHttpContextAccessor`). So "augment the identity from a non-IdP source" reduces to "get
+the dimension onto the principal as a claim before the policy reads it." Concretely, identity is stamped at **two**
+moments, and both must agree:
+
+1. **Runtime caller stamping (the straightforward half).** `PersistentRowSecurityPolicy.Resolve(principal)` derives the
+   caller's per-verb reach, and `GetInternalTags(principal)` / the injected `internalTagResolver` derives the `sys:` tags
+   stamped onto rows the caller creates. Both read claims. To source the tenant from the request, add an
+   `IClaimsTransformation` (or auth middleware) that reads `IHttpContextAccessor` (`Host` / route / gateway header) and
+   adds a `tenant` claim — *exactly* the shape of the demo's `KeycloakClaimsTransformer`, which already synthesizes
+   `scope` claims from `groups`. The policy then maps `tenant` uniformly with token-sourced claims; **no control-plane
+   change**, and the §14.2 bootstrap rules that already parameterise on a claim (`tenant == $claim.tenant`) work unchanged.
+
+2. **Grant-authoring stamping (the trap).** Administration (§15) and entitlement (§16.5) membership and reach are
+   **exact set-equality on the principal's whole stamped `sys:` identity** (§16.5.4). So the *same* dimension must be
+   stamped when a **grantee** is resolved — `ControlPlaneRowSecurityPolicy.ResolveGranteeIdentity(kind, value)` and the
+   directory `IDirectoryIdentityMapper` / `DirectoryPrincipalProjector`. Here is the failure: an administrator on
+   `acme.host.example` resolving a person against Keycloak gets `{sys:iss, sys:sub}` back — the directory adapter queries
+   the **IdP, which has no knowledge of the vanity-URL tenant** — so the grant's identity omits `sys:tenant=acme`. The
+   runtime caller (also via `acme.host.example`) carries `sys:tenant=acme`. The two never set-equal, and the grant is
+   **silently inert** (it looks authoritative but matches no one — the exact §16.5.4 footgun the resolved-grantee design
+   set out to remove, re-introduced through a back door). The reach path fails the same way: a stored rule
+   `tenant == $claim.tenant` is fine, but a grant *enumerating* a resolved identity (administrator entry, entitlement
+   grant) carries the wrong tag set.
+
+**The fix is a pattern we have already shipped: `DirectoryIssuer` / `sys:iss`.** The issuer dimension is a
+deployment-controlled value that every adapter funnels through **one** projector (`DirectoryPrincipalProjector`), which
+strips any mapper-supplied value and stamps the configured one — mapper-immutable, correct-by-construction, so identities
+are consistent across providers without trusting each mapper to remember. A context-derived `sys:tenant` is the *same
+shape*: a deployment-controlled dimension that must be funnelled through one projector and stamped at **both** the runtime
+and the authoring moment, from **one source**, so the two can never drift.
+
+**What must be built (the actionable checklist):**
+
+- **An ambient-dimension provider, request-scoped.** A small deployment-supplied abstraction — e.g.
+  `IAmbientIdentityDimensions.Resolve() → IReadOnlyList<SecurityTag>` — backed by `IHttpContextAccessor`, that maps the
+  current request's context (host / route / validated gateway header) to its `sys:` dimensions. It is the **single source
+  of truth** consulted by both stamping moments below. It must **fail closed**: an unresolvable context yields *no*
+  tenant and therefore *no* access, never a blank/wildcard that would cross tenants.
+- **Generalise `DirectoryIssuer` from one hard-coded `sys:iss` to a set of mapper-immutable ambient dimensions.**
+  `DirectoryPrincipalProjector` already strips-and-restamps the issuer; extend it to strip-and-restamp every ambient
+  dimension the provider yields (issuer becomes one such dimension). The grantee resolved inside an `acme` request thus
+  carries `sys:tenant=acme` by construction, no mapper cooperation required. `ResolveGranteeIdentity` (the non-directory
+  resolution path) must consult the same provider.
+- **Wire the runtime path from the same provider.** Either a deployment `IClaimsTransformation` that emits the ambient
+  dimensions as claims, **or** have the policy read the provider directly in `Resolve` / `GetInternalTags`. Prefer one
+  provider injected into both the projector and the policy so a single configuration governs both ends — drift between
+  "how the caller is stamped" and "how a grantee is stamped" is the whole bug class this section exists to prevent.
+- **A round-trip conformance test (the regression lock).** Prove that a grantee resolved within tenant-context `T`
+  set-equals a runtime caller in tenant-context `T` (membership via `WorkflowAdministrators.IsAdministeredBy`, reach via
+  the resolved `AccessContext`), **and** does *not* match a caller in tenant-context `T'`. This is the test that would
+  have caught the inert-grant trap; it must exist before the feature is trusted.
+- **Collision probe / digest — verify, don't assume.** `SecurityIdentityDigest` already hashes the *whole* canonical tag
+  set, so `FindIdentityConflictAsync` picks up the ambient dimension automatically — but add an explicit case so a future
+  change to the digest can't silently drop it (two principals identical but for `sys:tenant` must not collide).
+- **`whoami` / add-me / lockout (§15).** The caller's own resolved identity (used for *add-me* and transfer-lockout
+  prevention) composes `GetInternalTags`, so it inherits the ambient dimension automatically once the runtime path stamps
+  it — but a deployment that sources tenant from context **must** keep whoami on the same provider, or an admin can fail
+  *add-me* (their authored entry lacks the tenant the runtime stamps) or lock themselves out on transfer.
+
+**Trust boundary (this is an isolation primitive — getting it wrong is a cross-tenant breach).** A context-derived
+dimension is only as trustworthy as the path that sets it. An `X-Tenant` gateway header is safe **only** if the
+application cannot be reached bypassing the gateway, or strips/ignores any client-supplied copy and trusts only the
+gateway-inserted value. A vanity-host → tenant mapping must be an **authoritative, validated allow-list**, never the raw
+`Host` header taken at face value. The ambient-dimension provider is the right place to enforce this (validate the
+context against configured mappings, fail closed on a miss) so the trust decision lives in one auditable component rather
+than scattered across handlers. None of `sys:`'s correct-by-construction guarantees hold if the dimension's *source* is
+spoofable.
 
 ### 16.6 Decisions (§16)
 
