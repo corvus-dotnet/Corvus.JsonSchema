@@ -32,7 +32,10 @@ namespace Corvus.Text.Json.Arazzo.Durability.Benchmarks;
 /// (the returned list + each escaping <see cref="ResolvedPrincipal"/>, the per-row attribute map the
 /// <see cref="DirectoryRecord"/> contract requires, and the per-identity <see cref="SecurityTagSet"/> construction). The
 /// benchmark's value is the regression guard: a change that re-flattens metadata, adds a body copy, or double-parses moves
-/// the number.
+/// the number. <see cref="ParseUsers_Span"/> is the bytes-to-bytes path (a span mapper): ≈ 1.75 KB — ≈ 0.18× of the string
+/// path — by capturing only the value + the declared attribute as UTF-8 and writing the identity straight into a pooled
+/// buffer, so neither the flatten dictionary nor any per-value string is built (only the per-principal value/label and the
+/// one identity byte[] escape).
 /// </remarks>
 public class ScimResponseParseBenchmarks
 {
@@ -73,6 +76,18 @@ public class ScimResponseParseBenchmarks
         }),
         "bench-issuer");
 
+    // The span (bytes-to-bytes) mapper — writes the identity from the record's UTF-8 spans (organization captured by leaf).
+    private static readonly DirectoryPrincipalProjector SpanProjector = new(
+        DirectorySpanIdentityMapper.FromIdentity(
+            ["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:organization"],
+            static (DirectoryRecordView record, ref IdentityBuilder identity) =>
+            {
+                identity.Add("sys:tenant"u8, record.AttributeUtf8("organization"u8));
+                identity.Add("sys:sub"u8, record.ValueUtf8);
+                return true;
+            }),
+        "bench-issuer");
+
     /// <summary>The naive shape — materialise the whole ListResponse as a <see cref="StjDocument"/> DOM, then flatten + project.</summary>
     /// <returns>The resolved-principal count (prevents dead-code elimination).</returns>
     [Benchmark(Baseline = true)]
@@ -87,6 +102,11 @@ public class ScimResponseParseBenchmarks
     /// <returns>The resolved-principal count.</returns>
     [Benchmark]
     public int ParseUsers_Projected() => ScimPrincipalDirectory.ProjectResponse(GranteeKind.Person, UsersResource, ProjectedUsersBody, 10, Projector).Count;
+
+    /// <summary>The bytes-to-bytes path — a span mapper captures only the value + the declared attribute and writes the identity straight from spans, over the same full response.</summary>
+    /// <returns>The resolved-principal count.</returns>
+    [Benchmark]
+    public int ParseUsers_Span() => ScimPrincipalDirectory.ProjectResponseSpan(GranteeKind.Person, UsersResource, UsersBody, 10, SpanProjector).Count;
 
     private static int ProjectUsersViaDocument(byte[] body, int limit)
     {
