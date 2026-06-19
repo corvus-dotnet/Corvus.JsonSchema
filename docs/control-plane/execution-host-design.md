@@ -1232,15 +1232,21 @@ eligible-for-All`) remains step 6.
 > (Sqlite/Postgres/MySql/SqlServer/Cosmos/Mongo/Redis/AzureStorage/NATS, reach-filtered, conformance-locked); the
 > `ControlPlaneRowSecurityPolicy` grantee seam (`SupportedGranteeKinds` / `ResolveGranteeIdentity`) and `whoami`; the
 > `IPrincipalDirectory` seam **with an LDAP/AD adapter** (`Corvus.Text.Json.Arazzo.Directories.Ldap`, Novell async,
-> conformance-verified against a self-built OpenLDAP container) **and a Keycloak adapter**
+> conformance-verified against a self-built OpenLDAP container), **a Keycloak adapter**
 > (`Corvus.Text.Json.Arazzo.Directories.Keycloak`, Admin REST over the Corvus reader, single-flight token cache,
-> conformance-verified against a real `keycloak:26.0` container); the **issuer dimension** — every adapter funnels records
+> conformance-verified against a real `keycloak:26.0` container), **and a SCIM 2.0 adapter**
+> (`Corvus.Text.Json.Arazzo.Directories.Scim`, RFC 7644 filter/bearer over the Corvus reader, conformance-verified against
+> a mock SCIM provider via the shared `StubHttpMessageHandler`); the **attribute-projection seam** — a mapper may declare
+> the provider attributes it reads (`IDirectoryIdentityMapper.RequiredAttributes`, opt-in; empty = surface everything, the
+> safe default) and an adapter fetches only those plus the value/label attributes it needs (LDAP's native search list,
+> SCIM `attributes`, Graph `$select`, Google `fields`), so a directory search neither over-fetches over the wire nor
+> over-materialises on parse; the **issuer dimension** — every adapter funnels records
 > through `DirectoryPrincipalProjector`, which stamps a configured, mapper-immutable `sys:iss` so identities are disjoint
 > across providers by construction (`DirectoryIssuer`); the **identity-collision probe** (`FindIdentityConflictAsync`,
 > digest-indexed, full-reach) across every store; **collision enforcement** — admin-add/transfer refuse (409) a grant
 > whose resolved identity already belongs to a different grantee; and `GET /identity/{whoami,capabilities,grantees}` with
-> the admin-add recording hook. NOT YET BUILT (design-intent below): the remaining directory adapters (Entra,
-> Okta, Google, SCIM); the by-subject / by-workflow entitlement indexes (self-elevation still cold-scans, §16.5.3);
+> the admin-add recording hook. NOT YET BUILT (design-intent below): the remaining SaaS directory adapters (Entra,
+> Okta, Google); the by-subject / by-workflow entitlement indexes (self-elevation still cold-scans, §16.5.3);
 > multi-tag **person** resolution (the default is a best-effort *single* tag); and the resolved-grantee UI (the UI still
 > hand-assembles `{dimension, value}` tuples). **`catalog:read` is NOT a grantable scope** (the allowlist is
 > `runs:read`/`runs:write` only — see §16.5.3). The §17.1 reach-scoping (the observed-identity store is now reach-filtered

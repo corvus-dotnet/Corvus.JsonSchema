@@ -121,6 +121,16 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
     internal static IReadOnlyList<ResolvedPrincipal> ProjectResponse(GranteeKind kind, KeycloakResource resource, byte[] body, int limit, DirectoryPrincipalProjector projector)
     {
         var results = new List<ResolvedPrincipal>(limit);
+
+        // Attribute-projection seam (§16.5.4), parse-side. Keycloak's Admin API has no server-side field projection (the
+        // user representation is all-or-nothing under briefRepresentation=false), so when the mapper declares what it reads
+        // the adapter honours it on parse: only the declared custom attributes are flattened (the unbounded source — a user
+        // may carry many HR attributes the mapper never reads). The fixed user fields (username/firstName/lastName/email/id)
+        // are always surfaced — they are bounded and the value/label need them. No declaration => flatten every attribute.
+        HashSet<string>? customAttributeFilter = projector.RequiredAttributes.Count > 0
+            ? new HashSet<string>(projector.RequiredAttributes, StringComparer.OrdinalIgnoreCase)
+            : null;
+
         var reader = new Utf8JsonReader(body);
         if (!reader.Read() || reader.TokenType != JsonTokenType.StartArray)
         {
@@ -130,7 +140,7 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
         while (results.Count < limit && reader.Read() && reader.TokenType == JsonTokenType.StartObject)
         {
             DirectoryRecord? record = resource == KeycloakResource.Users
-                ? ReadUser(ref reader, kind)
+                ? ReadUser(ref reader, kind, customAttributeFilter)
                 : ReadNamed(ref reader, kind);
             if (record is { } parsed && projector.Project(parsed) is { } principal)
             {
@@ -143,7 +153,7 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
 
     // Reads one user object (reader positioned at its StartObject) into a record keyed on the username, with the user's
     // own attributes plus id/email/firstName/lastName flattened in for the mapper. Leaves the reader at the EndObject.
-    private static DirectoryRecord? ReadUser(ref Utf8JsonReader reader, GranteeKind kind)
+    private static DirectoryRecord? ReadUser(ref Utf8JsonReader reader, GranteeKind kind, HashSet<string>? customAttributeFilter)
     {
         string? username = null, firstName = null, lastName = null, email = null, id = null;
         var attributes = new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase);
@@ -177,7 +187,7 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
             else if (reader.ValueTextEquals("attributes"u8))
             {
                 reader.Read();
-                ReadAttributes(ref reader, attributes);
+                ReadAttributes(ref reader, attributes, customAttributeFilter);
             }
             else
             {
@@ -240,8 +250,10 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
     }
 
     // Flattens a Keycloak user's `attributes` object ({ "tenant": ["acme"], … }) into the record's attribute map. The
-    // reader is positioned at the attributes value; on a non-object (e.g. null) it skips and the map is unchanged.
-    private static void ReadAttributes(ref Utf8JsonReader reader, Dictionary<string, IReadOnlyList<string>> attributes)
+    // reader is positioned at the attributes value; on a non-object (e.g. null) it skips and the map is unchanged. When
+    // `filter` is non-null (the mapper declared what it reads) only those custom attributes are materialised; a key the
+    // mapper never reads is skipped without allocating its value list.
+    private static void ReadAttributes(ref Utf8JsonReader reader, Dictionary<string, IReadOnlyList<string>> attributes, HashSet<string>? filter)
     {
         if (reader.TokenType != JsonTokenType.StartObject)
         {
@@ -253,6 +265,12 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
         {
             string key = reader.GetString()!;
             reader.Read();
+            if (filter?.Contains(key) == false)
+            {
+                reader.Skip();
+                continue;
+            }
+
             if (reader.TokenType == JsonTokenType.StartArray)
             {
                 var values = new List<string>();
