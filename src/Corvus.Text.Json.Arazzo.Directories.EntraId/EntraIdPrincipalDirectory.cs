@@ -2,7 +2,10 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Net.Http.Headers;
+using System.Text;
+using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Internal;
 
@@ -84,7 +87,9 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
         // each ResolvedPrincipal (its Value/Label strings + stamped SecurityTagSet). When the mapper declares its
         // RequiredAttributes the $select makes Graph return only those, so both the response and the flatten shrink.
         byte[] body = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
-        return ProjectResponse(kind, resource, body, top, this.projector);
+        return this.projector.SupportsSpanProjection
+            ? ProjectResponseSpan(kind, resource, body, top, this.projector)
+            : ProjectResponse(kind, resource, body, top, this.projector);
     }
 
     /// <inheritdoc/>
@@ -188,6 +193,129 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
             }
 
             reader.Skip();
+        }
+
+        return results;
+    }
+
+    // The bytes-to-bytes path (used when the mapper is a span mapper): capture only the wanted attributes — the value, the
+    // label, and the mapper's declared attributes — as unescaped UTF-8 into a pooled scratch (reused per entity), build a
+    // stack-only DirectoryRecordView, and let the projector write the identity straight into a pooled buffer. No attribute
+    // string is materialized; only the per-principal value/label (which ResolvedPrincipal requires) and the one identity
+    // byte[] escape. The Graph entity is flat, so a wanted property is matched by name directly.
+    internal static IReadOnlyList<ResolvedPrincipal> ProjectResponseSpan(GranteeKind kind, EntraIdResource resource, byte[] body, int limit, DirectoryPrincipalProjector projector)
+    {
+        var results = new List<ResolvedPrincipal>(limit);
+
+        // The wanted attribute names as UTF-8 (value first, then label, then the mapper's declared attributes), built once.
+        string[] required = [.. projector.RequiredAttributes];
+        int wantedCount = 1 + (resource.DisplayAttribute is null ? 0 : 1) + required.Length;
+        byte[][] wanted = new byte[wantedCount][];
+        int next = 0;
+        int valueWanted = next;
+        wanted[next++] = Encoding.UTF8.GetBytes(resource.FilterAttribute);
+        int displayWanted = -1;
+        if (resource.DisplayAttribute is { } displayAttribute)
+        {
+            displayWanted = next;
+            wanted[next++] = Encoding.UTF8.GetBytes(displayAttribute);
+        }
+
+        foreach (string attribute in required)
+        {
+            wanted[next++] = Encoding.UTF8.GetBytes(attribute);
+        }
+
+        var reader = new Utf8JsonReader(body);
+        if (!reader.Read() || reader.TokenType != JsonTokenType.StartObject)
+        {
+            return results;
+        }
+
+        while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+        {
+            bool isValue = reader.ValueTextEquals("value"u8);
+            reader.Read();
+            if (!isValue || reader.TokenType != JsonTokenType.StartArray)
+            {
+                reader.Skip();
+                continue;
+            }
+
+            // The scratch (sized to the body, since unescaped bytes never exceed their escaped source) is reused per
+            // entity — each view is consumed by TryProjectIdentity before the next entity overwrites it.
+            byte[] scratch = ArrayPool<byte>.Shared.Rent(body.Length);
+            Span<DirectoryAttributeSlice> slices = stackalloc DirectoryAttributeSlice[wantedCount];
+            try
+            {
+                while (results.Count < limit && reader.Read() && reader.TokenType == JsonTokenType.StartObject)
+                {
+                    int captured = 0;
+                    int position = 0;
+                    int valueSlice = -1;
+                    int displaySlice = -1;
+                    while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+                    {
+                        int which = -1;
+                        for (int i = 0; i < wantedCount; i++)
+                        {
+                            if (reader.ValueTextEquals(wanted[i]))
+                            {
+                                which = i;
+                                break;
+                            }
+                        }
+
+                        reader.Read();
+                        if (which < 0 || reader.TokenType != JsonTokenType.String)
+                        {
+                            reader.Skip();
+                            continue;
+                        }
+
+                        int keyOffset = position;
+                        wanted[which].CopyTo(scratch.AsSpan(position));
+                        position += wanted[which].Length;
+                        int valueOffset = position;
+                        int valueLength = reader.CopyString(scratch.AsSpan(position));
+                        position += valueLength;
+                        if (which == valueWanted)
+                        {
+                            valueSlice = captured;
+                        }
+                        else if (which == displayWanted)
+                        {
+                            displaySlice = captured;
+                        }
+
+                        slices[captured++] = new DirectoryAttributeSlice(keyOffset, wanted[which].Length, valueOffset, valueLength);
+                    }
+
+                    if (valueSlice < 0)
+                    {
+                        continue;
+                    }
+
+                    DirectoryAttributeSlice value = slices[valueSlice];
+                    ReadOnlySpan<byte> valueSpan = scratch.AsSpan(value.ValueOffset, value.ValueLength);
+                    string valueText = Encoding.UTF8.GetString(valueSpan);
+                    string label = displaySlice >= 0
+                        ? Encoding.UTF8.GetString(scratch.AsSpan(slices[displaySlice].ValueOffset, slices[displaySlice].ValueLength))
+                        : valueText;
+
+                    var view = new DirectoryRecordView(kind, valueSpan, scratch, slices[..captured]);
+                    if (projector.TryProjectIdentity(kind, valueText, label, view) is { } principal)
+                    {
+                        results.Add(principal);
+                    }
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(scratch);
+            }
+
+            return results;
         }
 
         return results;
