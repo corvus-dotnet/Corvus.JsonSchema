@@ -120,6 +120,19 @@ public sealed class DirectoryIssuerTests
         tags.ShouldNotContain(new SecurityTag("sys:tenant", "evil"));
     }
 
+    [TestMethod]
+    public void Projector_overrides_a_mapper_supplied_issuer_through_the_uniform_stamp()
+    {
+        // The issuer is now stamped as a governed dimension (no issuer-specific path) — a mapper forging sys:iss is still
+        // stripped and the adapter's issuer is authoritative, exactly as before the unification.
+        var projector = new DirectoryPrincipalProjector(ForgedIssuerMapper(), "keycloak");
+
+        List<SecurityTag> tags = projector.Project(Record("alice"))!.Value.Identity.ToList();
+        tags.Count(t => t.Key == DirectoryIssuer.IssuerTagKey).ShouldBe(1);
+        tags.ShouldContain(new SecurityTag(DirectoryIssuer.IssuerTagKey, "keycloak"));
+        tags.ShouldNotContain(new SecurityTag(DirectoryIssuer.IssuerTagKey, "forged"));
+    }
+
     // A fixed ambient provider stamping sys:tenant=acme (§16.5.5) — stands in for a request-context tenant.
     private static readonly StaticAmbientIdentityDimensions Acme = new([new SecurityTag("sys:tenant", "acme")]);
 
@@ -142,6 +155,10 @@ public sealed class DirectoryIssuerTests
     // A mapper that forges sys:tenant=evil (an ambient dimension the deployment governs).
     private static IDirectoryIdentityMapper ForgedTenantMapper()
         => DirectoryIdentityMapper.FromFunc(record => new ResolvedPrincipal(record.Kind, record.Id, record.DisplayName, SecurityTagSet.FromTags([new SecurityTag("sys:sub", record.Id), new SecurityTag("sys:tenant", "evil")])));
+
+    // A mapper that forges sys:iss=forged (the issuer dimension the projector governs).
+    private static IDirectoryIdentityMapper ForgedIssuerMapper()
+        => DirectoryIdentityMapper.FromFunc(record => new ResolvedPrincipal(record.Kind, record.Id, record.DisplayName, SecurityTagSet.FromTags([new SecurityTag("sys:sub", record.Id), new SecurityTag(DirectoryIssuer.IssuerTagKey, "forged")])));
 
     private static DirectoryRecord Record(string id)
         => new(GranteeKind.Person, id, id, new Dictionary<string, IReadOnlyList<string>>(), []);
