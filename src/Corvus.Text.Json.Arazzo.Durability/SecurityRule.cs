@@ -2,6 +2,10 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
+using System.Text;
+using Corvus.Text.Json;
+
 namespace Corvus.Text.Json.Arazzo.Durability;
 
 /// <summary>
@@ -24,6 +28,15 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// <c>tenant == $claim.tenant</c> is "the row's tenant is one the principal holds"). A bare operand with no
 /// operator is truthy when its set is non-empty (e.g. <c>tenant</c> means "the row has a tenant label").
 /// Comparison is ordinal (case-sensitive).
+/// </para>
+/// <para>
+/// <b>Evaluation is bytes-to-bytes (design §14.2 / §16.5.4).</b> A row's tags arrive as a deferred
+/// <see cref="SecurityTagSet"/> holder (unescaped UTF-8); the row tags are parsed <b>once</b> into a pooled scratch
+/// buffer + slice table (the <see cref="SecurityTagSpanSort"/> core) and every operand/claims comparison runs on the
+/// unescaped UTF-8 spans. The rule's literal/tag-key operand values are encoded to UTF-8 once at
+/// <see cref="Compile"/>, and the principal's claims once per request (<see cref="Utf8ClaimSet"/>), so a list/search
+/// scan evaluates each candidate row without materialising a single managed <see cref="SecurityTag"/> string or
+/// <see cref="List{T}"/>. Ordinal UTF-8 byte equality is exactly the ordinal string equality of the same code points.
 /// </para>
 /// </remarks>
 public sealed class SecurityRule
@@ -75,22 +88,38 @@ public sealed class SecurityRule
         return new SecurityRule(node);
     }
 
-    /// <summary>Evaluates the rule against a row's security tags and a principal's claims.</summary>
+    /// <summary>Evaluates the rule against a row's security tags and a principal's claims — the bytes-to-bytes path
+    /// (the row tags are walked as unescaped UTF-8, no managed <see cref="SecurityTag"/> is materialised).</summary>
+    /// <param name="securityTags">The row's security tags (a run's or catalog version's), as the deferred holder.</param>
+    /// <param name="claims">The principal's claims: claim name → its values.</param>
+    /// <returns><see langword="true"/> if the rule admits the row to the principal.</returns>
+    public bool IsSatisfiedBy(in SecurityTagSet securityTags, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
+    {
+        ArgumentNullException.ThrowIfNull(claims);
+        var utf8Claims = new Utf8ClaimSet(claims);
+
+        // The single-rule public entry point (used for one-off read/write checks and the rule tests); the warm
+        // multi-rule filter scan goes through SecurityFilter, which parses each row once for the whole rule set.
+        return EvaluateAll([this], securityTags, in utf8Claims);
+    }
+
+    /// <summary>Evaluates the rule against a row's security tags (as a materialised tag list) and a principal's claims.
+    /// A convenience over the deferred-holder path for callers (and tests) that already hold a list; it delegates to the
+    /// same bytes-to-bytes evaluator via <see cref="SecurityTagSet.FromTags"/>.</summary>
     /// <param name="securityTags">The row's security-tag labels (a run's or catalog version's).</param>
     /// <param name="claims">The principal's claims: claim name → its values.</param>
     /// <returns><see langword="true"/> if the rule admits the row to the principal.</returns>
     public bool IsSatisfiedBy(IReadOnlyList<SecurityTag> securityTags, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
     {
         ArgumentNullException.ThrowIfNull(securityTags);
-        ArgumentNullException.ThrowIfNull(claims);
-        return this.root.Evaluate(securityTags, claims);
+        return this.IsSatisfiedBy(SecurityTagSet.FromTags(securityTags), claims);
     }
 
     /// <summary>
     /// Translates the rule into a SQL <c>WHERE</c> boolean fragment (design §14.4) that selects exactly the rows
-    /// <see cref="IsSatisfiedBy"/> would admit, using the backend's dialect/schema fragments. The principal's
-    /// claims are resolved to bound values here (they are query-time constants); tag-key operands become
-    /// correlated <c>EXISTS</c> subqueries over the row's security tags.
+    /// <see cref="IsSatisfiedBy(in SecurityTagSet, IReadOnlyDictionary{string, IReadOnlyList{string}})"/> would admit,
+    /// using the backend's dialect/schema fragments. The principal's claims are resolved to bound values here (they are
+    /// query-time constants); tag-key operands become correlated <c>EXISTS</c> subqueries over the row's security tags.
     /// </summary>
     /// <param name="emitter">The backend's SQL fragment provider (stateful per query; accumulates bound parameters).</param>
     /// <param name="claims">The principal's claims: claim name → its values.</param>
@@ -102,13 +131,126 @@ public sealed class SecurityRule
         return this.root.ToSql(emitter, claims);
     }
 
-    private static bool Intersects(IReadOnlyList<string> a, IReadOnlyList<string> b)
+    // Evaluates every rule in the set against one row's tags, parsing the row tags ONCE into pooled scratch + a slice
+    // table (the SecurityTagSpanSort core), so a multi-rule filter pays one parse per row. The slices index unescaped
+    // UTF-8 in the scratch buffer; nothing escapes to the heap (the buffers are pooled and returned).
+    internal static bool EvaluateAll(IReadOnlyList<SecurityRule> rules, in SecurityTagSet securityTags, in Utf8ClaimSet claims)
     {
-        foreach (string x in a)
+        if (securityTags.IsEmpty)
         {
-            foreach (string y in b)
+            // No row tags: evaluate over an empty span set (a tag-key/truthy operand resolves to empty; a
+            // $claims.superset predicate is vacuously true). The fail-closed untagged-row denial lives in SecurityFilter.
+            var emptyRows = default(RowTags);
+            foreach (SecurityRule rule in rules)
             {
-                if (string.Equals(x, y, StringComparison.Ordinal))
+                if (!rule.root.Evaluate(emptyRows, in claims))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        ReadOnlySpan<byte> json = securityTags.RawJson;
+        int count = securityTags.Count;
+        byte[] scratch = ArrayPool<byte>.Shared.Rent(json.Length);
+        SecurityTagSpanSort.TagSlice[]? rented = count > SecurityTagSpanSort.StackTagCapacity
+            ? ArrayPool<SecurityTagSpanSort.TagSlice>.Shared.Rent(count)
+            : null;
+        try
+        {
+            scoped Span<SecurityTagSpanSort.TagSlice> table = rented is not null
+                ? rented
+                : stackalloc SecurityTagSpanSort.TagSlice[SecurityTagSpanSort.StackTagCapacity];
+            Span<SecurityTagSpanSort.TagSlice> slices = table[..count];
+            SecurityTagSpanSort.Parse(json, scratch, slices);
+            var rows = new RowTags(scratch, slices);
+            foreach (SecurityRule rule in rules)
+            {
+                if (!rule.root.Evaluate(rows, in claims))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(scratch);
+            if (rented is not null)
+            {
+                ArrayPool<SecurityTagSpanSort.TagSlice>.Shared.Return(rented);
+            }
+        }
+    }
+
+    // ── bytes-to-bytes evaluation primitives ────────────────────────────────────────────────────────────────────────
+
+    // Does any value the row carries under tag key `left` intersect the value set the `right` operand resolves to?
+    private static bool SetsIntersect(in Operand left, in Operand right, RowTags rows, in Utf8ClaimSet claims)
+    {
+        if (left.IsTagKey)
+        {
+            return TagKeyIntersects(left.ValueUtf8, right, rows, claims);
+        }
+
+        if (right.IsTagKey)
+        {
+            return TagKeyIntersects(right.ValueUtf8, left, rows, claims);
+        }
+
+        // Both operands are query-time constants (claims/literals): a constant intersection over UTF-8 values.
+        return KnownIntersects(left, right, claims);
+    }
+
+    private static bool TagKeyIntersects(ReadOnlySpan<byte> tagKey, in Operand other, RowTags rows, in Utf8ClaimSet claims)
+    {
+        for (int i = 0; i < rows.Count; i++)
+        {
+            if (rows.Key(i).SequenceEqual(tagKey) && OtherContains(other, rows.Value(i), rows, claims))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool OtherContains(in Operand other, ReadOnlySpan<byte> value, RowTags rows, in Utf8ClaimSet claims)
+    {
+        if (other.IsTagKey)
+        {
+            ReadOnlySpan<byte> otherKey = other.ValueUtf8;
+            for (int j = 0; j < rows.Count; j++)
+            {
+                if (rows.Key(j).SequenceEqual(otherKey) && rows.Value(j).SequenceEqual(value))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return KnownContains(other, value, claims);
+    }
+
+    // Whether a query-time-known operand (literal or claim) resolves to a set containing `value`.
+    private static bool KnownContains(in Operand known, ReadOnlySpan<byte> value, in Utf8ClaimSet claims)
+    {
+        if (known.IsLiteral)
+        {
+            return value.SequenceEqual(known.ValueUtf8);
+        }
+
+        // A claim operand: the principal's values for the claim name.
+        if (claims.TryGetValues(known.ValueUtf8, out byte[][] values))
+        {
+            foreach (byte[] claimValue in values)
+            {
+                if (value.SequenceEqual(claimValue))
                 {
                     return true;
                 }
@@ -118,17 +260,60 @@ public sealed class SecurityRule
         return false;
     }
 
+    private static bool KnownIntersects(in Operand left, in Operand right, in Utf8ClaimSet claims)
+    {
+        if (left.IsLiteral)
+        {
+            return KnownContains(right, left.ValueUtf8, claims);
+        }
+
+        // left is a claim: any of its values present in right's set.
+        if (claims.TryGetValues(left.ValueUtf8, out byte[][] values))
+        {
+            foreach (byte[] claimValue in values)
+            {
+                if (KnownContains(right, claimValue, claims))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    // Whether an operand's value set is non-empty (a bare-operand truthiness test).
+    private static bool OperandNonEmpty(in Operand operand, RowTags rows, in Utf8ClaimSet claims)
+    {
+        if (operand.IsTagKey)
+        {
+            ReadOnlySpan<byte> key = operand.ValueUtf8;
+            for (int i = 0; i < rows.Count; i++)
+            {
+                if (rows.Key(i).SequenceEqual(key))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // A literal always resolves to a single value; a claim is non-empty iff the principal holds it.
+        return operand.IsLiteral || (claims.TryGetValues(operand.ValueUtf8, out byte[][] values) && values.Length > 0);
+    }
+
     private abstract class Node
     {
-        public abstract bool Evaluate(IReadOnlyList<SecurityTag> tags, IReadOnlyDictionary<string, IReadOnlyList<string>> claims);
+        public abstract bool Evaluate(RowTags rows, in Utf8ClaimSet claims);
 
         public abstract string ToSql(ISecurityRuleSqlEmitter emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims);
     }
 
     private sealed class OrNode(Node left, Node right) : Node
     {
-        public override bool Evaluate(IReadOnlyList<SecurityTag> tags, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
-            => left.Evaluate(tags, claims) || right.Evaluate(tags, claims);
+        public override bool Evaluate(RowTags rows, in Utf8ClaimSet claims)
+            => left.Evaluate(rows, in claims) || right.Evaluate(rows, in claims);
 
         public override string ToSql(ISecurityRuleSqlEmitter emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
             => emitter.OrElse(left.ToSql(emitter, claims), right.ToSql(emitter, claims));
@@ -136,8 +321,8 @@ public sealed class SecurityRule
 
     private sealed class AndNode(Node left, Node right) : Node
     {
-        public override bool Evaluate(IReadOnlyList<SecurityTag> tags, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
-            => left.Evaluate(tags, claims) && right.Evaluate(tags, claims);
+        public override bool Evaluate(RowTags rows, in Utf8ClaimSet claims)
+            => left.Evaluate(rows, in claims) && right.Evaluate(rows, in claims);
 
         public override string ToSql(ISecurityRuleSqlEmitter emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
             => emitter.AndAlso(left.ToSql(emitter, claims), right.ToSql(emitter, claims));
@@ -145,8 +330,8 @@ public sealed class SecurityRule
 
     private sealed class NotNode(Node inner) : Node
     {
-        public override bool Evaluate(IReadOnlyList<SecurityTag> tags, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
-            => !inner.Evaluate(tags, claims);
+        public override bool Evaluate(RowTags rows, in Utf8ClaimSet claims)
+            => !inner.Evaluate(rows, in claims);
 
         public override string ToSql(ISecurityRuleSqlEmitter emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
             => emitter.Negate(inner.ToSql(emitter, claims));
@@ -154,9 +339,9 @@ public sealed class SecurityRule
 
     private sealed class ComparisonNode(Operand left, Op op, Operand right) : Node
     {
-        public override bool Evaluate(IReadOnlyList<SecurityTag> tags, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
+        public override bool Evaluate(RowTags rows, in Utf8ClaimSet claims)
         {
-            bool intersects = Intersects(left.Resolve(tags, claims), right.Resolve(tags, claims));
+            bool intersects = SetsIntersect(left, right, rows, in claims);
             return op == Op.Equal ? intersects : !intersects;
         }
 
@@ -193,7 +378,7 @@ public sealed class SecurityRule
             else
             {
                 // Both operands are query-time constants (claims/literals): a constant intersection.
-                intersects = Intersects(left.ResolveKnown(claims), right.ResolveKnown(claims)) ? emitter.TrueLiteral : emitter.FalseLiteral;
+                intersects = ConstantIntersects(left.ResolveKnown(claims), right.ResolveKnown(claims)) ? emitter.TrueLiteral : emitter.FalseLiteral;
             }
 
             return op == Op.Equal ? intersects : emitter.Negate(intersects);
@@ -202,8 +387,8 @@ public sealed class SecurityRule
 
     private sealed class TruthyNode(Operand operand) : Node
     {
-        public override bool Evaluate(IReadOnlyList<SecurityTag> tags, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
-            => operand.Resolve(tags, claims).Count > 0;
+        public override bool Evaluate(RowTags rows, in Utf8ClaimSet claims)
+            => OperandNonEmpty(operand, rows, in claims);
 
         public override string ToSql(ISecurityRuleSqlEmitter emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
             => operand.IsTagKey
@@ -215,14 +400,14 @@ public sealed class SecurityRule
     // "Covered" means a row tag (k, v) has v among the principal's claim values for key k.
     private sealed class ClaimsCoverageNode(ClaimsQuantifier quantifier) : Node
     {
-        public override bool Evaluate(IReadOnlyList<SecurityTag> tags, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
+        public override bool Evaluate(RowTags rows, in Utf8ClaimSet claims)
         {
             if (quantifier == ClaimsQuantifier.Superset)
             {
                 // Every row tag must be covered (vacuously true on an untagged row; the filter denies that case).
-                foreach (SecurityTag tag in tags)
+                for (int i = 0; i < rows.Count; i++)
                 {
-                    if (!IsCovered(tag, claims))
+                    if (!claims.Covers(rows.Key(i), rows.Value(i)))
                     {
                         return false;
                     }
@@ -232,9 +417,9 @@ public sealed class SecurityRule
             }
 
             // Intersects: at least one row tag must be covered.
-            foreach (SecurityTag tag in tags)
+            for (int i = 0; i < rows.Count; i++)
             {
-                if (IsCovered(tag, claims))
+                if (claims.Covers(rows.Key(i), rows.Value(i)))
                 {
                     return true;
                 }
@@ -291,68 +476,61 @@ public sealed class SecurityRule
             // No claim can cover any tag → the principal shares nothing.
             return predicate ?? emitter.FalseLiteral;
         }
+    }
 
-        private static bool IsCovered(SecurityTag tag, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
+    // Constant set intersection over query-time-known string values — only the SQL path's both-constant branch.
+    private static bool ConstantIntersects(IReadOnlyList<string> a, IReadOnlyList<string> b)
+    {
+        foreach (string x in a)
         {
-            if (!claims.TryGetValue(tag.Key, out IReadOnlyList<string>? values))
+            foreach (string y in b)
             {
-                return false;
-            }
-
-            foreach (string value in values)
-            {
-                if (string.Equals(value, tag.Value, StringComparison.Ordinal))
+                if (string.Equals(x, y, StringComparison.Ordinal))
                 {
                     return true;
                 }
             }
-
-            return false;
         }
+
+        return false;
     }
 
-    private readonly struct Operand(OperandKind kind, string value)
+    private readonly struct Operand
     {
-        public bool IsTagKey => kind == OperandKind.TagKey;
+        private readonly OperandKind kind;
+        private readonly string value;
+        private readonly byte[] valueUtf8;
 
-        public bool IsClaimsPredicate => kind == OperandKind.ClaimsPredicate;
+        public Operand(OperandKind kind, string value)
+        {
+            this.kind = kind;
+            this.value = value;
 
-        public ClaimsQuantifier ClaimsQuantifier => string.Equals(value, "superset", StringComparison.Ordinal) ? ClaimsQuantifier.Superset : ClaimsQuantifier.Intersects;
+            // Encode the operand's value to UTF-8 once at compile so every per-row comparison is span-vs-span (a
+            // $claims.* predicate carries only a marker, never compared against a row, so its UTF-8 is harmless/unused).
+            this.valueUtf8 = Encoding.UTF8.GetBytes(value);
+        }
 
-        public string Value => value;
+        public bool IsTagKey => this.kind == OperandKind.TagKey;
 
-        // The query-time-known values of a claim or literal operand. Not valid for a tag-key operand (row data).
+        public bool IsLiteral => this.kind == OperandKind.Literal;
+
+        public bool IsClaimsPredicate => this.kind == OperandKind.ClaimsPredicate;
+
+        public ClaimsQuantifier ClaimsQuantifier => string.Equals(this.value, "superset", StringComparison.Ordinal) ? ClaimsQuantifier.Superset : ClaimsQuantifier.Intersects;
+
+        public string Value => this.value;
+
+        public ReadOnlySpan<byte> ValueUtf8 => this.valueUtf8;
+
+        // The query-time-known values of a claim or literal operand (the SQL path). Not valid for a tag-key operand.
         public IReadOnlyList<string> ResolveKnown(IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
-            => kind switch
+            => this.kind switch
             {
-                OperandKind.Literal => [value],
-                OperandKind.Claim => claims.TryGetValue(value, out IReadOnlyList<string>? values) ? values : [],
+                OperandKind.Literal => [this.value],
+                OperandKind.Claim => claims.TryGetValue(this.value, out IReadOnlyList<string>? values) ? values : [],
                 _ => throw new InvalidOperationException("ResolveKnown is not valid for a tag-key operand."),
             };
-
-        public IReadOnlyList<string> Resolve(IReadOnlyList<SecurityTag> tags, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
-        {
-            switch (kind)
-            {
-                case OperandKind.Literal:
-                    return [value];
-
-                case OperandKind.Claim:
-                    return claims.TryGetValue(value, out IReadOnlyList<string>? values) ? values : [];
-
-                default:
-                    var result = new List<string>();
-                    foreach (SecurityTag tag in tags)
-                    {
-                        if (string.Equals(tag.Key, value, StringComparison.Ordinal))
-                        {
-                            result.Add(tag.Value);
-                        }
-                    }
-
-                    return result;
-            }
-        }
     }
 
     private ref struct Parser(string text)

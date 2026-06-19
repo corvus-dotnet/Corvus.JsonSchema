@@ -33,14 +33,15 @@ public interface IObservedIdentityStore
     /// a sighting never fails a foreground operation.
     /// </summary>
     /// <param name="kind">The grantee kind.</param>
-    /// <param name="value">The grantee value (a subject id, tenant name, role name, or workflow id) — the prefix-searched key part.</param>
-    /// <param name="label">An optional human-friendly display label, or <see langword="null"/>.</param>
+    /// <param name="value">The grantee value (a subject id, tenant name, role name, or workflow id) — the prefix-searched key part — as unescaped UTF-8.</param>
+    /// <param name="label">An optional human-friendly display label as unescaped UTF-8 (empty for none).</param>
     /// <param name="identity">The grantee's exact <c>sys:</c> identity (empty for the unscoped/system identity).</param>
     /// <param name="complete">Whether <paramref name="identity"/> is the principal's whole stamped identity (so an exact-equality grant matches), or a best-effort partial mapping (§17.2).</param>
-    /// <param name="provenance">Where this identity was seen (e.g. <c>accessRequest</c>, <c>catalogVersion</c>, <c>administrator</c>, <c>grant</c>).</param>
+    /// <param name="provenance">Where this identity was seen (an interned literal, e.g. <c>accessRequest</c>, <c>catalogVersion</c>, <c>administrator</c>, <c>grant</c>).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A task that completes when the sighting is recorded.</returns>
-    ValueTask SeenAsync(GranteeKind kind, string value, string? label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken);
+    /// <remarks><paramref name="value"/> and <paramref name="label"/> are <see cref="ReadOnlyMemory{T}"/> so the caller can pass an owned, pooled UTF-8 buffer (<c>GetUtf8String().TakeOwnership(…)</c>) that survives the store's awaits — no managed string crosses the seam; a backend materializes <paramref name="value"/> only at its storage-key leaf.</remarks>
+    ValueTask SeenAsync(GranteeKind kind, ReadOnlyMemory<byte> value, ReadOnlyMemory<byte> label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken);
 
     /// <summary>
     /// Lists one keyset page of observed identities the caller's read reach admits whose <c>subjectValue</c> starts with
@@ -52,13 +53,13 @@ public interface IObservedIdentityStore
     /// </summary>
     /// <param name="context">The caller's row-access grant (use <see cref="AccessContext.System"/> for full reach).</param>
     /// <param name="kind">Restrict to one grantee kind, or <see langword="null"/> for all kinds.</param>
-    /// <param name="prefix">The case-sensitive <c>subjectValue</c> prefix to match (empty matches all).</param>
+    /// <param name="prefix">The case-sensitive <c>subjectValue</c> prefix to match (empty matches all), as unescaped UTF-8.</param>
     /// <param name="limit">The maximum number of identities to return in the page (a non-positive value is treated as 1).</param>
-    /// <param name="pageToken">An opaque token from a previous page's <see cref="ObservedIdentityPage.NextPageToken"/>, or <see langword="null"/> for the first page.</param>
+    /// <param name="pageToken">An opaque token from a previous page's <see cref="ObservedIdentityPage.NextPageToken"/>, or <see langword="null"/> for the first page (a store-minted continuation, not identity data, so it stays a string).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The page (matched identities + an optional next-page token), as a disposable batch the caller must dispose.</returns>
     /// <exception cref="FormatException"><paramref name="pageToken"/> is not a valid continuation token.</exception>
-    ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, GranteeKind? kind, string prefix, int limit, string? pageToken, CancellationToken cancellationToken);
+    ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, GranteeKind? kind, ReadOnlyMemory<byte> prefix, int limit, string? pageToken, CancellationToken cancellationToken);
 
     /// <summary>
     /// Probes for an identity collision (design §16.5.4): returns an existing grantee whose <c>sys:</c> identity is
@@ -76,9 +77,9 @@ public interface IObservedIdentityStore
     /// sentinel) never collides and always returns <see langword="null"/>.
     /// </remarks>
     /// <param name="kind">The grantee kind being authored (excluded from the match together with <paramref name="value"/>).</param>
-    /// <param name="value">The grantee value being authored (excluded from the match together with <paramref name="kind"/>).</param>
+    /// <param name="value">The grantee value being authored (excluded from the match together with <paramref name="kind"/>), as unescaped UTF-8.</param>
     /// <param name="identity">The resolved <c>sys:</c> identity to check for uniqueness.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The conflicting grantee, or <see langword="null"/> when the identity is unique to (<paramref name="kind"/>, <paramref name="value"/>).</returns>
-    ValueTask<ObservedIdentityConflict?> FindIdentityConflictAsync(GranteeKind kind, string value, SecurityTagSet identity, CancellationToken cancellationToken);
+    ValueTask<ObservedIdentityConflict?> FindIdentityConflictAsync(GranteeKind kind, ReadOnlyMemory<byte> value, SecurityTagSet identity, CancellationToken cancellationToken);
 }

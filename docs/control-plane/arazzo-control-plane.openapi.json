@@ -1352,7 +1352,7 @@
         ],
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdministratorIdentity" } } }
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdministratorMemberWrite" } } }
         },
         "responses": {
           "200": {
@@ -2844,6 +2844,23 @@
           "value": { "type": "string", "description": "The identity value (e.g. the base workflow id, or a tenant id)." }
         },
         "required": ["dimension", "value"]
+      },
+      "AdministratorMemberWrite": {
+        "type": "object",
+        "description": "Names an administrator to add (§15). Provide EITHER a resolved grantee from the picker — its `kind`, searchable `value`, and full `identity` (the {dimension,value} grants of GET /identity/grantees), which names a multi-tag grantee (e.g. a person resolved to {sys:tenant, sys:sub}) exactly — OR, for the simple case, a single deployment-mapped {dimension, value} grant (the kind is inferred from the dimension). When `identity` is present and non-empty it is the stored administrator identity.",
+        "properties": {
+          "kind": { "$ref": "#/components/schemas/GranteeKind" },
+          "value": { "type": "string", "description": "The grantee value — the searched key (resolved-grantee form) or the single grant's value." },
+          "identity": {
+            "type": "array",
+            "description": "The grantee's full resolved identity as {dimension, value} grants (from GET /identity/grantees). When present and non-empty this is the administrator identity; `kind` should accompany it.",
+            "items": { "$ref": "#/components/schemas/AdministratorIdentity" }
+          },
+          "label": { "type": "string", "description": "An optional human-friendly display label, recorded for the §16.5.4 typeahead." },
+          "complete": { "type": "boolean", "description": "Whether `identity` is the grantee's whole stamped identity (the picker's honest `complete`); defaults to true for the resolved-grantee form." },
+          "dimension": { "type": "string", "description": "The single-grant identity dimension (the simple form; ignored when `identity` is provided). The kind is inferred from it." }
+        },
+        "required": ["value"]
       },
       "AdministratorList": {
         "type": "object",

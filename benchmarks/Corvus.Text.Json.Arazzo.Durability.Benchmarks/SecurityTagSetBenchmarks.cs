@@ -27,7 +27,7 @@ public class SecurityTagSetBenchmarks
     private SecurityTagSet holder;
     private string jsonString = null!;
     private string delimited = null!;
-    private ParsedJsonDocument<JsonElement> document;
+    private ParsedJsonDocument<JsonElement> document = null!;
     private JsonElement tagsElement;
 
     [GlobalSetup]
