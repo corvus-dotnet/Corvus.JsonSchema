@@ -10,7 +10,16 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// <typeparam name="TState">The state type (carried by reference so the callback can be a <see langword="static"/> lambda).</typeparam>
 /// <param name="builder">The identity builder writing into a pooled buffer.</param>
 /// <param name="state">The build state.</param>
-public delegate void SecurityTagBuildAction<TState>(ref IdentityBuilder builder, in TState state);
+public delegate void SecurityTagBuildAction<TState>(ref IdentityBuilder builder, in TState state)
+    where TState : allows ref struct;
+
+/// <summary>Adds an identity's tags to <paramref name="builder"/> from <paramref name="state"/>, returning whether to keep the record — the callback of <see cref="SecurityTagSet.TryBuild{TState}"/>.</summary>
+/// <typeparam name="TState">The state type (carried by reference so the callback can be a <see langword="static"/> lambda).</typeparam>
+/// <param name="builder">The identity builder writing into a pooled buffer.</param>
+/// <param name="state">The build state.</param>
+/// <returns><see langword="true"/> to seal the identity, <see langword="false"/> to drop the record (no identity is produced).</returns>
+public delegate bool SecurityTagTryBuildAction<TState>(ref IdentityBuilder builder, in TState state)
+    where TState : allows ref struct;
 
 /// <summary>
 /// Builds a <see cref="SecurityTagSet"/> tag by tag straight into a pooled JSON buffer (design §14.2 / §16.5.4), so an

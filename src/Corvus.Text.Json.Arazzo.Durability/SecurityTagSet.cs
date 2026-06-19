@@ -238,6 +238,7 @@ public readonly struct SecurityTagSet
     /// <param name="build">Adds the tags via <see cref="IdentityBuilder.Add(ReadOnlySpan{byte}, ReadOnlySpan{byte})"/>; adding none yields the empty set.</param>
     /// <returns>The set.</returns>
     public static SecurityTagSet Build<TState>(in TState state, SecurityTagBuildAction<TState> build)
+        where TState : allows ref struct
     {
         ArgumentNullException.ThrowIfNull(build);
 
@@ -251,6 +252,45 @@ public readonly struct SecurityTagSet
             writer.WriteEndArray();
             writer.Flush();
             return builder.Count == 0 ? default : new SecurityTagSet(buffer.WrittenSpan.ToArray());
+        }
+        finally
+        {
+            workspace.ReturnWriterAndBuffer(writer, buffer);
+        }
+    }
+
+    /// <summary>
+    /// Builds the set the same bytes-to-bytes way as <see cref="Build{TState}"/>, but lets the callback drop the record —
+    /// returning <see langword="false"/> produces no identity (<paramref name="result"/> is the empty set and the method
+    /// returns <see langword="false"/>), so a directory mapper can decline a record it does not recognise without first
+    /// materializing anything.
+    /// </summary>
+    /// <typeparam name="TState">The state threaded to <paramref name="build"/>.</typeparam>
+    /// <param name="state">The state passed by reference to <paramref name="build"/>.</param>
+    /// <param name="build">Adds the tags and returns whether to keep the record.</param>
+    /// <param name="result">The built set when kept; the empty set when dropped.</param>
+    /// <returns><see langword="true"/> if the record was kept.</returns>
+    public static bool TryBuild<TState>(in TState state, SecurityTagTryBuildAction<TState> build, out SecurityTagSet result)
+        where TState : allows ref struct
+    {
+        ArgumentNullException.ThrowIfNull(build);
+
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, StackallocByteThreshold, out IByteBufferWriter buffer);
+        try
+        {
+            writer.WriteStartArray();
+            var builder = new IdentityBuilder(writer);
+            if (!build(ref builder, in state))
+            {
+                result = default;
+                return false;
+            }
+
+            writer.WriteEndArray();
+            writer.Flush();
+            result = builder.Count == 0 ? default : new SecurityTagSet(buffer.WrittenSpan.ToArray());
+            return true;
         }
         finally
         {
