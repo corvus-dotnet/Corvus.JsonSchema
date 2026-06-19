@@ -135,13 +135,11 @@ public sealed class SourceCredentialProviderFactory
     {
         if (binding.TryGetConfigValue("location", out string? location))
         {
-            return location!.ToLowerInvariant() switch
-            {
-                "header" => ApiKeyLocation.Header,
-                "query" => ApiKeyLocation.Query,
-                "cookie" => ApiKeyLocation.Cookie,
-                _ => throw new InvalidOperationException($"Binding '{binding.SourceNameValue}' has an unknown api-key location '{location}'."),
-            };
+            // Case-fold without allocating a lowercased string (matching the OrdinalIgnoreCase idiom used above).
+            if (string.Equals(location, "header", StringComparison.OrdinalIgnoreCase)) { return ApiKeyLocation.Header; }
+            if (string.Equals(location, "query", StringComparison.OrdinalIgnoreCase)) { return ApiKeyLocation.Query; }
+            if (string.Equals(location, "cookie", StringComparison.OrdinalIgnoreCase)) { return ApiKeyLocation.Cookie; }
+            throw new InvalidOperationException($"Binding '{binding.SourceNameValue}' has an unknown api-key location '{location}'.");
         }
 
         return ApiKeyLocation.Header;

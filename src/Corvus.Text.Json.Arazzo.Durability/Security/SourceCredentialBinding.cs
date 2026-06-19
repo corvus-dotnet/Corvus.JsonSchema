@@ -138,8 +138,8 @@ public readonly partial struct SourceCredentialBinding
     // UTF-8 (a pooled GetUtf8String buffer per side) — no managed string for either side.
     private static bool RunCarries(ReadOnlySpan<SecurityTagSpanSort.TagSlice> slices, ReadOnlySpan<byte> scratch, SecurityTagInfo required)
     {
-        using UnescapedUtf8JsonString key = ((JsonElement)required.Key).GetUtf8String();
-        using UnescapedUtf8JsonString value = ((JsonElement)required.Value).GetUtf8String();
+        using UnescapedUtf8JsonString key = required.Key.GetUtf8String();
+        using UnescapedUtf8JsonString value = required.Value.GetUtf8String();
         foreach (SecurityTagSpanSort.TagSlice slice in slices)
         {
             if (scratch.Slice(slice.KeyOffset, slice.KeyLength).SequenceEqual(key.Span)

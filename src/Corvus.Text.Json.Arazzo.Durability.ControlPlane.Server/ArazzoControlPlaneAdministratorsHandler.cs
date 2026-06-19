@@ -86,7 +86,7 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
                 newAdministrator = SecurityTagSet.Build(in state, BuildGranteeIdentity);
                 if (body.Kind.IsNotUndefined())
                 {
-                    using UnescapedUtf8JsonString kindToken = ((JsonElement)body.Kind).GetUtf8String();
+                    using UnescapedUtf8JsonString kindToken = body.Kind.GetUtf8String();
                     hasKind = GranteeKinds.TryParse(kindToken.Span, out kind);
                 }
 
@@ -102,7 +102,7 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
 
                 var state = new SingleGrantState(this.access, body.DimensionValue, body.Value);
                 newAdministrator = SecurityTagSet.Build(in state, BuildSingleGrantIdentity);
-                using (UnescapedUtf8JsonString dimension = ((JsonElement)body.DimensionValue).GetUtf8String())
+                using (UnescapedUtf8JsonString dimension = body.DimensionValue.GetUtf8String())
                 {
                     hasKind = GranteeKinds.FromDimension(dimension.Span, out kind);
                 }
@@ -130,11 +130,11 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
         byte[]? labelRented = null;
         try
         {
-            ReadOnlyMemory<byte> value = ((JsonElement)body.Value).GetUtf8String().TakeOwnership(out valueRented);
+            ReadOnlyMemory<byte> value = body.Value.GetUtf8String().TakeOwnership(out valueRented);
             ReadOnlyMemory<byte> label = default;
             if (body.Label.IsNotUndefined())
             {
-                label = ((JsonElement)body.Label).GetUtf8String().TakeOwnership(out labelRented);
+                label = body.Label.GetUtf8String().TakeOwnership(out labelRented);
             }
 
             // Collision guard (§16.5.4): if the resolved identity already belongs to a DIFFERENT recorded grantee, the
@@ -195,8 +195,8 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
     {
         foreach (Models.AdministratorIdentity grant in state.Identity.EnumerateArray())
         {
-            using UnescapedUtf8JsonString dimension = ((JsonElement)grant.DimensionValue).GetUtf8String();
-            using UnescapedUtf8JsonString value = ((JsonElement)grant.Value).GetUtf8String();
+            using UnescapedUtf8JsonString dimension = grant.DimensionValue.GetUtf8String();
+            using UnescapedUtf8JsonString value = grant.Value.GetUtf8String();
             state.Access.ResolveUsageGrantInto(dimension.Span, value.Span, ref builder);
         }
     }
@@ -204,8 +204,8 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
     // Builds the interim single-grant identity ({dimension, value}) bytes-to-bytes.
     private static void BuildSingleGrantIdentity(ref IdentityBuilder builder, in SingleGrantState state)
     {
-        using UnescapedUtf8JsonString dimension = ((JsonElement)state.Dimension).GetUtf8String();
-        using UnescapedUtf8JsonString value = ((JsonElement)state.Value).GetUtf8String();
+        using UnescapedUtf8JsonString dimension = state.Dimension.GetUtf8String();
+        using UnescapedUtf8JsonString value = state.Value.GetUtf8String();
         state.Access.ResolveUsageGrantInto(dimension.Span, value.Span, ref builder);
     }
 
@@ -230,8 +230,8 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
     // of the picker's BuildGranteeIdentity, one grant per administrator).
     private static void BuildAdministratorGrantIdentity(ref IdentityBuilder builder, in AdministratorGrantState state)
     {
-        using UnescapedUtf8JsonString dimension = ((JsonElement)state.Identity.DimensionValue).GetUtf8String();
-        using UnescapedUtf8JsonString value = ((JsonElement)state.Identity.Value).GetUtf8String();
+        using UnescapedUtf8JsonString dimension = state.Identity.DimensionValue.GetUtf8String();
+        using UnescapedUtf8JsonString value = state.Identity.Value.GetUtf8String();
         state.Access.ResolveUsageGrantInto(dimension.Span, value.Span, ref builder);
     }
 
@@ -284,7 +284,7 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
 
                 GranteeKind transferKind;
                 bool mapped;
-                using (UnescapedUtf8JsonString dimension = ((JsonElement)identity.DimensionValue).GetUtf8String())
+                using (UnescapedUtf8JsonString dimension = identity.DimensionValue.GetUtf8String())
                 {
                     mapped = GranteeKinds.FromDimension(dimension.Span, out transferKind);
                 }
@@ -297,7 +297,7 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
                 byte[]? valueRented = null;
                 try
                 {
-                    ReadOnlyMemory<byte> value = ((JsonElement)identity.Value).GetUtf8String().TakeOwnership(out valueRented);
+                    ReadOnlyMemory<byte> value = identity.Value.GetUtf8String().TakeOwnership(out valueRented);
                     if (await this.observed.FindIdentityConflictAsync(transferKind, value, resolved, cancellationToken).ConfigureAwait(false) is not null)
                     {
                         return TransferAdministrationResult.Conflict(CollisionProblem(), workspace);
