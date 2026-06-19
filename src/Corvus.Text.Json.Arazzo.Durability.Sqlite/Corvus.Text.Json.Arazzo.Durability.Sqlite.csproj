@@ -26,6 +26,9 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.Sqlite" />
+    <!-- Bump the SQLitePCLRaw native binary past NU1903 / GHSA-2m69-gcr7-jv3q (lib.e_sqlite3 2.1.11 that
+         Microsoft.Data.Sqlite pulls transitively). A direct reference here flows the patched bundle to every consumer. -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" />
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
     <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
     <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />

@@ -41,6 +41,10 @@
     <PackageVersion Include="Microsoft.Bcl.Memory" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.0.1" />
     <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.7" />
+    <!-- Direct-referenced by the Sqlite store to bump the SQLitePCLRaw family past the native-binary advisory NU1903 /
+         GHSA-2m69-gcr7-jv3q on lib.e_sqlite3 2.1.11 (which Microsoft.Data.Sqlite 10.0.7 otherwise pulls transitively).
+         bundle 3.0.3 carries the patched native binary lib.e_sqlite3 3.50.3 and flows to every store consumer. -->
+    <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
     <PackageVersion Include="MongoDB.Driver" Version="3.9.0" />
     <PackageVersion Include="MySqlConnector" Version="2.6.0" />
     <PackageVersion Include="Npgsql" Version="10.0.3" />
