@@ -49,7 +49,7 @@ public sealed class AmbientIdentityStampTests
         AmbientIdentityStamp.Apply(null, tags).ShouldBeSameAs(tags);
 
         SecurityTagSet set = SecurityTagSet.FromTags(tags);
-        AmbientIdentityStamp.Apply(null, set).ShouldBe(set);
+        AmbientIdentityStamp.Apply((IAmbientIdentityDimensions?)null, set).ShouldBe(set);
     }
 
     [TestMethod]
