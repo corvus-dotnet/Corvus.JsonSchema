@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-06-18T17:49:51.8497634\u002B00:00",
+  "generatedAt": "2026-06-19T15:36:40.6339557\u002B00:00",
   "generatedFiles": [
     "ListRunsRequest.cs",
     "ListRunsResponse.cs",
@@ -197,6 +197,12 @@
     "Models/AdministratorList.AdministratorIdentityArray.cs",
     "Models/AdministratorList.AdministratorIdentityArray.Mutable.cs",
     "Models/AdministratorList.AdministratorIdentityArray.JsonSchema.cs",
+    "Models/AdministratorMemberWrite.cs",
+    "Models/AdministratorMemberWrite.Mutable.cs",
+    "Models/AdministratorMemberWrite.JsonSchema.cs",
+    "Models/AdministratorMemberWrite.AdministratorIdentityArray.cs",
+    "Models/AdministratorMemberWrite.AdministratorIdentityArray.Mutable.cs",
+    "Models/AdministratorMemberWrite.AdministratorIdentityArray.JsonSchema.cs",
     "Models/AdministratorSetWrite.cs",
     "Models/AdministratorSetWrite.Mutable.cs",
     "Models/AdministratorSetWrite.JsonSchema.cs",
@@ -499,9 +505,9 @@
     "Models/GetIdentityGranteesSource.JsonSchema.cs",
     "Models/Corvus__GlobalDeclarations.cs"
   ],
-  "generatorVersion": "1.0.0\u002B4c7c292b607df1bb17133cbd47f9e7c9cc0426bf",
+  "generatorVersion": "1.0.0\u002Ba1005e9c7d38220596bfb82a218838c99361a4c2",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
-  "specFileHash": "da278e838e7133dd0162488d9309324b85e73ce41b662b53c5b35b477d632171",
+  "specFileHash": "e376402e8b7286fe6fa1be26b214ed0e0243df9fcee596da598c1a75eb356db4",
   "specVersion": "3.2"
 }

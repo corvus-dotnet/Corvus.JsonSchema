@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
+using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Directories;
 using Corvus.Text.Json.Arazzo.Durability;
@@ -77,8 +79,16 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
     /// <inheritdoc/>
     public async ValueTask<SearchGranteesResult> HandleSearchGranteesAsync(SearchGranteesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        GranteeKind? kind = parameters.Kind.IsNotUndefined() && GranteeKinds.TryParse((string)parameters.Kind, out GranteeKind k) ? k : null;
-        string prefix = parameters.Q.IsNotUndefined() ? (string)parameters.Q : string.Empty;
+        GranteeKind? kind = null;
+        if (parameters.Kind.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString kindToken = ((JsonElement)parameters.Kind).GetUtf8String();
+            if (GranteeKinds.TryParse(kindToken.Span, out GranteeKind k))
+            {
+                kind = k;
+            }
+        }
+
         string source = parameters.Source.IsNotUndefined() ? (string)parameters.Source : "observed";
         int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : DefaultLimit;
         string? pageToken = parameters.PageToken.IsNotUndefined() ? (string)parameters.PageToken : null;
@@ -86,49 +96,65 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
         // Reach-scope discovery to the caller's read reach (§17.1) — the same AccessContext idiom every other store uses.
         AccessContext context = this.access.Current();
 
-        // The projected grantee (ResolvedGrantee.Source) is a ref struct, so it cannot be collected into a list; the
-        // array is built inline from the live results, which stay in scope through Ok (it materialises the body).
-        if (string.Equals(source, "directory", StringComparison.Ordinal) && this.directory is not null)
+        // The search prefix flows to the (UTF-8) observed store as owned, pooled memory that survives the await — read
+        // once via GetUtf8String().TakeOwnership and returned to the pool in the finally; no managed string here.
+        byte[]? prefixRented = null;
+        try
         {
-            IReadOnlyList<ResolvedPrincipal> found = await this.directory.SearchAsync(kind ?? GranteeKind.Person, prefix, limit, cancellationToken).ConfigureAwait(false);
-            Models.GranteeList.Source directoryBody = new((ref Models.GranteeList.Builder b) => b.Create(
-                grantees: new Models.GranteeList.ResolvedGranteeArray.Source((ref Models.GranteeList.ResolvedGranteeArray.Builder ab) =>
-                {
-                    foreach (ResolvedPrincipal principal in found)
-                    {
-                        // The directory is external (no AccessContext), so reach-filter its results here, consistently.
-                        if (context.Admits(AccessVerb.Read, principal.Identity))
-                        {
-                            ab.AddItem(this.ToGrantee(principal.Kind.ToToken(), principal.Value, principal.Label, principal.Identity, complete: true, "directory"));
-                        }
-                    }
-                })));
-            return SearchGranteesResult.Ok(directoryBody, workspace);
-        }
+            ReadOnlyMemory<byte> prefix = parameters.Q.IsNotUndefined()
+                ? ((JsonElement)parameters.Q).GetUtf8String().TakeOwnership(out prefixRented)
+                : default;
 
-        using ObservedIdentityPage page = await this.observed.SearchAsync(context, kind, prefix, limit, pageToken, cancellationToken).ConfigureAwait(false);
-        string? nextToken = page.NextPageToken;
-        Models.GranteeList.Source body = new((ref Models.GranteeList.Builder b) =>
-        {
-            var array = new Models.GranteeList.ResolvedGranteeArray.Source((ref Models.GranteeList.ResolvedGranteeArray.Builder ab) =>
+            // The projected grantee (ResolvedGrantee.Source) is a ref struct, so it cannot be collected into a list; the
+            // array is built inline from the live results, which stay in scope through Ok (it materialises the body).
+            if (string.Equals(source, "directory", StringComparison.Ordinal) && this.directory is not null)
             {
-                foreach (ObservedIdentity identity in page.Identities)
+                // The directory query is a string leaf (the IPrincipalDirectory seam is string-typed — an LDAP filter / an
+                // HTTP URI), so transcode the prefix once for it.
+                IReadOnlyList<ResolvedPrincipal> found = await this.directory.SearchAsync(kind ?? GranteeKind.Person, Encoding.UTF8.GetString(prefix.Span), limit, cancellationToken).ConfigureAwait(false);
+
+                // Project the resolved principals BYTES-TO-BYTES with the generated builder's context-threading form (static
+                // lambdas + a ref-struct state): each grantee's value/label flow as the owned UTF-8 the adapter resolved,
+                // written straight into the model — no managed-string round-trip, and no closure allocated per grantee.
+                var directoryState = new DirectoryGranteesState(found, context, this.access);
+                Models.GranteeList grantees = Models.GranteeList.CreateBuilder(
+                    workspace,
+                    in directoryState,
+                    Models.GranteeList.ResolvedGranteeArray.Build(in directoryState, BuildDirectoryGrantees)).RootElement;
+                return SearchGranteesResult.Ok(grantees, workspace);
+            }
+
+            using ObservedIdentityPage page = await this.observed.SearchAsync(context, kind, prefix, limit, pageToken, cancellationToken).ConfigureAwait(false);
+            string? nextToken = page.NextPageToken;
+            Models.GranteeList.Source body = new((ref Models.GranteeList.Builder b) =>
+            {
+                var array = new Models.GranteeList.ResolvedGranteeArray.Source((ref Models.GranteeList.ResolvedGranteeArray.Builder ab) =>
                 {
-                    ab.AddItem(this.ToGrantee(identity.SubjectKindValue, identity.SubjectValueValue, identity.LabelOrNull, identity.IdentityTagsValue, identity.CompleteValue, "observed"));
+                    foreach (ObservedIdentity identity in page.Identities)
+                    {
+                        ab.AddItem(this.ToGrantee(identity.SubjectKindValue, identity.SubjectValueValue, identity.LabelOrNull, identity.IdentityTagsValue, identity.CompleteValue, "observed"));
+                    }
+                });
+
+                if (nextToken is null)
+                {
+                    b.Create(grantees: array);
+                }
+                else
+                {
+                    b.Create(grantees: array, nextPageToken: nextToken);
                 }
             });
 
-            if (nextToken is null)
+            return SearchGranteesResult.Ok(body, workspace);
+        }
+        finally
+        {
+            if (prefixRented is not null)
             {
-                b.Create(grantees: array);
+                ArrayPool<byte>.Shared.Return(prefixRented);
             }
-            else
-            {
-                b.Create(grantees: array, nextPageToken: nextToken);
-            }
-        });
-
-        return SearchGranteesResult.Ok(body, workspace);
+        }
     }
 
     private static Models.AdministratorIdentity.Source ToIdentity(CredentialUsageGrant grant)
@@ -158,5 +184,66 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
                 b.Create(complete: complete, identity: identityArray, kind: kindToken, source: source, value: value, label: label);
             }
         });
+    }
+
+    // ── directory grantee projection (bytes-to-bytes, context-threaded — no closures, design §16.5.4) ────────────────
+
+    // Builds the directory grantees array: each principal admitted by the caller's read reach is projected through its own
+    // item state, so the per-grantee build threads the principal's owned value/label UTF-8 (no managed string, no closure).
+    private static void BuildDirectoryGrantees(in DirectoryGranteesState state, ref Models.GranteeList.ResolvedGranteeArray.Builder array)
+    {
+        foreach (ResolvedPrincipal principal in state.Found)
+        {
+            // The directory is external (no AccessContext on its rows), so reach-filter its results here, consistently.
+            if (!state.Context.Admits(AccessVerb.Read, principal.Identity))
+            {
+                continue;
+            }
+
+            var item = new DirectoryGranteeItemState(principal, state.Access.DescribeUsageScope(principal.Identity));
+            array.AddItem(Models.ResolvedGrantee.Build(in item, BuildDirectoryGrantee));
+        }
+    }
+
+    // Builds one resolved grantee: the value/label flow as the adapter-owned UTF-8 the principal holds (no string), the
+    // kind/source as UTF-8 enum tokens, and the identity is described as {dimension, value} grants. `complete` is true for
+    // a directory full-resolution (§17.2).
+    private static void BuildDirectoryGrantee(in DirectoryGranteeItemState item, ref Models.ResolvedGrantee.Builder grantee)
+    {
+        grantee.Create(
+            in item,
+            complete: true,
+            identity: Models.ResolvedGrantee.AdministratorIdentityArray.Build(in item, BuildDirectoryGranteeIdentity),
+            kind: item.Principal.Kind.ToTokenUtf8(),
+            source: "directory"u8,
+            value: item.Principal.ValueMemory.Span,
+            label: item.Principal.HasLabel ? (Models.JsonString.Source)item.Principal.LabelMemory.Span : default);
+    }
+
+    // Describes a grantee's identity as the {dimension, value} grants its sys: tags map to (never raw tags). The grant
+    // dimension/value are the genuine response leaf (DescribeUsageScope materializes them as strings); ToIdentity writes
+    // them through the WriteAction form, so the lazy item never holds a stack ref to a string→Source temporary.
+    private static void BuildDirectoryGranteeIdentity(in DirectoryGranteeItemState item, ref Models.ResolvedGrantee.AdministratorIdentityArray.Builder identities)
+    {
+        foreach (CredentialUsageGrant grant in item.Grants)
+        {
+            identities.AddItem(ToIdentity(grant));
+        }
+    }
+
+    private readonly ref struct DirectoryGranteesState(IReadOnlyList<ResolvedPrincipal> found, AccessContext context, ControlPlaneAccess access)
+    {
+        public IReadOnlyList<ResolvedPrincipal> Found { get; } = found;
+
+        public AccessContext Context { get; } = context;
+
+        public ControlPlaneAccess Access { get; } = access;
+    }
+
+    private readonly ref struct DirectoryGranteeItemState(ResolvedPrincipal principal, IReadOnlyList<CredentialUsageGrant> grants)
+    {
+        public ResolvedPrincipal Principal { get; } = principal;
+
+        public IReadOnlyList<CredentialUsageGrant> Grants { get; } = grants;
     }
 }

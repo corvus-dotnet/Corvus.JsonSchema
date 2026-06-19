@@ -301,7 +301,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                 && (query.UpdatedBefore is not { } updatedBefore || index.UpdatedAt < updatedBefore)
                 && (query.CorrelationId is not { } cid || index.CorrelationId == cid)
                 && query.Tags.AllContainedIn(index.Tags)
-                && (query.Security?.IsSatisfiedBy(index.SecurityTags.ToList()) ?? true)
+                && (query.Security?.IsSatisfiedBy(index.SecurityTags) ?? true)
                 && (after is null || string.CompareOrdinal(runId.Value, after) > 0))
             {
                 listings.Add(new WorkflowRunListing(runId, index));

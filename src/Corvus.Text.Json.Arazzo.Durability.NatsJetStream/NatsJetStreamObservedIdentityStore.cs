@@ -118,32 +118,39 @@ public sealed class NatsJetStreamObservedIdentityStore : IObservedIdentityStore,
     }
 
     /// <inheritdoc/>
-    public async ValueTask SeenAsync(GranteeKind kind, string value, string? label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken)
+    public async ValueTask SeenAsync(GranteeKind kind, ReadOnlyMemory<byte> value, ReadOnlyMemory<byte> label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(value);
         ArgumentNullException.ThrowIfNull(provenance);
         string kindToken = kind.ToToken();
         DateTimeOffset now = this.timeProvider.GetUtcNow();
-        string key = Key(kindToken, value);
+
+        // The KV key (and the digest-index keys) are built from the value as a string, so the value materializes once
+        // here for those storage keys; the document body is serialized bytes-to-bytes from the value/label spans at the
+        // synchronous serialize calls below (taken after the read-await, so no span crosses an await).
+        string valueKey = Encoding.UTF8.GetString(value.Span);
+        string key = Key(kindToken, valueKey);
 
         // Read-merge-write: a first sighting inserts; an existing one preserves firstSeen, bumps lastSeen, unions
         // provenance, and refreshes label/identity/completeness (the shared merge). KV Put overwrites either way.
         NatsKVEntry<byte[]>? entry = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
         byte[] json = entry is { Value: { } existing }
-            ? ObservedIdentitySerialization.SerializeUpserted(existing, kindToken, value, label, identity, complete, now, provenance)
-            : ObservedIdentitySerialization.SerializeNew(kindToken, value, label, identity, complete, now, provenance);
+            ? ObservedIdentitySerialization.SerializeUpserted(existing, kindToken, value.Span, label.Span, identity, complete, now, provenance)
+            : ObservedIdentitySerialization.SerializeNew(kindToken, value.Span, label.Span, identity, complete, now, provenance);
 
         await this.store.PutAsync(key, json, cancellationToken: cancellationToken).ConfigureAwait(false);
-        await this.ReindexDigestAsync(kindToken, value, identity, cancellationToken).ConfigureAwait(false);
+        await this.ReindexDigestAsync(kindToken, valueKey, identity, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, GranteeKind? kind, string prefix, int limit, string? pageToken, CancellationToken cancellationToken)
+    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, GranteeKind? kind, ReadOnlyMemory<byte> prefix, int limit, string? pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        ArgumentNullException.ThrowIfNull(prefix);
         int pageSize = limit > 0 ? limit : 1;
         string? kindToken = kind?.ToToken();
+
+        // Candidates' subjectValue is recovered as a string from each key, so the prefix materializes once for the
+        // in-memory lower-bound StartsWith predicate.
+        string prefixStr = Encoding.UTF8.GetString(prefix.Span);
         bool hasCursor = ObservedIdentityContinuationToken.TryDecode(pageToken, out (string SubjectValue, string SubjectKind) cursor);
         string? afterSortKey = hasCursor ? SortKey(cursor.SubjectValue, cursor.SubjectKind) : null;
 
@@ -167,7 +174,7 @@ public sealed class NatsJetStreamObservedIdentityStore : IObservedIdentityStore,
                 continue;
             }
 
-            if (prefix.Length > 0 && !parts.SubjectValue.StartsWith(prefix, StringComparison.Ordinal))
+            if (prefixStr.Length > 0 && !parts.SubjectValue.StartsWith(prefixStr, StringComparison.Ordinal))
             {
                 continue;
             }
@@ -195,7 +202,7 @@ public sealed class NatsJetStreamObservedIdentityStore : IObservedIdentityStore,
                 bool admitted;
                 using (ParsedJsonDocument<ObservedIdentity> candidate = PersistedJson.ToPooledDocument<ObservedIdentity>(bytes))
                 {
-                    admitted = readReach.IsSatisfiedBy(candidate.RootElement.IdentityTagsValue.ToList());
+                    admitted = readReach.IsSatisfiedBy(candidate.RootElement.IdentityTagsValue);
                 }
 
                 if (!admitted)
@@ -236,10 +243,8 @@ public sealed class NatsJetStreamObservedIdentityStore : IObservedIdentityStore,
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ObservedIdentityConflict?> FindIdentityConflictAsync(GranteeKind kind, string value, SecurityTagSet identity, CancellationToken cancellationToken)
+    public async ValueTask<ObservedIdentityConflict?> FindIdentityConflictAsync(GranteeKind kind, ReadOnlyMemory<byte> value, SecurityTagSet identity, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(value);
-
         // The empty (unscoped) identity never collides; otherwise seek the digest membership index for a grantee whose
         // identity is set-equal (same digest) but whose (kind, value) differs — a non-unique identity the authoring path
         // refuses. This probe runs at FULL reach (a cross-tenant collision must be visible), so — unlike SearchAsync — it
@@ -250,6 +255,10 @@ public sealed class NatsJetStreamObservedIdentityStore : IObservedIdentityStore,
         }
 
         string kindToken = kind.ToToken();
+
+        // The member key's subjectValue is recovered as a string, so the value materializes once for the self-match
+        // comparison that excludes the grantee being authored.
+        string valueKey = Encoding.UTF8.GetString(value.Span);
         string memberFilter = DigestMemberPrefix(digest) + ">";
         await foreach (string memberKey in this.store.GetKeysAsync([memberFilter], cancellationToken: cancellationToken).ConfigureAwait(false))
         {
@@ -258,7 +267,7 @@ public sealed class NatsJetStreamObservedIdentityStore : IObservedIdentityStore,
                 continue;
             }
 
-            if (string.Equals(member.Kind, kindToken, StringComparison.Ordinal) && string.Equals(member.Value, value, StringComparison.Ordinal))
+            if (string.Equals(member.Kind, kindToken, StringComparison.Ordinal) && string.Equals(member.Value, valueKey, StringComparison.Ordinal))
             {
                 continue; // the grantee being authored — not a collision with itself
             }

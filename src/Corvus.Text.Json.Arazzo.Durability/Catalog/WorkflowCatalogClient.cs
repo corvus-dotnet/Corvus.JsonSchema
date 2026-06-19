@@ -439,7 +439,7 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
     private async ValueTask<bool> IsVersionVisibleAsync(string baseWorkflowId, int versionNumber, SecurityFilter security, CancellationToken cancellationToken)
     {
         CatalogVersion? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
-        return version is { } v && security.IsSatisfiedBy(v.SecurityTagsValue.ToList());
+        return version is { } v && security.IsSatisfiedBy(v.SecurityTagsValue);
     }
 
     private async ValueTask<bool> IsReferencedAsync(string workflowId, CancellationToken cancellationToken)

@@ -395,13 +395,13 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             foreach (BsonDocument document in cursor.Current)
             {
                 SecurityTagSet securityTags = ReadSecurityTags(document);
-                if (query.Security is { } security && !security.IsSatisfiedBy(securityTags.ToList()))
+                if (query.Security is { } security && !security.IsSatisfiedBy(securityTags))
                 {
                     continue;
                 }
 
                 string? correlationId = document["correlationId"].IsBsonNull ? null : document["correlationId"].AsString;
-                TagSet tags = document.TryGetValue("tags", out var tagsVal) && !tagsVal.IsBsonNull ? TagSet.FromTags(tagsVal.AsBsonArray.Select(t => t.AsString)) : default;
+                TagSet tags = MongoTags.Read(document);
                 var entry = new WorkflowRunIndexEntry(
                     document["workflowId"].AsString,
                     Enum.Parse<WorkflowRunStatus>(document["status"].AsString),

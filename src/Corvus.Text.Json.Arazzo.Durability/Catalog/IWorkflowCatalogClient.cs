@@ -111,7 +111,7 @@ public interface IWorkflowCatalogClient
     /// current administrator. Idempotent: if it is already an administrator the set is unchanged. The first change
     /// materializes the explicit administrator record from the version-1-derived default.
     /// </summary>
-    /// <param name="baseWorkflowId">The base workflow id (no <c>-vN</c> suffix).</param>
+    /// <param name="baseWorkflowId">The base workflow id (no <c>-vN</c> suffix) — the admin-store/catalog key (a string leaf).</param>
     /// <param name="newAdministrator">The identity to add (the unforgeable, deployment-stamped tags of the new administrator).</param>
     /// <param name="callerIdentity">The caller's own stamped identity; the caller must currently be an administrator.</param>
     /// <param name="cancellationToken">A cancellation token.</param>

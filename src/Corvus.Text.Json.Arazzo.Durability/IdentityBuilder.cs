@@ -51,7 +51,7 @@ public ref struct IdentityBuilder
     /// <summary>Adds one tag from UTF-8 spans — the zero-allocation path (the value is JSON-escaped straight into the pooled buffer; no managed string is created).</summary>
     /// <param name="key">The tag key as UTF-8 (typically a <c>"sys:…"u8</c> literal).</param>
     /// <param name="value">The tag value as unescaped UTF-8 (e.g. the source reader's <c>GetUtf8String().Span</c>).</param>
-    public void Add(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value)
+    public void Add(scoped ReadOnlySpan<byte> key, scoped ReadOnlySpan<byte> value)
     {
         this.writer.WriteStartObject();
         this.writer.WriteString(KeyUtf8, key);
@@ -63,7 +63,7 @@ public ref struct IdentityBuilder
     /// <summary>Adds one tag with a UTF-8 key and a <see cref="string"/> value — the opt-in path for a value a deployment computed through a string-typed API.</summary>
     /// <param name="key">The tag key as UTF-8 (typically a <c>"sys:…"u8</c> literal).</param>
     /// <param name="value">The tag value.</param>
-    public void Add(ReadOnlySpan<byte> key, string value)
+    public void Add(scoped ReadOnlySpan<byte> key, string value)
     {
         this.writer.WriteStartObject();
         this.writer.WriteString(KeyUtf8, key);

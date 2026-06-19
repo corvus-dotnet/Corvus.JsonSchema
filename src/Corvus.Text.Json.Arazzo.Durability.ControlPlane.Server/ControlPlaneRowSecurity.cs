@@ -2,7 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Security.Claims;
+using System.Text;
 using Corvus.Text.Json.Arazzo.Directories;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
@@ -71,6 +73,10 @@ public abstract class ControlPlaneRowSecurityPolicy
     /// <summary>Gets the reserved internal tag prefix this policy stamps/maps to (default <see cref="SecurityShell.DefaultInternalPrefix"/>).</summary>
     protected virtual string InternalTagPrefix => SecurityShell.DefaultInternalPrefix;
 
+    // The stack budget for a built internal-tag key (prefix + dimension); both are short identifiers, so this is never
+    // exceeded in practice — a longer dimension falls back to a pooled rent.
+    private const int StackKeyThreshold = 256;
+
     /// <summary>Maps operator-supplied source credential usage grants (§13) to the <strong>internal</strong> security
     /// tags a run must carry to use the binding — so a binding's usage scope is expressed in unforgeable, deployment-
     /// stamped identity terms rather than free-form labels. The default maps a grant <c>{dimension, value}</c> to the
@@ -92,6 +98,43 @@ public abstract class ControlPlaneRowSecurityPolicy
         }
 
         return tags;
+    }
+
+    /// <summary>
+    /// Resolves one operator-facing grant (<paramref name="dimension"/>, <paramref name="value"/>) — given as unescaped
+    /// UTF-8 — to its internal identity tag, written <strong>bytes to bytes</strong> into <paramref name="builder"/>: the
+    /// span counterpart of <see cref="ResolveUsageGrants"/>, so a grantee identity is built from a request without
+    /// materializing a managed <see cref="string"/> per dimension/value. The default writes the single tag
+    /// <c>{prefix+dimension = value}</c> (the same mapping as <see cref="ResolveUsageGrants"/>). A deployment that
+    /// overrides <see cref="ResolveUsageGrants"/> to remap or restrict grants should override this too, to keep the two
+    /// resolution paths consistent (write nothing to decline a grant).
+    /// </summary>
+    /// <param name="dimension">The grant dimension as unescaped UTF-8.</param>
+    /// <param name="value">The grant value as unescaped UTF-8.</param>
+    /// <param name="builder">The identity builder writing into a pooled buffer.</param>
+    public virtual void ResolveUsageGrantInto(ReadOnlySpan<byte> dimension, ReadOnlySpan<byte> value, ref IdentityBuilder builder)
+    {
+        // The default mapping (mirroring ResolveUsageGrants): the internal tag key is the reserved prefix concatenated
+        // with the dimension, built in a pooled/stack key buffer (both are short identifiers); the value is written
+        // verbatim. No managed string. A deployment that maps grants differently overrides THIS method (in spans).
+        string prefix = this.InternalTagPrefix;
+        int prefixLength = Encoding.UTF8.GetByteCount(prefix);
+        int keyLength = prefixLength + dimension.Length;
+        byte[]? rented = null;
+        Span<byte> key = keyLength <= StackKeyThreshold ? stackalloc byte[StackKeyThreshold] : (rented = ArrayPool<byte>.Shared.Rent(keyLength));
+        try
+        {
+            Encoding.UTF8.GetBytes(prefix, key);
+            dimension.CopyTo(key[prefixLength..]);
+            builder.Add(key[..keyLength], value);
+        }
+        finally
+        {
+            if (rented is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rented);
+            }
+        }
     }
 
     /// <summary>Describes a binding's stored internal usage tags back as operator-facing grants (the inverse of
@@ -221,6 +264,13 @@ internal sealed class ControlPlaneAccess
     /// <param name="grants">The operator-supplied usage grants.</param>
     /// <returns>The internal usage tags.</returns>
     public IReadOnlyList<SecurityTag> ResolveUsageGrants(IReadOnlyList<CredentialUsageGrant> grants) => this.policy?.ResolveUsageGrants(grants) ?? [];
+
+    /// <summary>Resolves one grant (UTF-8 dimension/value) into <paramref name="builder"/> bytes-to-bytes (writes nothing when unscoped).</summary>
+    /// <param name="dimension">The grant dimension as unescaped UTF-8.</param>
+    /// <param name="value">The grant value as unescaped UTF-8.</param>
+    /// <param name="builder">The identity builder writing into a pooled buffer.</param>
+    public void ResolveUsageGrantInto(ReadOnlySpan<byte> dimension, ReadOnlySpan<byte> value, ref IdentityBuilder builder)
+        => this.policy?.ResolveUsageGrantInto(dimension, value, ref builder);
 
     /// <summary>Describes internal usage tags back as operator-facing grants (empty when unscoped).</summary>
     /// <param name="usageTags">The binding's internal usage tags.</param>

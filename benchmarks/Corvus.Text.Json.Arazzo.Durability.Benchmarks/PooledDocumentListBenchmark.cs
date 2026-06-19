@@ -27,7 +27,7 @@ public class PooledDocumentListBenchmark
         var list = new List<ParsedJsonDocument<SecurityRuleDocument>>();
         for (int i = 0; i < this.Count; i++)
         {
-            list.Add(default);
+            list.Add(default!);
         }
 
         return list.Count;
@@ -41,7 +41,7 @@ public class PooledDocumentListBenchmark
         using var batch = new PooledDocumentList<SecurityRuleDocument>();
         for (int i = 0; i < this.Count; i++)
         {
-            batch.Add(default);
+            batch.Add(default!);
         }
 
         return batch.Count;

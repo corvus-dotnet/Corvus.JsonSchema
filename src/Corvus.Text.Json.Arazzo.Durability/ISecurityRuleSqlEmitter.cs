@@ -31,7 +31,7 @@ public interface ISecurityRuleSqlEmitter
 
     /// <summary>Builds "the current row has at least one security tag" — the deny-by-default guard (§14.2): an
     /// untagged (unclassified) row is never admitted to a reach-restricted principal, mirroring
-    /// <see cref="SecurityFilter.IsSatisfiedBy"/>.</summary>
+    /// <see cref="SecurityFilter.IsSatisfiedBy(in SecurityTagSet)"/>.</summary>
     /// <returns>A boolean SQL fragment.</returns>
     string ExistsAnyTag();
 

@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using MongoDB.Bson;
@@ -107,27 +108,31 @@ public sealed class MongoObservedIdentityStore : IObservedIdentityStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask SeenAsync(GranteeKind kind, string value, string? label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken)
+    public async ValueTask SeenAsync(GranteeKind kind, ReadOnlyMemory<byte> value, ReadOnlyMemory<byte> label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(value);
         ArgumentNullException.ThrowIfNull(provenance);
         string kindToken = kind.ToToken();
+
+        // The _id / subjectValue / sortKey are text storage keys, so the value materializes once here; the document body
+        // is serialized bytes-to-bytes from the value/label spans at the synchronous serialize calls below (taken after
+        // the read-await, so no span crosses an await).
+        string valueKey = Encoding.UTF8.GetString(value.Span);
         DateTimeOffset now = this.timeProvider.GetUtcNow();
 
         // Read-merge-write keyed by (kind, value): a first sighting inserts; an existing one preserves firstSeen, bumps
         // lastSeen, unions provenance, and refreshes label/identity/completeness (the shared merge). The driver pools
         // connections so concurrent sightings race on the unique _id; ReplaceOne with IsUpsert resolves either case.
-        byte[]? existing = await this.ReadDocumentAsync(kindToken, value, cancellationToken).ConfigureAwait(false);
+        byte[]? existing = await this.ReadDocumentAsync(kindToken, valueKey, cancellationToken).ConfigureAwait(false);
         byte[] json = existing is null
-            ? ObservedIdentitySerialization.SerializeNew(kindToken, value, label, identity, complete, now, provenance)
-            : ObservedIdentitySerialization.SerializeUpserted(existing, kindToken, value, label, identity, complete, now, provenance);
+            ? ObservedIdentitySerialization.SerializeNew(kindToken, value.Span, label.Span, identity, complete, now, provenance)
+            : ObservedIdentitySerialization.SerializeUpserted(existing, kindToken, value.Span, label.Span, identity, complete, now, provenance);
 
         var document = new BsonDocument
         {
-            ["_id"] = Key(kindToken, value),
-            ["sortKey"] = SortKey(value, kindToken),
+            ["_id"] = Key(kindToken, valueKey),
+            ["sortKey"] = SortKey(valueKey, kindToken),
             ["subjectKind"] = kindToken,
-            ["subjectValue"] = value,
+            ["subjectValue"] = valueKey,
             ["doc"] = new BsonBinaryData(json),
 
             // The indexed collision-probe key (§16.5.4): the order-independent digest of the sys: identity, or BsonNull
@@ -137,19 +142,21 @@ public sealed class MongoObservedIdentityStore : IObservedIdentityStore, IAsyncD
         };
 
         await this.identities.ReplaceOneAsync(
-            Builders<BsonDocument>.Filter.Eq("_id", Key(kindToken, value)),
+            Builders<BsonDocument>.Filter.Eq("_id", Key(kindToken, valueKey)),
             document,
             new ReplaceOptions { IsUpsert = true },
             cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, GranteeKind? kind, string prefix, int limit, string? pageToken, CancellationToken cancellationToken)
+    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, GranteeKind? kind, ReadOnlyMemory<byte> prefix, int limit, string? pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        ArgumentNullException.ThrowIfNull(prefix);
         int pageSize = limit > 0 ? limit : 1;
         string? kindToken = kind?.ToToken();
+
+        // The subjectValue field is text, so the prefix materializes once for the anchored regex + the .Length test.
+        string prefixStr = Encoding.UTF8.GetString(prefix.Span);
         bool hasCursor = ObservedIdentityContinuationToken.TryDecode(pageToken, out (string SubjectValue, string SubjectKind) cursor);
         SecurityFilter? readReach = context.Reach(AccessVerb.Read);
 
@@ -163,9 +170,9 @@ public sealed class MongoObservedIdentityStore : IObservedIdentityStore, IAsyncD
             filter = b.And(filter, b.Eq("subjectKind", kindToken));
         }
 
-        if (prefix.Length > 0)
+        if (prefixStr.Length > 0)
         {
-            filter = b.And(filter, b.Regex("subjectValue", new BsonRegularExpression("^" + EscapeRegex(prefix))));
+            filter = b.And(filter, b.Regex("subjectValue", new BsonRegularExpression("^" + EscapeRegex(prefixStr))));
         }
 
         if (hasCursor)
@@ -199,7 +206,7 @@ public sealed class MongoObservedIdentityStore : IObservedIdentityStore, IAsyncD
                     if (readReach is not null)
                     {
                         using ParsedJsonDocument<ObservedIdentity> candidate = PersistedJson.ToPooledDocument<ObservedIdentity>(json);
-                        if (!readReach.IsSatisfiedBy(candidate.RootElement.IdentityTagsValue.ToList()))
+                        if (!readReach.IsSatisfiedBy(candidate.RootElement.IdentityTagsValue))
                         {
                             continue;
                         }
@@ -228,10 +235,8 @@ public sealed class MongoObservedIdentityStore : IObservedIdentityStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ObservedIdentityConflict?> FindIdentityConflictAsync(GranteeKind kind, string value, SecurityTagSet identity, CancellationToken cancellationToken)
+    public async ValueTask<ObservedIdentityConflict?> FindIdentityConflictAsync(GranteeKind kind, ReadOnlyMemory<byte> value, SecurityTagSet identity, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(value);
-
         // The empty (unscoped) identity never collides; otherwise seek the indexed digest for a document whose identity
         // is set-equal (same digest) but whose (kind, value) differs — a non-unique identity the authoring path refuses.
         // Full reach (§16.5.4): the probe is deliberately NOT reach-filtered, so a cross-tenant collision is still found.
@@ -241,10 +246,11 @@ public sealed class MongoObservedIdentityStore : IObservedIdentityStore, IAsyncD
         }
 
         string kindToken = kind.ToToken();
+        string valueKey = Encoding.UTF8.GetString(value.Span);
         FilterDefinitionBuilder<BsonDocument> b = Builders<BsonDocument>.Filter;
         FilterDefinition<BsonDocument> filter = b.And(
             b.Eq("identityDigest", digest),
-            b.Not(b.And(b.Eq("subjectKind", kindToken), b.Eq("subjectValue", value))));
+            b.Not(b.And(b.Eq("subjectKind", kindToken), b.Eq("subjectValue", valueKey))));
 
         BsonDocument? match = await this.identities.Find(filter).Limit(1).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
         return match is null
