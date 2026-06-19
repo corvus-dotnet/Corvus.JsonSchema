@@ -1225,12 +1225,14 @@ eligible-for-All`) remains step 6.
 > (Sqlite/Postgres/MySql/SqlServer/Cosmos/Mongo/Redis/AzureStorage/NATS, reach-filtered, conformance-locked); the
 > `ControlPlaneRowSecurityPolicy` grantee seam (`SupportedGranteeKinds` / `ResolveGranteeIdentity`) and `whoami`; the
 > `IPrincipalDirectory` seam **with an LDAP/AD adapter** (`Corvus.Text.Json.Arazzo.Directories.Ldap`, Novell async,
-> conformance-verified against a self-built OpenLDAP container); the **issuer dimension** — every adapter funnels records
+> conformance-verified against a self-built OpenLDAP container) **and a Keycloak adapter**
+> (`Corvus.Text.Json.Arazzo.Directories.Keycloak`, Admin REST over the Corvus reader, single-flight token cache,
+> conformance-verified against a real `keycloak:26.0` container); the **issuer dimension** — every adapter funnels records
 > through `DirectoryPrincipalProjector`, which stamps a configured, mapper-immutable `sys:iss` so identities are disjoint
 > across providers by construction (`DirectoryIssuer`); the **identity-collision probe** (`FindIdentityConflictAsync`,
 > digest-indexed, full-reach) across every store; **collision enforcement** — admin-add/transfer refuse (409) a grant
 > whose resolved identity already belongs to a different grantee; and `GET /identity/{whoami,capabilities,grantees}` with
-> the admin-add recording hook. NOT YET BUILT (design-intent below): the remaining directory adapters (Keycloak, Entra,
+> the admin-add recording hook. NOT YET BUILT (design-intent below): the remaining directory adapters (Entra,
 > Okta, Google, SCIM); the by-subject / by-workflow entitlement indexes (self-elevation still cold-scans, §16.5.3);
 > multi-tag **person** resolution (the default is a best-effort *single* tag); and the resolved-grantee UI (the UI still
 > hand-assembles `{dimension, value}` tuples). **`catalog:read` is NOT a grantable scope** (the allowlist is
@@ -1436,5 +1438,7 @@ Azure Storage, and NATS apply reach in memory over their native ordering (matchi
 sighting upsert and search share one `ObservedIdentitySerialization` merge across every backend (including the in-memory
 reference).
 
-One item remains **explicitly deferred**: a Keycloak/OIDC `IPrincipalDirectory` adapter (the directory interface exists;
-no concrete adapter yet).
+The `IPrincipalDirectory` seam now ships with two concrete adapters — **LDAP/AD**
+(`Corvus.Text.Json.Arazzo.Directories.Ldap`) and **Keycloak** (`Corvus.Text.Json.Arazzo.Directories.Keycloak`, Admin REST
+over the Corvus reader with a single-flight token cache), each conformance-verified against a real container. The
+remaining SaaS adapters (Entra ID / Graph, Okta, Google Workspace, SCIM 2.0) are **explicitly deferred**.

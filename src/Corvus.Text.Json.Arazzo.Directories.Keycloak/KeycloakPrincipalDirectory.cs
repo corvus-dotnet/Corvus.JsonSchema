@@ -2,9 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using System.Net.Http.Headers;
-using System.Text;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Internal;
 
@@ -85,9 +83,7 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
         // returned List + each ResolvedPrincipal (its Value/Label strings + stamped SecurityTagSet). Per-row DirectoryRecord
         // + attribute Dictionary + transient GetString scalars are short-lived scratch the mapper contract forces.
         byte[] body = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
-        return this.projector.SupportsSpanProjection
-            ? ProjectResponseSpan(kind, resource, body, max, this.projector)
-            : ProjectResponse(kind, resource, body, max, this.projector);
+        return ProjectResponse(kind, resource, body, max, this.projector);
     }
 
     /// <inheritdoc/>
@@ -118,218 +114,6 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
         return new Uri(this.options.BaseUrl, $"/admin/realms/{realm}/{resourcePath}?max={max}{search}{brief}");
     }
 
-    // The bytes-to-bytes path (used when the mapper is a span mapper). Keycloak is the most bespoke shape: there is no
-    // configurable value/label attribute — a user is keyed on its top-level `username` with a display computed from
-    // `firstName`/`lastName`, a group/role on its top-level `name`; and a user's custom attributes are ARRAYS under an
-    // `attributes` object. So this captures the value (+ firstName/lastName for users) from the top level and the mapper's
-    // declared custom attributes from the `attributes` object's first array element — all as unescaped UTF-8 into a pooled
-    // scratch, with no attribute string.
-    internal static IReadOnlyList<ResolvedPrincipal> ProjectResponseSpan(GranteeKind kind, KeycloakResource resource, byte[] body, int limit, DirectoryPrincipalProjector projector)
-    {
-        var results = new List<ResolvedPrincipal>(limit);
-        bool isUser = resource == KeycloakResource.Users;
-
-        // Wanted UTF-8 names: the value (username / name), then firstName + lastName for a user's computed display, then
-        // the mapper's declared custom attributes (flat names, found in the `attributes` object).
-        string[] required = [.. projector.RequiredAttributes];
-        int wantedCount = (isUser ? 3 : 1) + required.Length;
-        byte[][] wanted = new byte[wantedCount][];
-        int next = 0;
-        int valueWanted = next;
-        wanted[next++] = isUser ? "username"u8.ToArray() : "name"u8.ToArray();
-        int firstNameWanted = -1;
-        int lastNameWanted = -1;
-        if (isUser)
-        {
-            firstNameWanted = next;
-            wanted[next++] = "firstName"u8.ToArray();
-            lastNameWanted = next;
-            wanted[next++] = "lastName"u8.ToArray();
-        }
-
-        foreach (string attribute in required)
-        {
-            wanted[next++] = Encoding.UTF8.GetBytes(attribute);
-        }
-
-        var reader = new Utf8JsonReader(body);
-        if (!reader.Read() || reader.TokenType != JsonTokenType.StartArray)
-        {
-            return results;
-        }
-
-        byte[] scratch = ArrayPool<byte>.Shared.Rent(body.Length);
-        Span<DirectoryAttributeSlice> slices = stackalloc DirectoryAttributeSlice[wantedCount];
-
-        // A reusable scratch buffer for an assembled "first last" display label (rented lazily, grown if a name pair
-        // exceeds it, reused across rows since TryProjectIdentity copies the label span before the next row writes it).
-        byte[]? labelBuffer = null;
-        try
-        {
-            while (results.Count < limit && reader.Read() && reader.TokenType == JsonTokenType.StartObject)
-            {
-                int captured = 0;
-                int position = 0;
-                int valueSlice = -1;
-                int firstSlice = -1;
-                int lastSlice = -1;
-                while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
-                {
-                    int which = MatchWanted(ref reader, wanted);
-                    reader.Read();
-                    if (which >= 0 && reader.TokenType == JsonTokenType.String)
-                    {
-                        CaptureScalar(ref reader, wanted[which], scratch, ref position, slices, ref captured);
-                        int index = captured - 1;
-                        if (which == valueWanted)
-                        {
-                            valueSlice = index;
-                        }
-                        else if (which == firstNameWanted)
-                        {
-                            firstSlice = index;
-                        }
-                        else if (which == lastNameWanted)
-                        {
-                            lastSlice = index;
-                        }
-                    }
-                    else if (reader.TokenType == JsonTokenType.StartObject)
-                    {
-                        // The `attributes` object: each member is an array of strings; capture the first of each wanted one.
-                        while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
-                        {
-                            int member = MatchWanted(ref reader, wanted);
-                            reader.Read();
-                            if (member >= 0 && reader.TokenType == JsonTokenType.StartArray)
-                            {
-                                CaptureFirstArrayString(ref reader, wanted[member], scratch, ref position, slices, ref captured);
-                            }
-                            else
-                            {
-                                reader.Skip();
-                            }
-                        }
-                    }
-                    else
-                    {
-                        reader.Skip();
-                    }
-                }
-
-                if (valueSlice < 0)
-                {
-                    continue;
-                }
-
-                DirectoryAttributeSlice value = slices[valueSlice];
-                ReadOnlySpan<byte> valueSpan = scratch.AsSpan(value.ValueOffset, value.ValueLength);
-
-                // The display label, bytes-to-bytes: a single name attribute is its own scratch span; a "first last"
-                // display is assembled into a reusable pooled buffer (no managed string); otherwise it falls back to the
-                // value span. The label span is copied into the principal by TryProjectIdentity before the next row reuses
-                // the buffer.
-                ReadOnlySpan<byte> labelSpan = isUser
-                    ? DisplaySpan(scratch, slices, firstSlice, lastSlice, valueSpan, ref labelBuffer)
-                    : valueSpan;
-
-                var view = new DirectoryRecordView(kind, valueSpan, scratch, slices[..captured]);
-                if (projector.TryProjectIdentity(kind, valueSpan, labelSpan, hasLabel: true, view) is { } principal)
-                {
-                    results.Add(principal);
-                }
-            }
-        }
-        finally
-        {
-            ArrayPool<byte>.Shared.Return(scratch);
-            if (labelBuffer is not null)
-            {
-                ArrayPool<byte>.Shared.Return(labelBuffer);
-            }
-        }
-
-        return results;
-    }
-
-    private static int MatchWanted(scoped ref Utf8JsonReader reader, byte[][] wanted)
-    {
-        for (int i = 0; i < wanted.Length; i++)
-        {
-            if (reader.ValueTextEquals(wanted[i]))
-            {
-                return i;
-            }
-        }
-
-        return -1;
-    }
-
-    private static void CaptureScalar(scoped ref Utf8JsonReader reader, byte[] key, byte[] scratch, ref int position, scoped Span<DirectoryAttributeSlice> slices, ref int captured)
-    {
-        int keyOffset = position;
-        key.CopyTo(scratch.AsSpan(position));
-        position += key.Length;
-        int valueOffset = position;
-        int valueLength = reader.CopyString(scratch.AsSpan(position));
-        position += valueLength;
-        slices[captured++] = new DirectoryAttributeSlice(keyOffset, key.Length, valueOffset, valueLength);
-    }
-
-    // Captures the first string element of a Keycloak attribute array (reader at its StartArray), skipping the rest; leaves
-    // the reader at the matching EndArray.
-    private static void CaptureFirstArrayString(scoped ref Utf8JsonReader reader, byte[] key, byte[] scratch, ref int position, scoped Span<DirectoryAttributeSlice> slices, ref int captured)
-    {
-        bool taken = false;
-        while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
-        {
-            if (!taken && reader.TokenType == JsonTokenType.String)
-            {
-                CaptureScalar(ref reader, key, scratch, ref position, slices, ref captured);
-                taken = true;
-            }
-            else
-            {
-                reader.Skip();
-            }
-        }
-    }
-
-    // The user display computed from the captured firstName/lastName spans as unescaped UTF-8 ("first last", or whichever
-    // is present), or the value span when neither name is present — no managed string. A "first last" pair is assembled
-    // into the reusable pooled label buffer (grown on demand); a single name is its own scratch span (zero copy).
-    private static ReadOnlySpan<byte> DisplaySpan(byte[] scratch, scoped Span<DirectoryAttributeSlice> slices, int firstSlice, int lastSlice, ReadOnlySpan<byte> value, ref byte[]? labelBuffer)
-    {
-        if (firstSlice < 0 && lastSlice < 0)
-        {
-            return value;
-        }
-
-        if (firstSlice >= 0 && lastSlice >= 0)
-        {
-            DirectoryAttributeSlice f = slices[firstSlice];
-            DirectoryAttributeSlice l = slices[lastSlice];
-            int needed = f.ValueLength + 1 + l.ValueLength;
-            if (labelBuffer is null || labelBuffer.Length < needed)
-            {
-                if (labelBuffer is not null)
-                {
-                    ArrayPool<byte>.Shared.Return(labelBuffer);
-                }
-
-                labelBuffer = ArrayPool<byte>.Shared.Rent(needed);
-            }
-
-            scratch.AsSpan(f.ValueOffset, f.ValueLength).CopyTo(labelBuffer);
-            labelBuffer[f.ValueLength] = (byte)' ';
-            scratch.AsSpan(l.ValueOffset, l.ValueLength).CopyTo(labelBuffer.AsSpan(f.ValueLength + 1));
-            return labelBuffer.AsSpan(0, needed);
-        }
-
-        DirectoryAttributeSlice present = firstSlice >= 0 ? slices[firstSlice] : slices[lastSlice];
-        return scratch.AsSpan(present.ValueOffset, present.ValueLength);
-    }
-
     // Projects a Keycloak Admin list response (a JSON array) to resolved principals. A pure function of (bytes, projector)
     // — the reader borrows `body` in place (no DOM, no copy); a dropped record (mapper returns null) does not consume the
     // limit, so a kind whose backing resource carries unrecognised entries (e.g. Keycloak's built-in realm roles) still
@@ -337,16 +121,6 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
     internal static IReadOnlyList<ResolvedPrincipal> ProjectResponse(GranteeKind kind, KeycloakResource resource, byte[] body, int limit, DirectoryPrincipalProjector projector)
     {
         var results = new List<ResolvedPrincipal>(limit);
-
-        // Attribute-projection seam (§16.5.4), parse-side. Keycloak's Admin API has no server-side field projection (the
-        // user representation is all-or-nothing under briefRepresentation=false), so when the mapper declares what it reads
-        // the adapter honours it on parse: only the declared custom attributes are flattened (the unbounded source — a user
-        // may carry many HR attributes the mapper never reads). The fixed user fields (username/firstName/lastName/email/id)
-        // are always surfaced — they are bounded and the value/label need them. No declaration => flatten every attribute.
-        HashSet<string>? customAttributeFilter = projector.RequiredAttributes.Count > 0
-            ? new HashSet<string>(projector.RequiredAttributes, StringComparer.OrdinalIgnoreCase)
-            : null;
-
         var reader = new Utf8JsonReader(body);
         if (!reader.Read() || reader.TokenType != JsonTokenType.StartArray)
         {
@@ -356,7 +130,7 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
         while (results.Count < limit && reader.Read() && reader.TokenType == JsonTokenType.StartObject)
         {
             DirectoryRecord? record = resource == KeycloakResource.Users
-                ? ReadUser(ref reader, kind, customAttributeFilter)
+                ? ReadUser(ref reader, kind)
                 : ReadNamed(ref reader, kind);
             if (record is { } parsed && projector.Project(parsed) is { } principal)
             {
@@ -369,7 +143,7 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
 
     // Reads one user object (reader positioned at its StartObject) into a record keyed on the username, with the user's
     // own attributes plus id/email/firstName/lastName flattened in for the mapper. Leaves the reader at the EndObject.
-    private static DirectoryRecord? ReadUser(ref Utf8JsonReader reader, GranteeKind kind, HashSet<string>? customAttributeFilter)
+    private static DirectoryRecord? ReadUser(ref Utf8JsonReader reader, GranteeKind kind)
     {
         string? username = null, firstName = null, lastName = null, email = null, id = null;
         var attributes = new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase);
@@ -403,7 +177,7 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
             else if (reader.ValueTextEquals("attributes"u8))
             {
                 reader.Read();
-                ReadAttributes(ref reader, attributes, customAttributeFilter);
+                ReadAttributes(ref reader, attributes);
             }
             else
             {
@@ -466,10 +240,8 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
     }
 
     // Flattens a Keycloak user's `attributes` object ({ "tenant": ["acme"], … }) into the record's attribute map. The
-    // reader is positioned at the attributes value; on a non-object (e.g. null) it skips and the map is unchanged. When
-    // `filter` is non-null (the mapper declared what it reads) only those custom attributes are materialised; a key the
-    // mapper never reads is skipped without allocating its value list.
-    private static void ReadAttributes(ref Utf8JsonReader reader, Dictionary<string, IReadOnlyList<string>> attributes, HashSet<string>? filter)
+    // reader is positioned at the attributes value; on a non-object (e.g. null) it skips and the map is unchanged.
+    private static void ReadAttributes(ref Utf8JsonReader reader, Dictionary<string, IReadOnlyList<string>> attributes)
     {
         if (reader.TokenType != JsonTokenType.StartObject)
         {
@@ -481,12 +253,6 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
         {
             string key = reader.GetString()!;
             reader.Read();
-            if (filter?.Contains(key) == false)
-            {
-                reader.Skip();
-                continue;
-            }
-
             if (reader.TokenType == JsonTokenType.StartArray)
             {
                 var values = new List<string>();
