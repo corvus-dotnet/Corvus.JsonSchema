@@ -1240,7 +1240,14 @@ eligible-for-All`) remains step 6.
 > (`Corvus.Text.Json.Arazzo.Directories.EntraId`, OAuth2 client-credentials + single-flight token cache, Graph
 > `$filter=startsWith`/`$select` over the Corvus reader, conformance-verified against a mock Graph endpoint), **and an Okta
 > adapter** (`Corvus.Text.Json.Arazzo.Directories.Okta`, SSWS API token, Okta `search sw` over the Corvus reader with
-> parse-side projection, conformance-verified against a mock Okta endpoint); the
+> parse-side projection, conformance-verified against a mock Okta endpoint), **and a Google Workspace adapter**
+> (`Corvus.Text.Json.Arazzo.Directories.Google`, service-account JWT / domain-wide delegation + single-flight token cache,
+> Admin SDK Directory `query` over the Corvus reader, conformance-verified against a mock Directory endpoint); the
+> **bytes-to-bytes identity path** — when the deployment supplies a span mapper (`IDirectoryIdentitySpanMapper`), each HTTP
+> adapter captures only the value/label + declared attributes as UTF-8 and builds the identity straight into a pooled
+> buffer via `SecurityTagSet.Build`/`IdentityBuilder` (no managed string per attribute or tag — a measured 77–90% drop in
+> identity-construction allocation across Graph/SCIM/Okta/Keycloak/Google), with the string `FromTags` path unchanged for
+> LDAP and string mappers; the
 > **attribute-projection seam** — a mapper may declare
 > the provider attributes it reads (`IDirectoryIdentityMapper.RequiredAttributes`, opt-in; empty = surface everything, the
 > safe default) and an adapter fetches only those plus the value/label attributes it needs (LDAP's native search list,
@@ -1250,8 +1257,9 @@ eligible-for-All`) remains step 6.
 > across providers by construction (`DirectoryIssuer`); the **identity-collision probe** (`FindIdentityConflictAsync`,
 > digest-indexed, full-reach) across every store; **collision enforcement** — admin-add/transfer refuse (409) a grant
 > whose resolved identity already belongs to a different grantee; and `GET /identity/{whoami,capabilities,grantees}` with
-> the admin-add recording hook. NOT YET BUILT (design-intent below): the remaining SaaS directory adapters (Entra,
-> Okta, Google); the by-subject / by-workflow entitlement indexes (self-elevation still cold-scans, §16.5.3);
+> the admin-add recording hook. The `IPrincipalDirectory` family is now complete — LDAP, Keycloak, SCIM 2.0, Entra ID,
+> Okta, and Google Workspace all ship. NOT YET BUILT (design-intent below): the by-subject / by-workflow entitlement
+> indexes (self-elevation still cold-scans, §16.5.3);
 > multi-tag **person** resolution (the default is a best-effort *single* tag); and the resolved-grantee UI (the UI still
 > hand-assembles `{dimension, value}` tuples). **`catalog:read` is NOT a grantable scope** (the allowlist is
 > `runs:read`/`runs:write` only — see §16.5.3). The §17.1 reach-scoping (the observed-identity store is now reach-filtered
