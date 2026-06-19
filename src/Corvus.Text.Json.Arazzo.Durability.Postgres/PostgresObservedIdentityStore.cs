@@ -86,37 +86,28 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
     }
 
     /// <inheritdoc/>
-    public async ValueTask SeenAsync(ObservedIdentity.GranteeKind kind, JsonString value, JsonString label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken)
+    public async ValueTask SeenAsync(GranteeKind kind, string value, string? label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(value);
         ArgumentNullException.ThrowIfNull(provenance);
         string kindToken = kind.ToToken();
-
-        // The SubjectValue column is TEXT (the storage-key leaf), so the value reifies once here for the SQL params; the
-        // document body is serialized bytes-to-bytes from the value/label JSON values at the synchronous serialize calls
-        // below (the value is valid for the whole call, so reifying the key synchronously before any await is fine).
-        string valueKey = (string)value;
         DateTimeOffset now = this.timeProvider.GetUtcNow();
 
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
 
-        // Read the existing document straight into a pooled document (GetStream → pooled parse) — no GC read array.
-        using ParsedJsonDocument<ObservedIdentity>? existing = await ReadDocumentAsync(connection, transaction, kindToken, valueKey, cancellationToken).ConfigureAwait(false);
+        byte[]? existing = await ReadDocumentAsync(connection, transaction, kindToken, value, cancellationToken).ConfigureAwait(false);
+        byte[] json = existing is null
+            ? ObservedIdentitySerialization.SerializeNew(kindToken, value, label, identity, complete, now, provenance)
+            : ObservedIdentitySerialization.SerializeUpserted(existing, kindToken, value, label, identity, complete, now, provenance);
 
         await using (NpgsqlCommand upsert = connection.CreateCommand())
         {
-            // Serialize the document into a pooled buffer and bind it as the bytea parameter via ReadOnlyMemory (Npgsql
-            // carries the exact length) — no GC document array. The buffer is returned to the pool once the command
-            // completes (ExecuteNonQueryAsync finishing is the guarantee the driver has read the parameter).
-            using PooledUtf8 doc = existing is null
-                ? ObservedIdentitySerialization.SerializeNewPooled(kind, value, label, identity, complete, now, provenance)
-                : ObservedIdentitySerialization.SerializeUpsertedPooled(existing.RootElement, kind, value, label, identity, complete, now, provenance);
-
             upsert.Transaction = transaction;
             upsert.CommandText = "INSERT INTO ObservedIdentities (SubjectKind, SubjectValue, Document, IdentityDigest) VALUES (@k, @v, @doc, @digest) ON CONFLICT (SubjectKind, SubjectValue) DO UPDATE SET Document = EXCLUDED.Document, IdentityDigest = EXCLUDED.IdentityDigest;";
             upsert.Parameters.AddWithValue("k", kindToken);
-            upsert.Parameters.AddWithValue("v", valueKey);
-            upsert.Parameters.Add(new NpgsqlParameter<ReadOnlyMemory<byte>>("doc", doc.Memory));
+            upsert.Parameters.AddWithValue("v", value);
+            upsert.Parameters.AddWithValue("doc", json);
             upsert.Parameters.AddWithValue("digest", (object?)SecurityIdentityDigest.Compute(identity) ?? DBNull.Value);
             await upsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -127,7 +118,7 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
             clear.Transaction = transaction;
             clear.CommandText = "DELETE FROM ObservedIdentitySecurityTags WHERE SubjectKind = @k AND SubjectValue = @v;";
             clear.Parameters.AddWithValue("k", kindToken);
-            clear.Parameters.AddWithValue("v", valueKey);
+            clear.Parameters.AddWithValue("v", value);
             await clear.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
@@ -140,7 +131,7 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
                 tagInsert.Transaction = transaction;
                 tagInsert.CommandText = "INSERT INTO ObservedIdentitySecurityTags (SubjectKind, SubjectValue, TagKey, TagValue) VALUES (@k, @v, @key, @value);";
                 tagInsert.Parameters.AddWithValue("k", kindToken);
-                tagInsert.Parameters.AddWithValue("v", valueKey);
+                tagInsert.Parameters.AddWithValue("v", value);
                 tagInsert.Parameters.AddWithValue("key", tag.Key);
                 tagInsert.Parameters.AddWithValue("value", tag.Value);
                 await tagInsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -151,31 +142,18 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, GranteeKind? kind, string prefix, int limit, string? pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(prefix);
         int pageSize = limit > 0 ? limit : 1;
-        string? kindToken = kind.IsNotUndefined() ? kind.ToToken() : null;
-
-        // The SubjectValue column is TEXT, so the prefix reifies once for the @p lower bound + the StartsWith break
-        // (undefined prefix matches all).
-        string prefixStr = prefix.IsNotUndefined() ? (string)prefix : string.Empty;
-
-        // The opaque page token arrives as its JSON value; decode the (subjectValue, subjectKind) cursor straight from the
-        // request UTF-8 (no managed token string). Init to empties so the unused-when-!hasCursor tuple is never null.
-        (string SubjectValue, string SubjectKind) cursor = (string.Empty, string.Empty);
-        bool hasCursor = false;
-        if (pageToken.IsNotUndefined())
-        {
-            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
-            hasCursor = ObservedIdentityContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
-        }
-
+        string? kindToken = kind?.ToToken();
+        bool hasCursor = ObservedIdentityContinuationToken.TryDecode(pageToken, out (string SubjectValue, string SubjectKind) cursor);
         SecurityFilter? readReach = context.Reach(AccessVerb.Read);
 
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         var docs = new PooledDocumentList<ObservedIdentity>(pageSize);
-        string? nextValue = null, nextKind = null;
+        string? nextToken = null;
         try
         {
             await using NpgsqlCommand select = connection.CreateCommand();
@@ -203,7 +181,7 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
             select.CommandText =
                 "SELECT SubjectKind, SubjectValue, Document FROM ObservedIdentities WHERE TRUE" +
                 (kindToken is not null ? " AND SubjectKind = @k" : string.Empty) +
-                (prefixStr.Length > 0 ? " AND SubjectValue >= @p" : string.Empty) +
+                (prefix.Length > 0 ? " AND SubjectValue >= @p" : string.Empty) +
                 (hasCursor ? " AND (SubjectValue > @cv OR (SubjectValue = @cv AND SubjectKind > @ck))" : string.Empty) +
                 securityPredicate +
                 " ORDER BY SubjectValue, SubjectKind LIMIT @limit;";
@@ -212,9 +190,9 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
                 select.Parameters.AddWithValue("k", kindToken);
             }
 
-            if (prefixStr.Length > 0)
+            if (prefix.Length > 0)
             {
-                select.Parameters.AddWithValue("p", prefixStr);
+                select.Parameters.AddWithValue("p", prefix);
             }
 
             if (hasCursor)
@@ -231,24 +209,23 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
             {
                 string rowKind = reader.GetString(0);
                 string rowValue = reader.GetString(1);
-                if (prefixStr.Length > 0 && !rowValue.StartsWith(prefixStr, StringComparison.Ordinal))
+                if (prefix.Length > 0 && !rowValue.StartsWith(prefix, StringComparison.Ordinal))
                 {
                     break;
                 }
 
                 if (docs.Count == pageSize)
                 {
-                    nextValue = lastValue;
-                    nextKind = lastKind;
+                    nextToken = ObservedIdentityContinuationToken.Encode(lastValue, lastKind);
                     break;
                 }
 
-                docs.Add(ReadDocument(reader, 2));
+                docs.Add(PersistedJson.ToPooledDocument<ObservedIdentity>(reader.GetFieldValue<byte[]>(2)));
                 lastValue = rowValue;
                 lastKind = rowKind;
             }
 
-            return nextValue is not null ? ObservedIdentityPage.Create(docs, nextValue, nextKind!) : ObservedIdentityPage.Create(docs);
+            return new ObservedIdentityPage(docs, nextToken);
         }
         catch
         {
@@ -258,8 +235,10 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<ObservedIdentity>?> FindIdentityConflictAsync(ObservedIdentity.GranteeKind kind, JsonString value, SecurityTagSet identity, CancellationToken cancellationToken)
+    public async ValueTask<ObservedIdentityConflict?> FindIdentityConflictAsync(GranteeKind kind, string value, SecurityTagSet identity, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(value);
+
         // The empty (unscoped) identity never collides; otherwise seek the indexed digest column for a row whose identity
         // is set-equal (same digest) but whose (kind, value) differs — a non-unique identity the authoring path refuses.
         // This probe runs at FULL reach (a cross-tenant collision must be visible), so unlike SearchAsync it pushes no
@@ -270,7 +249,6 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
         }
 
         string kindToken = kind.ToToken();
-        string valueKey = (string)value;
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlCommand select = connection.CreateCommand();
         select.CommandText =
@@ -278,14 +256,11 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
             "WHERE IdentityDigest = @d AND NOT (SubjectKind = @k AND SubjectValue = @v) LIMIT 1;";
         select.Parameters.AddWithValue("d", digest);
         select.Parameters.AddWithValue("k", kindToken);
-        select.Parameters.AddWithValue("v", valueKey);
+        select.Parameters.AddWithValue("v", value);
         await using NpgsqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-
-        // Hand back the conflicting grantee as its own JSON document (the caller disposes it); its kind/value/label live
-        // in the record, so nothing is reified into a separate POCO here.
         return await reader.ReadAsync(cancellationToken).ConfigureAwait(false)
-            ? ReadDocument(reader, 2)
-            : (ParsedJsonDocument<ObservedIdentity>?)null;
+            ? ToConflict(reader.GetString(0), reader.GetString(1), reader.GetFieldValue<byte[]>(2), kind)
+            : null;
     }
 
     /// <inheritdoc/>
@@ -304,12 +279,21 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
         await schema.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    // The driver mints the Document column as a byte[] (the read leaf — GetFieldValue); parse it NON-COPYING (it is a fresh
-    // managed array kept alive by the returned document) — no redundant pooled copy of bytes we already own.
-    private static ParsedJsonDocument<ObservedIdentity> ReadDocument(NpgsqlDataReader reader, int ordinal)
-        => ParsedJsonDocument<ObservedIdentity>.Parse(reader.GetFieldValue<byte[]>(ordinal).AsMemory());
+    // Builds the conflict from a matched row: the kind from its token, the value verbatim, and the label parsed from the
+    // document (a transient pooled parse — the label string it yields is an owned managed copy that outlives the dispose).
+    private static ObservedIdentityConflict ToConflict(string conflictKindToken, string conflictValue, byte[] document, GranteeKind fallbackKind)
+    {
+        string? label;
+        using (ParsedJsonDocument<ObservedIdentity> doc = PersistedJson.ToPooledDocument<ObservedIdentity>(document))
+        {
+            label = doc.RootElement.LabelOrNull;
+        }
 
-    private static async ValueTask<ParsedJsonDocument<ObservedIdentity>?> ReadDocumentAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, string kindToken, string value, CancellationToken cancellationToken)
+        GranteeKind conflictKind = GranteeKinds.TryParse(conflictKindToken, out GranteeKind parsed) ? parsed : fallbackKind;
+        return new ObservedIdentityConflict(conflictKind, conflictValue, label);
+    }
+
+    private static async ValueTask<byte[]?> ReadDocumentAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, string kindToken, string value, CancellationToken cancellationToken)
     {
         await using NpgsqlCommand select = connection.CreateCommand();
         select.Transaction = transaction;
@@ -317,7 +301,7 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
         select.Parameters.AddWithValue("k", kindToken);
         select.Parameters.AddWithValue("v", value);
         await using NpgsqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-        return await reader.ReadAsync(cancellationToken).ConfigureAwait(false) ? ReadDocument(reader, 0) : null;
+        return await reader.ReadAsync(cancellationToken).ConfigureAwait(false) ? reader.GetFieldValue<byte[]>(0) : null;
     }
 
     private ValueTask<NpgsqlConnection> OpenAsync(CancellationToken cancellationToken)

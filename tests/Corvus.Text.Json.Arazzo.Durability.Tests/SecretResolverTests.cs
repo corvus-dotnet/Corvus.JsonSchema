@@ -72,6 +72,48 @@ public sealed class SecretResolverTests
     }
 
     [TestMethod]
+    public async Task File_resolver_confined_to_a_root_reads_a_locator_relative_to_it()
+    {
+        // §17.5/F6: a configured root resolves locators relative to it (the locator is not the absolute path).
+        string root = Path.Combine(Path.GetTempPath(), $"corvus-secret-root-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Path.Combine(root, "db"));
+        await File.WriteAllBytesAsync(Path.Combine(root, "db", "password"), Encoding.UTF8.GetBytes("confined-secret"));
+        try
+        {
+            var resolver = new FileSecretResolver(root);
+            using SecretMaterial material = await resolver.ResolveAsync(SecretRef.Parse("file://db/password"), default);
+            material.Reveal().ShouldBe("confined-secret");
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [TestMethod]
+    public async Task File_resolver_confined_to_a_root_rejects_traversal_and_absolute_escapes()
+    {
+        // §17.5/F6: neither a `..` traversal nor an absolute locator may escape the configured root.
+        string root = Path.Combine(Path.GetTempPath(), $"corvus-secret-root-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        try
+        {
+            var resolver = new FileSecretResolver(root);
+
+            SecretResolutionException traversal = await Should.ThrowAsync<SecretResolutionException>(async () =>
+                await resolver.ResolveAsync(SecretRef.Parse("file://../../etc/passwd"), default));
+            traversal.Message.ShouldContain("escapes");
+
+            await Should.ThrowAsync<SecretResolutionException>(async () =>
+                await resolver.ResolveAsync(SecretRef.Parse("file:///etc/shadow"), default));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [TestMethod]
     public async Task Composite_dispatches_by_scheme_and_fails_closed_for_an_unregistered_scheme()
     {
         const string name = "CORVUS_ARAZZO_TEST_SECRET_COMPOSITE";

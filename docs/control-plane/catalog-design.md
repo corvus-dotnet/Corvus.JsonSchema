@@ -57,13 +57,17 @@ is a new version record. Only governance metadata is mutable.
 ### Package format
 
 A package is a **self-contained, nupkg-style ZIP archive** — an opaque binary artifact moved as a file
-(multipart upload / streamed download) and stored verbatim. Its documented internal layout (all entries UTF-8
-JSON), implemented by `WorkflowPackage` (the pack/unpack runtime tools in `Corvus.Text.Json.Arazzo.Durability`):
+(multipart upload / streamed download) and stored verbatim. Its documented internal layout (JSON entries
+except the binary executor assembly), implemented by `WorkflowPackage` (the pack/unpack runtime tools in
+`Corvus.Text.Json.Arazzo.Durability`):
 
 ```
 manifest.json     { "formatVersion": 1, "workflow": "workflow.json", "sources": [ { "name", "path" } ] }
 workflow.json     the Arazzo workflow document
 sources/<name>.json   each referenced source document (name = the workflow's sourceDescriptions[].name)
+metadata/schemas.json          optional precomputed schema metadata
+metadata/executor.dll          optional compiled workflow executor assembly (binary)
+metadata/executor-manifest.json   optional executor manifest (target framework, integrity binding, entry type)
 ```
 
 The archive is written **deterministically** (fixed entry order + timestamps) so identical content yields
@@ -96,9 +100,14 @@ retrieval endpoints.
 | `GET` | `/catalog` | `catalog:read` | Search versions — filters: `q` (title/description), `baseWorkflowId`, `tag` (repeatable, AND), `status`, `owner`; keyset paged. Returns version summaries (metadata). |
 | `GET` | `/catalog/{baseWorkflowId}` | `catalog:read` | List the versions of a base id. |
 | `GET` | `/catalog/{baseWorkflowId}/versions/{versionNumber}` | `catalog:read` | Get a version's **metadata** (no documents embedded). |
-| `GET` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/package` | `catalog:read` | **Download** the whole canonical package envelope (`application/json`). |
+| `GET` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/package` | `catalog:read` | **Download** the whole package archive (`application/octet-stream`, streamed — the opaque binary ZIP). |
 | `GET` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/workflow` | `catalog:read` | Get just the Arazzo workflow document (`application/json`) — the common UI case. |
 | `GET` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/sources/{sourceName}` | `catalog:read` | Get one referenced source document (OpenAPI/AsyncAPI) by its `sourceDescriptions` name (`application/json`). |
+| `GET` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/schemas` | `catalog:read` | Get the precomputed schema-metadata document (`application/json`). |
+| `GET` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/executor` | `catalog:read` | **Download** the compiled executor assembly (`application/octet-stream`, streamed) — present only on a runnable version. |
+| `GET` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/executor-manifest` | `catalog:read` | Get the executor manifest (`application/json`: target framework, assembly digest, package-hash binding, entry type). |
+| `POST` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/validate` | `catalog:read` | Validate a value against one of the version's baked schemas. |
+| `POST` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/runs` | `runs:write` | Trigger a run of a **runnable** version: validates inputs, creates a Pending run. `409` if not runnable, `422` if inputs invalid. |
 | `PATCH` | `/catalog/{baseWorkflowId}/versions/{versionNumber}` | `catalog:write` | Update governance metadata (`owner`, `tags`, `status`). Stamps `lastUpdatedBy`; status→Obsolete stamps `obsoletedBy`. |
 | `DELETE` | `/catalog/{baseWorkflowId}/versions/{versionNumber}` | `catalog:purge` | Delete one version. `409` if any run references its `workflowId`. |
 | `PURGE` | `/catalog` | `catalog:purge` | Bulk-reap **obsolete** versions that have no referencing runs. |
@@ -115,13 +124,12 @@ repo's OpenAPI generator supports this (a `format: binary` multipart part is bou
   file), `owner` (`CatalogOwner` JSON), `tags` (string array). The server reads the `package` part,
   canonicalises + hashes it, projects title/description/sources, rewrites the workflow id, and stores it.
   Responds `201` with the version metadata.
-- **Whole-package download** — `…/package` returns the canonical envelope as `application/json` (the package
-  *is* a JSON document — the self-contained, hash-verifiable artifact for backup/export or the future
-  code-generation service). The package is JSON, so it is returned as JSON rather than `octet-stream`; the
-  current server generator writes response bodies through a JSON writer (it has no raw byte-stream response
-  path), and a JSON body is the natural, working representation. A genuinely streamed binary download (and the
-  later compiled-assembly blob, which is **not** JSON) would need a server-side raw-stream response capability;
-  that is a follow-up if/when the assembly sub-resource is specified.
+- **Whole-package download** — `…/package` returns the package archive as `application/octet-stream`, streamed
+  (the package is the opaque, self-contained, hash-verifiable binary ZIP — for backup/export or the future
+  code-generation service). The server generator now has a raw byte-stream response path, so the archive is
+  streamed verbatim rather than re-serialised through a JSON writer; the JS client reads it as a `Blob`
+  (`getCatalogPackage(...)`, `arazzo-client.js`). The compiled-assembly download (`…/executor`) uses the same
+  raw-stream path; the executor manifest (`…/executor-manifest`) is JSON.
 - **Addressable documents** — the package is stored so its constituents are individually retrievable: `…/workflow`
   returns the Arazzo document and `…/sources/{sourceName}` returns one OpenAPI/AsyncAPI document, both as
   `application/json` — so the UI can fetch just the workflow definition (the common case) or a single source
@@ -185,23 +193,33 @@ versions, a version detail showing the package + hash + owner + governance attri
 (add, edit metadata, obsolete, delete) gated by the `catalog:*` scopes — reusing the kit's components,
 theming, and auth model.
 
-## Future phase (noted, not yet specified)
+## Code generation & execution (largely built)
 
 The package is deliberately a **complete, self-contained input to code generation**: it bundles the Arazzo
 workflow plus every referenced OpenAPI/AsyncAPI document, so it carries everything this repo's code generators
-need with no external resolution.
+need with no external resolution. Most of what was originally noted as a future phase is now implemented; the
+remaining items are called out below.
 
-**Code-generation service.** A version's package can be handed to a generation service that runs **our code
-generators** (the same `corvusjson` / executor-emitter pipeline used elsewhere) over the package contents to
-produce the workflow's executor code — entirely from the package, against the exact, content-hashed documents
-that version captured (so the generated code is reproducible and provably tied to the version).
+**Code-generation + compile (built).** On add, the store hands the package to an
+`IWorkflowExecutorProvider` (default `WorkflowExecutorProvider` in `Corvus.Text.Json.Arazzo.Generation`) that
+runs **our code generators** (the OpenAPI/AsyncAPI clients + executor emitter) over the package contents and
+**compiles** the result in memory — entirely from the package, against the exact, content-hashed documents the
+version captured. The compiled **executor assembly** plus an **executor manifest** are written into the package
+(`metadata/executor.dll`, `metadata/executor-manifest.json`; see *Package format*). A package that cannot be
+generated or compiled is still catalogued — just not runnable (`CatalogPackage.Project` /
+`InMemoryWorkflowCatalogStore`).
 
-**Compiled-assembly blob.** The output — a **release-build** compiled assembly — can then be stored on the
-catalog version, **cryptographically tied to the version** (signed over the package hash). A hosting service
-will discover and **dynamically load** that assembly to publish the workflow at a configured, secured endpoint.
+**Runnable versions + execution (built).** A version exposes a `runnable` flag (set when an executor was
+produced; `CatalogVersion`/`CatalogVersionSummary`). The compiled assembly and its manifest are downloadable
+(`GET …/executor` as `application/octet-stream`, `GET …/executor-manifest` as `application/json`), and a run can
+be triggered directly from a version: `POST …/runs` (`startCatalogWorkflowRun`) validates the inputs, creates a
+Pending run a hosting runner claims and executes, and returns `409` when the version is **not runnable** (carries
+no executor). `WorkflowExecutorLoader` (`Corvus.Text.Json.Arazzo.Execution`) dynamically loads the assembly into
+a collectible `AssemblyLoadContext` per `(baseWorkflowId, versionNumber)`, **verifying integrity** before use:
+the assembly digest must match the manifest's `assemblyDigest` (`sha256:<hex>`) and the manifest's `packageHash`
+must match the catalog version's content hash. This binds the assembly to the exact version by content digest.
 
-This adds (later): a generate-from-package step (package → generated code → compiled assembly), an assembly
-blob + signature on the version record, a publish/verify step, and the hosting/loader service. The design is
-ready for it now: the version is immutable and content-hashed, and the package is self-contained, so both the
-generated code and the assembly can be bound to — and regenerated from — the exact version. The API/store
-shape will extend with an assembly (and/or generated-code) sub-resource when specified.
+**Still design-only.** A *cryptographic signature* over the assembly/package (the current binding is a SHA-256
+digest, not a signature); and a dedicated **publish/hosting service** that loads a version's assembly and serves
+the workflow at a configured, secured endpoint (the loader primitive and the run-trigger exist; a standalone
+published-endpoint hosting service does not yet). These extend the existing shape rather than reshape it.

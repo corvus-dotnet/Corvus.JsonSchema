@@ -3,7 +3,9 @@
 // </copyright>
 
 using System.Security.Claims;
+using Corvus.Text.Json.Arazzo.Directories;
 using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.AspNetCore.Http;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
@@ -97,14 +99,18 @@ public abstract class ControlPlaneRowSecurityPolicy
     /// each tag's key; tags without the prefix are ignored.</summary>
     /// <param name="usageTags">The binding's internal usage tags.</param>
     /// <returns>The usage grants.</returns>
-    public virtual IReadOnlyList<CredentialUsageGrant> DescribeUsageScope(IReadOnlyList<SecurityTag> usageTags)
+    /// <remarks>Takes the <see cref="SecurityTagSet"/> holder and drives the projection from its allocation-free
+    /// enumerator — the grant key/value strings are the genuine response leaf, but the intermediate
+    /// <see cref="List{T}"/> a <c>ToList()</c> would build is not, so this is iterated directly (it runs per row of the
+    /// credentials/administrators/grantee list responses).</remarks>
+    public virtual IReadOnlyList<CredentialUsageGrant> DescribeUsageScope(SecurityTagSet usageTags)
     {
-        if (usageTags.Count == 0)
+        if (usageTags.IsEmpty)
         {
             return [];
         }
 
-        var grants = new List<CredentialUsageGrant>(usageTags.Count);
+        var grants = new List<CredentialUsageGrant>();
         foreach (SecurityTag tag in usageTags)
         {
             if (tag.Key.StartsWith(this.InternalTagPrefix, StringComparison.Ordinal))
@@ -115,6 +121,54 @@ public abstract class ControlPlaneRowSecurityPolicy
 
         return grants;
     }
+
+    /// <summary>
+    /// The grantee kinds this policy can resolve to a <c>sys:</c> identity (design §16.5.4) — what the grantee picker
+    /// may offer for view / operate / administer grants, so an operator never guesses a dimension. The default supports
+    /// none; a deployment opts in to the kinds whose identities it actually stamps.
+    /// </summary>
+    public virtual IReadOnlyList<GranteeKind> SupportedGranteeKinds => [];
+
+    /// <summary>
+    /// Resolves a chosen grantee (<paramref name="kind"/>, <paramref name="value"/>) to its exact deployment-stamped
+    /// <c>sys:</c> identity (design §16.5.4) — the identity an administrator entry or entitlement grant must name to
+    /// match this principal (membership is exact set-equality). The default maps the kind to its dimension
+    /// (<c>person→sub</c>, <c>team→tenant</c>, <c>role→role</c>, <c>workflow→workflow</c>) and produces the single tag
+    /// <c>{prefix+dimension = value}</c> — best-effort for a free-typed value; a deployment overrides to resolve a
+    /// multi-tag identity (e.g. a person to <c>{sys:tenant, sys:sub}</c>), typically via an <see cref="IPrincipalDirectory"/>.
+    /// </summary>
+    /// <param name="kind">The grantee kind.</param>
+    /// <param name="value">The grantee value (a subject id, tenant name, role name, or workflow id).</param>
+    /// <returns>The grantee's exact <c>sys:</c> identity.</returns>
+    public virtual SecurityTagSet ResolveGranteeIdentity(GranteeKind kind, string value)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(value);
+        return SecurityTagSet.FromTags([new SecurityTag(this.InternalTagPrefix + GranteeDimension(kind), value)]);
+    }
+
+    /// <summary>
+    /// Whether a single-tag resolution of <paramref name="kind"/> (the <see cref="ResolveGranteeIdentity"/> default) is the
+    /// principal's <strong>whole</strong> stamped identity (§17.2) — so a grant naming it matches by exact set-equality —
+    /// or a best-effort partial mapping. The default treats <see cref="GranteeKind.Person"/> as partial (a person is
+    /// typically multi-tag, e.g. <c>{sys:tenant, sys:sub}</c>) and team/role/workflow as whole-grain; a deployment
+    /// overrides to match its own stamping grain (e.g. one that stamps only <c>sys:sub</c> for people returns true here).
+    /// </summary>
+    /// <param name="kind">The grantee kind.</param>
+    /// <returns><see langword="true"/> if a single-tag resolution of the kind is the whole identity.</returns>
+    public virtual bool IsWholeGrainGrantee(GranteeKind kind) => kind != GranteeKind.Person;
+
+    /// <summary>Maps a <see cref="GranteeKind"/> to the usage-grant dimension it resolves through (the part after the
+    /// internal prefix, e.g. <see cref="GranteeKind.Team"/> → <c>tenant</c> → <c>sys:tenant</c>).</summary>
+    /// <param name="kind">The grantee kind.</param>
+    /// <returns>The dimension name.</returns>
+    protected static string GranteeDimension(GranteeKind kind) => kind switch
+    {
+        GranteeKind.Person => "sub",
+        GranteeKind.Team => "tenant",
+        GranteeKind.Role => "role",
+        GranteeKind.Workflow => "workflow",
+        _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown grantee kind."),
+    };
 }
 
 /// <summary>
@@ -171,5 +225,27 @@ internal sealed class ControlPlaneAccess
     /// <summary>Describes internal usage tags back as operator-facing grants (empty when unscoped).</summary>
     /// <param name="usageTags">The binding's internal usage tags.</param>
     /// <returns>The usage grants.</returns>
-    public IReadOnlyList<CredentialUsageGrant> DescribeUsageScope(IReadOnlyList<SecurityTag> usageTags) => this.policy?.DescribeUsageScope(usageTags) ?? [];
+    public IReadOnlyList<CredentialUsageGrant> DescribeUsageScope(SecurityTagSet usageTags) => this.policy?.DescribeUsageScope(usageTags) ?? [];
+
+    /// <summary>Gets the grantee kinds the deployment can resolve (empty when unscoped).</summary>
+    /// <returns>The supported grantee kinds.</returns>
+    public IReadOnlyList<GranteeKind> SupportedGranteeKinds() => this.policy?.SupportedGranteeKinds ?? [];
+
+    /// <summary>Resolves a grantee to its exact <c>sys:</c> identity (empty when unscoped).</summary>
+    /// <param name="kind">The grantee kind.</param>
+    /// <param name="value">The grantee value.</param>
+    /// <returns>The grantee's identity.</returns>
+    public SecurityTagSet ResolveGranteeIdentity(GranteeKind kind, string value) => this.policy?.ResolveGranteeIdentity(kind, value) ?? SecurityTagSet.Empty;
+
+    /// <summary>Whether a single-tag resolution of the kind is the whole stamped identity (§17.2); conservatively <see langword="false"/> when unscoped.</summary>
+    /// <param name="kind">The grantee kind.</param>
+    /// <returns><see langword="true"/> if a single-tag resolution of the kind is complete.</returns>
+    public bool IsWholeGrainGrantee(GranteeKind kind) => this.policy?.IsWholeGrainGrantee(kind) ?? false;
+
+    /// <summary>Describes the current caller's own stamped identity as operator-facing grants — the "whoami" identity
+    /// (empty when unscoped). Composes <see cref="InternalTags"/> through <see cref="DescribeUsageScope"/>.</summary>
+    /// <returns>The caller's identity as <c>{dimension, value}</c> grants.</returns>
+    // The whoami path resolves the caller's internal tags as a list once per request (not per row), so wrapping them into
+    // the holder here pays a single FromTags off the hot list paths — which now take the SecurityTagSet directly.
+    public IReadOnlyList<CredentialUsageGrant> CallerIdentityGrants() => this.DescribeUsageScope(SecurityTagSet.FromTags(this.InternalTags()));
 }

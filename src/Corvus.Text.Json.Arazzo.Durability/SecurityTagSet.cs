@@ -318,6 +318,88 @@ public readonly struct SecurityTagSet
         return list;
     }
 
+    /// <summary>
+    /// Whether this set contains exactly the same tags as <paramref name="other"/> (order-independent set equality), the
+    /// administration/entitlement membership comparison — computed directly on the unescaped UTF-8 key/value bytes, so it
+    /// materializes no managed string, no list, and nothing escapes to the heap.
+    /// </summary>
+    /// <param name="other">The set to compare against.</param>
+    /// <returns><see langword="true"/> if the two sets contain exactly the same tags.</returns>
+    public bool SetEquals(SecurityTagSet other)
+    {
+        if (this.json.IsEmpty || other.json.IsEmpty)
+        {
+            return this.json.IsEmpty && other.json.IsEmpty;
+        }
+
+        int count = this.Count;
+        if (count != other.Count)
+        {
+            return false;
+        }
+
+        // Parse + sort both sets into pooled scratch + stack slice tables, then compare element-wise on the unescaped
+        // UTF-8 spans — set equality without materializing a single tag string.
+        byte[] scratchA = ArrayPool<byte>.Shared.Rent(this.json.Length);
+        byte[] scratchB = ArrayPool<byte>.Shared.Rent(other.json.Length);
+        SecurityTagSpanSort.TagSlice[]? rentedA = count > SecurityTagSpanSort.StackTagCapacity ? ArrayPool<SecurityTagSpanSort.TagSlice>.Shared.Rent(count) : null;
+        SecurityTagSpanSort.TagSlice[]? rentedB = count > SecurityTagSpanSort.StackTagCapacity ? ArrayPool<SecurityTagSpanSort.TagSlice>.Shared.Rent(count) : null;
+        try
+        {
+            scoped Span<SecurityTagSpanSort.TagSlice> tableA;
+            scoped Span<SecurityTagSpanSort.TagSlice> tableB;
+            if (rentedA is not null)
+            {
+                tableA = rentedA;
+            }
+            else
+            {
+                tableA = stackalloc SecurityTagSpanSort.TagSlice[SecurityTagSpanSort.StackTagCapacity];
+            }
+
+            if (rentedB is not null)
+            {
+                tableB = rentedB;
+            }
+            else
+            {
+                tableB = stackalloc SecurityTagSpanSort.TagSlice[SecurityTagSpanSort.StackTagCapacity];
+            }
+
+            Span<SecurityTagSpanSort.TagSlice> a = tableA[..count];
+            Span<SecurityTagSpanSort.TagSlice> b = tableB[..count];
+            SecurityTagSpanSort.Parse(this.json.Span, scratchA, a);
+            SecurityTagSpanSort.Sort(a, scratchA);
+            SecurityTagSpanSort.Parse(other.json.Span, scratchB, b);
+            SecurityTagSpanSort.Sort(b, scratchB);
+
+            for (int i = 0; i < count; i++)
+            {
+                if (!scratchA.AsSpan(a[i].KeyOffset, a[i].KeyLength).SequenceEqual(scratchB.AsSpan(b[i].KeyOffset, b[i].KeyLength))
+                    || !scratchA.AsSpan(a[i].ValueOffset, a[i].ValueLength).SequenceEqual(scratchB.AsSpan(b[i].ValueOffset, b[i].ValueLength)))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(scratchA);
+            ArrayPool<byte>.Shared.Return(scratchB);
+            if (rentedA is not null)
+            {
+                ArrayPool<SecurityTagSpanSort.TagSlice>.Shared.Return(rentedA);
+            }
+
+            if (rentedB is not null)
+            {
+                ArrayPool<SecurityTagSpanSort.TagSlice>.Shared.Return(rentedB);
+            }
+        }
+    }
+
     /// <summary>Gets an allocation-free enumerator over the security tags (each <see cref="SecurityTag.Key"/>/<see cref="SecurityTag.Value"/> is decoded once at the driver leaf). Lets a <c>{ k, v }</c> / BSON / SQL backend write its embedded form without a <see cref="List{T}"/>.</summary>
     /// <returns>The enumerator.</returns>
     public Enumerator GetEnumerator() => new(this.json.Span);

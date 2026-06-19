@@ -7,7 +7,6 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
-using Corvus.Text.Json.Arazzo.Directories;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.AspNetCore.Authentication;
@@ -54,8 +53,8 @@ public sealed class ControlPlaneIdentityApiTests
     public async Task Grantees_search_returns_observed_identities_resolved_to_grants()
     {
         var observed = new InMemoryObservedIdentityStore();
-        await observed.SeenAsync(ObservedIdentity.GranteeKind.EnumValues.Team, Str("alpha"), Str("Alpha"), Tenant("alpha"), true, "test", default);
-        await observed.SeenAsync(ObservedIdentity.GranteeKind.EnumValues.Team, Str("beta"), Str("Beta"), Tenant("beta"), true, "test", default);
+        await observed.SeenAsync(GranteeKind.Team, "alpha", "Alpha", Tenant("alpha"), true, "test", default);
+        await observed.SeenAsync(GranteeKind.Team, "beta", "Beta", Tenant("beta"), true, "test", default);
 
         await using Scoped host = await StartAsync(observed);
         using Stj.JsonDocument doc = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/identity/grantees?q=al", AdminRead, "acme"));
@@ -118,8 +117,8 @@ public sealed class ControlPlaneIdentityApiTests
     public async Task Grantees_search_is_reach_filtered_so_an_admin_cannot_enumerate_other_tenants()
     {
         var observed = new InMemoryObservedIdentityStore();
-        await observed.SeenAsync(ObservedIdentity.GranteeKind.EnumValues.Team, Str("acme-team"), Str("Acme"), SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), true, "test", default);
-        await observed.SeenAsync(ObservedIdentity.GranteeKind.EnumValues.Team, Str("globex-team"), Str("Globex"), SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), true, "test", default);
+        await observed.SeenAsync(GranteeKind.Team, "acme-team", "Acme", SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), true, "test", default);
+        await observed.SeenAsync(GranteeKind.Team, "globex-team", "Globex", SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), true, "test", default);
 
         await using Scoped host = await StartAsync(observed, scopedReach: true);
 
@@ -131,44 +130,7 @@ public sealed class ControlPlaneIdentityApiTests
         grantees[0].GetProperty("value").GetString().ShouldBe("acme-team");
     }
 
-    [TestMethod]
-    public async Task Grantees_search_via_directory_projects_resolved_principals_bytes_to_bytes()
-    {
-        // A directory that resolves span-constructed principals (the bytes-to-bytes adapter path), so the handler's
-        // context-threaded projection writes each grantee's value/label straight from the owned UTF-8 into the response.
-        var directory = new FakeDirectory(
-            new ResolvedPrincipal(GranteeKind.Team, "acme-team"u8, "Acme Team"u8, hasLabel: true, Tenant("acme")),
-            new ResolvedPrincipal(GranteeKind.Team, "acme-ops"u8, "Acme Ops"u8, hasLabel: true, Tenant("acme")));
-
-        await using Scoped host = await StartAsync(directory: directory);
-        using Stj.JsonDocument doc = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/identity/grantees?q=acme-t&source=directory&kind=team", AdminRead, "acme"));
-
-        Stj.JsonElement[] grantees = [.. doc.RootElement.GetProperty("grantees").EnumerateArray()];
-        grantees.Length.ShouldBe(1); // only "acme-team" matches the "acme-t" prefix
-        grantees[0].GetProperty("value").GetString().ShouldBe("acme-team");
-        grantees[0].GetProperty("label").GetString().ShouldBe("Acme Team");
-        grantees[0].GetProperty("kind").GetString().ShouldBe("team");
-        grantees[0].GetProperty("source").GetString().ShouldBe("directory");
-        grantees[0].GetProperty("complete").GetBoolean().ShouldBeTrue(); // a directory full-resolution is complete (§17.2)
-        GrantsOf(grantees[0]).ShouldBe(["tenant=acme"]); // identity described back as {dimension,value}, prefix stripped
-    }
-
-    [TestMethod]
-    public async Task Grantees_search_via_directory_omits_an_absent_label()
-    {
-        // A principal with no display label (hasLabel: false) must omit the label property, not emit an empty string.
-        var directory = new FakeDirectory(
-            new ResolvedPrincipal(GranteeKind.Team, "acme-team"u8, default, hasLabel: false, Tenant("acme")));
-
-        await using Scoped host = await StartAsync(directory: directory);
-        using Stj.JsonDocument doc = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/identity/grantees?q=acme&source=directory&kind=team", AdminRead, "acme"));
-
-        Stj.JsonElement g = doc.RootElement.GetProperty("grantees").EnumerateArray().Single();
-        g.GetProperty("value").GetString().ShouldBe("acme-team");
-        g.TryGetProperty("label", out _).ShouldBeFalse();
-    }
-
-    private static async Task EstablishAsync(SecuredWorkflowCatalog catalog, string workflowId, string founder)
+    private static async Task EstablishAsync(WorkflowCatalogClient catalog, string workflowId, string founder)
     {
         SecurityTagSet founderIdentity = SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", founder)]);
         byte[] workflow = Encoding.UTF8.GetBytes($$"""
@@ -180,10 +142,6 @@ public sealed class ControlPlaneIdentityApiTests
         """);
         await catalog.AddAsync(CatalogPackage.Build(workflow, []), new CatalogOwner("Team", "team@example.com", null, null), default, founderIdentity, default);
     }
-
-    // The observed-store seam carries the JSON value (reified only at the store's key leaf); a test builds one from a
-    // managed string by parsing the JSON string literal (the test values contain no characters needing escaping).
-    private static JsonString Str(string value) => JsonString.ParseValue($"\"{value}\"");
 
     private static SecurityTagSet Tenant(string tenant)
         => SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", tenant)]);
@@ -199,11 +157,11 @@ public sealed class ControlPlaneIdentityApiTests
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)
         => Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 
-    private static async Task<Scoped> StartAsync(IObservedIdentityStore? observed = null, bool scopedReach = false, IPrincipalDirectory? directory = null)
+    private static async Task<Scoped> StartAsync(IObservedIdentityStore? observed = null, bool scopedReach = false)
     {
         var store = new InMemoryWorkflowStateStore();
-        var management = new SecuredWorkflowManagement(store, "ops");
-        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops", credentials: null, administrators: new InMemoryWorkflowAdministratorStore());
+        var management = new WorkflowManagementClient(store, "ops");
+        var catalog = new WorkflowCatalogClient(new InMemoryWorkflowCatalogStore(), store, "ops", credentials: null, administrators: new InMemoryWorkflowAdministratorStore());
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -217,7 +175,7 @@ public sealed class ControlPlaneIdentityApiTests
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(scopedReach), observedIdentityStore: observed, principalDirectory: directory);
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(scopedReach), observedIdentityStore: observed);
         await app.StartAsync();
 
         return new Scoped(app, app.GetTestClient(), catalog);
@@ -250,19 +208,9 @@ public sealed class ControlPlaneIdentityApiTests
         }
     }
 
-    // A stub directory: a prefix match over a fixed set of span-constructed principals (the bytes-to-bytes adapter path).
-    private sealed class FakeDirectory(params ResolvedPrincipal[] principals) : IPrincipalDirectory
+    private sealed class Scoped(WebApplication app, HttpClient client, WorkflowCatalogClient catalog) : IAsyncDisposable
     {
-        public ValueTask<IReadOnlyList<ResolvedPrincipal>> SearchAsync(GranteeKind kind, string query, int limit, CancellationToken cancellationToken)
-        {
-            IReadOnlyList<ResolvedPrincipal> matches = [.. principals.Where(p => p.Kind == kind && p.Value.StartsWith(query, StringComparison.Ordinal)).Take(limit)];
-            return new ValueTask<IReadOnlyList<ResolvedPrincipal>>(matches);
-        }
-    }
-
-    private sealed class Scoped(WebApplication app, HttpClient client, SecuredWorkflowCatalog catalog) : IAsyncDisposable
-    {
-        public SecuredWorkflowCatalog Catalog => catalog;
+        public WorkflowCatalogClient Catalog => catalog;
 
         public Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, string? scope, string? identity = null)
             => Send(new HttpRequestMessage(method, path), scope, identity);

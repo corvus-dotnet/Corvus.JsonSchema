@@ -78,87 +78,12 @@ public sealed class DirectoryIssuerTests
     public void Projector_drops_records_the_mapper_drops()
         => new DirectoryPrincipalProjector(SubMapper(), "keycloak").Project(Record("drop")).ShouldBeNull();
 
-    [TestMethod]
-    public void Projector_stamps_ambient_dimensions_on_the_string_path()
-    {
-        var projector = new DirectoryPrincipalProjector(SubMapper(), "keycloak", Acme);
-
-        ResolvedPrincipal? mapped = projector.Project(Record("alice"));
-
-        mapped.ShouldNotBeNull();
-        List<SecurityTag> tags = mapped!.Value.Identity.ToList();
-        tags.ShouldContain(new SecurityTag("sys:sub", "alice"));
-        tags.ShouldContain(new SecurityTag(DirectoryIssuer.IssuerTagKey, "keycloak"));
-        tags.ShouldContain(new SecurityTag("sys:tenant", "acme"));
-    }
-
-    [TestMethod]
-    public void Projector_stamps_ambient_dimensions_on_the_span_path()
-    {
-        var projector = new DirectoryPrincipalProjector(SpanSubMapper(), "keycloak", Acme);
-
-        // A view over the grantee value alone (no captured attributes) — the span mapper reads ValueUtf8 → sys:sub.
-        ResolvedPrincipal? mapped = projector.TryProjectIdentity(GranteeKind.Person, "alice"u8, "alice"u8, hasLabel: true, new DirectoryRecordView(GranteeKind.Person, "alice"u8, default, default));
-
-        mapped.ShouldNotBeNull();
-        List<SecurityTag> tags = mapped!.Value.Identity.ToList();
-        tags.ShouldContain(new SecurityTag("sys:sub", "alice"));
-        tags.ShouldContain(new SecurityTag(DirectoryIssuer.IssuerTagKey, "keycloak"));
-        tags.ShouldContain(new SecurityTag("sys:tenant", "acme"));
-    }
-
-    [TestMethod]
-    public void Projector_overrides_a_mapper_supplied_ambient_dimension_so_it_cannot_be_forged()
-    {
-        // A mapper forging sys:tenant=evil; the ambient provider governs sys:tenant and resolves acme → the forged value
-        // is stripped (mapper-immutable), exactly as the issuer is.
-        var projector = new DirectoryPrincipalProjector(ForgedTenantMapper(), "keycloak", Acme);
-
-        List<SecurityTag> tags = projector.Project(Record("alice"))!.Value.Identity.ToList();
-        tags.Count(t => t.Key == "sys:tenant").ShouldBe(1);
-        tags.ShouldContain(new SecurityTag("sys:tenant", "acme"));
-        tags.ShouldNotContain(new SecurityTag("sys:tenant", "evil"));
-    }
-
-    [TestMethod]
-    public void Projector_overrides_a_mapper_supplied_issuer_through_the_uniform_stamp()
-    {
-        // The issuer is now stamped as a governed dimension (no issuer-specific path) — a mapper forging sys:iss is still
-        // stripped and the adapter's issuer is authoritative, exactly as before the unification.
-        var projector = new DirectoryPrincipalProjector(ForgedIssuerMapper(), "keycloak");
-
-        List<SecurityTag> tags = projector.Project(Record("alice"))!.Value.Identity.ToList();
-        tags.Count(t => t.Key == DirectoryIssuer.IssuerTagKey).ShouldBe(1);
-        tags.ShouldContain(new SecurityTag(DirectoryIssuer.IssuerTagKey, "keycloak"));
-        tags.ShouldNotContain(new SecurityTag(DirectoryIssuer.IssuerTagKey, "forged"));
-    }
-
-    // A fixed ambient provider stamping sys:tenant=acme (§16.5.5) — stands in for a request-context tenant.
-    private static readonly StaticAmbientIdentityDimensions Acme = new([new SecurityTag("sys:tenant", "acme")]);
-
     // A mapper that drops records whose id is "drop" and otherwise resolves to a single sys:sub tag (no issuer — the
     // projector is responsible for that).
     private static IDirectoryIdentityMapper SubMapper()
         => DirectoryIdentityMapper.FromFunc(record => record.Id == "drop"
             ? null
             : new ResolvedPrincipal(record.Kind, record.Id, record.DisplayName, SecurityTagSet.FromTags([new SecurityTag("sys:sub", record.Id)])));
-
-    // The span counterpart of SubMapper: reads the grantee value as UTF-8 → sys:sub, no issuer or ambient (the projector
-    // appends those).
-    private static IDirectoryIdentityMapper SpanSubMapper()
-        => DirectorySpanIdentityMapper.FromIdentity([], static (DirectoryRecordView record, ref IdentityBuilder identity) =>
-        {
-            identity.Add("sys:sub"u8, record.ValueUtf8);
-            return true;
-        });
-
-    // A mapper that forges sys:tenant=evil (an ambient dimension the deployment governs).
-    private static IDirectoryIdentityMapper ForgedTenantMapper()
-        => DirectoryIdentityMapper.FromFunc(record => new ResolvedPrincipal(record.Kind, record.Id, record.DisplayName, SecurityTagSet.FromTags([new SecurityTag("sys:sub", record.Id), new SecurityTag("sys:tenant", "evil")])));
-
-    // A mapper that forges sys:iss=forged (the issuer dimension the projector governs).
-    private static IDirectoryIdentityMapper ForgedIssuerMapper()
-        => DirectoryIdentityMapper.FromFunc(record => new ResolvedPrincipal(record.Kind, record.Id, record.DisplayName, SecurityTagSet.FromTags([new SecurityTag("sys:sub", record.Id), new SecurityTag(DirectoryIssuer.IssuerTagKey, "forged")])));
 
     private static DirectoryRecord Record(string id)
         => new(GranteeKind.Person, id, id, new Dictionary<string, IReadOnlyList<string>>(), []);

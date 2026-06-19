@@ -36,7 +36,7 @@ public readonly partial struct RunnerRegistration
         {
             if ((bool)hosted.Loaded
                 && hosted.VersionNumber == versionNumber
-                && (string)hosted.BaseWorkflowId == baseWorkflowId)
+                && ((JsonElement)hosted.BaseWorkflowId).EqualsString(baseWorkflowId))
             {
                 return true;
             }

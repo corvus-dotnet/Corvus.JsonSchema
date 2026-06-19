@@ -2,8 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Linq;
-
 namespace Corvus.Text.Json.Arazzo.Durability;
 
 /// <summary>
@@ -13,6 +11,14 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// identity) and the entitlement cannot be self-granted — the tag is set from the catalogued version, never from the
 /// Arazzo document the author wrote.
 /// </summary>
+/// <remarks>
+/// <strong>Allocation ledger.</strong> <see cref="SameAdministrator"/> (the membership comparison, called in nested loops
+/// when authorizing/mutating administration) compares the two sets directly on their unescaped UTF-8 tag bytes
+/// (<see cref="SecurityTagSet.SetEquals"/>) — no managed strings, no list, no hash — instead of materializing two tag
+/// <see cref="List{T}"/>s plus their strings per call. <see cref="AdministratorIdentity"/> filters the workflow tag via the holder's allocation-free enumerator (one
+/// list, not two plus a LINQ iterator). <see cref="WithWorkflowTag"/> is the per-version <em>publish</em> path (cold)
+/// and keeps the straightforward one-list <see cref="SecurityTagSet.FromTags"/> form.
+/// </remarks>
 public static class WorkflowIdentity
 {
     /// <summary>The reserved internal tag key carrying a workflow's base id.</summary>
@@ -41,7 +47,20 @@ public static class WorkflowIdentity
     /// <param name="versionTags">A catalogued version's security tags.</param>
     /// <returns>The administrator-identity tags.</returns>
     public static SecurityTagSet AdministratorIdentity(SecurityTagSet versionTags)
-        => SecurityTagSet.FromTags(versionTags.ToList().Where(t => !string.Equals(t.Key, WorkflowTagKey, StringComparison.Ordinal)).ToList());
+    {
+        // Filter out the workflow-identity tag via the allocation-free enumerator — one list (the FromTags input), not a
+        // ToList + LINQ Where + a second ToList.
+        var tags = new List<SecurityTag>();
+        foreach (SecurityTag tag in versionTags)
+        {
+            if (!string.Equals(tag.Key, WorkflowTagKey, StringComparison.Ordinal))
+            {
+                tags.Add(tag);
+            }
+        }
+
+        return SecurityTagSet.FromTags(tags);
+    }
 
     /// <summary>Whether two administrator identities are equal as sets (order-independent), the administration
     /// membership comparison.</summary>
@@ -50,8 +69,9 @@ public static class WorkflowIdentity
     /// <returns><see langword="true"/> if they contain exactly the same tags.</returns>
     public static bool SameAdministrator(SecurityTagSet a, SecurityTagSet b)
     {
-        List<SecurityTag> left = a.ToList();
-        List<SecurityTag> right = b.ToList();
-        return left.Count == right.Count && left.All(right.Contains);
+        // Set-equality computed directly on the unescaped UTF-8 tag bytes (SecurityTagSet.SetEquals) — no managed
+        // strings, no list, no hash; nothing escapes to the heap. It runs in nested loops when authorizing/mutating
+        // administration, so the zero-allocation comparison matters.
+        return a.SetEquals(b);
     }
 }

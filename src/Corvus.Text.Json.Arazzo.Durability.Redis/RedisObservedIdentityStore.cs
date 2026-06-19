@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using StackExchange.Redis;
@@ -125,32 +124,21 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask SeenAsync(ObservedIdentity.GranteeKind kind, JsonString value, JsonString label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken)
+    public async ValueTask SeenAsync(GranteeKind kind, string value, string? label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(value);
         ArgumentNullException.ThrowIfNull(provenance);
         cancellationToken.ThrowIfCancellationRequested();
         string kindToken = kind.ToToken();
         DateTimeOffset now = this.timeProvider.GetUtcNow();
 
-        // The value is the storage-key leaf (the identity key, sortKey, and digestOf string), so it reifies once here as
-        // the key; the document body is serialized bytes-to-bytes from the value/label JSON values at the synchronous
-        // serialize calls below. The label never becomes a managed string.
-        string valueKey = (string)value;
-
         // Read-merge-write keyed by (kind, value): a first sighting inserts; an existing one preserves firstSeen, bumps
-        // lastSeen, unions provenance, and refreshes label/identity/completeness (the shared merge every backend uses). The
-        // existing document is read into a pooled lease and parsed NON-COPYING over it (the lease stays alive through the
-        // synchronous merge) — no GC read array.
-        using Lease<byte>? existingLease = await this.database.StringGetLeaseAsync(IdentityKey(kindToken, valueKey)).ConfigureAwait(false);
-        using ParsedJsonDocument<ObservedIdentity>? existing = existingLease is { Length: > 0 }
-            ? ParsedJsonDocument<ObservedIdentity>.Parse(existingLease.Memory)
-            : null;
-
-        // Serialize the document into a pooled buffer and pass it as the script value via ReadOnlyMemory (RedisValue carries
-        // the exact length) — no GC document array. The buffer is returned once the script call completes.
-        using PooledUtf8 doc = existing is null
-            ? ObservedIdentitySerialization.SerializeNewPooled(kind, value, label, identity, complete, now, provenance)
-            : ObservedIdentitySerialization.SerializeUpsertedPooled(existing.RootElement, kind, value, label, identity, complete, now, provenance);
+        // lastSeen, unions provenance, and refreshes label/identity/completeness (the shared merge every backend uses).
+        RedisValue existingValue = await this.database.StringGetAsync(IdentityKey(kindToken, value)).ConfigureAwait(false);
+        byte[]? existing = existingValue.IsNullOrEmpty ? null : (byte[])existingValue!;
+        byte[] json = existing is null
+            ? ObservedIdentitySerialization.SerializeNew(kindToken, value, label, identity, complete, now, provenance)
+            : ObservedIdentitySerialization.SerializeUpserted(existing, kindToken, value, label, identity, complete, now, provenance);
 
         // Store the document, ensure its sortKey is in the ordering index, and maintain the collision-probe digest index,
         // atomically. The key and sortKey are deterministic from (kind, value), so a re-sighting overwrites the document
@@ -158,33 +146,20 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
         // changed the identity — the script does that from the per-record digestOf string. The empty identity has no
         // digest ('' below) and is not indexed (it never collides).
         string digest = SecurityIdentityDigest.Compute(identity) ?? string.Empty;
-        RedisKey[] keys = [IdentityKey(kindToken, valueKey), IndexKey, DigestOfKey(kindToken, valueKey)];
-        RedisValue[] argv = [doc.Memory, SortKey(valueKey, kindToken), digest, DigestSetPrefix];
+        RedisKey[] keys = [IdentityKey(kindToken, value), IndexKey, DigestOfKey(kindToken, value)];
+        RedisValue[] argv = [json, SortKey(value, kindToken), digest, DigestSetPrefix];
         await this.database.ScriptEvaluateAsync(StoreScript, keys, argv).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, GranteeKind? kind, string prefix, int limit, string? pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(prefix);
         cancellationToken.ThrowIfCancellationRequested();
         int pageSize = limit > 0 ? limit : 1;
-        string? kindToken = kind.IsNotUndefined() ? kind.ToToken() : null;
-
-        // The prefix is the in-memory StartsWith predicate (and its .Length gate), so it reifies once here (undefined
-        // prefix matches all).
-        string prefixStr = prefix.IsNotUndefined() ? (string)prefix : string.Empty;
-
-        // The opaque page token arrives as its JSON value; decode the (subjectValue, subjectKind) cursor straight from the
-        // request UTF-8 (no managed token string). Init to empties so the unused-when-!hasCursor tuple is never null.
-        (string SubjectValue, string SubjectKind) cursor = (string.Empty, string.Empty);
-        bool hasCursor = false;
-        if (pageToken.IsNotUndefined())
-        {
-            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
-            hasCursor = ObservedIdentityContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
-        }
-
+        string? kindToken = kind?.ToToken();
+        bool hasCursor = ObservedIdentityContinuationToken.TryDecode(pageToken, out (string SubjectValue, string SubjectKind) cursor);
         SecurityFilter? readReach = context.Reach(AccessVerb.Read);
 
         // Redis has no server-side ordering for a sorted set's members by value, so the keyset scan runs over the index
@@ -195,7 +170,7 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
         string? cursorSortKey = hasCursor ? SortKey(cursor.SubjectValue, cursor.SubjectKind) : null;
 
         var docs = new PooledDocumentList<ObservedIdentity>(pageSize);
-        string? nextValue = null, nextKind = null;
+        string? nextToken = null;
         try
         {
             // A FURTHER admitted row beyond the page is the signal to emit a continuation token — the (value, kind) of
@@ -215,31 +190,27 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
                     continue;
                 }
 
-                if (prefixStr.Length > 0 && !subjectValue.StartsWith(prefixStr, StringComparison.Ordinal))
+                if (prefix.Length > 0 && !subjectValue.StartsWith(prefix, StringComparison.Ordinal))
                 {
                     continue;
                 }
 
                 cancellationToken.ThrowIfCancellationRequested();
-
-                // Read the candidate into a pooled lease (no GC read array): the reach check parses it NON-COPYING over the
-                // lease; a candidate that makes the page is copied into an owned pooled document (the lease returns here).
-                using Lease<byte>? lease = await this.database.StringGetLeaseAsync(IdentityKey(subjectKind, subjectValue)).ConfigureAwait(false);
-                if (lease is not { Length: > 0 })
+                RedisValue value = await this.database.StringGetAsync(IdentityKey(subjectKind, subjectValue)).ConfigureAwait(false);
+                if (value.IsNullOrEmpty)
                 {
                     continue;
                 }
 
-                // Reach (§17.1): a scoped caller discovers an identity only when their read-reach admits its tags — parse
-                // the candidate over the lease to read its identity tags, the same per-row reach idiom the credential and
-                // catalog stores use. An unrestricted (System) reach skips this entirely (no parse).
+                byte[] json = (byte[])value!;
+
+                // Reach (§17.1): a scoped caller discovers an identity only when their read-reach admits its tags —
+                // materialise the candidate to read its identity tags, the same per-row reach idiom the credential and
+                // catalog stores use. An unrestricted (System) reach skips this entirely (no materialisation).
                 if (readReach is not null)
                 {
-                    using ParsedJsonDocument<ObservedIdentity> candidate = ParsedJsonDocument<ObservedIdentity>.Parse(lease.Memory);
-                    SecurityTagSet identityTags = candidate.RootElement.IdentityTags.IsNotUndefined()
-                        ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(candidate.RootElement.IdentityTags).Memory)
-                        : SecurityTagSet.Empty;
-                    if (!readReach.IsSatisfiedBy(identityTags))
+                    using ParsedJsonDocument<ObservedIdentity> candidate = PersistedJson.ToPooledDocument<ObservedIdentity>(json);
+                    if (!readReach.IsSatisfiedBy(candidate.RootElement.IdentityTagsValue.ToList()))
                     {
                         continue; // not reach-visible to this caller (non-disclosing)
                     }
@@ -247,17 +218,16 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
 
                 if (docs.Count == pageSize)
                 {
-                    nextValue = lastValue;
-                    nextKind = lastKind;
+                    nextToken = ObservedIdentityContinuationToken.Encode(lastValue, lastKind);
                     break;
                 }
 
-                docs.Add(PersistedJson.ToPooledDocument<ObservedIdentity>(lease.Span));
+                docs.Add(PersistedJson.ToPooledDocument<ObservedIdentity>(json));
                 lastValue = subjectValue;
                 lastKind = subjectKind;
             }
 
-            return nextValue is not null ? ObservedIdentityPage.Create(docs, nextValue, nextKind!) : ObservedIdentityPage.Create(docs);
+            return new ObservedIdentityPage(docs, nextToken);
         }
         catch
         {
@@ -267,8 +237,9 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<ObservedIdentity>?> FindIdentityConflictAsync(ObservedIdentity.GranteeKind kind, JsonString value, SecurityTagSet identity, CancellationToken cancellationToken)
+    public async ValueTask<ObservedIdentityConflict?> FindIdentityConflictAsync(GranteeKind kind, string value, SecurityTagSet identity, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(value);
         cancellationToken.ThrowIfCancellationRequested();
 
         // The empty (unscoped) identity never collides; otherwise the digest is the SET key whose members are the
@@ -279,9 +250,7 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
             return null;
         }
 
-        // The value is the storage-key leaf used to compute this grantee's own sortKey (excluded from the probe).
-        string valueKey = (string)value;
-        string selfSortKey = SortKey(valueKey, kind.ToToken());
+        string selfSortKey = SortKey(value, kind.ToToken());
         foreach (RedisValue member in await this.database.SetMembersAsync(DigestSetKey(digest)).ConfigureAwait(false))
         {
             string sortKey = (string)member!;
@@ -291,15 +260,13 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
             }
 
             (string conflictValue, string conflictKindToken) = SplitSortKey(sortKey);
-            using Lease<byte>? document = await this.database.StringGetLeaseAsync(IdentityKey(conflictKindToken, conflictValue)).ConfigureAwait(false);
-            if (document is not { Length: > 0 })
+            RedisValue document = await this.database.StringGetAsync(IdentityKey(conflictKindToken, conflictValue)).ConfigureAwait(false);
+            if (document.IsNullOrEmpty)
             {
                 continue; // the document was removed between the index read and the fetch — skip the stale member
             }
 
-            // Hand back the conflicting grantee as its own JSON document (copied off the lease, which returns to the pool
-            // here; the caller disposes the document); its kind/value/label live in the record — no separate POCO.
-            return PersistedJson.ToPooledDocument<ObservedIdentity>(document.Span);
+            return ToConflict(conflictKindToken, conflictValue, (byte[])document!, kind);
         }
 
         return null;
@@ -340,4 +307,19 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
     // appear in either token), holding the digest this record is indexed under so a re-sighting can retract the old one.
     private static RedisKey DigestOfKey(string kindToken, string value)
         => DigestOfPrefix + kindToken + Separator + value;
+
+    // Builds the conflict from a matched member: the kind from its token, the value verbatim, and the label parsed from
+    // the stored document (a transient pooled parse — the label string it yields is an owned managed copy that outlives
+    // the dispose). The kind falls back to the authored kind if its token no longer parses.
+    private static ObservedIdentityConflict ToConflict(string conflictKindToken, string conflictValue, byte[] document, GranteeKind fallbackKind)
+    {
+        string? label;
+        using (ParsedJsonDocument<ObservedIdentity> doc = PersistedJson.ToPooledDocument<ObservedIdentity>(document))
+        {
+            label = doc.RootElement.LabelOrNull;
+        }
+
+        GranteeKind conflictKind = GranteeKinds.TryParse(conflictKindToken, out GranteeKind parsed) ? parsed : fallbackKind;
+        return new ObservedIdentityConflict(conflictKind, conflictValue, label);
+    }
 }

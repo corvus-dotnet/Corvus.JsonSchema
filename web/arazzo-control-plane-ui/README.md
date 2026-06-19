@@ -31,13 +31,15 @@ package `exports` — `@corvus-dotnet/arazzo-control-plane-ui`, `.../client`, `.
   `skipOutputs`) for runs;
   `<arazzo-catalog-table>`,
   `<arazzo-catalog-detail>`, `<arazzo-catalog-add-dialog>` (which can also set up a credential binding §13 per
-  declared source as the workflow is added) for the workflow catalog;
+  declared source, and stage the workflow's administrator set, as the workflow is added) for the workflow catalog;
   `<arazzo-credentials-table>` (a status-first rotation worklist), `<arazzo-credential-dialog>` (create/edit; the
   auth kind drives which secret slot(s) are shown — fixed role + plain label — and each slot has guided per-store
   `secretRef` fields that compose + preview the canonical reference; the control plane never reads the secret
   store, so it cannot browse it; re-pointing a reference rotates), and
-  `<arazzo-administrators-panel>` (the workflow-administration §15 set — composed into the catalog detail as a
-  per-workflow, authz-gated Security section rather than a standalone screen) for the source-credential (§13) and
+  `<arazzo-administrators-panel>` (the workflow-administration set — composed into the catalog detail as a
+  per-workflow, authz-gated Security section rather than a standalone screen; administrators are named with a
+  guided `<arazzo-admin-grant-input>` — a `{dimension, value}` picker over the well-known reach dimensions
+  `workflow`/`tenant`, the workflow value autocompleting from the catalog) for the source-credential (§13) and
   workflow-administration (§15) surfaces; and `<arazzo-access-requests>` (request run access, withdraw your own
   pending requests, and — for workflows you administer — approve / make-eligible / deny / revoke) for the
   access-request + approval (§16.5) surface. Each works alone. The

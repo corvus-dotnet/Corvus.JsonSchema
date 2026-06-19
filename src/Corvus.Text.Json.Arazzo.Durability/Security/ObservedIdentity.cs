@@ -54,28 +54,22 @@ public readonly partial struct ObservedIdentity
 
     /// <summary>Writes an observed-identity record into the caller's (pooled) writer in one pass — the upsert form.</summary>
     /// <param name="writer">The writer to serialize into.</param>
-    /// <param name="subjectKind">The grantee kind as its JSON value — written bytes-to-bytes (no reification); this writer is its genuine leaf.</param>
-    /// <param name="subjectValue">The grantee value (prefix-searched) as a JSON value — written bytes-to-bytes (no reification).</param>
-    /// <param name="label">An optional display label as a JSON value (omitted when undefined) — written bytes-to-bytes.</param>
+    /// <param name="subjectKind">The grantee kind's canonical lower-case token.</param>
+    /// <param name="subjectValue">The grantee value (prefix-searched).</param>
+    /// <param name="label">An optional display label (omitted when <see langword="null"/>/empty).</param>
     /// <param name="identityTags">The exact <c>sys:</c> identity.</param>
     /// <param name="complete">Whether <paramref name="identityTags"/> is the principal's whole stamped identity (§17.2).</param>
     /// <param name="firstSeenAt">When this identity was first observed.</param>
     /// <param name="lastSeenAt">When this identity was most recently observed.</param>
-    /// <param name="provenance">The sighting sources (interned provenance literals; omitted when empty).</param>
-    public static void WriteNew(Utf8JsonWriter writer, in GranteeKind subjectKind, in JsonString subjectValue, in JsonString label, SecurityTagSet identityTags, bool complete, DateTimeOffset firstSeenAt, DateTimeOffset lastSeenAt, IReadOnlyList<string>? provenance)
+    /// <param name="provenance">The sighting sources (omitted when empty).</param>
+    public static void WriteNew(Utf8JsonWriter writer, string subjectKind, string subjectValue, string? label, SecurityTagSet identityTags, bool complete, DateTimeOffset firstSeenAt, DateTimeOffset lastSeenAt, IReadOnlyList<string>? provenance)
     {
         writer.WriteStartObject();
-
-        // The grantee kind/value/label flow through as JSON values and are written bytes-to-bytes (WriteTo copies the
-        // element); this writer IS the genuine leaf for the document body, so nothing above it ever reified them.
-        writer.WritePropertyName(JsonPropertyNames.SubjectKindUtf8);
-        subjectKind.WriteTo(writer);
-        writer.WritePropertyName(JsonPropertyNames.SubjectValueUtf8);
-        subjectValue.WriteTo(writer);
-        if (label.IsNotUndefined())
+        writer.WriteString(JsonPropertyNames.SubjectKindUtf8, subjectKind);
+        writer.WriteString(JsonPropertyNames.SubjectValueUtf8, subjectValue);
+        if (!string.IsNullOrEmpty(label))
         {
-            writer.WritePropertyName(JsonPropertyNames.LabelUtf8);
-            label.WriteTo(writer);
+            writer.WriteString(JsonPropertyNames.LabelUtf8, label);
         }
 
         writer.WritePropertyName(JsonPropertyNames.IdentityTagsUtf8);

@@ -101,6 +101,32 @@ public class WorkflowExecutorBenchmarks
         }
         """;
 
+    // As InterpolationDocument, but the petId template embeds a non-statically-navigable fragment ($url), so the
+    // inliner bails and the step routes through the InterpolationEmitter fallback (the runtime interpreter into a
+    // workspace-pooled buffer) — the path whose per-step `new ArrayBufferWriter` was replaced by RentWriterAndBuffer.
+    private const string FallbackInterpolationDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "adopt",
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "pet-{$url}" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "outputs": { "petName": "$response.body#/name" }
+                }
+              ],
+              "outputs": { "name": "$steps.getPet.outputs.petName" }
+            }
+          ]
+        }
+        """;
+
     // A workflow whose success is decided by an inlined simple body-comparison criterion
     // ($response.body#/name == 'Fido') — evaluated directly via Comparand, no runtime interpreter.
     private const string SimpleCriteriaDocument = """
@@ -347,6 +373,7 @@ public class WorkflowExecutorBenchmarks
     private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>> executeStatusOnly = null!;
     private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>> executeUrlCriteria = null!;
     private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>> executeInterpolation = null!;
+    private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>> executeFallbackInterpolation = null!;
     private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>> executeSimpleCriteria = null!;
     private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>> executeJsonPath = null!;
     private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>> executeControlFlow = null!;
@@ -376,6 +403,7 @@ public class WorkflowExecutorBenchmarks
         this.executeStatusOnly = Compile(StatusOnlyDocument, "StatusOnlyWorkflow");
         this.executeUrlCriteria = Compile(UrlCriteriaDocument, "UrlCriteriaWorkflow");
         this.executeInterpolation = Compile(InterpolationDocument, "InterpolationWorkflow");
+        this.executeFallbackInterpolation = Compile(FallbackInterpolationDocument, "FallbackInterpolationWorkflow");
         this.executeSimpleCriteria = Compile(SimpleCriteriaDocument, "SimpleCriteriaWorkflow");
         this.executeJsonPath = Compile(JsonPathDocument, "JsonPathWorkflow");
         this.executeControlFlow = Compile(ControlFlowDocument, "ControlFlowWorkflow");
@@ -492,6 +520,19 @@ public class WorkflowExecutorBenchmarks
     {
         this.workspace.Reset();
         ValueTask<JsonElement> pending = this.executeInterpolation(this.transport, this.workspace, this.inputs, default, null);
+        JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
+        return result.TryGetProperty("name"u8, out _);
+    }
+
+    /// <summary>Runs a workflow whose petId template embeds a non-navigable fragment ("pet-{$url}"), so the step routes
+    /// through the InterpolationEmitter fallback (runtime interpreter → workspace-pooled buffer). Guards the per-step
+    /// interpolation buffer against regressing to a heap <c>new ArrayBufferWriter</c> (vs. <see cref="RunInterpolationWorkflow"/>'s inlined path).</summary>
+    /// <returns>Whether the workflow produced the expected output (a sink for the probe).</returns>
+    [Benchmark]
+    public bool RunFallbackInterpolationWorkflow()
+    {
+        this.workspace.Reset();
+        ValueTask<JsonElement> pending = this.executeFallbackInterpolation(this.transport, this.workspace, this.inputs, default, null);
         JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
         return result.TryGetProperty("name"u8, out _);
     }

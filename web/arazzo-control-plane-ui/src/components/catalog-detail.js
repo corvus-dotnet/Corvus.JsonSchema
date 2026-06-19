@@ -274,7 +274,7 @@ class ArazzoCatalogDetail extends ArazzoElement {
     host.hidden = false;
     let panel = host.querySelector('arazzo-administrators-panel');
     if (!panel) {
-      host.innerHTML = '<h4>Security — administrators (§15)</h4>';
+      host.innerHTML = '<h4>Security — administrators</h4>';
       panel = document.createElement('arazzo-administrators-panel');
       host.appendChild(panel);
     }

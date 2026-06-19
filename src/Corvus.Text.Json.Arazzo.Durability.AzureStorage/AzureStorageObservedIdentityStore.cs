@@ -5,7 +5,6 @@
 using System.Text;
 using Azure;
 using Azure.Data.Tables;
-using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 
@@ -107,43 +106,30 @@ public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
     }
 
     /// <inheritdoc/>
-    public async ValueTask SeenAsync(ObservedIdentity.GranteeKind kind, JsonString value, JsonString label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken)
+    public async ValueTask SeenAsync(GranteeKind kind, string value, string? label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(value);
         ArgumentNullException.ThrowIfNull(provenance);
         string kindToken = kind.ToToken();
-
-        // The PartitionKey / SubjectValue column is the storage-key leaf (a Table key string), so the value reifies once
-        // here as the key; the document body is serialized bytes-to-bytes from the value/label JSON values at the
-        // synchronous serialize calls below.
-        string valueKey = (string)value;
         DateTimeOffset now = this.timeProvider.GetUtcNow();
 
         // Read-merge-write: a first sighting inserts; an existing one preserves firstSeen, bumps lastSeen, unions
         // provenance, and refreshes label/identity/completeness (the shared merge). The re-sighting overwrites via
         // UpsertEntity (Replace), so the (kind, value) stays one entity. The existing read also yields the prior identity
         // digest, so a re-sighting that changes the identity can retract the stale digest-index entity below.
-        // The driver mints the existing document array (the table entity's binary column); parse it NON-COPYING (it stays
-        // alive through the synchronous merge) — no pooled read buffer, no copy.
-        (byte[]? existing, string? oldDigest) = await this.ReadDocumentAsync(kindToken, valueKey, cancellationToken).ConfigureAwait(false);
-        byte[] json;
-        if (existing is null)
-        {
-            json = ObservedIdentitySerialization.SerializeNew(kind, value, label, identity, complete, now, provenance);
-        }
-        else
-        {
-            using ParsedJsonDocument<ObservedIdentity> current = ParsedJsonDocument<ObservedIdentity>.Parse(existing.AsMemory());
-            json = ObservedIdentitySerialization.SerializeUpserted(current.RootElement, kind, value, label, identity, complete, now, provenance);
-        }
+        (byte[]? existing, string? oldDigest) = await this.ReadDocumentAsync(kindToken, value, cancellationToken).ConfigureAwait(false);
+        byte[] json = existing is null
+            ? ObservedIdentitySerialization.SerializeNew(kindToken, value, label, identity, complete, now, provenance)
+            : ObservedIdentitySerialization.SerializeUpserted(existing, kindToken, value, label, identity, complete, now, provenance);
 
         // The new digest is carried on the primary entity (so the next re-sighting knows which index entity to retract)
         // and is the partition of the secondary index entity. The empty identity has no digest: no index entry, and the
         // column is simply absent.
         string? newDigest = SecurityIdentityDigest.Compute(identity);
-        var entity = new TableEntity(PartitionKey(valueKey), RowKey(kindToken))
+        var entity = new TableEntity(PartitionKey(value), RowKey(kindToken))
         {
             [SubjectKindColumn] = kindToken,
-            [SubjectValueColumn] = valueKey,
+            [SubjectValueColumn] = value,
             [DocColumn] = json,
         };
         if (newDigest is not null)
@@ -163,41 +149,29 @@ public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
             // retired identity no longer collides (the §16.5.4 re-sighting retraction). DeleteEntityAsync returns 404 (not
             // an exception) when it was already absent.
             await this.identities
-                .DeleteEntityAsync(DigestPartition(oldDigest), DigestRowKey(kindToken, valueKey), ETag.All, cancellationToken)
+                .DeleteEntityAsync(DigestPartition(oldDigest), DigestRowKey(kindToken, value), ETag.All, cancellationToken)
                 .ConfigureAwait(false);
         }
 
         if (newDigest is not null)
         {
-            var indexEntity = new TableEntity(DigestPartition(newDigest), DigestRowKey(kindToken, valueKey))
+            var indexEntity = new TableEntity(DigestPartition(newDigest), DigestRowKey(kindToken, value))
             {
                 [SubjectKindColumn] = kindToken,
-                [SubjectValueColumn] = valueKey,
+                [SubjectValueColumn] = value,
             };
             await this.identities.UpsertEntityAsync(indexEntity, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
         }
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, GranteeKind? kind, string prefix, int limit, string? pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(prefix);
         int pageSize = limit > 0 ? limit : 1;
-        string? kindToken = kind.IsNotUndefined() ? kind.ToToken() : null;
-
-        // The prefix is matched ordinally against the SubjectValue key string, so it reifies once for the per-row
-        // StartsWith break (and its length guard) below (undefined prefix matches all).
-        string prefixStr = prefix.IsNotUndefined() ? (string)prefix : string.Empty;
-
-        // The opaque page token arrives as its JSON value; decode the (subjectValue, subjectKind) cursor straight from the
-        // request UTF-8 (no managed token string). Init to empties so the unused-when-!hasCursor tuple is never null.
-        (string SubjectValue, string SubjectKind) cursor = (string.Empty, string.Empty);
-        bool hasCursor = false;
-        if (pageToken.IsNotUndefined())
-        {
-            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
-            hasCursor = ObservedIdentityContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
-        }
+        string? kindToken = kind?.ToToken();
+        bool hasCursor = ObservedIdentityContinuationToken.TryDecode(pageToken, out (string SubjectValue, string SubjectKind) cursor);
 
         // The read reach is constant for the call; an unrestricted (System) reach admits everything without materialising
         // a single candidate's tags — only a scoped reach pays the per-candidate materialise-and-check cost (§17.1).
@@ -228,7 +202,7 @@ public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
                 continue;
             }
 
-            if (prefixStr.Length > 0 && !subjectValue.StartsWith(prefixStr, StringComparison.Ordinal))
+            if (prefix.Length > 0 && !subjectValue.StartsWith(prefix, StringComparison.Ordinal))
             {
                 continue;
             }
@@ -243,7 +217,7 @@ public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
         });
 
         var docs = new PooledDocumentList<ObservedIdentity>(pageSize);
-        string? nextValue = null, nextKind = null;
+        string? nextToken = null;
         try
         {
             EntityKey last = default;
@@ -271,10 +245,7 @@ public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
                     bool admitted;
                     using (ParsedJsonDocument<ObservedIdentity> candidate = PersistedJson.ToPooledDocument<ObservedIdentity>(json))
                     {
-                        SecurityTagSet identityTags = candidate.RootElement.IdentityTags.IsNotUndefined()
-                            ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(candidate.RootElement.IdentityTags).Memory)
-                            : SecurityTagSet.Empty;
-                        admitted = readReach.IsSatisfiedBy(identityTags);
+                        admitted = readReach.IsSatisfiedBy(candidate.RootElement.IdentityTagsValue.ToList());
                     }
 
                     if (!admitted)
@@ -286,8 +257,7 @@ public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
                 if (docs.Count == pageSize)
                 {
                     // At least one further admitted row remains → there is a next page; resume after the last included row.
-                    nextValue = last.SubjectValue;
-                    nextKind = last.SubjectKind;
+                    nextToken = ObservedIdentityContinuationToken.Encode(last.SubjectValue, last.SubjectKind);
                     break;
                 }
 
@@ -295,7 +265,7 @@ public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
                 last = key;
             }
 
-            return nextValue is not null ? ObservedIdentityPage.Create(docs, nextValue, nextKind!) : ObservedIdentityPage.Create(docs);
+            return new ObservedIdentityPage(docs, nextToken);
         }
         catch
         {
@@ -305,8 +275,10 @@ public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<ObservedIdentity>?> FindIdentityConflictAsync(ObservedIdentity.GranteeKind kind, JsonString value, SecurityTagSet identity, CancellationToken cancellationToken)
+    public async ValueTask<ObservedIdentityConflict?> FindIdentityConflictAsync(GranteeKind kind, string value, SecurityTagSet identity, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(value);
+
         // The empty (unscoped) identity has no digest and never collides; otherwise read the digest's index partition —
         // a single PartitionKey-scoped query (an indexed seek, never a table scan) — for an entry that is a DIFFERENT
         // grantee. Full reach (§16.5.4): the probe is deliberately not reach-filtered, so a cross-tenant collision is
@@ -317,9 +289,6 @@ public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
         }
 
         string kindToken = kind.ToToken();
-
-        // The SubjectValue column is the storage-key string, so the value reifies once for the "self" comparison.
-        string valueKey = (string)value;
         string filter = TableClient.CreateQueryFilter($"PartitionKey eq {DigestPartition(digest)}");
         await foreach (TableEntity indexEntity in this.identities.QueryAsync<TableEntity>(
             filter, select: [SubjectKindColumn, SubjectValueColumn], cancellationToken: cancellationToken).ConfigureAwait(false))
@@ -332,20 +301,24 @@ public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
 
             // The same grantee is not in conflict with itself — identify "self" by its (kind, value), the grantee's
             // identity, rather than by the encoded RowKey (robust to which entity-row surfaces it).
-            if (string.Equals(conflictKindToken, kindToken, StringComparison.Ordinal) && string.Equals(conflictValue, valueKey, StringComparison.Ordinal))
+            if (string.Equals(conflictKindToken, kindToken, StringComparison.Ordinal) && string.Equals(conflictValue, value, StringComparison.Ordinal))
             {
                 continue;
             }
 
-            // Hand back the conflicting grantee as its own JSON document (the caller disposes it); its kind/value/label
-            // live in the record, so nothing is reified into a separate POCO here. The label is authoritative on the
-            // conflicting party's primary entity (it can change on a re-sighting), read bytes-to-bytes from there rather
-            // than denormalised onto the index entity. A concurrently deleted primary yields no document — skip it.
+            // The label is authoritative on the conflicting party's primary entity (it can change on a re-sighting), so
+            // read it there rather than denormalising it onto the index entity. A concurrently deleted primary leaves the
+            // label null — still a valid (and intentionally generic) conflict.
+            string? label = null;
             (byte[]? document, _) = await this.ReadDocumentAsync(conflictKindToken, conflictValue, cancellationToken).ConfigureAwait(false);
             if (document is not null)
             {
-                return PersistedJson.ToPooledDocument<ObservedIdentity>(document);
+                using ParsedJsonDocument<ObservedIdentity> doc = PersistedJson.ToPooledDocument<ObservedIdentity>(document);
+                label = doc.RootElement.LabelOrNull;
             }
+
+            GranteeKind conflictKind = GranteeKinds.TryParse(conflictKindToken, out GranteeKind parsedKind) ? parsedKind : kind;
+            return new ObservedIdentityConflict(conflictKind, conflictValue, label);
         }
 
         return null;

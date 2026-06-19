@@ -228,7 +228,7 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
 
     private static bool Matches(in CatalogVersion version, CatalogQuery query)
     {
-        if (query.BaseWorkflowId is { } baseId && (string)version.BaseWorkflowId != baseId)
+        if (query.BaseWorkflowId is { } baseId && !((JsonElement)version.BaseWorkflowId).EqualsString(baseId))
         {
             return false;
         }

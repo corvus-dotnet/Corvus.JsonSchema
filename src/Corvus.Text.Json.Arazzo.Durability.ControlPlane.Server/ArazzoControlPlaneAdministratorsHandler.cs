@@ -32,6 +32,7 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
 
     private readonly IWorkflowCatalogClient catalog;
     private readonly ControlPlaneAccess access;
+    private readonly IObservedIdentityStore? observed;
 
     /// <summary>Initializes a new, unscoped instance (the caller resolves to no identity — administration management
     /// requires a configured row-security policy).</summary>
@@ -45,12 +46,15 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
     /// <param name="catalog">The catalog client that owns the administrator store and the administration operations.</param>
     /// <param name="access">Resolves the caller's deployment identity per request and maps administrator grants to and
     /// from internal tags. Unscoped (no identity) when no row security is configured.</param>
-    internal ArazzoControlPlaneAdministratorsHandler(IWorkflowCatalogClient catalog, ControlPlaneAccess access)
+    /// <param name="observed">An optional observed-identity store; a newly added administrator is recorded as a resolvable
+    /// grantee for the §16.5.4 typeahead (best-effort).</param>
+    internal ArazzoControlPlaneAdministratorsHandler(IWorkflowCatalogClient catalog, ControlPlaneAccess access, IObservedIdentityStore? observed = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(access);
         this.catalog = catalog;
         this.access = access;
+        this.observed = observed;
     }
 
     /// <inheritdoc/>
@@ -64,19 +68,43 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
     public async ValueTask<AddAdministratorResult> HandleAddAdministratorAsync(AddAdministratorParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
+        string dimensionValue = (string)parameters.Body.DimensionValue;
+        string value = (string)parameters.Body.Value;
         SecurityTagSet newAdministrator;
         try
         {
-            newAdministrator = this.IdentityFromGrant((string)parameters.Body.DimensionValue, (string)parameters.Body.Value);
+            newAdministrator = this.IdentityFromGrant(dimensionValue, value);
         }
         catch (ArgumentException ex)
         {
             return AddAdministratorResult.BadRequest(Problem("invalid-administrator", "Invalid administrator identity", 400, ex.Message), workspace);
         }
 
+        bool hasKind = GranteeKinds.FromDimension(dimensionValue, out GranteeKind kind);
+
+        // Collision guard (§16.5.4): if the resolved identity already belongs to a DIFFERENT recorded grantee, the
+        // deployment's identity mapping is not minting unique identities — refuse the ambiguous grant (409) rather than
+        // author a grant that would silently also admit that other principal. The message is generic: the conflicting
+        // party is never echoed (it may be outside the caller's reach), so the probe — which runs at full reach — does
+        // not become a cross-tenant disclosure oracle.
+        if (this.observed is not null && hasKind &&
+            await this.observed.FindIdentityConflictAsync(kind, value, newAdministrator, cancellationToken).ConfigureAwait(false) is not null)
+        {
+            return AddAdministratorResult.Conflict(CollisionProblem(), workspace);
+        }
+
         try
         {
             IReadOnlyList<SecurityTagSet> administrators = await this.catalog.AddAdministratorAsync(baseWorkflowId, newAdministrator, this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
+
+            // Record the newly named administrator as a resolvable grantee for the §16.5.4 typeahead. Best-effort: the
+            // sighting is an idempotent projection and never fails the add (a custom dimension simply isn't recorded). The
+            // grant maps to a single tag, so its completeness is the policy's whole-grain verdict for the kind (§17.2).
+            if (this.observed is not null && hasKind)
+            {
+                await this.observed.SeenAsync(kind, value, label: null, newAdministrator, this.access.IsWholeGrainGrantee(kind), "administrator", cancellationToken).ConfigureAwait(false);
+            }
+
             return AddAdministratorResult.Ok(this.ToList(administrators), workspace);
         }
         catch (WorkflowAdministrationException)
@@ -109,6 +137,21 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
         catch (ArgumentException ex)
         {
             return TransferAdministrationResult.BadRequest(Problem("invalid-administrator", "Invalid administrator identity", 400, ex.Message), workspace);
+        }
+
+        // Collision guard (§16.5.4): refuse the transfer if any named administrator resolves to an identity already held
+        // by a different grantee (a non-unique deployment mapping). Generic 409 — the conflicting party is never echoed.
+        if (this.observed is not null)
+        {
+            foreach (Models.AdministratorIdentity identity in parameters.Body.Administrators.EnumerateArray())
+            {
+                string transferValue = (string)identity.Value;
+                if (GranteeKinds.FromDimension((string)identity.DimensionValue, out GranteeKind transferKind) &&
+                    await this.observed.FindIdentityConflictAsync(transferKind, transferValue, this.IdentityFromGrant((string)identity.DimensionValue, transferValue), cancellationToken).ConfigureAwait(false) is not null)
+                {
+                    return TransferAdministrationResult.Conflict(CollisionProblem(), workspace);
+                }
+            }
         }
 
         try
@@ -199,6 +242,15 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
     private static Models.ProblemDetails.Source UnavailableProblem(NotSupportedException ex)
         => Problem("administration-unavailable", "Administration management unavailable", 409, ex.Message);
 
+    // A resolved grantee identity that already belongs to a different grantee (§16.5.4) — the deployment's identity
+    // mapping is not unique. Generic by design: the conflicting party is never named.
+    private static Models.ProblemDetails.Source CollisionProblem()
+        => Problem(
+            "identity-collision",
+            "Ambiguous grantee identity",
+            409,
+            "The named grantee resolves to an identity that already belongs to a different grantee, so the grant would be ambiguous. Check the deployment's directory identity mapping — it must resolve each distinct principal to a unique identity.");
+
     private static Models.ProblemDetails.Source Problem(string type, string title, int status, string detail)
         => new((ref Models.ProblemDetails.Builder b) => b.Create(
             detail: detail,
@@ -214,7 +266,7 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
             {
                 foreach (SecurityTagSet administrator in administrators)
                 {
-                    foreach (CredentialUsageGrant grant in this.access.DescribeUsageScope(administrator.ToList()))
+                    foreach (CredentialUsageGrant grant in this.access.DescribeUsageScope(administrator))
                     {
                         ab.AddItem(ToIdentity(grant));
                     }

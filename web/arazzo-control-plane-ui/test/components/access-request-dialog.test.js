@@ -24,15 +24,16 @@ describe('<arazzo-access-request-dialog>', () => {
     mount(el);
     el.open();
     ok($(el, '.sub-wf'), 'offers a workflow picker when not locked');
-    // runs:read is the least-privilege default; runs:write is opt-in.
-    ok(cb(el, 'runs:read').checked, 'runs:read is checked by default');
+    // View (catalog:read) is the least-privilege default; runs:read and runs:write are opt-in (§17.3).
+    ok(cb(el, 'catalog:read').checked, 'View (catalog:read) is checked by default');
+    ok(!cb(el, 'runs:read').checked, 'runs:read is opt-in');
     ok(!cb(el, 'runs:write').checked, 'runs:write is opt-in, not on by default');
     $(el, '.sub-wf').value = 'onboard-customer';
     const submitted = nextEvent(el, 'access-request-submitted');
     $(el, '.ok').click();
     const e = await submitted;
     equal(e.detail.request.baseWorkflowId, 'onboard-customer', 'submits for the chosen workflow');
-    ok(e.detail.request.requestedScopes.includes('runs:read'), 'requests the least-privilege read scope by default');
+    ok(e.detail.request.requestedScopes.includes('catalog:read'), 'requests the least-privilege view scope by default');
     ok(!e.detail.request.requestedScopes.includes('runs:write'), 'does not request write unless asked');
   });
 

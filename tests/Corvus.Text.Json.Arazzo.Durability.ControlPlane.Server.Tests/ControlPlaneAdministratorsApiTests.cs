@@ -162,6 +162,28 @@ public sealed class ControlPlaneAdministratorsApiTests
         (await host.SendAsync(HttpMethod.Get, "/administrators/flow", Write, Acme)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
+    [TestMethod]
+    public async Task A_grant_whose_resolved_identity_collides_with_another_grantee_is_refused()
+    {
+        // A deployment whose identity mapping is NOT unique: the grantee values "real" and "alias" both resolve to the
+        // same sys: identity. With an observed-identity store wired, the collision guard (§16.5.4) must refuse the second.
+        await using Scoped host = await StartAsync(observed: new InMemoryObservedIdentityStore(), policy: new CollidingIdentityPolicy());
+        await EstablishAsync(host.Catalog, "flow", Acme);
+
+        // acme records a co-administrator grantee "real" (→ the shared identity), succeeding and seeding the typeahead.
+        (await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"dimension":"tenant","value":"real"}""", Write, Acme))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // "alias" is a DIFFERENT grantee value that resolves to the SAME identity as "real" — naming it would author an
+        // ambiguous grant (the grant would silently also admit "real"), so it is refused (409), not merged.
+        (await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"dimension":"tenant","value":"alias"}""", Write, Acme))
+            .StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        // A genuinely distinct grantee resolves to its own identity and is unaffected.
+        (await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"dimension":"tenant","value":"distinct"}""", Write, Acme))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
     private static IEnumerable<string> Grants(Stj.JsonDocument document)
         => document.RootElement.GetProperty("administrators").EnumerateArray()
             .Select(a => $"{a.GetProperty("dimension").GetString()}={a.GetProperty("value").GetString()}");
@@ -189,7 +211,7 @@ public sealed class ControlPlaneAdministratorsApiTests
         return CatalogPackage.Build(workflow, []);
     }
 
-    private static async Task<Scoped> StartAsync(bool withAdministratorStore = true)
+    private static async Task<Scoped> StartAsync(bool withAdministratorStore = true, IObservedIdentityStore? observed = null, ControlPlaneRowSecurityPolicy? policy = null)
     {
         var store = new InMemoryWorkflowStateStore();
         var management = new WorkflowManagementClient(store, "ops");
@@ -212,7 +234,7 @@ public sealed class ControlPlaneAdministratorsApiTests
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), requireAuthorization: true, rowSecurity: new TenantIdentityPolicy());
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: policy ?? new TenantIdentityPolicy(), observedIdentityStore: observed);
         await app.StartAsync();
 
         return new Scoped(app, app.GetTestClient(), catalog);
@@ -229,6 +251,32 @@ public sealed class ControlPlaneAdministratorsApiTests
         {
             string? tenant = principal?.FindFirst("tenant")?.Value;
             return string.IsNullOrEmpty(tenant) ? [] : [new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", tenant)];
+        }
+    }
+
+    /// <summary>A non-unique mapping for the collision test: the grantee values <c>real</c> and <c>alias</c> both resolve
+    /// to the same identity (<c>sys:tenant=shared</c>); every other value resolves distinctly. The caller's <c>tenant</c>
+    /// claim is stamped as its identity, exactly like <see cref="TenantIdentityPolicy"/>.</summary>
+    private sealed class CollidingIdentityPolicy : ControlPlaneRowSecurityPolicy
+    {
+        public override AccessContext Resolve(ClaimsPrincipal? principal) => AccessContext.System;
+
+        public override IReadOnlyList<SecurityTag> GetInternalTags(ClaimsPrincipal? principal)
+        {
+            string? tenant = principal?.FindFirst("tenant")?.Value;
+            return string.IsNullOrEmpty(tenant) ? [] : [new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", tenant)];
+        }
+
+        public override IReadOnlyList<SecurityTag> ResolveUsageGrants(IReadOnlyList<CredentialUsageGrant> grants)
+        {
+            var tags = new List<SecurityTag>(grants.Count);
+            foreach (CredentialUsageGrant grant in grants)
+            {
+                string resolved = grant.Value is "real" or "alias" ? "shared" : grant.Value;
+                tags.Add(new SecurityTag(SecurityShell.DefaultInternalPrefix + grant.Dimension, resolved));
+            }
+
+            return tags;
         }
     }
 

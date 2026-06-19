@@ -19,6 +19,7 @@
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import { packWorkflowPackage } from '../workflow-package.js';
 import './credential-dialog.js';
+import './admin-grant-input.js';
 
 const SOURCES_HINT = 'Choose the workflow document above to see the source documents it requires.';
 
@@ -34,6 +35,8 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
     this.$('.error-banner').hidden = true;
     this.setMode('build');
     this.$('.sources').innerHTML = `<div class="hint">${SOURCES_HINT}</div>`;
+    this._stagedAdmins = [];
+    this.$('.admins-fs').hidden = true;
     this.$('dialog').showModal();
   }
 
@@ -44,6 +47,8 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
   setMode(mode) {
     this.$$('input[name="mode"]').forEach((r) => { r.checked = r.value === mode; });
     this.$$('.mode-fields').forEach((el) => { el.hidden = el.dataset.mode !== mode; });
+    // Administrators are staged from the parsed workflow document, so the section is a build-mode affordance.
+    if (mode !== 'build') this.$('.admins-fs').hidden = true;
   }
 
   get mode() {
@@ -84,6 +89,12 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
         .src-type { font-size: 11px; color: var(--_muted); text-transform: uppercase; letter-spacing: 0.03em; }
         .hint { font-size: 11px; color: var(--_muted); }
         .hint.err { color: var(--_danger); }
+        .admins { display: grid; gap: 6px; }
+        .admin-row { display: flex; align-items: center; gap: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); padding: 6px 10px; }
+        .admin-row .grant { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; flex: 1; }
+        .admin-row .grant .dim { color: var(--_muted); }
+        .admin-add { display: flex; gap: 8px; align-items: center; }
+        .admin-add .admin-grant { flex: 1; }
         .foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
       </style>
       <dialog part="dialog">
@@ -124,6 +135,16 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
 
             <div><label for="tags">Tags (space or comma separated)</label><input id="tags" type="text" placeholder="prod billing"></div>
 
+            <fieldset class="admins-fs" hidden>
+              <legend>Administrators</legend>
+              <label>Who may administer this workflow (the creator's identity always can). The workflow's own identity is staged by default — remove it to hand administration elsewhere.</label>
+              <div class="admins"></div>
+              <div class="admin-add">
+                <arazzo-admin-grant-input class="admin-grant"></arazzo-admin-grant-input>
+                <button class="add-admin ghost" type="button">+ Add administrator</button>
+              </div>
+            </fieldset>
+
             <div class="error-banner" hidden></div>
           </div>
           <div class="foot">
@@ -136,6 +157,7 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
 
     this.$$('input[name="mode"]').forEach((r) => r.addEventListener('change', () => this.setMode(r.value)));
     this.$('#workflowFile').addEventListener('change', () => this.deriveSources());
+    this.$('.add-admin').addEventListener('click', () => this.stageAdministrator());
     this.$('form').addEventListener('submit', (e) => {
       if (e.submitter?.value === 'confirm') {
         e.preventDefault();
@@ -154,8 +176,10 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
       doc = JSON.parse(await file.text());
     } catch {
       area.innerHTML = '<div class="hint err">The workflow document is not valid JSON.</div>';
+      this.$('.admins-fs').hidden = true;
       return;
     }
+    this.seedAdministrators(doc?.workflows?.[0]?.workflowId || '');
     const decls = Array.isArray(doc?.sourceDescriptions) ? doc.sourceDescriptions.filter((s) => s?.name) : [];
     if (decls.length === 0) {
       area.innerHTML = '<div class="hint">This workflow declares no source documents.</div>';
@@ -171,6 +195,50 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
         <input type="file" class="src-file" data-name="${escapeHtml(s.name)}" accept=".json,application/json">
         <label class="setup-cred-label"><input type="checkbox" class="setup-cred" data-name="${escapeHtml(s.name)}"> Set up a credential binding for this source after adding</label>
       </div>`).join('');
+  }
+
+  /**
+   * Seed the administrators section from the parsed workflow id. The workflow's own identity is staged by default
+   * (read-only value, but deletable) and the grant input is locked so the only workflow you can name is this one;
+   * tenant administrators can be added freely. Hidden when the document declares no workflow id.
+   */
+  seedAdministrators(baseWorkflowId) {
+    const fs = this.$('.admins-fs');
+    const grant = this.$('.admin-grant');
+    if (!baseWorkflowId) { fs.hidden = true; this._stagedAdmins = []; return; }
+    this._stagedAdmins = [{ dimension: 'workflow', value: baseWorkflowId }];
+    grant.setAttribute('fixed-workflow', baseWorkflowId);
+    if (this.client) grant.client = this.client;
+    fs.hidden = false;
+    this.renderStagedAdmins();
+  }
+
+  /** Append the grant input's identity to the staged set (idempotent), then clear the input. */
+  stageAdministrator() {
+    const grant = this.$('.admin-grant').grant;
+    if (!grant) return;
+    if (!this._stagedAdmins.some((a) => a.dimension === grant.dimension && a.value === grant.value)) {
+      this._stagedAdmins.push(grant);
+      this.renderStagedAdmins();
+    }
+    this.$('.admin-grant').reset();
+  }
+
+  renderStagedAdmins() {
+    const host = this.$('.admins');
+    if (!this._stagedAdmins.length) {
+      host.innerHTML = '<div class="hint">No administrators staged — only the creator will administer this workflow.</div>';
+      return;
+    }
+    host.innerHTML = this._stagedAdmins.map((a, i) => `
+      <div class="admin-row">
+        <span class="grant"><span class="dim">${escapeHtml(a.dimension)}=</span>${escapeHtml(a.value)}</span>
+        <button class="rm-admin ghost" type="button" data-i="${i}" title="Remove" aria-label="Remove">✕</button>
+      </div>`).join('');
+    this.$$('.rm-admin').forEach((btn) => btn.addEventListener('click', () => {
+      this._stagedAdmins.splice(Number(btn.dataset.i), 1);
+      this.renderStagedAdmins();
+    }));
   }
 
   /** Build the multipart request (package blob + owner + tags), or throw a friendly Error for invalid input. */
@@ -237,6 +305,9 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
     confirmBtn.disabled = true;
     try {
       const version = await this.client.addCatalogVersion(request);
+      // Apply the staged administrator set (build mode). addAdministrator is idempotent; failures are surfaced but
+      // never undo the landed version — the creator remains an administrator regardless.
+      await this.applyAdministrators(version.baseWorkflowId);
       // Sources the operator ticked to configure a credential binding for (build mode only).
       const setupSources = this.$$('.setup-cred').filter((c) => c.checked).map((c) => c.dataset.name);
       this.close();
@@ -249,6 +320,17 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
       this.emit('error', { problem, error: err });
     } finally {
       confirmBtn.disabled = false;
+    }
+  }
+
+  /** Grant each staged administrator on the landed base id (best-effort, idempotent). */
+  async applyAdministrators(baseWorkflowId) {
+    for (const identity of this._stagedAdmins || []) {
+      try {
+        await this.client.addAdministrator(baseWorkflowId, identity);
+      } catch (err) {
+        this.emit('error', { problem: err.problem || { title: err.message }, error: err });
+      }
     }
   }
 
