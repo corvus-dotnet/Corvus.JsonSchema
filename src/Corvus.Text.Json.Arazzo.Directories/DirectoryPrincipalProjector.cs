@@ -27,6 +27,13 @@ public sealed class DirectoryPrincipalProjector
         this.issuer = issuer;
     }
 
+    /// <summary>
+    /// Gets the provider attributes the deployment mapper reads (see <see cref="IDirectoryIdentityMapper.RequiredAttributes"/>)
+    /// — empty when the mapper declares none (the adapter then surfaces every attribute). An adapter requests exactly these
+    /// (plus its own value/label attributes) where its provider supports projection.
+    /// </summary>
+    public IReadOnlyCollection<string> RequiredAttributes => this.mapper.RequiredAttributes;
+
     /// <summary>Projects a raw record to a resolved principal carrying the adapter's issuer, or <see langword="null"/> if the mapper drops it.</summary>
     /// <param name="record">The raw directory record.</param>
     /// <returns>The resolved principal with its <c>sys:iss</c> stamped, or <see langword="null"/>.</returns>

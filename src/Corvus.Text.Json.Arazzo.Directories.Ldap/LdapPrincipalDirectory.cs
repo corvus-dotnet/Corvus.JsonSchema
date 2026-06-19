@@ -187,7 +187,7 @@ public sealed class LdapPrincipalDirectory : IPrincipalDirectory
         string filter = $"(&(objectClass={kindOptions.ObjectClass}){valueClause})";
 
         var results = new List<ResolvedPrincipal>(limit);
-        ILdapSearchResults search = await connection.SearchAsync(kindOptions.BaseDn, LdapConnection.ScopeSub, filter, BuildAttributeList(kindOptions), typesOnly: false, cancellationToken).ConfigureAwait(false);
+        ILdapSearchResults search = await connection.SearchAsync(kindOptions.BaseDn, LdapConnection.ScopeSub, filter, this.BuildAttributeList(kindOptions), typesOnly: false, cancellationToken).ConfigureAwait(false);
         while (results.Count < limit && await search.HasMoreAsync(cancellationToken).ConfigureAwait(false))
         {
             LdapEntry entry = await search.NextAsync(cancellationToken).ConfigureAwait(false);
@@ -200,7 +200,7 @@ public sealed class LdapPrincipalDirectory : IPrincipalDirectory
         return results;
     }
 
-    private static string[] BuildAttributeList(LdapKindOptions kindOptions)
+    private string[] BuildAttributeList(LdapKindOptions kindOptions)
     {
         var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { kindOptions.ValueAttribute };
         if (kindOptions.DisplayAttribute is { } display)
@@ -216,6 +216,15 @@ public sealed class LdapPrincipalDirectory : IPrincipalDirectory
         if (kindOptions.GroupAttribute is { } group)
         {
             set.Add(group);
+        }
+
+        // The attribute-projection seam (§16.5.4): also return whatever the mapper declares it reads, so a deployment can
+        // drive the LDAP search's returned-attribute list from the mapper (its natural single source) rather than only the
+        // per-kind FetchAttributes — both are honoured (unioned). LDAP already projects natively; this just widens the
+        // source of the projection to the mapper.
+        foreach (string attribute in this.projector.RequiredAttributes)
+        {
+            set.Add(attribute);
         }
 
         return [.. set];
@@ -234,7 +243,20 @@ public sealed class LdapPrincipalDirectory : IPrincipalDirectory
         {
             [kindOptions.ValueAttribute] = [value],
         };
+
+        // Surface the per-kind FetchAttributes and whatever the mapper declares it reads (the §16.5.4 projection seam) —
+        // both were requested in BuildAttributeList, so flatten both into the record for the mapper. The dictionary
+        // de-duplicates, so an attribute named in both is added once.
         foreach (string attribute in kindOptions.FetchAttributes)
+        {
+            IReadOnlyList<string> values = All(attributes, attribute);
+            if (values.Count > 0)
+            {
+                projected[attribute] = values;
+            }
+        }
+
+        foreach (string attribute in this.projector.RequiredAttributes)
         {
             IReadOnlyList<string> values = All(attributes, attribute);
             if (values.Count > 0)
