@@ -26,5 +26,6 @@
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Directories.Keycloak\Corvus.Text.Json.Arazzo.Directories.Keycloak.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Directories.Scim\Corvus.Text.Json.Arazzo.Directories.Scim.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Directories.EntraId\Corvus.Text.Json.Arazzo.Directories.EntraId.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Directories.Okta\Corvus.Text.Json.Arazzo.Directories.Okta.csproj" />
   </ItemGroup>
 </Project>
