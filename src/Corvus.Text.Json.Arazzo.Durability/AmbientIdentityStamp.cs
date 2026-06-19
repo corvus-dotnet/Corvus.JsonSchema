@@ -83,6 +83,56 @@ public static class AmbientIdentityStamp
         return SecurityTagSet.FromTags(tags);
     }
 
+    /// <summary>
+    /// Returns <paramref name="identity"/> with <strong>every</strong> provider's governed keys stripped and its resolved
+    /// ambient tags appended — the directory projector's uniform stamp over its full set of governed dimensions (the issuer
+    /// is one such provider, §16.5.5). One <c>FromTags</c> pass over the union, regardless of how many providers govern the
+    /// identity.
+    /// </summary>
+    /// <param name="providers">The governed-dimension providers (e.g. the issuer dimension plus an ambient provider); empty returns the identity unchanged.</param>
+    /// <param name="identity">The upstream identity set.</param>
+    /// <returns>The stamped set.</returns>
+    public static SecurityTagSet Apply(IReadOnlyList<IAmbientIdentityDimensions> providers, SecurityTagSet identity)
+    {
+        ArgumentNullException.ThrowIfNull(providers);
+        if (providers.Count == 0)
+        {
+            return identity;
+        }
+
+        // Keep the mapper's tags except any whose key a provider governs (mapper-immutable, fail-closed), then append each
+        // provider's authoritative resolved tags — a single FromTags over the union (the issuer + any ambient dimension in
+        // one pass, not one pass per provider).
+        var tags = new List<SecurityTag>();
+        foreach (SecurityTag tag in identity)
+        {
+            if (!IsGoverned(providers, tag.Key))
+            {
+                tags.Add(tag);
+            }
+        }
+
+        foreach (IAmbientIdentityDimensions provider in providers)
+        {
+            tags.AddRange(provider.Resolve().Tags);
+        }
+
+        return SecurityTagSet.FromTags(tags);
+    }
+
+    private static bool IsGoverned(IReadOnlyList<IAmbientIdentityDimensions> providers, string key)
+    {
+        foreach (IAmbientIdentityDimensions provider in providers)
+        {
+            if (Governs(provider.GovernedKeys, key))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static bool Governs(IReadOnlyCollection<string> governed, string key)
     {
         foreach (string governedKey in governed)
