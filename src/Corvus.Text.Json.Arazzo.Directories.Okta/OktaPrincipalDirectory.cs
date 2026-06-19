@@ -2,7 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Net.Http.Headers;
+using System.Text;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Internal;
 
@@ -79,7 +81,9 @@ public sealed class OktaPrincipalDirectory : IPrincipalDirectory, IDisposable
         // the mapper declares its RequiredAttributes the parse keeps only those (plus value/label) — skipping the value
         // list + dictionary entry for every profile attribute the mapper never reads.
         byte[] body = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
-        return ProjectResponse(kind, resource, body, pageLimit, this.projector);
+        return this.projector.SupportsSpanProjection
+            ? ProjectResponseSpan(kind, resource, body, pageLimit, this.projector)
+            : ProjectResponse(kind, resource, body, pageLimit, this.projector);
     }
 
     /// <inheritdoc/>
@@ -110,6 +114,166 @@ public sealed class OktaPrincipalDirectory : IPrincipalDirectory, IDisposable
     }
 
     private static string EscapeSearchLiteral(string value) => value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal);
+
+    // The bytes-to-bytes path (used when the mapper is a span mapper): capture the wanted attributes — value, label, and the
+    // mapper's declared attributes — as unescaped UTF-8 into a pooled scratch, then project span-wise with no attribute
+    // string. Okta nests its identity attributes under `profile`, so a wanted attribute is matched (and captured) by the
+    // LEAF of its name — a top-level scalar by its name (a role's `label`) and one level into an object by its member name
+    // (so `profile.login` / `profile.department` are captured under `login` / `department`, which the span mapper reads).
+    internal static IReadOnlyList<ResolvedPrincipal> ProjectResponseSpan(GranteeKind kind, OktaResource resource, byte[] body, int limit, DirectoryPrincipalProjector projector)
+    {
+        var results = new List<ResolvedPrincipal>(limit);
+
+        string[] required = [.. projector.RequiredAttributes];
+        int wantedCount = 1 + (resource.DisplayAttribute is null ? 0 : 1) + required.Length;
+        byte[][] wanted = new byte[wantedCount][];
+        int next = 0;
+        int valueWanted = next;
+        wanted[next++] = Encoding.UTF8.GetBytes(Leaf(resource.FilterAttribute));
+        int displayWanted = -1;
+        if (resource.DisplayAttribute is { } displayAttribute)
+        {
+            displayWanted = next;
+            wanted[next++] = Encoding.UTF8.GetBytes(Leaf(displayAttribute));
+        }
+
+        foreach (string attribute in required)
+        {
+            wanted[next++] = Encoding.UTF8.GetBytes(Leaf(attribute));
+        }
+
+        var reader = new Utf8JsonReader(body);
+        if (!reader.Read())
+        {
+            return results;
+        }
+
+        if (resource.ResultsProperty is { } property)
+        {
+            if (reader.TokenType != JsonTokenType.StartObject || !SeekProperty(ref reader, property))
+            {
+                return results;
+            }
+        }
+        else if (reader.TokenType != JsonTokenType.StartArray)
+        {
+            return results;
+        }
+
+        byte[] scratch = ArrayPool<byte>.Shared.Rent(body.Length);
+        Span<DirectoryAttributeSlice> slices = stackalloc DirectoryAttributeSlice[wantedCount];
+        try
+        {
+            while (results.Count < limit && reader.Read() && reader.TokenType == JsonTokenType.StartObject)
+            {
+                int captured = 0;
+                int position = 0;
+                int valueSlice = -1;
+                int displaySlice = -1;
+                while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+                {
+                    int which = MatchWanted(ref reader, wanted);
+                    reader.Read();
+                    if (which >= 0 && reader.TokenType == JsonTokenType.String)
+                    {
+                        CaptureScalar(ref reader, wanted[which], scratch, ref position, slices, ref captured);
+                        if (which == valueWanted)
+                        {
+                            valueSlice = captured - 1;
+                        }
+                        else if (which == displayWanted)
+                        {
+                            displaySlice = captured - 1;
+                        }
+                    }
+                    else if (reader.TokenType == JsonTokenType.StartObject)
+                    {
+                        while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+                        {
+                            int member = MatchWanted(ref reader, wanted);
+                            reader.Read();
+                            if (member >= 0 && reader.TokenType == JsonTokenType.String)
+                            {
+                                CaptureScalar(ref reader, wanted[member], scratch, ref position, slices, ref captured);
+                                if (member == valueWanted)
+                                {
+                                    valueSlice = captured - 1;
+                                }
+                                else if (member == displayWanted)
+                                {
+                                    displaySlice = captured - 1;
+                                }
+                            }
+                            else
+                            {
+                                reader.Skip();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        reader.Skip();
+                    }
+                }
+
+                if (valueSlice < 0)
+                {
+                    continue;
+                }
+
+                DirectoryAttributeSlice value = slices[valueSlice];
+                ReadOnlySpan<byte> valueSpan = scratch.AsSpan(value.ValueOffset, value.ValueLength);
+                string valueText = Encoding.UTF8.GetString(valueSpan);
+                string label = displaySlice >= 0
+                    ? Encoding.UTF8.GetString(scratch.AsSpan(slices[displaySlice].ValueOffset, slices[displaySlice].ValueLength))
+                    : valueText;
+
+                var view = new DirectoryRecordView(kind, valueSpan, scratch, slices[..captured]);
+                if (projector.TryProjectIdentity(kind, valueText, label, view) is { } principal)
+                {
+                    results.Add(principal);
+                }
+            }
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(scratch);
+        }
+
+        return results;
+    }
+
+    // The leaf of an Okta attribute path — the part after the last `.` (the `profile` member name), the key the span mapper
+    // reads. A bare name (a role's top-level `label`) is its own leaf.
+    private static string Leaf(string name)
+    {
+        int cut = name.LastIndexOf('.');
+        return cut < 0 ? name : name[(cut + 1)..];
+    }
+
+    private static int MatchWanted(scoped ref Utf8JsonReader reader, byte[][] wanted)
+    {
+        for (int i = 0; i < wanted.Length; i++)
+        {
+            if (reader.ValueTextEquals(wanted[i]))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private static void CaptureScalar(scoped ref Utf8JsonReader reader, byte[] key, byte[] scratch, ref int position, scoped Span<DirectoryAttributeSlice> slices, ref int captured)
+    {
+        int keyOffset = position;
+        key.CopyTo(scratch.AsSpan(position));
+        position += key.Length;
+        int valueOffset = position;
+        int valueLength = reader.CopyString(scratch.AsSpan(position));
+        position += valueLength;
+        slices[captured++] = new DirectoryAttributeSlice(keyOffset, key.Length, valueOffset, valueLength);
+    }
 
     // Projects an Okta list response to resolved principals. A pure function of (bytes, resource, projector) — the reader
     // borrows `body` in place (no DOM, no copy). Users / groups are a bare top-level array; a resource with a

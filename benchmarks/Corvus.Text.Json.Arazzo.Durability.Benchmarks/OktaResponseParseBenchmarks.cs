@@ -28,7 +28,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.Benchmarks;
 /// for every attribute to test the filter, where the DOM navigates without it. That residual is the whole reason wire-side
 /// projection (SCIM <c>attributes</c>, Graph <c>$select</c>, LDAP's search list) beats parse-side: it never sends, parses,
 /// or keys the unread attributes at all. Okta exposes no field-select, so parse-side is the best available — the seam still
-/// pays, just less than where the provider can project. The benchmark is the regression guard.
+/// pays, just less than where the provider can project. <see cref="ParseUsers_Span"/> is the bytes-to-bytes path (a span
+/// mapper): ≈ 1.83 KB — ≈ 0.10× of the full string path — by capturing only the value + the declared attribute (by leaf)
+/// as UTF-8 and writing the identity straight into a pooled buffer; neither the flatten dictionary nor any per-value string
+/// is built. The biggest drop of the HTTP adapters, since Okta's string path flattened the deepest profile. The benchmark
+/// is the regression guard.
 /// </remarks>
 public class OktaResponseParseBenchmarks
 {
@@ -54,6 +58,18 @@ public class OktaResponseParseBenchmarks
         DirectoryIdentityMapper.FromFunc(["profile.department"], Map),
         "bench-issuer");
 
+    // The span (bytes-to-bytes) mapper — writes the identity from the record's UTF-8 spans (department/login by leaf).
+    private static readonly DirectoryPrincipalProjector SpanProjector = new(
+        DirectorySpanIdentityMapper.FromIdentity(
+            ["profile.department"],
+            static (DirectoryRecordView record, ref IdentityBuilder identity) =>
+            {
+                identity.Add("sys:tenant"u8, record.AttributeUtf8("department"u8));
+                identity.Add("sys:sub"u8, record.ValueUtf8);
+                return true;
+            }),
+        "bench-issuer");
+
     /// <summary>The naive shape — materialise the whole array as a <see cref="StjDocument"/> DOM, then flatten + project.</summary>
     /// <returns>The resolved-principal count (prevents dead-code elimination).</returns>
     [Benchmark(Baseline = true)]
@@ -68,6 +84,11 @@ public class OktaResponseParseBenchmarks
     /// <returns>The resolved-principal count.</returns>
     [Benchmark]
     public int ParseUsers_Projected() => OktaPrincipalDirectory.ProjectResponse(GranteeKind.Person, UsersResource, UsersBody, 10, ProjectingProjector).Count;
+
+    /// <summary>The bytes-to-bytes path — a span mapper captures only the value + the declared attribute (by leaf) and writes the identity straight from spans, over the same full response.</summary>
+    /// <returns>The resolved-principal count.</returns>
+    [Benchmark]
+    public int ParseUsers_Span() => OktaPrincipalDirectory.ProjectResponseSpan(GranteeKind.Person, UsersResource, UsersBody, 10, SpanProjector).Count;
 
     private static ResolvedPrincipal? Map(DirectoryRecord record)
         => new(GranteeKind.Person, record.Id, record.DisplayName, SecurityTagSet.FromTags([new SecurityTag("sys:tenant", record.Attribute("profile.department") ?? string.Empty), new SecurityTag("sys:sub", record.Id)]));
