@@ -5,6 +5,7 @@
 using System.Net;
 using Corvus.Text.Json.Arazzo.Directories;
 using Corvus.Text.Json.Arazzo.Directories.Conformance;
+using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -39,16 +40,29 @@ public sealed class OktaPrincipalDirectoryConformanceTests : PrincipalDirectoryC
             },
         };
 
-        // The deployment mapper: derive each kind's exact sys: identity (the §16.5.4 seam). Persons take sys:tenant from
-        // profile.department and sys:sub from profile.login (the searchable value); teams from profile.name; roles from the
-        // role label.
-        var mapper = DirectoryIdentityMapper.FromFunc(record => record.Kind switch
-        {
-            GranteeKind.Person => new ResolvedPrincipal(GranteeKind.Person, record.Id, record.DisplayName, DirectoryFixture.Identity(("sys:tenant", record.Attribute("profile.department") ?? string.Empty), ("sys:sub", record.Id))),
-            GranteeKind.Team => new ResolvedPrincipal(GranteeKind.Team, record.Id, record.DisplayName, DirectoryFixture.Identity(("sys:team", record.Id))),
-            GranteeKind.Role => new ResolvedPrincipal(GranteeKind.Role, record.Id, record.DisplayName, DirectoryFixture.Identity(("sys:role", record.Id))),
-            _ => (ResolvedPrincipal?)null,
-        });
+        // The deployment mapper — a SPAN mapper exercising the bytes-to-bytes path: persons take sys:tenant from
+        // profile.department (declared, read by its leaf) and sys:sub from the searchable value (profile.login); teams from
+        // the value (profile.name); roles from the value (label). No attribute string.
+        var mapper = DirectorySpanIdentityMapper.FromIdentity(
+            ["profile.department"],
+            static (DirectoryRecordView record, ref IdentityBuilder identity) =>
+            {
+                switch (record.Kind)
+                {
+                    case GranteeKind.Person:
+                        identity.Add("sys:tenant"u8, record.AttributeUtf8("department"u8));
+                        identity.Add("sys:sub"u8, record.ValueUtf8);
+                        return true;
+                    case GranteeKind.Team:
+                        identity.Add("sys:team"u8, record.ValueUtf8);
+                        return true;
+                    case GranteeKind.Role:
+                        identity.Add("sys:role"u8, record.ValueUtf8);
+                        return true;
+                    default:
+                        return false;
+                }
+            });
 
         var httpClient = new HttpClient(new StubHttpMessageHandler(OktaMockBackend.Respond));
         return new ValueTask<IPrincipalDirectory>(new OktaPrincipalDirectory(options, new FixedSecretResolver(Token), mapper, httpClient));
