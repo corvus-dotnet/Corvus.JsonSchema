@@ -98,6 +98,39 @@ describe('<arazzo-catalog-add-dialog>', () => {
     equal(e.detail.version.status, 'Active');
   });
 
+  it('stages the workflow administrator (locked, deletable) and applies the set after the version lands', async () => {
+    el = dialogWithMock();
+    mount(el);
+    el.open();
+    setFile(el.$('#workflowFile'), 'workflow.json', workflowJson('nightly-reconcile', 'Nightly Reconcile'));
+    await waitFor(() => el.$('.src-file[data-name="petstore"]'));
+    setFile(el.$('.src-file[data-name="petstore"]'), 'petstore.json', JSON.stringify({ openapi: '3.1.0' }));
+
+    // The Administrators section seeds the workflow identity (read-only value, deletable) and pins the grant input.
+    const grant = await waitFor(() => el.$('arazzo-admin-grant-input'));
+    ok([...el.shadowRoot.querySelectorAll('.admins .admin-row')].some((r) => r.textContent.includes('workflow=nightly-reconcile')), 'workflow identity staged by default');
+    equal(grant.getAttribute('fixed-workflow'), 'nightly-reconcile', 'the workflow value is pinned to the new workflow');
+
+    // Add a tenant administrator and stage it.
+    const dim = grant.shadowRoot.querySelector('.dim');
+    dim.value = 'tenant';
+    dim.dispatchEvent(new Event('change'));
+    grant.shadowRoot.querySelector('.val-text').value = 'growth';
+    el.$('.add-admin').click();
+    ok([...el.shadowRoot.querySelectorAll('.admins .admin-row')].some((r) => r.textContent.includes('tenant=growth')), 'tenant administrator staged');
+
+    el.$('#ownerName').value = 'Team';
+    el.$('#ownerEmail').value = 'team@example.com';
+    const added = nextEvent(el, 'workflow-added');
+    el.$('.confirm').click();
+    await added;
+
+    // The staged set was applied to the landed base id via the administrators API.
+    const { administrators } = await el.client.listAdministrators('nightly-reconcile');
+    ok(administrators.some((a) => a.dimension === 'tenant' && a.value === 'growth'), 'applied the tenant administrator');
+    ok(administrators.some((a) => a.dimension === 'workflow' && a.value === 'nightly-reconcile'), 'applied the workflow administrator');
+  });
+
   it('opens a guided credential dialog locked to each source ticked for credential setup', async () => {
     el = dialogWithMock();
     mount(el);

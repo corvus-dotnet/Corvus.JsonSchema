@@ -69,7 +69,9 @@ public static class ControlPlaneAuthorization
     /// <summary>
     /// Registers one authorization policy per <see cref="ControlPlaneScopes"/> value: an authenticated
     /// principal whose <paramref name="scopeClaimType"/> claim carries the scope (OAuth-style space-delimited
-    /// values are split). Call <c>MapArazzoControlPlane(..., requireAuthorization: true)</c> to demand them.
+    /// values are split). Map the control plane with a scope-gating <see cref="ControlPlaneSecurityMode"/>
+    /// (<see cref="ControlPlaneSecurityMode.Scoped"/> or <see cref="ControlPlaneSecurityMode.ScopesOnly"/>) to
+    /// demand them.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="scopeClaimType">The claim type carrying granted scopes (default <c>scope</c>).</param>

@@ -361,7 +361,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
             {
                 managementTags = new Models.CredentialBindingSummary.CredentialSecurityTagArray.Source((ref Models.CredentialBindingSummary.CredentialSecurityTagArray.Builder ab) =>
                 {
-                    foreach (SecurityTag tag in binding.ManagementTagsValue.ToList())
+                    foreach (SecurityTag tag in binding.ManagementTagsValue)
                     {
                         ab.AddItem(ToSecurityTag(tag));
                     }
@@ -370,7 +370,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
 
             // The stored usage scope is described back as operator-facing identity grants (the inverse of the create
             // mapping) — internal tags are not exposed raw.
-            IReadOnlyList<CredentialUsageGrant> describedGrants = this.access.DescribeUsageScope(binding.UsageTagsValue.ToList());
+            IReadOnlyList<CredentialUsageGrant> describedGrants = this.access.DescribeUsageScope(binding.UsageTagsValue);
             Models.CredentialBindingSummary.CredentialUsageGrantArray.Source usageGrants = default;
             if (describedGrants.Count > 0)
             {

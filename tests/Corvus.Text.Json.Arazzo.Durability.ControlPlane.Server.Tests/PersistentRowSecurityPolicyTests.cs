@@ -289,6 +289,52 @@ public sealed class PersistentRowSecurityPolicyTests
         policy.Resolve(alice).Admits(AccessVerb.Write, SecurityTagSet.FromTags([new("domain", "payments")])).ShouldBeFalse(); // nor reach
     }
 
+    [TestMethod]
+    public async Task A_wildcard_binding_cannot_grant_unrestricted_reach_by_default()
+    {
+        // §17.5/F7: a `*` binding matches every authenticated principal; an Unrestricted grant on it would make
+        // everyone an operator. By default that grant is demoted to no reach (deny-by-default).
+        var store = new InMemorySecurityPolicyStore();
+        await store.AddBindingAsync(new SecurityBindingDefinition("*", null, VerbGrant.Full, VerbGrant.Full, VerbGrant.Full), "admin", default);
+        var policy = new PersistentRowSecurityPolicy(store);
+        await policy.RefreshAsync();
+
+        AccessContext ctx = policy.Resolve(Principal(("sub", "anyone")));
+        ctx.Reach(AccessVerb.Read).ShouldNotBeNull(); // NOT unrestricted (demoted)
+        ctx.Admits(AccessVerb.Read, Acme).ShouldBeFalse(); // demoted to no reach
+        ctx.Admits(AccessVerb.Write, Acme).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task A_wildcard_binding_with_rule_bounded_reach_is_still_honoured()
+    {
+        // F7 only blocks the Unrestricted form; a `*` binding with explicit rule-bounded reach is the operator's
+        // deliberate, scoped choice and still applies to every principal.
+        var store = new InMemorySecurityPolicyStore();
+        await store.AddRuleAsync("acme-only", new SecurityRuleDefinition("tenant == 'acme'"), "admin", default);
+        await store.AddBindingAsync(new SecurityBindingDefinition("*", null, VerbGrant.Rules("acme-only"), VerbGrant.None, VerbGrant.None), "admin", default);
+        var policy = new PersistentRowSecurityPolicy(store);
+        await policy.RefreshAsync();
+
+        AccessContext ctx = policy.Resolve(Principal(("sub", "anyone")));
+        ctx.Admits(AccessVerb.Read, Acme).ShouldBeTrue();   // rule-bounded reach honoured
+        ctx.Admits(AccessVerb.Read, Globex).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task A_deployment_can_opt_into_wildcard_unrestricted_reach()
+    {
+        // A genuinely single-tenant deployment may opt back in to "everyone is an operator".
+        var store = new InMemorySecurityPolicyStore();
+        await store.AddBindingAsync(new SecurityBindingDefinition("*", null, VerbGrant.Full, VerbGrant.Full, VerbGrant.Full), "admin", default);
+        var policy = new PersistentRowSecurityPolicy(store, allowWildcardUnrestrictedReach: true);
+        await policy.RefreshAsync();
+
+        AccessContext ctx = policy.Resolve(Principal(("sub", "anyone")));
+        ctx.Reach(AccessVerb.Read).ShouldBeNull(); // unrestricted, by explicit opt-in
+        ctx.Admits(AccessVerb.Read, Globex).ShouldBeTrue();
+    }
+
     private static readonly DateTimeOffset ClockNow = new(2026, 6, 15, 12, 0, 0, TimeSpan.Zero);
 
     // A clock fixed at a known instant so a binding's expiry is deterministic relative to "now".

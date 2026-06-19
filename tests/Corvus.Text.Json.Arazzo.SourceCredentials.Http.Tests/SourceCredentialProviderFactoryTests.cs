@@ -102,6 +102,48 @@ public sealed class SourceCredentialProviderFactoryTests
     }
 
     [TestMethod]
+    public async Task OAuth2_rejects_a_non_https_token_endpoint_by_default()
+    {
+        // §17.5/F5: a cleartext token endpoint would expose the POSTed client secret on the wire.
+        var resolver = new FakeSecretResolver(new() { ["env://CLIENT_SECRET"] = "shh" });
+        using var tokenClient = new HttpClient(new MockHttpHandler(HttpStatusCode.OK, "{}"));
+        var factory = new SourceCredentialProviderFactory(resolver, tokenClient);
+        SourceCredentialBinding binding = BindingFactory.Create(new(
+            "api",
+            "production",
+            SourceCredentialKind.OAuth2ClientCredentials,
+            [new SecretReferenceDefinition("clientSecret", "env://CLIENT_SECRET")],
+            [new CredentialConfigDefinition("tokenUrl", "http://auth.example/token"), new CredentialConfigDefinition("clientId", "client-1")]));
+
+        InvalidOperationException ex = await Should.ThrowAsync<InvalidOperationException>(async () => await factory.CreateAsync(binding, default));
+        ex.Message.ShouldContain("non-https");
+
+        // The client secret was never resolved (the guard fires before secret resolution).
+        resolver.Issued.ShouldBeEmpty();
+    }
+
+    [TestMethod]
+    public async Task OAuth2_allows_a_non_https_token_endpoint_when_the_deployment_opts_in()
+    {
+        var resolver = new FakeSecretResolver(new() { ["env://CLIENT_SECRET"] = "shh" });
+        var handler = new MockHttpHandler(HttpStatusCode.OK, "{\"access_token\":\"tok-1\",\"expires_in\":3600,\"token_type\":\"Bearer\"}");
+        using var tokenClient = new HttpClient(handler);
+        var factory = new SourceCredentialProviderFactory(resolver, tokenClient, allowInsecureOAuthTokenEndpoint: true);
+        SourceCredentialBinding binding = BindingFactory.Create(new(
+            "api",
+            "production",
+            SourceCredentialKind.OAuth2ClientCredentials,
+            [new SecretReferenceDefinition("clientSecret", "env://CLIENT_SECRET")],
+            [new CredentialConfigDefinition("tokenUrl", "http://auth.example/token"), new CredentialConfigDefinition("clientId", "client-1")]));
+
+        IHttpAuthenticationProvider provider = await factory.CreateAsync(binding, default);
+        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.example/");
+        await provider.AuthenticateAsync(request, default);
+        request.Headers.Authorization!.Parameter.ShouldBe("tok-1");
+        (provider as IDisposable)?.Dispose();
+    }
+
+    [TestMethod]
     public async Task A_missing_required_reference_or_config_throws()
     {
         var resolver = new FakeSecretResolver(new() { ["env://X"] = "x" });

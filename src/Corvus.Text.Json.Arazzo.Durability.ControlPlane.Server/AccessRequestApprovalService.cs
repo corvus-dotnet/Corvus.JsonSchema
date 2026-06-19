@@ -370,9 +370,11 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
     }
 
     // Writes a single security-policy binding for the requester on the target workflow — the shared shape of an active
-    // grant and an eligibility assignment. The capability scope and its matching row reach are granted together:
-    // runs:read → read-reach to the workflow's rows, runs:write → write-reach; purge is never granted. An eligibleOnly
-    // binding confers nothing active (the resolver ignores it) — it records the eligibility the self-elevation strategy reads.
+    // grant and an eligibility assignment. The capability scope and its matching row reach are granted together: a read
+    // scope (runs:read OR catalog:read — the §17.3 "view" grant) → read-reach to the workflow's rows (the same
+    // sys:workflow rule; the scope distinguishes run vs catalog visibility at the authorization layer), runs:write →
+    // write-reach; purge is never granted. An eligibleOnly binding confers nothing active (the resolver ignores it) — it
+    // records the eligibility the self-elevation strategy reads.
     private async ValueTask<string> WriteBindingAsync(AccessRequest request, IReadOnlyList<string> granted, string actor, bool eligibleOnly, DateTimeOffset? expiresAt, CancellationToken cancellationToken)
     {
         string baseWorkflowId = request.BaseWorkflowIdValue;
@@ -380,10 +382,11 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         string ruleName = await this.EnsureWorkflowRuleAsync(baseWorkflowId, actor, cancellationToken).ConfigureAwait(false);
 
         VerbGrant reach = VerbGrant.Rules(ruleName);
+        bool grantsRead = granted.Contains(ControlPlaneScopes.RunsRead) || granted.Contains(ControlPlaneScopes.CatalogRead);
         var definition = new SecurityBindingDefinition(
             request.SubjectClaimTypeValue,
             request.SubjectClaimValueValue,
-            Read: granted.Contains(ControlPlaneScopes.RunsRead) ? reach : VerbGrant.None,
+            Read: grantsRead ? reach : VerbGrant.None,
             Write: granted.Contains(ControlPlaneScopes.RunsWrite) ? reach : VerbGrant.None,
             Purge: VerbGrant.None,
             Description: (eligibleOnly ? "Eligibility for access request " : "Access request ") + request.IdValue,
@@ -511,7 +514,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
 
         foreach (JsonString name in grant.RuleNames.EnumerateArray())
         {
-            if (string.Equals((string)name, ruleName, StringComparison.Ordinal))
+            if (((JsonElement)name).EqualsString(ruleName))
             {
                 return true;
             }
@@ -545,6 +548,6 @@ public sealed class AccessRequestApprovalOptions
     /// <summary>Gets the maximum lifetime of a granted entitlement; a request may propose a shorter one. Defaults to 8 hours.</summary>
     public TimeSpan MaxTtl { get; init; } = TimeSpan.FromHours(8);
 
-    /// <summary>Gets the scopes an approval may grant — at most these, intersected with the request. Defaults to run access only (<c>runs:read</c>, <c>runs:write</c>); security, purge, administration, and escalation are never grantable.</summary>
-    public IReadOnlyList<string> GrantableScopes { get; init; } = [ControlPlaneScopes.RunsRead, ControlPlaneScopes.RunsWrite];
+    /// <summary>Gets the scopes an approval may grant — at most these, intersected with the request. Defaults to run access (<c>runs:read</c>, <c>runs:write</c>) plus the §17.3 view grant (<c>catalog:read</c>) — letting a reviewer see one workflow without joining its domain or administering it; security, purge, administration, and escalation are never grantable.</summary>
+    public IReadOnlyList<string> GrantableScopes { get; init; } = [ControlPlaneScopes.RunsRead, ControlPlaneScopes.RunsWrite, ControlPlaneScopes.CatalogRead];
 }

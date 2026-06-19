@@ -80,6 +80,26 @@ public sealed class AccessRequestApprovalServiceTests
     }
 
     [TestMethod]
+    public async Task Approving_a_view_request_grants_catalog_read_with_read_reach_only()
+    {
+        Harness h = await Harness.CreateAsync();
+        string id = await h.SubmitPendingAsync(["catalog:read"]);
+        using (await h.Service.ApproveAsync(id, Boss, "boss", null, default))
+        {
+        }
+
+        // The §17.3 view grant: catalog:read scope + READ reach to the workflow's rows (the reviewer sees its catalog
+        // entry), but NOT write reach, and scoped to this workflow only — visibility without operation or administration.
+        PersistentRowSecurityPolicy policy = await h.RefreshedPolicyAsync();
+        ClaimsPrincipal alice = Principal(("sub", "alice"));
+        policy.ResolveGrantedScopes(alice).ShouldBe(["catalog:read"]);
+        SecurityTagSet thisFlow = SecurityTagSet.FromTags([new("sys:workflow", "nightly-reconcile")]);
+        policy.Resolve(alice).Admits(AccessVerb.Read, thisFlow).ShouldBeTrue();
+        policy.Resolve(alice).Admits(AccessVerb.Write, thisFlow).ShouldBeFalse();
+        policy.Resolve(alice).Admits(AccessVerb.Read, SecurityTagSet.FromTags([new("sys:workflow", "other-flow")])).ShouldBeFalse();
+    }
+
+    [TestMethod]
     public async Task A_request_with_no_grantable_scope_is_rejected()
     {
         Harness h = await Harness.CreateAsync();

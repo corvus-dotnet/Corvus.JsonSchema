@@ -30,6 +30,14 @@
       "description": "Visibility and remediation for durable workflow runs."
     },
   {
+    "name": "catalog",
+    "description": "Publish and read versioned, runnable workflow definitions: add catalog versions, edit their governance metadata, read packages/workflows/executors/sources, validate inputs, and start runs (capability scopes catalog:read / catalog:write / catalog:purge, plus runs:write to start a run)."
+  },
+  {
+    "name": "runners",
+    "description": "Read the set of registered runners that host and execute catalog workflow versions (capability scope runs:read)."
+  },
+  {
     "name": "security",
     "description": "Author the row-security policy: rules and claim→rule bindings (capability scopes security:read / security:write)."
   },
@@ -44,6 +52,10 @@
   {
     "name": "accessRequests",
     "description": "Request and approve elevated, time-bound access to a workflow (design §16.5). Any authenticated principal may submit a request and withdraw their own; an administrator of the target workflow (§15) approves, denies, or revokes. An approval writes a single capped, time-boxed grant (run access only, scoped to the workflow); an eligible requester self-elevates without a human approver. These operations are authorized by the per-workflow administrator gate, not a global capability scope."
+  },
+  {
+    "name": "identity",
+    "description": "Resolve real grantees (person/team/role/workflow) to their exact deployment-stamped identity for the view/operate/administer grant pickers (design §16.5.4), and report the caller's own identity. Read-only: resolution uses a pluggable directory and a store-indexed typeahead of identities the control plane has already observed, so the picker never hand-assembles a {dimension,value} tuple that could silently match no one."
   }
   ],
   "paths": {
@@ -172,7 +184,7 @@
         ],
         "tags": ["runs"],
         "summary": "Resume a faulted run",
-        "description": "Resumes a faulted run, re-executing it from its last checkpoint (the faulted step). Only a run in the `Faulted` state can be resumed. Returns the run's new detail on success. An implementation MAY process the resume asynchronously and instead return `202 Accepted`.",
+        "description": "Resumes a faulted run, re-executing it from its last checkpoint (the faulted step). Only a run in the `Faulted` state can be resumed. Returns the run's new detail on success (200); a run that does not exist or is out of read reach is 404, a readable run outside write reach is 403, and a run that is not in the `Faulted` state conflicts (409).",
         "requestBody": {
           "required": false,
           "content": {
@@ -606,7 +618,7 @@
         ],
         "tags": ["catalog"],
         "summary": "Start a run of a workflow version",
-        "description": "Triggers a new run of this runnable version: validates the supplied inputs against the version's baked inputs schema, then creates a Pending run that a hosting runner claims and executes asynchronously and durably. Returns 202 with the run id; observe the run via the runs endpoints. 404 if the version does not exist; 409 if it is not runnable (carries no executor); 422 if the inputs fail validation.",
+        "description": "Triggers a new run of this runnable version: validates the supplied inputs against the version's baked inputs schema, then creates a Pending run that a hosting runner claims and executes asynchronously and durably. Returns 202 with the run id; observe the run via the runs endpoints. 404 if the version does not exist; 409 if it is not runnable (carries no executor) or no registered runner currently hosts it; 422 if the inputs fail validation.",
         "parameters": [
           { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
           { "$ref": "#/components/parameters/VersionNumberPath" }
@@ -1548,6 +1560,86 @@
           "409": { "$ref": "#/components/responses/Conflict" }
         }
       }
+    },
+    "/identity/whoami": {
+      "get": {
+        "operationId": "getWhoami",
+        "security": [{ "oauth2": [] }, { "openIdConnect": [] }, { "mtls": [] }],
+        "tags": ["identity"],
+        "summary": "Resolve the caller's own identity",
+        "description": "Returns the caller's own deployment-stamped identity as {dimension,value} grants (design §16.5.4) — the identity an administrator entry or grant must name to match the caller (so a UI can offer 'add me' and warn before a transfer would lock the caller out). Empty when the deployment is unscoped.",
+        "responses": {
+          "200": {
+            "description": "The caller's identity.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WhoAmI" } } }
+          }
+        }
+      }
+    },
+    "/identity/capabilities": {
+      "get": {
+        "operationId": "getIdentityCapabilities",
+        "security": [{ "oauth2": [] }, { "openIdConnect": [] }, { "mtls": [] }],
+        "tags": ["identity"],
+        "summary": "The grantee kinds the deployment can resolve",
+        "description": "Returns the grantee kinds (person/team/role/workflow) the deployment can resolve to a sys: identity, and whether an external directory is configured (design §16.5.4) — so the grantee picker offers exactly the resolvable grain instead of guessing.",
+        "responses": {
+          "200": {
+            "description": "The identity capabilities.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/IdentityCapabilities" } } }
+          }
+        }
+      }
+    },
+    "/identity/grantees": {
+      "get": {
+        "operationId": "searchGrantees",
+        "security": [
+          { "oauth2": ["administrators:read"] },
+          { "openIdConnect": ["administrators:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["identity"],
+        "summary": "Search resolvable grantees",
+        "description": "Searches for grantees matching a prefix, each resolved to its exact sys: identity (design §16.5.4). Source `observed` (default) is the store-indexed typeahead of identities the control plane has already seen (access requesters, version authors, administrators, grantees); `directory` queries the external directory when one is configured. Page with `limit` and the opaque `pageToken`.",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "description": "Restrict to one grantee kind.",
+            "schema": { "$ref": "#/components/schemas/GranteeKind" }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "description": "The case-sensitive value prefix to match (empty matches all).",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "description": "Where to resolve from: the store-indexed observed-identity typeahead (default) or the external directory.",
+            "schema": { "type": "string", "enum": ["observed", "directory"] }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "The maximum number of grantees to return in the page.",
+            "schema": { "$ref": "#/components/schemas/PageLimit" }
+          },
+          { "$ref": "#/components/parameters/PageTokenQuery" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The matching grantees.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GranteeList" } } }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1569,6 +1661,8 @@
               "catalog:purge": "Delete and purge catalog versions (destructive).",
               "credentials:read": "List and read source credential bindings (references and metadata only — never secret material).",
               "credentials:write": "Create, update, and delete source credential bindings (references and metadata only — never secret material).",
+              "security:read": "List and read the row-security policy: rules and claim→rule bindings.",
+              "security:write": "Create, update, and delete row-security rules and bindings.",
               "administrators:read": "Read a workflow's administrator set (described as deployment-mapped grants — never raw internal tags).",
               "administrators:write": "Manage a workflow's administrator set: add, remove, and transfer administration (current-administrator membership applies)."
             }
@@ -1584,6 +1678,8 @@
               "catalog:purge": "Delete and purge catalog versions (destructive).",
               "credentials:read": "List and read source credential bindings (references and metadata only — never secret material).",
               "credentials:write": "Create, update, and delete source credential bindings (references and metadata only — never secret material).",
+              "security:read": "List and read the row-security policy: rules and claim→rule bindings.",
+              "security:write": "Create, update, and delete row-security rules and bindings.",
               "administrators:read": "Read a workflow's administrator set (described as deployment-mapped grants — never raw internal tags).",
               "administrators:write": "Manage a workflow's administrator set: add, remove, and transfer administration (current-administrator membership applies)."
             }
@@ -2069,7 +2165,7 @@
         "type": "object",
         "description": "A request to cancel a run.",
         "properties": {
-          "reason": { "type": "string", "description": "An operator-supplied reason for the cancellation (recorded for audit)." }
+          "reason": { "type": "string", "minLength": 1, "description": "An operator-supplied reason for the cancellation (recorded for audit). Must be non-empty." }
         },
         "required": ["reason"]
       },
@@ -2771,6 +2867,77 @@
           }
         },
         "required": ["administrators"]
+      },
+      "GranteeKind": {
+        "type": "string",
+        "description": "A well-known kind of grantee the deployment can resolve to a sys: identity (design §16.5.4).",
+        "enum": ["person", "team", "role", "workflow"]
+      },
+      "ResolvedGrantee": {
+        "type": "object",
+        "description": "A grantee resolved to its exact deployment-stamped identity (design §16.5.4): name it in a view/operate/administer grant and the membership match (exact set-equality) is guaranteed. The identity is given as {dimension,value} grants, never raw sys: tags.",
+        "properties": {
+          "kind": { "$ref": "#/components/schemas/GranteeKind" },
+          "value": { "type": "string", "description": "The grantee value (a subject id, tenant/role name, or workflow id) — the prefix-searched key." },
+          "label": { "type": "string", "description": "An optional human-friendly display label." },
+          "identity": {
+            "type": "array",
+            "description": "The grantee's exact sys: identity as {dimension,value} grants.",
+            "items": { "$ref": "#/components/schemas/AdministratorIdentity" }
+          },
+          "source": {
+            "type": "string",
+            "enum": ["observed", "directory", "input"],
+            "description": "Where this grantee was resolved: the store-indexed observed-identity typeahead, the external directory, or a validated free-typed value."
+          },
+          "complete": {
+            "type": "boolean",
+            "description": "Whether the identity is the principal's full stamped identity (true), or a best-effort single-tag mapping of a free-typed value that may not match if the deployment stamps finer (false)."
+          }
+        },
+        "required": ["kind", "value", "identity", "source", "complete"]
+      },
+      "GranteeList": {
+        "type": "object",
+        "description": "A page of resolved grantees, ordered by (value, kind).",
+        "properties": {
+          "grantees": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ResolvedGrantee" }
+          },
+          "nextPageToken": {
+            "type": "string",
+            "description": "An opaque token to fetch the next page, or null/absent if this is the last page."
+          }
+        },
+        "required": ["grantees"]
+      },
+      "IdentityCapabilities": {
+        "type": "object",
+        "description": "What the deployment can resolve for the grantee pickers (design §16.5.4).",
+        "properties": {
+          "granteeKinds": {
+            "type": "array",
+            "description": "The grantee kinds the deployment can resolve (empty when unscoped).",
+            "items": { "$ref": "#/components/schemas/GranteeKind" }
+          },
+          "directorySearch": {
+            "type": "boolean",
+            "description": "Whether an external directory is configured for live search (beyond the store-indexed observed-identity typeahead)."
+          }
+        },
+        "required": ["granteeKinds", "directorySearch"]
+      },
+      "WhoAmI": {
+        "type": "object",
+        "description": "The caller's own deployment-stamped identity as {dimension,value} grants (design §16.5.4); empty when unscoped.",
+        "properties": {
+          "identity": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AdministratorIdentity" }
+          }
+        },
+        "required": ["identity"]
       },
       "AccessRequestSubmit": {
         "type": "object",

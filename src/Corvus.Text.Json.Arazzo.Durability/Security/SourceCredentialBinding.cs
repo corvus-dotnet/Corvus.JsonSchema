@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using Corvus.Text.Json;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Security;
@@ -86,28 +87,69 @@ public readonly partial struct SourceCredentialBinding
             return true;
         }
 
-        List<SecurityTag> runTagList = runTags.ToList();
-        foreach (SecurityTagInfo required in this.UsageTags.EnumerateArray())
+        // A usage-tagged binding is usable only by a run carrying all of its usage tags. The whole membership scan runs
+        // on UTF-8: the run's tags are parsed once into a pooled scratch buffer (no managed strings, no list), and each
+        // required tag is matched on its unescaped UTF-8 (GetUtf8String) against those slices — so it allocates nothing.
+        if (runTags.IsEmpty)
         {
-            string key = (string)required.Key;
-            string value = (string)required.Value;
-            bool matched = false;
-            foreach (SecurityTag have in runTagList)
+            return false;
+        }
+
+        ReadOnlySpan<byte> json = runTags.RawJson;
+        int runCount = runTags.Count;
+        byte[] scratch = ArrayPool<byte>.Shared.Rent(json.Length);
+        SecurityTagSpanSort.TagSlice[]? rentedSlices = runCount > SecurityTagSpanSort.StackTagCapacity ? ArrayPool<SecurityTagSpanSort.TagSlice>.Shared.Rent(runCount) : null;
+        try
+        {
+            scoped Span<SecurityTagSpanSort.TagSlice> table;
+            if (rentedSlices is not null)
             {
-                if (string.Equals(have.Key, key, StringComparison.Ordinal) && string.Equals(have.Value, value, StringComparison.Ordinal))
+                table = rentedSlices;
+            }
+            else
+            {
+                table = stackalloc SecurityTagSpanSort.TagSlice[SecurityTagSpanSort.StackTagCapacity];
+            }
+
+            Span<SecurityTagSpanSort.TagSlice> slices = table[..runCount];
+            SecurityTagSpanSort.Parse(json, scratch, slices);
+
+            foreach (SecurityTagInfo required in this.UsageTags.EnumerateArray())
+            {
+                if (!RunCarries(slices, scratch, required))
                 {
-                    matched = true;
-                    break;
+                    return false;
                 }
             }
 
-            if (!matched)
+            return true;
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(scratch);
+            if (rentedSlices is not null)
             {
-                return false;
+                ArrayPool<SecurityTagSpanSort.TagSlice>.Shared.Return(rentedSlices);
+            }
+        }
+    }
+
+    // Whether the run's tags (parsed as UTF-8 slices into scratch) carry the required tag, matched on its unescaped
+    // UTF-8 (a pooled GetUtf8String buffer per side) — no managed string for either side.
+    private static bool RunCarries(ReadOnlySpan<SecurityTagSpanSort.TagSlice> slices, ReadOnlySpan<byte> scratch, SecurityTagInfo required)
+    {
+        using UnescapedUtf8JsonString key = ((JsonElement)required.Key).GetUtf8String();
+        using UnescapedUtf8JsonString value = ((JsonElement)required.Value).GetUtf8String();
+        foreach (SecurityTagSpanSort.TagSlice slice in slices)
+        {
+            if (scratch.Slice(slice.KeyOffset, slice.KeyLength).SequenceEqual(key.Span)
+                && scratch.Slice(slice.ValueOffset, slice.ValueLength).SequenceEqual(value.Span))
+            {
+                return true;
             }
         }
 
-        return true;
+        return false;
     }
 
     /// <summary>Derives the binding's <see cref="CredentialStatus"/> (§13.2) from its <c>expiresAt</c> against
@@ -145,7 +187,7 @@ public readonly partial struct SourceCredentialBinding
     {
         foreach (SecretReference reference in this.SecretRefs.EnumerateArray())
         {
-            if (string.Equals((string)reference.Name, role, StringComparison.Ordinal))
+            if (((JsonElement)reference.Name).EqualsString(role))
             {
                 secretRef = SecretRef.Parse((string)reference.Ref);
                 return true;
@@ -166,7 +208,7 @@ public readonly partial struct SourceCredentialBinding
         {
             foreach (CredentialConfigEntry entry in this.Config.EnumerateArray())
             {
-                if (string.Equals((string)entry.Key, key, StringComparison.Ordinal))
+                if (((JsonElement)entry.Key).EqualsString(key))
                 {
                     value = (string)entry.Value;
                     return true;

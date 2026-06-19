@@ -38,6 +38,7 @@ Measure("Durable", executor.RunDurableWorkflow);
 Measure("StatusOnly", executor.RunStatusOnlyWorkflow);
 Measure("UrlCriteria", executor.RunUrlCriteriaWorkflow);
 Measure("Interpolation", executor.RunInterpolationWorkflow);
+Measure("FallbackInterp", executor.RunFallbackInterpolationWorkflow);
 Measure("SimpleCriteria", executor.RunSimpleCriteriaWorkflow);
 Measure("JsonPath", executor.RunJsonPathWorkflow);
 Measure("ControlFlow", executor.RunControlFlowWorkflow);

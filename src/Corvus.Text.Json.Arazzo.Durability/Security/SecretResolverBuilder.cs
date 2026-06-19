@@ -37,12 +37,18 @@ public sealed class SecretResolverBuilder
     public SecretResolverBuilder AddEnvironment() => this.Add(new EnvSecretResolver());
 
     /// <summary>Registers the built-in <c>file://</c> resolver (<see cref="FileSecretResolver"/>).</summary>
+    /// <param name="secretRoot">
+    /// An optional confinement root (§17.5/F6): when supplied, locators are resolved relative to it and may not escape
+    /// it (absolute paths and <c>..</c> traversal are rejected). When <see langword="null"/> the locator is the exact
+    /// file path (trusted-operator behaviour).
+    /// </param>
     /// <returns>This builder, for chaining.</returns>
-    public SecretResolverBuilder AddFile() => this.Add(new FileSecretResolver());
+    public SecretResolverBuilder AddFile(string? secretRoot = null) => this.Add(new FileSecretResolver(secretRoot));
 
     /// <summary>Registers both built-in resolvers (<c>env://</c> and <c>file://</c>).</summary>
+    /// <param name="secretRoot">An optional confinement root for the <c>file://</c> resolver (§17.5/F6).</param>
     /// <returns>This builder, for chaining.</returns>
-    public SecretResolverBuilder AddEnvironmentAndFile() => this.AddEnvironment().AddFile();
+    public SecretResolverBuilder AddEnvironmentAndFile(string? secretRoot = null) => this.AddEnvironment().AddFile(secretRoot);
 
     /// <summary>Builds a single <see cref="ISecretResolver"/> that dispatches a reference to the registered resolver
     /// for its scheme (fail-closed for an unregistered scheme).</summary>
