@@ -226,6 +226,38 @@ public readonly struct SecurityTagSet
         }
     }
 
+    /// <summary>
+    /// Builds the set by writing its tags straight into a pooled JSON buffer through an <see cref="IdentityBuilder"/> — the
+    /// <strong>bytes-to-bytes</strong> write leaf for an identity assembled from another UTF-8 source (a directory
+    /// response), so no managed <see cref="string"/> is materialized per key or value and no intermediate
+    /// <see cref="SecurityTag"/> list is built (cf. <see cref="FromTags"/>, the string-sourced leaf). The only owned
+    /// allocation is the one <see cref="byte"/> array the sealed set carries; the writer and buffer are pooled.
+    /// </summary>
+    /// <typeparam name="TState">The state threaded to <paramref name="build"/> (so it can be a <see langword="static"/> lambda — no capture).</typeparam>
+    /// <param name="state">The state passed by reference to <paramref name="build"/>.</param>
+    /// <param name="build">Adds the tags via <see cref="IdentityBuilder.Add(ReadOnlySpan{byte}, ReadOnlySpan{byte})"/>; adding none yields the empty set.</param>
+    /// <returns>The set.</returns>
+    public static SecurityTagSet Build<TState>(in TState state, SecurityTagBuildAction<TState> build)
+    {
+        ArgumentNullException.ThrowIfNull(build);
+
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, StackallocByteThreshold, out IByteBufferWriter buffer);
+        try
+        {
+            writer.WriteStartArray();
+            var builder = new IdentityBuilder(writer);
+            build(ref builder, in state);
+            writer.WriteEndArray();
+            writer.Flush();
+            return builder.Count == 0 ? default : new SecurityTagSet(buffer.WrittenSpan.ToArray());
+        }
+        finally
+        {
+            workspace.ReturnWriterAndBuffer(writer, buffer);
+        }
+    }
+
     /// <summary>Writes the security tags as a JSON array value to <paramref name="writer"/> (empty set writes <c>[]</c>).</summary>
     /// <param name="writer">The writer.</param>
     public void WriteTo(Utf8JsonWriter writer)
