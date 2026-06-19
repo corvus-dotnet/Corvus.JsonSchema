@@ -6,6 +6,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using Corvus.Text.Json.Arazzo.Directories;
 using Corvus.Text.Json.Arazzo.Directories.Conformance;
+using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Internal;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -78,16 +79,30 @@ public sealed class KeycloakPrincipalDirectoryConformanceTests : PrincipalDirect
             },
         };
 
-        // The deployment mapper: derive each kind's exact sys: identity (the §16.5.4 seam). Persons take sys:tenant from
-        // the user's `tenant` attribute and sys:sub from the username; teams/roles from the group/role name. Keycloak's
-        // built-in realm roles (offline_access, uma_authorization, default-roles-*) map to no sys: grant, so they drop.
-        var mapper = DirectoryIdentityMapper.FromFunc(record => record.Kind switch
-        {
-            GranteeKind.Person => new ResolvedPrincipal(GranteeKind.Person, record.Id, record.DisplayName, DirectoryFixture.Identity(("sys:tenant", record.Attribute("tenant") ?? string.Empty), ("sys:sub", record.Id))),
-            GranteeKind.Team => new ResolvedPrincipal(GranteeKind.Team, record.Id, record.DisplayName, DirectoryFixture.Identity(("sys:team", record.Id))),
-            GranteeKind.Role when record.Id is "workflow-admin" or "viewer" => new ResolvedPrincipal(GranteeKind.Role, record.Id, record.DisplayName, DirectoryFixture.Identity(("sys:role", record.Id))),
-            _ => (ResolvedPrincipal?)null,
-        });
+        // The deployment mapper — a SPAN mapper exercising the bytes-to-bytes path: persons take sys:tenant from the
+        // user's `tenant` attribute (an array under `attributes`, captured by its first element) and sys:sub from the
+        // username (the value); teams/roles from the value (group/role name). Keycloak's built-in realm roles
+        // (offline_access, uma_authorization, default-roles-*) map to no sys: grant, so they are dropped (return false).
+        var mapper = DirectorySpanIdentityMapper.FromIdentity(
+            ["tenant"],
+            static (DirectoryRecordView record, ref IdentityBuilder identity) =>
+            {
+                switch (record.Kind)
+                {
+                    case GranteeKind.Person:
+                        identity.Add("sys:tenant"u8, record.AttributeUtf8("tenant"u8));
+                        identity.Add("sys:sub"u8, record.ValueUtf8);
+                        return true;
+                    case GranteeKind.Team:
+                        identity.Add("sys:team"u8, record.ValueUtf8);
+                        return true;
+                    case GranteeKind.Role when record.ValueUtf8.SequenceEqual("workflow-admin"u8) || record.ValueUtf8.SequenceEqual("viewer"u8):
+                        identity.Add("sys:role"u8, record.ValueUtf8);
+                        return true;
+                    default:
+                        return false;
+                }
+            });
 
         return new ValueTask<IPrincipalDirectory>(new KeycloakPrincipalDirectory(options, new FixedSecretResolver(AdminPassword), mapper));
     }
