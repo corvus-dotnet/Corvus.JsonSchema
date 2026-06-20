@@ -165,20 +165,19 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         => this.DeleteAsync("SecurityRules", "Name", "rule", name, expectedEtag, cancellationToken);
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>> AddBindingAsync(SecurityBindingDocument draft, string actor, CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
             WorkflowEtag etag = NewEtag();
-            byte[] json = SecurityPolicySerialization.SerializeNewBinding(id, definition, actor, this.timeProvider.GetUtcNow(), etag);
+            byte[] json = SecurityPolicySerialization.SerializeNewBinding(id, draft, actor, this.timeProvider.GetUtcNow(), etag);
             using SqliteCommand insert = this.connection.CreateCommand();
             insert.CommandText = "INSERT INTO SecurityBindings (Id, SortOrder, Etag, Document) VALUES (@id, @order, @etag, @doc);";
             insert.Parameters.AddWithValue("@id", id);
-            insert.Parameters.AddWithValue("@order", definition.Order);
+            insert.Parameters.AddWithValue("@order", draft.OrderValue);
             insert.Parameters.AddWithValue("@etag", etag.Value!);
             insert.Parameters.AddWithValue("@doc", json);
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -222,10 +221,9 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
-        ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
@@ -237,10 +235,10 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
             }
 
             WorkflowEtag etag = NewEtag();
-            byte[] json = SecurityPolicySerialization.SerializeUpdatedBinding(doc, "binding", id, expectedEtag, definition, actor, this.timeProvider.GetUtcNow(), etag);
+            byte[] json = SecurityPolicySerialization.SerializeUpdatedBinding(doc, "binding", id, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), etag);
             using SqliteCommand update = this.connection.CreateCommand();
             update.CommandText = "UPDATE SecurityBindings SET SortOrder = @order, Etag = @etag, Document = @doc WHERE Id = @k;";
-            update.Parameters.AddWithValue("@order", definition.Order);
+            update.Parameters.AddWithValue("@order", draft.OrderValue);
             update.Parameters.AddWithValue("@etag", etag.Value!);
             update.Parameters.AddWithValue("@doc", json);
             update.Parameters.AddWithValue("@k", id);

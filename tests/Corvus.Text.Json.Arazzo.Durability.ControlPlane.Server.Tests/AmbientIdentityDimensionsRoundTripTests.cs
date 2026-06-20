@@ -93,7 +93,7 @@ public sealed class AmbientIdentityDimensionsRoundTripTests
         (HttpContextAccessor accessor, HttpRequestAmbientIdentityDimensions provider) = HostProvider();
         var store = new InMemorySecurityPolicyStore();
         await SeedRuleAsync(store, "team-payments", "team == 'payments'", "admin");
-        await store.AddBindingAsync(new SecurityBindingDefinition("role", "member", VerbGrant.Rules("team-payments"), VerbGrant.None, VerbGrant.None), "admin", default);
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "member", VerbGrant.Rules("team-payments"), VerbGrant.None, VerbGrant.None), "admin", default);
 
         // The deployment shell mandates the tenant from the caller's context: sys:tenant == $claim.tenant.
         var shell = new SecurityShell([SecurityRule.Compile("sys:tenant == $claim.tenant")]);
@@ -119,7 +119,7 @@ public sealed class AmbientIdentityDimensionsRoundTripTests
         (HttpContextAccessor accessor, HttpRequestAmbientIdentityDimensions provider) = HostProvider();
         var store = new InMemorySecurityPolicyStore();
         await SeedRuleAsync(store, "team-payments", "team == 'payments'", "admin");
-        await store.AddBindingAsync(new SecurityBindingDefinition("role", "member", VerbGrant.Rules("team-payments"), VerbGrant.None, VerbGrant.None), "admin", default);
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "member", VerbGrant.Rules("team-payments"), VerbGrant.None, VerbGrant.None), "admin", default);
         var shell = new SecurityShell([SecurityRule.Compile("sys:tenant == $claim.tenant")]);
         var policy = new PersistentRowSecurityPolicy(store, shell, internalTagResolver: SubTags, ambient: provider);
         await policy.RefreshAsync();
@@ -140,7 +140,7 @@ public sealed class AmbientIdentityDimensionsRoundTripTests
         (HttpContextAccessor accessor, HttpRequestAmbientIdentityDimensions provider) = HostProvider();
         var store = new InMemorySecurityPolicyStore();
         await SeedRuleAsync(store, "team-payments", "team == 'payments'", "admin");
-        await store.AddBindingAsync(new SecurityBindingDefinition("role", "member", VerbGrant.Rules("team-payments"), VerbGrant.None, VerbGrant.None), "admin", default);
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "member", VerbGrant.Rules("team-payments"), VerbGrant.None, VerbGrant.None), "admin", default);
         var shell = new SecurityShell([SecurityRule.Compile("sys:tenant == $claim.tenant")]);
         var policy = new PersistentRowSecurityPolicy(store, shell, internalTagResolver: SubTags, ambient: provider);
         await policy.RefreshAsync();
@@ -191,5 +191,15 @@ public sealed class AmbientIdentityDimensionsRoundTripTests
     {
         using ParsedJsonDocument<SecurityRuleDocument> draft = SecurityRuleDocument.Draft(expression);
         (await store.AddRuleAsync(name, draft.RootElement, actor, default)).Dispose();
+    }
+
+    // Adds the (pooled, disposable) draft binding, disposing the draft once the store has read it; the created document
+    // is returned for the caller to assert on / dispose (fire-and-forget callers ignore it).
+    private static async Task<ParsedJsonDocument<SecurityBindingDocument>> AddBindingDraftAsync(InMemorySecurityPolicyStore store, ParsedJsonDocument<SecurityBindingDocument> draft, string actor, CancellationToken cancellationToken = default)
+    {
+        using (draft)
+        {
+            return await store.AddBindingAsync(draft.RootElement, actor, cancellationToken);
+        }
     }
 }

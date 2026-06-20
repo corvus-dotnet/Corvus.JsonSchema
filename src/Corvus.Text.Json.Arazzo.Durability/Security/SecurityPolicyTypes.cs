@@ -2,32 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using VerbGrant = Corvus.Text.Json.Arazzo.Durability.Security.SecurityBindingDocument.VerbGrantInfo;
-
 namespace Corvus.Text.Json.Arazzo.Durability.Security;
-
-/// <summary>The mutable content of a binding (see <see cref="SecurityBindingDocument"/>) supplied on add/update.</summary>
-/// <param name="ClaimType">The principal claim type this binding keys on (<c>"*"</c> matches any authenticated principal).</param>
-/// <param name="ClaimValue">The required claim value; <see langword="null"/> matches any value of <paramref name="ClaimType"/>.</param>
-/// <param name="Read">The read-verb grant.</param>
-/// <param name="Write">The write-verb grant.</param>
-/// <param name="Purge">The purge-verb grant.</param>
-/// <param name="Order">Resolution order (ascending).</param>
-/// <param name="Description">An optional human description.</param>
-/// <param name="Scopes">The capability scopes (design §14.1) this binding grants the matched principal; <see langword="null"/> or empty is a reach-only binding.</param>
-/// <param name="ExpiresAt">When this grant expires (design §16.5.2, time-bound/PIM); <see langword="null"/> is a standing grant that never expires.</param>
-/// <param name="EligibleOnly">When <see langword="true"/>, this is an eligibility assignment (design §16.5.3/§16.5.4), not an active grant: the resolver ignores it; the self-elevation strategy reads it.</param>
-public readonly record struct SecurityBindingDefinition(
-    string ClaimType,
-    string? ClaimValue,
-    VerbGrant Read,
-    VerbGrant Write,
-    VerbGrant Purge,
-    int Order = 0,
-    string? Description = null,
-    IReadOnlyList<string>? Scopes = null,
-    DateTimeOffset? ExpiresAt = null,
-    bool EligibleOnly = false);
 
 /// <summary>
 /// A consistent point-in-time view of all rules and bindings plus a monotonic generation token a resolver caches

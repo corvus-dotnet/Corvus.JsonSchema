@@ -124,11 +124,14 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     /// <inheritdoc/>
     public async ValueTask<CreateSecurityBindingResult> HandleCreateSecurityBindingAsync(CreateSecurityBindingParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        if (ReadBinding(parameters.Body, out SecurityBindingDefinition definition, out Models.ProblemDetails.Source problem))
+        if (ReadBinding(parameters.Body, out ParsedJsonDocument<SecurityBindingDocument>? draft, out Models.ProblemDetails.Source problem))
         {
-            using ParsedJsonDocument<SecurityBindingDocument> created = await this.store.AddBindingAsync(definition, this.actor, cancellationToken).ConfigureAwait(false);
-            await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
-            return CreateSecurityBindingResult.Created(ToBindingSource(created.RootElement), workspace);
+            using (draft)
+            {
+                using ParsedJsonDocument<SecurityBindingDocument> created = await this.store.AddBindingAsync(draft!.RootElement, this.actor, cancellationToken).ConfigureAwait(false);
+                await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
+                return CreateSecurityBindingResult.Created(ToBindingSource(created.RootElement), workspace);
+            }
         }
 
         return CreateSecurityBindingResult.BadRequest(problem, workspace);
@@ -148,19 +151,22 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     public async ValueTask<UpdateSecurityBindingResult> HandleUpdateSecurityBindingAsync(UpdateSecurityBindingParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string id = (string)parameters.BindingId;
-        if (!ReadBinding(parameters.Body, out SecurityBindingDefinition definition, out Models.ProblemDetails.Source problem))
+        if (!ReadBinding(parameters.Body, out ParsedJsonDocument<SecurityBindingDocument>? draft, out Models.ProblemDetails.Source problem))
         {
             return UpdateSecurityBindingResult.BadRequest(problem, workspace);
         }
 
-        using ParsedJsonDocument<SecurityBindingDocument>? updated = await this.store.UpdateBindingAsync(id, definition, WorkflowEtag.None, this.actor, cancellationToken).ConfigureAwait(false);
-        if (updated is not { } b)
+        using (draft)
         {
-            return UpdateSecurityBindingResult.NotFound(NotFoundProblem("binding", id), workspace);
-        }
+            using ParsedJsonDocument<SecurityBindingDocument>? updated = await this.store.UpdateBindingAsync(id, draft!.RootElement, WorkflowEtag.None, this.actor, cancellationToken).ConfigureAwait(false);
+            if (updated is not { } b)
+            {
+                return UpdateSecurityBindingResult.NotFound(NotFoundProblem("binding", id), workspace);
+            }
 
-        await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
-        return UpdateSecurityBindingResult.Ok(ToBindingSource(b.RootElement), workspace);
+            await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
+            return UpdateSecurityBindingResult.Ok(ToBindingSource(b.RootElement), workspace);
+        }
     }
 
     /// <inheritdoc/>
@@ -194,17 +200,19 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         }
     }
 
-    private static bool ReadBinding(Models.SecurityBindingWrite body, out SecurityBindingDefinition definition, out Models.ProblemDetails.Source problem)
+    // Reads the request into a pooled, disposable draft binding the caller passes to the store and disposes. The verb
+    // grants are normalised (None/Full/Rules) into the durability grant; the store stamps id/etag/created.
+    private static bool ReadBinding(Models.SecurityBindingWrite body, out ParsedJsonDocument<SecurityBindingDocument>? draft, out Models.ProblemDetails.Source problem)
     {
         problem = default;
+        draft = null;
         if (body.ClaimType.IsUndefined())
         {
             problem = Problem("invalid-binding", "Invalid binding", 400, "A 'claimType' is required.");
-            definition = default;
             return false;
         }
 
-        definition = new SecurityBindingDefinition(
+        draft = SecurityBindingDocument.Draft(
             (string)body.ClaimType,
             OptionalString(body.ClaimValue),
             ToGrant(body.Read),

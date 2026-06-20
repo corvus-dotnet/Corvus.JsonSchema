@@ -191,17 +191,16 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         => this.DeleteAsync(name, RulePartition, "rule", expectedEtag, SecurityPolicySerialization.RuleEtagOf, cancellationToken);
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>> AddBindingAsync(SecurityBindingDocument draft, string actor, CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
-        using MemoryStream stream = EnvelopeStream<SecurityBindingDocument, (string Id, SecurityBindingDefinition Def, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
+        using MemoryStream stream = EnvelopeStream<SecurityBindingDocument, (string Id, SecurityBindingDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
             id,
             BindingPartition,
-            (id, definition, actor, this.timeProvider.GetUtcNow(), NewEtag()),
-            static (Utf8JsonWriter writer, in (string Id, SecurityBindingDefinition Def, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
-                => SecurityBindingDocument.WriteNew(writer, c.Id, c.Def, c.Actor, c.At, c.Tag),
+            (id, draft, actor, this.timeProvider.GetUtcNow(), NewEtag()),
+            static (Utf8JsonWriter writer, in (string Id, SecurityBindingDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
+                => SecurityBindingDocument.WriteNew(writer, c.Id, c.Draft, c.Actor, c.At, c.Tag),
             out ParsedJsonDocument<SecurityBindingDocument> document);
         try
         {
@@ -230,10 +229,9 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         => this.ReadBindingsAsync(cancellationToken);
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
-        ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
         byte[]? doc = await this.DocumentAsync(id, BindingPartition, cancellationToken).ConfigureAwait(false);
         if (doc is null)
@@ -245,12 +243,12 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         // updated document is serialized straight into the envelope (no owned byte[]).
         using ParsedJsonDocument<SecurityBindingDocument> current = PersistedJson.ToPooledDocument<SecurityBindingDocument>(doc);
         SecurityPolicySerialization.EnsureEtag("binding", id, expectedEtag, current.RootElement.EtagValue);
-        using MemoryStream stream = EnvelopeStream<SecurityBindingDocument, (SecurityBindingDocument Cur, SecurityBindingDefinition Def, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
+        using MemoryStream stream = EnvelopeStream<SecurityBindingDocument, (SecurityBindingDocument Cur, SecurityBindingDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
             id,
             BindingPartition,
-            (current.RootElement, definition, actor, this.timeProvider.GetUtcNow(), NewEtag()),
-            static (Utf8JsonWriter writer, in (SecurityBindingDocument Cur, SecurityBindingDefinition Def, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
-                => c.Cur.WriteUpdated(writer, c.Def, c.Actor, c.At, c.Tag),
+            (current.RootElement, draft, actor, this.timeProvider.GetUtcNow(), NewEtag()),
+            static (Utf8JsonWriter writer, in (SecurityBindingDocument Cur, SecurityBindingDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
+                => c.Cur.WriteUpdated(writer, c.Draft, c.Actor, c.At, c.Tag),
             out ParsedJsonDocument<SecurityBindingDocument> document);
         try
         {
