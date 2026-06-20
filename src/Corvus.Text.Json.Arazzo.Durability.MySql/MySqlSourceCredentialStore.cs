@@ -91,20 +91,20 @@ public sealed class MySqlSourceCredentialStore : ISourceCredentialStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialBinding draft, string actor, CancellationToken cancellationToken)
     {
-        SourceCredentialBinding.ValidateDefinition(definition);
+        SourceCredentialBinding.ValidateDraft(draft);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "scred-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
         WorkflowEtag etag = NewEtag();
-        byte[] json = SourceCredentialSerialization.SerializeNew(id, definition, actor, this.timeProvider.GetUtcNow(), etag);
-        string tags = SourceCredentialKey.Discriminator(definition.ManagementTags, definition.UsageTags);
+        byte[] json = SourceCredentialSerialization.SerializeNew(id, draft, actor, this.timeProvider.GetUtcNow(), etag);
+        string tags = SourceCredentialKey.Discriminator(draft.ManagementTagsValue, draft.UsageTagsValue);
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using MySqlCommand insert = connection.CreateCommand();
         insert.CommandText = "INSERT INTO SourceCredentials (SourceName, Environment, TagsHash, Tags, Etag, Document) VALUES (@s, @e, @h, @t, @etag, @doc);";
-        insert.Parameters.AddWithValue("@s", definition.SourceName);
-        insert.Parameters.AddWithValue("@e", definition.Environment);
-        insert.Parameters.AddWithValue("@h", TagsHash(definition.SourceName, definition.Environment, tags));
+        insert.Parameters.AddWithValue("@s", draft.SourceNameValue);
+        insert.Parameters.AddWithValue("@e", draft.EnvironmentValue);
+        insert.Parameters.AddWithValue("@h", TagsHash(draft.SourceNameValue, draft.EnvironmentValue, tags));
         insert.Parameters.AddWithValue("@t", tags);
         insert.Parameters.AddWithValue("@etag", etag.Value!);
         insert.Parameters.AddWithValue("@doc", json);
@@ -114,7 +114,7 @@ public sealed class MySqlSourceCredentialStore : ISourceCredentialStore, IAsyncD
         }
         catch (MySqlException ex) when (ex.ErrorCode == MySqlErrorCode.DuplicateKeyEntry)
         {
-            throw new InvalidOperationException($"A source credential binding for '{definition.SourceName}@{definition.Environment}' with those security tags already exists.");
+            throw new InvalidOperationException($"A source credential binding for '{draft.SourceNameValue}@{draft.EnvironmentValue}' with those security tags already exists.");
         }
 
         return PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
@@ -200,9 +200,9 @@ public sealed class MySqlSourceCredentialStore : ISourceCredentialStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialDefinition definition, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialBinding draft, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken)
     {
-        SourceCredentialBinding.ValidateDefinition(definition);
+        SourceCredentialBinding.ValidateDraft(draft);
         ArgumentNullException.ThrowIfNull(actor);
         ArgumentNullException.ThrowIfNull(context);
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
@@ -212,7 +212,7 @@ public sealed class MySqlSourceCredentialStore : ISourceCredentialStore, IAsyncD
             return null;
         }
 
-        byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, $"{sourceName}@{environment}", expectedEtag, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, $"{sourceName}@{environment}", expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), NewEtag());
         await using MySqlCommand update = connection.CreateCommand();
         update.CommandText = "UPDATE SourceCredentials SET Etag = @etag, Document = @doc WHERE SourceName = @s AND Environment = @e AND TagsHash = @h;";
         update.Parameters.AddWithValue("@etag", SourceCredentialSerialization.EtagOf(json).Value!);

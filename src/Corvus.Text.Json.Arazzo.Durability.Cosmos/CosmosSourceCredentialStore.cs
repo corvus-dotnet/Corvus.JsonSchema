@@ -104,19 +104,19 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialBinding draft, string actor, CancellationToken cancellationToken)
     {
-        SourceCredentialBinding.ValidateDefinition(definition);
+        SourceCredentialBinding.ValidateDraft(draft);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "scred-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
-        string partition = PartitionKey(definition.SourceName, definition.Environment);
-        string tags = SourceCredentialKey.Discriminator(definition.ManagementTags, definition.UsageTags);
+        string partition = PartitionKey(draft.SourceNameValue, draft.EnvironmentValue);
+        string tags = SourceCredentialKey.Discriminator(draft.ManagementTagsValue, draft.UsageTagsValue);
 
         // The document id within the partition is a deterministic, opaque hash of the tag discriminator, so a duplicate
         // (sourceName, environment, tags) create collides on the item id and Cosmos returns a 409 — mirroring the
         // relational backends' composite-primary-key uniqueness.
         string itemId = ItemId(tags);
-        byte[] json = SourceCredentialSerialization.SerializeNew(id, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] json = SourceCredentialSerialization.SerializeNew(id, draft, actor, this.timeProvider.GetUtcNow(), NewEtag());
 
         using MemoryStream stream = EnvelopeStream(itemId, partition, json, out ParsedJsonDocument<SourceCredentialBinding> document);
         try
@@ -124,7 +124,7 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
             using ResponseMessage response = await this.container.CreateItemStreamAsync(stream, new PartitionKey(partition), cancellationToken: cancellationToken).ConfigureAwait(false);
             if (response.StatusCode == HttpStatusCode.Conflict)
             {
-                throw new InvalidOperationException($"A source credential binding for '{definition.SourceName}@{definition.Environment}' with those security tags already exists.");
+                throw new InvalidOperationException($"A source credential binding for '{draft.SourceNameValue}@{draft.EnvironmentValue}' with those security tags already exists.");
             }
 
             response.EnsureSuccessStatusCode();
@@ -216,9 +216,9 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialDefinition definition, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialBinding draft, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken)
     {
-        SourceCredentialBinding.ValidateDefinition(definition);
+        SourceCredentialBinding.ValidateDraft(draft);
         ArgumentNullException.ThrowIfNull(actor);
         ArgumentNullException.ThrowIfNull(context);
         (byte[]? existing, string? tags) = await this.FindForManagementAsync(sourceName, environment, AccessVerb.Write, context, cancellationToken).ConfigureAwait(false);
@@ -228,7 +228,7 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
         }
 
         string partition = PartitionKey(sourceName, environment);
-        byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, $"{sourceName}@{environment}", expectedEtag, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, $"{sourceName}@{environment}", expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), NewEtag());
 
         using MemoryStream stream = EnvelopeStream(ItemId(tags!), partition, json, out ParsedJsonDocument<SourceCredentialBinding> document);
         try

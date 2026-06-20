@@ -77,6 +77,9 @@ public sealed class MockHttpHandler(HttpStatusCode statusCode, string responseBo
 public static class BindingFactory
 {
     public static SourceCredentialBinding Create(SourceCredentialDefinition definition, string id = "scred-1", string etag = "1")
-        => SourceCredentialBinding.FromJson(
-            SourceCredentialSerialization.SerializeNew(id, definition, "tester", DateTimeOffset.UnixEpoch, new WorkflowEtag(etag)));
+    {
+        using ParsedJsonDocument<SourceCredentialBinding> draft = SourceCredentialBinding.Draft(definition);
+        byte[] json = SourceCredentialSerialization.SerializeNew(id, draft.RootElement, "tester", DateTimeOffset.UnixEpoch, new WorkflowEtag(etag));
+        return SourceCredentialBinding.FromJson(json);
+    }
 }

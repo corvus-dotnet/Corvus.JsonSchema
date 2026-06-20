@@ -105,14 +105,14 @@ public sealed class NatsJetStreamSourceCredentialStore : ISourceCredentialStore,
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialBinding draft, string actor, CancellationToken cancellationToken)
     {
-        SourceCredentialBinding.ValidateDefinition(definition);
+        SourceCredentialBinding.ValidateDraft(draft);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "scred-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
         WorkflowEtag etag = NewEtag();
-        byte[] json = SourceCredentialSerialization.SerializeNew(id, definition, actor, this.timeProvider.GetUtcNow(), etag);
-        string key = Key(definition.SourceName, definition.Environment, SourceCredentialKey.Discriminator(definition.ManagementTags, definition.UsageTags));
+        byte[] json = SourceCredentialSerialization.SerializeNew(id, draft, actor, this.timeProvider.GetUtcNow(), etag);
+        string key = Key(draft.SourceNameValue, draft.EnvironmentValue, SourceCredentialKey.Discriminator(draft.ManagementTagsValue, draft.UsageTagsValue));
         try
         {
             // Create is optimistic-create (fails if the key already holds a live value), giving the exact-duplicate
@@ -121,7 +121,7 @@ public sealed class NatsJetStreamSourceCredentialStore : ISourceCredentialStore,
         }
         catch (NatsKVException)
         {
-            throw new InvalidOperationException($"A source credential binding for '{definition.SourceName}@{definition.Environment}' with those security tags already exists.");
+            throw new InvalidOperationException($"A source credential binding for '{draft.SourceNameValue}@{draft.EnvironmentValue}' with those security tags already exists.");
         }
 
         return PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
@@ -220,9 +220,9 @@ public sealed class NatsJetStreamSourceCredentialStore : ISourceCredentialStore,
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialDefinition definition, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialBinding draft, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken)
     {
-        SourceCredentialBinding.ValidateDefinition(definition);
+        SourceCredentialBinding.ValidateDraft(draft);
         ArgumentNullException.ThrowIfNull(actor);
         ArgumentNullException.ThrowIfNull(context);
         (byte[]? existing, string? key) = await this.FindForManagementAsync(sourceName, environment, AccessVerb.Write, context, cancellationToken).ConfigureAwait(false);
@@ -231,7 +231,7 @@ public sealed class NatsJetStreamSourceCredentialStore : ISourceCredentialStore,
             return null;
         }
 
-        byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, $"{sourceName}@{environment}", expectedEtag, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, $"{sourceName}@{environment}", expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), NewEtag());
         await this.store.PutAsync(key!, json, cancellationToken: cancellationToken).ConfigureAwait(false);
         return PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
     }
