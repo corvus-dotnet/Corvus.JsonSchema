@@ -1780,6 +1780,39 @@ public readonly partial struct JsonElement
     }
 
     /// <summary>
+    /// Creates a JSON document builder from a context-threaded source.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context carried by the source.</typeparam>
+    /// <param name="workspace">The workspace.</param>
+    /// <param name="source">The context-threaded source from which to create the document.</param>
+    /// <param name="estimatedMemberCount">The (optional) estimated member count for the root value.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A new <see cref="JsonDocumentBuilder{TMutable}"/> initialised with the given source.</returns>
+    /// <remarks>The generic mirror of <see cref="CreateBuilder(JsonWorkspace, in Source, int, int)"/>: a body assembled
+    /// closure-free as a <see cref="Source{TContext}"/> is materialised in a single pass. The universal
+    /// <see cref="JsonElement"/> needs this so a generated <c>Ok&lt;TContext&gt;</c> result factory whose response body is
+    /// an any-schema (resolved to <see cref="JsonElement"/>) can route the context-threaded body through it.</remarks>
+    /// <remarks>This method is not CLS compliant.</remarks>
+    [CLSCompliant(false)]
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in Source<TContext> source, int estimatedMemberCount = 30, int initialValueBufferSize = 8192)
+#if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+#endif
+    {
+        // Create the document builder without a MetadataDb
+        if (source.IsUndefined)
+        {
+            ThrowHelper.ThrowArgumentException(SR.EmptyJsonIsInvalid);
+        }
+
+        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
+        var cvb = ComplexValueBuilder.Create(documentBuilder, estimatedMemberCount);
+        source.AddAsItem(ref cvb);
+        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+        return documentBuilder;
+    }
+
+    /// <summary>
     /// Creates a JSON document builder from an array builder.
     /// </summary>
     /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
