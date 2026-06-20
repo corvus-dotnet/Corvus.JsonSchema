@@ -39,10 +39,16 @@ Use the generated factories instead.
 | `T.Build(static (ref T.Builder b) => b.Create(…))` | `T.Source` (lazy) | No fields to set (e.g. a `const`-only union variant), or you need imperative logic. Lambda MUST be `static`. |
 | `T.CreateBuilder(ws, field: v, …)` then `.RootElement` | `T` (immutable, in `ws`) | Only when you actually need a *materialized* value (e.g. to read it back, or store it). Not needed just to pass to a consumer. |
 | `T.CreateBuilder<TContext>(ws, ctx, static (in TContext ctx, ref T.Builder b) => …)` then `.RootElement` | `T` | Materializing while threading runtime values into a builder loop/conditional. The form the JMESPath/Jsonata/OpenApi generators emit. |
+| `T.CreateBuilder<TContext>(ws, in T.Source<TContext> body)` then `.RootElement` | `T` | Materializing a body you already assembled closure-free as a `Source<TContext>`. Usually you don't call this directly — the generated `…Result.Ok<TContext>(T.Source<TContext> body, ws)` does, in a **single** pass. See `corvus-builder-context-threading`. |
 
 **Default to `T.Build(field: v, …)`** — it is lazy and the consumer materializes it directly
 into its own buffer (one pass, no interim document). You almost never need `CreateBuilder` +
 `.RootElement`; reach for it only when you genuinely need a materialized value in hand.
+
+**Reaching a server result factory closure-free:** build the body as a context-threaded `T.Source<TContext>`
+(`T.Build<TContext>(in ctx, …)`, the context a `RefTuple`) and hand it to the generic `…Result.Ok<TContext>(body, ws)`
+overload — one closure-free materialization. Do **not** `CreateBuilder<TContext>(…).RootElement` then pass the immutable
+to the non-generic `Ok` (that re-materializes). Full detail: `corvus-builder-context-threading`.
 
 ```csharp
 // ✅ lazy, no workspace, no materialization — pass the builder straight to the client

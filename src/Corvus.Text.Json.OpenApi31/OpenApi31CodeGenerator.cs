@@ -36,6 +36,7 @@ public sealed class OpenApi31CodeGenerator
     private readonly string? clientNamePrefix;
     private readonly bool ignoreEmptyFormUrlEncodedBody;
     private readonly IReadOnlyDictionary<string, string> schemaTypeMap;
+    private readonly IReadOnlySet<string> contextSourceBodyPointers;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OpenApi31CodeGenerator"/> class.
@@ -54,16 +55,25 @@ public sealed class OpenApi31CodeGenerator
     /// When <see langword="true"/>, form-urlencoded request bodies whose schema defines
     /// no properties are treated as if the body were absent.
     /// </param>
+    /// <param name="contextSourceBodyPointers">
+    /// The subset of <paramref name="schemaTypeMap"/> pointers whose type is an object or array — i.e. types for
+    /// which the model generator emits a context-threaded <c>Source&lt;TContext&gt;</c>. A server result factory emits
+    /// a closure-free, single-materialisation <c>Ok&lt;TContext&gt;</c> overload only for a response body in this set;
+    /// a scalar body (no <c>Source&lt;TContext&gt;</c>) falls back to the non-generic factory. When <see langword="null"/>
+    /// no generic overloads are emitted (the conservative default for client/model generation).
+    /// </param>
     public OpenApi31CodeGenerator(
         string rootNamespace,
         IReadOnlyDictionary<string, string> schemaTypeMap,
         string? clientNamePrefix = null,
-        bool ignoreEmptyFormUrlEncodedBody = false)
+        bool ignoreEmptyFormUrlEncodedBody = false,
+        IReadOnlySet<string>? contextSourceBodyPointers = null)
     {
         this.rootNamespace = rootNamespace;
         this.schemaTypeMap = schemaTypeMap;
         this.clientNamePrefix = clientNamePrefix;
         this.ignoreEmptyFormUrlEncodedBody = ignoreEmptyFormUrlEncodedBody;
+        this.contextSourceBodyPointers = contextSourceBodyPointers ?? new HashSet<string>(StringComparer.Ordinal);
     }
 
     // ── Walk-phase reference (typed model objects, no strings extracted) ──
@@ -2373,6 +2383,21 @@ public sealed class OpenApi31CodeGenerator
             if (CodeEmitHelpers.IsJsonMediaType(content.MediaType))
             {
                 return this.ResolveSchemaTypeName(content.SchemaPointer);
+            }
+        }
+
+        return null;
+    }
+
+    // The JSON response body's schema pointer (the key into contextSourceBodyPointers) — used to decide whether the body
+    // type carries a Source<TContext>, and so whether a closure-free Ok<TContext> overload can be emitted for it.
+    private string? ResolveResponseBodySchemaPointer(ResponseInfo resp)
+    {
+        foreach (ContentInfo content in resp.Content)
+        {
+            if (CodeEmitHelpers.IsJsonMediaType(content.MediaType))
+            {
+                return content.SchemaPointer;
             }
         }
 
@@ -5580,7 +5605,7 @@ public sealed class OpenApi31CodeGenerator
                 w.WriteLine("/// Creates a default error result.");
                 w.WriteLine("/// </summary>");
 
-                this.EmitServerResultFactory(w, structName, factoryName, typeName, respHeaders, resp.StatusCode, hasHeaders, hasOctetStreamResponse);
+                this.EmitServerResultFactory(w, structName, factoryName, typeName, resp, respHeaders, resp.StatusCode, hasHeaders, hasOctetStreamResponse);
             }
             else
             {
@@ -5589,7 +5614,7 @@ public sealed class OpenApi31CodeGenerator
                 w.WriteLine($"/// {CodeEmitHelpers.EscapeXml(desc)}");
                 w.WriteLine("/// </summary>");
 
-                this.EmitServerResultFactory(w, structName, factoryName, typeName, respHeaders, resp.StatusCode, hasHeaders, hasOctetStreamResponse);
+                this.EmitServerResultFactory(w, structName, factoryName, typeName, resp, respHeaders, resp.StatusCode, hasHeaders, hasOctetStreamResponse);
             }
         }
 
@@ -5687,6 +5712,7 @@ public sealed class OpenApi31CodeGenerator
         string structName,
         string factoryName,
         string? bodyTypeName,
+        ResponseInfo response,
         List<(HeaderInfo Header, string TypeName, string FieldName, string PropertyName)> respHeaders,
         string statusCode,
         bool structHasHeaders,
@@ -5694,6 +5720,12 @@ public sealed class OpenApi31CodeGenerator
     {
         bool isDefault = statusCode == "default";
         bool hasBody = bodyTypeName is not null;
+
+        // The body carries a Source<TContext> (object/array type) iff its schema pointer is in the context-source set;
+        // only then can a closure-free, single-materialisation generic overload be emitted alongside the non-generic one.
+        bool bodyHasContextSource = hasBody
+            && this.ResolveResponseBodySchemaPointer(response) is { } bodySchemaPointer
+            && this.contextSourceBodyPointers.Contains(bodySchemaPointer);
 
         StringBuilder paramList = new();
         if (isDefault)
@@ -5776,6 +5808,57 @@ public sealed class OpenApi31CodeGenerator
         else
         {
             w.WriteLine($"public static {structName} {factoryName}({paramList}) => new({statusExpr}, {bodyExpr}, {contentTypeExpr}{binaryArgs});");
+        }
+
+        // Closure-free, single-materialisation sibling: takes the response body already assembled as a context-threaded
+        // Source<TContext> (built via the model's Build<TContext>) and routes it straight through CreateBuilder<TContext>
+        // — no per-item closure on the caller side and no re-materialisation here. Only emitted for object/array bodies
+        // (bodyHasContextSource); a scalar body has no Source<TContext> and uses the non-generic factory above.
+        if (bodyHasContextSource)
+        {
+            string genericParamList = paramList.ToString().Replace($"{bodyTypeName}.Source body", $"{bodyTypeName}.Source<TContext> body");
+            string genericBodyExpr = $"{bodyTypeName}.CreateBuilder(workspace, in body, 30).RootElement";
+
+            w.WriteLine("/// <summary>");
+            w.WriteLine($"/// Creates a {statusCode} {factoryName} result from a context-threaded body, materialised in a single pass.");
+            w.WriteLine("/// </summary>");
+            w.WriteLine("/// <typeparam name=\"TContext\">The type of the context carried by the body.</typeparam>");
+            if (isDefault)
+            {
+                w.WriteLine("/// <param name=\"statusCode\">The HTTP status code.</param>");
+            }
+
+            w.WriteLine("/// <param name=\"body\">The context-threaded response body.</param>");
+            w.WriteLine("/// <param name=\"workspace\">The workspace for building the response value.</param>");
+            foreach (var (header, _, fieldName, _) in respHeaders)
+            {
+                w.WriteLine($"/// <param name=\"{fieldName}\">The value for the <c>{header.HeaderName}</c> response header.</param>");
+            }
+
+            w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with status {statusCode}.</returns>");
+
+            string genericCtorArgs;
+            if (structHasHeaders)
+            {
+                StringBuilder ctorArgs = new();
+                ctorArgs.Append($"{statusExpr}, {genericBodyExpr}, {contentTypeExpr}{binaryArgs}");
+                foreach (var (_, typeName, fieldName, _) in respHeaders)
+                {
+                    ctorArgs.Append($", {fieldName}: {fieldName}.IsUndefined ? default : {typeName}.CreateBuilder(workspace, {fieldName}, 30).RootElement");
+                }
+
+                genericCtorArgs = ctorArgs.ToString();
+            }
+            else
+            {
+                genericCtorArgs = $"{statusExpr}, {genericBodyExpr}, {contentTypeExpr}{binaryArgs}";
+            }
+
+            w.WriteLine($"public static {structName} {factoryName}<TContext>({genericParamList})");
+            w.WriteLine("#if NET9_0_OR_GREATER");
+            w.WriteLine("    where TContext : allows ref struct");
+            w.WriteLine("#endif");
+            w.WriteLine($"    => new({genericCtorArgs});");
         }
     }
 

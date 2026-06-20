@@ -8270,6 +8270,32 @@ public class OpenApi31CodeGeneratorTests
     }
 
     [TestMethod]
+    public void GenerateServer_ContextSourceBody_EmitsClosureFreeGenericFactory()
+    {
+        HashSet<string> contextBodies = new(
+            CoverageSchemaTypeMap.Keys.Where(k => k.Contains("/responses/") && k.Contains("/content/")),
+            StringComparer.Ordinal);
+        OpenApi31CodeGenerator gen = new("CovTest.Server", CoverageSchemaTypeMap, contextSourceBodyPointers: contextBodies);
+        IReadOnlyList<GeneratedFile> files = gen.GenerateServer(GetCoverageRoot());
+
+        string results = string.Concat(files.Where(f => f.FileName.EndsWith("Result.cs")).Select(f => f.Content));
+        Assert.IsTrue(results.Contains(".Source<TContext> body"), "Expected a Source<TContext> body parameter on a generic result factory");
+        Assert.IsTrue(results.Contains("where TContext : allows ref struct"), "Expected the allows-ref-struct constraint");
+        Assert.IsTrue(results.Contains("CreateBuilder(workspace, in body, 30).RootElement"), "Expected a single-pass materialisation via CreateBuilder(in body)");
+        Assert.IsTrue(results.Contains("Ok("), "Expected the non-generic factory to remain alongside the generic one");
+    }
+
+    [TestMethod]
+    public void GenerateServer_NoContextSourceSet_OmitsGenericFactory()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateServerCoverageSpec();
+
+        string results = string.Concat(files.Where(f => f.FileName.EndsWith("Result.cs")).Select(f => f.Content));
+        Assert.IsFalse(results.Contains(".Source<TContext> body"), "Expected no generic result factory when no context-source set is supplied");
+        Assert.IsTrue(results.Contains("Ok("), "Expected the non-generic factories");
+    }
+
+    [TestMethod]
     public void GenerateServer_ResultStruct_HasFactoryMethods()
     {
         IReadOnlyList<GeneratedFile> files = GenerateServerCoverageSpec();
