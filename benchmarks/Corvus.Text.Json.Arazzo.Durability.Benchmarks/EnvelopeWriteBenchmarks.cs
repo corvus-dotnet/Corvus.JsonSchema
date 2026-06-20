@@ -25,12 +25,15 @@ public class EnvelopeWriteBenchmarks
 
     [GlobalSetup]
     public void Setup()
-        => this.docBytes = SecurityPolicySerialization.SerializeNewRule(
+    {
+        using ParsedJsonDocument<SecurityRuleDocument> draft = SecurityRuleDocument.Draft("sys:tenant == $claim.tenant", "Tenant isolation.");
+        this.docBytes = SecurityPolicySerialization.SerializeNewRule(
             "tenant-scoped",
-            new SecurityRuleDefinition("sys:tenant == $claim.tenant", "Tenant isolation."),
+            draft.RootElement,
             "alice",
             DateTimeOffset.UnixEpoch,
             new WorkflowEtag("etag-1"));
+    }
 
     /// <summary>Old: fresh growing MemoryStream + fresh Utf8JsonWriter for the envelope, plus the pooled return doc.</summary>
     /// <returns>A value derived from the artifacts (prevents dead-code elimination).</returns>

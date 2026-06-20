@@ -58,7 +58,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
 
         try
         {
-            using ParsedJsonDocument<SecurityRuleDocument> created = await this.store.AddRuleAsync(name, new SecurityRuleDefinition(expression, OptionalString(body.Description)), this.actor, cancellationToken).ConfigureAwait(false);
+            using ParsedJsonDocument<SecurityRuleDocument> created = await this.store.AddRuleAsync(name, SecurityRuleDocument.From(body), this.actor, cancellationToken).ConfigureAwait(false);
             await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
             return CreateSecurityRuleResult.Created(ToRuleSource(created.RootElement), workspace);
         }
@@ -90,7 +90,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             return UpdateSecurityRuleResult.BadRequest(problem, workspace);
         }
 
-        using ParsedJsonDocument<SecurityRuleDocument>? updated = await this.store.UpdateRuleAsync(name, new SecurityRuleDefinition(expression, OptionalString(body.Description)), WorkflowEtag.None, this.actor, cancellationToken).ConfigureAwait(false);
+        using ParsedJsonDocument<SecurityRuleDocument>? updated = await this.store.UpdateRuleAsync(name, SecurityRuleDocument.From(body), WorkflowEtag.None, this.actor, cancellationToken).ConfigureAwait(false);
         if (updated is not { } r)
         {
             return UpdateSecurityRuleResult.NotFound(NotFoundProblem("rule", name), workspace);

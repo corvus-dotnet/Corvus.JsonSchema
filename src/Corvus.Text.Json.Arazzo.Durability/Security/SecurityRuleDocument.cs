@@ -52,28 +52,28 @@ public readonly partial struct SecurityRuleDocument
     /// document over those bytes.</summary>
     /// <param name="writer">The writer to serialize into (typically the pooled writer from <see cref="PersistedJson"/>).</param>
     /// <param name="name">The rule's unique name.</param>
-    /// <param name="definition">The rule content (expression + optional description).</param>
+    /// <param name="draft">The draft rule carrying the operator-supplied content (expression + optional description) as JSON values — read bytes-to-bytes.</param>
     /// <param name="actor">The actor creating the rule (audit).</param>
     /// <param name="createdAt">The creation instant.</param>
     /// <param name="etag">The optimistic-concurrency token to assign.</param>
-    public static void WriteNew(Utf8JsonWriter writer, string name, SecurityRuleDefinition definition, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+    public static void WriteNew(Utf8JsonWriter writer, string name, in SecurityRuleDocument draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        using JsonDocumentBuilder<Mutable> builder = BuildNew(workspace, name, definition, actor, createdAt, etag);
+        using JsonDocumentBuilder<Mutable> builder = BuildNew(workspace, name, draft, actor, createdAt, etag);
         builder.RootElement.WriteTo(writer);
     }
 
     /// <summary>Realises an updated copy of this rule (modifying only the fields the update touches; name/created
     /// metadata carried through) and writes its JSON to the caller's (pooled) writer.</summary>
     /// <param name="writer">The writer to serialize into.</param>
-    /// <param name="definition">The new rule content.</param>
+    /// <param name="draft">The draft rule carrying the new operator-supplied content as JSON values — read bytes-to-bytes.</param>
     /// <param name="actor">The actor performing the update (audit).</param>
     /// <param name="updatedAt">The update instant.</param>
     /// <param name="etag">The new optimistic-concurrency token to assign.</param>
-    public void WriteUpdated(Utf8JsonWriter writer, SecurityRuleDefinition definition, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
+    public void WriteUpdated(Utf8JsonWriter writer, in SecurityRuleDocument draft, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        using JsonDocumentBuilder<Mutable> builder = this.ApplyUpdate(workspace, definition, actor, updatedAt, etag);
+        using JsonDocumentBuilder<Mutable> builder = this.ApplyUpdate(workspace, draft, actor, updatedAt, etag);
         builder.RootElement.WriteTo(writer);
     }
 
@@ -83,29 +83,57 @@ public readonly partial struct SecurityRuleDocument
     /// <returns>The rule.</returns>
     public static SecurityRuleDocument FromJson(ReadOnlyMemory<byte> utf8) => ParseValue(utf8.Span);
 
-    // Realises a new rule into the pooled workspace arena (shared by the buffer-writing and detached-value paths).
-    private static JsonDocumentBuilder<Mutable> BuildNew(JsonWorkspace workspace, string name, SecurityRuleDefinition definition, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+    /// <summary>
+    /// Builds a draft rule from operator-supplied content (expression + optional description) for a store to complete
+    /// with the server-stamped name/etag/created metadata — the programmatic counterpart of carrying an HTTP request
+    /// body as the draft via <c>From</c>. The store reads only the content fields (bytes-to-bytes) and stamps the rest.
+    /// </summary>
+    /// <param name="expression">The rule text in the security-rule grammar.</param>
+    /// <param name="description">An optional human description (omitted when <see langword="null"/>).</param>
+    /// <returns>A pooled, disposable draft document carrying only the supplied content — <c>using</c> it and pass its
+    /// <see cref="ParsedJsonDocument{T}.RootElement"/> to the store, which reads it synchronously before the draft is disposed.</returns>
+    public static ParsedJsonDocument<SecurityRuleDocument> Draft(string expression, string? description = null)
+    {
+        ArgumentNullException.ThrowIfNull(expression);
+        return PersistedJson.ToPooledDocument<SecurityRuleDocument, (string Expression, string? Description)>(
+            (expression, description),
+            static (Utf8JsonWriter writer, in (string Expression, string? Description) c) =>
+            {
+                writer.WriteStartObject();
+                writer.WriteString("expression"u8, c.Expression);
+                if (c.Description is { } description)
+                {
+                    writer.WriteString("description"u8, description);
+                }
+
+                writer.WriteEndObject();
+            });
+    }
+
+    // Realises a new rule into the pooled workspace arena: the draft's operator content is carried bytes-to-bytes (its
+    // JSON values flow straight into the builder); name and the server-stamped audit/concurrency fields are added here.
+    private static JsonDocumentBuilder<Mutable> BuildNew(JsonWorkspace workspace, string name, in SecurityRuleDocument draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
         => CreateBuilder(
             workspace,
             createdAt: createdAt,
             createdBy: actor,
             etag: etag.Value ?? string.Empty,
-            expression: definition.Expression,
+            expression: draft.Expression,
             name: name,
-            description: definition.Description is { } description ? (JsonString.Source)description : default);
+            description: draft.Description.IsNotUndefined() ? (JsonString.Source)draft.Description : default);
 
-    // Realises a mutable builder over this document and modifies only the fields an update touches; name and the
-    // created-* metadata are carried through unchanged (no field-by-field rebuild).
-    private JsonDocumentBuilder<Mutable> ApplyUpdate(JsonWorkspace workspace, SecurityRuleDefinition definition, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
+    // Realises a mutable builder over this document and modifies only the fields an update touches, carrying the draft's
+    // content bytes-to-bytes; name and the created-* metadata are carried through unchanged (no field-by-field rebuild).
+    private JsonDocumentBuilder<Mutable> ApplyUpdate(JsonWorkspace workspace, in SecurityRuleDocument draft, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
     {
         JsonDocumentBuilder<Mutable> builder = this.CreateBuilder(workspace);
-        builder.RootElement.SetExpression(definition.Expression);
+        builder.RootElement.SetExpression(draft.Expression);
         builder.RootElement.SetEtag(etag.Value ?? string.Empty);
         builder.RootElement.SetLastUpdatedAt(updatedAt);
         builder.RootElement.SetLastUpdatedBy(actor);
-        if (definition.Description is { } description)
+        if (draft.Description.IsNotUndefined())
         {
-            builder.RootElement.SetDescription(description);
+            builder.RootElement.SetDescription(draft.Description);
         }
         else
         {

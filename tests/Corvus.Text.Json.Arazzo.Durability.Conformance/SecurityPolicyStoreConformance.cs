@@ -59,7 +59,7 @@ public abstract class SecurityPolicyStoreConformance
     public async Task A_rule_round_trips_through_add_get_and_list()
     {
         ISecurityPolicyStore store = await this.NewStoreAsync();
-        using (ParsedJsonDocument<SecurityRuleDocument> added = await store.AddRuleAsync("tenant-scoped", new SecurityRuleDefinition("tenant == $claim.tenant", "Tenant isolation."), "alice", default))
+        using (ParsedJsonDocument<SecurityRuleDocument> added = await AddRuleDraftAsync(store, "tenant-scoped", "tenant == $claim.tenant", "Tenant isolation.", "alice"))
         {
             added.RootElement.NameValue.ShouldBe("tenant-scoped");
             added.RootElement.ExpressionValue.ShouldBe("tenant == $claim.tenant");
@@ -86,12 +86,12 @@ public abstract class SecurityPolicyStoreConformance
     public async Task Adding_a_duplicate_rule_name_fails()
     {
         ISecurityPolicyStore store = await this.NewStoreAsync();
-        using (await store.AddRuleAsync("r", new SecurityRuleDefinition("tenant"), "alice", default))
+        using (await AddRuleDraftAsync(store, "r", "tenant", null, "alice"))
         {
         }
 
         await Should.ThrowAsync<InvalidOperationException>(async () =>
-            await store.AddRuleAsync("r", new SecurityRuleDefinition("team"), "bob", default));
+            await AddRuleDraftAsync(store, "r", "team", null, "bob"));
     }
 
     [TestMethod]
@@ -99,12 +99,12 @@ public abstract class SecurityPolicyStoreConformance
     {
         ISecurityPolicyStore store = await this.NewStoreAsync();
         WorkflowEtag addedEtag;
-        using (ParsedJsonDocument<SecurityRuleDocument> added = await store.AddRuleAsync("r", new SecurityRuleDefinition("tenant"), "alice", default))
+        using (ParsedJsonDocument<SecurityRuleDocument> added = await AddRuleDraftAsync(store, "r", "tenant", null, "alice"))
         {
             addedEtag = added.RootElement.EtagValue;
         }
 
-        using (ParsedJsonDocument<SecurityRuleDocument>? updated = await store.UpdateRuleAsync("r", new SecurityRuleDefinition("team", "now team"), addedEtag, "bob", default))
+        using (ParsedJsonDocument<SecurityRuleDocument>? updated = await UpdateRuleDraftAsync(store, "r", "team", "now team", addedEtag, "bob"))
         {
             updated.ShouldNotBeNull();
             updated!.RootElement.ExpressionValue.ShouldBe("team");
@@ -113,7 +113,7 @@ public abstract class SecurityPolicyStoreConformance
             (updated.RootElement.EtagValue == addedEtag).ShouldBeFalse();
         }
 
-        (await store.UpdateRuleAsync("missing", new SecurityRuleDefinition("x"), WorkflowEtag.None, "bob", default)).ShouldBeNull();
+        (await UpdateRuleDraftAsync(store, "missing", "x", null, WorkflowEtag.None, "bob")).ShouldBeNull();
     }
 
     [TestMethod]
@@ -121,18 +121,18 @@ public abstract class SecurityPolicyStoreConformance
     {
         ISecurityPolicyStore store = await this.NewStoreAsync();
         WorkflowEtag addedEtag;
-        using (ParsedJsonDocument<SecurityRuleDocument> added = await store.AddRuleAsync("r", new SecurityRuleDefinition("tenant"), "alice", default))
+        using (ParsedJsonDocument<SecurityRuleDocument> added = await AddRuleDraftAsync(store, "r", "tenant", null, "alice"))
         {
             addedEtag = added.RootElement.EtagValue;
         }
 
-        using (await store.UpdateRuleAsync("r", new SecurityRuleDefinition("team"), addedEtag, "bob", default))
+        using (await UpdateRuleDraftAsync(store, "r", "team", null, addedEtag, "bob"))
         {
             // etag now advanced
         }
 
         await Should.ThrowAsync<SecurityPolicyConflictException>(async () =>
-            await store.UpdateRuleAsync("r", new SecurityRuleDefinition("x"), addedEtag, "carol", default));
+            await UpdateRuleDraftAsync(store, "r", "x", null, addedEtag, "carol"));
         await Should.ThrowAsync<SecurityPolicyConflictException>(async () =>
             await store.DeleteRuleAsync("r", addedEtag, default));
 
@@ -230,7 +230,7 @@ public abstract class SecurityPolicyStoreConformance
             g0 = s0.Generation;
         }
 
-        using (await store.AddRuleAsync("r", new SecurityRuleDefinition("tenant"), "alice", default))
+        using (await AddRuleDraftAsync(store, "r", "tenant", null, "alice"))
         {
         }
 
@@ -267,5 +267,18 @@ public abstract class SecurityPolicyStoreConformance
         }
 
         return store;
+    }
+
+    // Builds the draft rule (a pooled, disposable document), adds it, and disposes the draft once the store has read it.
+    private static async Task<ParsedJsonDocument<SecurityRuleDocument>> AddRuleDraftAsync(ISecurityPolicyStore store, string name, string expression, string? description, string actor)
+    {
+        using ParsedJsonDocument<SecurityRuleDocument> draft = SecurityRuleDocument.Draft(expression, description);
+        return await store.AddRuleAsync(name, draft.RootElement, actor, default);
+    }
+
+    private static async Task<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleDraftAsync(ISecurityPolicyStore store, string name, string expression, string? description, WorkflowEtag expectedEtag, string actor)
+    {
+        using ParsedJsonDocument<SecurityRuleDocument> draft = SecurityRuleDocument.Draft(expression, description);
+        return await store.UpdateRuleAsync(name, draft.RootElement, expectedEtag, actor, default);
     }
 }

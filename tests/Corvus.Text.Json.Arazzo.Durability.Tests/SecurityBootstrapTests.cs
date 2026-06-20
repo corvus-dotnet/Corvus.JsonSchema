@@ -46,7 +46,8 @@ public sealed class SecurityBootstrapTests
             tenantEtag = tenant!.RootElement.EtagValue;
         }
 
-        using (await store.UpdateRuleAsync(SecurityBootstrap.TenantScopedRuleName, new SecurityRuleDefinition("sys:tenant == $claim.tenant"), tenantEtag, "alice", default))
+        using (ParsedJsonDocument<SecurityRuleDocument> draft = SecurityRuleDocument.Draft("sys:tenant == $claim.tenant"))
+        using (await store.UpdateRuleAsync(SecurityBootstrap.TenantScopedRuleName, draft.RootElement, tenantEtag, "alice", default))
         {
         }
 
