@@ -88,28 +88,28 @@ public readonly partial struct SecurityBindingDocument
     /// document over those bytes.</summary>
     /// <param name="writer">The writer to serialize into (typically the pooled writer from <see cref="PersistedJson"/>).</param>
     /// <param name="id">The binding id.</param>
-    /// <param name="definition">The binding content (claim match + per-verb grants).</param>
+    /// <param name="draft">The draft binding carrying the operator-supplied content as JSON values — read bytes-to-bytes.</param>
     /// <param name="actor">The actor creating the binding (audit).</param>
     /// <param name="createdAt">The creation instant.</param>
     /// <param name="etag">The optimistic-concurrency token to assign.</param>
-    public static void WriteNew(Utf8JsonWriter writer, string id, SecurityBindingDefinition definition, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+    public static void WriteNew(Utf8JsonWriter writer, string id, in SecurityBindingDocument draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        using JsonDocumentBuilder<Mutable> builder = BuildNew(workspace, id, definition, actor, createdAt, etag);
+        using JsonDocumentBuilder<Mutable> builder = BuildNew(workspace, id, draft, actor, createdAt, etag);
         builder.RootElement.WriteTo(writer);
     }
 
     /// <summary>Realises an updated copy of this binding (modifying only the fields the update touches; id/created
     /// metadata carried through) and writes its JSON to the caller's (pooled) writer.</summary>
     /// <param name="writer">The writer to serialize into.</param>
-    /// <param name="definition">The new binding content.</param>
+    /// <param name="draft">The draft binding carrying the new operator-supplied content as JSON values — read bytes-to-bytes.</param>
     /// <param name="actor">The actor performing the update (audit).</param>
     /// <param name="updatedAt">The update instant.</param>
     /// <param name="etag">The new optimistic-concurrency token to assign.</param>
-    public void WriteUpdated(Utf8JsonWriter writer, SecurityBindingDefinition definition, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
+    public void WriteUpdated(Utf8JsonWriter writer, in SecurityBindingDocument draft, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        using JsonDocumentBuilder<Mutable> builder = this.ApplyUpdate(workspace, definition, actor, updatedAt, etag);
+        using JsonDocumentBuilder<Mutable> builder = this.ApplyUpdate(workspace, draft, actor, updatedAt, etag);
         builder.RootElement.WriteTo(writer);
     }
 
@@ -119,102 +119,198 @@ public readonly partial struct SecurityBindingDocument
     /// <returns>The binding.</returns>
     public static SecurityBindingDocument FromJson(ReadOnlyMemory<byte> utf8) => ParseValue(utf8.Span);
 
-    // Realises a new binding into the pooled workspace arena (shared by the buffer-writing and detached-value paths).
-    private static JsonDocumentBuilder<Mutable> BuildNew(JsonWorkspace workspace, string id, SecurityBindingDefinition definition, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+    /// <summary>
+    /// Builds a draft binding from operator-supplied content for a store to complete with the server-stamped
+    /// id/etag/created metadata — the programmatic counterpart of carrying an HTTP request body as the draft. The store
+    /// reads only the content fields (bytes-to-bytes) and stamps the rest.
+    /// </summary>
+    /// <param name="claimType">The principal claim type the binding keys on (<c>"*"</c> = any authenticated).</param>
+    /// <param name="claimValue">The required claim value, or <see langword="null"/> (matches any value).</param>
+    /// <param name="read">The read-verb grant.</param>
+    /// <param name="write">The write-verb grant.</param>
+    /// <param name="purge">The purge-verb grant.</param>
+    /// <param name="order">The resolution order (ascending).</param>
+    /// <param name="description">An optional human description.</param>
+    /// <param name="scopes">The capability scopes granted (design §14.1); <see langword="null"/>/empty is reach-only.</param>
+    /// <param name="expiresAt">When the grant expires (design §16.5.2); <see langword="null"/> is a standing grant.</param>
+    /// <param name="eligibleOnly">When <see langword="true"/>, an eligibility assignment (design §16.5.3/§16.5.4), not an active grant.</param>
+    /// <returns>A pooled, disposable draft document the caller must dispose once the store has read it.</returns>
+    public static ParsedJsonDocument<SecurityBindingDocument> Draft(
+        string claimType,
+        string? claimValue,
+        VerbGrantInfo read,
+        VerbGrantInfo write,
+        VerbGrantInfo purge,
+        int order = 0,
+        string? description = null,
+        IReadOnlyList<string>? scopes = null,
+        DateTimeOffset? expiresAt = null,
+        bool eligibleOnly = false)
     {
-        JsonDocumentBuilder<Mutable> builder = CreateBuilder(
+        ArgumentNullException.ThrowIfNull(claimType);
+        var state = new DraftState(claimType, claimValue, read, write, purge, order, description, scopes, expiresAt, eligibleOnly);
+        return PersistedJson.ToPooledDocument<SecurityBindingDocument, DraftState>(
+            in state,
+            static (Utf8JsonWriter writer, in DraftState c) =>
+            {
+                writer.WriteStartObject();
+                writer.WriteString("claimType"u8, c.ClaimType);
+                if (c.ClaimValue is { } claimValue)
+                {
+                    writer.WriteString("claimValue"u8, claimValue);
+                }
+
+                writer.WritePropertyName("read"u8);
+                c.Read.WriteTo(writer);
+                writer.WritePropertyName("write"u8);
+                c.Write.WriteTo(writer);
+                writer.WritePropertyName("purge"u8);
+                c.Purge.WriteTo(writer);
+                writer.WriteNumber("order"u8, c.Order);
+                if (c.Description is { } description)
+                {
+                    writer.WriteString("description"u8, description);
+                }
+
+                if (c.Scopes is { Count: > 0 } scopes)
+                {
+                    writer.WriteStartArray("scopes"u8);
+                    foreach (string scope in scopes)
+                    {
+                        writer.WriteStringValue(scope);
+                    }
+
+                    writer.WriteEndArray();
+                }
+
+                if (c.ExpiresAt is { } expiresAt)
+                {
+                    writer.WriteString("expiresAt"u8, expiresAt);
+                }
+
+                if (c.EligibleOnly)
+                {
+                    writer.WriteBoolean("eligibleOnly"u8, true);
+                }
+
+                writer.WriteEndObject();
+            });
+    }
+
+    // Realises a new binding into the pooled workspace arena: the draft's operator content is carried bytes-to-bytes (its
+    // JSON values flow straight into the builder); id and the server-stamped audit/concurrency fields are added here.
+    private static JsonDocumentBuilder<Mutable> BuildNew(JsonWorkspace workspace, string id, in SecurityBindingDocument draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+        => CreateBuilder(
             workspace,
-            claimType: definition.ClaimType,
+            claimType: draft.ClaimType,
             createdAt: createdAt,
             createdBy: actor,
             etag: etag.Value ?? string.Empty,
             id: id,
-            order: definition.Order,
-            purge: definition.Purge,
-            read: definition.Read,
-            write: definition.Write,
-            claimValue: definition.ClaimValue is { } claimValue ? (JsonString.Source)claimValue : default,
-            description: definition.Description is { } description ? (JsonString.Source)description : default,
-            expiresAt: definition.ExpiresAt is { } expiresAt ? (JsonDateTime.Source)expiresAt : default,
-            eligibleOnly: definition.EligibleOnly ? (JsonBoolean.Source)true : default);
-        ApplyScopes(builder, definition.Scopes);
-        return builder;
-    }
+            order: draft.Order,
+            purge: draft.Purge,
+            read: draft.Read,
+            write: draft.Write,
+            claimValue: draft.ClaimValue.IsNotUndefined() ? (JsonString.Source)draft.ClaimValue : default,
+            description: draft.Description.IsNotUndefined() ? (JsonString.Source)draft.Description : default,
+            expiresAt: draft.ExpiresAt.IsNotUndefined() ? (JsonDateTime.Source)draft.ExpiresAt : default,
+            eligibleOnly: draft.EligibleOnly.IsNotUndefined() ? (JsonBoolean.Source)draft.EligibleOnly : default,
+            scopes: draft.Scopes.IsNotUndefined() ? (JsonStringArray.Source)draft.Scopes : default);
 
-    // Realises a mutable builder over this document and modifies only the fields an update touches; id and the
-    // created-* metadata are carried through unchanged (no field-by-field rebuild).
-    private JsonDocumentBuilder<Mutable> ApplyUpdate(JsonWorkspace workspace, SecurityBindingDefinition definition, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
+    // Realises a mutable builder over this document and modifies only the fields an update touches, carrying the draft's
+    // content bytes-to-bytes; id and the created-* metadata are carried through unchanged (no field-by-field rebuild).
+    private JsonDocumentBuilder<Mutable> ApplyUpdate(JsonWorkspace workspace, in SecurityBindingDocument draft, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
     {
         JsonDocumentBuilder<Mutable> builder = this.CreateBuilder(workspace);
-        builder.RootElement.SetClaimType(definition.ClaimType);
-        builder.RootElement.SetOrder(definition.Order);
-        builder.RootElement.SetRead(definition.Read);
-        builder.RootElement.SetWrite(definition.Write);
-        builder.RootElement.SetPurge(definition.Purge);
+        builder.RootElement.SetClaimType(draft.ClaimType);
+        builder.RootElement.SetOrder(draft.Order);
+        builder.RootElement.SetRead(draft.Read);
+        builder.RootElement.SetWrite(draft.Write);
+        builder.RootElement.SetPurge(draft.Purge);
         builder.RootElement.SetEtag(etag.Value ?? string.Empty);
         builder.RootElement.SetLastUpdatedAt(updatedAt);
         builder.RootElement.SetLastUpdatedBy(actor);
-        if (definition.ClaimValue is { } claimValue)
+        if (draft.ClaimValue.IsNotUndefined())
         {
-            builder.RootElement.SetClaimValue(claimValue);
+            builder.RootElement.SetClaimValue(draft.ClaimValue);
         }
         else
         {
             builder.RootElement.RemoveClaimValue();
         }
 
-        if (definition.Description is { } description)
+        if (draft.Description.IsNotUndefined())
         {
-            builder.RootElement.SetDescription(description);
+            builder.RootElement.SetDescription(draft.Description);
         }
         else
         {
             builder.RootElement.RemoveDescription();
         }
 
-        if (definition.ExpiresAt is { } expiresAt)
+        if (draft.ExpiresAt.IsNotUndefined())
         {
-            builder.RootElement.SetExpiresAt(expiresAt);
+            builder.RootElement.SetExpiresAt(draft.ExpiresAt);
         }
         else
         {
             builder.RootElement.RemoveExpiresAt();
         }
 
-        if (definition.EligibleOnly)
+        if (draft.EligibleOnly.IsNotUndefined())
         {
-            builder.RootElement.SetEligibleOnly(true);
+            builder.RootElement.SetEligibleOnly(draft.EligibleOnly);
         }
         else
         {
             builder.RootElement.RemoveEligibleOnly();
         }
 
-        ApplyScopes(builder, definition.Scopes);
-        return builder;
-    }
-
-    // Sets (or removes, when empty) the granted capability scopes on a binding builder — shared by the new/updated
-    // write paths. The scopes list is threaded as the build context so the item callback is static (no closure).
-    private static void ApplyScopes(JsonDocumentBuilder<Mutable> builder, IReadOnlyList<string>? scopes)
-    {
-        if (scopes is { Count: > 0 })
+        if (draft.Scopes.IsNotUndefined())
         {
-            builder.RootElement.SetScopes(
-                JsonStringArray.Build(
-                    scopes,
-                    static (in IReadOnlyList<string> source, ref JsonStringArray.Builder array) =>
-                    {
-                        foreach (string scope in source)
-                        {
-                            array.AddItem(scope);
-                        }
-                    }));
+            builder.RootElement.SetScopes(draft.Scopes);
         }
         else
         {
             builder.RootElement.RemoveScopes();
         }
+
+        return builder;
+    }
+
+    // The operator-supplied content of a draft binding, threaded through the pooled-writer callback (a static lambda, no
+    // closure). Holds the verb grants by value (each a thin Corvus.Text.Json handle) plus the scalar/optional fields.
+    private readonly struct DraftState(
+        string claimType,
+        string? claimValue,
+        VerbGrantInfo read,
+        VerbGrantInfo write,
+        VerbGrantInfo purge,
+        int order,
+        string? description,
+        IReadOnlyList<string>? scopes,
+        DateTimeOffset? expiresAt,
+        bool eligibleOnly)
+    {
+        public string ClaimType { get; } = claimType;
+
+        public string? ClaimValue { get; } = claimValue;
+
+        public VerbGrantInfo Read { get; } = read;
+
+        public VerbGrantInfo Write { get; } = write;
+
+        public VerbGrantInfo Purge { get; } = purge;
+
+        public int Order { get; } = order;
+
+        public string? Description { get; } = description;
+
+        public IReadOnlyList<string>? Scopes { get; } = scopes;
+
+        public DateTimeOffset? ExpiresAt { get; } = expiresAt;
+
+        public bool EligibleOnly { get; } = eligibleOnly;
     }
 
     /// <summary>

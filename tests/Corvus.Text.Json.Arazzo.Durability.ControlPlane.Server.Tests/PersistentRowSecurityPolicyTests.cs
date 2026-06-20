@@ -42,8 +42,7 @@ public sealed class PersistentRowSecurityPolicyTests
     {
         var store = new InMemorySecurityPolicyStore();
         await SecurityBootstrap.SeedAsync(store);
-        await store.AddBindingAsync(
-            new SecurityBindingDefinition("role", "tenant-admin", VerbGrant.Rules("tenant-scoped"), VerbGrant.Rules("tenant-scoped"), VerbGrant.None),
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "tenant-admin", VerbGrant.Rules("tenant-scoped"), VerbGrant.Rules("tenant-scoped"), VerbGrant.None),
             "admin",
             default);
 
@@ -63,8 +62,7 @@ public sealed class PersistentRowSecurityPolicyTests
     public async Task An_unrestricted_binding_grants_full_reach_including_untagged_rows()
     {
         var store = new InMemorySecurityPolicyStore();
-        await store.AddBindingAsync(
-            new SecurityBindingDefinition("role", "operator", VerbGrant.Full, VerbGrant.Full, VerbGrant.Full),
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "operator", VerbGrant.Full, VerbGrant.Full, VerbGrant.Full),
             "admin",
             default);
 
@@ -82,8 +80,7 @@ public sealed class PersistentRowSecurityPolicyTests
     {
         var store = new InMemorySecurityPolicyStore();
         await SecurityBootstrap.SeedAsync(store);
-        await store.AddBindingAsync(
-            new SecurityBindingDefinition("role", "tenant-admin", VerbGrant.Rules("tenant-scoped"), VerbGrant.None, VerbGrant.None),
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "tenant-admin", VerbGrant.Rules("tenant-scoped"), VerbGrant.None, VerbGrant.None),
             "admin",
             default);
 
@@ -102,8 +99,8 @@ public sealed class PersistentRowSecurityPolicyTests
         await SeedRuleAsync(store, "globex-only", "tenant == 'globex'", "admin");
 
         // Two bindings the principal matches (by two different claims), each granting a different tenant for read.
-        await store.AddBindingAsync(new SecurityBindingDefinition("role", "a", VerbGrant.Rules("acme-only"), VerbGrant.None, VerbGrant.None), "admin", default);
-        await store.AddBindingAsync(new SecurityBindingDefinition("group", "g", VerbGrant.Rules("globex-only"), VerbGrant.None, VerbGrant.None), "admin", default);
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "a", VerbGrant.Rules("acme-only"), VerbGrant.None, VerbGrant.None), "admin", default);
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("group", "g", VerbGrant.Rules("globex-only"), VerbGrant.None, VerbGrant.None), "admin", default);
 
         var policy = new PersistentRowSecurityPolicy(store);
         await policy.RefreshAsync();
@@ -117,7 +114,7 @@ public sealed class PersistentRowSecurityPolicyTests
     public async Task A_null_or_unauthenticated_principal_is_denied()
     {
         var store = new InMemorySecurityPolicyStore();
-        await store.AddBindingAsync(new SecurityBindingDefinition("*", null, VerbGrant.Full, VerbGrant.Full, VerbGrant.Full), "admin", default);
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("*", null, VerbGrant.Full, VerbGrant.Full, VerbGrant.Full), "admin", default);
         var policy = new PersistentRowSecurityPolicy(store);
         await policy.RefreshAsync();
 
@@ -130,7 +127,7 @@ public sealed class PersistentRowSecurityPolicyTests
     {
         var store = new InMemorySecurityPolicyStore();
         await SeedRuleAsync(store, "team-payments", "team == 'payments'", "admin");
-        await store.AddBindingAsync(new SecurityBindingDefinition("role", "u", VerbGrant.Rules("team-payments"), VerbGrant.None, VerbGrant.None), "admin", default);
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "u", VerbGrant.Rules("team-payments"), VerbGrant.None, VerbGrant.None), "admin", default);
 
         // Deployment shell mandates the tenant via an internal tag; the binding narrows by team.
         var shell = new SecurityShell([SecurityRule.Compile("sys:tenant == $claim.tenant")]);
@@ -147,8 +144,7 @@ public sealed class PersistentRowSecurityPolicyTests
     public async Task A_binding_grants_capability_scopes_to_the_matched_principal()
     {
         var store = new InMemorySecurityPolicyStore();
-        await store.AddBindingAsync(
-            new SecurityBindingDefinition("sub", "alice", VerbGrant.None, VerbGrant.None, VerbGrant.None, Scopes: [ControlPlaneScopes.RunsWrite, ControlPlaneScopes.RunsRead]),
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("sub", "alice", VerbGrant.None, VerbGrant.None, VerbGrant.None, scopes: [ControlPlaneScopes.RunsWrite, ControlPlaneScopes.RunsRead]),
             "approver",
             default);
 
@@ -168,7 +164,7 @@ public sealed class PersistentRowSecurityPolicyTests
         var store = new InMemorySecurityPolicyStore();
 
         // A binding with reach grants but no scopes is the common (standing-rule) case → the zero-allocation fast path.
-        await store.AddBindingAsync(new SecurityBindingDefinition("sub", "alice", VerbGrant.Full, VerbGrant.None, VerbGrant.None), "admin", default);
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("sub", "alice", VerbGrant.Full, VerbGrant.None, VerbGrant.None), "admin", default);
         var policy = new PersistentRowSecurityPolicy(store);
         await policy.RefreshAsync();
 
@@ -179,8 +175,8 @@ public sealed class PersistentRowSecurityPolicyTests
     public async Task Granted_scopes_union_and_deduplicate_across_matched_bindings()
     {
         var store = new InMemorySecurityPolicyStore();
-        await store.AddBindingAsync(new SecurityBindingDefinition("sub", "alice", VerbGrant.None, VerbGrant.None, VerbGrant.None, Scopes: [ControlPlaneScopes.RunsWrite]), "approver", default);
-        await store.AddBindingAsync(new SecurityBindingDefinition("team", "payments", VerbGrant.None, VerbGrant.None, VerbGrant.None, Scopes: [ControlPlaneScopes.RunsWrite, ControlPlaneScopes.CatalogRead]), "approver", default);
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("sub", "alice", VerbGrant.None, VerbGrant.None, VerbGrant.None, scopes: [ControlPlaneScopes.RunsWrite]), "approver", default);
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("team", "payments", VerbGrant.None, VerbGrant.None, VerbGrant.None, scopes: [ControlPlaneScopes.RunsWrite, ControlPlaneScopes.CatalogRead]), "approver", default);
 
         var policy = new PersistentRowSecurityPolicy(store);
         await policy.RefreshAsync();
@@ -197,8 +193,7 @@ public sealed class PersistentRowSecurityPolicyTests
         await SeedRuleAsync(store, "payments-domain", "domain == 'payments'", "admin");
 
         // A single entitlement carrying BOTH a capability (runs:write) AND a reach (domain=payments) — the §16.5 shape.
-        await store.AddBindingAsync(
-            new SecurityBindingDefinition("sub", "alice", VerbGrant.Rules("payments-domain"), VerbGrant.Rules("payments-domain"), VerbGrant.None, Scopes: [ControlPlaneScopes.RunsWrite]),
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("sub", "alice", VerbGrant.Rules("payments-domain"), VerbGrant.Rules("payments-domain"), VerbGrant.None, scopes: [ControlPlaneScopes.RunsWrite]),
             "approver",
             default);
 
@@ -218,7 +213,7 @@ public sealed class PersistentRowSecurityPolicyTests
     public async Task A_null_or_unauthenticated_principal_is_granted_no_scopes()
     {
         var store = new InMemorySecurityPolicyStore();
-        await store.AddBindingAsync(new SecurityBindingDefinition("*", null, VerbGrant.None, VerbGrant.None, VerbGrant.None, Scopes: [ControlPlaneScopes.RunsWrite]), "approver", default);
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("*", null, VerbGrant.None, VerbGrant.None, VerbGrant.None, scopes: [ControlPlaneScopes.RunsWrite]), "approver", default);
         var policy = new PersistentRowSecurityPolicy(store);
         await policy.RefreshAsync();
 
@@ -233,8 +228,7 @@ public sealed class PersistentRowSecurityPolicyTests
         await SeedRuleAsync(store, "payments-domain", "domain == 'payments'", "admin");
 
         // A time-bound grant whose expiry is already in the past relative to the policy's clock (§16.5.2).
-        await store.AddBindingAsync(
-            new SecurityBindingDefinition("sub", "alice", VerbGrant.Rules("payments-domain"), VerbGrant.Rules("payments-domain"), VerbGrant.None, Scopes: [ControlPlaneScopes.RunsWrite], ExpiresAt: ClockNow.AddMinutes(-1)),
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("sub", "alice", VerbGrant.Rules("payments-domain"), VerbGrant.Rules("payments-domain"), VerbGrant.None, scopes: [ControlPlaneScopes.RunsWrite], expiresAt: ClockNow.AddMinutes(-1)),
             "approver",
             default);
 
@@ -253,8 +247,7 @@ public sealed class PersistentRowSecurityPolicyTests
     {
         var store = new InMemorySecurityPolicyStore();
         await SeedRuleAsync(store, "payments-domain", "domain == 'payments'", "admin");
-        await store.AddBindingAsync(
-            new SecurityBindingDefinition("sub", "alice", VerbGrant.Rules("payments-domain"), VerbGrant.Rules("payments-domain"), VerbGrant.None, Scopes: [ControlPlaneScopes.RunsWrite], ExpiresAt: ClockNow.AddHours(1)),
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("sub", "alice", VerbGrant.Rules("payments-domain"), VerbGrant.Rules("payments-domain"), VerbGrant.None, scopes: [ControlPlaneScopes.RunsWrite], expiresAt: ClockNow.AddHours(1)),
             "approver",
             default);
 
@@ -276,8 +269,7 @@ public sealed class PersistentRowSecurityPolicyTests
 
         // An eligibility assignment (§16.5.3/§16.5.4): it carries a scope + reach, but eligibleOnly means the resolver
         // must ignore it entirely — eligibility confers nothing active (the self-elevation strategy reads it instead).
-        await store.AddBindingAsync(
-            new SecurityBindingDefinition("sub", "alice", VerbGrant.Rules("payments-domain"), VerbGrant.Rules("payments-domain"), VerbGrant.None, Scopes: [ControlPlaneScopes.RunsWrite], EligibleOnly: true),
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("sub", "alice", VerbGrant.Rules("payments-domain"), VerbGrant.Rules("payments-domain"), VerbGrant.None, scopes: [ControlPlaneScopes.RunsWrite], eligibleOnly: true),
             "approver",
             default);
 
@@ -295,7 +287,7 @@ public sealed class PersistentRowSecurityPolicyTests
         // §17.5/F7: a `*` binding matches every authenticated principal; an Unrestricted grant on it would make
         // everyone an operator. By default that grant is demoted to no reach (deny-by-default).
         var store = new InMemorySecurityPolicyStore();
-        await store.AddBindingAsync(new SecurityBindingDefinition("*", null, VerbGrant.Full, VerbGrant.Full, VerbGrant.Full), "admin", default);
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("*", null, VerbGrant.Full, VerbGrant.Full, VerbGrant.Full), "admin", default);
         var policy = new PersistentRowSecurityPolicy(store);
         await policy.RefreshAsync();
 
@@ -312,7 +304,7 @@ public sealed class PersistentRowSecurityPolicyTests
         // deliberate, scoped choice and still applies to every principal.
         var store = new InMemorySecurityPolicyStore();
         await SeedRuleAsync(store, "acme-only", "tenant == 'acme'", "admin");
-        await store.AddBindingAsync(new SecurityBindingDefinition("*", null, VerbGrant.Rules("acme-only"), VerbGrant.None, VerbGrant.None), "admin", default);
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("*", null, VerbGrant.Rules("acme-only"), VerbGrant.None, VerbGrant.None), "admin", default);
         var policy = new PersistentRowSecurityPolicy(store);
         await policy.RefreshAsync();
 
@@ -326,7 +318,7 @@ public sealed class PersistentRowSecurityPolicyTests
     {
         // A genuinely single-tenant deployment may opt back in to "everyone is an operator".
         var store = new InMemorySecurityPolicyStore();
-        await store.AddBindingAsync(new SecurityBindingDefinition("*", null, VerbGrant.Full, VerbGrant.Full, VerbGrant.Full), "admin", default);
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("*", null, VerbGrant.Full, VerbGrant.Full, VerbGrant.Full), "admin", default);
         var policy = new PersistentRowSecurityPolicy(store, allowWildcardUnrestrictedReach: true);
         await policy.RefreshAsync();
 
@@ -349,5 +341,15 @@ public sealed class PersistentRowSecurityPolicyTests
     {
         using ParsedJsonDocument<SecurityRuleDocument> draft = SecurityRuleDocument.Draft(expression);
         (await store.AddRuleAsync(name, draft.RootElement, actor, default)).Dispose();
+    }
+
+    // Adds the (pooled, disposable) draft binding, disposing the draft once the store has read it; the created document
+    // is returned for the caller to assert on / dispose (fire-and-forget callers ignore it).
+    private static async Task<ParsedJsonDocument<SecurityBindingDocument>> AddBindingDraftAsync(InMemorySecurityPolicyStore store, ParsedJsonDocument<SecurityBindingDocument> draft, string actor, CancellationToken cancellationToken = default)
+    {
+        using (draft)
+        {
+            return await store.AddBindingAsync(draft.RootElement, actor, cancellationToken);
+        }
     }
 }

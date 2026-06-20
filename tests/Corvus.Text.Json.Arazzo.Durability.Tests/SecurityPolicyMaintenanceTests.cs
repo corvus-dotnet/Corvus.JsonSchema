@@ -24,8 +24,7 @@ public sealed class SecurityPolicyMaintenanceTests
         var store = new InMemorySecurityPolicyStore();
 
         string expiredId;
-        using (ParsedJsonDocument<SecurityBindingDocument> expired = await store.AddBindingAsync(
-            new SecurityBindingDefinition("sub", "alice", VerbGrant.Full, VerbGrant.None, VerbGrant.None, ExpiresAt: Now.AddMinutes(-5)),
+        using (ParsedJsonDocument<SecurityBindingDocument> expired = await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("sub", "alice", VerbGrant.Full, VerbGrant.None, VerbGrant.None, expiresAt: Now.AddMinutes(-5)),
             "admin",
             default))
         {
@@ -33,8 +32,7 @@ public sealed class SecurityPolicyMaintenanceTests
         }
 
         string validId;
-        using (ParsedJsonDocument<SecurityBindingDocument> valid = await store.AddBindingAsync(
-            new SecurityBindingDefinition("sub", "bob", VerbGrant.Full, VerbGrant.None, VerbGrant.None, ExpiresAt: Now.AddHours(1)),
+        using (ParsedJsonDocument<SecurityBindingDocument> valid = await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("sub", "bob", VerbGrant.Full, VerbGrant.None, VerbGrant.None, expiresAt: Now.AddHours(1)),
             "admin",
             default))
         {
@@ -42,8 +40,7 @@ public sealed class SecurityPolicyMaintenanceTests
         }
 
         string standingId;
-        using (ParsedJsonDocument<SecurityBindingDocument> standing = await store.AddBindingAsync(
-            new SecurityBindingDefinition("role", "operator", VerbGrant.Full, VerbGrant.Full, VerbGrant.Full),
+        using (ParsedJsonDocument<SecurityBindingDocument> standing = await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "operator", VerbGrant.Full, VerbGrant.Full, VerbGrant.Full),
             "admin",
             default))
         {
@@ -70,11 +67,21 @@ public sealed class SecurityPolicyMaintenanceTests
     public async Task Reaping_an_unexpired_policy_deletes_nothing()
     {
         var store = new InMemorySecurityPolicyStore();
-        using (await store.AddBindingAsync(new SecurityBindingDefinition("role", "operator", VerbGrant.Full, VerbGrant.Full, VerbGrant.Full), "admin", default))
+        using (await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "operator", VerbGrant.Full, VerbGrant.Full, VerbGrant.Full), "admin", default))
         {
         }
 
         (await SecurityPolicyMaintenance.ReapExpiredBindingsAsync(store, new FixedClock(Now))).ShouldBe(0);
+    }
+
+    // Adds the (pooled, disposable) draft binding, disposing the draft once the store has read it; the created document
+    // is returned for the caller to assert on and dispose.
+    private static async Task<ParsedJsonDocument<SecurityBindingDocument>> AddBindingDraftAsync(InMemorySecurityPolicyStore store, ParsedJsonDocument<SecurityBindingDocument> draft, string actor, CancellationToken cancellationToken = default)
+    {
+        using (draft)
+        {
+            return await store.AddBindingAsync(draft.RootElement, actor, cancellationToken);
+        }
     }
 
     // A clock fixed at a known instant so a binding's expiry is deterministic relative to "now".

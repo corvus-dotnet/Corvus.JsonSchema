@@ -63,11 +63,11 @@ public interface ISecurityPolicyStore
     ValueTask<bool> DeleteRuleAsync(string name, WorkflowEtag expectedEtag, CancellationToken cancellationToken);
 
     /// <summary>Creates a binding, assigning it an id.</summary>
-    /// <param name="definition">The binding content.</param>
+    /// <param name="draft">The draft binding carrying the operator-supplied content as JSON values; the store stamps the id/etag/created metadata. Build one programmatically via <see cref="SecurityBindingDocument.Draft"/>.</param>
     /// <param name="actor">The authenticated identity creating the binding (for audit).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The created binding (with its assigned id), as a pooled document the caller must dispose.</returns>
-    ValueTask<ParsedJsonDocument<SecurityBindingDocument>> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken);
+    ValueTask<ParsedJsonDocument<SecurityBindingDocument>> AddBindingAsync(SecurityBindingDocument draft, string actor, CancellationToken cancellationToken);
 
     /// <summary>Gets a binding by id, or <see langword="null"/> if absent.</summary>
     /// <param name="id">The binding id.</param>
@@ -82,13 +82,13 @@ public interface ISecurityPolicyStore
 
     /// <summary>Updates a binding's content under optimistic concurrency.</summary>
     /// <param name="id">The binding id.</param>
-    /// <param name="definition">The new content.</param>
+    /// <param name="draft">The draft binding carrying the new operator-supplied content as JSON values; the store carries the id/created metadata forward and stamps the updated etag/last-updated metadata.</param>
     /// <param name="expectedEtag">The expected current etag (<see cref="WorkflowEtag.None"/> to overwrite unconditionally).</param>
     /// <param name="actor">The authenticated identity updating the binding (for audit).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The updated binding as a pooled document the caller must dispose, or <see langword="null"/> if no binding with that id exists.</returns>
     /// <exception cref="SecurityPolicyConflictException">The expected etag no longer matches.</exception>
-    ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken);
+    ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken);
 
     /// <summary>Deletes a binding under optimistic concurrency.</summary>
     /// <param name="id">The binding id.</param>
