@@ -100,7 +100,7 @@ var accessRequests = new Corvus.Text.Json.Arazzo.Durability.Security.InMemoryAcc
 
 // arazzo-admins members are eligible to self-elevate (JIT activation, no human approver, §16.5.3); everyone else
 // must submit a request and be approved by a §15 administrator of the target workflow.
-Func<ClaimsPrincipal, AccessRequestDefinition, bool> eligibleForSelfElevation =
+Func<ClaimsPrincipal, AccessRequest, bool> eligibleForSelfElevation =
     static (principal, _) => principal.FindAll("groups").Any(c => c.Value == "arazzo-admins");
 
 // Control-plane authorization is per-deployment (design §14.1). The real strategy is OIDC: bearer tokens from

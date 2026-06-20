@@ -66,24 +66,19 @@ public sealed class MongoAccessRequestStore : IAccessRequestStore, IAsyncDisposa
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequestDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequest draft, string actor, CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrEmpty(definition.BaseWorkflowId);
-        ArgumentException.ThrowIfNullOrEmpty(definition.SubjectClaimType);
-        ArgumentException.ThrowIfNullOrEmpty(definition.SubjectClaimValue);
-        ArgumentNullException.ThrowIfNull(definition.RequestedScopes);
-        ArgumentOutOfRangeException.ThrowIfZero(definition.RequestedScopes.Count);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "req-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
         WorkflowEtag etag = NewEtag();
         DateTimeOffset now = this.timeProvider.GetUtcNow();
-        byte[] json = AccessRequestSerialization.SerializeNew(id, definition, actor, now, etag);
+        byte[] json = AccessRequestSerialization.SerializeNew(id, draft, actor, now, etag);
         var document = new BsonDocument
         {
             ["_id"] = id,
-            ["baseWorkflowId"] = definition.BaseWorkflowId,
-            ["subjectClaimType"] = definition.SubjectClaimType,
-            ["subjectClaimValue"] = definition.SubjectClaimValue,
+            ["baseWorkflowId"] = draft.BaseWorkflowIdValue,
+            ["subjectClaimType"] = draft.SubjectClaimTypeValue,
+            ["subjectClaimValue"] = draft.SubjectClaimValueValue,
             ["status"] = AccessRequestStatusNames.Pending,
             ["createdAt"] = now.UtcDateTime.ToString("o", CultureInfo.InvariantCulture),
             ["doc"] = new BsonBinaryData(json),

@@ -22,11 +22,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.Security;
 public interface IAccessRequestStore
 {
     /// <summary>Creates a new <see cref="AccessRequestStatus.Pending"/> request, assigning it an id.</summary>
-    /// <param name="definition">The request content.</param>
+    /// <param name="draft">The draft request carrying the create-content as JSON values; the store stamps the id/etag/created metadata and the Pending status. Build one programmatically via <see cref="AccessRequest.Draft"/>.</param>
     /// <param name="actor">The authenticated identity (the requester) creating the request (for audit).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The created request (with its assigned id), as a pooled document the caller must dispose.</returns>
-    ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequestDefinition definition, string actor, CancellationToken cancellationToken);
+    ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequest draft, string actor, CancellationToken cancellationToken);
 
     /// <summary>Gets a request by id, or <see langword="null"/> if absent.</summary>
     /// <param name="id">The request id.</param>

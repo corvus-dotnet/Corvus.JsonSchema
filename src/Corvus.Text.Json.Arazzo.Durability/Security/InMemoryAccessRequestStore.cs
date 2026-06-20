@@ -34,19 +34,14 @@ public sealed class InMemoryAccessRequestStore : IAccessRequestStore
         => this.timeProvider = timeProvider ?? TimeProvider.System;
 
     /// <inheritdoc/>
-    public ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequestDefinition definition, string actor, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequest draft, string actor, CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrEmpty(definition.BaseWorkflowId);
-        ArgumentException.ThrowIfNullOrEmpty(definition.SubjectClaimType);
-        ArgumentException.ThrowIfNullOrEmpty(definition.SubjectClaimValue);
-        ArgumentNullException.ThrowIfNull(definition.RequestedScopes);
-        ArgumentOutOfRangeException.ThrowIfZero(definition.RequestedScopes.Count);
         ArgumentNullException.ThrowIfNull(actor);
 
         lock (this.gate)
         {
             string id = "req-" + (++this.requestSequence).ToString(CultureInfo.InvariantCulture);
-            byte[] json = AccessRequestSerialization.SerializeNew(id, definition, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
+            byte[] json = AccessRequestSerialization.SerializeNew(id, draft, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
             this.requests[id] = json;
             return new ValueTask<ParsedJsonDocument<AccessRequest>>(PersistedJson.ToPooledDocument<AccessRequest>(json));
         }
