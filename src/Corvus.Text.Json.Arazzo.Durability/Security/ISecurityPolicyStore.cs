@@ -27,11 +27,11 @@ public interface ISecurityPolicyStore
 {
     /// <summary>Creates a rule. Throws if a rule with the same name already exists.</summary>
     /// <param name="name">The rule's unique name.</param>
-    /// <param name="definition">The rule content.</param>
+    /// <param name="draft">The draft rule carrying the operator-supplied content (expression + optional description) as JSON values; the store stamps the name/etag/created metadata. Build one from an HTTP request body via <c>From</c>, or programmatically via <see cref="SecurityRuleDocument.Draft"/>.</param>
     /// <param name="actor">The authenticated identity creating the rule (for audit).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The created rule, as a pooled document the caller must dispose.</returns>
-    ValueTask<ParsedJsonDocument<SecurityRuleDocument>> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken);
+    ValueTask<ParsedJsonDocument<SecurityRuleDocument>> AddRuleAsync(string name, SecurityRuleDocument draft, string actor, CancellationToken cancellationToken);
 
     /// <summary>Gets a rule by name, or <see langword="null"/> if absent.</summary>
     /// <param name="name">The rule name.</param>
@@ -46,13 +46,13 @@ public interface ISecurityPolicyStore
 
     /// <summary>Updates a rule's content under optimistic concurrency.</summary>
     /// <param name="name">The rule name.</param>
-    /// <param name="definition">The new content.</param>
+    /// <param name="draft">The draft rule carrying the new operator-supplied content as JSON values; the store carries the name/created metadata forward and stamps the updated etag/last-updated metadata.</param>
     /// <param name="expectedEtag">The expected current etag (<see cref="WorkflowEtag.None"/> to overwrite unconditionally).</param>
     /// <param name="actor">The authenticated identity updating the rule (for audit).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The updated rule as a pooled document the caller must dispose, or <see langword="null"/> if no rule with that name exists.</returns>
     /// <exception cref="SecurityPolicyConflictException">The expected etag no longer matches.</exception>
-    ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken);
+    ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken);
 
     /// <summary>Deletes a rule under optimistic concurrency.</summary>
     /// <param name="name">The rule name.</param>

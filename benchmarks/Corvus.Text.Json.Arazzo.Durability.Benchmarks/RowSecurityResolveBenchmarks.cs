@@ -36,7 +36,11 @@ public class RowSecurityResolveBenchmarks
 
         // The common deployment shape: a standing reach-only rule + binding, NO per-principal capability grant.
         var noGrantStore = new InMemorySecurityPolicyStore();
-        await noGrantStore.AddRuleAsync("team-payments", new SecurityRuleDefinition("team == 'payments'"), "admin", default);
+        using (ParsedJsonDocument<SecurityRuleDocument> draft = SecurityRuleDocument.Draft("team == 'payments'"))
+        {
+            (await noGrantStore.AddRuleAsync("team-payments", draft.RootElement, "admin", default)).Dispose();
+        }
+
         await noGrantStore.AddBindingAsync(
             new SecurityBindingDefinition("team", "payments", VerbGrant.Rules("team-payments"), VerbGrant.None, VerbGrant.None),
             "admin",
@@ -48,7 +52,11 @@ public class RowSecurityResolveBenchmarks
         // elevated state). The far-future expiry makes the grant active while forcing the resolver's time-bound path
         // (AnyExpiringBindings → a single clock read) — proving that path stays allocation-free.
         var grantedStore = new InMemorySecurityPolicyStore();
-        await grantedStore.AddRuleAsync("team-payments", new SecurityRuleDefinition("team == 'payments'"), "admin", default);
+        using (ParsedJsonDocument<SecurityRuleDocument> draft = SecurityRuleDocument.Draft("team == 'payments'"))
+        {
+            (await grantedStore.AddRuleAsync("team-payments", draft.RootElement, "admin", default)).Dispose();
+        }
+
         await grantedStore.AddBindingAsync(
             new SecurityBindingDefinition("team", "payments", VerbGrant.Rules("team-payments"), VerbGrant.None, VerbGrant.None),
             "admin",
