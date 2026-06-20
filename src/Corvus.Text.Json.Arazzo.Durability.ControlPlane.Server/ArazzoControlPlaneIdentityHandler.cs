@@ -77,6 +77,18 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
     }
 
     /// <inheritdoc/>
+    // Ownership ledger (GC-escaping allocations = the per-grant identity leaf + DescribeUsageScope lists + tracked string
+    // leaves; NO builder closure, NO per-item closure, NO re-materialisation — the ~2.0 KB closure-free floor):
+    //   kindToken ............. pooled UnescapedUtf8JsonString lease, disposed at end of the parse `if`.
+    //   prefix/prefixRented ... ArrayPool-rented byte[], returned in the `finally`.
+    //   source/pageToken/NextPageToken  string — LEAF (request params + store NextPageToken are string-typed).
+    //   found + UTF8.GetString  list/string — LEAF (IPrincipalDirectory seam is string-typed: LDAP filter / HTTP URI).
+    //   page .................. ObservedIdentityPage (class, IDisposable) — `using`; identities read during the one Ok pass, before dispose.
+    //   state/item ........... RefTuple<…> ref structs (stack, no heap) carrying the projection/per-grantee context to the static builders.
+    //   body .................. lazy GranteeList.Source<TContext> (no closure) — materialised once by Ok<TContext>, then GC.
+    //   per grantee `grants` .. IReadOnlyList<CredentialUsageGrant> — LEAF (DescribeUsageScope returns string POCO grants); ToIdentity is the identity leaf.
+    //   response .............. GranteeList immutable — workspace-owned (pooled arena); the host serialises it.
+    // The value/label/kind bytes path materialises NO managed string (spans / enum tokens). Benchmark: GranteeProjectionBenchmarks (2.01 KB).
     public async ValueTask<SearchGranteesResult> HandleSearchGranteesAsync(SearchGranteesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         GranteeKind? kind = null;
@@ -105,40 +117,35 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
                 ? parameters.Q.GetUtf8String().TakeOwnership(out prefixRented)
                 : default;
 
-            // The projected grantee (ResolvedGrantee.Source) is a ref struct, so it cannot be collected into a list; the
-            // array is built inline from the live results, which stay in scope through Ok (it materialises the body).
+            // Project the discovered principals/identities into the GranteeList body CLOSURE-FREE with a single
+            // materialisation: a context-threaded GranteeList.Source<TContext> (the generated Build<TContext> + static build
+            // methods, the per-projection state carried in a RefTuple — no bespoke context struct, no per-item closure)
+            // handed to the generated Ok<TContext>, which runs the one CreateBuilder<TContext> pass into the response
+            // workspace (no re-materialisation). value/label/kind flow BYTES-TO-BYTES (owned UTF-8 spans / enum tokens, no
+            // managed string); the {dimension, value} identity grants are the genuine string leaf (DescribeUsageScope).
+            // Ownership ledger above this method; proven by GranteeProjectionBenchmarks (~2.0 KB, the closure-free floor).
             if (string.Equals(source, "directory", StringComparison.Ordinal) && this.directory is not null)
             {
                 // The directory query is a string leaf (the IPrincipalDirectory seam is string-typed — an LDAP filter / an
                 // HTTP URI), so transcode the prefix once for it.
                 IReadOnlyList<ResolvedPrincipal> found = await this.directory.SearchAsync(kind ?? GranteeKind.Person, Encoding.UTF8.GetString(prefix.Span), limit, cancellationToken).ConfigureAwait(false);
 
-                // Project the resolved principals BYTES-TO-BYTES with the generated builder's context-threading form (static
-                // lambdas + a ref-struct state): each grantee's value/label flow as the owned UTF-8 the adapter resolved,
-                // written straight into the model — no managed-string round-trip, and no closure allocated per grantee.
-                var directoryState = new DirectoryGranteesState(found, context, this.access);
-                Models.GranteeList grantees = Models.GranteeList.CreateBuilder(
-                    workspace,
-                    in directoryState,
-                    Models.GranteeList.ResolvedGranteeArray.Build(in directoryState, BuildDirectoryGrantees)).RootElement;
-                return SearchGranteesResult.Ok(grantees, workspace);
+                var state = new RefTuple<IReadOnlyList<ResolvedPrincipal>, AccessContext, ControlPlaneAccess>(found, context, this.access);
+                var body = Models.GranteeList.Build(
+                    in state,
+                    grantees: Models.GranteeList.ResolvedGranteeArray.Build(in state, BuildDirectoryGrantees));
+                return SearchGranteesResult.Ok(body, workspace);
             }
 
             using ObservedIdentityPage page = await this.observed.SearchAsync(context, kind, prefix, limit, pageToken, cancellationToken).ConfigureAwait(false);
-            string? nextToken = page.NextPageToken;
 
-            // Project the observed identities BYTES-TO-BYTES with the context-threading form (mirrors the directory branch):
-            // each identity's subjectValue/subjectKind/label flow as UTF-8 spans straight into the model — no GetString, no
-            // per-grantee closure. The observed-store and response are distinct CTJ models, so the bridge between them is
-            // x.GetUtf8String() (the stored model exposes it directly). The opaque page token is a genuine string leaf, so
-            // it threads through the CreateBuilder<TContext> overload's nextPageToken parameter only when the store set it.
-            var observedState = new ObservedGranteesState(page, this.access);
-            Models.GranteeList.ResolvedGranteeArray.Source<ObservedGranteesState> observedGrantees =
-                Models.GranteeList.ResolvedGranteeArray.Build(in observedState, BuildObservedGrantees);
-            Models.GranteeList granteeList = nextToken is null
-                ? Models.GranteeList.CreateBuilder(workspace, in observedState, observedGrantees).RootElement
-                : Models.GranteeList.CreateBuilder(workspace, in observedState, observedGrantees, nextToken).RootElement;
-            return SearchGranteesResult.Ok(granteeList, workspace);
+            // The opaque page token is a genuine string leaf; it threads through Build's nextPageToken only when set.
+            var observedState = new RefTuple<ObservedIdentityPage, ControlPlaneAccess>(page, this.access);
+            var observedBody = Models.GranteeList.Build(
+                in observedState,
+                grantees: Models.GranteeList.ResolvedGranteeArray.Build(in observedState, BuildObservedGrantees),
+                nextPageToken: page.NextPageToken is { } token ? (Models.JsonString.Source)token : default);
+            return SearchGranteesResult.Ok(observedBody, workspace);
         }
         finally
         {
@@ -152,119 +159,86 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
     private static Models.AdministratorIdentity.Source ToIdentity(CredentialUsageGrant grant)
         => new((ref Models.AdministratorIdentity.Builder b) => b.Create(grant.Dimension, grant.Value));
 
-    // ── directory grantee projection (bytes-to-bytes, context-threaded — no closures, design §16.5.4) ────────────────
+    // ── grantee projection (closure-free Build<TContext>; RefTuple contexts; bytes-to-bytes value/label, §16.5.4) ──────
+    //
+    // The per-projection state (the page/found + AccessContext + ControlPlaneAccess) and the per-item state
+    // (principal/identity + the described grants) are threaded through a RefTuple<…> rather than a bespoke context struct;
+    // the static build methods deconstruct what they need. No closure is captured, and Ok<TContext> materialises the body
+    // in one pass — the ~2.0 KB closure-free floor proven by GranteeProjectionBenchmarks.
 
-    // Builds the directory grantees array: each principal admitted by the caller's read reach is projected through its own
-    // item state, so the per-grantee build threads the principal's owned value/label UTF-8 (no managed string, no closure).
-    private static void BuildDirectoryGrantees(in DirectoryGranteesState state, ref Models.GranteeList.ResolvedGranteeArray.Builder array)
+    // Builds the directory grantees array: each principal admitted by the caller's read reach (the directory is external,
+    // so reach-filter here) is projected through its own item RefTuple — the principal plus the {dimension, value} grants
+    // its sys: identity describes back to (DescribeUsageScope, the genuine string leaf).
+    private static void BuildDirectoryGrantees(in RefTuple<IReadOnlyList<ResolvedPrincipal>, AccessContext, ControlPlaneAccess> state, ref Models.GranteeList.ResolvedGranteeArray.Builder array)
     {
-        foreach (ResolvedPrincipal principal in state.Found)
+        (IReadOnlyList<ResolvedPrincipal> found, AccessContext context, ControlPlaneAccess access) = state;
+        foreach (ResolvedPrincipal principal in found)
         {
-            // The directory is external (no AccessContext on its rows), so reach-filter its results here, consistently.
-            if (!state.Context.Admits(AccessVerb.Read, principal.Identity))
+            if (!context.Admits(AccessVerb.Read, principal.Identity))
             {
                 continue;
             }
 
-            var item = new DirectoryGranteeItemState(principal, state.Access.DescribeUsageScope(principal.Identity));
+            var item = new RefTuple<ResolvedPrincipal, IReadOnlyList<CredentialUsageGrant>>(principal, access.DescribeUsageScope(principal.Identity));
             array.AddItem(Models.ResolvedGrantee.Build(in item, BuildDirectoryGrantee));
         }
     }
 
-    // Builds one resolved grantee: the value/label flow as the adapter-owned UTF-8 the principal holds (no string), the
-    // kind/source as UTF-8 enum tokens, and the identity is described as {dimension, value} grants. `complete` is true for
-    // a directory full-resolution (§17.2).
-    private static void BuildDirectoryGrantee(in DirectoryGranteeItemState item, ref Models.ResolvedGrantee.Builder grantee)
+    // Builds one directory grantee: the value/label flow as the adapter-owned UTF-8 the principal holds (no managed string),
+    // the kind/source as UTF-8 enum tokens. `complete` is true for a directory full-resolution (§17.2).
+    private static void BuildDirectoryGrantee(in RefTuple<ResolvedPrincipal, IReadOnlyList<CredentialUsageGrant>> item, ref Models.ResolvedGrantee.Builder grantee)
     {
-        grantee.Create(
-            in item,
-            complete: true,
-            identity: Models.ResolvedGrantee.AdministratorIdentityArray.Build(in item, BuildDirectoryGranteeIdentity),
-            kind: item.Principal.Kind.ToTokenUtf8(),
-            source: "directory"u8,
-            value: item.Principal.ValueMemory.Span,
-            label: item.Principal.HasLabel ? (Models.JsonString.Source)item.Principal.LabelMemory.Span : default);
-    }
-
-    // Describes a grantee's identity as the {dimension, value} grants its sys: tags map to (never raw tags). The grant
-    // dimension/value are the genuine response leaf (DescribeUsageScope materializes them as strings); ToIdentity writes
-    // them through the WriteAction form, so the lazy item never holds a stack ref to a string→Source temporary.
-    private static void BuildDirectoryGranteeIdentity(in DirectoryGranteeItemState item, ref Models.ResolvedGrantee.AdministratorIdentityArray.Builder identities)
-    {
-        foreach (CredentialUsageGrant grant in item.Grants)
+        ResolvedPrincipal principal = item.Item1;
+        if (principal.HasLabel)
         {
-            identities.AddItem(ToIdentity(grant));
+            grantee.Create(in item, complete: true, identity: Models.ResolvedGrantee.AdministratorIdentityArray.Build(in item, BuildGranteeIdentity), kind: principal.Kind.ToTokenUtf8(), source: "directory"u8, value: principal.ValueMemory.Span, label: (Models.JsonString.Source)principal.LabelMemory.Span);
+        }
+        else
+        {
+            grantee.Create(in item, complete: true, identity: Models.ResolvedGrantee.AdministratorIdentityArray.Build(in item, BuildGranteeIdentity), kind: principal.Kind.ToTokenUtf8(), source: "directory"u8, value: principal.ValueMemory.Span);
         }
     }
 
-    private readonly ref struct DirectoryGranteesState(IReadOnlyList<ResolvedPrincipal> found, AccessContext context, ControlPlaneAccess access)
-    {
-        public IReadOnlyList<ResolvedPrincipal> Found { get; } = found;
-
-        public AccessContext Context { get; } = context;
-
-        public ControlPlaneAccess Access { get; } = access;
-    }
-
-    private readonly ref struct DirectoryGranteeItemState(ResolvedPrincipal principal, IReadOnlyList<CredentialUsageGrant> grants)
-    {
-        public ResolvedPrincipal Principal { get; } = principal;
-
-        public IReadOnlyList<CredentialUsageGrant> Grants { get; } = grants;
-    }
-
-    // ── observed-identity grantee projection (bytes-to-bytes, context-threaded — no closures, design §16.5.4) ─────────
-
     // Builds the observed grantees array: the store already reach-filtered the page, so each identity is projected directly.
-    private static void BuildObservedGrantees(in ObservedGranteesState state, ref Models.GranteeList.ResolvedGranteeArray.Builder array)
+    private static void BuildObservedGrantees(in RefTuple<ObservedIdentityPage, ControlPlaneAccess> state, ref Models.GranteeList.ResolvedGranteeArray.Builder array)
     {
-        foreach (ObservedIdentity identity in state.Page.Identities)
+        (ObservedIdentityPage page, ControlPlaneAccess access) = state;
+        foreach (ObservedIdentity identity in page.Identities)
         {
-            var item = new ObservedGranteeItemState(identity, state.Access.DescribeUsageScope(identity.IdentityTagsValue));
+            var item = new RefTuple<ObservedIdentity, IReadOnlyList<CredentialUsageGrant>>(identity, access.DescribeUsageScope(identity.IdentityTagsValue));
             array.AddItem(Models.ResolvedGrantee.Build(in item, BuildObservedGrantee));
         }
     }
 
     // Builds one observed grantee: subjectValue/subjectKind/label flow as UTF-8 straight off the stored CTJ model (its
-    // generated JsonString/enum exposes GetUtf8String() directly — no managed string, no closure). `complete` is the
-    // stored honesty flag (§17.2). The identity is described as {dimension, value} grants (the genuine response leaf).
-    private static void BuildObservedGrantee(in ObservedGranteeItemState item, ref Models.ResolvedGrantee.Builder grantee)
+    // generated JsonString/enum exposes GetUtf8String() directly — a pooled lease, no managed string), bridged to the
+    // response model as spans. `complete` is the stored honesty flag (§17.2). The leases live until Create copies the bytes.
+    private static void BuildObservedGrantee(in RefTuple<ObservedIdentity, IReadOnlyList<CredentialUsageGrant>> item, ref Models.ResolvedGrantee.Builder grantee)
     {
-        using UnescapedUtf8JsonString kind = item.Identity.SubjectKind.GetUtf8String();
-        using UnescapedUtf8JsonString value = item.Identity.SubjectValue.GetUtf8String();
-        Models.ResolvedGrantee.AdministratorIdentityArray.Source<ObservedGranteeItemState> identity =
-            Models.ResolvedGrantee.AdministratorIdentityArray.Build(in item, BuildObservedGranteeIdentity);
-
-        if (item.Identity.Label.IsNotUndefined())
+        ObservedIdentity identity = item.Item1;
+        using UnescapedUtf8JsonString kind = identity.SubjectKind.GetUtf8String();
+        using UnescapedUtf8JsonString value = identity.SubjectValue.GetUtf8String();
+        if (identity.Label.IsNotUndefined())
         {
-            using UnescapedUtf8JsonString label = item.Identity.Label.GetUtf8String();
-            grantee.Create(in item, complete: item.Identity.CompleteValue, identity: identity, kind: kind.Span, source: "observed"u8, value: value.Span, label: label.Span);
+            using UnescapedUtf8JsonString label = identity.Label.GetUtf8String();
+            grantee.Create(in item, complete: identity.CompleteValue, identity: Models.ResolvedGrantee.AdministratorIdentityArray.Build(in item, BuildGranteeIdentity), kind: kind.Span, source: "observed"u8, value: value.Span, label: label.Span);
         }
         else
         {
-            grantee.Create(in item, complete: item.Identity.CompleteValue, identity: identity, kind: kind.Span, source: "observed"u8, value: value.Span);
+            grantee.Create(in item, complete: identity.CompleteValue, identity: Models.ResolvedGrantee.AdministratorIdentityArray.Build(in item, BuildGranteeIdentity), kind: kind.Span, source: "observed"u8, value: value.Span);
         }
     }
 
-    private static void BuildObservedGranteeIdentity(in ObservedGranteeItemState item, ref Models.ResolvedGrantee.AdministratorIdentityArray.Builder identities)
+    // The grantee's identity, described as the {dimension, value} grants its sys: tags map to (never raw tags) — the genuine
+    // string leaf; ToIdentity writes each grant through the WriteAction form. The item RefTuple's second element is the grant
+    // list; the first (TIdentity) is whatever the grantee branch threads (a ResolvedPrincipal or an ObservedIdentity) — the
+    // identity sub-array's context must match its grantee's context, so it is generic over that first element.
+    private static void BuildGranteeIdentity<TIdentity>(in RefTuple<TIdentity, IReadOnlyList<CredentialUsageGrant>> item, ref Models.ResolvedGrantee.AdministratorIdentityArray.Builder identities)
+        where TIdentity : allows ref struct
     {
-        foreach (CredentialUsageGrant grant in item.Grants)
+        foreach (CredentialUsageGrant grant in item.Item2)
         {
             identities.AddItem(ToIdentity(grant));
         }
-    }
-
-    private readonly ref struct ObservedGranteesState(ObservedIdentityPage page, ControlPlaneAccess access)
-    {
-        public ObservedIdentityPage Page { get; } = page;
-
-        public ControlPlaneAccess Access { get; } = access;
-    }
-
-    private readonly ref struct ObservedGranteeItemState(ObservedIdentity identity, IReadOnlyList<CredentialUsageGrant> grants)
-    {
-        public ObservedIdentity Identity { get; } = identity;
-
-        public IReadOnlyList<CredentialUsageGrant> Grants { get; } = grants;
     }
 }
