@@ -2057,6 +2057,43 @@ internal static partial class CodeGeneratorExtensions
             }
             """);
 
+        // The context-threaded mirror of the above: materialise a Source<TContext> that was assembled closure-free
+        // (the missing generic twin of the non-generic CreateBuilder(ws, in Source value)). A generated Ok<TContext>
+        // result factory routes a context-threaded response body straight through this for a single materialisation.
+        // Only object/array types carry a Source<TContext> (see AppendSourceOfContextRefStruct's guard), so gate on the
+        // same condition — a scalar has no Source<TContext> to consume.
+        if (builders.Any(b => b.ArrayBuilderName is not null || b.ObjectBuilderName is not null) ||
+            (typeDeclaration.ImpliedCoreTypesOrAny() & (CoreTypes.Object | CoreTypes.Array)) != 0)
+        {
+            generator
+                .AppendSeparatorLine()
+                .AppendBlockIndent(
+                $$"""
+                /// <summary>
+                /// Creates and initializes a mutable document from a context-threaded value.
+                /// </summary>
+                /// <typeparam name="TContext">The type of the context carried by the value.</typeparam>
+                /// <param name="workspace">The JSON workspace.</param>
+                /// <param name="value">The context-threaded value with which to initialize the builder.</param>
+                /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                /// <returns>An instance of a mutable document initialized with the given value.</returns>
+                public static JsonDocumentBuilder<{{generator.MutableClassName()}}> CreateBuilder<TContext>(
+                    JsonWorkspace workspace, scoped in {{generator.SourceClassName()}}<TContext> value, int initialCapacity = {{initialCapacity}})
+                    #if NET9_0_OR_GREATER
+                    where TContext : allows ref struct
+                    #endif
+                {
+                    // Create the document builder without a MetadataDb
+                    JsonDocumentBuilder<{{generator.MutableClassName()}}> documentBuilder = workspace.CreateBuilder<{{generator.MutableClassName()}}>(-1);
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    value.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder;
+                }
+                """);
+        }
+
         CoreTypes core = typeDeclaration.ImpliedCoreTypesOrAny();
 
         bool isArray = (core & CoreTypes.Array) != 0;
