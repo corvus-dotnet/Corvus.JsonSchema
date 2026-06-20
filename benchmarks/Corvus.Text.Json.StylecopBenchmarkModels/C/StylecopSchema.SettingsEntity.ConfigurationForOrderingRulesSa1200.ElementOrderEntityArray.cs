@@ -72,14 +72,14 @@ public readonly partial struct StylecopSchema
             /// </para>
             /// </remarks>
             [DebuggerDisplay("{DebuggerDisplay,nq}")]
-            public readonly partial struct ElementOrderEntityArray
+            public readonly partial struct EntityArray
 #if NET8_0_OR_GREATER
-                : IJsonElement<ElementOrderEntityArray>,
+                : IJsonElement<EntityArray>,
                   IFormattable,
                   ISpanFormattable,
                   IUtf8SpanFormattable
 #else
-                : IJsonElement<ElementOrderEntityArray>,
+                : IJsonElement<EntityArray>,
                   IFormattable
 #endif
             {
@@ -89,10 +89,10 @@ public readonly partial struct StylecopSchema
 
                 #pragma warning restore CS8618 // JsonDocument nullability
                 /// <summary>
-                /// Initializes a new instance of the <see cref="ElementOrderEntityArray"/> struct.
+                /// Initializes a new instance of the <see cref="EntityArray"/> struct.
                 /// </summary>
                 /// <param name="value">The value from which to construct the instance.</param>
-                internal ElementOrderEntityArray(IJsonDocument parent, int idx)
+                internal EntityArray(IJsonDocument parent, int idx)
                 {
                     Debug.Assert(idx >= 0);
                     _parent = parent;
@@ -102,7 +102,7 @@ public readonly partial struct StylecopSchema
                 /// <summary>
                 /// Gets the default instance.
                 /// </summary>
-                public static ElementOrderEntityArray DefaultInstance { get; } = ElementOrderEntityArray.ParseValue("[\n                \"kind\",\n                \"accessibility\",\n                \"constant\",\n                \"static\",\n                \"readonly\"\n              ]"u8);
+                public static EntityArray DefaultInstance { get; } = EntityArray.ParseValue("[\n                \"kind\",\n                \"accessibility\",\n                \"constant\",\n                \"static\",\n                \"readonly\"\n              ]"u8);
 
                 /// <summary>
                 /// Gets the rank of the array.
@@ -116,12 +116,12 @@ public readonly partial struct StylecopSchema
                 /// <returns>The item at the given index.</returns>
                 /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
                 /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-                public Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity this[int index]
+                public Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Entity this[int index]
                 {
                     get
                     {
                         CheckValidInstance();
-                        return _parent.GetArrayIndexElement<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity>(_idx, index);
+                        return _parent.GetArrayIndexElement<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Entity>(_idx, index);
                     }
                 }
 
@@ -139,10 +139,10 @@ public readonly partial struct StylecopSchema
                 /// Enumerates the array.
                 /// </summary>
                 /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-                public ArrayEnumerator<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity> EnumerateArray()
+                public ArrayEnumerator<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Entity> EnumerateArray()
                 {
                     CheckValidInstance();
-                    return EnumeratorCreator.CreateArrayEnumerator<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity>(_parent, _idx);
+                    return EnumeratorCreator.CreateArrayEnumerator<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Entity>(_parent, _idx);
                 }
 
                 /// <inheritdoc/>
@@ -159,7 +159,7 @@ public readonly partial struct StylecopSchema
                 /// <returns>
                 /// <c>True</c> if the values are equal.
                 /// </returns>
-                public static bool operator ==(in ElementOrderEntityArray left, in ElementOrderEntityArray right)
+                public static bool operator ==(in EntityArray left, in EntityArray right)
                 {
                     return left.Equals(right);
                 }
@@ -172,7 +172,7 @@ public readonly partial struct StylecopSchema
                 /// <returns>
                 /// <c>True</c> if the values are not equal.
                 /// </returns>
-                public static bool operator !=(in ElementOrderEntityArray left, in ElementOrderEntityArray right)
+                public static bool operator !=(in EntityArray left, in EntityArray right)
                 {
                     return !left.Equals(right);
                 }
@@ -185,7 +185,7 @@ public readonly partial struct StylecopSchema
                 /// <returns>
                 /// <c>True</c> if the values are equal.
                 /// </returns>
-                public static bool operator ==(in ElementOrderEntityArray left, in JsonElement right)
+                public static bool operator ==(in EntityArray left, in JsonElement right)
                 {
                     return left.Equals(right);
                 }
@@ -198,7 +198,7 @@ public readonly partial struct StylecopSchema
                 /// <returns>
                 /// <c>True</c> if the values are not equal.
                 /// </returns>
-                public static bool operator !=(in ElementOrderEntityArray left, in JsonElement right)
+                public static bool operator !=(in EntityArray left, in JsonElement right)
                 {
                     return !left.Equals(right);
                 }
@@ -209,7 +209,7 @@ public readonly partial struct StylecopSchema
                 /// <param name="value">The instance of this type.</param>
                 /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public static implicit operator JsonElement(ElementOrderEntityArray instance)
+                public static implicit operator JsonElement(EntityArray instance)
                 {
                     return JsonElement.From(instance);
                 }
@@ -220,9 +220,9 @@ public readonly partial struct StylecopSchema
                 /// <param name="value">The instance of this type as a JsonElement.</param>
                 /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public static implicit operator ElementOrderEntityArray(JsonElement instance)
+                public static implicit operator EntityArray(JsonElement instance)
                 {
-                    return ElementOrderEntityArray.From(instance);
+                    return EntityArray.From(instance);
                 }
 
                 /// <summary>
@@ -231,7 +231,7 @@ public readonly partial struct StylecopSchema
                 /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
                 /// <returns>An instance of this type, initialized from the JSON element.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public static ElementOrderEntityArray From<T>(in T instance)
+                public static EntityArray From<T>(in T instance)
                     where T : struct, IJsonElement<T>
                 {
                     return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -256,10 +256,10 @@ public readonly partial struct StylecopSchema
                 /// </exception>
                 [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public static ElementOrderEntityArray ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+                public static EntityArray ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
                 {
                     #pragma warning disable CS0618 // Type or member is obsolete
-                    return JsonElementHelpers.ParseValue<ElementOrderEntityArray>(utf8Json, options);
+                    return JsonElementHelpers.ParseValue<EntityArray>(utf8Json, options);
                     #pragma warning restore CS0618
                 }
 
@@ -282,10 +282,10 @@ public readonly partial struct StylecopSchema
                 /// </exception>
                 [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public static ElementOrderEntityArray ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+                public static EntityArray ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
                 {
                     #pragma warning disable CS0618 // Type or member is obsolete
-                    return JsonElementHelpers.ParseValue<ElementOrderEntityArray>(json, options);
+                    return JsonElementHelpers.ParseValue<EntityArray>(json, options);
                     #pragma warning restore CS0618
                 }
 
@@ -308,10 +308,10 @@ public readonly partial struct StylecopSchema
                 /// </exception>
                 [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public static ElementOrderEntityArray ParseValue(string json, JsonDocumentOptions options = default)
+                public static EntityArray ParseValue(string json, JsonDocumentOptions options = default)
                 {
                     #pragma warning disable CS0618 // Type or member is obsolete
-                    return JsonElementHelpers.ParseValue<ElementOrderEntityArray>(json, options);
+                    return JsonElementHelpers.ParseValue<EntityArray>(json, options);
                     #pragma warning restore CS0618
                 }
 
@@ -351,10 +351,10 @@ public readonly partial struct StylecopSchema
                 ///   A value could not be read from the reader.
                 /// </exception>
                 [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-                public static ElementOrderEntityArray ParseValue(ref Utf8JsonReader reader)
+                public static EntityArray ParseValue(ref Utf8JsonReader reader)
                 {
                     #pragma warning disable CS0618 // Type or member is obsolete
-                    return JsonElementHelpers.ParseValue<ElementOrderEntityArray>(ref reader);
+                    return JsonElementHelpers.ParseValue<EntityArray>(ref reader);
                     #pragma warning restore CS0618
                 }
 
@@ -396,16 +396,16 @@ public readonly partial struct StylecopSchema
                 /// <exception cref="JsonException">
                 ///   A value could not be read from the reader.
                 /// </exception>
-                public static bool TryParseValue(ref Utf8JsonReader reader, out ElementOrderEntityArray? result)
+                public static bool TryParseValue(ref Utf8JsonReader reader, out EntityArray? result)
                 {
-                    return JsonElementHelpers.TryParseValue<ElementOrderEntityArray>(ref reader, out result);
+                    return JsonElementHelpers.TryParseValue<EntityArray>(ref reader, out result);
                 }
 
                 /// <inheritdoc/>
                 public override bool Equals(object? obj)
                 {
                     return
-                        (obj is IJsonElement value && Equals(new ElementOrderEntityArray(value.ParentDocument, value.ParentDocumentIndex))) ||
+                        (obj is IJsonElement value && Equals(new EntityArray(value.ParentDocument, value.ParentDocumentIndex))) ||
                         (obj is null && this.IsNull());
                 }
 
@@ -495,11 +495,11 @@ public readonly partial struct StylecopSchema
                 void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-                static ElementOrderEntityArray IJsonElement<ElementOrderEntityArray>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+                static EntityArray IJsonElement<EntityArray>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
                 [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-                private string DebuggerDisplay => $"ElementOrderEntityArray: ValueKind = {ValueKind} : \"{ToString()}\"";
+                private string DebuggerDisplay => $"EntityArray: ValueKind = {ValueKind} : \"{ToString()}\"";
 
                 [DebuggerBrowsable(DebuggerBrowsableState.Never)]
                 IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -514,11 +514,11 @@ public readonly partial struct StylecopSchema
                 JsonValueKind IJsonElement.ValueKind => ValueKind;
 
                 /// <summary>
-                /// Gets a <see cref="ElementOrderEntityArray"/> which can be safely stored beyond the lifetime of the
+                /// Gets a <see cref="EntityArray"/> which can be safely stored beyond the lifetime of the
                 /// original document.
                 /// </summary>
                 /// <returns>
-                /// A <see cref="ElementOrderEntityArray"/> which can be safely stored beyond the lifetime of the
+                /// A <see cref="EntityArray"/> which can be safely stored beyond the lifetime of the
                 /// original document.
                 /// </returns>
                 /// <remarks>
@@ -527,10 +527,10 @@ public readonly partial struct StylecopSchema
                 /// this method returns the same instance without additional allocation.
                 /// </para>
                 /// </remarks>
-                public ElementOrderEntityArray Clone()
+                public EntityArray Clone()
                 {
                     CheckValidInstance();
-                    return _parent.CloneElement<ElementOrderEntityArray>(_idx);
+                    return _parent.CloneElement<EntityArray>(_idx);
                 }
 
                 /// <summary>
@@ -538,7 +538,7 @@ public readonly partial struct StylecopSchema
                 /// or returns this instance if it is already immutable.
                 /// </summary>
                 /// <returns>
-                /// An immutable <see cref="ElementOrderEntityArray"/> that lives for the lifetime of its
+                /// An immutable <see cref="EntityArray"/> that lives for the lifetime of its
                 /// workspace and its associated documents.
                 /// </returns>
                 /// <remarks>
@@ -552,12 +552,12 @@ public readonly partial struct StylecopSchema
                 /// If this instance is already backed by an immutable document, it is returned as-is.
                 /// </para>
                 /// </remarks>
-                public ElementOrderEntityArray Freeze()
+                public EntityArray Freeze()
                 {
                     CheckValidInstance();
                     if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
                     {
-                        return mutable.FreezeElement<ElementOrderEntityArray>(_idx);
+                        return mutable.FreezeElement<EntityArray>(_idx);
                     }
 
                     return this;

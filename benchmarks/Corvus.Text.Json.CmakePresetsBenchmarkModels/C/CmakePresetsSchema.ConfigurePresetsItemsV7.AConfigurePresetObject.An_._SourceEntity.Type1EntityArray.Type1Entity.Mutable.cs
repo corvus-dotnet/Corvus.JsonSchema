@@ -17,58 +17,73 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.VercelBenchmark.Current;
+namespace Corvus.CmakePresetsBenchmark.Current;
 
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
-public readonly partial struct VercelSchema
+/// <remarks>
+/// <para>
+/// The presets specify the generator and the build directory, and optionally a list of variables and other arguments to pass to CMake.
+/// </para>
+/// </remarks>
+public readonly partial struct CmakePresetsSchema
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// A list of header definitions.
+    /// A configure preset object.
     /// </para>
     /// </remarks>
-    public readonly partial struct RequiredHeadersAndSourceEntityArray
+    public readonly partial struct ConfigurePresetsItemsV7
     {
         /// <summary>
         /// Generated from JSON Schema.
         /// </summary>
-        public readonly partial struct RequiredHeadersAndSourceEntity
+        /// <remarks>
+        /// <para>
+        /// A configure preset object.
+        /// </para>
+        /// </remarks>
+        public readonly partial struct AConfigurePresetObject
         {
             /// <summary>
             /// Generated from JSON Schema.
             /// </summary>
             /// <remarks>
             /// <para>
-            /// An array of requirements that are needed to match
+            /// An optional object specifying trace options.
             /// </para>
             /// </remarks>
-            public readonly partial struct MissingEntityArray
+            public readonly partial struct AnOptionalObjectSpecifyingTraceOptions
             {
                 /// <summary>
                 /// Generated from JSON Schema.
                 /// </summary>
-                public readonly partial struct MissingEntity
+                public readonly partial struct SourceEntity
                 {
                     /// <summary>
                     /// Generated from JSON Schema.
                     /// </summary>
-                    public readonly partial struct RequiredKeyAndType
+                    /// <remarks>
+                    /// <para>
+                    /// An optional array of strings representing the paths to source files to be traced.
+                    /// </para>
+                    /// </remarks>
+                    public readonly partial struct AStringRepresentingThePathToOneSourceFileToBeTracedArray
                     {
                         /// <summary>
                         /// Generated from JSON Schema.
                         /// </summary>
                         /// <remarks>
                         /// <para>
-                        /// A regular expression used to match the value. Named groups can be used in the destination
+                        /// A string representing the path to one source file to be traced.
                         /// </para>
                         /// </remarks>
                         [DebuggerDisplay("{DebuggerDisplay,nq}")]
-                        public readonly partial struct ValueEntity
+                        public readonly partial struct AStringRepresentingThePathToOneSourceFileToBeTraced
                         {
                             public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -176,7 +191,7 @@ public readonly partial struct VercelSchema
                                 /// <param name="value">The instance of this type.</param>
                                 /// <returns>A mutable instance.</returns>
                                 /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-                                public static explicit operator Mutable(ValueEntity instance)
+                                public static explicit operator Mutable(AStringRepresentingThePathToOneSourceFileToBeTraced instance)
                                 {
                                     if (instance._parent is not IMutableJsonDocument doc)
                                     {
@@ -191,9 +206,9 @@ public readonly partial struct VercelSchema
                                 /// Converts to an immutable instance of the <see cref="Mutable"/> type.
                                 /// </summary>
                                 /// <param name="value">The <see cref="Mutable"/> instance.</param>
-                                /// <returns>An immutable instance of a <see cref="ValueEntity"/>, initialized from the <see cref="Mutable"/> value.</returns>
+                                /// <returns>An immutable instance of a <see cref="AStringRepresentingThePathToOneSourceFileToBeTraced"/>, initialized from the <see cref="Mutable"/> value.</returns>
                                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                                public static implicit operator ValueEntity(Mutable instance)
+                                public static implicit operator AStringRepresentingThePathToOneSourceFileToBeTraced(Mutable instance)
                                 {
                                     return new(instance._parent, instance._idx);
                                 }
@@ -226,7 +241,7 @@ public readonly partial struct VercelSchema
                                 public override bool Equals(object? obj)
                                 {
                                     return
-                                        (obj is IJsonElement value && Equals(new ValueEntity(value.ParentDocument, value.ParentDocumentIndex))) ||
+                                        (obj is IJsonElement value && Equals(new AStringRepresentingThePathToOneSourceFileToBeTraced(value.ParentDocument, value.ParentDocumentIndex))) ||
                                         (obj is null && this.IsNull());
                                 }
 
@@ -376,7 +391,7 @@ public readonly partial struct VercelSchema
 #endif
 
                                 [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-                                private string DebuggerDisplay => $"ValueEntity.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+                                private string DebuggerDisplay => $"AStringRepresentingThePathToOneSourceFileToBeTraced.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
 
                                 [DebuggerBrowsable(DebuggerBrowsableState.Never)]
                                 IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -391,11 +406,11 @@ public readonly partial struct VercelSchema
                                 JsonValueKind IJsonElement.ValueKind => ValueKind;
 
                                 /// <summary>
-                                /// Gets a <see cref="ValueEntity"/> which can be safely stored beyond the lifetime of the
+                                /// Gets a <see cref="AStringRepresentingThePathToOneSourceFileToBeTraced"/> which can be safely stored beyond the lifetime of the
                                 /// original document.
                                 /// </summary>
                                 /// <returns>
-                                /// A <see cref="ValueEntity"/> which can be safely stored beyond the lifetime of the
+                                /// A <see cref="AStringRepresentingThePathToOneSourceFileToBeTraced"/> which can be safely stored beyond the lifetime of the
                                 /// original document.
                                 /// </returns>
                                 /// <remarks>
@@ -404,10 +419,10 @@ public readonly partial struct VercelSchema
                                 /// document. The result is independent of the workspace.
                                 /// </para>
                                 /// </remarks>
-                                public readonly ValueEntity Clone()
+                                public readonly AStringRepresentingThePathToOneSourceFileToBeTraced Clone()
                                 {
                                     CheckValidInstance();
-                                    return _parent.CloneElement<ValueEntity>(_idx);
+                                    return _parent.CloneElement<AStringRepresentingThePathToOneSourceFileToBeTraced>(_idx);
                                 }
 
                                 /// <summary>
@@ -415,7 +430,7 @@ public readonly partial struct VercelSchema
                                 /// document builder registered in the same workspace.
                                 /// </summary>
                                 /// <returns>
-                                /// An immutable <see cref="ValueEntity"/> that lives for the lifetime of its
+                                /// An immutable <see cref="AStringRepresentingThePathToOneSourceFileToBeTraced"/> that lives for the lifetime of its
                                 /// workspace and its associated documents.
                                 /// </returns>
                                 /// <remarks>
@@ -426,10 +441,10 @@ public readonly partial struct VercelSchema
                                 /// immutable but is only valid for the lifetime of the workspace.
                                 /// </para>
                                 /// </remarks>
-                                public readonly ValueEntity Freeze()
+                                public readonly AStringRepresentingThePathToOneSourceFileToBeTraced Freeze()
                                 {
                                     CheckValidInstance();
-                                    return _parent.FreezeElement<ValueEntity>(_idx);
+                                    return _parent.FreezeElement<AStringRepresentingThePathToOneSourceFileToBeTraced>(_idx);
                                 }
                             }
 
@@ -479,7 +494,7 @@ public readonly partial struct VercelSchema
                                     _kind = requiresUnescaping ? Kind.RawUtf8StringRequiresUnescaping : Kind.RawUtf8StringNotRequiresUnescaping;
                                 }
 
-                                public static implicit operator Source(ValueEntity instance) => new(JsonElement.From(instance));
+                                public static implicit operator Source(AStringRepresentingThePathToOneSourceFileToBeTraced instance) => new(JsonElement.From(instance));
 
                                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                                 public static implicit operator Source(ReadOnlySpan<byte> value) => new (value);
@@ -655,31 +670,7 @@ public readonly partial struct VercelSchema
                             /// <returns>An instance of a mutable document initialized with this instance.</returns>
                             public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
                             {
-                                return workspace.CreateBuilder<ValueEntity, Mutable>(this);
-                            }
-
-                            /// <summary>
-                            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
-                            /// </summary>
-                            /// <param name="value">The value with which to initialize the document.</param>
-                            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
-                            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
-                            public static ParsedJsonDocument<ValueEntity> Create(
-                                scoped in Source value, int initialCapacity = 1)
-                            {
-                                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
-                                try
-                                {
-                                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
-                                    value.AddAsItem(ref cvb);
-                                    Debug.Assert(cvb.MemberCount == 1);
-                                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-                                    return documentBuilder.ToParsedJsonDocument<ValueEntity>();
-                                }
-                                finally
-                                {
-                                    documentBuilder.Dispose();
-                                }
+                                return workspace.CreateBuilder<AStringRepresentingThePathToOneSourceFileToBeTraced, Mutable>(this);
                             }
                         }
                     }

@@ -17,48 +17,63 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.VercelBenchmark.Current;
+namespace Corvus.CmakePresetsBenchmark.Current;
 
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
-public readonly partial struct VercelSchema
+/// <remarks>
+/// <para>
+/// The presets specify the generator and the build directory, and optionally a list of variables and other arguments to pass to CMake.
+/// </para>
+/// </remarks>
+public readonly partial struct CmakePresetsSchema
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// A list of rewrite definitions.
+    /// A configure preset object.
     /// </para>
     /// </remarks>
-    public readonly partial struct AListOfRewriteDefiniRequiredDestinArray
+    public readonly partial struct ConfigurePresetsItemsV7
     {
         /// <summary>
         /// Generated from JSON Schema.
         /// </summary>
-        public readonly partial struct RequiredDestinationAndSourceEntity
+        /// <remarks>
+        /// <para>
+        /// A configure preset object.
+        /// </para>
+        /// </remarks>
+        public readonly partial struct AConfigurePresetObject
         {
             /// <summary>
             /// Generated from JSON Schema.
             /// </summary>
             /// <remarks>
             /// <para>
-            /// An array of requirements that are needed to match
+            /// An optional object specifying trace options.
             /// </para>
             /// </remarks>
-            public readonly partial struct MissingEntityArray
+            public readonly partial struct AnOptionalObjectSpecifyingTraceOptions
             {
                 /// <summary>
                 /// Generated from JSON Schema.
                 /// </summary>
-                public readonly partial struct MissingEntity
+                public readonly partial struct SourceEntity
                 {
                     /// <summary>
                     /// Generated from JSON Schema.
                     /// </summary>
+                    /// <remarks>
+                    /// <para>
+                    /// An optional array of strings representing the paths to source files to be traced.
+                    /// </para>
+                    /// </remarks>
                     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-                    public readonly partial struct RequiredKeyAndType
+                    public readonly partial struct AStringRepresentingThePathToOneSourceFileToBeTracedArray
                     {
                         public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -163,7 +178,7 @@ public readonly partial struct VercelSchema
                             /// <param name="value">The instance of this type.</param>
                             /// <returns>A mutable instance.</returns>
                             /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-                            public static explicit operator Mutable(RequiredKeyAndType instance)
+                            public static explicit operator Mutable(AStringRepresentingThePathToOneSourceFileToBeTracedArray instance)
                             {
                                 if (instance._parent is not IMutableJsonDocument doc)
                                 {
@@ -178,9 +193,9 @@ public readonly partial struct VercelSchema
                             /// Converts to an immutable instance of the <see cref="Mutable"/> type.
                             /// </summary>
                             /// <param name="value">The <see cref="Mutable"/> instance.</param>
-                            /// <returns>An immutable instance of a <see cref="RequiredKeyAndType"/>, initialized from the <see cref="Mutable"/> value.</returns>
+                            /// <returns>An immutable instance of a <see cref="AStringRepresentingThePathToOneSourceFileToBeTracedArray"/>, initialized from the <see cref="Mutable"/> value.</returns>
                             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                            public static implicit operator RequiredKeyAndType(Mutable instance)
+                            public static implicit operator AStringRepresentingThePathToOneSourceFileToBeTracedArray(Mutable instance)
                             {
                                 return new(instance._parent, instance._idx);
                             }
@@ -198,89 +213,46 @@ public readonly partial struct VercelSchema
                             }
 
                             /// <summary>
-                            /// Gets the <c>key</c> property.
+                            /// Gets the item at the given index.
                             /// </summary>
-                            /// <remarks>
-                            /// <para>
-                            /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-                            /// </para>
-                            /// <para>
-                            /// The name of the element contained in the particular type
-                            /// </para>
-                            /// </remarks>
-                            public Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.TheNameOfTheElementContainedInTheParticularType.Mutable Key
+                            /// <param name="index">The index at which to retrieve the item.</param>
+                            /// <returns>The item at the given index.</returns>
+                            /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
+                            /// <exception cref="InvalidOperationException">The value is not an array.</exception>
+                            public Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.AStringRepresentingThePathToOneSourceFileToBeTraced.Mutable this[int index]
                             {
                                 get
                                 {
-                                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeyUtf8, out Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.TheNameOfTheElementContainedInTheParticularType.Mutable value))
-                                    {
-                                        return value;
-                                    }
-
-                                    return default;
+                                    CheckValidInstance();
+                                    return _parent.GetArrayIndexElement<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.AStringRepresentingThePathToOneSourceFileToBeTraced.Mutable>(_idx, index);
                                 }
                             }
 
                             /// <summary>
-                            /// Gets the <c>type</c> property.
+                            /// Gets the array length.
                             /// </summary>
-                            /// <remarks>
-                            /// <para>
-                            /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-                            /// </para>
-                            /// <para>
-                            /// The type of request element to check
-                            /// </para>
-                            /// </remarks>
-                            public Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.TheTypeOfRequestElementToCheck.Mutable Type
-                            {
-                                get
-                                {
-                                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TypeUtf8, out Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.TheTypeOfRequestElementToCheck.Mutable value))
-                                    {
-                                        return value;
-                                    }
-
-                                    return default;
-                                }
-                            }
-
-                            /// <summary>
-                            /// Gets the (optional) <c>value</c> property.
-                            /// </summary>
-                            /// <remarks>
-                            /// <para>
-                            /// A regular expression used to match the value. Named groups can be used in the destination
-                            /// </para>
-                            /// </remarks>
-                            public Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.ValueEntity.Mutable Value
-                            {
-                                get
-                                {
-                                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ValueUtf8, out Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.ValueEntity.Mutable value))
-                                    {
-                                        return value;
-                                    }
-
-                                    return default;
-                                }
-                            }
-
-                            /// <summary>
-                            /// Gets the number of properties in the object.
-                            /// </summary>
-                            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-                            public int GetPropertyCount()
+                            /// <exception cref="InvalidOperationException">The value is not an array.</exception>
+                            public int GetArrayLength()
                             {
                                 CheckValidInstance();
-                                return _parent.GetPropertyCount(_idx);
+                                return _parent.GetArrayLength(_idx);
+                            }
+
+                            /// <summary>
+                            /// Enumerates the array.
+                            /// </summary>
+                            /// <exception cref="InvalidOperationException">The value is not an array.</exception>
+                            public ArrayEnumerator<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.AStringRepresentingThePathToOneSourceFileToBeTraced.Mutable> EnumerateArray()
+                            {
+                                CheckValidInstance();
+                                return EnumeratorCreator.CreateArrayEnumerator<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.AStringRepresentingThePathToOneSourceFileToBeTraced.Mutable>(_parent, _idx);
                             }
 
                             /// <inheritdoc/>
                             public override bool Equals(object? obj)
                             {
                                 return
-                                    (obj is IJsonElement value && Equals(new RequiredKeyAndType(value.ParentDocument, value.ParentDocumentIndex))) ||
+                                    (obj is IJsonElement value && Equals(new AStringRepresentingThePathToOneSourceFileToBeTracedArray(value.ParentDocument, value.ParentDocumentIndex))) ||
                                     (obj is null && this.IsNull());
                             }
 
@@ -293,113 +265,6 @@ public readonly partial struct VercelSchema
                                 where T : struct, IJsonElement
                             {
                                 return JsonElementHelpers.DeepEquals(this, other);
-                            }
-
-                            /// <summary>
-                            /// Set the <c>key</c> property.
-                            /// </summary>
-                            /// <param name="value">The value of the property to add.</param>
-                            public void SetKey(scoped in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.TheNameOfTheElementContainedInTheParticularType.Source value)
-                            {
-                                CheckValidInstance();
-
-                                if (value.IsUndefined)
-                                {
-                                    CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("key");
-                                }
-
-                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeyUtf8, out IJsonDocument? elementParent, out int elementIdx))
-                                {
-                                    // We are going to replace just the value
-                                    value.AddAsItem(ref cvb);
-                                    _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-                                }
-                                else
-                                {
-                                    // We are going to insert the new value
-                                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Key, ref cvb);
-                                    int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                                    _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-                                }
-
-                                _documentVersion = _parent.Version;
-                            }
-
-                            /// <summary>
-                            /// Set the <c>type</c> property.
-                            /// </summary>
-                            /// <param name="value">The value of the property to add.</param>
-                            public void SetType(scoped in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.TheTypeOfRequestElementToCheck.Source value)
-                            {
-                                CheckValidInstance();
-
-                                if (value.IsUndefined)
-                                {
-                                    CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("type");
-                                }
-
-                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TypeUtf8, out IJsonDocument? elementParent, out int elementIdx))
-                                {
-                                    // We are going to replace just the value
-                                    value.AddAsItem(ref cvb);
-                                    _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-                                }
-                                else
-                                {
-                                    // We are going to insert the new value
-                                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref cvb);
-                                    int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                                    _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-                                }
-
-                                _documentVersion = _parent.Version;
-                            }
-
-                            /// <summary>
-                            /// Set the <c>value</c> property.
-                            /// </summary>
-                            /// <param name="value">The value of the property to add.</param>
-                            public void SetValue(scoped in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.ValueEntity.Source value)
-                            {
-                                CheckValidInstance();
-
-                                if (value.IsUndefined)
-                                {
-                                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ValueUtf8);
-                                    _documentVersion = _parent.Version;
-                                    return;
-                                }
-
-                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
-                                {
-                                    // We are going to replace just the value
-                                    value.AddAsItem(ref cvb);
-                                    _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-                                }
-                                else
-                                {
-                                    // We are going to insert the new value
-                                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Value, ref cvb);
-                                    int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                                    _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-                                }
-
-                                _documentVersion = _parent.Version;
-                            }
-
-                            /// <summary>
-                            /// Remove the <c>value</c> property, if present.
-                            /// </summary>
-                            /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-                            public bool RemoveValue()
-                            {
-                                CheckValidInstance();
-                                bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ValueUtf8);
-                                _documentVersion = _parent.Version;
-                                return result;
                             }
 
                             /// <inheritdoc/>
@@ -486,7 +351,359 @@ public readonly partial struct VercelSchema
 #endif
 
                             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-                            private string DebuggerDisplay => $"RequiredKeyAndType.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+                            private string DebuggerDisplay => $"AStringRepresentingThePathToOneSourceFileToBeTracedArray.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+                            /// <summary>
+                            ///   Sets the value of an array element at the specified index.
+                            /// </summary>
+                            /// <param name="itemIndex">The zero-based index of the array element to set.</param>
+                            /// <param name="value">The item value to set.</param>
+                            /// <exception cref="InvalidOperationException">
+                            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+                            ///   or the element reference is stale due to document mutations.
+                            /// </exception>
+                            /// <exception cref="ObjectDisposedException">
+                            ///   The parent <see cref="JsonDocument"/> has been disposed.
+                            /// </exception>
+                            /// <exception cref="ArgumentOutOfRangeException">
+                            ///   <paramref name="itemIndex"/> is negative or greater than the array length.
+                            /// </exception>
+                            /// <remarks>
+                            ///   <para>
+                            ///     This method allows replacing existing array elements or appending new elements
+                            ///     when <paramref name="itemIndex"/> equals the current array length.
+                            ///   </para>
+                            /// </remarks>
+                            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                            public void SetItem(int itemIndex, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.AStringRepresentingThePathToOneSourceFileToBeTraced.Source value)
+                            {
+                                CheckValidInstance();
+
+                                if (value.IsUndefined)
+                                {
+                                    RemoveAt(itemIndex);
+                                    return;
+                                }
+
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 30);
+                                value.AddAsItem(ref cvb);
+                                int arrayLength = GetArrayLength();
+                                if (itemIndex == arrayLength)
+                                {
+                                    _parent.InsertAndDispose(_idx, _idx + _parent.GetDbSize(_idx, false), ref cvb);
+                                }
+                                else
+                                {
+                                    _parent.GetArrayIndexElement(_idx, itemIndex, out IMutableJsonDocument elementParent, out int elementIdx);
+                                    _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+                                }
+
+                                _documentVersion = _parent.Version;
+                            }
+                            /// <summary>
+                            ///   Inserts an item into the array at the specified index.
+                            /// </summary>
+                            /// <param name="itemIndex">The zero-based index of the array element at which to insert.</param>
+                            /// <param name="value">The item value to insert.</param>
+                            /// <exception cref="InvalidOperationException">
+                            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+                            ///   or the element reference is stale due to document mutations.
+                            /// </exception>
+                            /// <exception cref="ObjectDisposedException">
+                            ///   The parent <see cref="JsonDocument"/> has been disposed.
+                            /// </exception>
+                            /// <exception cref="ArgumentOutOfRangeException">
+                            ///   <paramref name="itemIndex"/> is negative or greater than the array length.
+                            /// </exception>
+                            /// <remarks>
+                            ///   <para>
+                            ///     This method allows inserting array elements or appending new elements
+                            ///     when <paramref name="itemIndex"/> equals the current array length.
+                            ///   </para>
+                            /// </remarks>
+                            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                            public void InsertItem(int itemIndex, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.AStringRepresentingThePathToOneSourceFileToBeTraced.Source value)
+                            {
+                                CheckValidInstance();
+
+                                if (value.IsUndefined)
+                                {
+                                    return;
+                                }
+
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 30);
+                                value.AddAsItem(ref cvb);
+                                _parent.InsertAndDispose(_idx, _parent.GetArrayInsertionIndex(_idx, itemIndex), ref cvb);
+                                _documentVersion = _parent.Version;
+                            }
+                            /// <summary>
+                            ///   Adds an item to the end of the array.
+                            /// </summary>
+                            /// <param name="value">The item value to add.</param>
+                            /// <exception cref="InvalidOperationException">
+                            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+                            ///   or the element reference is stale due to document mutations.
+                            /// </exception>
+                            /// <exception cref="ObjectDisposedException">
+                            ///   The parent <see cref="JsonDocument"/> has been disposed.
+                            /// </exception>
+                            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                            public void AddItem(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.AStringRepresentingThePathToOneSourceFileToBeTraced.Source value)
+                            {
+                                InsertItem(GetArrayLength(), in value);
+                            }
+                            /// <summary>
+                            ///   Inserts multiple items into the array at the specified index,
+                            ///   using an <see cref="JsonElement.ArrayBuilder"/> delegate to build the items.
+                            /// </summary>
+                            /// <param name="itemIndex">The zero-based index at which to insert the items.</param>
+                            /// <param name="rangeBuilder">A delegate that adds items to an <see cref="JsonElement.ArrayBuilder"/>.</param>
+                            /// <param name="estimatedMemberCount">The estimated total number of elements for capacity optimization.</param>
+                            /// <exception cref="InvalidOperationException">
+                            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+                            ///   or the element reference is stale due to document mutations.
+                            /// </exception>
+                            /// <exception cref="ObjectDisposedException">
+                            ///   The parent <see cref="JsonDocument"/> has been disposed.
+                            /// </exception>
+                            /// <exception cref="ArgumentOutOfRangeException">
+                            ///   <paramref name="itemIndex"/> is negative or greater than the array length.
+                            /// </exception>
+                            /// <remarks>
+                            ///   <para>
+                            ///     Only the items built by the delegate are inserted — no array wrapper is added.
+                            ///   </para>
+                            /// </remarks>
+                            public void InsertRange(int itemIndex, JsonElement.ArrayBuilder.Build rangeBuilder, int estimatedMemberCount = 30)
+                            {
+                                CheckValidInstance();
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, estimatedMemberCount);
+                                JsonElement.ArrayBuilder.BuildItems(rangeBuilder, ref cvb);
+                                _parent.InsertAndDispose(_idx, _parent.GetArrayInsertionIndex(_idx, itemIndex), ref cvb);
+                                _documentVersion = _parent.Version;
+                            }
+
+                            /// <summary>
+                            ///   Inserts multiple items into the array at the specified index,
+                            ///   using an <see cref="JsonElement.ArrayBuilder"/> delegate with a context parameter.
+                            /// </summary>
+                            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+                            /// <param name="itemIndex">The zero-based index at which to insert the items.</param>
+                            /// <param name="context">The context to pass to the builder delegate.</param>
+                            /// <param name="rangeBuilder">A delegate that adds items to an <see cref="JsonElement.ArrayBuilder"/>.</param>
+                            /// <param name="estimatedMemberCount">The estimated total number of elements for capacity optimization.</param>
+                            /// <exception cref="InvalidOperationException">
+                            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+                            ///   or the element reference is stale due to document mutations.
+                            /// </exception>
+                            /// <exception cref="ObjectDisposedException">
+                            ///   The parent <see cref="JsonDocument"/> has been disposed.
+                            /// </exception>
+                            /// <exception cref="ArgumentOutOfRangeException">
+                            ///   <paramref name="itemIndex"/> is negative or greater than the array length.
+                            /// </exception>
+                            /// <remarks>
+                            ///   <para>
+                            ///     Only the items built by the delegate are inserted — no array wrapper is added.
+                            ///   </para>
+                            /// </remarks>
+                            public void InsertRange<TContext>(int itemIndex, in TContext context, JsonElement.ArrayBuilder.Build<TContext> rangeBuilder, int estimatedMemberCount = 30)
+                            #if NET9_0_OR_GREATER
+                                where TContext : allows ref struct
+                            #endif
+                            {
+                                CheckValidInstance();
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, estimatedMemberCount);
+                                JsonElement.ArrayBuilder.BuildItems(context, rangeBuilder, ref cvb);
+                                _parent.InsertAndDispose(_idx, _parent.GetArrayInsertionIndex(_idx, itemIndex), ref cvb);
+                                _documentVersion = _parent.Version;
+                            }
+                            /// <summary>
+                            ///   Appends multiple items to the end of the array,
+                            ///   using an <see cref="JsonElement.ArrayBuilder"/> delegate to build the items.
+                            /// </summary>
+                            /// <param name="rangeBuilder">A delegate that adds items to an <see cref="JsonElement.ArrayBuilder"/>.</param>
+                            /// <param name="estimatedMemberCount">The estimated total number of elements for capacity optimization.</param>
+                            /// <exception cref="InvalidOperationException">
+                            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+                            ///   or the element reference is stale due to document mutations.
+                            /// </exception>
+                            /// <exception cref="ObjectDisposedException">
+                            ///   The parent <see cref="JsonDocument"/> has been disposed.
+                            /// </exception>
+                            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                            public void AddRange(JsonElement.ArrayBuilder.Build rangeBuilder, int estimatedMemberCount = 30)
+                            {
+                                InsertRange(GetArrayLength(), rangeBuilder, estimatedMemberCount);
+                            }
+
+                            /// <summary>
+                            ///   Appends multiple items to the end of the array,
+                            ///   using an <see cref="JsonElement.ArrayBuilder"/> delegate with a context parameter.
+                            /// </summary>
+                            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+                            /// <param name="context">The context to pass to the builder delegate.</param>
+                            /// <param name="rangeBuilder">A delegate that adds items to an <see cref="JsonElement.ArrayBuilder"/>.</param>
+                            /// <param name="estimatedMemberCount">The estimated total number of elements for capacity optimization.</param>
+                            /// <exception cref="InvalidOperationException">
+                            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+                            ///   or the element reference is stale due to document mutations.
+                            /// </exception>
+                            /// <exception cref="ObjectDisposedException">
+                            ///   The parent <see cref="JsonDocument"/> has been disposed.
+                            /// </exception>
+                            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                            public void AddRange<TContext>(in TContext context, JsonElement.ArrayBuilder.Build<TContext> rangeBuilder, int estimatedMemberCount = 30)
+                            #if NET9_0_OR_GREATER
+                                where TContext : allows ref struct
+                            #endif
+                            {
+                                InsertRange(GetArrayLength(), context, rangeBuilder, estimatedMemberCount);
+                            }
+
+                            /// <summary>
+                            ///   Removes a range of items from the array starting at the specified index.
+                            /// </summary>
+                            /// <param name="startIndex">The zero-based index at which to begin removing items.</param>
+                            /// <param name="count">The number of items to remove.</param>
+                            /// <exception cref="InvalidOperationException">
+                            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+                            ///   or the element reference is stale due to document mutations.
+                            /// </exception>
+                            /// <exception cref="ObjectDisposedException">
+                            ///   The parent <see cref="JsonDocument"/> has been disposed.
+                            /// </exception>
+                            /// <exception cref="ArgumentOutOfRangeException">
+                            ///   <paramref name="startIndex"/> is negative or greater than the current array length.
+                            /// </exception>
+                            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                            public void RemoveRange(int startIndex, int count)
+                            {
+                                CheckValidInstance();
+                                JsonElementHelpers.RemoveRangeUnsafe(this, startIndex, count);
+                                _documentVersion = _parent.Version;
+                            }
+
+                            /// <summary>
+                            ///   Removes a single item from the array at the specified index.
+                            /// </summary>
+                            /// <param name="index">The zero-based index of the item to remove.</param>
+                            /// <exception cref="InvalidOperationException">
+                            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+                            ///   or the element reference is stale due to document mutations.
+                            /// </exception>
+                            /// <exception cref="ObjectDisposedException">
+                            ///   The parent <see cref="JsonDocument"/> has been disposed.
+                            /// </exception>
+                            /// <exception cref="ArgumentOutOfRangeException">
+                            ///   <paramref name="index"/> is negative or greater than or equal to the current array length.
+                            /// </exception>
+                            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                            public void RemoveAt(int index)
+                            {
+                                CheckValidInstance();
+                                JsonElementHelpers.RemoveRangeUnsafe(this, index, 1);
+                                _documentVersion = _parent.Version;
+                            }
+
+                            /// <summary>
+                            ///   Removes the first array element that equals the specified item.
+                            /// </summary>
+                            /// <param name="item">The item to find and remove.</param>
+                            /// <returns><see langword="true"/> if an element was found and removed; otherwise, <see langword="false"/>.</returns>
+                            /// <exception cref="InvalidOperationException">
+                            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+                            ///   or the element reference is stale due to document mutations.
+                            /// </exception>
+                            /// <exception cref="ObjectDisposedException">
+                            ///   The parent <see cref="JsonDocument"/> has been disposed.
+                            /// </exception>
+                            public bool Remove(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.AStringRepresentingThePathToOneSourceFileToBeTraced item)
+                            {
+                                CheckValidInstance();
+                                if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.AStringRepresentingThePathToOneSourceFileToBeTraced>(this, in item))
+                                {
+                                    return false;
+                                }
+
+                                _documentVersion = _parent.Version;
+                                return true;
+                            }
+
+                            /// <summary>
+                            ///   Removes all array elements that match the specified predicate.
+                            /// </summary>
+                            /// <param name="predicate">The predicate function that determines which elements to remove.</param>
+                            /// <exception cref="InvalidOperationException">
+                            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+                            ///   or the element reference is stale due to document mutations.
+                            /// </exception>
+                            /// <exception cref="ObjectDisposedException">
+                            ///   The parent <see cref="JsonDocument"/> has been disposed.
+                            /// </exception>
+                            /// <exception cref="ArgumentNullException">
+                            ///   <paramref name="predicate"/> is <see langword="null"/>.
+                            /// </exception>
+                            /// <remarks>
+                            ///   <para>
+                            ///     This method efficiently removes elements in a single pass by iterating backwards
+                            ///     through the array and removing consecutive blocks of matching elements.
+                            ///   </para>
+                            ///   <para>
+                            ///     The predicate function is called for each element in the array. If the predicate
+                            ///     returns <see langword="true"/>, the element will be removed from the array.
+                            ///   </para>
+                            /// </remarks>
+                            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                            public void RemoveWhere(JsonPredicate<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.AStringRepresentingThePathToOneSourceFileToBeTraced> predicate)
+                            {
+                                CheckValidInstance();
+                                JsonElementHelpers.RemoveWhereUnsafe<Mutable, Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.AStringRepresentingThePathToOneSourceFileToBeTraced>(this, predicate);
+                                _documentVersion = _parent.Version;
+                            }
+
+                            /// <summary>
+                            ///   Replaces the first array element that equals the specified item with a new value.
+                            /// </summary>
+                            /// <param name="oldItem">The item to find.</param>
+                            /// <param name="newItem">The value to replace it with.</param>
+                            /// <returns><see langword="true"/> if an element was found and replaced; otherwise, <see langword="false"/>.</returns>
+                            /// <exception cref="InvalidOperationException">
+                            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+                            ///   or the element reference is stale due to document mutations.
+                            /// </exception>
+                            /// <exception cref="ObjectDisposedException">
+                            ///   The parent <see cref="JsonDocument"/> has been disposed.
+                            /// </exception>
+                            public bool Replace(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.AStringRepresentingThePathToOneSourceFileToBeTraced oldItem, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.AStringRepresentingThePathToOneSourceFileToBeTraced.Source newItem)
+                            {
+                                CheckValidInstance();
+
+                                if (newItem.IsUndefined)
+                                {
+                                    return Remove(in oldItem);
+                                }
+
+                                var enumerator = EnumeratorCreator.CreateArrayEnumerator<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.AStringRepresentingThePathToOneSourceFileToBeTraced>(_parent, _idx);
+
+                                while (enumerator.MoveNext())
+                                {
+                                    Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.AStringRepresentingThePathToOneSourceFileToBeTraced current = enumerator.Current;
+                                    if (JsonElementHelpers.DeepEquals(in current, in oldItem))
+                                    {
+                                        ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 30);
+                                        newItem.AddAsItem(ref cvb);
+
+                                        int elementStart = ((IJsonElement)current).ParentDocumentIndex;
+                                        int elementEnd = elementStart + ((IJsonElement)current).ParentDocument.GetDbSize(elementStart, true);
+                                        _parent.OverwriteAndDispose(_idx, elementStart, elementEnd, 1, ref cvb);
+
+                                        _documentVersion = _parent.Version;
+                                        return true;
+                                    }
+                                }
+
+                                return false;
+                            }
 
                             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
                             IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -501,11 +718,11 @@ public readonly partial struct VercelSchema
                             JsonValueKind IJsonElement.ValueKind => ValueKind;
 
                             /// <summary>
-                            /// Gets a <see cref="RequiredKeyAndType"/> which can be safely stored beyond the lifetime of the
+                            /// Gets a <see cref="AStringRepresentingThePathToOneSourceFileToBeTracedArray"/> which can be safely stored beyond the lifetime of the
                             /// original document.
                             /// </summary>
                             /// <returns>
-                            /// A <see cref="RequiredKeyAndType"/> which can be safely stored beyond the lifetime of the
+                            /// A <see cref="AStringRepresentingThePathToOneSourceFileToBeTracedArray"/> which can be safely stored beyond the lifetime of the
                             /// original document.
                             /// </returns>
                             /// <remarks>
@@ -514,10 +731,10 @@ public readonly partial struct VercelSchema
                             /// document. The result is independent of the workspace.
                             /// </para>
                             /// </remarks>
-                            public readonly RequiredKeyAndType Clone()
+                            public readonly AStringRepresentingThePathToOneSourceFileToBeTracedArray Clone()
                             {
                                 CheckValidInstance();
-                                return _parent.CloneElement<RequiredKeyAndType>(_idx);
+                                return _parent.CloneElement<AStringRepresentingThePathToOneSourceFileToBeTracedArray>(_idx);
                             }
 
                             /// <summary>
@@ -525,7 +742,7 @@ public readonly partial struct VercelSchema
                             /// document builder registered in the same workspace.
                             /// </summary>
                             /// <returns>
-                            /// An immutable <see cref="RequiredKeyAndType"/> that lives for the lifetime of its
+                            /// An immutable <see cref="AStringRepresentingThePathToOneSourceFileToBeTracedArray"/> that lives for the lifetime of its
                             /// workspace and its associated documents.
                             /// </returns>
                             /// <remarks>
@@ -536,10 +753,10 @@ public readonly partial struct VercelSchema
                             /// immutable but is only valid for the lifetime of the workspace.
                             /// </para>
                             /// </remarks>
-                            public readonly RequiredKeyAndType Freeze()
+                            public readonly AStringRepresentingThePathToOneSourceFileToBeTracedArray Freeze()
                             {
                                 CheckValidInstance();
-                                return _parent.FreezeElement<RequiredKeyAndType>(_idx);
+                                return _parent.FreezeElement<AStringRepresentingThePathToOneSourceFileToBeTracedArray>(_idx);
                             }
                         }
 
@@ -549,16 +766,12 @@ public readonly partial struct VercelSchema
                             {
                                 Unknown,
                                 JsonElement,
-                                Create,
                                 Builder,
                             }
 
                             private readonly Kind _kind;
                             private readonly JsonElement _jsonElement;
-                            private readonly Builder.Build? _objectBuilder;
-                            private readonly Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.TheNameOfTheElementContainedInTheParticularType.Source _createArg1;
-                            private readonly Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.TheTypeOfRequestElementToCheck.Source _createArg2;
-                            private readonly Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.ValueEntity.Source _createArg3;
+                            private readonly Builder.Build? _arrayBuilder;
 
                             /// <summary>
                             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -571,17 +784,9 @@ public readonly partial struct VercelSchema
                                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
                             }
 
-                            internal Source(Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+                            internal Source(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
-                            internal Source(scoped in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.TheNameOfTheElementContainedInTheParticularType.Source arg1, scoped in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.TheTypeOfRequestElementToCheck.Source arg2, scoped in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.ValueEntity.Source arg3)
-                            {
-                                _createArg1 = arg1;
-                                _createArg2 = arg2;
-                                _createArg3 = arg3;
-                                _kind = Kind.Create;
-                            }
-
-                            public static implicit operator Source(RequiredKeyAndType instance) => new(JsonElement.From(instance));
+                            public static implicit operator Source(AStringRepresentingThePathToOneSourceFileToBeTracedArray instance) => new(JsonElement.From(instance));
 
                             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                             {
@@ -593,15 +798,8 @@ public readonly partial struct VercelSchema
                                         valueBuilder.AddProperty(utf8Name, _jsonElement, escapeName, nameRequiresUnescaping);
                                         break;
                                     case Kind.Builder:
-                                        valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                                        valueBuilder.AddProperty(utf8Name, _arrayBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                                         break;
-                                    case Kind.Create:
-                                        {
-                                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
-                                            valueBuilder.EndProperty(handle);
-                                            break;
-                                        }
                                     default:
                                         Debug.Fail("Unexpected Kind");
                                         break;
@@ -618,15 +816,8 @@ public readonly partial struct VercelSchema
                                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
                                         break;
                                     case Kind.Builder:
-                                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _arrayBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                                         break;
-                                    case Kind.Create:
-                                        {
-                                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
-                                            valueBuilder.EndProperty(handle);
-                                            break;
-                                        }
                                     default:
                                         Debug.Fail("Unexpected Kind");
                                         break;
@@ -643,15 +834,8 @@ public readonly partial struct VercelSchema
                                         valueBuilder.AddProperty(name, _jsonElement);
                                         break;
                                     case Kind.Builder:
-                                        valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                                        valueBuilder.AddProperty(name, _arrayBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                                         break;
-                                    case Kind.Create:
-                                        {
-                                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
-                                            valueBuilder.EndProperty(handle);
-                                            break;
-                                        }
                                     default:
                                         Debug.Fail("Unexpected Kind");
                                         break;
@@ -668,15 +852,8 @@ public readonly partial struct VercelSchema
                                         valueBuilder.AddProperty(name, _jsonElement);
                                         break;
                                     case Kind.Builder:
-                                        valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                                        valueBuilder.AddProperty(name, _arrayBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                                         break;
-                                    case Kind.Create:
-                                        {
-                                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
-                                            valueBuilder.EndProperty(handle);
-                                            break;
-                                        }
                                     default:
                                         Debug.Fail("Unexpected Kind");
                                         break;
@@ -693,15 +870,8 @@ public readonly partial struct VercelSchema
                                         valueBuilder.AddItem(_jsonElement);
                                         break;
                                     case Kind.Builder:
-                                        valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                                        valueBuilder.AddItem(_arrayBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                                         break;
-                                    case Kind.Create:
-                                        {
-                                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
-                                            valueBuilder.EndItem(handle);
-                                            break;
-                                        }
                                     default:
                                         Debug.Fail("Unexpected Kind");
                                         break;
@@ -724,7 +894,7 @@ public readonly partial struct VercelSchema
                             private readonly Kind _kind;
                             TContext _context;
                             Source _source;
-                            private readonly Builder.Build<TContext>? _objectBuilder;
+                            private readonly Builder.Build<TContext>? _arrayBuilder;
 
                             /// <summary>
                             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -735,7 +905,7 @@ public readonly partial struct VercelSchema
 
                             public static implicit operator Source<TContext>(Source source) => new (source);
 
-                            internal Source(scoped in TContext context, Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+                            internal Source(scoped in TContext context, Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
                             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                             {
@@ -747,7 +917,7 @@ public readonly partial struct VercelSchema
                                         _source.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                                         break;
                                     case Kind.Builder:
-                                        valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                                        valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");
@@ -765,7 +935,7 @@ public readonly partial struct VercelSchema
                                         _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                                         break;
                                     case Kind.Builder:
-                                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");
@@ -783,7 +953,7 @@ public readonly partial struct VercelSchema
                                         _source.AddAsProperty(name, ref valueBuilder);
                                         break;
                                     case Kind.Builder:
-                                        valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                                        valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");
@@ -801,7 +971,7 @@ public readonly partial struct VercelSchema
                                         _source.AddAsProperty(name, ref valueBuilder);
                                         break;
                                     case Kind.Builder:
-                                        valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                                        valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");
@@ -819,7 +989,7 @@ public readonly partial struct VercelSchema
                                         _source.AddAsItem(ref valueBuilder);
                                         break;
                                     case Kind.Builder:
-                                        valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                                        valueBuilder.AddItem(BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");
@@ -847,38 +1017,21 @@ public readonly partial struct VercelSchema
                             }
 
                             /// <summary>
-                            /// Creates an instance of a <see cref="RequiredKeyAndType"/>.
+                            /// Add an item to the array.
                             /// </summary>
-                            internal static void Create(
-                                ref ComplexValueBuilder builder,
-                                in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.TheNameOfTheElementContainedInTheParticularType.Source key,
-                                in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.TheTypeOfRequestElementToCheck.Source type,
-                                in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.ValueEntity.Source value = default)
+                            public void AddItem(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.AStringRepresentingThePathToOneSourceFileToBeTraced.Source value)
                             {
-                                key.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Key, ref builder);
-                                type.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref builder);
-                                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Value, ref builder);
-                            }
-
-                            /// <summary>
-                            /// Creates an instance of a <see cref="RequiredKeyAndType"/>.
-                            /// </summary>
-                            public void Create(
-                                in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.TheNameOfTheElementContainedInTheParticularType.Source key,
-                                in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.TheTypeOfRequestElementToCheck.Source type,
-                                in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.ValueEntity.Source value = default)
-                            {
-                                Create(ref _builder, key, type, value);
+                                value.AddAsItem(ref _builder);
                             }
 
                             internal static void BuildValue(Build value, ref ComplexValueBuilder o)
                             {
-                                o.StartObject();
+                                o.StartArray();
 
                                 Builder ovb = new(o);
                                 value(ref ovb);
                                 o = ovb._builder;
-                                o.EndObject();
+                                o.EndArray();
                             }
 
                             internal static void BuildValue<TContext>(in TContext context, Build<TContext> value, ref ComplexValueBuilder o)
@@ -886,26 +1039,12 @@ public readonly partial struct VercelSchema
                                 where TContext : allows ref struct
 #endif
                             {
-                                o.StartObject();
+                                o.StartArray();
 
                                 Builder ovb = new(o);
                                 value(context, ref ovb);
                                 o = ovb._builder;
-                                o.EndObject();
-                            }
-
-                            /// <summary>
-                            /// Builds the object value directly from its captured property values into the given complex value builder.
-                            /// </summary>
-                            /// <param name="arg1">The value of the property.</param>
-                            /// <param name="arg2">The value of the property.</param>
-                            /// <param name="arg3">The value of the property.</param>
-                            /// <param name="o">The complex value builder into which to write the object.</param>
-                            internal static void BuildCreateValue(scoped in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.TheNameOfTheElementContainedInTheParticularType.Source arg1, scoped in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.TheTypeOfRequestElementToCheck.Source arg2, scoped in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.ValueEntity.Source arg3, ref ComplexValueBuilder o)
-                            {
-                                o.StartObject();
-                                Create(ref o, arg1, arg2, arg3);
-                                o.EndObject();
+                                o.EndArray();
                             }
                         }
 
@@ -936,18 +1075,6 @@ public readonly partial struct VercelSchema
                             #endif
                         {
                             return new Source<TContext>(context, buildValue);
-                        }
-
-                        /// <summary>
-                        /// Build an instance of the value directly from its property values.
-                        /// </summary>
-                        /// <param name="key">The value of the <c>"key"</c> property.</param>
-                        /// <param name="type">The value of the <c>"type"</c> property.</param>
-                        /// <param name="value">The value of the <c>"value"</c> property.</param>
-                        /// <returns>The source from which to build the value.</returns>
-                        public static Source Build(scoped in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.TheNameOfTheElementContainedInTheParticularType.Source key, scoped in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.TheTypeOfRequestElementToCheck.Source type, scoped in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.ValueEntity.Source value = default)
-                        {
-                            return new Source(key, type, value);
                         }
 
                         /// <summary>
@@ -988,6 +1115,24 @@ public readonly partial struct VercelSchema
                             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                             value.AddAsItem(ref cvb);
                             Debug.Assert(cvb.MemberCount == 1);
+                            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                            return documentBuilder;
+                        }
+
+                        /// <summary>
+                        /// Creates an empty mutable document builder.
+                        /// </summary>
+                        /// <param name="workspace">The JSON workspace.</param>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                        /// <returns>An empty mutable document builder.</returns>
+                        public static JsonDocumentBuilder<Mutable> CreateBuilder(
+                            JsonWorkspace workspace, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                        {
+                            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
+                            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                            cvb.StartArray();
+                            cvb.EndArray();
                             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
                             return documentBuilder;
                         }
@@ -1040,144 +1185,13 @@ public readonly partial struct VercelSchema
                         }
 
                         /// <summary>
-                        /// Creates and initializes a mutable document from the given property values.
-                        /// </summary>
-                        /// <param name="workspace">The JSON workspace.</param>
-                        /// <param name="key">The value of the property.</param>
-                        /// <param name="type">The value of the property.</param>
-                        /// <param name="value">The value of the property.</param>
-                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
-                        /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-                        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.TheNameOfTheElementContainedInTheParticularType.Source key, in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.TheTypeOfRequestElementToCheck.Source type, in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.ValueEntity.Source value = default, int initialCapacity = 30)
-                        {
-                            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
-                            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
-                            cvb.StartObject();
-                            Builder ovb = new(cvb);
-                            ovb.Create(key, type, value);
-                            cvb = ovb._builder;
-                            cvb.EndObject();
-                            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-                            return documentBuilder;
-                        }
-
-                        /// <summary>
                         /// Creates and initializes a mutable document from this instance.
                         /// </summary>
                         /// <param name="workspace">The JSON workspace.</param>
                         /// <returns>An instance of a mutable document initialized with this instance.</returns>
                         public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
                         {
-                            return workspace.CreateBuilder<RequiredKeyAndType, Mutable>(this);
-                        }
-
-                        /// <summary>
-                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
-                        /// </summary>
-                        /// <param name="value">The value with which to initialize the document.</param>
-                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
-                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
-                        public static ParsedJsonDocument<RequiredKeyAndType> Create(
-                            scoped in Source value, int initialCapacity = 30)
-                        {
-                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
-                            try
-                            {
-                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
-                                value.AddAsItem(ref cvb);
-                                Debug.Assert(cvb.MemberCount == 1);
-                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-                                return documentBuilder.ToParsedJsonDocument<RequiredKeyAndType>();
-                            }
-                            finally
-                            {
-                                documentBuilder.Dispose();
-                            }
-                        }
-
-                        /// <summary>
-                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
-                        /// </summary>
-                        /// <param name="value">The value with which to initialize the document.</param>
-                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
-                        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
-                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
-                        public static ParsedJsonDocument<RequiredKeyAndType> Create(
-                            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
-                        {
-                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
-                            try
-                            {
-                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
-                                var source = new Source(value);
-                                source.AddAsItem(ref cvb);
-                                Debug.Assert(cvb.MemberCount == 1);
-                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-                                return documentBuilder.ToParsedJsonDocument<RequiredKeyAndType>();
-                            }
-                            finally
-                            {
-                                documentBuilder.Dispose();
-                            }
-                        }
-
-                        /// <summary>
-                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
-                        /// </summary>
-                        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
-                        /// <param name="context">The context to pass to the builder.</param>
-                        /// <param name="value">The value with which to initialize the document.</param>
-                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
-                        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
-                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
-                        public static ParsedJsonDocument<RequiredKeyAndType> Create<TContext>(
-                            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
-                            #if NET9_0_OR_GREATER
-                            where TContext : allows ref struct
-                            #endif
-                        {
-                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
-                            try
-                            {
-                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
-                                var source = new Source<TContext>(context, value);
-                                source.AddAsItem(ref cvb);
-                                Debug.Assert(cvb.MemberCount == 1);
-                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-                                return documentBuilder.ToParsedJsonDocument<RequiredKeyAndType>();
-                            }
-                            finally
-                            {
-                                documentBuilder.Dispose();
-                            }
-                        }
-
-                        /// <summary>
-                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
-                        /// </summary>
-                        /// <param name="key">The value of the property.</param>
-                        /// <param name="type">The value of the property.</param>
-                        /// <param name="value">The value of the property.</param>
-                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
-                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-                        public static ParsedJsonDocument<RequiredKeyAndType> Create(in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.TheNameOfTheElementContainedInTheParticularType.Source key, in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.TheTypeOfRequestElementToCheck.Source type, in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.ValueEntity.Source value = default, int initialCapacity = 30)
-                        {
-                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
-                            try
-                            {
-                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
-                                cvb.StartObject();
-                                Builder ovb = new(cvb);
-                                ovb.Create(key, type, value);
-                                cvb = ovb._builder;
-                                cvb.EndObject();
-                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-                                return documentBuilder.ToParsedJsonDocument<RequiredKeyAndType>();
-                            }
-                            finally
-                            {
-                                documentBuilder.Dispose();
-                            }
+                            return workspace.CreateBuilder<AStringRepresentingThePathToOneSourceFileToBeTracedArray, Mutable>(this);
                         }
                     }
                 }
