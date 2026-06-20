@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Text;
 using Corvus.Text.Json;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Security;
@@ -42,15 +41,17 @@ public sealed class InMemoryObservedIdentityStore : IObservedIdentityStore
         => this.timeProvider = timeProvider ?? TimeProvider.System;
 
     /// <inheritdoc/>
-    public ValueTask SeenAsync(GranteeKind kind, ReadOnlyMemory<byte> value, ReadOnlyMemory<byte> label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken)
+    public ValueTask SeenAsync(ObservedIdentity.GranteeKind kind, JsonString value, JsonString label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(provenance);
+
+        // The dictionary key is a string (the in-memory storage leaf), so the kind reifies once here to its interned token.
         string kindToken = kind.ToToken();
         DateTimeOffset now = this.timeProvider.GetUtcNow();
 
-        // The dictionary is string-keyed (the in-memory storage leaf), so the value materializes once here as the key;
-        // the document body is serialized bytes-to-bytes from the value/label spans (no field strings).
-        string valueKey = Encoding.UTF8.GetString(value.Span);
+        // The dictionary is string-keyed (the in-memory storage leaf — the only place that needs a concrete form), so the
+        // value reifies once here as the key; the document body is serialized bytes-to-bytes from the value/label JSON values.
+        string valueKey = (string)value;
 
         lock (this.gate)
         {
@@ -59,8 +60,8 @@ public sealed class InMemoryObservedIdentityStore : IObservedIdentityStore
             // Upsert (preserve firstSeen, bump lastSeen, union provenance, refresh label/identity/completeness) vs first
             // sighting — the merge is the shared serialization every backend uses, so the semantics are identical.
             byte[] json = this.identities.TryGetValue(key, out byte[]? existing)
-                ? ObservedIdentitySerialization.SerializeUpserted(existing, kindToken, value.Span, label.Span, identity, complete, now, provenance)
-                : ObservedIdentitySerialization.SerializeNew(kindToken, value.Span, label.Span, identity, complete, now, provenance);
+                ? ObservedIdentitySerialization.SerializeUpserted(existing, kind, value, label, identity, complete, now, provenance)
+                : ObservedIdentitySerialization.SerializeNew(kind, value, label, identity, complete, now, provenance);
 
             this.identities[key] = json;
             this.ReindexDigest(key, identity);
@@ -70,16 +71,17 @@ public sealed class InMemoryObservedIdentityStore : IObservedIdentityStore
     }
 
     /// <inheritdoc/>
-    public ValueTask<ObservedIdentityConflict?> FindIdentityConflictAsync(GranteeKind kind, ReadOnlyMemory<byte> value, SecurityTagSet identity, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<ObservedIdentity>?> FindIdentityConflictAsync(ObservedIdentity.GranteeKind kind, JsonString value, SecurityTagSet identity, CancellationToken cancellationToken)
     {
         // The empty (unscoped) identity never collides; otherwise look the digest up in the index (O(1), no scan) and
         // return the first holder that is a DIFFERENT grantee — a non-unique identity the authoring path must refuse.
         if (SecurityIdentityDigest.Compute(identity) is not { } digest)
         {
-            return new ValueTask<ObservedIdentityConflict?>((ObservedIdentityConflict?)null);
+            return new ValueTask<ParsedJsonDocument<ObservedIdentity>?>((ParsedJsonDocument<ObservedIdentity>?)null);
         }
 
-        (string Kind, string Value) self = (kind.ToToken(), Encoding.UTF8.GetString(value.Span));
+        // The dictionary key is a string (the storage leaf), so the authored value reifies once here for the self-compare.
+        (string Kind, string Value) self = (kind.ToToken(), (string)value);
         lock (this.gate)
         {
             if (this.byDigest.TryGetValue(digest, out HashSet<(string Kind, string Value)>? holders))
@@ -91,20 +93,17 @@ public sealed class InMemoryObservedIdentityStore : IObservedIdentityStore
                         continue;
                     }
 
-                    string? label = null;
+                    // Hand back the conflicting grantee as its own JSON document (the caller disposes it); its
+                    // kind/value/label live in the record, so nothing is reified into a separate POCO here.
                     if (this.identities.TryGetValue(holder, out byte[]? doc))
                     {
-                        using ParsedJsonDocument<ObservedIdentity> parsed = PersistedJson.ToPooledDocument<ObservedIdentity>(doc);
-                        label = parsed.RootElement.LabelOrNull;
+                        return new ValueTask<ParsedJsonDocument<ObservedIdentity>?>(PersistedJson.ToPooledDocument<ObservedIdentity>(doc));
                     }
-
-                    GranteeKind conflictKind = GranteeKinds.TryParse(holder.Kind, out GranteeKind parsedKind) ? parsedKind : kind;
-                    return new ValueTask<ObservedIdentityConflict?>(new ObservedIdentityConflict(conflictKind, holder.Value, label));
                 }
             }
         }
 
-        return new ValueTask<ObservedIdentityConflict?>((ObservedIdentityConflict?)null);
+        return new ValueTask<ParsedJsonDocument<ObservedIdentity>?>((ParsedJsonDocument<ObservedIdentity>?)null);
     }
 
     // Retract this key's previous digest (if the identity changed on a re-sighting) and index its new one. The empty
@@ -134,15 +133,17 @@ public sealed class InMemoryObservedIdentityStore : IObservedIdentityStore
     }
 
     /// <inheritdoc/>
-    public ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, GranteeKind? kind, ReadOnlyMemory<byte> prefix, int limit, string? pageToken, CancellationToken cancellationToken)
+    public ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, string? pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         int pageSize = limit > 0 ? limit : 1;
-        string? kindToken = kind?.ToToken();
 
-        // The dictionary keys are strings (the in-memory storage leaf), so the prefix materializes once for the ordinal
-        // StartsWith — a backend pushes the prefix predicate to its index instead.
-        string prefixStr = Encoding.UTF8.GetString(prefix.Span);
+        // Undefined kind means "all kinds"; a defined kind reifies once to its interned token for the ordinal key match.
+        string? kindToken = kind.IsNotUndefined() ? kind.ToToken() : null;
+
+        // The dictionary keys are strings (the in-memory storage leaf), so the prefix reifies once for the ordinal
+        // StartsWith (undefined prefix matches all) — a backend pushes the prefix predicate to its index instead.
+        string prefixStr = prefix.IsNotUndefined() ? (string)prefix : string.Empty;
         bool hasCursor = ObservedIdentityContinuationToken.TryDecode(pageToken, out (string SubjectValue, string SubjectKind) cursor);
 
         // The keyset order every backend pages by is (subjectValue, subjectKind). Rather than materialise + sort the whole

@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
@@ -71,7 +70,11 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
         Models.AdministratorMemberWrite body = parameters.Body;
 
         SecurityTagSet newAdministrator;
-        GranteeKind kind = default;
+
+        // The grantee kind the observed store seam carries — its own JSON value (ObservedIdentity.GranteeKind). The
+        // resolved path converts the request kind straight across with From(); the interim single-grant path infers it
+        // from the dimension (a domain enum, for the policy's whole-grain test) and maps that to the store kind.
+        ObservedIdentity.GranteeKind kind = default;
         bool hasKind = false;
         bool complete;
         try
@@ -84,10 +87,13 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
                 // managed string per dimension/value, no intermediate grant list).
                 var state = new GranteeIdentityState(this.access, body.Identity);
                 newAdministrator = SecurityTagSet.Build(in state, BuildGranteeIdentity);
+
+                // The request's grantee kind IS a JSON value; convert it to the store's kind with a straight From()
+                // (free rewrap, no reify, no token re-parse) — the store carries it through bytes-to-bytes.
                 if (body.Kind.IsNotUndefined())
                 {
-                    using UnescapedUtf8JsonString kindToken = body.Kind.GetUtf8String();
-                    hasKind = GranteeKinds.TryParse(kindToken.Span, out kind);
+                    kind = ObservedIdentity.GranteeKind.From(body.Kind);
+                    hasKind = true;
                 }
 
                 complete = !body.Complete.IsNotUndefined() || (bool)body.Complete;
@@ -102,12 +108,16 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
 
                 var state = new SingleGrantState(this.access, body.DimensionValue, body.Value);
                 newAdministrator = SecurityTagSet.Build(in state, BuildSingleGrantIdentity);
-                using (UnescapedUtf8JsonString dimension = body.DimensionValue.GetUtf8String())
-                {
-                    hasKind = GranteeKinds.FromDimension(dimension.Span, out kind);
-                }
 
-                complete = hasKind && this.access.IsWholeGrainGrantee(kind);
+                // Map the dimension to its grantee kind by comparing the JSON value DIRECTLY (ValueEquals — no
+                // GetUtf8String unescape lease). The policy's whole-grain verdict consumes the domain enum; the store kind
+                // is the equivalent JSON value (a pre-built constant — no reify).
+                hasKind = TryGranteeKindForDimension(body.DimensionValue, out GranteeKind dimensionKind);
+                complete = hasKind && this.access.IsWholeGrainGrantee(dimensionKind);
+                if (hasKind)
+                {
+                    kind = dimensionKind.ToObservedKind();
+                }
             }
 
             if (newAdministrator.IsEmpty)
@@ -123,70 +133,85 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
         // baseWorkflowId is the catalog/admin-store key (string-keyed stores) — its genuine leaf is a string, read once.
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
 
-        // The grantee value and label persist as observed-store document bytes, so they flow to that (UTF-8) seam as
-        // owned, pooled memory that survives the awaits — read once via GetUtf8String().TakeOwnership and returned to the
-        // pool in the finally; no managed string is materialized for them.
-        byte[]? valueRented = null;
-        byte[]? labelRented = null;
-        try
-        {
-            ReadOnlyMemory<byte> value = body.Value.GetUtf8String().TakeOwnership(out valueRented);
-            ReadOnlyMemory<byte> label = default;
-            if (body.Label.IsNotUndefined())
-            {
-                label = body.Label.GetUtf8String().TakeOwnership(out labelRented);
-            }
+        // The grantee value/label are the JSON values from the request body; they flow to the observed store as those
+        // JSON values (From() rewraps, no reify, no managed string) and are written bytes-to-bytes at the store's leaf.
+        // The request document outlives this call, so no owned copy is needed.
+        JsonString value = JsonString.From(body.Value);
+        JsonString label = body.Label.IsNotUndefined() ? JsonString.From(body.Label) : default;
 
-            // Collision guard (§16.5.4): if the resolved identity already belongs to a DIFFERENT recorded grantee, the
-            // deployment's identity mapping is not minting unique identities — refuse the ambiguous grant (409) rather than
-            // author a grant that would silently also admit that other principal. The message is generic: the conflicting
-            // party is never echoed (it may be outside the caller's reach), so the probe — which runs at full reach — does
-            // not become a cross-tenant disclosure oracle.
-            if (this.observed is not null && hasKind &&
-                await this.observed.FindIdentityConflictAsync(kind, value, newAdministrator, cancellationToken).ConfigureAwait(false) is not null)
+        // Collision guard (§16.5.4): if the resolved identity already belongs to a DIFFERENT recorded grantee, the
+        // deployment's identity mapping is not minting unique identities — refuse the ambiguous grant (409) rather than
+        // author a grant that would silently also admit that other principal. The message is generic: the conflicting
+        // party is never echoed (it may be outside the caller's reach), so the probe — which runs at full reach — does
+        // not become a cross-tenant disclosure oracle. The conflicting record (a pooled document) is disposed here.
+        if (this.observed is not null && hasKind)
+        {
+            using ParsedJsonDocument<ObservedIdentity>? conflict = await this.observed.FindIdentityConflictAsync(kind, value, newAdministrator, cancellationToken).ConfigureAwait(false);
+            if (conflict is not null)
             {
                 return AddAdministratorResult.Conflict(CollisionProblem(), workspace);
             }
-
-            try
-            {
-                IReadOnlyList<SecurityTagSet> administrators = await this.catalog.AddAdministratorAsync(baseWorkflowId, newAdministrator, this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
-
-                // Record the newly named administrator as a resolvable grantee for the §16.5.4 typeahead. Best-effort: the
-                // sighting is an idempotent projection and never fails the add. `complete` is honest (§17.2): the picker's
-                // resolved completeness for a grantee-path add, or the policy's whole-grain verdict for the interim grant.
-                if (this.observed is not null && hasKind)
-                {
-                    await this.observed.SeenAsync(kind, value, label, newAdministrator, complete, "administrator", cancellationToken).ConfigureAwait(false);
-                }
-
-                return AddAdministratorResult.Ok(this.ToList(administrators), workspace);
-            }
-            catch (WorkflowAdministrationException)
-            {
-                return AddAdministratorResult.Forbidden(NotAdministratorProblem(baseWorkflowId), workspace);
-            }
-            catch (WorkflowAdministrationConflictException ex)
-            {
-                return AddAdministratorResult.Conflict(ConflictProblem(ex), workspace);
-            }
-            catch (NotSupportedException ex)
-            {
-                return AddAdministratorResult.Conflict(UnavailableProblem(ex), workspace);
-            }
         }
-        finally
+
+        try
         {
-            if (valueRented is not null)
+            IReadOnlyList<SecurityTagSet> administrators = await this.catalog.AddAdministratorAsync(baseWorkflowId, newAdministrator, this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
+
+            // Record the newly named administrator as a resolvable grantee for the §16.5.4 typeahead. Best-effort: the
+            // sighting is an idempotent projection and never fails the add. `complete` is honest (§17.2): the picker's
+            // resolved completeness for a grantee-path add, or the policy's whole-grain verdict for the interim grant.
+            if (this.observed is not null && hasKind)
             {
-                ArrayPool<byte>.Shared.Return(valueRented);
+                await this.observed.SeenAsync(kind, value, label, newAdministrator, complete, "administrator", cancellationToken).ConfigureAwait(false);
             }
 
-            if (labelRented is not null)
-            {
-                ArrayPool<byte>.Shared.Return(labelRented);
-            }
+            return AddAdministratorResult.Ok(this.ToList(administrators), workspace);
         }
+        catch (WorkflowAdministrationException)
+        {
+            return AddAdministratorResult.Forbidden(NotAdministratorProblem(baseWorkflowId), workspace);
+        }
+        catch (WorkflowAdministrationConflictException ex)
+        {
+            return AddAdministratorResult.Conflict(ConflictProblem(ex), workspace);
+        }
+        catch (NotSupportedException ex)
+        {
+            return AddAdministratorResult.Conflict(UnavailableProblem(ex), workspace);
+        }
+    }
+
+    // Maps an interim {dimension, value} grant's dimension to its grantee kind by comparing the JSON value DIRECTLY
+    // (ValueEquals — no GetUtf8String unescape lease, no managed string), the inverse of the policy's kind→dimension map.
+    // A custom dimension names no well-known kind (false), so it records no sighting / skips the collision probe.
+    private static bool TryGranteeKindForDimension(in Models.JsonString dimension, out GranteeKind kind)
+    {
+        if (dimension.ValueEquals("sub"u8))
+        {
+            kind = GranteeKind.Person;
+            return true;
+        }
+
+        if (dimension.ValueEquals("tenant"u8))
+        {
+            kind = GranteeKind.Team;
+            return true;
+        }
+
+        if (dimension.ValueEquals("role"u8))
+        {
+            kind = GranteeKind.Role;
+            return true;
+        }
+
+        if (dimension.ValueEquals("workflow"u8))
+        {
+            kind = GranteeKind.Workflow;
+            return true;
+        }
+
+        kind = default;
+        return false;
     }
 
     // Builds the grantee identity from the resolved {dimension, value} grants, reading each as UTF-8 and writing its
@@ -282,33 +307,20 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
             {
                 SecurityTagSet resolved = newAdministrators[index++];
 
-                GranteeKind transferKind;
-                bool mapped;
-                using (UnescapedUtf8JsonString dimension = identity.DimensionValue.GetUtf8String())
-                {
-                    mapped = GranteeKinds.FromDimension(dimension.Span, out transferKind);
-                }
-
-                if (!mapped)
+                // Map the dimension to its grantee kind by comparing the JSON value DIRECTLY (ValueEquals — no
+                // GetUtf8String unescape lease); a custom dimension names no well-known kind, so it has no collision probe.
+                if (!TryGranteeKindForDimension(identity.DimensionValue, out GranteeKind transferKind))
                 {
                     continue;
                 }
 
-                byte[]? valueRented = null;
-                try
+                // The grantee value flows to the probe as its JSON value (From() rewraps, no reify); the dimension-inferred
+                // domain kind maps to the store's JSON kind (a pre-built constant). The conflicting record (a pooled
+                // document) is disposed at the end of this iteration.
+                using ParsedJsonDocument<ObservedIdentity>? conflict = await this.observed.FindIdentityConflictAsync(transferKind.ToObservedKind(), JsonString.From(identity.Value), resolved, cancellationToken).ConfigureAwait(false);
+                if (conflict is not null)
                 {
-                    ReadOnlyMemory<byte> value = identity.Value.GetUtf8String().TakeOwnership(out valueRented);
-                    if (await this.observed.FindIdentityConflictAsync(transferKind, value, resolved, cancellationToken).ConfigureAwait(false) is not null)
-                    {
-                        return TransferAdministrationResult.Conflict(CollisionProblem(), workspace);
-                    }
-                }
-                finally
-                {
-                    if (valueRented is not null)
-                    {
-                        ArrayPool<byte>.Shared.Return(valueRented);
-                    }
+                    return TransferAdministrationResult.Conflict(CollisionProblem(), workspace);
                 }
             }
         }
