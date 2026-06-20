@@ -79,6 +79,36 @@ public static class PersistedJson
     }
 
     /// <summary>
+    /// Serializes JSON into a pooled scratch buffer and materializes it as a disposable, pooled document — the
+    /// callback-driven counterpart of <see cref="ToPooledDocument{T}(ReadOnlySpan{byte})"/> with no intermediate owned
+    /// <see cref="byte"/> array. The scratch writer/buffer and the document's backing buffer are all pooled; the only
+    /// allocation is the small document wrapper, returned to the pool on <see cref="IDisposable.Dispose"/>. Use this to
+    /// build a draft document from in-memory values (e.g. a programmatic store caller) that the caller disposes.
+    /// </summary>
+    /// <typeparam name="T">The Corvus.Text.Json document type.</typeparam>
+    /// <typeparam name="TContext">The write-callback state type.</typeparam>
+    /// <param name="context">The state passed to <paramref name="write"/>.</param>
+    /// <param name="write">Writes the JSON (pass a <see langword="static"/> lambda to avoid a closure).</param>
+    /// <returns>The pooled, disposable document.</returns>
+    public static ParsedJsonDocument<T> ToPooledDocument<T, TContext>(in TContext context, WriteCallback<TContext> write)
+        where T : struct, IJsonElement<T>
+        where TContext : allows ref struct
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(DefaultBufferSize, out IByteBufferWriter buffer);
+        try
+        {
+            write(writer, in context);
+            writer.Flush();
+            return ToPooledDocument<T>(buffer.WrittenSpan);
+        }
+        finally
+        {
+            workspace.ReturnWriterAndBuffer(writer, buffer);
+        }
+    }
+
+    /// <summary>
     /// Materializes a disposable document over an <see cref="ArrayPool{T}"/>-rented copy of <paramref name="utf8"/> —
     /// the only allocation is the small document wrapper; its backing buffer and metadata return to the pool on
     /// <see cref="IDisposable.Dispose"/>. The caller owns the returned document's lifetime: dispose it when done, or
