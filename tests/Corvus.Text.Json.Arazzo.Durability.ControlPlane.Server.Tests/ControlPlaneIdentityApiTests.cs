@@ -54,8 +54,8 @@ public sealed class ControlPlaneIdentityApiTests
     public async Task Grantees_search_returns_observed_identities_resolved_to_grants()
     {
         var observed = new InMemoryObservedIdentityStore();
-        await observed.SeenAsync(GranteeKind.Team, U8("alpha"), U8("Alpha"), Tenant("alpha"), true, "test", default);
-        await observed.SeenAsync(GranteeKind.Team, U8("beta"), U8("Beta"), Tenant("beta"), true, "test", default);
+        await observed.SeenAsync(ObservedIdentity.GranteeKind.EnumValues.Team, Str("alpha"), Str("Alpha"), Tenant("alpha"), true, "test", default);
+        await observed.SeenAsync(ObservedIdentity.GranteeKind.EnumValues.Team, Str("beta"), Str("Beta"), Tenant("beta"), true, "test", default);
 
         await using Scoped host = await StartAsync(observed);
         using Stj.JsonDocument doc = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/identity/grantees?q=al", AdminRead, "acme"));
@@ -118,8 +118,8 @@ public sealed class ControlPlaneIdentityApiTests
     public async Task Grantees_search_is_reach_filtered_so_an_admin_cannot_enumerate_other_tenants()
     {
         var observed = new InMemoryObservedIdentityStore();
-        await observed.SeenAsync(GranteeKind.Team, U8("acme-team"), U8("Acme"), SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), true, "test", default);
-        await observed.SeenAsync(GranteeKind.Team, U8("globex-team"), U8("Globex"), SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), true, "test", default);
+        await observed.SeenAsync(ObservedIdentity.GranteeKind.EnumValues.Team, Str("acme-team"), Str("Acme"), SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), true, "test", default);
+        await observed.SeenAsync(ObservedIdentity.GranteeKind.EnumValues.Team, Str("globex-team"), Str("Globex"), SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), true, "test", default);
 
         await using Scoped host = await StartAsync(observed, scopedReach: true);
 
@@ -181,7 +181,9 @@ public sealed class ControlPlaneIdentityApiTests
         await catalog.AddAsync(CatalogPackage.Build(workflow, []), new CatalogOwner("Team", "team@example.com", null, null), default, founderIdentity, default);
     }
 
-    private static ReadOnlyMemory<byte> U8(string value) => System.Text.Encoding.UTF8.GetBytes(value);
+    // The observed-store seam carries the JSON value (reified only at the store's key leaf); a test builds one from a
+    // managed string by parsing the JSON string literal (the test values contain no characters needing escaping).
+    private static JsonString Str(string value) => JsonString.ParseValue($"\"{value}\"");
 
     private static SecurityTagSet Tenant(string tenant)
         => SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", tenant)]);

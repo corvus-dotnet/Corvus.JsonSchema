@@ -118,39 +118,39 @@ public sealed class NatsJetStreamObservedIdentityStore : IObservedIdentityStore,
     }
 
     /// <inheritdoc/>
-    public async ValueTask SeenAsync(GranteeKind kind, ReadOnlyMemory<byte> value, ReadOnlyMemory<byte> label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken)
+    public async ValueTask SeenAsync(ObservedIdentity.GranteeKind kind, JsonString value, JsonString label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(provenance);
         string kindToken = kind.ToToken();
         DateTimeOffset now = this.timeProvider.GetUtcNow();
 
-        // The KV key (and the digest-index keys) are built from the value as a string, so the value materializes once
-        // here for those storage keys; the document body is serialized bytes-to-bytes from the value/label spans at the
-        // synchronous serialize calls below (taken after the read-await, so no span crosses an await).
-        string valueKey = Encoding.UTF8.GetString(value.Span);
+        // The KV key (and the digest-index keys) are built from the value as a string, so the value reifies once here as
+        // those storage keys; the document body is serialized bytes-to-bytes from the value/label JSON values at the
+        // synchronous serialize calls below.
+        string valueKey = (string)value;
         string key = Key(kindToken, valueKey);
 
         // Read-merge-write: a first sighting inserts; an existing one preserves firstSeen, bumps lastSeen, unions
         // provenance, and refreshes label/identity/completeness (the shared merge). KV Put overwrites either way.
         NatsKVEntry<byte[]>? entry = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
         byte[] json = entry is { Value: { } existing }
-            ? ObservedIdentitySerialization.SerializeUpserted(existing, kindToken, value.Span, label.Span, identity, complete, now, provenance)
-            : ObservedIdentitySerialization.SerializeNew(kindToken, value.Span, label.Span, identity, complete, now, provenance);
+            ? ObservedIdentitySerialization.SerializeUpserted(existing, kind, value, label, identity, complete, now, provenance)
+            : ObservedIdentitySerialization.SerializeNew(kind, value, label, identity, complete, now, provenance);
 
         await this.store.PutAsync(key, json, cancellationToken: cancellationToken).ConfigureAwait(false);
         await this.ReindexDigestAsync(kindToken, valueKey, identity, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, GranteeKind? kind, ReadOnlyMemory<byte> prefix, int limit, string? pageToken, CancellationToken cancellationToken)
+    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, string? pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         int pageSize = limit > 0 ? limit : 1;
-        string? kindToken = kind?.ToToken();
+        string? kindToken = kind.IsNotUndefined() ? kind.ToToken() : null;
 
-        // Candidates' subjectValue is recovered as a string from each key, so the prefix materializes once for the
-        // in-memory lower-bound StartsWith predicate.
-        string prefixStr = Encoding.UTF8.GetString(prefix.Span);
+        // Candidates' subjectValue is recovered as a string from each key, so the prefix reifies once for the in-memory
+        // lower-bound StartsWith predicate (undefined prefix matches all).
+        string prefixStr = prefix.IsNotUndefined() ? (string)prefix : string.Empty;
         bool hasCursor = ObservedIdentityContinuationToken.TryDecode(pageToken, out (string SubjectValue, string SubjectKind) cursor);
         string? afterSortKey = hasCursor ? SortKey(cursor.SubjectValue, cursor.SubjectKind) : null;
 
@@ -243,7 +243,7 @@ public sealed class NatsJetStreamObservedIdentityStore : IObservedIdentityStore,
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ObservedIdentityConflict?> FindIdentityConflictAsync(GranteeKind kind, ReadOnlyMemory<byte> value, SecurityTagSet identity, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<ObservedIdentity>?> FindIdentityConflictAsync(ObservedIdentity.GranteeKind kind, JsonString value, SecurityTagSet identity, CancellationToken cancellationToken)
     {
         // The empty (unscoped) identity never collides; otherwise seek the digest membership index for a grantee whose
         // identity is set-equal (same digest) but whose (kind, value) differs — a non-unique identity the authoring path
@@ -256,9 +256,9 @@ public sealed class NatsJetStreamObservedIdentityStore : IObservedIdentityStore,
 
         string kindToken = kind.ToToken();
 
-        // The member key's subjectValue is recovered as a string, so the value materializes once for the self-match
-        // comparison that excludes the grantee being authored.
-        string valueKey = Encoding.UTF8.GetString(value.Span);
+        // The member key's subjectValue is recovered as a string, so the value reifies once for the self-match comparison
+        // that excludes the grantee being authored.
+        string valueKey = (string)value;
         string memberFilter = DigestMemberPrefix(digest) + ">";
         await foreach (string memberKey in this.store.GetKeysAsync([memberFilter], cancellationToken: cancellationToken).ConfigureAwait(false))
         {
@@ -272,17 +272,14 @@ public sealed class NatsJetStreamObservedIdentityStore : IObservedIdentityStore,
                 continue; // the grantee being authored — not a collision with itself
             }
 
-            // Load the conflicting grantee's record for its label; a tombstoned/raced member key just yields no document.
+            // Hand back the conflicting grantee as its own JSON document (the caller disposes it); its kind/value/label
+            // live in the record, so nothing is reified into a separate POCO here. A tombstoned/raced member key just
+            // yields no document — skip it.
             NatsKVEntry<byte[]>? entry = await this.TryGetAsync(Key(member.Kind, member.Value), cancellationToken).ConfigureAwait(false);
-            string? label = null;
             if (entry is { Value: { } bytes })
             {
-                using ParsedJsonDocument<ObservedIdentity> doc = PersistedJson.ToPooledDocument<ObservedIdentity>(bytes);
-                label = doc.RootElement.LabelOrNull;
+                return PersistedJson.ToPooledDocument<ObservedIdentity>(bytes);
             }
-
-            GranteeKind conflictKind = GranteeKinds.TryParse(member.Kind, out GranteeKind parsed) ? parsed : kind;
-            return new ObservedIdentityConflict(conflictKind, member.Value, label);
         }
 
         return null;
