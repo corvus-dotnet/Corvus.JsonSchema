@@ -30,13 +30,16 @@ public interface ISourceCredentialStore
 {
     /// <summary>Creates a binding (identity = sourceName, environment, and the immutable security tags), assigning it an
     /// id. Throws if a binding with the same (sourceName, environment, security-tags) already exists. The control plane
-    /// stamps the principal's internal tenant tag onto <paramref name="definition"/> before calling, so the new binding
-    /// is owned by the creator's slice of the security shell (§14.2).</summary>
-    /// <param name="definition">The binding content (references + non-secret metadata + security tags).</param>
+    /// stamps the principal's internal tenant tag onto the <paramref name="draft"/> before calling, so the new binding
+    /// is owned by the creator's slice of the security shell (§14.2). The store reads the draft's content bytes-to-bytes
+    /// and stamps id/createdBy/createdAt/etag.</summary>
+    /// <param name="draft">The draft binding (references + non-secret metadata + resolved security tags) — typically built
+    /// by <see cref="SourceCredentialBinding.Draft(SourceCredentialDefinition)"/> or from a request body; the store reads
+    /// it synchronously, so a pooled draft may be disposed once the call returns.</param>
     /// <param name="actor">The authenticated identity creating the binding (for audit).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The created binding (with its assigned id), as a pooled document the caller must dispose.</returns>
-    ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialDefinition definition, string actor, CancellationToken cancellationToken);
+    ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialBinding draft, string actor, CancellationToken cancellationToken);
 
     /// <summary>Gets the binding for (<paramref name="sourceName"/>, <paramref name="environment"/>) that the caller's
     /// read reach admits, or <see langword="null"/> if none is visible. A binding outside the caller's reach is reported
@@ -68,14 +71,16 @@ public interface ISourceCredentialStore
     /// the created-* audit fields are immutable; only the references and non-secret metadata are replaced.</summary>
     /// <param name="sourceName">The Arazzo source description name.</param>
     /// <param name="environment">The deployment environment.</param>
-    /// <param name="definition">The new content (its security tags are ignored — tags are immutable).</param>
+    /// <param name="draft">The new content as a draft (its identity and security tags are ignored — those are immutable
+    /// and carried forward from the stored binding); the store reads it synchronously, so a pooled draft may be disposed
+    /// once the call returns.</param>
     /// <param name="expectedEtag">The expected current etag (<see cref="WorkflowEtag.None"/> to overwrite unconditionally).</param>
     /// <param name="actor">The authenticated identity updating the binding (for audit).</param>
     /// <param name="context">The caller's row-access grant (use <see cref="AccessContext.System"/> for full reach).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The updated binding as a pooled document the caller must dispose, or <see langword="null"/> if no binding the caller may write exists for that key.</returns>
     /// <exception cref="SourceCredentialConflictException">The expected etag no longer matches.</exception>
-    ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialDefinition definition, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken);
+    ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialBinding draft, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken);
 
     /// <summary>Deletes the binding for (<paramref name="sourceName"/>, <paramref name="environment"/>) the caller's
     /// write reach admits, under optimistic concurrency.</summary>

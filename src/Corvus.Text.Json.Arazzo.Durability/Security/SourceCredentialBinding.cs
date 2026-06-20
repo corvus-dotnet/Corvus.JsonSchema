@@ -230,87 +230,211 @@ public readonly partial struct SourceCredentialBinding
     public byte[] ToJsonBytes()
         => PersistedJson.ToArray(this, static (Utf8JsonWriter writer, in SourceCredentialBinding v) => v.WriteTo(writer));
 
-    /// <summary>Writes a brand-new binding's JSON into the caller's (pooled) writer in one pass — secret material
-    /// never appears; each <see cref="SecretReference"/> is validated to parse as a <see cref="SecretRef"/> so a
+    /// <summary>Builds a draft binding from programmatic content (references + non-secret metadata + the resolved
+    /// security tags) for a store to complete with the server-stamped id/createdBy/createdAt/etag — the cold counterpart
+    /// of carrying an HTTP request body as the draft. The store reads only the content fields (bytes-to-bytes) and stamps
+    /// the rest.</summary>
+    /// <param name="definition">The binding content (references + non-secret metadata + security tags).</param>
+    /// <returns>A pooled, disposable draft document carrying only the supplied content; <c>using</c> it and pass its
+    /// <see cref="ParsedJsonDocument{T}.RootElement"/> to the store, which reads it synchronously before it is disposed.</returns>
+    public static ParsedJsonDocument<SourceCredentialBinding> Draft(SourceCredentialDefinition definition)
+        => PersistedJson.ToPooledDocument<SourceCredentialBinding, SourceCredentialDefinition>(
+            definition,
+            static (Utf8JsonWriter writer, in SourceCredentialDefinition d) =>
+            {
+                writer.WriteStartObject();
+                writer.WriteString(JsonPropertyNames.SourceNameUtf8, d.SourceName);
+                writer.WriteString(JsonPropertyNames.EnvironmentUtf8, d.Environment);
+                writer.WriteString(JsonPropertyNames.AuthKindUtf8, d.AuthKind.ToJsonToken());
+                WriteSecretRefs(writer, d.SecretRefs);
+                WriteConfig(writer, d.Config);
+                if (d.Description is { } description)
+                {
+                    writer.WriteString(JsonPropertyNames.DescriptionUtf8, description);
+                }
+
+                WriteLifecycle(writer, d);
+
+                if (!d.ManagementTags.IsEmpty)
+                {
+                    writer.WritePropertyName(JsonPropertyNames.ManagementTagsUtf8);
+                    d.ManagementTags.WriteTo(writer);
+                }
+
+                if (!d.UsageTags.IsEmpty)
+                {
+                    writer.WritePropertyName(JsonPropertyNames.UsageTagsUtf8);
+                    d.UsageTags.WriteTo(writer);
+                }
+
+                writer.WriteEndObject();
+            });
+
+    /// <summary>Builds a draft binding directly from an HTTP request body's already-parsed JSON values (carried
+    /// bytes-to-bytes — no per-field strings, no list) plus the resolved management/usage tags, for a store to complete
+    /// with the server-stamped id/createdBy/createdAt/etag. Pass <see langword="default"/> (an undefined element) for any
+    /// field the body omits; for an update, pass <see langword="default"/> for the immutable identity (sourceName,
+    /// environment) and tags — the store carries those forward from the stored binding.</summary>
+    /// <param name="sourceName">The source-name value (or undefined for an update).</param>
+    /// <param name="environment">The environment value (or undefined for an update).</param>
+    /// <param name="authKind">The auth-kind token value.</param>
+    /// <param name="secretRefs">The secret-references array value.</param>
+    /// <param name="config">The config array value (or undefined).</param>
+    /// <param name="description">The description value (or undefined).</param>
+    /// <param name="expiresAt">The expires-at value (or undefined).</param>
+    /// <param name="rotatedAt">The rotated-at value (or undefined).</param>
+    /// <param name="managementTags">The resolved management tags (empty for an update).</param>
+    /// <param name="usageTags">The resolved usage tags (empty for an update).</param>
+    /// <returns>A pooled, disposable draft document; <c>using</c> it and pass its
+    /// <see cref="ParsedJsonDocument{T}.RootElement"/> to the store, which reads it synchronously before it is disposed.</returns>
+    public static ParsedJsonDocument<SourceCredentialBinding> Draft(
+        in JsonElement sourceName,
+        in JsonElement environment,
+        in JsonElement authKind,
+        in JsonElement secretRefs,
+        in JsonElement config,
+        in JsonElement description,
+        in JsonElement expiresAt,
+        in JsonElement rotatedAt,
+        in SecurityTagSet managementTags,
+        in SecurityTagSet usageTags)
+    {
+        DraftElements state = new(sourceName, environment, authKind, secretRefs, config, description, expiresAt, rotatedAt, managementTags, usageTags);
+        return PersistedJson.ToPooledDocument<SourceCredentialBinding, DraftElements>(
+            state,
+            static (Utf8JsonWriter writer, in DraftElements s) =>
+            {
+                writer.WriteStartObject();
+                WriteValueIfPresent(writer, JsonPropertyNames.SourceNameUtf8, s.SourceName);
+                WriteValueIfPresent(writer, JsonPropertyNames.EnvironmentUtf8, s.Environment);
+                WriteValueIfPresent(writer, JsonPropertyNames.AuthKindUtf8, s.AuthKind);
+                WriteValueIfPresent(writer, JsonPropertyNames.SecretRefsUtf8, s.SecretRefs);
+                WriteValueIfPresent(writer, JsonPropertyNames.ConfigUtf8, s.Config);
+                WriteValueIfPresent(writer, JsonPropertyNames.DescriptionUtf8, s.Description);
+                WriteValueIfPresent(writer, JsonPropertyNames.ExpiresAtUtf8, s.ExpiresAt);
+                WriteValueIfPresent(writer, JsonPropertyNames.RotatedAtUtf8, s.RotatedAt);
+                if (!s.ManagementTags.IsEmpty)
+                {
+                    writer.WritePropertyName(JsonPropertyNames.ManagementTagsUtf8);
+                    s.ManagementTags.WriteTo(writer);
+                }
+
+                if (!s.UsageTags.IsEmpty)
+                {
+                    writer.WritePropertyName(JsonPropertyNames.UsageTagsUtf8);
+                    s.UsageTags.WriteTo(writer);
+                }
+
+                writer.WriteEndObject();
+            });
+    }
+
+    /// <summary>Writes a brand-new binding's JSON into the caller's (pooled) writer in one pass — the draft's operator
+    /// content is carried bytes-to-bytes and the server fields (id/createdBy/createdAt/etag) are stamped here. Secret
+    /// material never appears; each secret reference is validated to be a well-formed <see cref="SecretRef"/> so a
     /// malformed (or accidental inline-secret) value is rejected at the boundary.</summary>
     /// <param name="writer">The writer to serialize into.</param>
+    /// <param name="draft">The draft binding carrying the operator-supplied content as JSON values (read bytes-to-bytes).</param>
     /// <param name="id">The assigned binding id.</param>
-    /// <param name="definition">The binding content (references + non-secret metadata only).</param>
     /// <param name="actor">The actor creating the binding (audit).</param>
     /// <param name="createdAt">The creation instant.</param>
     /// <param name="etag">The optimistic-concurrency token to assign.</param>
-    public static void WriteNew(Utf8JsonWriter writer, string id, SourceCredentialDefinition definition, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+    public static void WriteNew(Utf8JsonWriter writer, in SourceCredentialBinding draft, string id, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
     {
-        ValidateDefinition(definition);
+        ValidateDraft(draft);
+        RequireIdentity(draft);
         writer.WriteStartObject();
         writer.WriteString(JsonPropertyNames.IdUtf8, id);
-        writer.WriteString(JsonPropertyNames.SourceNameUtf8, definition.SourceName);
-        writer.WriteString(JsonPropertyNames.EnvironmentUtf8, definition.Environment);
-        writer.WriteString(JsonPropertyNames.AuthKindUtf8, definition.AuthKind.ToJsonToken());
-        WriteSecretRefs(writer, definition.SecretRefs);
-        WriteConfig(writer, definition.Config);
-        if (definition.Description is { } description)
-        {
-            writer.WriteString(JsonPropertyNames.DescriptionUtf8, description);
-        }
-
-        WriteLifecycle(writer, definition);
-
-        if (!definition.ManagementTags.IsEmpty)
-        {
-            writer.WritePropertyName(JsonPropertyNames.ManagementTagsUtf8);
-            definition.ManagementTags.WriteTo(writer);
-        }
-
-        if (!definition.UsageTags.IsEmpty)
-        {
-            writer.WritePropertyName(JsonPropertyNames.UsageTagsUtf8);
-            definition.UsageTags.WriteTo(writer);
-        }
-
+        WriteValueIfPresent(writer, JsonPropertyNames.SourceNameUtf8, (JsonElement)draft.SourceName);
+        WriteValueIfPresent(writer, JsonPropertyNames.EnvironmentUtf8, (JsonElement)draft.Environment);
+        WriteValueIfPresent(writer, JsonPropertyNames.AuthKindUtf8, (JsonElement)draft.AuthKind);
+        WriteValueIfPresent(writer, JsonPropertyNames.SecretRefsUtf8, (JsonElement)draft.SecretRefs);
+        WriteValueIfPresent(writer, JsonPropertyNames.ConfigUtf8, (JsonElement)draft.Config);
+        WriteValueIfPresent(writer, JsonPropertyNames.DescriptionUtf8, (JsonElement)draft.Description);
+        WriteValueIfPresent(writer, JsonPropertyNames.ExpiresAtUtf8, (JsonElement)draft.ExpiresAt);
+        WriteValueIfPresent(writer, JsonPropertyNames.RotatedAtUtf8, (JsonElement)draft.RotatedAt);
+        WriteValueIfPresent(writer, JsonPropertyNames.ManagementTagsUtf8, (JsonElement)draft.ManagementTags);
+        WriteValueIfPresent(writer, JsonPropertyNames.UsageTagsUtf8, (JsonElement)draft.UsageTags);
         writer.WriteString(JsonPropertyNames.CreatedByUtf8, actor);
         writer.WriteString(JsonPropertyNames.CreatedAtUtf8, createdAt);
         writer.WriteString(JsonPropertyNames.EtagUtf8, etag.Value ?? string.Empty);
         writer.WriteEndObject();
     }
 
-    /// <summary>Writes an updated copy of this binding (immutable identity — id/sourceName/environment — and the
-    /// created-* audit fields carried through; only the mutable reference/metadata fields replaced).</summary>
+    // Copies a draft/source property to the writer bytes-to-bytes when present (skips an undefined element).
+    private static void WriteValueIfPresent(Utf8JsonWriter writer, ReadOnlySpan<byte> name, in JsonElement value)
+    {
+        if (value.ValueKind != JsonValueKind.Undefined)
+        {
+            writer.WritePropertyName(name);
+            value.WriteTo(writer);
+        }
+    }
+
+    // The bytes-to-bytes draft context: the request body's already-parsed JSON values plus the resolved tag sets.
+    private readonly struct DraftElements(
+        JsonElement sourceName,
+        JsonElement environment,
+        JsonElement authKind,
+        JsonElement secretRefs,
+        JsonElement config,
+        JsonElement description,
+        JsonElement expiresAt,
+        JsonElement rotatedAt,
+        SecurityTagSet managementTags,
+        SecurityTagSet usageTags)
+    {
+        public JsonElement SourceName { get; } = sourceName;
+
+        public JsonElement Environment { get; } = environment;
+
+        public JsonElement AuthKind { get; } = authKind;
+
+        public JsonElement SecretRefs { get; } = secretRefs;
+
+        public JsonElement Config { get; } = config;
+
+        public JsonElement Description { get; } = description;
+
+        public JsonElement ExpiresAt { get; } = expiresAt;
+
+        public JsonElement RotatedAt { get; } = rotatedAt;
+
+        public SecurityTagSet ManagementTags { get; } = managementTags;
+
+        public SecurityTagSet UsageTags { get; } = usageTags;
+    }
+
+    /// <summary>Writes an updated copy of this binding: the immutable identity (id/sourceName/environment), the immutable
+    /// security tags, and the created-* audit fields are carried through from the stored binding; the draft's mutable
+    /// reference/metadata content is carried bytes-to-bytes.</summary>
     /// <param name="writer">The writer to serialize into.</param>
-    /// <param name="definition">The new binding content.</param>
+    /// <param name="draft">The draft carrying the new mutable content as JSON values (read bytes-to-bytes).</param>
     /// <param name="actor">The actor performing the update (audit).</param>
     /// <param name="updatedAt">The update instant.</param>
     /// <param name="etag">The new optimistic-concurrency token to assign.</param>
-    public void WriteUpdated(Utf8JsonWriter writer, SourceCredentialDefinition definition, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
+    public void WriteUpdated(Utf8JsonWriter writer, in SourceCredentialBinding draft, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
     {
-        ValidateDefinition(definition);
+        ValidateDraft(draft);
         writer.WriteStartObject();
         writer.WriteString(JsonPropertyNames.IdUtf8, this.IdValue);
-        writer.WriteString(JsonPropertyNames.SourceNameUtf8, this.SourceNameValue);
-        writer.WriteString(JsonPropertyNames.EnvironmentUtf8, this.EnvironmentValue);
-        writer.WriteString(JsonPropertyNames.AuthKindUtf8, definition.AuthKind.ToJsonToken());
-        WriteSecretRefs(writer, definition.SecretRefs);
-        WriteConfig(writer, definition.Config);
-        if (definition.Description is { } description)
-        {
-            writer.WriteString(JsonPropertyNames.DescriptionUtf8, description);
-        }
 
-        WriteLifecycle(writer, definition);
+        // Immutable identity carried forward from the stored binding, never taken from the draft.
+        WriteValueIfPresent(writer, JsonPropertyNames.SourceNameUtf8, (JsonElement)this.SourceName);
+        WriteValueIfPresent(writer, JsonPropertyNames.EnvironmentUtf8, (JsonElement)this.Environment);
+
+        // Mutable content carried bytes-to-bytes from the draft.
+        WriteValueIfPresent(writer, JsonPropertyNames.AuthKindUtf8, (JsonElement)draft.AuthKind);
+        WriteValueIfPresent(writer, JsonPropertyNames.SecretRefsUtf8, (JsonElement)draft.SecretRefs);
+        WriteValueIfPresent(writer, JsonPropertyNames.ConfigUtf8, (JsonElement)draft.Config);
+        WriteValueIfPresent(writer, JsonPropertyNames.DescriptionUtf8, (JsonElement)draft.Description);
+        WriteValueIfPresent(writer, JsonPropertyNames.ExpiresAtUtf8, (JsonElement)draft.ExpiresAt);
+        WriteValueIfPresent(writer, JsonPropertyNames.RotatedAtUtf8, (JsonElement)draft.RotatedAt);
 
         // Management and usage tags are immutable identity (the binding's row-authorization scope) — carried forward
-        // from the existing binding, never taken from the update definition.
-        if (!this.ManagementTagsValue.IsEmpty)
-        {
-            writer.WritePropertyName(JsonPropertyNames.ManagementTagsUtf8);
-            this.ManagementTagsValue.WriteTo(writer);
-        }
-
-        if (!this.UsageTagsValue.IsEmpty)
-        {
-            writer.WritePropertyName(JsonPropertyNames.UsageTagsUtf8);
-            this.UsageTagsValue.WriteTo(writer);
-        }
+        // from the existing binding, never taken from the draft.
+        WriteValueIfPresent(writer, JsonPropertyNames.ManagementTagsUtf8, (JsonElement)this.ManagementTags);
+        WriteValueIfPresent(writer, JsonPropertyNames.UsageTagsUtf8, (JsonElement)this.UsageTags);
 
         writer.WriteString(JsonPropertyNames.CreatedByUtf8, this.CreatedByValue);
         writer.WriteString(JsonPropertyNames.CreatedAtUtf8, this.CreatedAtValue);
@@ -320,27 +444,47 @@ public readonly partial struct SourceCredentialBinding
         writer.WriteEndObject();
     }
 
-    /// <summary>Validates a definition: at least one secret reference, every reference well-formed (and thus a
-    /// pointer, not inline secret material). Throws <see cref="ArgumentException"/> on a malformed definition.</summary>
-    /// <param name="definition">The definition to validate.</param>
-    public static void ValidateDefinition(SourceCredentialDefinition definition)
+    /// <summary>Validates a draft binding's references: at least one, each with a non-empty role name and a well-formed
+    /// <see cref="SecretRef"/> (a pointer, not inline secret material) — read bytes-to-bytes off the draft's UTF-8.
+    /// Throws <see cref="ArgumentException"/> on a malformed draft.</summary>
+    /// <param name="draft">The draft to validate.</param>
+    public static void ValidateDraft(in SourceCredentialBinding draft)
     {
-        ArgumentException.ThrowIfNullOrEmpty(definition.SourceName);
-        ArgumentException.ThrowIfNullOrEmpty(definition.Environment);
-        if (definition.SecretRefs is null || definition.SecretRefs.Count == 0)
+        if (!draft.SecretRefs.IsNotUndefined() || draft.SecretRefs.GetArrayLength() == 0)
         {
-            throw new ArgumentException("A source credential binding requires at least one secret reference.", nameof(definition));
+            throw new ArgumentException("A source credential binding requires at least one secret reference.", nameof(draft));
         }
 
-        foreach (SecretReferenceDefinition reference in definition.SecretRefs)
+        foreach (SecretReference reference in draft.SecretRefs.EnumerateArray())
         {
-            ArgumentException.ThrowIfNullOrEmpty(reference.Name);
-            if (!SecretRef.TryParse(reference.Ref, out _))
+            using UnescapedUtf8JsonString name = reference.Name.GetUtf8String();
+            if (name.Span.IsEmpty)
+            {
+                throw new ArgumentException("A secret reference requires a non-empty name.", nameof(draft));
+            }
+
+            using UnescapedUtf8JsonString referenceValue = reference.Ref.GetUtf8String();
+            if (!SecretRef.IsWellFormed(referenceValue.Span))
             {
                 throw new ArgumentException(
-                    $"Secret reference '{reference.Name}' is not a valid SecretRef (scheme://locator[#version]); secret material must never be stored inline.",
-                    nameof(definition));
+                    $"Secret reference '{(string)reference.Name}' is not a valid SecretRef (scheme://locator[#version]); secret material must never be stored inline.",
+                    nameof(draft));
             }
+        }
+    }
+
+    // A create draft must carry the immutable identity (sourceName, environment); an update draft omits it (the store
+    // carries it forward from the stored binding).
+    private static void RequireIdentity(in SourceCredentialBinding draft)
+    {
+        if (!draft.SourceName.IsNotUndefined())
+        {
+            throw new ArgumentException("A source credential binding requires a 'sourceName'.", nameof(draft));
+        }
+
+        if (!draft.Environment.IsNotUndefined())
+        {
+            throw new ArgumentException("A source credential binding requires an 'environment'.", nameof(draft));
         }
     }
 

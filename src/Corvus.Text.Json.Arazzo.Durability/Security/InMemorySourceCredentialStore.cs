@@ -35,20 +35,20 @@ public sealed class InMemorySourceCredentialStore : ISourceCredentialStore
         => this.timeProvider = timeProvider ?? TimeProvider.System;
 
     /// <inheritdoc/>
-    public ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialDefinition definition, string actor, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialBinding draft, string actor, CancellationToken cancellationToken)
     {
-        SourceCredentialBinding.ValidateDefinition(definition);
+        SourceCredentialBinding.ValidateDraft(draft);
         ArgumentNullException.ThrowIfNull(actor);
 
         lock (this.gate)
         {
-            (string, string, string) key = (definition.SourceName, definition.Environment, SourceCredentialKey.Discriminator(definition.ManagementTags, definition.UsageTags));
+            (string, string, string) key = (draft.SourceNameValue, draft.EnvironmentValue, SourceCredentialKey.Discriminator(draft.ManagementTagsValue, draft.UsageTagsValue));
             if (this.bindings.ContainsKey(key))
             {
-                throw new InvalidOperationException($"A source credential binding for '{KeyOf(definition.SourceName, definition.Environment)}' with those security tags already exists.");
+                throw new InvalidOperationException($"A source credential binding for '{KeyOf(draft.SourceNameValue, draft.EnvironmentValue)}' with those security tags already exists.");
             }
 
-            byte[] json = SourceCredentialSerialization.SerializeNew(this.NextId(), definition, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
+            byte[] json = SourceCredentialSerialization.SerializeNew(this.NextId(), draft, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
             this.bindings[key] = json;
             return new ValueTask<ParsedJsonDocument<SourceCredentialBinding>>(PersistedJson.ToPooledDocument<SourceCredentialBinding>(json));
         }
@@ -145,9 +145,9 @@ public sealed class InMemorySourceCredentialStore : ISourceCredentialStore
     }
 
     /// <inheritdoc/>
-    public ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialDefinition definition, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialBinding draft, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken)
     {
-        SourceCredentialBinding.ValidateDefinition(definition);
+        SourceCredentialBinding.ValidateDraft(draft);
         ArgumentNullException.ThrowIfNull(actor);
         ArgumentNullException.ThrowIfNull(context);
 
@@ -159,7 +159,7 @@ public sealed class InMemorySourceCredentialStore : ISourceCredentialStore
                 return new ValueTask<ParsedJsonDocument<SourceCredentialBinding>?>((ParsedJsonDocument<SourceCredentialBinding>?)null);
             }
 
-            byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, KeyOf(sourceName, environment), expectedEtag, definition, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
+            byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, KeyOf(sourceName, environment), expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
             this.bindings[key] = json; // tags immutable → key unchanged
             return new ValueTask<ParsedJsonDocument<SourceCredentialBinding>?>(PersistedJson.ToPooledDocument<SourceCredentialBinding>(json));
         }

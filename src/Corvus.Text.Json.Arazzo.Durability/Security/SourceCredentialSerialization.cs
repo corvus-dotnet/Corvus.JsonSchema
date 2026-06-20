@@ -16,37 +16,38 @@ namespace Corvus.Text.Json.Arazzo.Durability.Security;
 /// </summary>
 public static class SourceCredentialSerialization
 {
-    /// <summary>Serializes a brand-new binding to owned JSON bytes (pooled scratch, no detached clone).</summary>
+    /// <summary>Serializes a brand-new binding to owned JSON bytes (pooled scratch, no detached clone) — the draft's
+    /// operator content is carried bytes-to-bytes; id and the server-stamped audit/concurrency fields are added here.</summary>
     /// <param name="id">The assigned binding id.</param>
-    /// <param name="definition">The binding content (references + non-secret metadata only).</param>
+    /// <param name="draft">The draft binding carrying the operator-supplied content as JSON values (read bytes-to-bytes).</param>
     /// <param name="actor">The creating identity (audit).</param>
     /// <param name="createdAt">The creation timestamp.</param>
     /// <param name="etag">The new record etag.</param>
     /// <returns>The owned UTF-8 JSON bytes.</returns>
-    public static byte[] SerializeNew(string id, SourceCredentialDefinition definition, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+    public static byte[] SerializeNew(string id, in SourceCredentialBinding draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
         => PersistedJson.ToArray(
-            (id, definition, actor, createdAt, etag),
-            static (Utf8JsonWriter writer, in (string Id, SourceCredentialDefinition Def, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
-                => SourceCredentialBinding.WriteNew(writer, c.Id, c.Def, c.Actor, c.At, c.Tag));
+            (id, draft, actor, createdAt, etag),
+            static (Utf8JsonWriter writer, in (string Id, SourceCredentialBinding Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
+                => SourceCredentialBinding.WriteNew(writer, c.Draft, c.Id, c.Actor, c.At, c.Tag));
 
     /// <summary>Parses the stored binding (pooled), checks the etag, and serializes the carried-forward update.</summary>
     /// <param name="existing">The stored binding's current UTF-8 JSON bytes.</param>
     /// <param name="key">The binding key (<c>sourceName@environment</c>) for a conflict message.</param>
     /// <param name="expectedEtag">The expected current etag (<see cref="WorkflowEtag.None"/> overwrites unconditionally).</param>
-    /// <param name="definition">The new content.</param>
+    /// <param name="draft">The draft carrying the new mutable content as JSON values (read bytes-to-bytes).</param>
     /// <param name="actor">The updating identity (audit).</param>
     /// <param name="updatedAt">The update timestamp.</param>
     /// <param name="etag">The new record etag.</param>
     /// <returns>The owned UTF-8 JSON bytes.</returns>
     /// <exception cref="SourceCredentialConflictException">The expected etag no longer matches.</exception>
-    public static byte[] SerializeUpdated(ReadOnlySpan<byte> existing, string key, WorkflowEtag expectedEtag, SourceCredentialDefinition definition, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
+    public static byte[] SerializeUpdated(ReadOnlySpan<byte> existing, string key, WorkflowEtag expectedEtag, in SourceCredentialBinding draft, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
     {
         using ParsedJsonDocument<SourceCredentialBinding> current = PersistedJson.ToPooledDocument<SourceCredentialBinding>(existing);
         EnsureEtag(key, expectedEtag, current.RootElement.EtagValue);
         return PersistedJson.ToArray(
-            (Current: current.RootElement, definition, actor, updatedAt, etag),
-            static (Utf8JsonWriter writer, in (SourceCredentialBinding Current, SourceCredentialDefinition Def, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
-                => c.Current.WriteUpdated(writer, c.Def, c.Actor, c.At, c.Tag));
+            (Current: current.RootElement, draft, actor, updatedAt, etag),
+            static (Utf8JsonWriter writer, in (SourceCredentialBinding Current, SourceCredentialBinding Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
+                => c.Current.WriteUpdated(writer, c.Draft, c.Actor, c.At, c.Tag));
     }
 
     /// <summary>Reads a stored binding's etag through a pooled, disposed document (no detached clone) — for the delete concurrency check.</summary>

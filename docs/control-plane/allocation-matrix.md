@@ -1,0 +1,275 @@
+# Control-plane allocation matrix (API → store)
+
+> **Status: Phase 1 — skeleton for review.** Single source of truth for the bytes-to-bytes
+> allocation campaign (issue #803). It enumerates every control-plane API operation, its call
+> tree to the durable store, the ownership ledger, the one end-to-end baseline benchmark, the
+> target CTJ pattern (grounded in a named skill / § of the design doc), and the **measured**
+> before→after.
+
+## Clean-slate rule (overrides everything below)
+
+**No row is "done" because a prior commit or session says so.** Prior work is treated only as the
+*current code shape* — a starting state to be measured, never a completion. Every row with an
+allocation seam goes through the **same** process, from scratch, and is marked ✅ **only** when a
+before→after measurement is recorded in Part D of this document:
+
+1. **Ground** in the named skill(s) + design-doc § *before* writing code. Derive the target from
+   the conventions; the existing code is the corpus being replaced ([[dont-anchor-on-existing-bad-code]]).
+2. **Baseline** — one end-to-end benchmark (handler → InMemory store) measuring the **current**
+   allocation. This is the "before". Establish it by *running it*, not by recalling a number.
+3. **Ledger** — post the ownership ledger for the path ([[alloc-ownership-ledger-discipline]],
+   [[frequency-is-not-a-licence]]).
+4. **Change** the seam/layers per the target pattern.
+5. **After** — re-run the same benchmark (with a `[Benchmark(Baseline = true)]` old-path arm so the
+   delta is measured, not asserted); record before→after.
+6. **Document** the row in Part D; if a better pattern emerged, **update the skill** and link it.
+
+### The InMemory-baseline decision
+
+The end-to-end benchmark per row runs against `InMemory*` stores — the in-process, our-code-only
+floor. Per design §13.4.1, per-backend micro-benchmarks are *not* the right tool (driver allocation
+dominates and isn't ours); **Sqlite** is a single spot-check for the driver delta where a row
+warrants it. Backends are enumerated per seam as a **leaf-realisation** column (static audit, the
+§13.4.1 method), not exploded into N benchmarks.
+
+### Status legend (this pass only — nothing starts as ✅)
+
+| Mark | Meaning |
+|---|---|
+| ⬜ | Not started in this pass |
+| 🔬 | Ledger posted **and** baseline measured (the "before" exists) |
+| 🔧 | Change applied, after-measurement pending |
+| ✅ | before→after recorded in Part D + committed |
+| ➖ | No allocation seam — confirmed allocation-free (opaque bytes / 0-copy passthrough / direct delete) |
+
+### Current-seam-shape legend (descriptive of today's code, **not** a completion claim)
+
+`record` = hand-rolled struct/record input · `draft` = already passes a generated CTJ document ·
+`params` = loose scalar params · `list` = collection seam · `bytes` = opaque/0-copy.
+A `draft` shape still requires the full process above — it is *not* presumed minimal.
+
+---
+
+## Part A — write-seam inventory (campaign core)
+
+The 7 durable store interfaces, persisted CTJ document, shared serialization helper, and the
+**current write-seam shape**. Goal: every write seam carries the generated CTJ document, realising
+only at the genuine leaf — [[no-handrolled-records-use-codegen-jsonschema]],
+[[seams-carry-json-values-realise-at-leaf]].
+
+| Store write method | Persisted doc | Serialization helper | Current seam shape | Status |
+|---|---|---|---|---|
+| `IObservedIdentityStore.SeenAsync` | `ObservedIdentity` | `ObservedIdentitySerialization` | `params` (CTJ kind + JsonString value/label + SecurityTagSet) | ⬜ |
+| `ISecurityPolicyStore.Add/UpdateRule` | `SecurityRuleDocument` | `SecurityPolicySerialization` | `draft` | ⬜ |
+| `ISecurityPolicyStore.Add/UpdateBinding` | `SecurityBindingDocument` | `SecurityPolicySerialization` | `draft` | ⬜ |
+| `IAccessRequestStore.CreateAsync` | `AccessRequest` | `AccessRequestSerialization` | `draft` | ⬜ |
+| `IAccessRequestStore.DecideAsync` | `AccessRequest` | `AccessRequestSerialization` | `record` (`AccessRequestDecision`) | ⬜ |
+| `ISourceCredentialStore.Add/UpdateAsync` | `SourceCredentialBinding` | `SourceCredentialSerialization` | `draft` (seam carries the generated doc; `SourceCredentialDefinition` retained only as the cold-caller convenience input via `Draft(definition)` + extension) | ✅ (Part D) |
+| `IWorkflowCatalogStore.AddAsync` | `CatalogVersion` | (catalog serialization) | `record` (`CatalogMetadata`) + `bytes` package | ⬜ |
+| `IWorkflowCatalogStore.UpdateMetadataAsync` | `CatalogVersion` | (catalog serialization) | `record` (`CatalogMetadataPatch`) | ⬜ |
+| `IWorkflowAdministratorStore.PutAsync` | `WorkflowAdministrators` | `WorkflowAdministratorsSerialization` | `list` (`IReadOnlyList<SecurityTagSet>`) | ⬜ |
+| `IWorkflowStateStore.SaveAsync` | opaque checkpoint | (executor-owned) | `bytes` + index | ➖ (confirm) |
+
+**Backend leaf-realisation (all seams, §13.4.1 static audit — to re-confirm per worked row):** every
+backend persists the same document bytes; realisations only at the driver leaf — indexed key columns
++ etag. Backends: InMemory (core) · Sqlite · Postgres · SqlServer · MySql · Mongo · Cosmos · Redis ·
+NatsJetStream · AzureStorage.
+
+---
+
+## Part B — full API matrix (all endpoints)
+
+`Handler.Method → [Client] → Store.Method`. `R`/`W` = read/write. *Existing bench* = benchmark code
+that exists today (a starting point to be re-baselined, **not** evidence of completion).
+
+### Runs — `ArazzoControlPlaneHandler` → `IWorkflowManagementClient` → `IWorkflowStateStore`
+
+| Op | Call tree | R/W | Current pattern / hotspots | Existing bench | Target pattern + grounding | Status |
+|---|---|---|---|---|---|---|
+| `GET /runs` | ListRuns → ListAsync | R | builds `WorkflowRunSummary` page loop | — | confirm `From()`-wrap projection ([[ctj-handler-response-projection]]) | ⬜ |
+| `GET /runs/{id}` | GetRun → GetAsync | R | conditional fault/wait/tags arrays; a `ParseValue` in detail build | — | review projection; kill `ParseValue` (`corvus-typed-model-construction`) | ⬜ |
+| `DELETE /runs/{id}` | DeleteRun → GetAsync ×checks → DeleteAsync | W | 2× GetAsync access checks | — | — | ➖ |
+| `POST /runs/{id}/resume` | ResumeRun → GetAsync ×2 → ResumeAsync | W | builds detail 3×; union `Match()` | — | review repeated detail builds | ⬜ |
+| `POST /runs/{id}/cancel` | CancelRun → GetAsync ×2 → CancelAsync | W | builds detail 3×; `(string)reason` | — | as resume | ⬜ |
+| `POST(custom) /runs` purge | PurgeRuns → PurgeAsync | W | small result model | — | — | ➖ |
+
+### Credentials — `ArazzoControlPlaneCredentialsHandler` → `ISourceCredentialStore`
+
+| Op | Call tree | R/W | Current pattern / hotspots | Existing bench | Target pattern + grounding | Status |
+|---|---|---|---|---|---|---|
+| `GET /credentials` | ListCredentials → ListAsync | R | `ToSummary` per binding | `CredentialStoreReadBenchmarks` (ResolveForUsage) | confirm summary projection | ⬜ |
+| `POST /credentials` | CreateCredential → **AddAsync** | W | `List<SecretReferenceDefinition>`, `List<SecurityTag>`, record `SourceCredentialDefinition`, `with { }` tag stamp | `SourceCredentialStoreBenchmarks` (record vs draft) | `SourceCredentialBinding.Draft(...)` + store stamps; `SecretRef.IsWellFormed(ReadOnlySpan<byte>)` 0-B validation; `corvus-typed-model-construction`, `corvus-builder-context-threading`, `corvus-bytes-to-bytes`; §13.4.1 | ✅ **2.35→1.64 KB (Part D)** |
+| `GET /credentials/{s}/{e}` | GetCredential → GetAsync | R | `ToSummary` | — | confirm projection | ⬜ |
+| `PUT /credentials/{s}/{e}` | UpdateCredential → **UpdateAsync** | W | as create (record seam) | shares the create seam (not separately benched) | as create (draft seam) | ✅ converted with POST (Part D) |
+| `DELETE /credentials/{s}/{e}` | DeleteCredential → DeleteAsync | W | minimal | — | — | ➖ |
+
+### Catalog — `ArazzoControlPlaneCatalogHandler` → `IWorkflowCatalogClient` → `IWorkflowCatalogStore`
+
+| Op | Call tree | R/W | Current pattern / hotspots | Existing bench | Target pattern + grounding | Status |
+|---|---|---|---|---|---|---|
+| `GET /catalog` search | SearchCatalog → SearchAsync | R | `BuildPage` loop; `ToTags` copy | — | confirm projection | ⬜ |
+| `POST /catalog` | AddCatalogVersion → **AddAsync** | W | record `CatalogMetadata` + package bytes; `ToOwner`/`ToTags`; `SecurityTagSet.FromTags` | none (e2e) | carry `CatalogVersion` draft + package bytes | ⬜ |
+| `GET /catalog/{id}` list | ListCatalogVersions → SearchAsync | R | BuildPage | — | — | ⬜ |
+| `GET …/versions/{n}` | GetCatalogVersion → GetAsync | R | `CatalogVersionSummary.From()` wrap | — | confirm congruent wrap | ⬜ |
+| `PATCH …/versions/{n}` | UpdateCatalogVersion → GetAsync(check) → **UpdateMetadataAsync** | W | record `CatalogMetadataPatch`; `ToOwner`/`ToTags`; 2× GetAsync | none (e2e) | carry patch draft / mutable builder ([[corvus-mutable-documents]]) | ⬜ |
+| `DELETE …/versions/{n}` | Delete → GetAsync(check) → DeleteAsync | W | 2× GetAsync | — | — | ➖ |
+| `POST(custom) /catalog` purge | PurgeCatalog → PurgeAsync | W | small result | — | — | ➖ |
+| `GET …/package` | GetCatalogPackage → GetPackageAsync | R | returns `ReadOnlyMemory<byte>` | — | confirm 0-copy | ➖ |
+| `GET …/workflow,/schemas,/executor,/executor-manifest,/sources/{n}` | Get*Document → GetDocumentAsync | R | `ParsedJsonDocument.Parse` + workspace ownership (binary ones return bytes) | — | confirm pooled-parse + ownership handoff ([[corvus-parsed-documents-and-memory]]) | ⬜ |
+| `POST …/validate` | ValidateCatalogValue → GetAsync + GetPackageAsync + cached schema | W | validation errors `List<>`; schema cache | — | review error projection | ⬜ |
+| `POST …/runs` start | StartCatalogWorkflowRun → GetAsync + StartAsync + IsVersionHostedAsync | W | optional validation errors `List<>` | `WorkflowExecutorBenchmarks` (executor, not this handler) | review | ⬜ |
+
+### Runners — `ArazzoControlPlaneRunnersHandler` → `IRunnerRegistry`
+
+| Op | Call tree | R/W | Current pattern | Existing bench | Target | Status |
+|---|---|---|---|---|---|---|
+| `GET /runners` | ListRunners → ListAsync | R | `Runner.From()` wrap per row | — | confirm wrap | ⬜ |
+
+### Identity — `ArazzoControlPlaneIdentityHandler`
+
+| Op | Call tree | R/W | Current pattern | Existing bench | Target | Status |
+|---|---|---|---|---|---|---|
+| `GET /identity/whoami` | Whoami → (ControlPlaneAccess) | R | builds identity array | — | confirm | ⬜ |
+| `GET /identity/capabilities` | Capabilities → (ControlPlaneAccess) | R | builds kind array | — | confirm | ⬜ |
+| `GET /identity/grantees` | SearchGrantees → ObservedIdentity.SearchAsync / PrincipalDirectory.SearchAsync | R | RefTuple closure-free projection; directory path builds `List<ResolvedPrincipal>` | `GranteeProjectionBenchmarks` | re-baseline; confirm directory list is genuine leaf | ⬜ |
+
+### Administrators — `ArazzoControlPlaneAdministratorsHandler` → `IWorkflowAdministratorStore` / `IObservedIdentityStore`
+
+| Op | Call tree | R/W | Current pattern / hotspots | Existing bench | Target | Status |
+|---|---|---|---|---|---|---|
+| `GET /administrators/{id}` | List → GetAdministratorsAsync | R | `DescribeUsageScope` per admin | — | confirm projection | ⬜ |
+| `POST …/members` | AddAdministrator → FindIdentityConflict? → AddAdministratorAsync → SeenAsync | W | `SecurityTagSet.Build` (span-threaded); collision probe; label allocs | — | review list seam to `PutAsync` | ⬜ |
+| `PUT /administrators/{id}` | TransferAdministration → FindIdentityConflict×loop → TransferAsync | W | `List<SecurityTagSet>`; collision probe loop | — | `PutAsync` list seam review | ⬜ |
+| `DELETE …/members/{d}/{v}` | RemoveAdministrator → RemoveAdministratorAsync | W | `SecurityTagSet` from {dim,val} | — | — | ⬜ |
+
+### Security rules + bindings — `ArazzoControlPlaneSecurityHandler` → `ISecurityPolicyStore`
+
+| Op | Call tree | R/W | Current pattern | Existing bench | Target | Status |
+|---|---|---|---|---|---|---|
+| `GET /security/rules` | ListRules → ListRulesAsync | R | `ToRuleSource` per rule | — | confirm projection | ⬜ |
+| `POST /security/rules` | CreateRule → **AddRuleAsync** | W | `SecurityRule.Compile` validation; draft | `SecurityRuleStoreBenchmarks` (has baseline arm) | re-baseline e2e; confirm draft is minimal | ⬜ |
+| `GET /security/rules/{n}` | GetRule → GetRuleAsync | R | `ToRuleSource` | — | confirm | ⬜ |
+| `PUT /security/rules/{n}` | UpdateRule → **UpdateRuleAsync** | W | draft | `SecurityRuleStoreBenchmarks` (has baseline arm) | re-baseline e2e | ⬜ |
+| `DELETE /security/rules/{n}` | DeleteRule → DeleteRuleAsync | W | direct | — | — | ➖ |
+| `GET /security/bindings` | ListBindings → ListBindingsAsync | R | `ToBindingSource` per binding | `RowSecurityResolveBenchmarks` (resolve) | confirm projection | ⬜ |
+| `POST /security/bindings` | CreateBinding → **AddBindingAsync** | W | `ReadBinding` → `List<string>` rule names; `Draft()` | `SecurityBindingStoreBenchmarks` (no baseline arm) | add baseline arm; measure | ⬜ |
+| `GET /security/bindings/{id}` | GetBinding → GetBindingAsync | R | `ToBindingSource` | — | confirm | ⬜ |
+| `PUT /security/bindings/{id}` | UpdateBinding → **UpdateBindingAsync** | W | draft | `SecurityBindingStoreBenchmarks` (no baseline arm) | add baseline arm; measure | ⬜ |
+| `DELETE /security/bindings/{id}` | DeleteBinding → DeleteBindingAsync | W | direct | — | — | ➖ |
+
+### Access requests — `ArazzoControlPlaneAccessRequestsHandler` → `IAccessRequestApprovalService` / `IAccessRequestStore`
+
+| Op | Call tree | R/W | Current pattern | Existing bench | Target | Status |
+|---|---|---|---|---|---|---|
+| `GET /accessRequests` | List → ListAsync (+admin check) | R | `ToViewSource` per request; admin loop | — | confirm projection | ⬜ |
+| `POST /accessRequests` | Submit → SubmitAsync → **CreateAsync** | W | `List<string>` scopes; `AccessRequest.Draft()` | `AccessRequestStoreBenchmarks` (no baseline arm) | add baseline arm; measure | ⬜ |
+| `GET /accessRequests/{id}` | Get → GetAsync (+visibility) | R | `ToView` wrap | `AccessRequestViewProjectionBenchmarks` (has baseline arm) | re-baseline; confirm wrap | ⬜ |
+| `POST …/approve` | Approve → ApproveAsync → **DecideAsync** | W | record `AccessRequestDecision` | — | carry decision draft / mutable builder | ⬜ |
+| `POST …/approve-as-eligible` | ApproveAsEligible → ApproveAsEligibleAsync → DecideAsync (+ binding/rule Draft) | W | record decision; `Draft()` for binding/rule | — | as approve | ⬜ |
+| `POST …/deny,/withdraw,/revoke` | → ApprovalService.* → DecideAsync | W | record decision | — | as approve | ⬜ |
+
+---
+
+## Part C — benchmark plan
+
+One end-to-end (handler → InMemory store) benchmark per write row, each with a
+`[Benchmark(Baseline = true)]` old-path arm. Existing store benchmarks are starting points to be
+**re-run and recorded** under the clean-slate rule — none is treated as an established baseline
+until its number is captured in Part D.
+
+| Seam | Existing code | Action |
+|---|---|---|
+| ObservedIdentity `SeenAsync` | `ObservedIdentityStoreBenchmarks` (no baseline arm) | add old-path arm; measure before→after |
+| Security rule Add/Update | `SecurityRuleStoreBenchmarks` (has baseline arm) | re-run; record numbers |
+| Security binding Add/Update | `SecurityBindingStoreBenchmarks` (no baseline arm) | add old-path arm; measure |
+| Access request Create | `AccessRequestStoreBenchmarks` (no baseline arm) | add old-path arm; measure |
+| Access request Decide | (extend `AccessRequestStoreBenchmarks`) | record vs draft |
+| SourceCredential Add/Update | **create** `SourceCredentialStoreBenchmarks` | `Create_FromRecord` (baseline) vs `Create_FromDraft` |
+| Catalog Add / UpdateMetadata | **create** `CatalogStoreBenchmarks` | record vs draft |
+| Administrators Put | **create** `AdministratorStoreBenchmarks` | list-seam before/after |
+
+### Infra facts (verified)
+
+- `MemoryDiagnoser` is applied **globally** in
+  `benchmarks/Corvus.Text.Json.Arazzo.Durability.Benchmarks/Program.cs`
+  (`ManualConfig.CreateMinimumViable().AddJob(Job.ShortRun…).AddDiagnoser(MemoryDiagnoser.Default)`).
+- `BenchmarkDotNet.Artifacts/` is **gitignored** → run output is transient. Every before→after
+  number must be recorded in Part D **and** the commit message.
+
+---
+
+## Part D — per-row ledger + before→after (the only record of completion)
+
+> One sub-section per worked row: the ownership ledger, the pattern applied (skill ref), and the
+> measured before→after (InMemory; Sqlite spot-check where relevant). A row is ✅ only once it
+> appears here with numbers.
+
+### ✅ `POST /credentials` → `ISourceCredentialStore.AddAsync` (and `PUT` → `UpdateAsync`)
+
+**Pattern applied — record→draft seam elimination.** `AddAsync`/`UpdateAsync` now carry a draft
+`SourceCredentialBinding` (the generated CTJ document the store already persists), not a
+`SourceCredentialDefinition` record. The warm HTTP handler builds the draft straight from the
+already-parsed request body via `SourceCredentialBinding.Draft(JsonElement …, in SecurityTagSet …)` —
+`secretRefs`/`config`/`description`/lifecycle copied **bytes-to-bytes** (no `List`, no per-field
+strings), management/usage tags written from the resolved `SecurityTagSet`s. The store reads the draft
+bytes-to-bytes and stamps `id`/`createdBy`/`createdAt`/`etag`; reference validation moved to a 0-B span
+(`SecretRef.IsWellFormed(ReadOnlySpan<byte>)`). Cold/programmatic callers keep an ergonomic record path
+via `SourceCredentialBinding.Draft(SourceCredentialDefinition)` + `SourceCredentialStoreExtensions`.
+Grounded in `corvus-bytes-to-bytes`, `corvus-typed-model-construction`, `corvus-builder-context-threading`,
+§13.4.1; mirrors the sibling `SecurityRuleDocument`/`SecurityBindingDocument`/`AccessRequest` draft seams.
+
+**Ledger** (measured region = parsed body → write seam → `InMemory` store; access-tag resolution and the
+`ToSummary` response projection are excluded — those are precomputed / separate rows):
+
+| Allocation | Owner / site | Verdict | Outcome |
+|---|---|---|---|
+| `List<SecretReferenceDefinition>` + N×2 strings | handler `ReadSecretRefs` | **KILL** | removed — `body.secretRefs` copied bytes-to-bytes |
+| `List<CredentialConfigDefinition>` + M×2 strings | handler `ReadConfig` | **KILL** | removed — `body.config` copied bytes-to-bytes |
+| `(string)Description` | handler `OptionalString` | **KILL** | removed — carried as a JSON value |
+| `SourceCredentialDefinition` record + `with {…}` | handler `ReadWrite` | n/a | was already free — `readonly record struct`; `with` is a stack copy (matrix "hotspot" corrected) |
+| persisted `byte[]` document | store serialize leaf | **LEAF** | kept (§13.4.1 write leaf) |
+| returned `ParsedJsonDocument` wrapper | store return | **LEAF** | kept (caller disposes) |
+| pooled draft document wrapper | handler/extension `Draft` | new | the bytes form the seam now carries (pooled, disposed) |
+
+**Before → after** (InMemory, ShortRun, MemoryDiagnoser, **same run**; `SourceCredentialStoreBenchmarks` —
+both arms source the same parsed body + precomputed tags, fresh store per op so the unique key does not
+409, returned doc disposed as the handler does, no delete in the measured region):
+
+| Arm | Mean | Allocated | Ratio |
+|---|---|---|---|
+| `Create_FromRecord` (baseline — old record seam) | 7.91 µs | **2.35 KB** | 1.00 |
+| `Create_FromDraft` (new draft seam) | 6.56 µs | **1.64 KB** | **0.70× (−0.71 KB, −30%)** |
+
+**Backends (§13.4.1 static audit).** All 10 (InMemory, Sqlite, Postgres, SqlServer, MySql, Mongo, Cosmos,
+Redis, NatsJetStream, AzureStorage) carry the draft to the shared `SourceCredentialSerialization` → single
+`byte[]` at the driver leaf. InMemory **and Sqlite** `SourceCredentialStoreConformance` pass in-process (no
+container); the other 8 backends are container-gated (`integration`, not run here).
+
+**Tests (net10.0, green).** `SourceCredentialStoreConformance` on InMemory + Sqlite (12 tests incl. the
+trust-boundary inline-secret rejection and tag immutability), lifecycle, Http cache/transport, Server
+handler, CLI. Slnx build **0 Warning(s), 0 Error(s)**.
+
+**Decisions & deferrals.**
+- **`PUT /credentials` → `UpdateAsync`** was converted in the same change (shared draft seam + serialization;
+  identity/tags carried forward from the stored binding). Conformance-verified; **not separately benchmarked**
+  — it eliminates the identical `List`s, so the create arm is the seam proxy. (Add an `Update_*` arm if a
+  discrete number is wanted.)
+- **Management-tag `List<SecurityTag>`** (handler `ReadTags` + `new List(InternalTags())` + `FromTags`) is
+  left as-is — it is access-tag *resolution* (the usage tags already use the bytes-to-bytes `SecurityTagSet.Build`),
+  a distinct seam from the record→draft persistence seam this row targets. Candidate follow-up.
+- **`samples/` (Aspire demo)** is not in the slnx and was not built; it uses only the record extension overload
+  (same overload resolution as the green tests), so it compiles, but this was not independently verified here.
+
+---
+
+## Cross-references
+
+- Skills: `corvus-typed-model-construction`, `corvus-builder-context-threading`,
+  `corvus-bytes-to-bytes`, `corvus-ctj-handler-implementation`, `corvus-mutable-documents`,
+  `corvus-parsed-documents-and-memory`, `corvus-benchmarks`, `corvus-buffer-and-pooling`.
+- Design: `docs/control-plane/execution-host-design.md` §13, §13.4.1, §14.2.
+- Memory: [[no-handrolled-records-use-codegen-jsonschema]],
+  [[seams-carry-json-values-realise-at-leaf]], [[alloc-free-typed-model-construction]],
+  [[alloc-free-persistence-seam]], [[alloc-ownership-ledger-discipline]],
+  [[frequency-is-not-a-licence]], [[dont-anchor-on-existing-bad-code]],
+  [[ctj-handler-response-projection]].
