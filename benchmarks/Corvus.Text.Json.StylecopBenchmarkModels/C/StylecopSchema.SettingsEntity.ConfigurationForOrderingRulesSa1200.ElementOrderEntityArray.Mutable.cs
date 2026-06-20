@@ -72,7 +72,7 @@ public readonly partial struct StylecopSchema
             /// </para>
             /// </remarks>
             [DebuggerDisplay("{DebuggerDisplay,nq}")]
-            public readonly partial struct ElementOrderEntityArray
+            public readonly partial struct EntityArray
             {
                 public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -110,7 +110,7 @@ public readonly partial struct StylecopSchema
                     /// mutated; attempting to mutate it throws an <see cref="InvalidOperationException"/> directing
                     /// the caller to set the value on its parent first.
                     /// </remarks>
-                    public static Mutable DefaultInstance { get; } = JsonElementHelpers.CreateDefaultValueElement<ElementOrderEntityArray, Mutable>(ElementOrderEntityArray.DefaultInstance);
+                    public static Mutable DefaultInstance { get; } = JsonElementHelpers.CreateDefaultValueElement<EntityArray, Mutable>(EntityArray.DefaultInstance);
 
                     /// <inheritdoc/>
                     public JsonValueKind ValueKind => TokenType.ToValueKind();
@@ -187,7 +187,7 @@ public readonly partial struct StylecopSchema
                     /// <param name="value">The instance of this type.</param>
                     /// <returns>A mutable instance.</returns>
                     /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-                    public static explicit operator Mutable(ElementOrderEntityArray instance)
+                    public static explicit operator Mutable(EntityArray instance)
                     {
                         if (instance._parent is not IMutableJsonDocument doc)
                         {
@@ -202,9 +202,9 @@ public readonly partial struct StylecopSchema
                     /// Converts to an immutable instance of the <see cref="Mutable"/> type.
                     /// </summary>
                     /// <param name="value">The <see cref="Mutable"/> instance.</param>
-                    /// <returns>An immutable instance of a <see cref="ElementOrderEntityArray"/>, initialized from the <see cref="Mutable"/> value.</returns>
+                    /// <returns>An immutable instance of a <see cref="EntityArray"/>, initialized from the <see cref="Mutable"/> value.</returns>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    public static implicit operator ElementOrderEntityArray(Mutable instance)
+                    public static implicit operator EntityArray(Mutable instance)
                     {
                         return new(instance._parent, instance._idx);
                     }
@@ -228,12 +228,12 @@ public readonly partial struct StylecopSchema
                     /// <returns>The item at the given index.</returns>
                     /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
                     /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-                    public Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity.Mutable this[int index]
+                    public Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Entity.Mutable this[int index]
                     {
                         get
                         {
                             CheckValidInstance();
-                            return _parent.GetArrayIndexElement<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity.Mutable>(_idx, index);
+                            return _parent.GetArrayIndexElement<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Entity.Mutable>(_idx, index);
                         }
                     }
 
@@ -251,17 +251,17 @@ public readonly partial struct StylecopSchema
                     /// Enumerates the array.
                     /// </summary>
                     /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-                    public ArrayEnumerator<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity.Mutable> EnumerateArray()
+                    public ArrayEnumerator<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Entity.Mutable> EnumerateArray()
                     {
                         CheckValidInstance();
-                        return EnumeratorCreator.CreateArrayEnumerator<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity.Mutable>(_parent, _idx);
+                        return EnumeratorCreator.CreateArrayEnumerator<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Entity.Mutable>(_parent, _idx);
                     }
 
                     /// <inheritdoc/>
                     public override bool Equals(object? obj)
                     {
                         return
-                            (obj is IJsonElement value && Equals(new ElementOrderEntityArray(value.ParentDocument, value.ParentDocumentIndex))) ||
+                            (obj is IJsonElement value && Equals(new EntityArray(value.ParentDocument, value.ParentDocumentIndex))) ||
                             (obj is null && this.IsNull());
                     }
 
@@ -360,7 +360,7 @@ public readonly partial struct StylecopSchema
 #endif
 
                     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-                    private string DebuggerDisplay => $"ElementOrderEntityArray.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+                    private string DebuggerDisplay => $"EntityArray.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
                     /// <summary>
                     ///   Sets the value of an array element at the specified index.
                     /// </summary>
@@ -383,7 +383,7 @@ public readonly partial struct StylecopSchema
                     ///   </para>
                     /// </remarks>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    public void SetItem(int itemIndex, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity.Source value)
+                    public void SetItem(int itemIndex, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Entity.Source value)
                     {
                         CheckValidInstance();
 
@@ -430,7 +430,7 @@ public readonly partial struct StylecopSchema
                     ///   </para>
                     /// </remarks>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    public void InsertItem(int itemIndex, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity.Source value)
+                    public void InsertItem(int itemIndex, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Entity.Source value)
                     {
                         CheckValidInstance();
 
@@ -456,7 +456,7 @@ public readonly partial struct StylecopSchema
                     ///   The parent <see cref="JsonDocument"/> has been disposed.
                     /// </exception>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    public void AddItem(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity.Source value)
+                    public void AddItem(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Entity.Source value)
                     {
                         InsertItem(GetArrayLength(), in value);
                     }
@@ -626,10 +626,10 @@ public readonly partial struct StylecopSchema
                     /// <exception cref="ObjectDisposedException">
                     ///   The parent <see cref="JsonDocument"/> has been disposed.
                     /// </exception>
-                    public bool Remove(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity item)
+                    public bool Remove(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Entity item)
                     {
                         CheckValidInstance();
-                        if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity>(this, in item))
+                        if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Entity>(this, in item))
                         {
                             return false;
                         }
@@ -663,10 +663,10 @@ public readonly partial struct StylecopSchema
                     ///   </para>
                     /// </remarks>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    public void RemoveWhere(JsonPredicate<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity> predicate)
+                    public void RemoveWhere(JsonPredicate<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Entity> predicate)
                     {
                         CheckValidInstance();
-                        JsonElementHelpers.RemoveWhereUnsafe<Mutable, Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity>(this, predicate);
+                        JsonElementHelpers.RemoveWhereUnsafe<Mutable, Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Entity>(this, predicate);
                         _documentVersion = _parent.Version;
                     }
 
@@ -683,7 +683,7 @@ public readonly partial struct StylecopSchema
                     /// <exception cref="ObjectDisposedException">
                     ///   The parent <see cref="JsonDocument"/> has been disposed.
                     /// </exception>
-                    public bool Replace(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity oldItem, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity.Source newItem)
+                    public bool Replace(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Entity oldItem, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Entity.Source newItem)
                     {
                         CheckValidInstance();
 
@@ -692,11 +692,11 @@ public readonly partial struct StylecopSchema
                             return Remove(in oldItem);
                         }
 
-                        var enumerator = EnumeratorCreator.CreateArrayEnumerator<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity>(_parent, _idx);
+                        var enumerator = EnumeratorCreator.CreateArrayEnumerator<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Entity>(_parent, _idx);
 
                         while (enumerator.MoveNext())
                         {
-                            Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity current = enumerator.Current;
+                            Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Entity current = enumerator.Current;
                             if (JsonElementHelpers.DeepEquals(in current, in oldItem))
                             {
                                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 30);
@@ -727,11 +727,11 @@ public readonly partial struct StylecopSchema
                     JsonValueKind IJsonElement.ValueKind => ValueKind;
 
                     /// <summary>
-                    /// Gets a <see cref="ElementOrderEntityArray"/> which can be safely stored beyond the lifetime of the
+                    /// Gets a <see cref="EntityArray"/> which can be safely stored beyond the lifetime of the
                     /// original document.
                     /// </summary>
                     /// <returns>
-                    /// A <see cref="ElementOrderEntityArray"/> which can be safely stored beyond the lifetime of the
+                    /// A <see cref="EntityArray"/> which can be safely stored beyond the lifetime of the
                     /// original document.
                     /// </returns>
                     /// <remarks>
@@ -740,10 +740,10 @@ public readonly partial struct StylecopSchema
                     /// document. The result is independent of the workspace.
                     /// </para>
                     /// </remarks>
-                    public readonly ElementOrderEntityArray Clone()
+                    public readonly EntityArray Clone()
                     {
                         CheckValidInstance();
-                        return _parent.CloneElement<ElementOrderEntityArray>(_idx);
+                        return _parent.CloneElement<EntityArray>(_idx);
                     }
 
                     /// <summary>
@@ -751,7 +751,7 @@ public readonly partial struct StylecopSchema
                     /// document builder registered in the same workspace.
                     /// </summary>
                     /// <returns>
-                    /// An immutable <see cref="ElementOrderEntityArray"/> that lives for the lifetime of its
+                    /// An immutable <see cref="EntityArray"/> that lives for the lifetime of its
                     /// workspace and its associated documents.
                     /// </returns>
                     /// <remarks>
@@ -762,10 +762,10 @@ public readonly partial struct StylecopSchema
                     /// immutable but is only valid for the lifetime of the workspace.
                     /// </para>
                     /// </remarks>
-                    public readonly ElementOrderEntityArray Freeze()
+                    public readonly EntityArray Freeze()
                     {
                         CheckValidInstance();
-                        return _parent.FreezeElement<ElementOrderEntityArray>(_idx);
+                        return _parent.FreezeElement<EntityArray>(_idx);
                     }
                 }
 
@@ -793,9 +793,9 @@ public readonly partial struct StylecopSchema
                         _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
                     }
 
-                    internal Source(Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
+                    internal Source(Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
-                    public static implicit operator Source(ElementOrderEntityArray instance) => new(JsonElement.From(instance));
+                    public static implicit operator Source(EntityArray instance) => new(JsonElement.From(instance));
 
                     internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                     {
@@ -914,7 +914,7 @@ public readonly partial struct StylecopSchema
 
                     public static implicit operator Source<TContext>(Source source) => new (source);
 
-                    internal Source(scoped in TContext context, Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
+                    internal Source(scoped in TContext context, Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
                     internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                     {
@@ -1028,7 +1028,7 @@ public readonly partial struct StylecopSchema
                     /// <summary>
                     /// Add an item to the array.
                     /// </summary>
-                    public void AddItem(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity.Source value)
+                    public void AddItem(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Entity.Source value)
                     {
                         value.AddAsItem(ref _builder);
                     }
@@ -1095,6 +1095,29 @@ public readonly partial struct StylecopSchema
                 /// <returns>An instance of a mutable document initialized with the given value.</returns>
                 public static JsonDocumentBuilder<Mutable> CreateBuilder(
                     JsonWorkspace workspace, scoped in Source value, int initialCapacity = 30)
+                {
+                    // Create the document builder without a MetadataDb
+                    JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    value.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder;
+                }
+
+                /// <summary>
+                /// Creates and initializes a mutable document from a context-threaded value.
+                /// </summary>
+                /// <typeparam name="TContext">The type of the context carried by the value.</typeparam>
+                /// <param name="workspace">The JSON workspace.</param>
+                /// <param name="value">The context-threaded value with which to initialize the builder.</param>
+                /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                /// <returns>An instance of a mutable document initialized with the given value.</returns>
+                public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
+                    JsonWorkspace workspace, scoped in Source<TContext> value, int initialCapacity = 30)
+                    #if NET9_0_OR_GREATER
+                    where TContext : allows ref struct
+                    #endif
                 {
                     // Create the document builder without a MetadataDb
                     JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
@@ -1177,7 +1200,7 @@ public readonly partial struct StylecopSchema
                 /// <returns>An instance of a mutable document initialized with this instance.</returns>
                 public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
                 {
-                    return workspace.CreateBuilder<ElementOrderEntityArray, Mutable>(this);
+                    return workspace.CreateBuilder<EntityArray, Mutable>(this);
                 }
             }
         }

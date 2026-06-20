@@ -177,28 +177,28 @@ public readonly partial struct CmakePresetsSchema
                     }
 
                     /// <summary>
-                    /// Conversion to <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray"/>.
+                    /// Conversion to <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Type1EntityArray"/>.
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
-                    public static explicit operator Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray(SourceEntity value)
+                    public static explicit operator Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Type1EntityArray(SourceEntity value)
                     {
-                        return Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.From(value);
+                        return Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Type1EntityArray.From(value);
                     }
 
                     /// <summary>
-                    /// Conversion from <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray"/>.
+                    /// Conversion from <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Type1EntityArray"/>.
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
-                    public static implicit operator SourceEntity(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray value)
+                    public static implicit operator SourceEntity(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Type1EntityArray value)
                     {
                         return From(value);
                     }
 
                     /// <summary>
-                    /// Conversion from the <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray"/> mutable view.
+                    /// Conversion from the <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Type1EntityArray"/> mutable view.
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
-                    public static implicit operator SourceEntity(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.Mutable value)
+                    public static implicit operator SourceEntity(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Type1EntityArray.Mutable value)
                     {
                         return From(value);
                     }
@@ -687,15 +687,15 @@ public readonly partial struct CmakePresetsSchema
                     }
 
                     /// <summary>
-                    /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray" />.
+                    /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Type1EntityArray" />.
                     /// </summary>
                     /// <param name="result">The result of the conversions.</param>
                     /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                    public bool TryGetAsAStringRepresentingThePathToOneSourceFileToBeTracedArray(out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray result)
+                    public bool TryGetAsType1EntityArray(out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Type1EntityArray result)
                     {
-                        if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.JsonSchema.Evaluate(_parent, _idx))
+                        if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Type1EntityArray.JsonSchema.Evaluate(_parent, _idx))
                         {
-                            result = Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.From(this);
+                            result = Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Type1EntityArray.From(this);
                             return true;
                         }
 
@@ -710,13 +710,13 @@ public readonly partial struct CmakePresetsSchema
                     /// <typeparam name="TResult">The result of calling the match function.</typeparam>
                     /// <param name="context">The context to pass to the match function.</param>
                     /// <param name="matchAnyOf0Entity">Match a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AnyOf0Entity"/>.</param>
-                    /// <param name="matchAStringRepresentingThePathToOneSourceFileToBeTracedArray">Match a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray"/>.</param>
+                    /// <param name="matchType1EntityArray">Match a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Type1EntityArray"/>.</param>
                     /// <param name="defaultMatch">Match any other value.</param>
                     /// <returns>An instance of the value returned by the match function.</returns>
                     public TResult Match<TContext, TResult>(
                         in TContext context,
                         Matcher<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AnyOf0Entity, TContext, TResult> matchAnyOf0Entity,
-                        Matcher<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray, TContext, TResult> matchAStringRepresentingThePathToOneSourceFileToBeTracedArray,
+                        Matcher<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Type1EntityArray, TContext, TResult> matchType1EntityArray,
                         Matcher<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity, TContext, TResult> defaultMatch)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
@@ -727,9 +727,9 @@ public readonly partial struct CmakePresetsSchema
                             return matchAnyOf0Entity(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AnyOf0Entity.From(this), context);
                         }
 
-                        if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.JsonSchema.Evaluate(_parent, _idx))
+                        if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Type1EntityArray.JsonSchema.Evaluate(_parent, _idx))
                         {
-                            return matchAStringRepresentingThePathToOneSourceFileToBeTracedArray(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.From(this), context);
+                            return matchType1EntityArray(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Type1EntityArray.From(this), context);
                         }
 
                         return defaultMatch(this, context);
@@ -740,12 +740,12 @@ public readonly partial struct CmakePresetsSchema
                     /// </summary>
                     /// <typeparam name="TResult">The result of calling the match function.</typeparam>
                     /// <param name="matchAnyOf0Entity">Match a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AnyOf0Entity"/>.</param>
-                    /// <param name="matchAStringRepresentingThePathToOneSourceFileToBeTracedArray">Match a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray"/>.</param>
+                    /// <param name="matchType1EntityArray">Match a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Type1EntityArray"/>.</param>
                     /// <param name="defaultMatch">Match any other value.</param>
                     /// <returns>An instance of the value returned by the match function.</returns>
                     public TResult Match<TResult>(
                         Matcher<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AnyOf0Entity, TResult> matchAnyOf0Entity,
-                        Matcher<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray, TResult> matchAStringRepresentingThePathToOneSourceFileToBeTracedArray,
+                        Matcher<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Type1EntityArray, TResult> matchType1EntityArray,
                         Matcher<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity, TResult> defaultMatch)
                     {
                         if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AnyOf0Entity.JsonSchema.Evaluate(_parent, _idx))
@@ -753,9 +753,9 @@ public readonly partial struct CmakePresetsSchema
                             return matchAnyOf0Entity(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AnyOf0Entity.From(this));
                         }
 
-                        if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.JsonSchema.Evaluate(_parent, _idx))
+                        if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Type1EntityArray.JsonSchema.Evaluate(_parent, _idx))
                         {
-                            return matchAStringRepresentingThePathToOneSourceFileToBeTracedArray(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.From(this));
+                            return matchType1EntityArray(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Type1EntityArray.From(this));
                         }
 
                         return defaultMatch(this);
