@@ -99,19 +99,19 @@ public sealed class MongoSourceCredentialStore : ISourceCredentialStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialBinding draft, string actor, CancellationToken cancellationToken)
     {
-        SourceCredentialBinding.ValidateDefinition(definition);
+        SourceCredentialBinding.ValidateDraft(draft);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "scred-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
         WorkflowEtag etag = NewEtag();
-        byte[] json = SourceCredentialSerialization.SerializeNew(id, definition, actor, this.timeProvider.GetUtcNow(), etag);
-        string tags = SourceCredentialKey.Discriminator(definition.ManagementTags, definition.UsageTags);
+        byte[] json = SourceCredentialSerialization.SerializeNew(id, draft, actor, this.timeProvider.GetUtcNow(), etag);
+        string tags = SourceCredentialKey.Discriminator(draft.ManagementTagsValue, draft.UsageTagsValue);
         var document = new BsonDocument
         {
-            ["_id"] = Key(definition.SourceName, definition.Environment, tags),
-            ["sourceName"] = definition.SourceName,
-            ["environment"] = definition.Environment,
+            ["_id"] = Key(draft.SourceNameValue, draft.EnvironmentValue, tags),
+            ["sourceName"] = draft.SourceNameValue,
+            ["environment"] = draft.EnvironmentValue,
             ["tags"] = tags,
             ["etag"] = etag.Value!,
             ["doc"] = new BsonBinaryData(json),
@@ -122,7 +122,7 @@ public sealed class MongoSourceCredentialStore : ISourceCredentialStore, IAsyncD
         }
         catch (MongoWriteException ex) when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
         {
-            throw new InvalidOperationException($"A source credential binding for '{definition.SourceName}@{definition.Environment}' with those security tags already exists.");
+            throw new InvalidOperationException($"A source credential binding for '{draft.SourceNameValue}@{draft.EnvironmentValue}' with those security tags already exists.");
         }
 
         return PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
@@ -206,9 +206,9 @@ public sealed class MongoSourceCredentialStore : ISourceCredentialStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialDefinition definition, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialBinding draft, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken)
     {
-        SourceCredentialBinding.ValidateDefinition(definition);
+        SourceCredentialBinding.ValidateDraft(draft);
         ArgumentNullException.ThrowIfNull(actor);
         ArgumentNullException.ThrowIfNull(context);
         (byte[]? existing, string? tags) = await this.FindForManagementAsync(sourceName, environment, AccessVerb.Write, context, cancellationToken).ConfigureAwait(false);
@@ -217,7 +217,7 @@ public sealed class MongoSourceCredentialStore : ISourceCredentialStore, IAsyncD
             return null;
         }
 
-        byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, $"{sourceName}@{environment}", expectedEtag, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, $"{sourceName}@{environment}", expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), NewEtag());
         var update = Builders<BsonDocument>.Update
             .Set("etag", SourceCredentialSerialization.EtagOf(json).Value!)
             .Set("doc", new BsonBinaryData(json));
