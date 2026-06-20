@@ -67,13 +67,8 @@ public sealed class SqliteAccessRequestStore : IAccessRequestStore, IAsyncDispos
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequestDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequest draft, string actor, CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrEmpty(definition.BaseWorkflowId);
-        ArgumentException.ThrowIfNullOrEmpty(definition.SubjectClaimType);
-        ArgumentException.ThrowIfNullOrEmpty(definition.SubjectClaimValue);
-        ArgumentNullException.ThrowIfNull(definition.RequestedScopes);
-        ArgumentOutOfRangeException.ThrowIfZero(definition.RequestedScopes.Count);
         ArgumentNullException.ThrowIfNull(actor);
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
@@ -81,15 +76,15 @@ public sealed class SqliteAccessRequestStore : IAccessRequestStore, IAsyncDispos
             string id = "req-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
             WorkflowEtag etag = NewEtag();
             DateTimeOffset now = this.timeProvider.GetUtcNow();
-            byte[] json = AccessRequestSerialization.SerializeNew(id, definition, actor, now, etag);
+            byte[] json = AccessRequestSerialization.SerializeNew(id, draft, actor, now, etag);
             using SqliteCommand insert = this.connection.CreateCommand();
             insert.CommandText =
                 "INSERT INTO AccessRequests (Id, BaseWorkflowId, SubjectClaimType, SubjectClaimValue, Status, CreatedAt, Etag, Document) " +
                 "VALUES (@id, @bw, @st, @sv, @status, @createdAt, @etag, @doc);";
             insert.Parameters.AddWithValue("@id", id);
-            insert.Parameters.AddWithValue("@bw", definition.BaseWorkflowId);
-            insert.Parameters.AddWithValue("@st", definition.SubjectClaimType);
-            insert.Parameters.AddWithValue("@sv", definition.SubjectClaimValue);
+            insert.Parameters.AddWithValue("@bw", draft.BaseWorkflowIdValue);
+            insert.Parameters.AddWithValue("@st", draft.SubjectClaimTypeValue);
+            insert.Parameters.AddWithValue("@sv", draft.SubjectClaimValueValue);
             insert.Parameters.AddWithValue("@status", AccessRequestStatusNames.Pending);
             insert.Parameters.AddWithValue("@createdAt", now.UtcDateTime.ToString("o", CultureInfo.InvariantCulture));
             insert.Parameters.AddWithValue("@etag", etag.Value!);

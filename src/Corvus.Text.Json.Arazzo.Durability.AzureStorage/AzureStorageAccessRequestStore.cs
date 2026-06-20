@@ -95,23 +95,18 @@ public sealed class AzureStorageAccessRequestStore : IAccessRequestStore
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequestDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequest draft, string actor, CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrEmpty(definition.BaseWorkflowId);
-        ArgumentException.ThrowIfNullOrEmpty(definition.SubjectClaimType);
-        ArgumentException.ThrowIfNullOrEmpty(definition.SubjectClaimValue);
-        ArgumentNullException.ThrowIfNull(definition.RequestedScopes);
-        ArgumentOutOfRangeException.ThrowIfZero(definition.RequestedScopes.Count);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "req-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
         WorkflowEtag etag = NewEtag();
         DateTimeOffset now = this.timeProvider.GetUtcNow();
-        byte[] json = AccessRequestSerialization.SerializeNew(id, definition, actor, now, etag);
+        byte[] json = AccessRequestSerialization.SerializeNew(id, draft, actor, now, etag);
         var entity = new TableEntity(RequestPartition, Enc(id))
         {
-            [BaseWorkflowIdColumn] = definition.BaseWorkflowId,
-            [SubjectClaimTypeColumn] = definition.SubjectClaimType,
-            [SubjectClaimValueColumn] = definition.SubjectClaimValue,
+            [BaseWorkflowIdColumn] = draft.BaseWorkflowIdValue,
+            [SubjectClaimTypeColumn] = draft.SubjectClaimTypeValue,
+            [SubjectClaimValueColumn] = draft.SubjectClaimValueValue,
             [StatusColumn] = AccessRequestStatusNames.Pending,
             [CreatedAtColumn] = now.UtcDateTime.ToString("o", CultureInfo.InvariantCulture),
             [DocumentColumn] = json,

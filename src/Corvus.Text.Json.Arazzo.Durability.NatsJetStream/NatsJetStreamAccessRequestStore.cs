@@ -104,17 +104,12 @@ public sealed class NatsJetStreamAccessRequestStore : IAccessRequestStore, IAsyn
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequestDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequest draft, string actor, CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrEmpty(definition.BaseWorkflowId);
-        ArgumentException.ThrowIfNullOrEmpty(definition.SubjectClaimType);
-        ArgumentException.ThrowIfNullOrEmpty(definition.SubjectClaimValue);
-        ArgumentNullException.ThrowIfNull(definition.RequestedScopes);
-        ArgumentOutOfRangeException.ThrowIfZero(definition.RequestedScopes.Count);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "req-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
         WorkflowEtag etag = NewEtag();
-        byte[] json = AccessRequestSerialization.SerializeNew(id, definition, actor, this.timeProvider.GetUtcNow(), etag);
+        byte[] json = AccessRequestSerialization.SerializeNew(id, draft, actor, this.timeProvider.GetUtcNow(), etag);
         await this.store.PutAsync(RequestPrefix + Enc(id), json, cancellationToken: cancellationToken).ConfigureAwait(false);
         return PersistedJson.ToPooledDocument<AccessRequest>(json);
     }

@@ -71,23 +71,23 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
     /// <see langword="true"/> — the requester is eligible to self-elevate exactly this — the request is auto-approved
     /// (self-elevation, no human approver); otherwise it is created pending an administrator's decision.
     /// </summary>
-    /// <param name="definition">The request content (subject = the requester).</param>
+    /// <param name="draft">The draft request carrying the create-content (subject = the requester) as JSON values.</param>
     /// <param name="actor">The requester's audit identity.</param>
     /// <param name="eligibleForSelfElevation">Whether the requester is eligible to self-elevate this request (caller-resolved from claims for now; §16.5.3).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The created request — pending, or already approved when self-elevated.</returns>
-    public async ValueTask<ParsedJsonDocument<AccessRequest>> SubmitAsync(AccessRequestDefinition definition, string actor, bool eligibleForSelfElevation, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<AccessRequest>> SubmitAsync(AccessRequest draft, string actor, bool eligibleForSelfElevation, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(actor);
-        ValidateWorkflowId(definition.BaseWorkflowId);
+        ValidateWorkflowId(draft.BaseWorkflowIdValue);
 
-        ParsedJsonDocument<AccessRequest> created = await this.requests.CreateAsync(definition, actor, cancellationToken).ConfigureAwait(false);
+        ParsedJsonDocument<AccessRequest> created = await this.requests.CreateAsync(draft, actor, cancellationToken).ConfigureAwait(false);
 
         // Self-elevation eligibility is symmetric to capability (§16.5.3): claims ∪ stored eligibility. The caller
         // resolves the IdP-coarse claims part; here we add the approver-granted part — a stored eligibility assignment
         // (an eligibleOnly binding) for this subject + workflow + scopes. Either source auto-approves into a fresh,
         // time-boxed active grant; otherwise the request stays pending for a human approver.
-        bool eligible = eligibleForSelfElevation || await this.IsStoredEligibleAsync(definition, cancellationToken).ConfigureAwait(false);
+        bool eligible = eligibleForSelfElevation || await this.IsStoredEligibleAsync(draft, cancellationToken).ConfigureAwait(false);
         if (!eligible)
         {
             return created;
@@ -469,22 +469,22 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
     // Approver-granted eligibility (§16.5.3): is there an eligibleOnly binding for this subject that covers the
     // requested workflow + (capped) scopes and has not lapsed? Read from the store directly — the resolver excludes
     // eligibility from active resolution. A cold submit-path scan over the bindings; a by-claim query is a later refinement.
-    private async ValueTask<bool> IsStoredEligibleAsync(AccessRequestDefinition definition, CancellationToken cancellationToken)
+    private async ValueTask<bool> IsStoredEligibleAsync(AccessRequest draft, CancellationToken cancellationToken)
     {
-        List<string> capped = this.CapScopes(definition.RequestedScopes);
+        List<string> capped = this.CapScopes(draft.RequestedScopesArray());
         if (capped.Count == 0)
         {
             return false;
         }
 
-        string ruleName = WorkflowRuleName(definition.BaseWorkflowId);
+        string ruleName = WorkflowRuleName(draft.BaseWorkflowIdValue);
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         using PooledDocumentList<SecurityBindingDocument> bindings = await this.policy.ListBindingsAsync(cancellationToken).ConfigureAwait(false);
         foreach (SecurityBindingDocument binding in bindings)
         {
             if (!binding.EligibleOnlyValue
-                || !string.Equals(binding.ClaimTypeValue, definition.SubjectClaimType, StringComparison.Ordinal)
-                || !string.Equals(binding.ClaimValueOrNull, definition.SubjectClaimValue, StringComparison.Ordinal))
+                || !string.Equals(binding.ClaimTypeValue, draft.SubjectClaimTypeValue, StringComparison.Ordinal)
+                || !string.Equals(binding.ClaimValueOrNull, draft.SubjectClaimValueValue, StringComparison.Ordinal))
             {
                 continue;
             }

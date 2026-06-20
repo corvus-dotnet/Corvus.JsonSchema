@@ -31,7 +31,7 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
     private readonly IWorkflowCatalogClient catalog;
     private readonly ControlPlaneAccess access;
     private readonly string subjectClaimType;
-    private readonly Func<ClaimsPrincipal, AccessRequestDefinition, bool>? eligibility;
+    private readonly Func<ClaimsPrincipal, AccessRequest, bool>? eligibility;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneAccessRequestsHandler"/> class.</summary>
     /// <param name="approval">The approval service the submit/approve/deny/withdraw/revoke operations delegate to.</param>
@@ -46,7 +46,7 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
         IWorkflowCatalogClient catalog,
         ControlPlaneAccess access,
         string subjectClaimType = "sub",
-        Func<ClaimsPrincipal, AccessRequestDefinition, bool>? eligibility = null)
+        Func<ClaimsPrincipal, AccessRequest, bool>? eligibility = null)
     {
         ArgumentNullException.ThrowIfNull(approval);
         ArgumentNullException.ThrowIfNull(requests);
@@ -77,7 +77,9 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
             scopes.Add((string)scope);
         }
 
-        var definition = new AccessRequestDefinition(
+        // The draft request the approval pipeline + store carry: the body fields + the principal-derived subject, as a
+        // pooled, disposable document the eligibility predicate and SubmitAsync read; the store stamps id/etag/created.
+        using ParsedJsonDocument<AccessRequest> draft = AccessRequest.Draft(
             (string)parameters.Body.BaseWorkflowId,
             scopes,
             this.subjectClaimType,
@@ -86,10 +88,10 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
             parameters.Body.Reason.IsNotUndefined() ? (string)parameters.Body.Reason : null,
             parameters.Body.RequestedDurationSeconds.IsNotUndefined() ? (long)parameters.Body.RequestedDurationSeconds : null);
 
-        bool eligible = this.eligibility?.Invoke(principal, definition) ?? false;
+        bool eligible = this.eligibility?.Invoke(principal, draft.RootElement) ?? false;
         try
         {
-            ParsedJsonDocument<AccessRequest> created = await this.approval.SubmitAsync(definition, ActorOf(principal), eligible, cancellationToken).ConfigureAwait(false);
+            ParsedJsonDocument<AccessRequest> created = await this.approval.SubmitAsync(draft.RootElement, ActorOf(principal), eligible, cancellationToken).ConfigureAwait(false);
             workspace.TakeOwnership(created);
             return SubmitAccessRequestResult.Created(ToView(created.RootElement), workspace);
         }
