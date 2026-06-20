@@ -42,6 +42,18 @@ public readonly struct StartCatalogWorkflowRunResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="StartCatalogWorkflowRunResult"/> with status 202.</returns>
     public static StartCatalogWorkflowRunResult Accepted(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunAccepted.Source body, JsonWorkspace workspace) => new(202, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunAccepted.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    /// <summary>
+    /// Creates a 202 Accepted result from a context-threaded body, materialised in a single pass.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context carried by the body.</typeparam>
+    /// <param name="body">The context-threaded response body.</param>
+    /// <param name="workspace">The workspace for building the response value.</param>
+    /// <returns>A <see cref="StartCatalogWorkflowRunResult"/> with status 202.</returns>
+    public static StartCatalogWorkflowRunResult Accepted<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunAccepted.Source<TContext> body, JsonWorkspace workspace)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+        => new(202, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunAccepted.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Creates a 404 NotFound result.
@@ -50,6 +62,18 @@ public readonly struct StartCatalogWorkflowRunResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="StartCatalogWorkflowRunResult"/> with status 404.</returns>
     public static StartCatalogWorkflowRunResult NotFound(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(404, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    /// <summary>
+    /// Creates a 404 NotFound result from a context-threaded body, materialised in a single pass.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context carried by the body.</typeparam>
+    /// <param name="body">The context-threaded response body.</param>
+    /// <param name="workspace">The workspace for building the response value.</param>
+    /// <returns>A <see cref="StartCatalogWorkflowRunResult"/> with status 404.</returns>
+    public static StartCatalogWorkflowRunResult NotFound<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source<TContext> body, JsonWorkspace workspace)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+        => new(404, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Creates a 409 Conflict result.
@@ -58,6 +82,18 @@ public readonly struct StartCatalogWorkflowRunResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="StartCatalogWorkflowRunResult"/> with status 409.</returns>
     public static StartCatalogWorkflowRunResult Conflict(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(409, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    /// <summary>
+    /// Creates a 409 Conflict result from a context-threaded body, materialised in a single pass.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context carried by the body.</typeparam>
+    /// <param name="body">The context-threaded response body.</param>
+    /// <param name="workspace">The workspace for building the response value.</param>
+    /// <returns>A <see cref="StartCatalogWorkflowRunResult"/> with status 409.</returns>
+    public static StartCatalogWorkflowRunResult Conflict<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source<TContext> body, JsonWorkspace workspace)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+        => new(409, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Creates a 422 UnprocessableEntity result.
@@ -66,6 +102,18 @@ public readonly struct StartCatalogWorkflowRunResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="StartCatalogWorkflowRunResult"/> with status 422.</returns>
     public static StartCatalogWorkflowRunResult UnprocessableEntity(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ValidationResult.Source body, JsonWorkspace workspace) => new(422, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ValidationResult.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    /// <summary>
+    /// Creates a 422 UnprocessableEntity result from a context-threaded body, materialised in a single pass.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context carried by the body.</typeparam>
+    /// <param name="body">The context-threaded response body.</param>
+    /// <param name="workspace">The workspace for building the response value.</param>
+    /// <returns>A <see cref="StartCatalogWorkflowRunResult"/> with status 422.</returns>
+    public static StartCatalogWorkflowRunResult UnprocessableEntity<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ValidationResult.Source<TContext> body, JsonWorkspace workspace)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+        => new(422, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ValidationResult.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
