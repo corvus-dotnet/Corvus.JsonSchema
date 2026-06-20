@@ -26,6 +26,16 @@ public sealed class AccessRequestApprovalServiceTests
     private static ClaimsPrincipal Principal(params (string Type, string Value)[] claims)
         => new(new ClaimsIdentity(claims.Select(c => new Claim(c.Type, c.Value)).ToList(), "test"));
 
+    // Submits the (pooled, disposable) draft request, disposing the draft once the service has read it; the created
+    // document is returned for the caller to assert on and dispose.
+    private static async Task<ParsedJsonDocument<AccessRequest>> SubmitRequestAsync(IAccessRequestApprovalService service, ParsedJsonDocument<AccessRequest> draft, string actor, bool eligibleForSelfElevation, CancellationToken cancellationToken = default)
+    {
+        using (draft)
+        {
+            return await service.SubmitAsync(draft.RootElement, actor, eligibleForSelfElevation, cancellationToken);
+        }
+    }
+
     [TestMethod]
     public async Task Approving_writes_a_time_boxed_run_grant_scoped_to_the_workflow()
     {
@@ -114,8 +124,7 @@ public sealed class AccessRequestApprovalServiceTests
         Harness h = await Harness.CreateAsync();
 
         // alice is NOT an administrator, but is eligible to self-elevate → the request is auto-approved.
-        using (ParsedJsonDocument<AccessRequest> submitted = await h.Service.SubmitAsync(
-            new AccessRequestDefinition("nightly-reconcile", ["runs:write"], "sub", "alice"),
+        using (ParsedJsonDocument<AccessRequest> submitted = await SubmitRequestAsync(h.Service, AccessRequest.Draft("nightly-reconcile", ["runs:write"], "sub", "alice"),
             "alice",
             eligibleForSelfElevation: true,
             default))
@@ -184,8 +193,7 @@ public sealed class AccessRequestApprovalServiceTests
         Harness h = await Harness.CreateAsync();
 
         // A crafted id containing a quote would break out of the sys:workflow == '...' literal — rejected up front.
-        await Should.ThrowAsync<AccessRequestStateException>(async () => await h.Service.SubmitAsync(
-            new AccessRequestDefinition("evil' || $claims.superset || 'x", ["runs:write"], "sub", "alice"),
+        await Should.ThrowAsync<AccessRequestStateException>(async () => await SubmitRequestAsync(h.Service, AccessRequest.Draft("evil' || $claims.superset || 'x", ["runs:write"], "sub", "alice"),
             "alice",
             eligibleForSelfElevation: false,
             default));
@@ -237,8 +245,7 @@ public sealed class AccessRequestApprovalServiceTests
         before.ResolveGrantedScopes(Principal(("sub", "alice"))).ShouldBeEmpty();
 
         // alice self-elevates (NOT claims-eligible) — the stored eligibility auto-approves a fresh active grant.
-        using (ParsedJsonDocument<AccessRequest> activated = await h.Service.SubmitAsync(
-            new AccessRequestDefinition("nightly-reconcile", ["runs:write"], "sub", "alice"),
+        using (ParsedJsonDocument<AccessRequest> activated = await SubmitRequestAsync(h.Service, AccessRequest.Draft("nightly-reconcile", ["runs:write"], "sub", "alice"),
             "alice",
             eligibleForSelfElevation: false,
             default))
@@ -263,8 +270,7 @@ public sealed class AccessRequestApprovalServiceTests
         }
 
         // A self-elevation for runs:write is not covered → it stays pending for a human approver.
-        using (ParsedJsonDocument<AccessRequest> over = await h.Service.SubmitAsync(
-            new AccessRequestDefinition("nightly-reconcile", ["runs:write"], "sub", "alice"),
+        using (ParsedJsonDocument<AccessRequest> over = await SubmitRequestAsync(h.Service, AccessRequest.Draft("nightly-reconcile", ["runs:write"], "sub", "alice"),
             "alice",
             eligibleForSelfElevation: false,
             default))
@@ -273,8 +279,7 @@ public sealed class AccessRequestApprovalServiceTests
         }
 
         // A self-elevation for runs:read is covered → auto-approved.
-        using (ParsedJsonDocument<AccessRequest> ok = await h.Service.SubmitAsync(
-            new AccessRequestDefinition("nightly-reconcile", ["runs:read"], "sub", "alice"),
+        using (ParsedJsonDocument<AccessRequest> ok = await SubmitRequestAsync(h.Service, AccessRequest.Draft("nightly-reconcile", ["runs:read"], "sub", "alice"),
             "alice",
             eligibleForSelfElevation: false,
             default))
@@ -302,8 +307,7 @@ public sealed class AccessRequestApprovalServiceTests
 
         // The eligibility assignment is gone — a later self-elevation matches nothing and stays pending.
         (await h.Policy.GetBindingAsync(bindingId, default)).ShouldBeNull();
-        using (ParsedJsonDocument<AccessRequest> later = await h.Service.SubmitAsync(
-            new AccessRequestDefinition("nightly-reconcile", ["runs:write"], "sub", "alice"),
+        using (ParsedJsonDocument<AccessRequest> later = await SubmitRequestAsync(h.Service, AccessRequest.Draft("nightly-reconcile", ["runs:write"], "sub", "alice"),
             "alice",
             eligibleForSelfElevation: false,
             default))
@@ -356,8 +360,7 @@ public sealed class AccessRequestApprovalServiceTests
 
         public async Task<string> SubmitPendingAsync(IReadOnlyList<string> scopes, long? requestedDurationSeconds = null)
         {
-            using ParsedJsonDocument<AccessRequest> submitted = await this.Service.SubmitAsync(
-                new AccessRequestDefinition(Workflow, scopes, "sub", "alice", RequestedDurationSeconds: requestedDurationSeconds),
+            using ParsedJsonDocument<AccessRequest> submitted = await SubmitRequestAsync(this.Service, AccessRequest.Draft(Workflow, scopes, "sub", "alice", requestedDurationSeconds: requestedDurationSeconds),
                 "alice",
                 eligibleForSelfElevation: false,
                 default);
