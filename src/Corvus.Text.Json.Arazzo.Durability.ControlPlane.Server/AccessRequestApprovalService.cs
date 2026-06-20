@@ -383,18 +383,18 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
 
         VerbGrant reach = VerbGrant.Rules(ruleName);
         bool grantsRead = granted.Contains(ControlPlaneScopes.RunsRead) || granted.Contains(ControlPlaneScopes.CatalogRead);
-        var definition = new SecurityBindingDefinition(
+        using ParsedJsonDocument<SecurityBindingDocument> draft = SecurityBindingDocument.Draft(
             request.SubjectClaimTypeValue,
             request.SubjectClaimValueValue,
-            Read: grantsRead ? reach : VerbGrant.None,
-            Write: granted.Contains(ControlPlaneScopes.RunsWrite) ? reach : VerbGrant.None,
-            Purge: VerbGrant.None,
-            Description: (eligibleOnly ? "Eligibility for access request " : "Access request ") + request.IdValue,
-            Scopes: granted,
-            ExpiresAt: expiresAt,
-            EligibleOnly: eligibleOnly);
+            read: grantsRead ? reach : VerbGrant.None,
+            write: granted.Contains(ControlPlaneScopes.RunsWrite) ? reach : VerbGrant.None,
+            purge: VerbGrant.None,
+            description: (eligibleOnly ? "Eligibility for access request " : "Access request ") + request.IdValue,
+            scopes: granted,
+            expiresAt: expiresAt,
+            eligibleOnly: eligibleOnly);
 
-        using ParsedJsonDocument<SecurityBindingDocument> binding = await this.policy.AddBindingAsync(definition, actor, cancellationToken).ConfigureAwait(false);
+        using ParsedJsonDocument<SecurityBindingDocument> binding = await this.policy.AddBindingAsync(draft.RootElement, actor, cancellationToken).ConfigureAwait(false);
         return binding.RootElement.IdValue;
     }
 

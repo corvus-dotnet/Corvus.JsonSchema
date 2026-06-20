@@ -41,10 +41,10 @@ public sealed class KeycloakClaimsTransformerTests
         await SecurityBootstrap.SeedAsync(store);
 
         // The per-principal grant an approval/self-elevation persists: keyed on the subject claim, granting a scope.
-        await store.AddBindingAsync(
-            new SecurityBindingDefinition("preferred_username", "alice", VerbGrant.None, VerbGrant.None, VerbGrant.None, Scopes: [ControlPlaneScopes.RunsWrite]),
-            "approver",
-            default);
+        using (ParsedJsonDocument<SecurityBindingDocument> grant = SecurityBindingDocument.Draft("preferred_username", "alice", VerbGrant.None, VerbGrant.None, VerbGrant.None, scopes: [ControlPlaneScopes.RunsWrite]))
+        {
+            (await store.AddBindingAsync(grant.RootElement, "approver", default)).Dispose();
+        }
 
         var entitlements = new PersistentRowSecurityPolicy(store);
         await entitlements.RefreshAsync();
