@@ -28,23 +28,6 @@ public enum AccessRequestStatus
     Eligible,
 }
 
-/// <summary>The content of a new access request (supplied on create).</summary>
-/// <param name="BaseWorkflowId">The base workflow id the request targets (approval routes to its §15 administrators).</param>
-/// <param name="RequestedScopes">The capability scopes requested (e.g. <c>runs:write</c>); at least one.</param>
-/// <param name="SubjectClaimType">The principal claim type the eventual grant keys on (e.g. <c>sub</c>).</param>
-/// <param name="SubjectClaimValue">The requester's value for <paramref name="SubjectClaimType"/>.</param>
-/// <param name="RequesterLabel">An optional human-friendly label for the requester (display only).</param>
-/// <param name="Reason">An optional justification.</param>
-/// <param name="RequestedDurationSeconds">The optional time-bound (PIM) duration the requester proposes, in seconds; <see langword="null"/> defaults to the deployment maximum TTL.</param>
-public readonly record struct AccessRequestDefinition(
-    string BaseWorkflowId,
-    IReadOnlyList<string> RequestedScopes,
-    string SubjectClaimType,
-    string SubjectClaimValue,
-    string? RequesterLabel = null,
-    string? Reason = null,
-    long? RequestedDurationSeconds = null);
-
 /// <summary>A decision applied to a request (a terminal transition).</summary>
 /// <param name="Status">The terminal status — <see cref="AccessRequestStatus.Approved"/>, <see cref="AccessRequestStatus.Eligible"/>, <see cref="AccessRequestStatus.Denied"/>, <see cref="AccessRequestStatus.Withdrawn"/>, or <see cref="AccessRequestStatus.Revoked"/>.</param>
 /// <param name="DecisionReason">An optional note recorded with the decision.</param>

@@ -16,12 +16,12 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 public interface IAccessRequestApprovalService
 {
     /// <summary>Submits a request; auto-approves it (self-elevation) when the requester is eligible.</summary>
-    /// <param name="definition">The request content (subject = the requester).</param>
+    /// <param name="draft">The draft request carrying the create-content (subject = the requester) as JSON values.</param>
     /// <param name="actor">The requester's audit identity.</param>
     /// <param name="eligibleForSelfElevation">Whether the requester is eligible to self-elevate this request.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The created request — pending, or already approved when self-elevated.</returns>
-    ValueTask<ParsedJsonDocument<AccessRequest>> SubmitAsync(AccessRequestDefinition definition, string actor, bool eligibleForSelfElevation, CancellationToken cancellationToken);
+    ValueTask<ParsedJsonDocument<AccessRequest>> SubmitAsync(AccessRequest draft, string actor, bool eligibleForSelfElevation, CancellationToken cancellationToken);
 
     /// <summary>Approves a pending request, writing the time-boxed entitlement (the approver must be a §15 administrator of the target workflow).</summary>
     /// <param name="requestId">The request id.</param>

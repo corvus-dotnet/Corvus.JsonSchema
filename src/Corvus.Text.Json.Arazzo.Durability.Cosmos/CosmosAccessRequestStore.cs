@@ -103,22 +103,17 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequestDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<AccessRequest>> CreateAsync(AccessRequest draft, string actor, CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrEmpty(definition.BaseWorkflowId);
-        ArgumentException.ThrowIfNullOrEmpty(definition.SubjectClaimType);
-        ArgumentException.ThrowIfNullOrEmpty(definition.SubjectClaimValue);
-        ArgumentNullException.ThrowIfNull(definition.RequestedScopes);
-        ArgumentOutOfRangeException.ThrowIfZero(definition.RequestedScopes.Count);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "req-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
         DateTimeOffset now = this.timeProvider.GetUtcNow();
-        byte[] json = AccessRequestSerialization.SerializeNew(id, definition, actor, now, NewEtag());
+        byte[] json = AccessRequestSerialization.SerializeNew(id, draft, actor, now, NewEtag());
         var fields = new EnvelopeFields(
             id,
-            definition.BaseWorkflowId,
-            definition.SubjectClaimType,
-            definition.SubjectClaimValue,
+            draft.BaseWorkflowIdValue,
+            draft.SubjectClaimTypeValue,
+            draft.SubjectClaimValueValue,
             AccessRequestStatusNames.Pending,
             now.UtcDateTime.ToString("o", CultureInfo.InvariantCulture),
             json);

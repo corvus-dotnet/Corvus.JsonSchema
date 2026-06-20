@@ -17,16 +17,16 @@ public static class AccessRequestSerialization
 {
     /// <summary>Serializes a brand-new (Pending) request to owned JSON bytes.</summary>
     /// <param name="id">The assigned request id.</param>
-    /// <param name="definition">The request content.</param>
+    /// <param name="draft">The draft request carrying the create-content as JSON values (read bytes-to-bytes).</param>
     /// <param name="actor">The creating identity (the requester; audit).</param>
     /// <param name="createdAt">The creation timestamp.</param>
     /// <param name="etag">The new record etag.</param>
     /// <returns>The owned UTF-8 JSON bytes.</returns>
-    public static byte[] SerializeNew(string id, AccessRequestDefinition definition, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+    public static byte[] SerializeNew(string id, AccessRequest draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
         => PersistedJson.ToArray(
-            (id, definition, actor, createdAt, etag),
-            static (Utf8JsonWriter writer, in (string Id, AccessRequestDefinition Def, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
-                => AccessRequest.WriteNew(writer, c.Id, c.Def, c.Actor, c.At, c.Tag));
+            (id, draft, actor, createdAt, etag),
+            static (Utf8JsonWriter writer, in (string Id, AccessRequest Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
+                => AccessRequest.WriteNew(writer, c.Id, c.Draft, c.Actor, c.At, c.Tag));
 
     /// <summary>Parses the stored request (pooled), checks the etag, and serializes the decided record.</summary>
     /// <param name="existing">The stored request's current UTF-8 JSON bytes.</param>

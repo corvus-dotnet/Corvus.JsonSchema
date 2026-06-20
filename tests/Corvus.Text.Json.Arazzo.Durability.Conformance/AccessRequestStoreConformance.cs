@@ -45,8 +45,7 @@ public abstract class AccessRequestStoreConformance
     {
         IAccessRequestStore store = await this.NewStoreAsync();
         string id;
-        using (ParsedJsonDocument<AccessRequest> created = await store.CreateAsync(
-            new AccessRequestDefinition("nightly-reconcile", ["runs:write", "runs:read"], "sub", "alice", RequesterLabel: "Alice", Reason: "on-call", RequestedDurationSeconds: 3600),
+        using (ParsedJsonDocument<AccessRequest> created = await CreateRequestAsync(store, AccessRequest.Draft("nightly-reconcile", ["runs:write", "runs:read"], "sub", "alice", requesterLabel: "Alice", reason: "on-call", requestedDurationSeconds: 3600),
             "alice",
             default))
         {
@@ -152,8 +151,7 @@ public abstract class AccessRequestStoreConformance
         IAccessRequestStore store = await this.NewStoreAsync();
         WorkflowEtag created;
         string id;
-        using (ParsedJsonDocument<AccessRequest> request = await store.CreateAsync(
-            new AccessRequestDefinition("w", ["runs:write"], "sub", "alice"),
+        using (ParsedJsonDocument<AccessRequest> request = await CreateRequestAsync(store, AccessRequest.Draft("w", ["runs:write"], "sub", "alice"),
             "alice",
             default))
         {
@@ -188,11 +186,20 @@ public abstract class AccessRequestStoreConformance
 
     private async ValueTask<string> CreateAsync(IAccessRequestStore store, string baseWorkflowId, string subject)
     {
-        using ParsedJsonDocument<AccessRequest> created = await store.CreateAsync(
-            new AccessRequestDefinition(baseWorkflowId, ["runs:write"], "sub", subject),
+        using ParsedJsonDocument<AccessRequest> created = await CreateRequestAsync(store, AccessRequest.Draft(baseWorkflowId, ["runs:write"], "sub", subject),
             subject,
             default);
         return created.RootElement.IdValue;
+    }
+
+    // Creates the (pooled, disposable) draft request, disposing the draft once the store has read it; the created
+    // document is returned for the caller to assert on and dispose.
+    private static async Task<ParsedJsonDocument<AccessRequest>> CreateRequestAsync(IAccessRequestStore store, ParsedJsonDocument<AccessRequest> draft, string actor, CancellationToken cancellationToken = default)
+    {
+        using (draft)
+        {
+            return await store.CreateAsync(draft.RootElement, actor, cancellationToken);
+        }
     }
 
     private async ValueTask<List<string>> IdsAsync(IAccessRequestStore store, AccessRequestQuery query)
