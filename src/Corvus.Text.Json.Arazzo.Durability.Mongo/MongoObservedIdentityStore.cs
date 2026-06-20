@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using MongoDB.Bson;
@@ -108,15 +107,15 @@ public sealed class MongoObservedIdentityStore : IObservedIdentityStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask SeenAsync(GranteeKind kind, ReadOnlyMemory<byte> value, ReadOnlyMemory<byte> label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken)
+    public async ValueTask SeenAsync(ObservedIdentity.GranteeKind kind, JsonString value, JsonString label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(provenance);
         string kindToken = kind.ToToken();
 
-        // The _id / subjectValue / sortKey are text storage keys, so the value materializes once here; the document body
-        // is serialized bytes-to-bytes from the value/label spans at the synchronous serialize calls below (taken after
-        // the read-await, so no span crosses an await).
-        string valueKey = Encoding.UTF8.GetString(value.Span);
+        // The _id / subjectValue / sortKey are text storage keys, so the value reifies once here; the document body is
+        // serialized bytes-to-bytes from the value/label JSON values at the synchronous serialize calls below (taken
+        // after the read-await).
+        string valueKey = (string)value;
         DateTimeOffset now = this.timeProvider.GetUtcNow();
 
         // Read-merge-write keyed by (kind, value): a first sighting inserts; an existing one preserves firstSeen, bumps
@@ -124,8 +123,8 @@ public sealed class MongoObservedIdentityStore : IObservedIdentityStore, IAsyncD
         // connections so concurrent sightings race on the unique _id; ReplaceOne with IsUpsert resolves either case.
         byte[]? existing = await this.ReadDocumentAsync(kindToken, valueKey, cancellationToken).ConfigureAwait(false);
         byte[] json = existing is null
-            ? ObservedIdentitySerialization.SerializeNew(kindToken, value.Span, label.Span, identity, complete, now, provenance)
-            : ObservedIdentitySerialization.SerializeUpserted(existing, kindToken, value.Span, label.Span, identity, complete, now, provenance);
+            ? ObservedIdentitySerialization.SerializeNew(kind, value, label, identity, complete, now, provenance)
+            : ObservedIdentitySerialization.SerializeUpserted(existing, kind, value, label, identity, complete, now, provenance);
 
         var document = new BsonDocument
         {
@@ -149,14 +148,14 @@ public sealed class MongoObservedIdentityStore : IObservedIdentityStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, GranteeKind? kind, ReadOnlyMemory<byte> prefix, int limit, string? pageToken, CancellationToken cancellationToken)
+    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, string? pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         int pageSize = limit > 0 ? limit : 1;
-        string? kindToken = kind?.ToToken();
+        string? kindToken = kind.IsNotUndefined() ? kind.ToToken() : null;
 
-        // The subjectValue field is text, so the prefix materializes once for the anchored regex + the .Length test.
-        string prefixStr = Encoding.UTF8.GetString(prefix.Span);
+        // The subjectValue field is text, so the prefix reifies once for the anchored regex + the .Length test.
+        string prefixStr = prefix.IsNotUndefined() ? (string)prefix : string.Empty;
         bool hasCursor = ObservedIdentityContinuationToken.TryDecode(pageToken, out (string SubjectValue, string SubjectKind) cursor);
         SecurityFilter? readReach = context.Reach(AccessVerb.Read);
 
@@ -235,7 +234,7 @@ public sealed class MongoObservedIdentityStore : IObservedIdentityStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ObservedIdentityConflict?> FindIdentityConflictAsync(GranteeKind kind, ReadOnlyMemory<byte> value, SecurityTagSet identity, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<ObservedIdentity>?> FindIdentityConflictAsync(ObservedIdentity.GranteeKind kind, JsonString value, SecurityTagSet identity, CancellationToken cancellationToken)
     {
         // The empty (unscoped) identity never collides; otherwise seek the indexed digest for a document whose identity
         // is set-equal (same digest) but whose (kind, value) differs — a non-unique identity the authoring path refuses.
@@ -246,16 +245,19 @@ public sealed class MongoObservedIdentityStore : IObservedIdentityStore, IAsyncD
         }
 
         string kindToken = kind.ToToken();
-        string valueKey = Encoding.UTF8.GetString(value.Span);
+        string valueKey = (string)value;
         FilterDefinitionBuilder<BsonDocument> b = Builders<BsonDocument>.Filter;
         FilterDefinition<BsonDocument> filter = b.And(
             b.Eq("identityDigest", digest),
             b.Not(b.And(b.Eq("subjectKind", kindToken), b.Eq("subjectValue", valueKey))));
 
         BsonDocument? match = await this.identities.Find(filter).Limit(1).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+
+        // Hand back the conflicting grantee as its own JSON document (the caller disposes it); its kind/value/label live
+        // in the record, so nothing is reified into a separate POCO here.
         return match is null
             ? null
-            : ToConflict(match["subjectKind"].AsString, match["subjectValue"].AsString, match["doc"].AsBsonBinaryData.Bytes, kind);
+            : PersistedJson.ToPooledDocument<ObservedIdentity>(match["doc"].AsBsonBinaryData.Bytes);
     }
 
     /// <inheritdoc/>
@@ -285,21 +287,6 @@ public sealed class MongoObservedIdentityStore : IObservedIdentityStore, IAsyncD
     private static string SortKey(string value, string kindToken) => string.Concat(value, Separator.ToString(), kindToken);
 
     private static string EscapeRegex(string value) => System.Text.RegularExpressions.Regex.Escape(value);
-
-    // Builds the conflict from a matched document: the kind from its token, the value verbatim, and the label parsed
-    // from the stored ObservedIdentity (a transient pooled parse — the label string it yields is an owned managed copy
-    // that outlives the dispose).
-    private static ObservedIdentityConflict ToConflict(string conflictKindToken, string conflictValue, byte[] document, GranteeKind fallbackKind)
-    {
-        string? label;
-        using (ParsedJsonDocument<ObservedIdentity> doc = PersistedJson.ToPooledDocument<ObservedIdentity>(document))
-        {
-            label = doc.RootElement.LabelOrNull;
-        }
-
-        GranteeKind conflictKind = GranteeKinds.TryParse(conflictKindToken, out GranteeKind parsed) ? parsed : fallbackKind;
-        return new ObservedIdentityConflict(conflictKind, conflictValue, label);
-    }
 
     private async ValueTask<byte[]?> ReadDocumentAsync(string kindToken, string value, CancellationToken cancellationToken)
     {

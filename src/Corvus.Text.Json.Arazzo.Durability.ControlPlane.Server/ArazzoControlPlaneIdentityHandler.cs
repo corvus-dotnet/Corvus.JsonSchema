@@ -2,8 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
-using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Directories;
 using Corvus.Text.Json.Arazzo.Durability;
@@ -80,9 +78,9 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
     // Ownership ledger (GC-escaping allocations = the per-grant identity leaf + DescribeUsageScope lists + tracked string
     // leaves; NO builder closure, NO per-item closure, NO re-materialisation — the ~2.0 KB closure-free floor):
     //   kindToken ............. pooled UnescapedUtf8JsonString lease, disposed at end of the parse `if`.
-    //   prefix/prefixRented ... ArrayPool-rented byte[], returned in the `finally`.
+    //   prefix ................ the request Q as its JSON value (From(), no reify, no rental) — passed to the store; reified only at the directory string leaf.
     //   source/pageToken/NextPageToken  string — LEAF (request params + store NextPageToken are string-typed).
-    //   found + UTF8.GetString  list/string — LEAF (IPrincipalDirectory seam is string-typed: LDAP filter / HTTP URI).
+    //   found + (string)prefix  list/string — LEAF (IPrincipalDirectory seam is string-typed: LDAP filter / HTTP URI).
     //   page .................. ObservedIdentityPage (class, IDisposable) — `using`; identities read during the one Ok pass, before dispose.
     //   state/item ........... RefTuple<…> ref structs (stack, no heap) carrying the projection/per-grantee context to the static builders.
     //   body .................. lazy GranteeList.Source<TContext> (no closure) — materialised once by Ok<TContext>, then GC.
@@ -91,15 +89,9 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
     // The value/label/kind bytes path materialises NO managed string (spans / enum tokens). Benchmark: GranteeProjectionBenchmarks (2.01 KB).
     public async ValueTask<SearchGranteesResult> HandleSearchGranteesAsync(SearchGranteesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        GranteeKind? kind = null;
-        if (parameters.Kind.IsNotUndefined())
-        {
-            using UnescapedUtf8JsonString kindToken = parameters.Kind.GetUtf8String();
-            if (GranteeKinds.TryParse(kindToken.Span, out GranteeKind k))
-            {
-                kind = k;
-            }
-        }
+        // The query's grantee kind IS a JSON value; convert it to the store's kind with a straight From() (free rewrap,
+        // no reify, no token re-parse) — the observed store carries it through. An absent kind is undefined (= all kinds).
+        ObservedIdentity.GranteeKind kind = ObservedIdentity.GranteeKind.From(parameters.Kind);
 
         string source = parameters.Source.IsNotUndefined() ? (string)parameters.Source : "observed";
         int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : DefaultLimit;
@@ -108,52 +100,41 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
         // Reach-scope discovery to the caller's read reach (§17.1) — the same AccessContext idiom every other store uses.
         AccessContext context = this.access.Current();
 
-        // The search prefix flows to the (UTF-8) observed store as owned, pooled memory that survives the await — read
-        // once via GetUtf8String().TakeOwnership and returned to the pool in the finally; no managed string here.
-        byte[]? prefixRented = null;
-        try
+        // The search prefix flows to the observed store as its JSON value (From() rewraps parameters.Q, no reify, no
+        // managed string); the backend reifies it only at its index leaf. Undefined Q means "match all".
+        JsonString prefix = parameters.Q.IsNotUndefined() ? JsonString.From(parameters.Q) : default;
+
+        // Project the discovered principals/identities into the GranteeList body CLOSURE-FREE with a single
+        // materialisation: a context-threaded GranteeList.Source<TContext> (the generated Build<TContext> + static build
+        // methods, the per-projection state carried in a RefTuple — no bespoke context struct, no per-item closure)
+        // handed to the generated Ok<TContext>, which runs the one CreateBuilder<TContext> pass into the response
+        // workspace (no re-materialisation). value/label/kind flow BYTES-TO-BYTES (owned UTF-8 spans / enum tokens, no
+        // managed string); the {dimension, value} identity grants are the genuine string leaf (DescribeUsageScope).
+        // Ownership ledger above this method; proven by GranteeProjectionBenchmarks (~2.0 KB, the closure-free floor).
+        if (string.Equals(source, "directory", StringComparison.Ordinal) && this.directory is not null)
         {
-            ReadOnlyMemory<byte> prefix = parameters.Q.IsNotUndefined()
-                ? parameters.Q.GetUtf8String().TakeOwnership(out prefixRented)
-                : default;
+            // The directory seam is domain-typed (IPrincipalDirectory takes the GranteeKind enum) and string-typed (an
+            // LDAP filter / an HTTP URI), so reify both at that genuine leaf: the store kind back to the domain enum
+            // (defaulting to Person when unspecified), and the prefix to a string.
+            GranteeKind directoryKind = kind.IsNotUndefined() ? kind.ToGranteeKind() : GranteeKind.Person;
+            IReadOnlyList<ResolvedPrincipal> found = await this.directory.SearchAsync(directoryKind, prefix.IsNotUndefined() ? (string)prefix : string.Empty, limit, cancellationToken).ConfigureAwait(false);
 
-            // Project the discovered principals/identities into the GranteeList body CLOSURE-FREE with a single
-            // materialisation: a context-threaded GranteeList.Source<TContext> (the generated Build<TContext> + static build
-            // methods, the per-projection state carried in a RefTuple — no bespoke context struct, no per-item closure)
-            // handed to the generated Ok<TContext>, which runs the one CreateBuilder<TContext> pass into the response
-            // workspace (no re-materialisation). value/label/kind flow BYTES-TO-BYTES (owned UTF-8 spans / enum tokens, no
-            // managed string); the {dimension, value} identity grants are the genuine string leaf (DescribeUsageScope).
-            // Ownership ledger above this method; proven by GranteeProjectionBenchmarks (~2.0 KB, the closure-free floor).
-            if (string.Equals(source, "directory", StringComparison.Ordinal) && this.directory is not null)
-            {
-                // The directory query is a string leaf (the IPrincipalDirectory seam is string-typed — an LDAP filter / an
-                // HTTP URI), so transcode the prefix once for it.
-                IReadOnlyList<ResolvedPrincipal> found = await this.directory.SearchAsync(kind ?? GranteeKind.Person, Encoding.UTF8.GetString(prefix.Span), limit, cancellationToken).ConfigureAwait(false);
-
-                var state = new RefTuple<IReadOnlyList<ResolvedPrincipal>, AccessContext, ControlPlaneAccess>(found, context, this.access);
-                var body = Models.GranteeList.Build(
-                    in state,
-                    grantees: Models.GranteeList.ResolvedGranteeArray.Build(in state, BuildDirectoryGrantees));
-                return SearchGranteesResult.Ok(body, workspace);
-            }
-
-            using ObservedIdentityPage page = await this.observed.SearchAsync(context, kind, prefix, limit, pageToken, cancellationToken).ConfigureAwait(false);
-
-            // The opaque page token is a genuine string leaf; it threads through Build's nextPageToken only when set.
-            var observedState = new RefTuple<ObservedIdentityPage, ControlPlaneAccess>(page, this.access);
-            var observedBody = Models.GranteeList.Build(
-                in observedState,
-                grantees: Models.GranteeList.ResolvedGranteeArray.Build(in observedState, BuildObservedGrantees),
-                nextPageToken: page.NextPageToken is { } token ? (Models.JsonString.Source)token : default);
-            return SearchGranteesResult.Ok(observedBody, workspace);
+            var state = new RefTuple<IReadOnlyList<ResolvedPrincipal>, AccessContext, ControlPlaneAccess>(found, context, this.access);
+            var body = Models.GranteeList.Build(
+                in state,
+                grantees: Models.GranteeList.ResolvedGranteeArray.Build(in state, BuildDirectoryGrantees));
+            return SearchGranteesResult.Ok(body, workspace);
         }
-        finally
-        {
-            if (prefixRented is not null)
-            {
-                ArrayPool<byte>.Shared.Return(prefixRented);
-            }
-        }
+
+        using ObservedIdentityPage page = await this.observed.SearchAsync(context, kind, prefix, limit, pageToken, cancellationToken).ConfigureAwait(false);
+
+        // The opaque page token is a genuine string leaf; it threads through Build's nextPageToken only when set.
+        var observedState = new RefTuple<ObservedIdentityPage, ControlPlaneAccess>(page, this.access);
+        var observedBody = Models.GranteeList.Build(
+            in observedState,
+            grantees: Models.GranteeList.ResolvedGranteeArray.Build(in observedState, BuildObservedGrantees),
+            nextPageToken: page.NextPageToken is { } token ? (Models.JsonString.Source)token : default);
+        return SearchGranteesResult.Ok(observedBody, workspace);
     }
 
     private static Models.AdministratorIdentity.Source ToIdentity(CredentialUsageGrant grant)

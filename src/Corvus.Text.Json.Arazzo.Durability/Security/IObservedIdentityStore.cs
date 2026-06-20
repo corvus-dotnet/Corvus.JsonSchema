@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text.Json;
+
 namespace Corvus.Text.Json.Arazzo.Durability.Security;
 
 /// <summary>
@@ -32,34 +34,34 @@ public interface IObservedIdentityStore
     /// label and identity tags, and unions <paramref name="provenance"/> into its sighting sources. Cheap and best-effort —
     /// a sighting never fails a foreground operation.
     /// </summary>
-    /// <param name="kind">The grantee kind.</param>
-    /// <param name="value">The grantee value (a subject id, tenant name, role name, or workflow id) — the prefix-searched key part — as unescaped UTF-8.</param>
-    /// <param name="label">An optional human-friendly display label as unescaped UTF-8 (empty for none).</param>
+    /// <param name="kind">The grantee kind as a JSON value (the store carries it through and reifies it only at its own key leaf).</param>
+    /// <param name="value">The grantee value (a subject id, tenant name, role name, or workflow id) — the prefix-searched key part — as a JSON value.</param>
+    /// <param name="label">An optional human-friendly display label as a JSON value (undefined for none).</param>
     /// <param name="identity">The grantee's exact <c>sys:</c> identity (empty for the unscoped/system identity).</param>
     /// <param name="complete">Whether <paramref name="identity"/> is the principal's whole stamped identity (so an exact-equality grant matches), or a best-effort partial mapping (§17.2).</param>
     /// <param name="provenance">Where this identity was seen (an interned literal, e.g. <c>accessRequest</c>, <c>catalogVersion</c>, <c>administrator</c>, <c>grant</c>).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A task that completes when the sighting is recorded.</returns>
-    /// <remarks><paramref name="value"/> and <paramref name="label"/> are <see cref="ReadOnlyMemory{T}"/> so the caller can pass an owned, pooled UTF-8 buffer (<c>GetUtf8String().TakeOwnership(…)</c>) that survives the store's awaits — no managed string crosses the seam; a backend materializes <paramref name="value"/> only at its storage-key leaf.</remarks>
-    ValueTask SeenAsync(GranteeKind kind, ReadOnlyMemory<byte> value, ReadOnlyMemory<byte> label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken);
+    /// <remarks><paramref name="kind"/>, <paramref name="value"/> and <paramref name="label"/> are the JSON values themselves — the caller passes them straight through (no <c>GetUtf8String</c>/<c>TakeOwnership</c>, no managed string). A backend reifies <paramref name="kind"/>/<paramref name="value"/> only at its own storage-key leaf (and writes them bytes-to-bytes into its document); the values stay valid for the whole call (the request document outlives it).</remarks>
+    ValueTask SeenAsync(ObservedIdentity.GranteeKind kind, JsonString value, JsonString label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken);
 
     /// <summary>
     /// Lists one keyset page of observed identities the caller's read reach admits whose <c>subjectValue</c> starts with
-    /// <paramref name="prefix"/> (optionally restricted to <paramref name="kind"/>), ascending by
+    /// <paramref name="prefix"/> (optionally restricted to a defined <paramref name="kind"/>), ascending by
     /// <c>(subjectValue, subjectKind)</c> — an indexed query pushed down to the store. An identity is admitted iff
     /// <paramref name="context"/> admits its identity tags for <see cref="AccessVerb.Read"/>, so discovery is scoped to
     /// the caller's existing visibility (§17.1). Seeks strictly past <paramref name="pageToken"/> and returns at most
     /// <paramref name="limit"/> identities, emitting an <see cref="ObservedIdentityPage.NextPageToken"/> when more remain.
     /// </summary>
     /// <param name="context">The caller's row-access grant (use <see cref="AccessContext.System"/> for full reach).</param>
-    /// <param name="kind">Restrict to one grantee kind, or <see langword="null"/> for all kinds.</param>
-    /// <param name="prefix">The case-sensitive <c>subjectValue</c> prefix to match (empty matches all), as unescaped UTF-8.</param>
+    /// <param name="kind">Restrict to one grantee kind (as a JSON value), or undefined for all kinds — the backend reifies it only at its index leaf.</param>
+    /// <param name="prefix">The case-sensitive <c>subjectValue</c> prefix to match (undefined/empty matches all), as a JSON value the backend reifies only at its index leaf.</param>
     /// <param name="limit">The maximum number of identities to return in the page (a non-positive value is treated as 1).</param>
     /// <param name="pageToken">An opaque token from a previous page's <see cref="ObservedIdentityPage.NextPageToken"/>, or <see langword="null"/> for the first page (a store-minted continuation, not identity data, so it stays a string).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The page (matched identities + an optional next-page token), as a disposable batch the caller must dispose.</returns>
     /// <exception cref="FormatException"><paramref name="pageToken"/> is not a valid continuation token.</exception>
-    ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, GranteeKind? kind, ReadOnlyMemory<byte> prefix, int limit, string? pageToken, CancellationToken cancellationToken);
+    ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, string? pageToken, CancellationToken cancellationToken);
 
     /// <summary>
     /// Probes for an identity collision (design §16.5.4): returns an existing grantee whose <c>sys:</c> identity is
@@ -76,10 +78,10 @@ public interface IObservedIdentityStore
     /// generic refusal that does not echo the conflicting party is the safe response. The empty identity (the unscoped
     /// sentinel) never collides and always returns <see langword="null"/>.
     /// </remarks>
-    /// <param name="kind">The grantee kind being authored (excluded from the match together with <paramref name="value"/>).</param>
-    /// <param name="value">The grantee value being authored (excluded from the match together with <paramref name="kind"/>), as unescaped UTF-8.</param>
+    /// <param name="kind">The grantee kind being authored (as a JSON value; excluded from the match together with <paramref name="value"/>) — the backend reifies it only at its key leaf.</param>
+    /// <param name="value">The grantee value being authored (excluded from the match together with <paramref name="kind"/>), as a JSON value the backend reifies only at its key leaf.</param>
     /// <param name="identity">The resolved <c>sys:</c> identity to check for uniqueness.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The conflicting grantee, or <see langword="null"/> when the identity is unique to (<paramref name="kind"/>, <paramref name="value"/>).</returns>
-    ValueTask<ObservedIdentityConflict?> FindIdentityConflictAsync(GranteeKind kind, ReadOnlyMemory<byte> value, SecurityTagSet identity, CancellationToken cancellationToken);
+    /// <returns>The conflicting grantee's record as a pooled document the caller disposes (the conflict is the server's to decide on / audit — a handler must not echo cross-reach details), or <see langword="null"/> when the identity is unique to (<paramref name="kind"/>, <paramref name="value"/>).</returns>
+    ValueTask<ParsedJsonDocument<ObservedIdentity>?> FindIdentityConflictAsync(ObservedIdentity.GranteeKind kind, JsonString value, SecurityTagSet identity, CancellationToken cancellationToken);
 }

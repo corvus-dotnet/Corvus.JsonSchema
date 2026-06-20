@@ -43,9 +43,9 @@ public abstract class ObservedIdentityStoreConformance
     {
         IObservedIdentityStore store = await this.NewStoreAsync();
         SecurityTagSet identity = SecurityTagSet.FromTags([new SecurityTag("sys:tenant", "acme"), new SecurityTag("sys:sub", "alice")]);
-        await store.SeenAsync(GranteeKind.Person, U8("alice"), U8("Alice Smith"), identity, true, "accessRequest", default);
+        await store.SeenAsync(Person, Str("alice"), Str("Alice Smith"), identity, true, "accessRequest", default);
 
-        using ObservedIdentityPage page = await store.SearchAsync(AccessContext.System, GranteeKind.Person, U8("ali"), 10, null, default);
+        using ObservedIdentityPage page = await store.SearchAsync(AccessContext.System, Person, Str("ali"), 10, null, default);
         ObservedIdentity o = page.Identities.Single();
         o.SubjectKindValue.ShouldBe("person");
         o.SubjectValueValue.ShouldBe("alice");
@@ -61,10 +61,10 @@ public abstract class ObservedIdentityStoreConformance
     {
         IObservedIdentityStore store = await this.NewStoreAsync();
         SecurityTagSet identity = SecurityTagSet.FromTags([new SecurityTag("sys:tenant", "acme")]);
-        await store.SeenAsync(GranteeKind.Team, U8("acme"), U8("Acme"), identity, true, "catalogVersion", default);
-        await store.SeenAsync(GranteeKind.Team, U8("acme"), U8("Acme Corp"), identity, true, "administrator", default);
+        await store.SeenAsync(Team, Str("acme"), Str("Acme"), identity, true, "catalogVersion", default);
+        await store.SeenAsync(Team, Str("acme"), Str("Acme Corp"), identity, true, "administrator", default);
 
-        using ObservedIdentityPage page = await store.SearchAsync(AccessContext.System, GranteeKind.Team, U8("acme"), 10, null, default);
+        using ObservedIdentityPage page = await store.SearchAsync(AccessContext.System, Team, Str("acme"), 10, null, default);
         ObservedIdentity o = page.Identities.Single(); // one record, not two
         o.LabelOrNull.ShouldBe("Acme Corp"); // refreshed by the later sighting
         Provenance(o).ShouldBe(["catalogVersion", "administrator"], ignoreOrder: true);
@@ -76,22 +76,22 @@ public abstract class ObservedIdentityStoreConformance
     {
         IObservedIdentityStore store = await this.NewStoreAsync();
         SecurityTagSet id = SecurityTagSet.FromTags([new SecurityTag("sys:tenant", "acme")]);
-        await store.SeenAsync(GranteeKind.Person, U8("alice"), default, id, true, "x", default);
-        await store.SeenAsync(GranteeKind.Person, U8("albert"), default, id, true, "x", default);
-        await store.SeenAsync(GranteeKind.Team, U8("alpha"), default, id, true, "x", default);
-        await store.SeenAsync(GranteeKind.Person, U8("bob"), default, id, true, "x", default);
+        await store.SeenAsync(Person, Str("alice"), default, id, true, "x", default);
+        await store.SeenAsync(Person, Str("albert"), default, id, true, "x", default);
+        await store.SeenAsync(Team, Str("alpha"), default, id, true, "x", default);
+        await store.SeenAsync(Person, Str("bob"), default, id, true, "x", default);
 
-        using (ObservedIdentityPage all = await store.SearchAsync(AccessContext.System, null, U8("al"), 10, null, default))
+        using (ObservedIdentityPage all = await store.SearchAsync(AccessContext.System, AllKinds, Str("al"), 10, null, default))
         {
             all.Identities.Count.ShouldBe(3); // alice, albert, alpha
         }
 
-        using (ObservedIdentityPage people = await store.SearchAsync(AccessContext.System, GranteeKind.Person, U8("al"), 10, null, default))
+        using (ObservedIdentityPage people = await store.SearchAsync(AccessContext.System, Person, Str("al"), 10, null, default))
         {
             people.Identities.Count.ShouldBe(2); // alice, albert
         }
 
-        using (ObservedIdentityPage teams = await store.SearchAsync(AccessContext.System, GranteeKind.Team, U8(string.Empty), 10, null, default))
+        using (ObservedIdentityPage teams = await store.SearchAsync(AccessContext.System, Team, Str(string.Empty), 10, null, default))
         {
             teams.Identities.Single().SubjectValueValue.ShouldBe("alpha"); // empty prefix matches all of the kind
         }
@@ -102,17 +102,17 @@ public abstract class ObservedIdentityStoreConformance
     {
         IObservedIdentityStore store = await this.NewStoreAsync();
         SecurityTagSet id = SecurityTagSet.FromTags([new SecurityTag("sys:tenant", "acme")]);
-        (GranteeKind Kind, string Value)[] keys =
+        (ObservedIdentity.GranteeKind Kind, string Value)[] keys =
         [
-            (GranteeKind.Person, "delta"), (GranteeKind.Person, "alpha"), (GranteeKind.Team, "alpha"), (GranteeKind.Person, "echo"),
-            (GranteeKind.Person, "bravo"), (GranteeKind.Role, "charlie"), (GranteeKind.Person, "foxtrot"), (GranteeKind.Team, "golf"),
+            (Person, "delta"), (Person, "alpha"), (Team, "alpha"), (Person, "echo"),
+            (Person, "bravo"), (Role, "charlie"), (Person, "foxtrot"), (Team, "golf"),
         ];
 
         // Add out of order, to prove the store (not insertion order) establishes the page order, and that the
         // (subjectValue, subjectKind) tie-breaker separates the two "alpha" rows deterministically.
-        foreach ((GranteeKind kind, string value) in keys.OrderByDescending(k => k.Value, StringComparer.Ordinal).ThenByDescending(k => k.Kind))
+        foreach ((ObservedIdentity.GranteeKind kind, string value) in keys.OrderByDescending(k => k.Value, StringComparer.Ordinal).ThenByDescending(k => k.Kind.ToToken(), StringComparer.Ordinal))
         {
-            await store.SeenAsync(kind, U8(value), default, id, true, "x", default);
+            await store.SeenAsync(kind, Str(value), default, id, true, "x", default);
         }
 
         var seen = new List<string>();
@@ -120,7 +120,7 @@ public abstract class ObservedIdentityStoreConformance
         int pages = 0;
         do
         {
-            using ObservedIdentityPage page = await store.SearchAsync(AccessContext.System, null, U8(string.Empty), 3, token, default);
+            using ObservedIdentityPage page = await store.SearchAsync(AccessContext.System, AllKinds, Str(string.Empty), 3, token, default);
             page.Identities.Count.ShouldBeLessThanOrEqualTo(3);
             foreach (ObservedIdentity o in page.Identities)
             {
@@ -142,7 +142,7 @@ public abstract class ObservedIdentityStoreConformance
         // A malformed token is rejected (rather than silently restarting).
         await Should.ThrowAsync<FormatException>(async () =>
         {
-            using ObservedIdentityPage bad = await store.SearchAsync(AccessContext.System, null, U8(string.Empty), 3, "this~is~not~a~token", default);
+            using ObservedIdentityPage bad = await store.SearchAsync(AccessContext.System, AllKinds, Str(string.Empty), 3, "this~is~not~a~token", default);
         });
     }
 
@@ -150,17 +150,17 @@ public abstract class ObservedIdentityStoreConformance
     public async Task Search_is_reach_filtered_to_the_callers_read_reach()
     {
         IObservedIdentityStore store = await this.NewStoreAsync();
-        await store.SeenAsync(GranteeKind.Team, U8("acme"), U8("Acme"), SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), true, "test", default);
-        await store.SeenAsync(GranteeKind.Team, U8("globex"), U8("Globex"), SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), true, "test", default);
+        await store.SeenAsync(Team, Str("acme"), Str("Acme"), SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), true, "test", default);
+        await store.SeenAsync(Team, Str("globex"), Str("Globex"), SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), true, "test", default);
 
         // A caller reach-scoped to tenant=acme discovers acme's identity only; globex's is invisible (non-disclosing, §17.1).
-        using (ObservedIdentityPage acme = await store.SearchAsync(ScopeBy("tenant", "acme"), null, U8(string.Empty), 10, null, default))
+        using (ObservedIdentityPage acme = await store.SearchAsync(ScopeBy("tenant", "acme"), AllKinds, Str(string.Empty), 10, null, default))
         {
             acme.Identities.Single().SubjectValueValue.ShouldBe("acme");
         }
 
         // System reach sees both.
-        using (ObservedIdentityPage all = await store.SearchAsync(AccessContext.System, null, U8(string.Empty), 10, null, default))
+        using (ObservedIdentityPage all = await store.SearchAsync(AccessContext.System, AllKinds, Str(string.Empty), 10, null, default))
         {
             all.Identities.Count.ShouldBe(2);
         }
@@ -171,23 +171,23 @@ public abstract class ObservedIdentityStoreConformance
     {
         IObservedIdentityStore store = await this.NewStoreAsync();
         SecurityTagSet alice = SecurityTagSet.FromTags([new SecurityTag("sys:iss", "ldap"), new SecurityTag("sys:sub", "alice")]);
-        await store.SeenAsync(GranteeKind.Person, U8("alice"), U8("Alice"), alice, true, "administrator", default);
+        await store.SeenAsync(Person, Str("alice"), Str("Alice"), alice, true, "administrator", default);
 
         // A DIFFERENT grantee value resolving to the same identity (tags supplied in a different order, to prove the match
         // is by set-equality, not byte-equality) is a collision the authoring path must refuse.
         SecurityTagSet sameIdentityReordered = SecurityTagSet.FromTags([new SecurityTag("sys:sub", "alice"), new SecurityTag("sys:iss", "ldap")]);
-        ObservedIdentityConflict? conflict = await store.FindIdentityConflictAsync(GranteeKind.Person, U8("alice-2"), sameIdentityReordered, default);
+        using ParsedJsonDocument<ObservedIdentity>? conflict = await store.FindIdentityConflictAsync(Person, Str("alice-2"), sameIdentityReordered, default);
         conflict.ShouldNotBeNull();
-        conflict!.Value.Kind.ShouldBe(GranteeKind.Person);
-        conflict.Value.Value.ShouldBe("alice");
+        conflict!.RootElement.SubjectKindValue.ShouldBe("person");
+        conflict.RootElement.SubjectValueValue.ShouldBe("alice");
 
         // The SAME grantee is not in conflict with itself; a genuinely distinct identity has no conflict.
-        (await store.FindIdentityConflictAsync(GranteeKind.Person, U8("alice"), alice, default)).ShouldBeNull();
-        (await store.FindIdentityConflictAsync(GranteeKind.Person, U8("bob"), SecurityTagSet.FromTags([new SecurityTag("sys:iss", "ldap"), new SecurityTag("sys:sub", "bob")]), default)).ShouldBeNull();
+        (await store.FindIdentityConflictAsync(Person, Str("alice"), alice, default)).ShouldBeNull();
+        (await store.FindIdentityConflictAsync(Person, Str("bob"), SecurityTagSet.FromTags([new SecurityTag("sys:iss", "ldap"), new SecurityTag("sys:sub", "bob")]), default)).ShouldBeNull();
 
         // The empty (unscoped) identity never collides, even though many grantees may map to it.
-        await store.SeenAsync(GranteeKind.Role, U8("system"), default, SecurityTagSet.Empty, true, "x", default);
-        (await store.FindIdentityConflictAsync(GranteeKind.Role, U8("other"), SecurityTagSet.Empty, default)).ShouldBeNull();
+        await store.SeenAsync(Role, Str("system"), default, SecurityTagSet.Empty, true, "x", default);
+        (await store.FindIdentityConflictAsync(Role, Str("other"), SecurityTagSet.Empty, default)).ShouldBeNull();
     }
 
     [TestMethod]
@@ -196,16 +196,25 @@ public abstract class ObservedIdentityStoreConformance
         IObservedIdentityStore store = await this.NewStoreAsync();
         SecurityTagSet original = SecurityTagSet.FromTags([new SecurityTag("sys:iss", "ldap"), new SecurityTag("sys:sub", "old")]);
         SecurityTagSet updated = SecurityTagSet.FromTags([new SecurityTag("sys:iss", "ldap"), new SecurityTag("sys:sub", "new")]);
-        await store.SeenAsync(GranteeKind.Person, U8("carol"), default, original, true, "x", default);
-        await store.SeenAsync(GranteeKind.Person, U8("carol"), default, updated, true, "x", default); // the identity changed on re-sighting
+        await store.SeenAsync(Person, Str("carol"), default, original, true, "x", default);
+        await store.SeenAsync(Person, Str("carol"), default, updated, true, "x", default); // the identity changed on re-sighting
 
         // The retired identity no longer conflicts (the digest index followed the re-sighting); the current one does.
-        (await store.FindIdentityConflictAsync(GranteeKind.Person, U8("carol-2"), original, default)).ShouldBeNull();
-        ObservedIdentityConflict? current = await store.FindIdentityConflictAsync(GranteeKind.Person, U8("carol-2"), updated, default);
-        current!.Value.Value.ShouldBe("carol");
+        (await store.FindIdentityConflictAsync(Person, Str("carol-2"), original, default)).ShouldBeNull();
+        using ParsedJsonDocument<ObservedIdentity>? current = await store.FindIdentityConflictAsync(Person, Str("carol-2"), updated, default);
+        current!.RootElement.SubjectValueValue.ShouldBe("carol");
     }
 
-    private static ReadOnlyMemory<byte> U8(string value) => System.Text.Encoding.UTF8.GetBytes(value);
+    // The seam carries the grantee kind as its JSON value (ObservedIdentity.GranteeKind); these are the enum constants the
+    // tests pass, with AllKinds (undefined) meaning "all kinds" to a search.
+    private static readonly ObservedIdentity.GranteeKind Person = ObservedIdentity.GranteeKind.EnumValues.Person;
+    private static readonly ObservedIdentity.GranteeKind Team = ObservedIdentity.GranteeKind.EnumValues.Team;
+    private static readonly ObservedIdentity.GranteeKind Role = ObservedIdentity.GranteeKind.EnumValues.Role;
+    private static readonly ObservedIdentity.GranteeKind AllKinds = default;
+
+    // The seam carries the JSON value (the store reifies only at its own key leaf); a test builds one from a managed
+    // string by parsing the JSON string literal (the test values contain no characters needing escaping).
+    private static JsonString Str(string value) => JsonString.ParseValue($"\"{value}\"");
 
     private static AccessContext ScopeBy(string key, string value) => AccessContext.Uniform(
         new SecurityFilter([SecurityRule.Compile($"{key} == $claim.{key}")], new Dictionary<string, IReadOnlyList<string>> { [key] = [value] }));
