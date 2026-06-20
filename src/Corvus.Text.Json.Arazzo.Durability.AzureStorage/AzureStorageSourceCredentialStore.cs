@@ -90,18 +90,18 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>> AddAsync(SourceCredentialBinding draft, string actor, CancellationToken cancellationToken)
     {
-        SourceCredentialBinding.ValidateDefinition(definition);
+        SourceCredentialBinding.ValidateDraft(draft);
         ArgumentNullException.ThrowIfNull(actor);
         string id = "scred-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
         WorkflowEtag etag = NewEtag();
-        byte[] json = SourceCredentialSerialization.SerializeNew(id, definition, actor, this.timeProvider.GetUtcNow(), etag);
-        string discriminator = SourceCredentialKey.Discriminator(definition.ManagementTags, definition.UsageTags);
-        var entity = new TableEntity(PartitionKey(definition.SourceName), RowKey(definition.Environment, discriminator))
+        byte[] json = SourceCredentialSerialization.SerializeNew(id, draft, actor, this.timeProvider.GetUtcNow(), etag);
+        string discriminator = SourceCredentialKey.Discriminator(draft.ManagementTagsValue, draft.UsageTagsValue);
+        var entity = new TableEntity(PartitionKey(draft.SourceNameValue), RowKey(draft.EnvironmentValue, discriminator))
         {
-            [SourceNameColumn] = definition.SourceName,
-            [EnvironmentColumn] = definition.Environment,
+            [SourceNameColumn] = draft.SourceNameValue,
+            [EnvironmentColumn] = draft.EnvironmentValue,
             [DiscriminatorColumn] = discriminator,
             [DocColumn] = json,
         };
@@ -111,7 +111,7 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
         }
         catch (RequestFailedException ex) when (ex.Status == 409)
         {
-            throw new InvalidOperationException($"A source credential binding for '{definition.SourceName}@{definition.Environment}' with those security tags already exists.");
+            throw new InvalidOperationException($"A source credential binding for '{draft.SourceNameValue}@{draft.EnvironmentValue}' with those security tags already exists.");
         }
 
         return PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
@@ -212,9 +212,9 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialDefinition definition, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SourceCredentialBinding>?> UpdateAsync(string sourceName, string environment, SourceCredentialBinding draft, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken)
     {
-        SourceCredentialBinding.ValidateDefinition(definition);
+        SourceCredentialBinding.ValidateDraft(draft);
         ArgumentNullException.ThrowIfNull(actor);
         ArgumentNullException.ThrowIfNull(context);
         (byte[]? existing, string? discriminator) = await this.FindForManagementAsync(sourceName, environment, AccessVerb.Write, context, cancellationToken).ConfigureAwait(false);
@@ -223,7 +223,7 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
             return null;
         }
 
-        byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, $"{sourceName}@{environment}", expectedEtag, definition, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, $"{sourceName}@{environment}", expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), NewEtag());
         var entity = new TableEntity(PartitionKey(sourceName), RowKey(environment, discriminator!))
         {
             [SourceNameColumn] = sourceName,

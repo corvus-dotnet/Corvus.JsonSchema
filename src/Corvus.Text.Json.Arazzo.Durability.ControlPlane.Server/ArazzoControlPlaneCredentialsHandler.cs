@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// <para><strong>Trust boundary (§13).</strong> This handler manages <em>references</em> only. It holds no
 /// <see cref="ISecretResolver"/> and never resolves, returns, or logs secret material; request and response bodies
 /// carry a <see cref="SecretRef"/> plus non-secret metadata. A value that is not a well-formed <see cref="SecretRef"/>
-/// is rejected at the boundary (400) by the same <see cref="SourceCredentialBinding.ValidateDefinition"/> the store
+/// is rejected at the boundary (400) by the same <see cref="SourceCredentialBinding.ValidateDraft"/> the store
 /// uses, so secret material cannot be smuggled inline. Rotation is by changing the reference.</para>
 /// <para>The (sourceName, environment) pair is the binding key; create conflicts (409) if one already exists, and
 /// update/delete on a missing binding is a 404. Identity and created-* audit fields are immutable across updates.</para>
@@ -76,13 +76,14 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     /// <inheritdoc/>
     public async ValueTask<CreateCredentialResult> HandleCreateCredentialAsync(CreateCredentialParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        SourceCredentialDefinition definition;
+        Models.CredentialBindingWrite body = parameters.Body;
         SecurityTagSet managementTags;
+        SecurityTagSet usageTags;
         try
         {
             // managementTags = the principal's deployment-internal tenant tag (always stamped, so the owner keeps
             // management) PLUS any operator-supplied management labels (validated against the reserved internal prefix).
-            IReadOnlyList<SecurityTag> userManagement = ReadTags(parameters.Body.ManagementTags);
+            IReadOnlyList<SecurityTag> userManagement = ReadTags(body.ManagementTags);
             this.access.ValidateUserTags(userManagement);
             var management = new List<SecurityTag>(this.access.InternalTags());
             management.AddRange(userManagement);
@@ -95,10 +96,9 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
             // and the resolved tag written straight into the pooled buffer — no managed string or grant list. With no
             // grants, usage defaults to the creating principal's own identity (the owner's runs). The two scopes are
             // independent (§13/§14.2).
-            SecurityTagSet usageTags;
-            if (parameters.Body.UsageGrants.IsNotUndefined() && parameters.Body.UsageGrants.GetArrayLength() > 0)
+            if (body.UsageGrants.IsNotUndefined() && body.UsageGrants.GetArrayLength() > 0)
             {
-                var grantsState = new UsageGrantsState(this.access, parameters.Body.UsageGrants);
+                var grantsState = new UsageGrantsState(this.access, body.UsageGrants);
                 usageTags = SecurityTagSet.Build(in grantsState, BuildUsageGrants);
             }
             else
@@ -106,7 +106,19 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
                 usageTags = SecurityTagSet.FromTags(this.access.InternalTags());
             }
 
-            definition = ReadWrite(parameters.Body) with { ManagementTags = managementTags, UsageTags = usageTags };
+            // The required request fields are validated up front; their JSON values are then carried into the draft
+            // bytes-to-bytes (no per-field strings, no list) — see the draft build below.
+            if (!body.SourceName.IsNotUndefined())
+            {
+                throw new ArgumentException("A 'sourceName' is required.");
+            }
+
+            if (!body.Environment.IsNotUndefined())
+            {
+                throw new ArgumentException("An 'environment' is required.");
+            }
+
+            _ = ReadAuthKind(body.AuthKind);
         }
         catch (ArgumentException ex)
         {
@@ -122,7 +134,20 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
 
         try
         {
-            using ParsedJsonDocument<SourceCredentialBinding> created = await this.store.AddAsync(definition, this.actor, cancellationToken).ConfigureAwait(false);
+            // The persisted binding carries the request body's reference/metadata JSON values bytes-to-bytes (no
+            // per-field strings, no list) plus the resolved management/usage tags; the store stamps id/createdBy/createdAt/etag.
+            using ParsedJsonDocument<SourceCredentialBinding> draft = SourceCredentialBinding.Draft(
+                sourceName: (JsonElement)body.SourceName,
+                environment: (JsonElement)body.Environment,
+                authKind: (JsonElement)body.AuthKind,
+                secretRefs: (JsonElement)body.SecretRefs,
+                config: (JsonElement)body.Config,
+                description: (JsonElement)body.Description,
+                expiresAt: (JsonElement)body.ExpiresAt,
+                rotatedAt: (JsonElement)body.RotatedAt,
+                managementTags: managementTags,
+                usageTags: usageTags);
+            using ParsedJsonDocument<SourceCredentialBinding> created = await this.store.AddAsync(draft.RootElement, this.actor, cancellationToken).ConfigureAwait(false);
             return CreateCredentialResult.Created(ToSummary(created.RootElement), workspace);
         }
         catch (ArgumentException ex)
@@ -151,10 +176,10 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     {
         string sourceName = (string)parameters.SourceName;
         string environment = (string)parameters.Environment;
-        SourceCredentialDefinition definition;
+        Models.CredentialBindingUpdate body = parameters.Body;
         try
         {
-            definition = ReadUpdate(sourceName, environment, parameters.Body);
+            _ = ReadAuthKind(body.AuthKind);
         }
         catch (ArgumentException ex)
         {
@@ -163,7 +188,20 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
 
         try
         {
-            using ParsedJsonDocument<SourceCredentialBinding>? updated = await this.store.UpdateAsync(sourceName, environment, definition, WorkflowEtag.None, this.actor, this.access.Current(), cancellationToken).ConfigureAwait(false);
+            // Only the mutable content is carried bytes-to-bytes; the immutable identity (sourceName, environment) and the
+            // security tags are carried forward from the stored binding by the store, so the draft omits them.
+            using ParsedJsonDocument<SourceCredentialBinding> draft = SourceCredentialBinding.Draft(
+                sourceName: default,
+                environment: default,
+                authKind: (JsonElement)body.AuthKind,
+                secretRefs: (JsonElement)body.SecretRefs,
+                config: (JsonElement)body.Config,
+                description: (JsonElement)body.Description,
+                expiresAt: (JsonElement)body.ExpiresAt,
+                rotatedAt: (JsonElement)body.RotatedAt,
+                managementTags: default,
+                usageTags: default);
+            using ParsedJsonDocument<SourceCredentialBinding>? updated = await this.store.UpdateAsync(sourceName, environment, draft.RootElement, WorkflowEtag.None, this.actor, this.access.Current(), cancellationToken).ConfigureAwait(false);
             return updated is { } b
                 ? UpdateCredentialResult.Ok(ToSummary(b.RootElement), workspace)
                 : UpdateCredentialResult.NotFound(NotFoundProblem(sourceName, environment), workspace);
@@ -185,103 +223,10 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
             : DeleteCredentialResult.NotFound(NotFoundProblem(sourceName, environment), workspace);
     }
 
-    private static SourceCredentialDefinition ReadWrite(Models.CredentialBindingWrite body)
-    {
-        string sourceName = body.SourceName.IsNotUndefined() ? (string)body.SourceName : throw new ArgumentException("A 'sourceName' is required.");
-        string environment = body.Environment.IsNotUndefined() ? (string)body.Environment : throw new ArgumentException("An 'environment' is required.");
-        return new SourceCredentialDefinition(
-            sourceName,
-            environment,
-            ReadAuthKind(body.AuthKind),
-            ReadSecretRefs(body.SecretRefs),
-            ReadConfig(body.Config),
-            OptionalString(body.Description),
-            ExpiresAt: OptionalInstant(body.ExpiresAt),
-            RotatedAt: OptionalInstant(body.RotatedAt));
-    }
-
-    private static SourceCredentialDefinition ReadUpdate(string sourceName, string environment, Models.CredentialBindingUpdate body)
-        => new(
-            sourceName,
-            environment,
-            ReadAuthKind(body.AuthKind),
-            ReadSecretRefs(body.SecretRefs),
-            ReadConfig(body.Config),
-            OptionalString(body.Description),
-            ExpiresAt: OptionalInstant(body.ExpiresAt),
-            RotatedAt: OptionalInstant(body.RotatedAt));
-
     private static SourceCredentialKind ReadAuthKind(Models.SourceCredentialKind authKind)
         => authKind.IsNotUndefined()
             ? SourceCredentialKindExtensions.Parse((string)authKind)
             : throw new ArgumentException("An 'authKind' is required.");
-
-    private static List<SecretReferenceDefinition> ReadSecretRefs(Models.CredentialBindingWrite.SecretReferenceArray secretRefs)
-    {
-        var list = new List<SecretReferenceDefinition>();
-        if (secretRefs.IsNotUndefined())
-        {
-            foreach (Models.SecretReference reference in secretRefs.EnumerateArray())
-            {
-                list.Add(new SecretReferenceDefinition((string)reference.Name, (string)reference.Ref));
-            }
-        }
-
-        return list;
-    }
-
-    private static List<SecretReferenceDefinition> ReadSecretRefs(Models.CredentialBindingUpdate.SecretReferenceArray secretRefs)
-    {
-        var list = new List<SecretReferenceDefinition>();
-        if (secretRefs.IsNotUndefined())
-        {
-            foreach (Models.SecretReference reference in secretRefs.EnumerateArray())
-            {
-                list.Add(new SecretReferenceDefinition((string)reference.Name, (string)reference.Ref));
-            }
-        }
-
-        return list;
-    }
-
-    private static List<CredentialConfigDefinition>? ReadConfig(Models.CredentialBindingWrite.CredentialConfigEntryArray config)
-    {
-        if (!config.IsNotUndefined() || config.GetArrayLength() == 0)
-        {
-            return null;
-        }
-
-        var list = new List<CredentialConfigDefinition>();
-        foreach (Models.CredentialConfigEntry entry in config.EnumerateArray())
-        {
-            list.Add(new CredentialConfigDefinition((string)entry.Key, (string)entry.Value));
-        }
-
-        return list;
-    }
-
-    private static List<CredentialConfigDefinition>? ReadConfig(Models.CredentialBindingUpdate.CredentialConfigEntryArray config)
-    {
-        if (!config.IsNotUndefined() || config.GetArrayLength() == 0)
-        {
-            return null;
-        }
-
-        var list = new List<CredentialConfigDefinition>();
-        foreach (Models.CredentialConfigEntry entry in config.EnumerateArray())
-        {
-            list.Add(new CredentialConfigDefinition((string)entry.Key, (string)entry.Value));
-        }
-
-        return list;
-    }
-
-    private static string? OptionalString(Models.JsonString value) => value.IsNotUndefined() ? (string)value : null;
-
-    // Read an optional date-time from the request body via the typed conversion (CTJ's JSON-Schema-compliant parse over
-    // the backing UTF-8) — no managed-string realization.
-    private static DateTimeOffset? OptionalInstant(Models.JsonDateTime value)
-        => value.IsNotUndefined() ? ((NodaTime.OffsetDateTime)value).ToDateTimeOffset() : null;
 
     private static List<SecurityTag> ReadTags(Models.CredentialBindingWrite.CredentialSecurityTagArray tags)
     {
