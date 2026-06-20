@@ -124,15 +124,14 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
     }
 
     /// <inheritdoc/>
-    public ValueTask<ParsedJsonDocument<SecurityBindingDocument>> AddBindingAsync(SecurityBindingDefinition definition, string actor, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<SecurityBindingDocument>> AddBindingAsync(SecurityBindingDocument draft, string actor, CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
 
         lock (this.gate)
         {
             string id = "bnd-" + (++this.bindingSequence).ToString(CultureInfo.InvariantCulture);
-            byte[] json = SecurityPolicySerialization.SerializeNewBinding(id, definition, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
+            byte[] json = SecurityPolicySerialization.SerializeNewBinding(id, draft, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
             this.bindings[id] = json;
             this.generation++;
             return new ValueTask<ParsedJsonDocument<SecurityBindingDocument>>(PersistedJson.ToPooledDocument<SecurityBindingDocument>(json));
@@ -160,10 +159,9 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
     }
 
     /// <inheritdoc/>
-    public ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
-        ArgumentException.ThrowIfNullOrEmpty(definition.ClaimType);
         ArgumentNullException.ThrowIfNull(actor);
 
         lock (this.gate)
@@ -173,7 +171,7 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
                 return new ValueTask<ParsedJsonDocument<SecurityBindingDocument>?>((ParsedJsonDocument<SecurityBindingDocument>?)null);
             }
 
-            byte[] json = SecurityPolicySerialization.SerializeUpdatedBinding(existing, "binding", id, expectedEtag, definition, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
+            byte[] json = SecurityPolicySerialization.SerializeUpdatedBinding(existing, "binding", id, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
             this.bindings[id] = json;
             this.generation++;
             return new ValueTask<ParsedJsonDocument<SecurityBindingDocument>?>(PersistedJson.ToPooledDocument<SecurityBindingDocument>(json));

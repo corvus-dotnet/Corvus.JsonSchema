@@ -79,10 +79,10 @@ await Corvus.Text.Json.Arazzo.Durability.Security.SecurityBootstrap.SeedAsync(se
 // Every authenticated principal may READ the whole control plane; WRITE/run reach is deny-by-default and conferred
 // per-principal only through the access-request → approval flow (§16.5). So a stored grant is what lets a principal
 // *act*, scoped to exactly the workflow it names — the worked example's "alice may trigger that workflow, and only it".
-(await securityPolicy.AddBindingAsync(
-    new SecurityBindingDefinition("*", null, Read: VerbGrant.Full, Write: VerbGrant.None, Purge: VerbGrant.None, Description: "Authenticated principals may read the whole control plane."),
-    "bootstrap",
-    default)).Dispose();
+using (ParsedJsonDocument<SecurityBindingDocument> readAllBinding = SecurityBindingDocument.Draft("*", null, read: VerbGrant.Full, write: VerbGrant.None, purge: VerbGrant.None, description: "Authenticated principals may read the whole control plane."))
+{
+    (await securityPolicy.AddBindingAsync(readAllBinding.RootElement, "bootstrap", default)).Dispose();
+}
 
 // The entitlement resolver (§16.5.2 Decision-A): ONE PersistentRowSecurityPolicy over the security-policy store
 // backs both layers — the claims transformer unions its ResolveGrantedScopes into the scope claim (capability), and

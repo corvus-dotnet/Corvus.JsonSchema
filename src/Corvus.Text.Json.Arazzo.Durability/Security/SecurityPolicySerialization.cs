@@ -52,36 +52,36 @@ public static class SecurityPolicySerialization
 
     /// <summary>Serializes a brand-new binding to owned JSON bytes (pooled scratch, no detached clone).</summary>
     /// <param name="id">The assigned binding id.</param>
-    /// <param name="definition">The binding content.</param>
+    /// <param name="draft">The draft binding carrying the operator-supplied content as JSON values (read bytes-to-bytes).</param>
     /// <param name="actor">The creating identity (audit).</param>
     /// <param name="createdAt">The creation timestamp.</param>
     /// <param name="etag">The new record etag.</param>
     /// <returns>The owned UTF-8 JSON bytes.</returns>
-    public static byte[] SerializeNewBinding(string id, SecurityBindingDefinition definition, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+    public static byte[] SerializeNewBinding(string id, SecurityBindingDocument draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
         => PersistedJson.ToArray(
-            (id, definition, actor, createdAt, etag),
-            static (Utf8JsonWriter writer, in (string Id, SecurityBindingDefinition Def, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
-                => SecurityBindingDocument.WriteNew(writer, c.Id, c.Def, c.Actor, c.At, c.Tag));
+            (id, draft, actor, createdAt, etag),
+            static (Utf8JsonWriter writer, in (string Id, SecurityBindingDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
+                => SecurityBindingDocument.WriteNew(writer, c.Id, c.Draft, c.Actor, c.At, c.Tag));
 
     /// <summary>Parses the stored binding (pooled), checks the etag, and serializes the carried-forward update.</summary>
     /// <param name="existing">The stored binding's current UTF-8 JSON bytes.</param>
     /// <param name="kind">The record kind for a conflict message (e.g. <c>binding</c>).</param>
     /// <param name="id">The record identity for a conflict message.</param>
     /// <param name="expectedEtag">The expected current etag (<see cref="WorkflowEtag.None"/> overwrites unconditionally).</param>
-    /// <param name="definition">The new content.</param>
+    /// <param name="draft">The draft binding carrying the new operator-supplied content as JSON values (read bytes-to-bytes).</param>
     /// <param name="actor">The updating identity (audit).</param>
     /// <param name="updatedAt">The update timestamp.</param>
     /// <param name="etag">The new record etag.</param>
     /// <returns>The owned UTF-8 JSON bytes.</returns>
     /// <exception cref="SecurityPolicyConflictException">The expected etag no longer matches.</exception>
-    public static byte[] SerializeUpdatedBinding(ReadOnlySpan<byte> existing, string kind, string id, WorkflowEtag expectedEtag, SecurityBindingDefinition definition, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
+    public static byte[] SerializeUpdatedBinding(ReadOnlySpan<byte> existing, string kind, string id, WorkflowEtag expectedEtag, SecurityBindingDocument draft, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
     {
         using ParsedJsonDocument<SecurityBindingDocument> current = PersistedJson.ToPooledDocument<SecurityBindingDocument>(existing);
         EnsureEtag(kind, id, expectedEtag, current.RootElement.EtagValue);
         return PersistedJson.ToArray(
-            (Current: current.RootElement, definition, actor, updatedAt, etag),
-            static (Utf8JsonWriter writer, in (SecurityBindingDocument Current, SecurityBindingDefinition Def, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
-                => c.Current.WriteUpdated(writer, c.Def, c.Actor, c.At, c.Tag));
+            (Current: current.RootElement, draft, actor, updatedAt, etag),
+            static (Utf8JsonWriter writer, in (SecurityBindingDocument Current, SecurityBindingDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
+                => c.Current.WriteUpdated(writer, c.Draft, c.Actor, c.At, c.Tag));
     }
 
     /// <summary>Reads a stored rule's etag through a pooled, disposed document (no detached clone) — for the delete concurrency check.</summary>

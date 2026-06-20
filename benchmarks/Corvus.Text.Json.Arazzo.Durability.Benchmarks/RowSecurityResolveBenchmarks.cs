@@ -41,10 +41,11 @@ public class RowSecurityResolveBenchmarks
             (await noGrantStore.AddRuleAsync("team-payments", draft.RootElement, "admin", default)).Dispose();
         }
 
-        await noGrantStore.AddBindingAsync(
-            new SecurityBindingDefinition("team", "payments", VerbGrant.Rules("team-payments"), VerbGrant.None, VerbGrant.None),
-            "admin",
-            default);
+        using (ParsedJsonDocument<SecurityBindingDocument> binding = SecurityBindingDocument.Draft("team", "payments", VerbGrant.Rules("team-payments"), VerbGrant.None, VerbGrant.None))
+        {
+            (await noGrantStore.AddBindingAsync(binding.RootElement, "admin", default)).Dispose();
+        }
+
         this.noGrantPolicy = new PersistentRowSecurityPolicy(noGrantStore);
         await this.noGrantPolicy.RefreshAsync();
 
@@ -57,14 +58,16 @@ public class RowSecurityResolveBenchmarks
             (await grantedStore.AddRuleAsync("team-payments", draft.RootElement, "admin", default)).Dispose();
         }
 
-        await grantedStore.AddBindingAsync(
-            new SecurityBindingDefinition("team", "payments", VerbGrant.Rules("team-payments"), VerbGrant.None, VerbGrant.None),
-            "admin",
-            default);
-        await grantedStore.AddBindingAsync(
-            new SecurityBindingDefinition("sub", "alice", VerbGrant.Rules("team-payments"), VerbGrant.Rules("team-payments"), VerbGrant.None, Scopes: [ControlPlaneScopes.RunsWrite], ExpiresAt: new DateTimeOffset(2999, 1, 1, 0, 0, 0, TimeSpan.Zero)),
-            "approver",
-            default);
+        using (ParsedJsonDocument<SecurityBindingDocument> binding = SecurityBindingDocument.Draft("team", "payments", VerbGrant.Rules("team-payments"), VerbGrant.None, VerbGrant.None))
+        {
+            (await grantedStore.AddBindingAsync(binding.RootElement, "admin", default)).Dispose();
+        }
+
+        using (ParsedJsonDocument<SecurityBindingDocument> grant = SecurityBindingDocument.Draft("sub", "alice", VerbGrant.Rules("team-payments"), VerbGrant.Rules("team-payments"), VerbGrant.None, scopes: [ControlPlaneScopes.RunsWrite], expiresAt: new DateTimeOffset(2999, 1, 1, 0, 0, 0, TimeSpan.Zero)))
+        {
+            (await grantedStore.AddBindingAsync(grant.RootElement, "approver", default)).Dispose();
+        }
+
         this.grantedPolicy = new PersistentRowSecurityPolicy(grantedStore);
         await this.grantedPolicy.RefreshAsync();
 

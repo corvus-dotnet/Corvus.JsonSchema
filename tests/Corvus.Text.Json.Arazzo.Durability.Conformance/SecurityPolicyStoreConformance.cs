@@ -146,8 +146,7 @@ public abstract class SecurityPolicyStoreConformance
     {
         ISecurityPolicyStore store = await this.NewStoreAsync();
         string aId;
-        using (ParsedJsonDocument<SecurityBindingDocument> a = await store.AddBindingAsync(
-            new SecurityBindingDefinition("role", "tenant-admin", VerbGrant.Rules("tenant-scoped"), VerbGrant.Rules("tenant-scoped"), VerbGrant.None, Order: 10),
+        using (ParsedJsonDocument<SecurityBindingDocument> a = await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "tenant-admin", VerbGrant.Rules("tenant-scoped"), VerbGrant.Rules("tenant-scoped"), VerbGrant.None, order: 10),
             "alice",
             default))
         {
@@ -155,8 +154,7 @@ public abstract class SecurityPolicyStoreConformance
         }
 
         string bId;
-        using (ParsedJsonDocument<SecurityBindingDocument> b = await store.AddBindingAsync(
-            new SecurityBindingDefinition("role", "operator", VerbGrant.Full, VerbGrant.Full, VerbGrant.Full, Order: 5),
+        using (ParsedJsonDocument<SecurityBindingDocument> b = await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "operator", VerbGrant.Full, VerbGrant.Full, VerbGrant.Full, order: 5),
             "alice",
             default))
         {
@@ -191,8 +189,7 @@ public abstract class SecurityPolicyStoreConformance
         ISecurityPolicyStore store = await this.NewStoreAsync();
         string addedId;
         WorkflowEtag addedEtag;
-        using (ParsedJsonDocument<SecurityBindingDocument> added = await store.AddBindingAsync(
-            new SecurityBindingDefinition("role", "viewer", VerbGrant.Rules("r1"), VerbGrant.None, VerbGrant.None),
+        using (ParsedJsonDocument<SecurityBindingDocument> added = await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "viewer", VerbGrant.Rules("r1"), VerbGrant.None, VerbGrant.None),
             "alice",
             default))
         {
@@ -201,9 +198,10 @@ public abstract class SecurityPolicyStoreConformance
         }
 
         WorkflowEtag updatedEtag;
-        using (ParsedJsonDocument<SecurityBindingDocument>? updated = await store.UpdateBindingAsync(
+        using (ParsedJsonDocument<SecurityBindingDocument>? updated = await UpdateBindingDraftAsync(
+            store,
             addedId,
-            new SecurityBindingDefinition("role", "viewer", VerbGrant.Rules("r1", "r2"), VerbGrant.None, VerbGrant.None, Description: "two rules"),
+            SecurityBindingDocument.Draft("role", "viewer", VerbGrant.Rules("r1", "r2"), VerbGrant.None, VerbGrant.None, description: "two rules"),
             addedEtag,
             "bob",
             default))
@@ -214,7 +212,7 @@ public abstract class SecurityPolicyStoreConformance
         }
 
         await Should.ThrowAsync<SecurityPolicyConflictException>(async () =>
-            await store.UpdateBindingAsync(addedId, new SecurityBindingDefinition("role", "viewer", VerbGrant.None, VerbGrant.None, VerbGrant.None), addedEtag, "carol", default));
+            await UpdateBindingDraftAsync(store, addedId, SecurityBindingDocument.Draft("role", "viewer", VerbGrant.None, VerbGrant.None, VerbGrant.None), addedEtag, "carol", default));
 
         (await store.DeleteBindingAsync(addedId, updatedEtag, default)).ShouldBeTrue();
         (await store.GetBindingAsync(addedId, default)).ShouldBeNull();
@@ -248,7 +246,7 @@ public abstract class SecurityPolicyStoreConformance
             snapshot.Rules.Select(r => r.NameValue).ShouldBe(["r"]);
         }
 
-        using (await store.AddBindingAsync(new SecurityBindingDefinition("*", null, VerbGrant.Full, VerbGrant.Full, VerbGrant.Full), "alice", default))
+        using (await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("*", null, VerbGrant.Full, VerbGrant.Full, VerbGrant.Full), "alice", default))
         {
         }
 
@@ -280,5 +278,23 @@ public abstract class SecurityPolicyStoreConformance
     {
         using ParsedJsonDocument<SecurityRuleDocument> draft = SecurityRuleDocument.Draft(expression, description);
         return await store.UpdateRuleAsync(name, draft.RootElement, expectedEtag, actor, default);
+    }
+
+    // Adds the (pooled, disposable) draft binding, disposing the draft once the store has read it; the created document
+    // is returned for the caller to assert on and dispose.
+    private static async Task<ParsedJsonDocument<SecurityBindingDocument>> AddBindingDraftAsync(ISecurityPolicyStore store, ParsedJsonDocument<SecurityBindingDocument> draft, string actor, CancellationToken cancellationToken = default)
+    {
+        using (draft)
+        {
+            return await store.AddBindingAsync(draft.RootElement, actor, cancellationToken);
+        }
+    }
+
+    private static async Task<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingDraftAsync(ISecurityPolicyStore store, string id, ParsedJsonDocument<SecurityBindingDocument> draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken = default)
+    {
+        using (draft)
+        {
+            return await store.UpdateBindingAsync(id, draft.RootElement, expectedEtag, actor, cancellationToken);
+        }
     }
 }
