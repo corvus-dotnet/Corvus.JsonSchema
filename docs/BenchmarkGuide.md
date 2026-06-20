@@ -122,7 +122,20 @@ A regression is flagged (⚠️) when Mean increases by more than the threshold 
 
 ## Regenerating C/ models
 
-After making code generator changes, regenerate all C/ directories:
+After making code generator changes, regenerate **all** C/ directories with the batch script
+(`benchmarks/scripts/Regenerate-CurrentBenchmarks.ps1`):
+
+```powershell
+pwsh benchmarks/scripts/Regenerate-CurrentBenchmarks.ps1
+```
+
+It builds the generator, then for every `*BenchmarkModels` project reads the root namespace
+(`Corvus.<Name>Benchmark.Current`) from the existing `C/` output, uses the root type `<Name>Schema`
+(overridable in the script's `$Overrides` table) and the project's single `*-schema.json`, cleans `C/`,
+regenerates with `--engine V5`, and flags any project whose regeneration is **not** additive-only for review.
+It never touches `B/`.
+
+To regenerate a single project by hand (the script automates exactly this per project):
 
 ```powershell
 # 1. Clean the C/ directory (old files cause compilation errors)

@@ -41,7 +41,7 @@ public readonly partial struct JshintrcSchema
     /// </para>
     /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp
+    public readonly partial struct MaxerrEntity
     {
         public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -79,7 +79,7 @@ public readonly partial struct JshintrcSchema
             /// mutated; attempting to mutate it throws an <see cref="InvalidOperationException"/> directing
             /// the caller to set the value on its parent first.
             /// </remarks>
-            public static Mutable DefaultInstance { get; } = JsonElementHelpers.CreateDefaultValueElement<MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp, Mutable>(MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp.DefaultInstance);
+            public static Mutable DefaultInstance { get; } = JsonElementHelpers.CreateDefaultValueElement<MaxerrEntity, Mutable>(MaxerrEntity.DefaultInstance);
 
             /// <inheritdoc/>
             public JsonValueKind ValueKind => TokenType.ToValueKind();
@@ -171,7 +171,7 @@ public readonly partial struct JshintrcSchema
             /// <param name="value">The instance of this type.</param>
             /// <returns>A mutable instance.</returns>
             /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-            public static explicit operator Mutable(MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp instance)
+            public static explicit operator Mutable(MaxerrEntity instance)
             {
                 if (instance._parent is not IMutableJsonDocument doc)
                 {
@@ -186,9 +186,9 @@ public readonly partial struct JshintrcSchema
             /// Converts to an immutable instance of the <see cref="Mutable"/> type.
             /// </summary>
             /// <param name="value">The <see cref="Mutable"/> instance.</param>
-            /// <returns>An immutable instance of a <see cref="MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp"/>, initialized from the <see cref="Mutable"/> value.</returns>
+            /// <returns>An immutable instance of a <see cref="MaxerrEntity"/>, initialized from the <see cref="Mutable"/> value.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static implicit operator MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp(Mutable instance)
+            public static implicit operator MaxerrEntity(Mutable instance)
             {
                 return new(instance._parent, instance._idx);
             }
@@ -263,7 +263,7 @@ public readonly partial struct JshintrcSchema
             public override bool Equals(object? obj)
             {
                 return
-                    (obj is IJsonElement value && Equals(new MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp(value.ParentDocument, value.ParentDocumentIndex))) ||
+                    (obj is IJsonElement value && Equals(new MaxerrEntity(value.ParentDocument, value.ParentDocumentIndex))) ||
                     (obj is null && this.IsNull());
             }
 
@@ -392,7 +392,7 @@ public readonly partial struct JshintrcSchema
 #endif
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-            private string DebuggerDisplay => $"MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+            private string DebuggerDisplay => $"MaxerrEntity.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
             IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -407,11 +407,11 @@ public readonly partial struct JshintrcSchema
             JsonValueKind IJsonElement.ValueKind => ValueKind;
 
             /// <summary>
-            /// Gets a <see cref="MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp"/> which can be safely stored beyond the lifetime of the
+            /// Gets a <see cref="MaxerrEntity"/> which can be safely stored beyond the lifetime of the
             /// original document.
             /// </summary>
             /// <returns>
-            /// A <see cref="MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp"/> which can be safely stored beyond the lifetime of the
+            /// A <see cref="MaxerrEntity"/> which can be safely stored beyond the lifetime of the
             /// original document.
             /// </returns>
             /// <remarks>
@@ -420,10 +420,10 @@ public readonly partial struct JshintrcSchema
             /// document. The result is independent of the workspace.
             /// </para>
             /// </remarks>
-            public readonly MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp Clone()
+            public readonly MaxerrEntity Clone()
             {
                 CheckValidInstance();
-                return _parent.CloneElement<MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp>(_idx);
+                return _parent.CloneElement<MaxerrEntity>(_idx);
             }
 
             /// <summary>
@@ -431,7 +431,7 @@ public readonly partial struct JshintrcSchema
             /// document builder registered in the same workspace.
             /// </summary>
             /// <returns>
-            /// An immutable <see cref="MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp"/> that lives for the lifetime of its
+            /// An immutable <see cref="MaxerrEntity"/> that lives for the lifetime of its
             /// workspace and its associated documents.
             /// </returns>
             /// <remarks>
@@ -442,10 +442,10 @@ public readonly partial struct JshintrcSchema
             /// immutable but is only valid for the lifetime of the workspace.
             /// </para>
             /// </remarks>
-            public readonly MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp Freeze()
+            public readonly MaxerrEntity Freeze()
             {
                 CheckValidInstance();
-                return _parent.FreezeElement<MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp>(_idx);
+                return _parent.FreezeElement<MaxerrEntity>(_idx);
             }
         }
 
@@ -488,7 +488,7 @@ public readonly partial struct JshintrcSchema
 
             private Source(long value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }
 
-            public static implicit operator Source(MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp instance) => new(JsonElement.From(instance));
+            public static implicit operator Source(MaxerrEntity instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(double value) => new (value);
@@ -634,7 +634,7 @@ public readonly partial struct JshintrcSchema
         /// <returns>An instance of a mutable document initialized with this instance.</returns>
         public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
         {
-            return workspace.CreateBuilder<MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp, Mutable>(this);
+            return workspace.CreateBuilder<MaxerrEntity, Mutable>(this);
         }
     }
 }

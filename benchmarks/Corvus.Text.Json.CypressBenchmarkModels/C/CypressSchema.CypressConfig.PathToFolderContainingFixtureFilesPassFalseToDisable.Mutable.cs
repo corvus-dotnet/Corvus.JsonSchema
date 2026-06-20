@@ -46,7 +46,7 @@ public readonly partial struct CypressSchema
         /// </para>
         /// </remarks>
         [DebuggerDisplay("{DebuggerDisplay,nq}")]
-        public readonly partial struct PathToFolderContainingFixtureFilesPassFalseToDisable
+        public readonly partial struct FixturesFolderEntity
         {
             public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -84,7 +84,7 @@ public readonly partial struct CypressSchema
                 /// mutated; attempting to mutate it throws an <see cref="InvalidOperationException"/> directing
                 /// the caller to set the value on its parent first.
                 /// </remarks>
-                public static Mutable DefaultInstance { get; } = JsonElementHelpers.CreateDefaultValueElement<PathToFolderContainingFixtureFilesPassFalseToDisable, Mutable>(PathToFolderContainingFixtureFilesPassFalseToDisable.DefaultInstance);
+                public static Mutable DefaultInstance { get; } = JsonElementHelpers.CreateDefaultValueElement<FixturesFolderEntity, Mutable>(FixturesFolderEntity.DefaultInstance);
 
                 /// <inheritdoc/>
                 public JsonValueKind ValueKind => TokenType.ToValueKind();
@@ -180,7 +180,7 @@ public readonly partial struct CypressSchema
                 /// <param name="value">The instance of this type.</param>
                 /// <returns>A mutable instance.</returns>
                 /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-                public static explicit operator Mutable(PathToFolderContainingFixtureFilesPassFalseToDisable instance)
+                public static explicit operator Mutable(FixturesFolderEntity instance)
                 {
                     if (instance._parent is not IMutableJsonDocument doc)
                     {
@@ -195,9 +195,9 @@ public readonly partial struct CypressSchema
                 /// Converts to an immutable instance of the <see cref="Mutable"/> type.
                 /// </summary>
                 /// <param name="value">The <see cref="Mutable"/> instance.</param>
-                /// <returns>An immutable instance of a <see cref="PathToFolderContainingFixtureFilesPassFalseToDisable"/>, initialized from the <see cref="Mutable"/> value.</returns>
+                /// <returns>An immutable instance of a <see cref="FixturesFolderEntity"/>, initialized from the <see cref="Mutable"/> value.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public static implicit operator PathToFolderContainingFixtureFilesPassFalseToDisable(Mutable instance)
+                public static implicit operator FixturesFolderEntity(Mutable instance)
                 {
                     return new(instance._parent, instance._idx);
                 }
@@ -256,7 +256,7 @@ public readonly partial struct CypressSchema
                 public override bool Equals(object? obj)
                 {
                     return
-                        (obj is IJsonElement value && Equals(new PathToFolderContainingFixtureFilesPassFalseToDisable(value.ParentDocument, value.ParentDocumentIndex))) ||
+                        (obj is IJsonElement value && Equals(new FixturesFolderEntity(value.ParentDocument, value.ParentDocumentIndex))) ||
                         (obj is null && this.IsNull());
                 }
 
@@ -406,7 +406,7 @@ public readonly partial struct CypressSchema
 #endif
 
                 [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-                private string DebuggerDisplay => $"PathToFolderContainingFixtureFilesPassFalseToDisable.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+                private string DebuggerDisplay => $"FixturesFolderEntity.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
 
                 [DebuggerBrowsable(DebuggerBrowsableState.Never)]
                 IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -421,11 +421,11 @@ public readonly partial struct CypressSchema
                 JsonValueKind IJsonElement.ValueKind => ValueKind;
 
                 /// <summary>
-                /// Gets a <see cref="PathToFolderContainingFixtureFilesPassFalseToDisable"/> which can be safely stored beyond the lifetime of the
+                /// Gets a <see cref="FixturesFolderEntity"/> which can be safely stored beyond the lifetime of the
                 /// original document.
                 /// </summary>
                 /// <returns>
-                /// A <see cref="PathToFolderContainingFixtureFilesPassFalseToDisable"/> which can be safely stored beyond the lifetime of the
+                /// A <see cref="FixturesFolderEntity"/> which can be safely stored beyond the lifetime of the
                 /// original document.
                 /// </returns>
                 /// <remarks>
@@ -434,10 +434,10 @@ public readonly partial struct CypressSchema
                 /// document. The result is independent of the workspace.
                 /// </para>
                 /// </remarks>
-                public readonly PathToFolderContainingFixtureFilesPassFalseToDisable Clone()
+                public readonly FixturesFolderEntity Clone()
                 {
                     CheckValidInstance();
-                    return _parent.CloneElement<PathToFolderContainingFixtureFilesPassFalseToDisable>(_idx);
+                    return _parent.CloneElement<FixturesFolderEntity>(_idx);
                 }
 
                 /// <summary>
@@ -445,7 +445,7 @@ public readonly partial struct CypressSchema
                 /// document builder registered in the same workspace.
                 /// </summary>
                 /// <returns>
-                /// An immutable <see cref="PathToFolderContainingFixtureFilesPassFalseToDisable"/> that lives for the lifetime of its
+                /// An immutable <see cref="FixturesFolderEntity"/> that lives for the lifetime of its
                 /// workspace and its associated documents.
                 /// </returns>
                 /// <remarks>
@@ -456,10 +456,10 @@ public readonly partial struct CypressSchema
                 /// immutable but is only valid for the lifetime of the workspace.
                 /// </para>
                 /// </remarks>
-                public readonly PathToFolderContainingFixtureFilesPassFalseToDisable Freeze()
+                public readonly FixturesFolderEntity Freeze()
                 {
                     CheckValidInstance();
-                    return _parent.FreezeElement<PathToFolderContainingFixtureFilesPassFalseToDisable>(_idx);
+                    return _parent.FreezeElement<FixturesFolderEntity>(_idx);
                 }
             }
 
@@ -513,7 +513,7 @@ public readonly partial struct CypressSchema
 
                 private Source(bool value) { _kind = value ? Kind.True : Kind.False; }
 
-                public static implicit operator Source(PathToFolderContainingFixtureFilesPassFalseToDisable instance) => new(JsonElement.From(instance));
+                public static implicit operator Source(FixturesFolderEntity instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(ReadOnlySpan<byte> value) => new (value);
@@ -722,7 +722,7 @@ public readonly partial struct CypressSchema
             /// <returns>An instance of a mutable document initialized with this instance.</returns>
             public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
             {
-                return workspace.CreateBuilder<PathToFolderContainingFixtureFilesPassFalseToDisable, Mutable>(this);
+                return workspace.CreateBuilder<FixturesFolderEntity, Mutable>(this);
             }
         }
     }
