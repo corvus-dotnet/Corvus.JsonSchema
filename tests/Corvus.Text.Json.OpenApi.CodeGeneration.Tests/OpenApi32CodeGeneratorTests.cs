@@ -1024,6 +1024,42 @@ public class OpenApi32CodeGeneratorTests
     }
 
     [TestMethod]
+    public void GenerateServer_ContextSourceBody_EmitsClosureFreeGenericFactory()
+    {
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+
+        // Mark every JSON response-body schema pointer as carrying a Source<TContext> (the object/array case); the
+        // generator must then emit the closure-free, single-materialisation generic factory beside the non-generic one.
+        HashSet<string> contextBodies = new(
+            schemaTypeMap.Keys.Where(k => k.Contains("/responses/") && k.Contains("/content/")),
+            StringComparer.Ordinal);
+        OpenApi32CodeGenerator generator = new("CovTest.Server", schemaTypeMap, contextSourceBodyPointers: contextBodies);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateServer(covspecRoot);
+
+        string results = string.Concat(files.Where(f => f.FileName.EndsWith("Result.cs")).Select(f => f.Content));
+
+        Assert.IsTrue(results.Contains(".Source<TContext> body"), "Expected a Source<TContext> body parameter on a generic result factory");
+        Assert.IsTrue(results.Contains("where TContext : allows ref struct"), "Expected the allows-ref-struct constraint");
+        Assert.IsTrue(results.Contains("CreateBuilder(workspace, in body, 30).RootElement"), "Expected a single-pass materialisation via CreateBuilder(in body)");
+        Assert.IsTrue(results.Contains("Ok("), "Expected the non-generic factory to remain alongside the generic one");
+    }
+
+    [TestMethod]
+    public void GenerateServer_NoContextSourceSet_OmitsGenericFactory()
+    {
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+
+        // No context-source set (the conservative default) — only the non-generic factories are emitted.
+        OpenApi32CodeGenerator generator = new("CovTest.Server", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateServer(covspecRoot);
+
+        string results = string.Concat(files.Where(f => f.FileName.EndsWith("Result.cs")).Select(f => f.Content));
+
+        Assert.IsFalse(results.Contains(".Source<TContext> body"), "Expected no generic result factory when no context-source set is supplied");
+        Assert.IsTrue(results.Contains("Ok("), "Expected the non-generic factories");
+    }
+
+    [TestMethod]
     public void GenerateServer_StreamingResultStruct_HasPushWriterFactory()
     {
         Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
