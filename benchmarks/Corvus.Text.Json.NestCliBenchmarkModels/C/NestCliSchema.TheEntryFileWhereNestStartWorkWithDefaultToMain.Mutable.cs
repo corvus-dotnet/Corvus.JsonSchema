@@ -41,7 +41,7 @@ public readonly partial struct NestCliSchema
     /// </para>
     /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct TheEntryFileWhereNestStartWorkWithDefaultToMain
+    public readonly partial struct EntryFileEntity
     {
         public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -79,7 +79,7 @@ public readonly partial struct NestCliSchema
             /// mutated; attempting to mutate it throws an <see cref="InvalidOperationException"/> directing
             /// the caller to set the value on its parent first.
             /// </remarks>
-            public static Mutable DefaultInstance { get; } = JsonElementHelpers.CreateDefaultValueElement<TheEntryFileWhereNestStartWorkWithDefaultToMain, Mutable>(TheEntryFileWhereNestStartWorkWithDefaultToMain.DefaultInstance);
+            public static Mutable DefaultInstance { get; } = JsonElementHelpers.CreateDefaultValueElement<EntryFileEntity, Mutable>(EntryFileEntity.DefaultInstance);
 
             /// <inheritdoc/>
             public JsonValueKind ValueKind => TokenType.ToValueKind();
@@ -159,7 +159,7 @@ public readonly partial struct NestCliSchema
             /// <param name="value">The instance of this type.</param>
             /// <returns>A mutable instance.</returns>
             /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-            public static explicit operator Mutable(TheEntryFileWhereNestStartWorkWithDefaultToMain instance)
+            public static explicit operator Mutable(EntryFileEntity instance)
             {
                 if (instance._parent is not IMutableJsonDocument doc)
                 {
@@ -174,9 +174,9 @@ public readonly partial struct NestCliSchema
             /// Converts to an immutable instance of the <see cref="Mutable"/> type.
             /// </summary>
             /// <param name="value">The <see cref="Mutable"/> instance.</param>
-            /// <returns>An immutable instance of a <see cref="TheEntryFileWhereNestStartWorkWithDefaultToMain"/>, initialized from the <see cref="Mutable"/> value.</returns>
+            /// <returns>An immutable instance of a <see cref="EntryFileEntity"/>, initialized from the <see cref="Mutable"/> value.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static implicit operator TheEntryFileWhereNestStartWorkWithDefaultToMain(Mutable instance)
+            public static implicit operator EntryFileEntity(Mutable instance)
             {
                 return new(instance._parent, instance._idx);
             }
@@ -209,7 +209,7 @@ public readonly partial struct NestCliSchema
             public override bool Equals(object? obj)
             {
                 return
-                    (obj is IJsonElement value && Equals(new TheEntryFileWhereNestStartWorkWithDefaultToMain(value.ParentDocument, value.ParentDocumentIndex))) ||
+                    (obj is IJsonElement value && Equals(new EntryFileEntity(value.ParentDocument, value.ParentDocumentIndex))) ||
                     (obj is null && this.IsNull());
             }
 
@@ -359,7 +359,7 @@ public readonly partial struct NestCliSchema
 #endif
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-            private string DebuggerDisplay => $"TheEntryFileWhereNestStartWorkWithDefaultToMain.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+            private string DebuggerDisplay => $"EntryFileEntity.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
             IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -374,11 +374,11 @@ public readonly partial struct NestCliSchema
             JsonValueKind IJsonElement.ValueKind => ValueKind;
 
             /// <summary>
-            /// Gets a <see cref="TheEntryFileWhereNestStartWorkWithDefaultToMain"/> which can be safely stored beyond the lifetime of the
+            /// Gets a <see cref="EntryFileEntity"/> which can be safely stored beyond the lifetime of the
             /// original document.
             /// </summary>
             /// <returns>
-            /// A <see cref="TheEntryFileWhereNestStartWorkWithDefaultToMain"/> which can be safely stored beyond the lifetime of the
+            /// A <see cref="EntryFileEntity"/> which can be safely stored beyond the lifetime of the
             /// original document.
             /// </returns>
             /// <remarks>
@@ -387,10 +387,10 @@ public readonly partial struct NestCliSchema
             /// document. The result is independent of the workspace.
             /// </para>
             /// </remarks>
-            public readonly TheEntryFileWhereNestStartWorkWithDefaultToMain Clone()
+            public readonly EntryFileEntity Clone()
             {
                 CheckValidInstance();
-                return _parent.CloneElement<TheEntryFileWhereNestStartWorkWithDefaultToMain>(_idx);
+                return _parent.CloneElement<EntryFileEntity>(_idx);
             }
 
             /// <summary>
@@ -398,7 +398,7 @@ public readonly partial struct NestCliSchema
             /// document builder registered in the same workspace.
             /// </summary>
             /// <returns>
-            /// An immutable <see cref="TheEntryFileWhereNestStartWorkWithDefaultToMain"/> that lives for the lifetime of its
+            /// An immutable <see cref="EntryFileEntity"/> that lives for the lifetime of its
             /// workspace and its associated documents.
             /// </returns>
             /// <remarks>
@@ -409,10 +409,10 @@ public readonly partial struct NestCliSchema
             /// immutable but is only valid for the lifetime of the workspace.
             /// </para>
             /// </remarks>
-            public readonly TheEntryFileWhereNestStartWorkWithDefaultToMain Freeze()
+            public readonly EntryFileEntity Freeze()
             {
                 CheckValidInstance();
-                return _parent.FreezeElement<TheEntryFileWhereNestStartWorkWithDefaultToMain>(_idx);
+                return _parent.FreezeElement<EntryFileEntity>(_idx);
             }
         }
 
@@ -462,7 +462,7 @@ public readonly partial struct NestCliSchema
                 _kind = requiresUnescaping ? Kind.RawUtf8StringRequiresUnescaping : Kind.RawUtf8StringNotRequiresUnescaping;
             }
 
-            public static implicit operator Source(TheEntryFileWhereNestStartWorkWithDefaultToMain instance) => new(JsonElement.From(instance));
+            public static implicit operator Source(EntryFileEntity instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(ReadOnlySpan<byte> value) => new (value);
@@ -638,7 +638,7 @@ public readonly partial struct NestCliSchema
         /// <returns>An instance of a mutable document initialized with this instance.</returns>
         public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
         {
-            return workspace.CreateBuilder<TheEntryFileWhereNestStartWorkWithDefaultToMain, Mutable>(this);
+            return workspace.CreateBuilder<EntryFileEntity, Mutable>(this);
         }
     }
 }

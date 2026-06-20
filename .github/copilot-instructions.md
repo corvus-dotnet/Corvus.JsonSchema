@@ -470,7 +470,25 @@ Where `<Name>` is the benchmark name (e.g., `AnsibleMeta`, `GeoJson`, `CmakePres
 
 ### Regenerating C/ benchmarks
 
-After making code generator changes, regenerate all C/ directories:
+After making code generator changes, regenerate **all** C/ directories with the batch script:
+
+```bash
+pwsh benchmarks/scripts/Regenerate-CurrentBenchmarks.ps1
+```
+
+It builds the generator, then for every `*BenchmarkModels` project reads the root namespace
+(`Corvus.<Name>Benchmark.Current`) from the existing `C/` output, applies the `<Name>Schema` root-type
+convention (overridable via the script's `$Overrides` table) against the project's single `*-schema.json`,
+cleans `C/`, regenerates with `--engine V5`, and flags any project whose regeneration is **not** additive-only
+for review. It never touches B/. See `docs/BenchmarkGuide.md` for the full description.
+
+> A non-additive (review-flagged) diff is not automatically wrong: a generator change that alters nested
+> type-name truncation (e.g. the path-truncation collision fix in `GenerationDriverV5.cs`) legitimately
+> renames deeply-nested files for the larger schemas (GeoJson, Ui5, CmakePresets, …), which git pairs as
+> delete+add. Confirm the benchmark solution still builds and treat such a sweep as its own commit, distinct
+> from any feature change riding alongside it.
+
+To regenerate a single project by hand (the script automates exactly this per project):
 
 ```bash
 # Clean the C/ directory first (old files cause compilation errors)
@@ -480,7 +498,7 @@ Remove-Item -Recurse -Force benchmarks\Corvus.Text.Json.<Name>BenchmarkModels\C\
 dotnet run --project src\Corvus.Json.CodeGenerator -f net10.0 -c Release -- <schema-path> --rootNamespace Corvus.<Name>Benchmark.Current --outputRootTypeName <Name>Schema --outputPath benchmarks\Corvus.Text.Json.<Name>BenchmarkModels\C --engine V5
 ```
 
-All 37+ benchmark models follow the same pattern — no special cases. (GeoJson previously required special handling for long file paths, but this was fixed by the path truncation collision fix in `GenerationDriverV5.cs`.)
+All 37+ benchmark models follow the same pattern — no special cases.
 
 ### Running benchmarks
 
