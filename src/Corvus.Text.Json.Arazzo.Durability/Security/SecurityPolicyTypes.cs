@@ -6,11 +6,6 @@ using VerbGrant = Corvus.Text.Json.Arazzo.Durability.Security.SecurityBindingDoc
 
 namespace Corvus.Text.Json.Arazzo.Durability.Security;
 
-/// <summary>The mutable content of a security rule (see <see cref="SecurityRuleDocument"/>) supplied on add/update.</summary>
-/// <param name="Expression">The rule text in the security-rule grammar.</param>
-/// <param name="Description">An optional human description.</param>
-public readonly record struct SecurityRuleDefinition(string Expression, string? Description = null);
-
 /// <summary>The mutable content of a binding (see <see cref="SecurityBindingDocument"/>) supplied on add/update.</summary>
 /// <param name="ClaimType">The principal claim type this binding keys on (<c>"*"</c> matches any authenticated principal).</param>
 /// <param name="ClaimValue">The required claim value; <see langword="null"/> matches any value of <paramref name="ClaimType"/>.</param>

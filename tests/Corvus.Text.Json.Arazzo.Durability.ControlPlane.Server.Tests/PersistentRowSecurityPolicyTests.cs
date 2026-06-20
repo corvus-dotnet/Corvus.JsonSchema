@@ -98,8 +98,8 @@ public sealed class PersistentRowSecurityPolicyTests
     public async Task Grants_compose_as_or_across_matched_bindings()
     {
         var store = new InMemorySecurityPolicyStore();
-        await store.AddRuleAsync("acme-only", new SecurityRuleDefinition("tenant == 'acme'"), "admin", default);
-        await store.AddRuleAsync("globex-only", new SecurityRuleDefinition("tenant == 'globex'"), "admin", default);
+        await SeedRuleAsync(store, "acme-only", "tenant == 'acme'", "admin");
+        await SeedRuleAsync(store, "globex-only", "tenant == 'globex'", "admin");
 
         // Two bindings the principal matches (by two different claims), each granting a different tenant for read.
         await store.AddBindingAsync(new SecurityBindingDefinition("role", "a", VerbGrant.Rules("acme-only"), VerbGrant.None, VerbGrant.None), "admin", default);
@@ -129,7 +129,7 @@ public sealed class PersistentRowSecurityPolicyTests
     public async Task The_shell_wrapper_is_anded_into_every_grant()
     {
         var store = new InMemorySecurityPolicyStore();
-        await store.AddRuleAsync("team-payments", new SecurityRuleDefinition("team == 'payments'"), "admin", default);
+        await SeedRuleAsync(store, "team-payments", "team == 'payments'", "admin");
         await store.AddBindingAsync(new SecurityBindingDefinition("role", "u", VerbGrant.Rules("team-payments"), VerbGrant.None, VerbGrant.None), "admin", default);
 
         // Deployment shell mandates the tenant via an internal tag; the binding narrows by team.
@@ -194,7 +194,7 @@ public sealed class PersistentRowSecurityPolicyTests
     public async Task A_scope_grant_does_not_alter_the_bindings_reach()
     {
         var store = new InMemorySecurityPolicyStore();
-        await store.AddRuleAsync("payments-domain", new SecurityRuleDefinition("domain == 'payments'"), "admin", default);
+        await SeedRuleAsync(store, "payments-domain", "domain == 'payments'", "admin");
 
         // A single entitlement carrying BOTH a capability (runs:write) AND a reach (domain=payments) — the §16.5 shape.
         await store.AddBindingAsync(
@@ -230,7 +230,7 @@ public sealed class PersistentRowSecurityPolicyTests
     public async Task An_expired_grant_confers_no_capability_or_reach()
     {
         var store = new InMemorySecurityPolicyStore();
-        await store.AddRuleAsync("payments-domain", new SecurityRuleDefinition("domain == 'payments'"), "admin", default);
+        await SeedRuleAsync(store, "payments-domain", "domain == 'payments'", "admin");
 
         // A time-bound grant whose expiry is already in the past relative to the policy's clock (§16.5.2).
         await store.AddBindingAsync(
@@ -252,7 +252,7 @@ public sealed class PersistentRowSecurityPolicyTests
     public async Task A_future_dated_grant_is_active_until_it_expires()
     {
         var store = new InMemorySecurityPolicyStore();
-        await store.AddRuleAsync("payments-domain", new SecurityRuleDefinition("domain == 'payments'"), "admin", default);
+        await SeedRuleAsync(store, "payments-domain", "domain == 'payments'", "admin");
         await store.AddBindingAsync(
             new SecurityBindingDefinition("sub", "alice", VerbGrant.Rules("payments-domain"), VerbGrant.Rules("payments-domain"), VerbGrant.None, Scopes: [ControlPlaneScopes.RunsWrite], ExpiresAt: ClockNow.AddHours(1)),
             "approver",
@@ -272,7 +272,7 @@ public sealed class PersistentRowSecurityPolicyTests
     public async Task An_eligible_only_binding_confers_no_active_capability_or_reach()
     {
         var store = new InMemorySecurityPolicyStore();
-        await store.AddRuleAsync("payments-domain", new SecurityRuleDefinition("domain == 'payments'"), "admin", default);
+        await SeedRuleAsync(store, "payments-domain", "domain == 'payments'", "admin");
 
         // An eligibility assignment (§16.5.3/§16.5.4): it carries a scope + reach, but eligibleOnly means the resolver
         // must ignore it entirely — eligibility confers nothing active (the self-elevation strategy reads it instead).
@@ -311,7 +311,7 @@ public sealed class PersistentRowSecurityPolicyTests
         // F7 only blocks the Unrestricted form; a `*` binding with explicit rule-bounded reach is the operator's
         // deliberate, scoped choice and still applies to every principal.
         var store = new InMemorySecurityPolicyStore();
-        await store.AddRuleAsync("acme-only", new SecurityRuleDefinition("tenant == 'acme'"), "admin", default);
+        await SeedRuleAsync(store, "acme-only", "tenant == 'acme'", "admin");
         await store.AddBindingAsync(new SecurityBindingDefinition("*", null, VerbGrant.Rules("acme-only"), VerbGrant.None, VerbGrant.None), "admin", default);
         var policy = new PersistentRowSecurityPolicy(store);
         await policy.RefreshAsync();
@@ -341,5 +341,13 @@ public sealed class PersistentRowSecurityPolicyTests
     private sealed class FixedClock(DateTimeOffset now) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => now;
+    }
+
+    // Seeds a rule from a pooled, disposable draft (the store reads it synchronously), disposing both the draft and the
+    // created document — the test asserts on resolution, not the seed record.
+    private static async Task SeedRuleAsync(InMemorySecurityPolicyStore store, string name, string expression, string actor)
+    {
+        using ParsedJsonDocument<SecurityRuleDocument> draft = SecurityRuleDocument.Draft(expression);
+        (await store.AddRuleAsync(name, draft.RootElement, actor, default)).Dispose();
     }
 }

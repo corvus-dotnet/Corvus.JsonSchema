@@ -49,8 +49,10 @@ public static class SecurityBootstrap
 
             try
             {
-                // The created document is not needed here; dispose it so its pooled buffer is returned.
-                (await store.AddRuleAsync(name, new SecurityRuleDefinition(expression, description), actor, cancellationToken).ConfigureAwait(false)).Dispose();
+                // The created document is not needed here; dispose it so its pooled buffer is returned. The draft is a
+                // pooled document too (the store reads it synchronously) — dispose it once the create completes.
+                using ParsedJsonDocument<SecurityRuleDocument> draft = SecurityRuleDocument.Draft(expression, description);
+                (await store.AddRuleAsync(name, draft.RootElement, actor, cancellationToken).ConfigureAwait(false)).Dispose();
                 seeded.Add(name);
             }
             catch (InvalidOperationException)

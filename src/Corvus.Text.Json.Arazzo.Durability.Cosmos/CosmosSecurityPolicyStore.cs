@@ -108,17 +108,16 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>> AddRuleAsync(string name, SecurityRuleDocument draft, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
-        ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
         ArgumentNullException.ThrowIfNull(actor);
-        using MemoryStream stream = EnvelopeStream<SecurityRuleDocument, (string Name, SecurityRuleDefinition Def, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
+        using MemoryStream stream = EnvelopeStream<SecurityRuleDocument, (string Name, SecurityRuleDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
             name,
             RulePartition,
-            (name, definition, actor, this.timeProvider.GetUtcNow(), NewEtag()),
-            static (Utf8JsonWriter writer, in (string Name, SecurityRuleDefinition Def, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
-                => SecurityRuleDocument.WriteNew(writer, c.Name, c.Def, c.Actor, c.At, c.Tag),
+            (name, draft, actor, this.timeProvider.GetUtcNow(), NewEtag()),
+            static (Utf8JsonWriter writer, in (string Name, SecurityRuleDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
+                => SecurityRuleDocument.WriteNew(writer, c.Name, c.Draft, c.Actor, c.At, c.Tag),
             out ParsedJsonDocument<SecurityRuleDocument> document);
         try
         {
@@ -152,10 +151,9 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         => this.ReadRulesAsync(cancellationToken);
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
-        ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
         ArgumentNullException.ThrowIfNull(actor);
         byte[]? doc = await this.DocumentAsync(name, RulePartition, cancellationToken).ConfigureAwait(false);
         if (doc is null)
@@ -167,12 +165,12 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         // updated document is serialized straight into the envelope (no owned byte[]).
         using ParsedJsonDocument<SecurityRuleDocument> current = PersistedJson.ToPooledDocument<SecurityRuleDocument>(doc);
         SecurityPolicySerialization.EnsureEtag("rule", name, expectedEtag, current.RootElement.EtagValue);
-        using MemoryStream stream = EnvelopeStream<SecurityRuleDocument, (SecurityRuleDocument Cur, SecurityRuleDefinition Def, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
+        using MemoryStream stream = EnvelopeStream<SecurityRuleDocument, (SecurityRuleDocument Cur, SecurityRuleDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
             name,
             RulePartition,
-            (current.RootElement, definition, actor, this.timeProvider.GetUtcNow(), NewEtag()),
-            static (Utf8JsonWriter writer, in (SecurityRuleDocument Cur, SecurityRuleDefinition Def, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
-                => c.Cur.WriteUpdated(writer, c.Def, c.Actor, c.At, c.Tag),
+            (current.RootElement, draft, actor, this.timeProvider.GetUtcNow(), NewEtag()),
+            static (Utf8JsonWriter writer, in (SecurityRuleDocument Cur, SecurityRuleDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
+                => c.Cur.WriteUpdated(writer, c.Draft, c.Actor, c.At, c.Tag),
             out ParsedJsonDocument<SecurityRuleDocument> document);
         try
         {

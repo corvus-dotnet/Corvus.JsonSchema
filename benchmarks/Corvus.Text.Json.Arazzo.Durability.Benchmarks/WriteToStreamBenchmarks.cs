@@ -32,9 +32,10 @@ public class WriteToStreamBenchmarks
     [GlobalSetup]
     public void Setup()
     {
+        using ParsedJsonDocument<SecurityRuleDocument> draft = SecurityRuleDocument.Draft("sys:tenant == $claim.tenant", "Tenant isolation.");
         byte[] json = SecurityPolicySerialization.SerializeNewRule(
             "tenant-scoped",
-            new SecurityRuleDefinition("sys:tenant == $claim.tenant", "Tenant isolation."),
+            draft.RootElement,
             "alice",
             DateTimeOffset.UnixEpoch,
             new WorkflowEtag("etag-1"));

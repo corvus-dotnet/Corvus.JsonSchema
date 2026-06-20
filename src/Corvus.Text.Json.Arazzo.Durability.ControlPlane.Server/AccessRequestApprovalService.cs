@@ -412,9 +412,10 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
 
         try
         {
+            using ParsedJsonDocument<SecurityRuleDocument> ruleDraft = SecurityRuleDocument.Draft(WorkflowIdentity.WorkflowTagKey + " == '" + baseWorkflowId + "'", "Run access to workflow " + baseWorkflowId + ".");
             using (await this.policy.AddRuleAsync(
                 ruleName,
-                new SecurityRuleDefinition(WorkflowIdentity.WorkflowTagKey + " == '" + baseWorkflowId + "'", "Run access to workflow " + baseWorkflowId + "."),
+                ruleDraft.RootElement,
                 actor,
                 cancellationToken).ConfigureAwait(false))
             {

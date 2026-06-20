@@ -18,36 +18,36 @@ public static class SecurityPolicySerialization
 {
     /// <summary>Serializes a brand-new rule to owned JSON bytes (pooled scratch, no detached clone).</summary>
     /// <param name="name">The rule name.</param>
-    /// <param name="definition">The rule content.</param>
+    /// <param name="draft">The draft rule carrying the operator-supplied content as JSON values (read bytes-to-bytes).</param>
     /// <param name="actor">The creating identity (audit).</param>
     /// <param name="createdAt">The creation timestamp.</param>
     /// <param name="etag">The new record etag.</param>
     /// <returns>The owned UTF-8 JSON bytes.</returns>
-    public static byte[] SerializeNewRule(string name, SecurityRuleDefinition definition, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+    public static byte[] SerializeNewRule(string name, SecurityRuleDocument draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
         => PersistedJson.ToArray(
-            (name, definition, actor, createdAt, etag),
-            static (Utf8JsonWriter writer, in (string Name, SecurityRuleDefinition Def, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
-                => SecurityRuleDocument.WriteNew(writer, c.Name, c.Def, c.Actor, c.At, c.Tag));
+            (name, draft, actor, createdAt, etag),
+            static (Utf8JsonWriter writer, in (string Name, SecurityRuleDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
+                => SecurityRuleDocument.WriteNew(writer, c.Name, c.Draft, c.Actor, c.At, c.Tag));
 
     /// <summary>Parses the stored rule (pooled), checks the etag, and serializes the carried-forward update.</summary>
     /// <param name="existing">The stored rule's current UTF-8 JSON bytes.</param>
     /// <param name="kind">The record kind for a conflict message (e.g. <c>rule</c>).</param>
     /// <param name="id">The record identity for a conflict message.</param>
     /// <param name="expectedEtag">The expected current etag (<see cref="WorkflowEtag.None"/> overwrites unconditionally).</param>
-    /// <param name="definition">The new content.</param>
+    /// <param name="draft">The draft rule carrying the new operator-supplied content as JSON values (read bytes-to-bytes).</param>
     /// <param name="actor">The updating identity (audit).</param>
     /// <param name="updatedAt">The update timestamp.</param>
     /// <param name="etag">The new record etag.</param>
     /// <returns>The owned UTF-8 JSON bytes.</returns>
     /// <exception cref="SecurityPolicyConflictException">The expected etag no longer matches.</exception>
-    public static byte[] SerializeUpdatedRule(ReadOnlySpan<byte> existing, string kind, string id, WorkflowEtag expectedEtag, SecurityRuleDefinition definition, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
+    public static byte[] SerializeUpdatedRule(ReadOnlySpan<byte> existing, string kind, string id, WorkflowEtag expectedEtag, SecurityRuleDocument draft, string actor, DateTimeOffset updatedAt, WorkflowEtag etag)
     {
         using ParsedJsonDocument<SecurityRuleDocument> current = PersistedJson.ToPooledDocument<SecurityRuleDocument>(existing);
         EnsureEtag(kind, id, expectedEtag, current.RootElement.EtagValue);
         return PersistedJson.ToArray(
-            (Current: current.RootElement, definition, actor, updatedAt, etag),
-            static (Utf8JsonWriter writer, in (SecurityRuleDocument Current, SecurityRuleDefinition Def, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
-                => c.Current.WriteUpdated(writer, c.Def, c.Actor, c.At, c.Tag));
+            (Current: current.RootElement, draft, actor, updatedAt, etag),
+            static (Utf8JsonWriter writer, in (SecurityRuleDocument Current, SecurityRuleDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
+                => c.Current.WriteUpdated(writer, c.Draft, c.Actor, c.At, c.Tag));
     }
 
     /// <summary>Serializes a brand-new binding to owned JSON bytes (pooled scratch, no detached clone).</summary>

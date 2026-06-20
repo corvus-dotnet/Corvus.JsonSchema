@@ -41,10 +41,9 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
         => this.timeProvider = timeProvider ?? TimeProvider.System;
 
     /// <inheritdoc/>
-    public ValueTask<ParsedJsonDocument<SecurityRuleDocument>> AddRuleAsync(string name, SecurityRuleDefinition definition, string actor, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<SecurityRuleDocument>> AddRuleAsync(string name, SecurityRuleDocument draft, string actor, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
-        ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
         ArgumentNullException.ThrowIfNull(actor);
 
         lock (this.gate)
@@ -54,7 +53,7 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
                 throw new InvalidOperationException($"A security rule named '{name}' already exists.");
             }
 
-            byte[] json = SecurityPolicySerialization.SerializeNewRule(name, definition, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
+            byte[] json = SecurityPolicySerialization.SerializeNewRule(name, draft, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
             this.rules[name] = json;
             this.generation++;
             return new ValueTask<ParsedJsonDocument<SecurityRuleDocument>>(PersistedJson.ToPooledDocument<SecurityRuleDocument>(json));
@@ -82,10 +81,9 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
     }
 
     /// <inheritdoc/>
-    public ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDefinition definition, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
-        ArgumentException.ThrowIfNullOrEmpty(definition.Expression);
         ArgumentNullException.ThrowIfNull(actor);
 
         lock (this.gate)
@@ -95,7 +93,7 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
                 return new ValueTask<ParsedJsonDocument<SecurityRuleDocument>?>((ParsedJsonDocument<SecurityRuleDocument>?)null);
             }
 
-            byte[] json = SecurityPolicySerialization.SerializeUpdatedRule(existing, "rule", name, expectedEtag, definition, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
+            byte[] json = SecurityPolicySerialization.SerializeUpdatedRule(existing, "rule", name, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
             this.rules[name] = json;
             this.generation++;
             return new ValueTask<ParsedJsonDocument<SecurityRuleDocument>?>(PersistedJson.ToPooledDocument<SecurityRuleDocument>(json));
