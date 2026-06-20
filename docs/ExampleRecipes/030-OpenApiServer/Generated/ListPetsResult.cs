@@ -49,6 +49,19 @@ public readonly struct ListPetsResult
     /// <param name="xNext">The value for the <c>x-next</c> response header.</param>
     /// <returns>A <see cref="ListPetsResult"/> with status 200.</returns>
     public static ListPetsResult Ok(Petstore.Server.Models.Pets.Source body, JsonWorkspace workspace, Petstore.Server.Models.JsonString.Source xNext = default) => new(200, Petstore.Server.Models.Pets.CreateBuilder(workspace, body, 30).RootElement, "application/json", xNext: xNext.IsUndefined ? default : Petstore.Server.Models.JsonString.CreateBuilder(workspace, xNext, 30).RootElement);
+    /// <summary>
+    /// Creates a 200 Ok result from a context-threaded body, materialised in a single pass.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context carried by the body.</typeparam>
+    /// <param name="body">The context-threaded response body.</param>
+    /// <param name="workspace">The workspace for building the response value.</param>
+    /// <param name="xNext">The value for the <c>x-next</c> response header.</param>
+    /// <returns>A <see cref="ListPetsResult"/> with status 200.</returns>
+    public static ListPetsResult Ok<TContext>(Petstore.Server.Models.Pets.Source<TContext> body, JsonWorkspace workspace, Petstore.Server.Models.JsonString.Source xNext = default)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+        => new(200, Petstore.Server.Models.Pets.CreateBuilder(workspace, in body, 30).RootElement, "application/json", xNext: xNext.IsUndefined ? default : Petstore.Server.Models.JsonString.CreateBuilder(workspace, xNext, 30).RootElement);
 
     /// <summary>
     /// Creates a default error result.
@@ -58,6 +71,19 @@ public readonly struct ListPetsResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="ListPetsResult"/> with status default.</returns>
     public static ListPetsResult Default(int statusCode, Petstore.Server.Models.Error.Source body, JsonWorkspace workspace) => new(statusCode, Petstore.Server.Models.Error.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    /// <summary>
+    /// Creates a default Default result from a context-threaded body, materialised in a single pass.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context carried by the body.</typeparam>
+    /// <param name="statusCode">The HTTP status code.</param>
+    /// <param name="body">The context-threaded response body.</param>
+    /// <param name="workspace">The workspace for building the response value.</param>
+    /// <returns>A <see cref="ListPetsResult"/> with status default.</returns>
+    public static ListPetsResult Default<TContext>(int statusCode, Petstore.Server.Models.Error.Source<TContext> body, JsonWorkspace workspace)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+        => new(statusCode, Petstore.Server.Models.Error.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
