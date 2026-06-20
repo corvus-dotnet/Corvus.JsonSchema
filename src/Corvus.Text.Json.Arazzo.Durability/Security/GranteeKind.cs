@@ -40,7 +40,7 @@ public static class GranteeKinds
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown grantee kind."),
     };
 
-    /// <summary>Gets the canonical lower-case token as UTF-8 (for bytes-to-bytes serialization) — the <see cref="ToToken"/> form without a managed string.</summary>
+    /// <summary>Gets the canonical lower-case token as UTF-8 (for bytes-to-bytes serialization) — the <see cref="ToToken(GranteeKind)"/> form without a managed string.</summary>
     /// <param name="kind">The grantee kind.</param>
     /// <returns>The canonical token as a UTF-8 span.</returns>
     public static ReadOnlySpan<byte> ToTokenUtf8(this GranteeKind kind) => kind switch
@@ -52,104 +52,87 @@ public static class GranteeKinds
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown grantee kind."),
     };
 
-    /// <summary>Parses a canonical token back to a <see cref="GranteeKind"/>.</summary>
-    /// <param name="token">The token (e.g. <c>person</c>).</param>
-    /// <param name="kind">The parsed kind on success.</param>
-    /// <returns><see langword="true"/> if the token is a known grantee kind.</returns>
-    public static bool TryParse(string? token, out GranteeKind kind)
+    // ── C# domain enum ⇄ CTJ ObservedIdentity.GranteeKind adapters ───────────────────────────────────────────────────
+    //
+    // The observed-identity store seam carries the JSON value (ObservedIdentity.GranteeKind), not this domain enum — so a
+    // handler converts a request's grantee kind to the store kind with a straight From(). These adapters bridge only the
+    // genuinely C#-enum-typed leaves (the directory seam, the policy's whole-grain/dimension maps): a kind that originates
+    // as this enum (inferred from a {dimension, value} grant) becomes the store's CTJ kind via ToObservedKind, and the CTJ
+    // store kind reifies back to this enum at a C#-enum leaf via ToGranteeKind. Both are allocation-free (the EnumValues
+    // are pre-built constants; the token compares are span-equality), so the store key still reifies via the interned
+    // ToToken below — never a per-call GC string.
+
+    /// <summary>Gets the canonical lower-case token for a CTJ <see cref="ObservedIdentity.GranteeKind"/> as an interned
+    /// literal — the storage-key leaf for a backend that needs a concrete key, without reifying a per-call string (the
+    /// counterpart of <see cref="ToToken(GranteeKind)"/> for the value the store seam carries).</summary>
+    /// <param name="kind">The CTJ grantee kind.</param>
+    /// <returns>The canonical token (an interned literal).</returns>
+    public static string ToToken(this ObservedIdentity.GranteeKind kind)
     {
-        switch (token)
+        if (kind.ValueEquals("person"u8))
         {
-            case "person": kind = GranteeKind.Person; return true;
-            case "team": kind = GranteeKind.Team; return true;
-            case "role": kind = GranteeKind.Role; return true;
-            case "workflow": kind = GranteeKind.Workflow; return true;
-            default: kind = default; return false;
+            return "person";
         }
+
+        if (kind.ValueEquals("team"u8))
+        {
+            return "team";
+        }
+
+        if (kind.ValueEquals("role"u8))
+        {
+            return "role";
+        }
+
+        if (kind.ValueEquals("workflow"u8))
+        {
+            return "workflow";
+        }
+
+        throw new ArgumentOutOfRangeException(nameof(kind), "Unknown grantee kind.");
     }
 
-    /// <summary>Parses a canonical token (UTF-8) back to a <see cref="GranteeKind"/> — the span counterpart of <see cref="TryParse(string?, out GranteeKind)"/>, no managed string.</summary>
-    /// <param name="token">The token as UTF-8 (e.g. <c>person</c>).</param>
-    /// <param name="kind">The parsed kind on success.</param>
-    /// <returns><see langword="true"/> if the token is a known grantee kind.</returns>
-    public static bool TryParse(ReadOnlySpan<byte> token, out GranteeKind kind)
+    /// <summary>Maps a domain <see cref="GranteeKind"/> to the CTJ <see cref="ObservedIdentity.GranteeKind"/> the observed
+    /// store seam carries — for a kind that originates as this enum (inferred from a grant dimension). Returns the
+    /// pre-built enum constant, so no JSON is parsed and nothing is allocated.</summary>
+    /// <param name="kind">The domain grantee kind.</param>
+    /// <returns>The equivalent CTJ grantee kind.</returns>
+    public static ObservedIdentity.GranteeKind ToObservedKind(this GranteeKind kind) => kind switch
     {
-        if (token.SequenceEqual("person"u8))
-        {
-            kind = GranteeKind.Person;
-            return true;
-        }
+        GranteeKind.Person => ObservedIdentity.GranteeKind.EnumValues.Person,
+        GranteeKind.Team => ObservedIdentity.GranteeKind.EnumValues.Team,
+        GranteeKind.Role => ObservedIdentity.GranteeKind.EnumValues.Role,
+        GranteeKind.Workflow => ObservedIdentity.GranteeKind.EnumValues.Workflow,
+        _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown grantee kind."),
+    };
 
-        if (token.SequenceEqual("team"u8))
-        {
-            kind = GranteeKind.Team;
-            return true;
-        }
-
-        if (token.SequenceEqual("role"u8))
-        {
-            kind = GranteeKind.Role;
-            return true;
-        }
-
-        if (token.SequenceEqual("workflow"u8))
-        {
-            kind = GranteeKind.Workflow;
-            return true;
-        }
-
-        kind = default;
-        return false;
-    }
-
-    /// <summary>Maps a usage-grant dimension back to the <see cref="GranteeKind"/> it names (the inverse of the policy's
-    /// grantee→dimension map: <c>sub→person</c>, <c>tenant→team</c>, <c>role→role</c>, <c>workflow→workflow</c>).</summary>
-    /// <param name="dimension">The grant dimension (e.g. <c>tenant</c>).</param>
-    /// <param name="kind">The grantee kind on success.</param>
-    /// <returns><see langword="true"/> if the dimension maps to a well-known grantee kind (a custom dimension does not).</returns>
-    public static bool FromDimension(string? dimension, out GranteeKind kind)
+    /// <summary>Reifies a CTJ <see cref="ObservedIdentity.GranteeKind"/> back to the domain <see cref="GranteeKind"/> — at
+    /// a genuinely C#-enum-typed leaf (the directory seam / the policy), the inverse of <see cref="ToObservedKind"/>.
+    /// Allocation-free (span-equality, no managed string).</summary>
+    /// <param name="kind">The CTJ grantee kind (must be defined).</param>
+    /// <returns>The equivalent domain grantee kind.</returns>
+    public static GranteeKind ToGranteeKind(this ObservedIdentity.GranteeKind kind)
     {
-        switch (dimension)
+        if (kind.ValueEquals("person"u8))
         {
-            case "sub": kind = GranteeKind.Person; return true;
-            case "tenant": kind = GranteeKind.Team; return true;
-            case "role": kind = GranteeKind.Role; return true;
-            case "workflow": kind = GranteeKind.Workflow; return true;
-            default: kind = default; return false;
-        }
-    }
-
-    /// <summary>Maps a usage-grant dimension (UTF-8) back to the <see cref="GranteeKind"/> it names — the span counterpart of <see cref="FromDimension(string?, out GranteeKind)"/>, no managed string.</summary>
-    /// <param name="dimension">The grant dimension as UTF-8 (e.g. <c>tenant</c>).</param>
-    /// <param name="kind">The grantee kind on success.</param>
-    /// <returns><see langword="true"/> if the dimension maps to a well-known grantee kind.</returns>
-    public static bool FromDimension(ReadOnlySpan<byte> dimension, out GranteeKind kind)
-    {
-        if (dimension.SequenceEqual("sub"u8))
-        {
-            kind = GranteeKind.Person;
-            return true;
+            return GranteeKind.Person;
         }
 
-        if (dimension.SequenceEqual("tenant"u8))
+        if (kind.ValueEquals("team"u8))
         {
-            kind = GranteeKind.Team;
-            return true;
+            return GranteeKind.Team;
         }
 
-        if (dimension.SequenceEqual("role"u8))
+        if (kind.ValueEquals("role"u8))
         {
-            kind = GranteeKind.Role;
-            return true;
+            return GranteeKind.Role;
         }
 
-        if (dimension.SequenceEqual("workflow"u8))
+        if (kind.ValueEquals("workflow"u8))
         {
-            kind = GranteeKind.Workflow;
-            return true;
+            return GranteeKind.Workflow;
         }
 
-        kind = default;
-        return false;
+        throw new ArgumentOutOfRangeException(nameof(kind), "Unknown grantee kind.");
     }
 }

@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using StackExchange.Redis;
@@ -125,25 +124,25 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask SeenAsync(GranteeKind kind, ReadOnlyMemory<byte> value, ReadOnlyMemory<byte> label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken)
+    public async ValueTask SeenAsync(ObservedIdentity.GranteeKind kind, JsonString value, JsonString label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(provenance);
         cancellationToken.ThrowIfCancellationRequested();
         string kindToken = kind.ToToken();
         DateTimeOffset now = this.timeProvider.GetUtcNow();
 
-        // The value is the storage-key leaf (the identity key, sortKey, and digestOf string), so it materializes once here;
-        // the document body is serialized bytes-to-bytes from the value/label spans at the synchronous serialize calls
-        // below (taken after the read-await, so no span crosses an await). The label never becomes a managed string.
-        string valueKey = Encoding.UTF8.GetString(value.Span);
+        // The value is the storage-key leaf (the identity key, sortKey, and digestOf string), so it reifies once here as
+        // the key; the document body is serialized bytes-to-bytes from the value/label JSON values at the synchronous
+        // serialize calls below. The label never becomes a managed string.
+        string valueKey = (string)value;
 
         // Read-merge-write keyed by (kind, value): a first sighting inserts; an existing one preserves firstSeen, bumps
         // lastSeen, unions provenance, and refreshes label/identity/completeness (the shared merge every backend uses).
         RedisValue existingValue = await this.database.StringGetAsync(IdentityKey(kindToken, valueKey)).ConfigureAwait(false);
         byte[]? existing = existingValue.IsNullOrEmpty ? null : (byte[])existingValue!;
         byte[] json = existing is null
-            ? ObservedIdentitySerialization.SerializeNew(kindToken, value.Span, label.Span, identity, complete, now, provenance)
-            : ObservedIdentitySerialization.SerializeUpserted(existing, kindToken, value.Span, label.Span, identity, complete, now, provenance);
+            ? ObservedIdentitySerialization.SerializeNew(kind, value, label, identity, complete, now, provenance)
+            : ObservedIdentitySerialization.SerializeUpserted(existing, kind, value, label, identity, complete, now, provenance);
 
         // Store the document, ensure its sortKey is in the ordering index, and maintain the collision-probe digest index,
         // atomically. The key and sortKey are deterministic from (kind, value), so a re-sighting overwrites the document
@@ -157,15 +156,16 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, GranteeKind? kind, ReadOnlyMemory<byte> prefix, int limit, string? pageToken, CancellationToken cancellationToken)
+    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, string? pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         cancellationToken.ThrowIfCancellationRequested();
         int pageSize = limit > 0 ? limit : 1;
-        string? kindToken = kind?.ToToken();
+        string? kindToken = kind.IsNotUndefined() ? kind.ToToken() : null;
 
-        // The prefix is the in-memory StartsWith predicate (and its .Length gate), so it materializes once here.
-        string prefixStr = Encoding.UTF8.GetString(prefix.Span);
+        // The prefix is the in-memory StartsWith predicate (and its .Length gate), so it reifies once here (undefined
+        // prefix matches all).
+        string prefixStr = prefix.IsNotUndefined() ? (string)prefix : string.Empty;
         bool hasCursor = ObservedIdentityContinuationToken.TryDecode(pageToken, out (string SubjectValue, string SubjectKind) cursor);
         SecurityFilter? readReach = context.Reach(AccessVerb.Read);
 
@@ -244,7 +244,7 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ObservedIdentityConflict?> FindIdentityConflictAsync(GranteeKind kind, ReadOnlyMemory<byte> value, SecurityTagSet identity, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<ObservedIdentity>?> FindIdentityConflictAsync(ObservedIdentity.GranteeKind kind, JsonString value, SecurityTagSet identity, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -257,7 +257,7 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
         }
 
         // The value is the storage-key leaf used to compute this grantee's own sortKey (excluded from the probe).
-        string valueKey = Encoding.UTF8.GetString(value.Span);
+        string valueKey = (string)value;
         string selfSortKey = SortKey(valueKey, kind.ToToken());
         foreach (RedisValue member in await this.database.SetMembersAsync(DigestSetKey(digest)).ConfigureAwait(false))
         {
@@ -274,7 +274,9 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
                 continue; // the document was removed between the index read and the fetch — skip the stale member
             }
 
-            return ToConflict(conflictKindToken, conflictValue, (byte[])document!, kind);
+            // Hand back the conflicting grantee as its own JSON document (the caller disposes it); its kind/value/label
+            // live in the record, so nothing is reified into a separate POCO here.
+            return PersistedJson.ToPooledDocument<ObservedIdentity>((byte[])document!);
         }
 
         return null;
@@ -315,19 +317,4 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
     // appear in either token), holding the digest this record is indexed under so a re-sighting can retract the old one.
     private static RedisKey DigestOfKey(string kindToken, string value)
         => DigestOfPrefix + kindToken + Separator + value;
-
-    // Builds the conflict from a matched member: the kind from its token, the value verbatim, and the label parsed from
-    // the stored document (a transient pooled parse — the label string it yields is an owned managed copy that outlives
-    // the dispose). The kind falls back to the authored kind if its token no longer parses.
-    private static ObservedIdentityConflict ToConflict(string conflictKindToken, string conflictValue, byte[] document, GranteeKind fallbackKind)
-    {
-        string? label;
-        using (ParsedJsonDocument<ObservedIdentity> doc = PersistedJson.ToPooledDocument<ObservedIdentity>(document))
-        {
-            label = doc.RootElement.LabelOrNull;
-        }
-
-        GranteeKind conflictKind = GranteeKinds.TryParse(conflictKindToken, out GranteeKind parsed) ? parsed : fallbackKind;
-        return new ObservedIdentityConflict(conflictKind, conflictValue, label);
-    }
 }

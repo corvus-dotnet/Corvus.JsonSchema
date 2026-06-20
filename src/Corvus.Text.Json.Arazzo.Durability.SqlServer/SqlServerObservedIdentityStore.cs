@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Globalization;
-using System.Text;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.Data.SqlClient;
 
@@ -64,15 +63,15 @@ public sealed class SqlServerObservedIdentityStore : IObservedIdentityStore
     }
 
     /// <inheritdoc/>
-    public async ValueTask SeenAsync(GranteeKind kind, ReadOnlyMemory<byte> value, ReadOnlyMemory<byte> label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken)
+    public async ValueTask SeenAsync(ObservedIdentity.GranteeKind kind, JsonString value, JsonString label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(provenance);
         string kindToken = kind.ToToken();
 
-        // The SubjectValue column is NVARCHAR (the storage-key leaf), so the value materializes once here for the SQL
-        // params; the document body is serialized bytes-to-bytes from the value/label spans at the synchronous serialize
-        // calls below (taken after the read-await, so no span crosses an await).
-        string valueKey = Encoding.UTF8.GetString(value.Span);
+        // The SubjectValue column is NVARCHAR (the storage-key leaf), so the value reifies once here for the SQL params;
+        // the document body is serialized bytes-to-bytes from the value/label JSON values at the synchronous serialize
+        // calls below (the value is valid for the whole call, so reifying the key synchronously before any await is fine).
+        string valueKey = (string)value;
         DateTimeOffset now = this.timeProvider.GetUtcNow();
 
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
@@ -80,8 +79,8 @@ public sealed class SqlServerObservedIdentityStore : IObservedIdentityStore
 
         byte[]? existing = await ReadDocumentAsync(connection, transaction, kindToken, valueKey, cancellationToken).ConfigureAwait(false);
         byte[] json = existing is null
-            ? ObservedIdentitySerialization.SerializeNew(kindToken, value.Span, label.Span, identity, complete, now, provenance)
-            : ObservedIdentitySerialization.SerializeUpserted(existing, kindToken, value.Span, label.Span, identity, complete, now, provenance);
+            ? ObservedIdentitySerialization.SerializeNew(kind, value, label, identity, complete, now, provenance)
+            : ObservedIdentitySerialization.SerializeUpserted(existing, kind, value, label, identity, complete, now, provenance);
 
         await using (SqlCommand write = connection.CreateCommand())
         {
@@ -126,14 +125,15 @@ public sealed class SqlServerObservedIdentityStore : IObservedIdentityStore
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, GranteeKind? kind, ReadOnlyMemory<byte> prefix, int limit, string? pageToken, CancellationToken cancellationToken)
+    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, string? pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         int pageSize = limit > 0 ? limit : 1;
-        string? kindToken = kind?.ToToken();
+        string? kindToken = kind.IsNotUndefined() ? kind.ToToken() : null;
 
-        // The SubjectValue column is NVARCHAR, so the prefix materializes once for the @p lower bound + the StartsWith break.
-        string prefixStr = Encoding.UTF8.GetString(prefix.Span);
+        // The SubjectValue column is NVARCHAR, so the prefix reifies once for the @p lower bound + the StartsWith break
+        // (undefined prefix matches all).
+        string prefixStr = prefix.IsNotUndefined() ? (string)prefix : string.Empty;
         bool hasCursor = ObservedIdentityContinuationToken.TryDecode(pageToken, out (string SubjectValue, string SubjectKind) cursor);
         SecurityFilter? readReach = context.Reach(AccessVerb.Read);
 
@@ -221,7 +221,7 @@ public sealed class SqlServerObservedIdentityStore : IObservedIdentityStore
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ObservedIdentityConflict?> FindIdentityConflictAsync(GranteeKind kind, ReadOnlyMemory<byte> value, SecurityTagSet identity, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<ObservedIdentity>?> FindIdentityConflictAsync(ObservedIdentity.GranteeKind kind, JsonString value, SecurityTagSet identity, CancellationToken cancellationToken)
     {
         // The empty (unscoped) identity never collides; otherwise seek the indexed digest column for a row whose identity
         // is set-equal (same digest) but whose (kind, value) differs — a non-unique identity the authoring path refuses.
@@ -231,7 +231,7 @@ public sealed class SqlServerObservedIdentityStore : IObservedIdentityStore
         }
 
         string kindToken = kind.ToToken();
-        string valueKey = Encoding.UTF8.GetString(value.Span);
+        string valueKey = (string)value;
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using SqlCommand select = connection.CreateCommand();
         select.CommandText =
@@ -241,23 +241,12 @@ public sealed class SqlServerObservedIdentityStore : IObservedIdentityStore
         select.Parameters.AddWithValue("@k", kindToken);
         select.Parameters.AddWithValue("@v", valueKey);
         await using SqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+
+        // Hand back the conflicting grantee as its own JSON document (the caller disposes it); its kind/value/label live
+        // in the record, so nothing is reified into a separate POCO here.
         return await reader.ReadAsync(cancellationToken).ConfigureAwait(false)
-            ? ToConflict(reader.GetString(0), reader.GetString(1), reader.GetFieldValue<byte[]>(2), kind)
-            : null;
-    }
-
-    // Builds the conflict from a matched row: the kind from its token, the value verbatim, and the label parsed from the
-    // document (a transient pooled parse — the label string it yields is an owned managed copy that outlives the dispose).
-    private static ObservedIdentityConflict ToConflict(string conflictKindToken, string conflictValue, byte[] document, GranteeKind fallbackKind)
-    {
-        string? label;
-        using (ParsedJsonDocument<ObservedIdentity> doc = PersistedJson.ToPooledDocument<ObservedIdentity>(document))
-        {
-            label = doc.RootElement.LabelOrNull;
-        }
-
-        GranteeKind conflictKind = GranteeKinds.TryParse(conflictKindToken, out GranteeKind parsed) ? parsed : fallbackKind;
-        return new ObservedIdentityConflict(conflictKind, conflictValue, label);
+            ? PersistedJson.ToPooledDocument<ObservedIdentity>(reader.GetFieldValue<byte[]>(2))
+            : (ParsedJsonDocument<ObservedIdentity>?)null;
     }
 
     private static async ValueTask<byte[]?> ReadDocumentAsync(SqlConnection connection, SqlTransaction transaction, string kindToken, string value, CancellationToken cancellationToken)

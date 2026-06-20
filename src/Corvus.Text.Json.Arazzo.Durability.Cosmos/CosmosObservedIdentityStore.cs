@@ -94,24 +94,29 @@ public sealed class CosmosObservedIdentityStore : IObservedIdentityStore, IAsync
         return new ValueTask<CosmosObservedIdentityStore>(Connect(client, databaseName, timeProvider, ownsClient: false));
     }
 
+    // The seam's JsonString is fully qualified here (and in SearchAsync/FindIdentityConflictAsync): V5 has no shared
+    // JsonString — each generation root emits its own — and this project references the base Corvus.Text.Json directly,
+    // so an unqualified JsonString binds to a different per-root type than the interface's …Durability.JsonString
+    // (CS0535). The FQN pins the exact seam type.
+
     /// <inheritdoc/>
-    public async ValueTask SeenAsync(GranteeKind kind, ReadOnlyMemory<byte> value, ReadOnlyMemory<byte> label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken)
+    public async ValueTask SeenAsync(ObservedIdentity.GranteeKind kind, Corvus.Text.Json.Arazzo.Durability.JsonString value, Corvus.Text.Json.Arazzo.Durability.JsonString label, SecurityTagSet identity, bool complete, string provenance, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(provenance);
         string kindToken = kind.ToToken();
         DateTimeOffset now = this.timeProvider.GetUtcNow();
 
         // subjectValue is the storage-key leaf (item id / partition key / query param / sortKey / stored column), so the
-        // value materializes once here; the document body is serialized bytes-to-bytes from the value/label spans at the
-        // synchronous serialize calls below (taken after the read-await, so no span crosses an await).
-        string valueKey = Encoding.UTF8.GetString(value.Span);
+        // value reifies once here; the document body is serialized bytes-to-bytes from the value/label JSON values at the
+        // synchronous serialize calls below (taken after the read-await).
+        string valueKey = (string)value;
         string partition = PartitionKey(kindToken, valueKey);
 
         // Read the existing document (single partition) to merge; then upsert the whole envelope.
         byte[]? existing = await this.ReadDocumentAsync(kindToken, valueKey, partition, cancellationToken).ConfigureAwait(false);
         byte[] json = existing is null
-            ? ObservedIdentitySerialization.SerializeNew(kindToken, value.Span, label.Span, identity, complete, now, provenance)
-            : ObservedIdentitySerialization.SerializeUpserted(existing, kindToken, value.Span, label.Span, identity, complete, now, provenance);
+            ? ObservedIdentitySerialization.SerializeNew(kind, value, label, identity, complete, now, provenance)
+            : ObservedIdentitySerialization.SerializeUpserted(existing, kind, value, label, identity, complete, now, provenance);
 
         using MemoryStream stream = EnvelopeStream(ItemId(kindToken, valueKey), partition, kindToken, valueKey, SecurityIdentityDigest.Compute(identity), identity.ToList(), json);
         using ResponseMessage response = await this.container.UpsertItemStreamAsync(stream, new PartitionKey(partition), cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -119,16 +124,16 @@ public sealed class CosmosObservedIdentityStore : IObservedIdentityStore, IAsync
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, GranteeKind? kind, ReadOnlyMemory<byte> prefix, int limit, string? pageToken, CancellationToken cancellationToken)
+    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, Corvus.Text.Json.Arazzo.Durability.JsonString prefix, int limit, string? pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         int pageSize = limit > 0 ? limit : 1;
-        string? kindToken = kind?.ToToken();
+        string? kindToken = kind.IsNotUndefined() ? kind.ToToken() : null;
         bool hasCursor = ObservedIdentityContinuationToken.TryDecode(pageToken, out (string SubjectValue, string SubjectKind) cursor);
         SecurityFilter? readReach = context.Reach(AccessVerb.Read);
 
-        // subjectValue is stored as a string column, so the prefix materializes once for the STARTSWITH @prefix param.
-        string prefixStr = Encoding.UTF8.GetString(prefix.Span);
+        // subjectValue is stored as a string column, so the prefix reifies once for the STARTSWITH @prefix param.
+        string prefixStr = prefix.IsNotUndefined() ? (string)prefix : string.Empty;
         var conditions = new List<string>();
         var parameters = new List<(string Name, string Value)>();
         if (kindToken is not null)
@@ -200,7 +205,7 @@ public sealed class CosmosObservedIdentityStore : IObservedIdentityStore, IAsync
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ObservedIdentityConflict?> FindIdentityConflictAsync(GranteeKind kind, ReadOnlyMemory<byte> value, SecurityTagSet identity, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<ObservedIdentity>?> FindIdentityConflictAsync(ObservedIdentity.GranteeKind kind, Corvus.Text.Json.Arazzo.Durability.JsonString value, SecurityTagSet identity, CancellationToken cancellationToken)
     {
         // The empty (unscoped) identity never collides; otherwise seek the indexed identityDigest property for an item
         // whose identity is set-equal (same digest) but whose (kind, value) differs — a non-unique identity the authoring
@@ -211,9 +216,9 @@ public sealed class CosmosObservedIdentityStore : IObservedIdentityStore, IAsync
             return null;
         }
 
-        // subjectValue is stored as a string column, so the value materializes once for the @v query param.
+        // subjectValue is stored as a string column, so the value reifies once for the @v query param.
         string kindToken = kind.ToToken();
-        string valueKey = Encoding.UTF8.GetString(value.Span);
+        string valueKey = (string)value;
         var definition = new QueryDefinition(
             "SELECT c.subjectValue, c.subjectKind, c.doc FROM c WHERE c.identityDigest = @d AND NOT (c.subjectKind = @k AND c.subjectValue = @v) OFFSET 0 LIMIT 1")
             .WithParameter("@d", digest)
@@ -222,7 +227,10 @@ public sealed class CosmosObservedIdentityStore : IObservedIdentityStore, IAsync
 
         await foreach ((string rowValue, string rowKind, ReadOnlyMemory<byte> doc) in this.QueryDocumentsAsync(definition, cancellationToken).ConfigureAwait(false))
         {
-            return ToConflict(rowKind, rowValue, doc.Span, kind);
+            // Hand back the conflicting grantee as its own JSON document (the caller disposes it); its kind/value/label
+            // live in the record, so nothing is reified into a separate POCO here. The doc span is a view into the query
+            // page, so the copy into the pooled document must complete before iteration moves on — it does (we return).
+            return PersistedJson.ToPooledDocument<ObservedIdentity>(doc.Span);
         }
 
         return null;
@@ -254,21 +262,6 @@ public sealed class CosmosObservedIdentityStore : IObservedIdentityStore, IAsync
         Span<byte> hash = stackalloc byte[32];
         SHA256.HashData(Encoding.UTF8.GetBytes(subjectKind + Separator + subjectValue), hash);
         return "obid-" + Convert.ToHexStringLower(hash);
-    }
-
-    // Builds the conflict from a matched item: the kind from its token, the value verbatim, and the label parsed from the
-    // embedded doc (a transient pooled parse — the label string it yields is an owned managed copy that outlives the
-    // dispose; the doc span is a view into the query page, so the parse must complete before the page buffer is reused).
-    private static ObservedIdentityConflict ToConflict(string conflictKindToken, string conflictValue, ReadOnlySpan<byte> document, GranteeKind fallbackKind)
-    {
-        string? label;
-        using (ParsedJsonDocument<ObservedIdentity> doc = PersistedJson.ToPooledDocument<ObservedIdentity>(document))
-        {
-            label = doc.RootElement.LabelOrNull;
-        }
-
-        GranteeKind conflictKind = GranteeKinds.TryParse(conflictKindToken, out GranteeKind parsed) ? parsed : fallbackKind;
-        return new ObservedIdentityConflict(conflictKind, conflictValue, label);
     }
 
     // Serializes the { id, pk, subjectKind, subjectValue, identityDigest, sortKey, securityTags:[{k,v}], doc } envelope
