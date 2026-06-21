@@ -109,7 +109,7 @@ that exists today (a starting point to be re-baselined, **not** evidence of comp
 |---|---|---|---|---|---|---|
 | `GET /catalog` search | SearchCatalog → SearchAsync | R | `BuildPage` loop; `ToTags` copy | — | confirm projection | ⬜ |
 | `POST /catalog` | AddCatalogVersion → **AddAsync** | W | record `CatalogMetadata` + package bytes; `ToOwner`/`ToTags`; `SecurityTagSet.FromTags` | `CatalogStoreBenchmarks` (e2e baseline 19.92 KB) | owner is a **queryable indexed decomposition** (`Owner*` columns + read-reconstruct), not a string seam — confirmed genuine (Part D) | ➖ owner genuine (indexed); ↓ projection row is the real lever |
-| `POST /catalog` *(projection)* | AddAsync → `CatalogPackage.Project` | W | parse + canonicalise + hash + id-rewrite + version-doc write + ZIP pack/unpack (the bulk; NOT the record seam) | `CatalogStoreBenchmarks` | single-parse + zero-alloc SHA256 + ZIP no-copy/right-sized reads + contained entry-buffer rent (`OpenPooled`/`PackPooled`) | ✅ **19.92→18.07 KB**; remaining ~71% is `ZipArchive` framework floor (proven, Part D) |
+| `POST /catalog` *(projection)* | AddAsync → `CatalogPackage.Project` | W | parse + canonicalise + hash + id-rewrite + version-doc write + ZIP pack/unpack (the bulk; NOT the record seam) | `CatalogStoreBenchmarks` | single-parse + zero-alloc SHA256 + ZIP no-copy/right-sized reads + entry-buffer rent (`OpenPooled`/`PackPooled`) + pooled canonical-hash buffer (`TryCanonicalize`) | ✅ **19.92→17.7 KB**; remaining ~70% is `ZipArchive` structural object-graph floor (source-proven, Part D) |
 | `GET /catalog/{id}` list | ListCatalogVersions → SearchAsync | R | BuildPage | — | — | ⬜ |
 | `GET …/versions/{n}` | GetCatalogVersion → GetAsync | R | `CatalogVersionSummary.From()` wrap | — | confirm congruent wrap | ⬜ |
 | `PATCH …/versions/{n}` | UpdateCatalogVersion → GetAsync(check) → **UpdateMetadataAsync** | W | record `CatalogMetadataPatch`; `ToOwner`/`ToTags`; 2× GetAsync | none (e2e) | carry patch draft / mutable builder ([[corvus-mutable-documents]]) | ⬜ |
@@ -287,42 +287,62 @@ are already holders.
 transcode is the price of a searchable owner. Catalog's real allocation lever is the **package projection** — the separate
 `POST /catalog (projection)` row (below).
 
-### 🔧 `POST /catalog (projection)` → `CatalogPackage.Project` — 3 wins done, entry-buffer rent pending
+### 🔧 `POST /catalog (projection)` → `CatalogPackage.Project` — 4 wins done; ZipArchive floor proven structural
 
-**Before → after (3 local, no-API-change wins; `CatalogStoreBenchmarks.Add_FromRecord`, InMemory, ShortRun): 19.92 KB →
-18.24 KB/op (−1.68 KB, −8.4%).** Build 0/0; catalog/package/conformance tests green.
+**Before → after (`CatalogStoreBenchmarks.Add_FromRecord`, InMemory, ShortRun): 19.92 KB → 17.7 KB/op (−2.22 KB,
+−11.1%).** Build 0/0; catalog/package/conformance tests green; content hash byte-identical at every step.
 
 1. **Single parse of the workflow.** `Project` re-parsed the *rewritten* workflow only to read title/description/sources;
    those are id-independent, so they're now read during the id-rewrite pass (`RewriteWorkflowId` returns them) — one parse.
-2. **Zero-alloc content hash.** `ComputeContentHash` now uses `SHA256.HashData(span, stackalloc span)` (no per-call SHA256
-   instance, no heap digest array) + `Convert.ToHexStringLower`.
+2. **Zero-alloc content hash digest.** `ComputeContentHash` uses `SHA256.HashData(span, stackalloc span)` (no per-call
+   SHA256 instance, no heap digest array) + `Convert.ToHexStringLower`.
 3. **ZIP I/O.** `Open` wraps the package's backing array directly (`MemoryMarshal.TryGetArray`, no full-package `ToArray`
    copy); `ReadEntryStream` reads each entry into a right-sized array via its known uncompressed length (no growing
-   `MemoryStream`, no `Stream.CopyTo` scratch buffer).
+   `MemoryStream`, no `Stream.CopyTo` scratch buffer). Plus a `Project`-only pooled read (`WorkflowPackage.OpenPooled` →
+   `PooledPackageContents`, ArrayPool-rented, disposed after the synchronous projection) + `PackPooled`/`ComputeContentHash`
+   `ReadOnlyMemory`-sources overloads (the `byte[]` overloads stay as thin wrappers, so the public
+   `Open`/`WorkflowPackageContents`/provider interfaces + every test are unchanged).
+4. **Pooled canonical-content hash buffer.** `ComputeContentHash` now canonicalises the assembled `{ sources, workflow }`
+   document straight into an `ArrayPool`-rented buffer via `JsonCanonicalizer.TryCanonicalize(in JsonElement, Span<byte>,
+   out int)` (grow-on-overflow, size-hinted by the assembled length) and SHA-256s the written span in place — the
+   `JsonCanonicalizer.Canonicalize(...) → byte[]` materialisation is gone (the removed `CanonicalContent` helper). Hash
+   value unchanged (conformance `Identical_packages_hash_identically` + stored-hash comparisons green).
 
-**Entry-buffer rent — DONE (contained, no public-API churn).** Implemented as a `CatalogPackage.Project`-only pooled read
-(`WorkflowPackage.OpenPooled` → `PooledPackageContents`, ArrayPool-rented, disposed after the synchronous projection) +
-`PackPooled`/`ComputeContentHash` `ReadOnlyMemory`-sources overloads (the `byte[]` overloads stay as thin wrappers, so the
-public `Open`/`WorkflowPackageContents`/provider interfaces + every test are unchanged; the optional providers, rare,
-materialise). **18.24 KB → 18.07 KB/op**, build 0/0, catalog/package tests green.
-
-**Why only −0.17 KB — measured per-stage attribution** (`CatalogProjectionBreakdownBenchmarks`, each public stage isolated;
-`Project` = 14.98 KB, store `Add` = 18.07 KB):
+**Measured per-stage attribution** (`CatalogProjectionBreakdownBenchmarks`, each public stage isolated; `Project`-only =
+14.62 KB, store `Add` = 17.7 KB):
 
 | Stage | Allocated | Note |
 |---|---|---|
-| `OpenInputZip` (`ZipArchive(Read)`) | 7.25 KB | framework floor (the rent shaved only the entry arrays) |
-| `PackCanonicalZip` (`ZipArchive(Create)` + output) | 5.54 KB | framework + the genuine canonical-package leaf |
-| `ComputeHash` (canonicalise + SHA-256) | 1.36 KB | the canonical-content array is a chaseable transient |
+| `OpenInputZip` (`ZipArchive(Read)`) | 7.25 KB | framework floor — the entry object graph (see below) |
+| `PackCanonicalZip` (`ZipArchive(Create)` + output) | 5.54 KB | framework floor + the genuine canonical-package leaf + `ToArray()` |
+| `ComputeHash` (canonicalise + SHA-256) | 1.36 → **1.00 KB** | win #4 removed the canonical `byte[]`; rest = pooled-doc parse + hex string |
 | `BuildVersionDocument` (`CatalogVersion.Create`) | 1.56 KB | the genuine stored version-doc leaf |
 | store overhead (`Add` − `Project`) | ~3.1 KB | version doc + canonical-package storage copy + dict |
 
-**Conclusion: ~71% of the publish allocation is `System.IO.Compression.ZipArchive`** (read 7.25 + write 5.54 ≈ 12.8 KB) — an
-**unpoolable framework floor**; "100% rented" is unreachable while the package is a ZIP. Genuine stored leaves (canonical
-package + version doc) come next. The only remaining *chaseable* transients (~1–2 KB) are the canonical-content hash buffer
-(needs a pooled `JsonCanonicalizer` output), the rewritten-workflow array, and `PackPooled`'s growing `MemoryStream`. A
-materially larger cut would require **changing the package format away from `ZipArchive`** — a wire/disk compatibility
-change, out of campaign scope.
+**Conclusion: ~70% of the publish allocation is `System.IO.Compression.ZipArchive`** (read 7.25 + write 5.54 ≈ 12.8 KB) and
+it is an **unpoolable, structural framework floor** — proven by reading dotnet/runtime `main` sources, not asserted:
+
+- The large per-call working buffers are **already pooled by the framework**, so they do *not* appear in the benchmark
+  after warmup: `DeflateStream._buffer = ArrayPool<byte>.Shared.Rent(8192)` (lazy, returned on dispose); ZipArchive's
+  central-directory read rents `ArrayPool<byte>.Shared.Rent(4096)` (returned in `finally`); `Inflater`/`Deflater` allocate
+  **native** zlib memory (`ZLibStreamHandle`, invisible to MemoryDiagnoser) and **pin** the input rather than copying.
+- What remains GC-counted is the **managed object graph the API gives no hook to avoid**: `ZipArchive` + `List<>` +
+  `Dictionary<>` + one `ZipArchiveEntry` **per entry** (each with a decoded `FullName` string, `_storedEntryNameBytes`,
+  extra-field arrays), the per-entry stream wrappers (`SubReadStream`/`CrcValidatingReadStream` on read;
+  `CheckSumAndSizeWriteStream`/`DirectToArchiveWriterStream`/`WrappedStream` on write), and `MemoryStream.ToArray()` on pack.
+- The only API-level lever is `CompressionLevel.NoCompression` (Stored): source-confirmed to skip `DeflateStream`/`Inflater`
+  on read and `Deflater` on write — but those buffers are *already pooled*, so it is a native-memory/CPU lever, **not** a
+  GC-allocation win, and it inflates the persisted package. Not worth taking.
+- **There is no zero-allocation ZIP in the BCL or the ASP.NET Core stack.** ASP.NET Core has no PKZIP handling at all; its
+  response compression (`BrotliCompressionProvider`/`GzipCompressionProvider`) wraps streaming `BrotliStream`/`GZipStream`
+  (a different, container-less format; allocating wrappers). The platform's genuinely zero-GC compressors are the
+  span-struct `BrotliEncoder`/`BrotliDecoder` (`.TryCompress`/`.TryDecompress(ReadOnlySpan, Span, out, out)` — streamless,
+  native + caller buffers; .NET 11 adds `ZstandardEncoder`/`ZstandardDecoder`). No span-struct Deflate/zlib ships.
+
+A materially larger cut therefore requires **dropping the ZIP container on the hot path** — a custom length-prefixed (TLV)
+framing read/written via `IBufferWriter`/spans, payloads stored or compressed with the span-struct codecs — which removes
+the entire `ZipArchive`/`ZipArchiveEntry` object graph. That is a **package-format (wire/disk) change**, a deliberate
+architectural decision tracked separately from the per-row campaign, not a row-level tweak.
 
 ---
 
