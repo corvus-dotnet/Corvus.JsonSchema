@@ -140,14 +140,14 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
     }
 
     /// <inheritdoc/>
-    public ValueTask<CatalogVersion> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         return this.AddCoreAsync(baseWorkflowId, packageUtf8.ToArray(), metadata, cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<CatalogVersion?> GetAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<CatalogVersion>?> GetAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(baseWorkflowId);
         NullableResponse<TableEntity> existing = await this.catalog
@@ -196,38 +196,50 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
             filter = filter is null ? clause : filter + " and " + clause;
         }
 
-        var matches = new List<CatalogVersion>();
+        // The page is a pooled batch of disposable version documents (the caller disposes the page). Each candidate is
+        // parsed once; matches are kept in the batch, non-matches and the look-ahead row are disposed immediately.
+        var matches = new PooledDocumentList<CatalogVersion>(limit);
         string? continuation = null;
-        await foreach (TableEntity entity in this.catalog.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
+        try
         {
-            string sortKey = SortKey(entity.PartitionKey, ParseRowKey(entity.RowKey));
-            if (after is not null && string.CompareOrdinal(sortKey, after) <= 0)
+            await foreach (TableEntity entity in this.catalog.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
             {
-                continue;
-            }
+                string sortKey = SortKey(entity.PartitionKey, ParseRowKey(entity.RowKey));
+                if (after is not null && string.CompareOrdinal(sortKey, after) <= 0)
+                {
+                    continue;
+                }
 
-            CatalogVersion candidate = ReadVersion(entity);
-            if (!Matches(candidate, query))
-            {
-                continue;
-            }
+                ParsedJsonDocument<CatalogVersion> candidate = ReadVersion(entity);
+                if (!Matches(candidate.RootElement, query))
+                {
+                    candidate.Dispose();
+                    continue;
+                }
 
-            if (matches.Count == limit)
-            {
-                // There is at least one more matching row beyond this page.
-                CatalogVersionRef lastRef = matches[^1].Ref;
-                continuation = WorkflowContinuationToken.Encode(SortKey(lastRef.BaseWorkflowId, lastRef.VersionNumber));
-                break;
-            }
+                if (matches.Count == limit)
+                {
+                    // There is at least one more matching row beyond this page.
+                    CatalogVersionRef lastRef = matches[matches.Count - 1].Ref;
+                    continuation = WorkflowContinuationToken.Encode(SortKey(lastRef.BaseWorkflowId, lastRef.VersionNumber));
+                    candidate.Dispose();
+                    break;
+                }
 
-            matches.Add(candidate);
+                matches.Add(candidate);
+            }
+        }
+        catch
+        {
+            matches.Dispose();
+            throw;
         }
 
         return new CatalogPage(matches, continuation);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<CatalogVersion?> UpdateMetadataAsync(string baseWorkflowId, int versionNumber, CatalogMetadataPatch patch, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<CatalogVersion>?> UpdateMetadataAsync(string baseWorkflowId, int versionNumber, CatalogMetadataPatch patch, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(baseWorkflowId);
         DateTimeOffset now = this.timeProvider.GetUtcNow();
@@ -241,17 +253,28 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
         }
 
         TableEntity entity = existing.Value!;
-        CatalogVersion current = ReadVersion(entity);
 
-        CatalogStatus currentStatus = current.StatusValue;
-        CatalogStatus status = patch.Status ?? currentStatus;
-        bool newlyObsolete = status == CatalogStatus.Obsolete && currentStatus != CatalogStatus.Obsolete;
-        bool reactivated = status == CatalogStatus.Active && currentStatus == CatalogStatus.Obsolete;
+        CatalogStatus status;
+        CatalogOwner owner;
+        TagSet tags;
+        string? obsoletedBy;
+        DateTimeOffset? obsoletedAt;
 
-        CatalogOwner owner = patch.Owner ?? current.OwnerValue;
-        TagSet tags = patch.Tags ?? current.TagsValue;
-        string? obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedByOrNull;
-        DateTimeOffset? obsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAtValue;
+        // The current row is read into a pooled, disposable document only to source the unchanged fields; its
+        // field accessors return OWNED COPIES, so the values are safe after the document is disposed.
+        using (ParsedJsonDocument<CatalogVersion> currentDoc = ReadVersion(entity))
+        {
+            CatalogVersion current = currentDoc.RootElement;
+            CatalogStatus currentStatus = current.StatusValue;
+            status = patch.Status ?? currentStatus;
+            bool newlyObsolete = status == CatalogStatus.Obsolete && currentStatus != CatalogStatus.Obsolete;
+            bool reactivated = status == CatalogStatus.Active && currentStatus == CatalogStatus.Obsolete;
+
+            owner = patch.Owner ?? current.OwnerValue;
+            tags = patch.Tags ?? current.TagsValue;
+            obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedByOrNull;
+            obsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAtValue;
+        }
 
         WriteGovernance(entity, status, tags, owner, patch.UpdatedBy, now, obsoletedBy, obsoletedAt);
         await this.catalog.UpdateEntityAsync(entity, entity.ETag, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
@@ -307,7 +330,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
     private static string SortKey(string baseWorkflowId, int versionNumber)
         => string.Create(CultureInfo.InvariantCulture, $"{baseWorkflowId}{versionNumber:D10}");
 
-    private static bool Matches(CatalogVersion version, CatalogQuery query)
+    private static bool Matches(in CatalogVersion version, CatalogQuery query)
     {
         if (query.BaseWorkflowId is { } baseId && version.Ref.BaseWorkflowId != baseId)
         {
@@ -356,7 +379,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
         return query.Security is not { } security || security.IsSatisfiedBy(version.SecurityTagsValue);
     }
 
-    private static TableEntity BuildEntity(CatalogVersion version)
+    private static TableEntity BuildEntity(in CatalogVersion version)
     {
         CatalogVersionRef reference = version.Ref;
         var entity = new TableEntity(reference.BaseWorkflowId, RowKey(reference.VersionNumber))
@@ -410,7 +433,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
         entity["ObsoletedAt"] = obsoletedAt?.ToUnixTimeMilliseconds();
     }
 
-    private static CatalogVersion ReadVersion(TableEntity entity)
+    private static ParsedJsonDocument<CatalogVersion> ReadVersion(TableEntity entity)
         => CatalogVersion.Create(
             baseWorkflowId: entity.PartitionKey,
             versionNumber: ParseRowKey(entity.RowKey),
@@ -443,7 +466,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
     private static SecurityTagSet DecodeSecurityTags(string? encoded)
         => SecurityTagSet.FromJsonStringOrEmpty(encoded);
 
-    private async ValueTask<CatalogVersion> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
+    private async ValueTask<ParsedJsonDocument<CatalogVersion>> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         TagSet tags = metadata.Tags;
@@ -457,7 +480,10 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
             cancellationToken.ThrowIfCancellationRequested();
             int versionNumber = await this.MaxVersionAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false) + 1;
             CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
-            CatalogVersion version = CatalogVersion.Create(
+
+            // The returned version is a pooled, disposable document (the caller owns it). It is built once and the
+            // Table entity is projected from it; on a 409 retry the document is disposed so the loop cannot leak it.
+            ParsedJsonDocument<CatalogVersion> version = CatalogVersion.Create(
                 baseWorkflowId: baseWorkflowId,
                 versionNumber: versionNumber,
                 workflowId: projection.WorkflowId,
@@ -476,18 +502,24 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
             // Write the package blob first; it is keyed by (base, version) and is overwritten harmlessly on a
             // retry. The Table entity, written with create-if-not-exists, is the authority for the version's
             // existence, so a partial failure before it lands leaves an orphan blob, not a phantom version.
-            await this.packages.GetBlobClient(BlobName(baseWorkflowId, versionNumber))
-                .UploadAsync(BinaryData.FromBytes(projection.CanonicalPackage.ToArray()), overwrite: true, cancellationToken)
-                .ConfigureAwait(false);
-
             try
             {
-                await this.catalog.AddEntityAsync(BuildEntity(version), cancellationToken).ConfigureAwait(false);
+                await this.packages.GetBlobClient(BlobName(baseWorkflowId, versionNumber))
+                    .UploadAsync(BinaryData.FromBytes(projection.CanonicalPackage.ToArray()), overwrite: true, cancellationToken)
+                    .ConfigureAwait(false);
+
+                await this.catalog.AddEntityAsync(BuildEntity(version.RootElement), cancellationToken).ConfigureAwait(false);
                 return version;
             }
             catch (RequestFailedException ex) when (ex.Status == 409)
             {
                 // Another add claimed this version number concurrently — recompute the max and try again.
+                version.Dispose();
+            }
+            catch
+            {
+                version.Dispose();
+                throw;
             }
         }
     }

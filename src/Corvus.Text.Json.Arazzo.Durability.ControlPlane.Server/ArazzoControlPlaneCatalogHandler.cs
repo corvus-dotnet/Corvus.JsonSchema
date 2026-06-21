@@ -81,8 +81,12 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
 
         try
         {
-            CatalogVersion version = await this.catalog.AddAsync(parameters.Package, owner, tags, securityTags, cancellationToken).ConfigureAwait(false);
-            return AddCatalogVersionResult.Created(Models.CatalogVersionSummary.From(version), workspace);
+            ParsedJsonDocument<CatalogVersion> version = await this.catalog.AddAsync(parameters.Package, owner, tags, securityTags, cancellationToken).ConfigureAwait(false);
+
+            // The summary is a zero-copy view over the version document, so hand the pooled document to the workspace —
+            // it owns it for the response's lifetime, and a throw cannot leak the rented buffer.
+            workspace.TakeOwnership(version);
+            return AddCatalogVersionResult.Created(Models.CatalogVersionSummary.From(version.RootElement), workspace);
         }
         catch (WorkflowAdministrationException ex)
         {
@@ -116,8 +120,13 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 100;
         string? pageToken = parameters.PageToken.IsNotUndefined() ? (string)parameters.PageToken : null;
 
-        CatalogPage page = await this.catalog.SearchAsync(
+        using CatalogPage page = await this.catalog.SearchAsync(
             new CatalogQuery(text, baseWorkflowId, workflowIdPrefix, tags, status, owner, limit, pageToken), this.access.Current(), cancellationToken).ConfigureAwait(false);
+
+        // The page summaries are views over the pooled version documents, and the response body's Source is materialized
+        // by Ok(...) here but re-read by the later (post-handler) body validation/serialization — so hand the documents
+        // to the workspace (it disposes them at request end); `using page` then only returns the batch's backing array.
+        page.Versions.TransferOwnershipTo(workspace);
         return SearchCatalogResult.Ok(BuildPage(page), workspace);
     }
 
@@ -128,8 +137,11 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 100;
         string? pageToken = parameters.PageToken.IsNotUndefined() ? (string)parameters.PageToken : null;
 
-        CatalogPage page = await this.catalog.SearchAsync(
+        using CatalogPage page = await this.catalog.SearchAsync(
             new CatalogQuery(BaseWorkflowId: baseWorkflowId, Limit: limit, ContinuationToken: pageToken), this.access.Current(), cancellationToken).ConfigureAwait(false);
+
+        // See HandleSearchCatalogAsync: hand the documents to the workspace so the deferred body materialization is safe.
+        page.Versions.TransferOwnershipTo(workspace);
         return ListCatalogVersionsResult.Ok(BuildPage(page), workspace);
     }
 
@@ -140,10 +152,14 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         int versionNumber = (int)parameters.VersionNumber;
 
         // Gated by read reach (§14.2): a version outside it comes back null → 404 (non-disclosing).
-        CatalogVersion? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, this.access.Current(), cancellationToken).ConfigureAwait(false);
-        return version is { } v
-            ? GetCatalogVersionResult.Ok(Models.CatalogVersionSummary.From(v), workspace)
-            : GetCatalogVersionResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
+        ParsedJsonDocument<CatalogVersion>? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (version is not { } v)
+        {
+            return GetCatalogVersionResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
+        }
+
+        workspace.TakeOwnership(v);
+        return GetCatalogVersionResult.Ok(Models.CatalogVersionSummary.From(v.RootElement), workspace);
     }
 
     /// <inheritdoc/>
@@ -159,21 +175,28 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         AccessContext ctx = this.access.Current();
 
         // Gate (§14.2): a version outside read reach → 404 (non-disclosing); readable but outside write reach → 403.
-        CatalogVersion? existing = await this.catalog.GetAsync(baseWorkflowId, versionNumber, ctx, cancellationToken).ConfigureAwait(false);
-        if (existing is not { } ev)
+        // The existing version is only inspected for the reach check, so it is disposed here (its tags are owned copies).
+        using (ParsedJsonDocument<CatalogVersion>? existing = await this.catalog.GetAsync(baseWorkflowId, versionNumber, ctx, cancellationToken).ConfigureAwait(false))
+        {
+            if (existing is not { } ev)
+            {
+                return UpdateCatalogVersionResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
+            }
+
+            if (!ctx.Admits(AccessVerb.Write, ev.RootElement.SecurityTagsValue))
+            {
+                return UpdateCatalogVersionResult.Forbidden(ForbiddenProblem(baseWorkflowId, versionNumber), workspace);
+            }
+        }
+
+        ParsedJsonDocument<CatalogVersion>? updated = await this.catalog.UpdateAsync(baseWorkflowId, versionNumber, owner, tags, status, ctx, cancellationToken).ConfigureAwait(false);
+        if (updated is not { } v)
         {
             return UpdateCatalogVersionResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
         }
 
-        if (!ctx.Admits(AccessVerb.Write, ev.SecurityTagsValue))
-        {
-            return UpdateCatalogVersionResult.Forbidden(ForbiddenProblem(baseWorkflowId, versionNumber), workspace);
-        }
-
-        CatalogVersion? updated = await this.catalog.UpdateAsync(baseWorkflowId, versionNumber, owner, tags, status, ctx, cancellationToken).ConfigureAwait(false);
-        return updated is { } v
-            ? UpdateCatalogVersionResult.Ok(Models.CatalogVersionSummary.From(v), workspace)
-            : UpdateCatalogVersionResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
+        workspace.TakeOwnership(v);
+        return UpdateCatalogVersionResult.Ok(Models.CatalogVersionSummary.From(v.RootElement), workspace);
     }
 
     /// <inheritdoc/>
@@ -184,13 +207,14 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         AccessContext ctx = this.access.Current();
 
         // Gate (§14.2): a version outside read reach → 404 (non-disclosing); readable but outside write reach → 403.
-        CatalogVersion? existing = await this.catalog.GetAsync(baseWorkflowId, versionNumber, ctx, cancellationToken).ConfigureAwait(false);
+        // Inspect-and-discard: the version is only read for the reach check, so the pooled document is disposed here.
+        using ParsedJsonDocument<CatalogVersion>? existing = await this.catalog.GetAsync(baseWorkflowId, versionNumber, ctx, cancellationToken).ConfigureAwait(false);
         if (existing is not { } ev)
         {
             return DeleteCatalogVersionResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
         }
 
-        if (!ctx.Admits(AccessVerb.Write, ev.SecurityTagsValue))
+        if (!ctx.Admits(AccessVerb.Write, ev.RootElement.SecurityTagsValue))
         {
             return DeleteCatalogVersionResult.Forbidden(ForbiddenProblem(baseWorkflowId, versionNumber), workspace);
         }
@@ -366,13 +390,16 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         int versionNumber = (int)parameters.VersionNumber;
         AccessContext ctx = this.access.Current();
 
-        // Gated by read reach (§14.2): a version outside it reads back null → 404 (triggering is gated by it).
-        CatalogVersion? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, ctx, cancellationToken).ConfigureAwait(false);
-        if (version is not { } catalogVersion)
+        // Gated by read reach (§14.2): a version outside it reads back null → 404 (triggering is gated by it). The
+        // pooled document is held (its fields — runnable/workflowId/securityTags — are owned copies) until the run is
+        // started, then disposed at method exit; ParsedJsonDocument is not thread-affine, so holding it across awaits is safe.
+        using ParsedJsonDocument<CatalogVersion>? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, ctx, cancellationToken).ConfigureAwait(false);
+        if (version is not { } catalogVersionDoc)
         {
             return StartCatalogWorkflowRunResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
         }
 
+        CatalogVersion catalogVersion = catalogVersionDoc.RootElement;
         if (!(bool)catalogVersion.Runnable)
         {
             return StartCatalogWorkflowRunResult.Conflict(

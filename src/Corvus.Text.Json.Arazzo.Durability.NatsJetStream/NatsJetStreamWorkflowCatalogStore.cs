@@ -133,18 +133,23 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
     }
 
     /// <inheritdoc/>
-    public ValueTask<CatalogVersion> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         return this.AddCoreAsync(baseWorkflowId, packageUtf8.ToArray(), metadata, cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<CatalogVersion?> GetAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<CatalogVersion>?> GetAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(baseWorkflowId);
         NatsKVEntry<byte[]>? entry = await this.TryGetAsync(Key(baseWorkflowId, versionNumber), cancellationToken).ConfigureAwait(false);
-        return entry is { Value: { } value } ? Envelope.DecodeMetadata(value) : null;
+
+        // The envelope header bytes ARE the version document JSON; realize a pooled, disposable document over them
+        // (the byte-backend idiom) rather than cloning a bare value out.
+        return entry is { Value: { } value }
+            ? ParsedJsonDocument<CatalogVersion>.Parse(Envelope.DecodeHeader(value))
+            : null;
     }
 
     /// <inheritdoc/>
@@ -172,20 +177,24 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         string? after = WorkflowContinuationToken.Decode(query.ContinuationToken);
         int limit = query.Limit <= 0 ? 100 : query.Limit;
 
-        // The KV bucket has no server-side ordering or filtering, so collect matches, sort by the composite
-        // sort key, and keyset-page here — mirroring how the run store answers visibility queries.
-        var matches = new List<(string SortKey, CatalogVersion Version)>();
-        await foreach (CatalogVersion candidate in this.ScanAsync(cancellationToken).ConfigureAwait(false))
+        // The KV bucket has no server-side ordering or filtering, so collect the matching header bytes, sort them by
+        // the composite sort key, then realize and page the result here — mirroring how the run store answers
+        // visibility queries. Only the matching rows are parsed (each inspected once for filtering, with the inspection
+        // document disposed before it is re-parsed into the owned page), so non-matches never enter the pool.
+        var matches = new List<(string SortKey, byte[] Header)>();
+        await foreach (byte[] header in this.ScanHeadersAsync(cancellationToken).ConfigureAwait(false))
         {
-            string sortKey = SortKey(candidate.Ref.BaseWorkflowId, candidate.Ref.VersionNumber);
+            using ParsedJsonDocument<CatalogVersion> candidate = ParsedJsonDocument<CatalogVersion>.Parse(header);
+            CatalogVersionRef reference = candidate.RootElement.Ref;
+            string sortKey = SortKey(reference.BaseWorkflowId, reference.VersionNumber);
             if (after is not null && string.CompareOrdinal(sortKey, after) <= 0)
             {
                 continue;
             }
 
-            if (Matches(candidate, query))
+            if (Matches(candidate.RootElement, query))
             {
-                matches.Add((sortKey, candidate));
+                matches.Add((sortKey, header));
             }
         }
 
@@ -194,15 +203,31 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         string? continuation = null;
         if (matches.Count > limit)
         {
+            continuation = WorkflowContinuationToken.Encode(matches[limit - 1].SortKey);
             matches = matches.GetRange(0, limit);
-            continuation = WorkflowContinuationToken.Encode(matches[^1].SortKey);
         }
 
-        return new CatalogPage(matches.ConvertAll(static m => m.Version), continuation);
+        // The page is a pooled batch of disposable version documents (the caller disposes the page); realize each
+        // selected header into the batch, disposing a partially-built batch if a parse throws.
+        var versions = new PooledDocumentList<CatalogVersion>(matches.Count);
+        try
+        {
+            foreach ((_, byte[] header) in matches)
+            {
+                versions.Add(ParsedJsonDocument<CatalogVersion>.Parse(header));
+            }
+        }
+        catch
+        {
+            versions.Dispose();
+            throw;
+        }
+
+        return new CatalogPage(versions, continuation);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<CatalogVersion?> UpdateMetadataAsync(string baseWorkflowId, int versionNumber, CatalogMetadataPatch patch, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<CatalogVersion>?> UpdateMetadataAsync(string baseWorkflowId, int versionNumber, CatalogMetadataPatch patch, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(baseWorkflowId);
         DateTimeOffset now = this.timeProvider.GetUtcNow();
@@ -213,40 +238,42 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
             return null;
         }
 
-        CatalogVersion? current = Envelope.DecodeMetadata(value);
         byte[] package = Envelope.DecodePackage(value);
 
-        if (current is not { } cur)
+        // The envelope header bytes ARE the current version document JSON; inspect them through a short-lived pooled
+        // document, then rebuild the updated header bytes — never cloning a bare value out of the read.
+        byte[] updatedHeader;
+        using (ParsedJsonDocument<CatalogVersion> currentDoc = ParsedJsonDocument<CatalogVersion>.Parse(Envelope.DecodeHeader(value)))
         {
-            return null;
+            CatalogVersion current = currentDoc.RootElement;
+            CatalogStatus currentStatus = current.StatusValue;
+            CatalogStatus status = patch.Status ?? currentStatus;
+            bool newlyObsolete = status == CatalogStatus.Obsolete && currentStatus != CatalogStatus.Obsolete;
+            bool reactivated = status == CatalogStatus.Active && currentStatus == CatalogStatus.Obsolete;
+
+            CatalogVersionRef reference = current.Ref;
+            updatedHeader = CatalogVersion.CreateBytes(
+                baseWorkflowId: reference.BaseWorkflowId,
+                versionNumber: reference.VersionNumber,
+                workflowId: reference.WorkflowId,
+                title: (string)current.Title,
+                description: current.DescriptionOrNull,
+                status: status,
+                tags: patch.Tags ?? current.TagsValue,
+                owner: patch.Owner ?? current.OwnerValue,
+                sources: current.SourcesValue,
+                hash: (string)current.Hash,
+                createdBy: (string)current.CreatedBy,
+                createdAt: current.CreatedAtValue,
+                lastUpdatedBy: patch.UpdatedBy,
+                lastUpdatedAt: now,
+                obsoletedBy: newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedByOrNull,
+                obsoletedAt: newlyObsolete ? now : reactivated ? null : current.ObsoletedAtValue,
+                runnable: (bool)current.Runnable);
         }
 
-        CatalogStatus status = patch.Status ?? cur.StatusValue;
-        bool newlyObsolete = status == CatalogStatus.Obsolete && cur.StatusValue != CatalogStatus.Obsolete;
-        bool reactivated = status == CatalogStatus.Active && cur.StatusValue == CatalogStatus.Obsolete;
-
-        CatalogVersionRef reference = cur.Ref;
-        CatalogVersion updated = CatalogVersion.Create(
-            baseWorkflowId: reference.BaseWorkflowId,
-            versionNumber: reference.VersionNumber,
-            workflowId: reference.WorkflowId,
-            title: (string)cur.Title,
-            description: cur.DescriptionOrNull,
-            status: status,
-            tags: patch.Tags ?? cur.TagsValue,
-            owner: patch.Owner ?? cur.OwnerValue,
-            sources: cur.SourcesValue,
-            hash: (string)cur.Hash,
-            createdBy: (string)cur.CreatedBy,
-            createdAt: cur.CreatedAtValue,
-            lastUpdatedBy: patch.UpdatedBy,
-            lastUpdatedAt: now,
-            obsoletedBy: newlyObsolete ? patch.UpdatedBy : reactivated ? null : cur.ObsoletedByOrNull,
-            obsoletedAt: newlyObsolete ? now : reactivated ? null : cur.ObsoletedAtValue,
-            runnable: (bool)cur.Runnable);
-
-        await this.catalog.PutAsync(key, Envelope.Encode(updated, package), cancellationToken: cancellationToken).ConfigureAwait(false);
-        return updated;
+        await this.catalog.PutAsync(key, Envelope.Encode(updatedHeader, package), cancellationToken: cancellationToken).ConfigureAwait(false);
+        return ParsedJsonDocument<CatalogVersion>.Parse(updatedHeader);
     }
 
     /// <inheritdoc/>
@@ -268,11 +295,13 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
     public async ValueTask<IReadOnlyList<CatalogVersionRef>> ListObsoleteAsync(CancellationToken cancellationToken)
     {
         var refs = new List<CatalogVersionRef>();
-        await foreach (CatalogVersion version in this.ScanAsync(cancellationToken).ConfigureAwait(false))
+        await foreach (byte[] header in this.ScanHeadersAsync(cancellationToken).ConfigureAwait(false))
         {
-            if (version.StatusValue == CatalogStatus.Obsolete)
+            using ParsedJsonDocument<CatalogVersion> doc = ParsedJsonDocument<CatalogVersion>.Parse(header);
+            if (doc.RootElement.StatusValue == CatalogStatus.Obsolete)
             {
-                refs.Add(version.Ref);
+                // CatalogVersionRef materializes its strings, so it outlives the document.
+                refs.Add(doc.RootElement.Ref);
             }
         }
 
@@ -306,7 +335,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
     private static string SortKey(string baseWorkflowId, int versionNumber)
         => string.Create(CultureInfo.InvariantCulture, $"{baseWorkflowId}{versionNumber:D10}");
 
-    private static bool Matches(CatalogVersion version, CatalogQuery query)
+    private static bool Matches(in CatalogVersion version, CatalogQuery query)
     {
         if (query.BaseWorkflowId is { } baseId && version.Ref.BaseWorkflowId != baseId)
         {
@@ -353,7 +382,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         return true;
     }
 
-    private async ValueTask<CatalogVersion> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
+    private async ValueTask<ParsedJsonDocument<CatalogVersion>> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         TagSet tags = metadata.Tags;
@@ -368,7 +397,10 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
             cancellationToken.ThrowIfCancellationRequested();
             int versionNumber = await this.MaxVersionAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false) + 1;
             CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
-            CatalogVersion version = CatalogVersion.Create(
+
+            // The envelope header IS the version document JSON; build those bytes directly (the byte-backend idiom),
+            // store the envelope, and realize a pooled, disposable document over the same header bytes for the return.
+            byte[] header = CatalogVersion.CreateBytes(
                 baseWorkflowId: baseWorkflowId,
                 versionNumber: versionNumber,
                 workflowId: projection.WorkflowId,
@@ -384,11 +416,11 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
                 runnable: projection.HasExecutor,
                 securityTags: securityTags);
 
-            byte[] value = Envelope.Encode(version, projection.CanonicalPackage.Span);
+            byte[] value = Envelope.Encode(header, projection.CanonicalPackage.Span);
             try
             {
                 await this.catalog.CreateAsync(Key(baseWorkflowId, versionNumber), value, cancellationToken: cancellationToken).ConfigureAwait(false);
-                return version;
+                return ParsedJsonDocument<CatalogVersion>.Parse(header);
             }
             catch (NatsKVException)
             {
@@ -400,9 +432,10 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
     private async ValueTask<int> MaxVersionAsync(string baseWorkflowId, CancellationToken cancellationToken)
     {
         int max = 0;
-        await foreach (CatalogVersion version in this.ScanAsync(cancellationToken).ConfigureAwait(false))
+        await foreach (byte[] header in this.ScanHeadersAsync(cancellationToken).ConfigureAwait(false))
         {
-            CatalogVersionRef reference = version.Ref;
+            using ParsedJsonDocument<CatalogVersion> doc = ParsedJsonDocument<CatalogVersion>.Parse(header);
+            CatalogVersionRef reference = doc.RootElement.Ref;
             if (reference.BaseWorkflowId == baseWorkflowId && reference.VersionNumber > max)
             {
                 max = reference.VersionNumber;
@@ -412,14 +445,16 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         return max;
     }
 
-    private async IAsyncEnumerable<CatalogVersion> ScanAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    // Yields each stored version's header bytes (the version document JSON); callers parse a short-lived pooled
+    // document over them to inspect fields, never cloning a bare value out of the scan.
+    private async IAsyncEnumerable<byte[]> ScanHeadersAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         await foreach (string key in this.catalog.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
         {
             NatsKVEntry<byte[]>? entry = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
             if (entry is { Value: { } value })
             {
-                yield return Envelope.DecodeMetadata(value);
+                yield return Envelope.DecodeHeader(value);
             }
         }
     }
@@ -457,10 +492,10 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
     private static class Envelope
     {
         // The header IS the CatalogVersion JSON document (push-JSON-to-the-store); the value is
-        // [4-byte little-endian header length][CatalogVersion JSON][package bytes].
-        public static byte[] Encode(CatalogVersion version, ReadOnlySpan<byte> package)
+        // [4-byte little-endian header length][CatalogVersion JSON][package bytes]. The header bytes are built by the
+        // byte-backend factory (CatalogVersion.CreateBytes) at the call site, so Encode just frames them.
+        public static byte[] Encode(byte[] header, ReadOnlySpan<byte> package)
         {
-            byte[] header = version.ToJsonBytes();
             var result = new byte[4 + header.Length + package.Length];
             BinaryPrimitives.WriteInt32LittleEndian(result, header.Length);
             header.CopyTo(result.AsSpan(4));
@@ -474,10 +509,12 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
             return value.AsSpan(4 + headerLength).ToArray();
         }
 
-        public static CatalogVersion DecodeMetadata(byte[] value)
+        // Returns the version document JSON bytes from the envelope; the store realizes a pooled, disposable
+        // document over them via ParsedJsonDocument<CatalogVersion>.Parse (never a bare-value clone).
+        public static byte[] DecodeHeader(byte[] value)
         {
             int headerLength = BinaryPrimitives.ReadInt32LittleEndian(value);
-            return CatalogVersion.FromJson(value.AsMemory(4, headerLength));
+            return value.AsSpan(4, headerLength).ToArray();
         }
     }
 }

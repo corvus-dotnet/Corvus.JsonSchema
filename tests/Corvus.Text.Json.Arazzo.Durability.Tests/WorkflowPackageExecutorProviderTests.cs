@@ -57,7 +57,8 @@ public class WorkflowPackageExecutorProviderTests
         var provider = new FakeExecutorProvider();
         var store = new InMemoryWorkflowCatalogStore(executorProvider: provider);
 
-        CatalogVersion version = await store.AddAsync("flow", WorkflowPackage.Pack(Workflow("flow"), []), Meta(), default);
+        using ParsedJsonDocument<CatalogVersion> versionDoc = await store.AddAsync("flow", WorkflowPackage.Pack(Workflow("flow"), []), Meta(), default);
+        CatalogVersion version = versionDoc.RootElement;
 
         // The store baked the provider's assembly into the stored package and serves it back by name.
         ReadOnlyMemory<byte>? executor = await store.GetDocumentAsync(version.Ref.BaseWorkflowId, version.Ref.VersionNumber, WorkflowPackage.ExecutorDocumentName, default);
@@ -72,7 +73,8 @@ public class WorkflowPackageExecutorProviderTests
     public async Task Store_omits_the_executor_when_no_provider_is_injected()
     {
         var store = new InMemoryWorkflowCatalogStore();
-        CatalogVersion version = await store.AddAsync("flow", WorkflowPackage.Pack(Workflow("flow"), []), Meta(), default);
+        using ParsedJsonDocument<CatalogVersion> versionDoc = await store.AddAsync("flow", WorkflowPackage.Pack(Workflow("flow"), []), Meta(), default);
+        CatalogVersion version = versionDoc.RootElement;
 
         ReadOnlyMemory<byte>? executor = await store.GetDocumentAsync(version.Ref.BaseWorkflowId, version.Ref.VersionNumber, WorkflowPackage.ExecutorDocumentName, default);
         executor.ShouldBeNull();

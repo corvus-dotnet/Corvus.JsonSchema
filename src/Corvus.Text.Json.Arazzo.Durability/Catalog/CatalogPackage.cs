@@ -97,7 +97,7 @@ public static partial class CatalogPackage
     public static CatalogPackageProjection Project(ReadOnlyMemory<byte> packageZip, string baseWorkflowId, int versionNumber, IWorkflowMetadataProvider? metadataProvider = null, IWorkflowExecutorProvider? executorProvider = null)
     {
         ArgumentNullException.ThrowIfNull(baseWorkflowId);
-        string workflowId = $"{baseWorkflowId}-v{versionNumber.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        string workflowId = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{baseWorkflowId}-v{versionNumber}");
 
         // Pooled, borrow-only read of the package's workflow + sources: the documents are views over the package buffer,
         // so the publish hot path reads them with no per-document heap allocation. Everything that outlives this scope

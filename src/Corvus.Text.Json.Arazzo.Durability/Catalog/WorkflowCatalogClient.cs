@@ -54,11 +54,11 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
     }
 
     /// <inheritdoc/>
-    public ValueTask<CatalogVersion> AddAsync(ReadOnlyMemory<byte> packageUtf8, CatalogOwner owner, TagSet tags, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(ReadOnlyMemory<byte> packageUtf8, CatalogOwner owner, TagSet tags, CancellationToken cancellationToken)
         => this.AddAsync(packageUtf8, owner, tags, securityTags: default, cancellationToken);
 
     /// <inheritdoc/>
-    public async ValueTask<CatalogVersion> AddAsync(ReadOnlyMemory<byte> packageUtf8, CatalogOwner owner, TagSet tags, SecurityTagSet securityTags, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(ReadOnlyMemory<byte> packageUtf8, CatalogOwner owner, TagSet tags, SecurityTagSet securityTags, CancellationToken cancellationToken)
     {
         using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity("catalog.add");
         activity?.SetTag(ArazzoTelemetry.ActorTag, this.actor);
@@ -112,10 +112,10 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
             }
         }
 
-        CatalogVersion version = await this.catalog.AddAsync(
+        ParsedJsonDocument<CatalogVersion> version = await this.catalog.AddAsync(
             baseWorkflowId, packageUtf8, new CatalogMetadata(owner, this.actor, tags, effectiveTags), cancellationToken).ConfigureAwait(false);
-        activity?.SetTag(ArazzoTelemetry.VersionNumberTag, version.Ref.VersionNumber);
-        activity?.SetTag(ArazzoTelemetry.WorkflowIdTag, version.Ref.WorkflowId);
+        activity?.SetTag(ArazzoTelemetry.VersionNumberTag, version.RootElement.Ref.VersionNumber);
+        activity?.SetTag(ArazzoTelemetry.WorkflowIdTag, version.RootElement.Ref.WorkflowId);
         activity?.SetTag(ArazzoTelemetry.OutcomeTag, "added");
         return version;
     }
@@ -133,13 +133,24 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
     }
 
     /// <inheritdoc/>
-    public async ValueTask<CatalogVersion?> GetAsync(string baseWorkflowId, int versionNumber, AccessContext context, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<CatalogVersion>?> GetAsync(string baseWorkflowId, int versionNumber, AccessContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        CatalogVersion? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+        ParsedJsonDocument<CatalogVersion>? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+        if (version is null)
+        {
+            return null;
+        }
 
-        // A version outside the caller's read reach is reported as absent (non-disclosing, §14.2).
-        return version is { } v && context.Admits(AccessVerb.Read, v.SecurityTagsValue) ? v : null;
+        // A version outside the caller's read reach is reported as absent (non-disclosing, §14.2) — dispose the document
+        // we won't hand back so its pooled buffer is returned rather than leaked.
+        if (context.Admits(AccessVerb.Read, version.RootElement.SecurityTagsValue))
+        {
+            return version;
+        }
+
+        version.Dispose();
+        return null;
     }
 
     /// <inheritdoc/>
@@ -167,7 +178,7 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
     }
 
     /// <inheritdoc/>
-    public async ValueTask<CatalogVersion?> UpdateAsync(string baseWorkflowId, int versionNumber, CatalogOwner? owner, TagSet? tags, CatalogStatus? status, AccessContext context, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<CatalogVersion>?> UpdateAsync(string baseWorkflowId, int versionNumber, CatalogOwner? owner, TagSet? tags, CatalogStatus? status, AccessContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
 
@@ -183,7 +194,7 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
             return null;
         }
 
-        CatalogVersion? updated = await this.catalog.UpdateMetadataAsync(
+        ParsedJsonDocument<CatalogVersion>? updated = await this.catalog.UpdateMetadataAsync(
             baseWorkflowId, versionNumber, new CatalogMetadataPatch(this.actor, owner, tags, status), cancellationToken).ConfigureAwait(false);
         activity?.SetTag(ArazzoTelemetry.OutcomeTag, updated is null ? "missing" : "updated");
         return updated;
@@ -199,16 +210,16 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
         activity?.SetTag(ArazzoTelemetry.BaseWorkflowIdTag, baseWorkflowId);
         activity?.SetTag(ArazzoTelemetry.VersionNumberTag, versionNumber);
 
-        CatalogVersion? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+        using ParsedJsonDocument<CatalogVersion>? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
 
         // Absent, or outside the caller's write reach → reported as not found (non-disclosing, §14.2).
-        if (version is not { } v || !context.Admits(AccessVerb.Write, v.SecurityTagsValue))
+        if (version is not { } v || !context.Admits(AccessVerb.Write, v.RootElement.SecurityTagsValue))
         {
             activity?.SetTag(ArazzoTelemetry.OutcomeTag, "missing");
             return CatalogDeleteOutcome.NotFound;
         }
 
-        if (await this.IsReferencedAsync((string)v.WorkflowId, cancellationToken).ConfigureAwait(false))
+        if (await this.IsReferencedAsync((string)v.RootElement.WorkflowId, cancellationToken).ConfigureAwait(false))
         {
             activity?.SetTag(ArazzoTelemetry.OutcomeTag, "referenced");
             return CatalogDeleteOutcome.Referenced;
@@ -340,9 +351,9 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
             }
         }
 
-        CatalogVersion? firstVersion = await this.catalog.GetAsync(baseWorkflowId, 1, cancellationToken).ConfigureAwait(false);
+        using ParsedJsonDocument<CatalogVersion>? firstVersion = await this.catalog.GetAsync(baseWorkflowId, 1, cancellationToken).ConfigureAwait(false);
         List<SecurityTagSet> fallback = firstVersion is { } established
-            ? [WorkflowIdentity.AdministratorIdentity(established.SecurityTagsValue)]
+            ? [WorkflowIdentity.AdministratorIdentity(established.RootElement.SecurityTagsValue)]
             : [];
         return (fallback, WorkflowEtag.None);
     }
@@ -432,14 +443,14 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
             return true;
         }
 
-        CatalogVersion? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
-        return version is { } v && context.Admits(verb, v.SecurityTagsValue);
+        using ParsedJsonDocument<CatalogVersion>? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+        return version is { } v && context.Admits(verb, v.RootElement.SecurityTagsValue);
     }
 
     private async ValueTask<bool> IsVersionVisibleAsync(string baseWorkflowId, int versionNumber, SecurityFilter security, CancellationToken cancellationToken)
     {
-        CatalogVersion? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
-        return version is { } v && security.IsSatisfiedBy(v.SecurityTagsValue);
+        using ParsedJsonDocument<CatalogVersion>? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+        return version is { } v && security.IsSatisfiedBy(v.RootElement.SecurityTagsValue);
     }
 
     private async ValueTask<bool> IsReferencedAsync(string workflowId, CancellationToken cancellationToken)

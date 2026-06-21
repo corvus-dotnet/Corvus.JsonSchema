@@ -90,8 +90,10 @@ public readonly partial struct CatalogVersion
     /// <param name="obsoletedBy">The actor that marked the version obsolete, if it is.</param>
     /// <param name="obsoletedAt">When the version was marked obsolete, if it is.</param>
     /// <param name="runnable">Whether the package carries a runnable executor assembly.</param>
-    /// <returns>The catalog version.</returns>
-    public static CatalogVersion Create(
+    /// <returns>A pooled, disposable document of the catalog version. The caller owns it — dispose it, or transfer
+    /// ownership to a <see cref="JsonWorkspace"/> (<c>workspace.TakeOwnership(doc)</c>) when its value reaches a response —
+    /// so the backing memory (and its parse metadata) returns to the pool rather than being a standalone GC allocation.</returns>
+    public static ParsedJsonDocument<CatalogVersion> Create(
         string baseWorkflowId,
         int versionNumber,
         string workflowId,
@@ -115,78 +117,152 @@ public readonly partial struct CatalogVersion
         Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter buffer);
         try
         {
-            writer.WriteStartObject();
-            writer.WriteString(JsonPropertyNames.BaseWorkflowIdUtf8, baseWorkflowId);
-            writer.WriteNumber(JsonPropertyNames.VersionNumberUtf8, versionNumber);
-            writer.WriteString(JsonPropertyNames.WorkflowIdUtf8, workflowId);
-            writer.WriteString(JsonPropertyNames.TitleUtf8, title);
-            if (description is not null)
-            {
-                writer.WriteString(JsonPropertyNames.DescriptionUtf8, description);
-            }
-
-            writer.WriteString(JsonPropertyNames.StatusUtf8, status.ToString());
-
-            writer.WritePropertyName(JsonPropertyNames.TagsUtf8);
-            tags.WriteTo(writer);
-
-            if (!securityTags.IsEmpty)
-            {
-                writer.WritePropertyName(JsonPropertyNames.SecurityTagsUtf8);
-                securityTags.WriteTo(writer);
-            }
-
-            writer.WriteStartObject(JsonPropertyNames.OwnerUtf8);
-            writer.WriteString(CatalogOwnerInfo.JsonPropertyNames.NameUtf8, owner.Name);
-            writer.WriteString(CatalogOwnerInfo.JsonPropertyNames.EmailUtf8, owner.Email);
-            if (owner.Team is not null)
-            {
-                writer.WriteString(CatalogOwnerInfo.JsonPropertyNames.TeamUtf8, owner.Team);
-            }
-
-            if (owner.Url is not null)
-            {
-                writer.WriteString(CatalogOwnerInfo.JsonPropertyNames.UrlUtf8, owner.Url);
-            }
-
-            writer.WriteEndObject();
-
-            writer.WritePropertyName(JsonPropertyNames.SourcesUtf8);
-            sources.WriteTo(writer);
-
-            writer.WriteString(JsonPropertyNames.HashUtf8, hash);
-            writer.WriteString(JsonPropertyNames.CreatedByUtf8, createdBy);
-            writer.WriteString(JsonPropertyNames.CreatedAtUtf8, createdAt);
-            if (lastUpdatedBy is not null)
-            {
-                writer.WriteString(JsonPropertyNames.LastUpdatedByUtf8, lastUpdatedBy);
-            }
-
-            if (lastUpdatedAt is { } lua)
-            {
-                writer.WriteString(JsonPropertyNames.LastUpdatedAtUtf8, lua);
-            }
-
-            if (obsoletedBy is not null)
-            {
-                writer.WriteString(JsonPropertyNames.ObsoletedByUtf8, obsoletedBy);
-            }
-
-            if (obsoletedAt is { } oa)
-            {
-                writer.WriteString(JsonPropertyNames.ObsoletedAtUtf8, oa);
-            }
-
-            writer.WriteBoolean(JsonPropertyNames.RunnableUtf8, runnable);
-            writer.WriteEndObject();
+            WriteDocument(writer, baseWorkflowId, versionNumber, workflowId, title, description, status, tags, owner, sources, hash, createdBy, createdAt, lastUpdatedBy, lastUpdatedAt, obsoletedBy, obsoletedAt, runnable, securityTags);
             writer.Flush();
-            return ParseValue(buffer.WrittenSpan);
+
+            // Pooled + disposable (rented backing + pooled parse metadata), the converted-seam idiom — not a standalone
+            // GC value. Column backends (SQL/Azure) return this directly; the handler transfers it to the request workspace.
+            return PersistedJson.ToPooledDocument<CatalogVersion>(buffer.WrittenSpan);
         }
         finally
         {
             workspace.ReturnWriterAndBuffer(writer, buffer);
         }
     }
+
+    /// <summary>Serializes a version's persisted JSON document to an owned <see cref="byte"/> array — for byte-storage
+    /// backends (and InMemory), which persist the bytes and realize a pooled <see cref="ParsedJsonDocument{T}"/> over them
+    /// on read via <see cref="ParsedJsonDocument{T}.Parse(ReadOnlyMemory{byte}, JsonDocumentOptions)"/>.</summary>
+    /// <returns>The version document's UTF-8 JSON bytes.</returns>
+    public static byte[] CreateBytes(
+        string baseWorkflowId,
+        int versionNumber,
+        string workflowId,
+        string title,
+        string? description,
+        CatalogStatus status,
+        TagSet tags,
+        CatalogOwner owner,
+        SourceSet sources,
+        string hash,
+        string createdBy,
+        DateTimeOffset createdAt,
+        string? lastUpdatedBy = null,
+        DateTimeOffset? lastUpdatedAt = null,
+        string? obsoletedBy = null,
+        DateTimeOffset? obsoletedAt = null,
+        bool runnable = false,
+        SecurityTagSet securityTags = default)
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter buffer);
+        try
+        {
+            WriteDocument(writer, baseWorkflowId, versionNumber, workflowId, title, description, status, tags, owner, sources, hash, createdBy, createdAt, lastUpdatedBy, lastUpdatedAt, obsoletedBy, obsoletedAt, runnable, securityTags);
+            writer.Flush();
+            return buffer.WrittenSpan.ToArray();
+        }
+        finally
+        {
+            workspace.ReturnWriterAndBuffer(writer, buffer);
+        }
+    }
+
+    private static void WriteDocument(
+        Utf8JsonWriter writer,
+        string baseWorkflowId,
+        int versionNumber,
+        string workflowId,
+        string title,
+        string? description,
+        CatalogStatus status,
+        TagSet tags,
+        CatalogOwner owner,
+        SourceSet sources,
+        string hash,
+        string createdBy,
+        DateTimeOffset createdAt,
+        string? lastUpdatedBy,
+        DateTimeOffset? lastUpdatedAt,
+        string? obsoletedBy,
+        DateTimeOffset? obsoletedAt,
+        bool runnable,
+        SecurityTagSet securityTags)
+    {
+        writer.WriteStartObject();
+        writer.WriteString(JsonPropertyNames.BaseWorkflowIdUtf8, baseWorkflowId);
+        writer.WriteNumber(JsonPropertyNames.VersionNumberUtf8, versionNumber);
+        writer.WriteString(JsonPropertyNames.WorkflowIdUtf8, workflowId);
+        writer.WriteString(JsonPropertyNames.TitleUtf8, title);
+        if (description is not null)
+        {
+            writer.WriteString(JsonPropertyNames.DescriptionUtf8, description);
+        }
+
+        writer.WriteString(JsonPropertyNames.StatusUtf8, StatusToUtf8(status));
+
+        writer.WritePropertyName(JsonPropertyNames.TagsUtf8);
+        tags.WriteTo(writer);
+
+        if (!securityTags.IsEmpty)
+        {
+            writer.WritePropertyName(JsonPropertyNames.SecurityTagsUtf8);
+            securityTags.WriteTo(writer);
+        }
+
+        writer.WriteStartObject(JsonPropertyNames.OwnerUtf8);
+        writer.WriteString(CatalogOwnerInfo.JsonPropertyNames.NameUtf8, owner.Name);
+        writer.WriteString(CatalogOwnerInfo.JsonPropertyNames.EmailUtf8, owner.Email);
+        if (owner.Team is not null)
+        {
+            writer.WriteString(CatalogOwnerInfo.JsonPropertyNames.TeamUtf8, owner.Team);
+        }
+
+        if (owner.Url is not null)
+        {
+            writer.WriteString(CatalogOwnerInfo.JsonPropertyNames.UrlUtf8, owner.Url);
+        }
+
+        writer.WriteEndObject();
+
+        writer.WritePropertyName(JsonPropertyNames.SourcesUtf8);
+        sources.WriteTo(writer);
+
+        writer.WriteString(JsonPropertyNames.HashUtf8, hash);
+        writer.WriteString(JsonPropertyNames.CreatedByUtf8, createdBy);
+        writer.WriteString(JsonPropertyNames.CreatedAtUtf8, createdAt);
+        if (lastUpdatedBy is not null)
+        {
+            writer.WriteString(JsonPropertyNames.LastUpdatedByUtf8, lastUpdatedBy);
+        }
+
+        if (lastUpdatedAt is { } lua)
+        {
+            writer.WriteString(JsonPropertyNames.LastUpdatedAtUtf8, lua);
+        }
+
+        if (obsoletedBy is not null)
+        {
+            writer.WriteString(JsonPropertyNames.ObsoletedByUtf8, obsoletedBy);
+        }
+
+        if (obsoletedAt is { } oa)
+        {
+            writer.WriteString(JsonPropertyNames.ObsoletedAtUtf8, oa);
+        }
+
+        writer.WriteBoolean(JsonPropertyNames.RunnableUtf8, runnable);
+        writer.WriteEndObject();
+    }
+
+    // The persisted status token as a UTF-8 constant — avoids an enum.ToString() string allocation per build. Must
+    // round-trip through StatusValue's Enum.Parse, so the bytes equal the enum member names.
+    private static ReadOnlySpan<byte> StatusToUtf8(CatalogStatus status) => status switch
+    {
+        CatalogStatus.Active => "Active"u8,
+        CatalogStatus.Obsolete => "Obsolete"u8,
+        _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Unknown catalog status."),
+    };
 
     /// <summary>Parses a <see cref="CatalogVersion"/> from its persisted JSON document, detached from the parse buffer.</summary>
     /// <param name="utf8">The UTF-8 JSON document.</param>

@@ -4,6 +4,7 @@
 
 using System.Linq;
 using System.Text;
+using Corvus.Text.Json;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 
@@ -45,7 +46,8 @@ public abstract class WorkflowCatalogStoreConformance
     public async Task Add_assigns_v1_rewrites_id_and_projects_metadata()
     {
         IWorkflowCatalogStore store = await this.NewStoreAsync();
-        CatalogVersion version = await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default);
+        using ParsedJsonDocument<CatalogVersion> versionDoc = await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default);
+        CatalogVersion version = versionDoc.RootElement;
 
         version.Ref.VersionNumber.ShouldBe(1);
         version.Ref.BaseWorkflowId.ShouldBe("nightly-reconcile");
@@ -65,8 +67,9 @@ public abstract class WorkflowCatalogStoreConformance
     public async Task Add_second_version_assigns_v2()
     {
         IWorkflowCatalogStore store = await this.NewStoreAsync();
-        await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default);
-        CatalogVersion second = await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default);
+        (await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default)).Dispose();
+        using ParsedJsonDocument<CatalogVersion> secondDoc = await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default);
+        CatalogVersion second = secondDoc.RootElement;
 
         second.Ref.VersionNumber.ShouldBe(2);
         second.Ref.WorkflowId.ShouldBe("nightly-reconcile-v2");
@@ -76,14 +79,17 @@ public abstract class WorkflowCatalogStoreConformance
     public async Task Identical_packages_hash_identically()
     {
         IWorkflowCatalogStore store = await this.NewStoreAsync();
-        CatalogVersion a = await store.AddAsync("base-a", Package("base-a"), Meta(), default);
-        CatalogVersion b = await store.AddAsync("base-b", Package("base-b"), Meta(), default);
+        using ParsedJsonDocument<CatalogVersion> aDoc = await store.AddAsync("base-a", Package("base-a"), Meta(), default);
+        using ParsedJsonDocument<CatalogVersion> bDoc = await store.AddAsync("base-b", Package("base-b"), Meta(), default);
+        CatalogVersion a = aDoc.RootElement;
+        CatalogVersion b = bDoc.RootElement;
 
         // The only content difference is the workflow id, which both rewrite to "-v1"; everything else is equal,
         // so the canonical hashes differ only because the ids differ — different base ids => different hashes.
         ((string)a.Hash).ShouldNotBe((string)b.Hash);
 
-        CatalogVersion a2 = await store.AddAsync("base-a", Package("base-a"), Meta(), default);
+        using ParsedJsonDocument<CatalogVersion> a2Doc = await store.AddAsync("base-a", Package("base-a"), Meta(), default);
+        CatalogVersion a2 = a2Doc.RootElement;
         a2.Ref.WorkflowId.ShouldBe("base-a-v2");
         ((string)a2.Hash).ShouldNotBe((string)a.Hash); // v1 vs v2 ids differ
     }
@@ -92,9 +98,13 @@ public abstract class WorkflowCatalogStoreConformance
     public async Task Get_returns_metadata_and_unknown_returns_null()
     {
         IWorkflowCatalogStore store = await this.NewStoreAsync();
-        await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default);
+        (await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default)).Dispose();
 
-        (await store.GetAsync("nightly-reconcile", 1, default)).ShouldNotBeNull();
+        using (ParsedJsonDocument<CatalogVersion>? present = await store.GetAsync("nightly-reconcile", 1, default))
+        {
+            present.ShouldNotBeNull();
+        }
+
         (await store.GetAsync("nightly-reconcile", 2, default)).ShouldBeNull();
         (await store.GetAsync("missing", 1, default)).ShouldBeNull();
     }
@@ -103,7 +113,7 @@ public abstract class WorkflowCatalogStoreConformance
     public async Task GetPackage_returns_canonical_bytes_with_versioned_id()
     {
         IWorkflowCatalogStore store = await this.NewStoreAsync();
-        await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default);
+        (await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default)).Dispose();
 
         ReadOnlyMemory<byte>? package = await store.GetPackageAsync("nightly-reconcile", 1, default);
         package.ShouldNotBeNull();
@@ -118,7 +128,7 @@ public abstract class WorkflowCatalogStoreConformance
     public async Task GetDocument_returns_workflow_source_or_null()
     {
         IWorkflowCatalogStore store = await this.NewStoreAsync();
-        await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default);
+        (await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default)).Dispose();
 
         ReadOnlyMemory<byte>? workflow = await store.GetDocumentAsync("nightly-reconcile", 1, CatalogPackage.WorkflowDocumentName, default);
         workflow.ShouldNotBeNull();
@@ -135,62 +145,64 @@ public abstract class WorkflowCatalogStoreConformance
     public async Task Query_filters_by_base_tag_status_text_and_owner()
     {
         IWorkflowCatalogStore store = await this.NewStoreAsync();
-        await store.AddAsync("alpha", Package("alpha", title: "Alpha Flow"), Meta(tags: ["prod", "billing"]), default);
-        await store.AddAsync("beta", Package("beta", title: "Beta Flow"), Meta(tags: ["prod"]), default);
+        (await store.AddAsync("alpha", Package("alpha", title: "Alpha Flow"), Meta(tags: ["prod", "billing"]), default)).Dispose();
+        (await store.AddAsync("beta", Package("beta", title: "Beta Flow"), Meta(tags: ["prod"]), default)).Dispose();
 
-        (await store.QueryAsync(new CatalogQuery(BaseWorkflowId: "alpha"), default)).Versions.Count.ShouldBe(1);
-        (await store.QueryAsync(new CatalogQuery(Tags: TagSet.FromTags(["prod"])), default)).Versions.Count.ShouldBe(2);
-        (await store.QueryAsync(new CatalogQuery(Tags: TagSet.FromTags(["prod", "billing"])), default)).Versions.Count.ShouldBe(1);
-        (await store.QueryAsync(new CatalogQuery(Text: "alpha"), default)).Versions.Count.ShouldBe(1);
-        (await store.QueryAsync(new CatalogQuery(Owner: "team-a@example.com"), default)).Versions.Count.ShouldBe(2);
-        (await store.QueryAsync(new CatalogQuery(Status: CatalogStatus.Obsolete), default)).Versions.Count.ShouldBe(0);
+        await this.QueryCountShouldBe(store, new CatalogQuery(BaseWorkflowId: "alpha"), 1);
+        await this.QueryCountShouldBe(store, new CatalogQuery(Tags: TagSet.FromTags(["prod"])), 2);
+        await this.QueryCountShouldBe(store, new CatalogQuery(Tags: TagSet.FromTags(["prod", "billing"])), 1);
+        await this.QueryCountShouldBe(store, new CatalogQuery(Text: "alpha"), 1);
+        await this.QueryCountShouldBe(store, new CatalogQuery(Owner: "team-a@example.com"), 2);
+        await this.QueryCountShouldBe(store, new CatalogQuery(Status: CatalogStatus.Obsolete), 0);
     }
 
     [TestMethod]
     public async Task Query_filters_by_workflow_id_prefix()
     {
         IWorkflowCatalogStore store = await this.NewStoreAsync();
-        await store.AddAsync("adopt-pet", Package("adopt-pet"), Meta(), default);                   // adopt-pet-v1
-        await store.AddAsync("adopt-pet", Package("adopt-pet"), Meta(), default);                   // adopt-pet-v2
-        await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default);   // nightly-reconcile-v1
-        await store.AddAsync("Billing-Sync", Package("Billing-Sync"), Meta(), default);             // Billing-Sync-v1 (mixed case)
+        (await store.AddAsync("adopt-pet", Package("adopt-pet"), Meta(), default)).Dispose();                 // adopt-pet-v1
+        (await store.AddAsync("adopt-pet", Package("adopt-pet"), Meta(), default)).Dispose();                 // adopt-pet-v2
+        (await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default)).Dispose(); // nightly-reconcile-v1
+        (await store.AddAsync("Billing-Sync", Package("Billing-Sync"), Meta(), default)).Dispose();           // Billing-Sync-v1 (mixed case)
 
         // A base-name prefix matches every version of that workflow (the versioned id begins with the base id).
-        (await store.QueryAsync(new CatalogQuery(WorkflowIdPrefix: "adopt"), default)).Versions.Count.ShouldBe(2);
+        await this.QueryCountShouldBe(store, new CatalogQuery(WorkflowIdPrefix: "adopt"), 2);
         // A versioned-id prefix narrows to the single version.
-        (await store.QueryAsync(new CatalogQuery(WorkflowIdPrefix: "adopt-pet-v2"), default)).Versions.Count.ShouldBe(1);
+        await this.QueryCountShouldBe(store, new CatalogQuery(WorkflowIdPrefix: "adopt-pet-v2"), 1);
         // A different workflow.
-        (await store.QueryAsync(new CatalogQuery(WorkflowIdPrefix: "nightly"), default)).Versions.Count.ShouldBe(1);
+        await this.QueryCountShouldBe(store, new CatalogQuery(WorkflowIdPrefix: "nightly"), 1);
         // No match.
-        (await store.QueryAsync(new CatalogQuery(WorkflowIdPrefix: "zzz"), default)).Versions.Count.ShouldBe(0);
+        await this.QueryCountShouldBe(store, new CatalogQuery(WorkflowIdPrefix: "zzz"), 0);
 
         // Case-insensitive BOTH ways: an upper-case prefix matches lower-case ids, and a lower-case prefix
         // matches a mixed-case id. (Backends index this via lower()/NOCASE/lowered-field, see the stores.)
-        (await store.QueryAsync(new CatalogQuery(WorkflowIdPrefix: "ADOPT-PET"), default)).Versions.Count.ShouldBe(2);
-        (await store.QueryAsync(new CatalogQuery(WorkflowIdPrefix: "AdOpT"), default)).Versions.Count.ShouldBe(2);
-        (await store.QueryAsync(new CatalogQuery(WorkflowIdPrefix: "billing"), default)).Versions.Count.ShouldBe(1);
-        (await store.QueryAsync(new CatalogQuery(WorkflowIdPrefix: "BILLING-SYNC"), default)).Versions.Count.ShouldBe(1);
-        (await store.QueryAsync(new CatalogQuery(WorkflowIdPrefix: "billing-sync-v1"), default)).Versions.Count.ShouldBe(1);
+        await this.QueryCountShouldBe(store, new CatalogQuery(WorkflowIdPrefix: "ADOPT-PET"), 2);
+        await this.QueryCountShouldBe(store, new CatalogQuery(WorkflowIdPrefix: "AdOpT"), 2);
+        await this.QueryCountShouldBe(store, new CatalogQuery(WorkflowIdPrefix: "billing"), 1);
+        await this.QueryCountShouldBe(store, new CatalogQuery(WorkflowIdPrefix: "BILLING-SYNC"), 1);
+        await this.QueryCountShouldBe(store, new CatalogQuery(WorkflowIdPrefix: "billing-sync-v1"), 1);
     }
 
     [TestMethod]
     public async Task Query_pages_by_keyset()
     {
         IWorkflowCatalogStore store = await this.NewStoreAsync();
-        await store.AddAsync("a", Package("a"), Meta(), default);
-        await store.AddAsync("b", Package("b"), Meta(), default);
-        await store.AddAsync("c", Package("c"), Meta(), default);
+        (await store.AddAsync("a", Package("a"), Meta(), default)).Dispose();
+        (await store.AddAsync("b", Package("b"), Meta(), default)).Dispose();
+        (await store.AddAsync("c", Package("c"), Meta(), default)).Dispose();
 
-        CatalogPage first = await store.QueryAsync(new CatalogQuery(Limit: 2), default);
+        using CatalogPage first = await store.QueryAsync(new CatalogQuery(Limit: 2), default);
         first.Versions.Count.ShouldBe(2);
         first.ContinuationToken.ShouldNotBeNull();
 
-        CatalogPage second = await store.QueryAsync(new CatalogQuery(Limit: 2, ContinuationToken: first.ContinuationToken), default);
+        using CatalogPage second = await store.QueryAsync(new CatalogQuery(Limit: 2, ContinuationToken: first.ContinuationToken), default);
         second.Versions.Count.ShouldBe(1);
         second.ContinuationToken.ShouldBeNull();
 
+        // Materialize the ids while both pages are still alive (their version values are valid only until disposal).
         first.Versions.Select(v => v.Ref.BaseWorkflowId)
             .Concat(second.Versions.Select(v => v.Ref.BaseWorkflowId))
+            .ToList()
             .ShouldBe(["a", "b", "c"]);
     }
 
@@ -199,14 +211,14 @@ public abstract class WorkflowCatalogStoreConformance
     {
         var clock = new TestClock(T0);
         IWorkflowCatalogStore store = await this.NewStoreAsync(clock);
-        await store.AddAsync("svc", Package("svc"), Meta(), default);
+        (await store.AddAsync("svc", Package("svc"), Meta(), default)).Dispose();
         clock.Advance(TimeSpan.FromHours(1));
 
-        CatalogVersion? updated = await store.UpdateMetadataAsync(
+        using ParsedJsonDocument<CatalogVersion>? updated = await store.UpdateMetadataAsync(
             "svc", 1, new CatalogMetadataPatch("bob", Owner: new CatalogOwner("Team B", "team-b@example.com"), Tags: TagSet.FromTags(["retired"]), Status: CatalogStatus.Obsolete), default);
 
         updated.ShouldNotBeNull();
-        CatalogVersion updatedValue = updated.Value;
+        CatalogVersion updatedValue = updated.RootElement;
         updatedValue.OwnerValue.Name.ShouldBe("Team B");
         updatedValue.TagsValue.ToList().ShouldBe(["retired"]);
         updatedValue.StatusValue.ShouldBe(CatalogStatus.Obsolete);
@@ -220,12 +232,12 @@ public abstract class WorkflowCatalogStoreConformance
     public async Task Update_partial_leaves_unset_fields_unchanged()
     {
         IWorkflowCatalogStore store = await this.NewStoreAsync();
-        await store.AddAsync("svc", Package("svc"), Meta(tags: ["keep"]), default);
+        (await store.AddAsync("svc", Package("svc"), Meta(tags: ["keep"]), default)).Dispose();
 
-        CatalogVersion? updated = await store.UpdateMetadataAsync("svc", 1, new CatalogMetadataPatch("bob"), default);
+        using ParsedJsonDocument<CatalogVersion>? updated = await store.UpdateMetadataAsync("svc", 1, new CatalogMetadataPatch("bob"), default);
 
         updated.ShouldNotBeNull();
-        CatalogVersion updatedValue = updated.Value;
+        CatalogVersion updatedValue = updated.RootElement;
         updatedValue.TagsValue.ToList().ShouldBe(["keep"]);
         updatedValue.OwnerValue.Email.ShouldBe("team-a@example.com");
         updatedValue.StatusValue.ShouldBe(CatalogStatus.Active);
@@ -235,13 +247,13 @@ public abstract class WorkflowCatalogStoreConformance
     public async Task Update_reactivation_clears_obsoletion()
     {
         IWorkflowCatalogStore store = await this.NewStoreAsync();
-        await store.AddAsync("svc", Package("svc"), Meta(), default);
-        await store.UpdateMetadataAsync("svc", 1, new CatalogMetadataPatch("bob", Status: CatalogStatus.Obsolete), default);
+        (await store.AddAsync("svc", Package("svc"), Meta(), default)).Dispose();
+        (await store.UpdateMetadataAsync("svc", 1, new CatalogMetadataPatch("bob", Status: CatalogStatus.Obsolete), default))?.Dispose();
 
-        CatalogVersion? reactivated = await store.UpdateMetadataAsync("svc", 1, new CatalogMetadataPatch("carol", Status: CatalogStatus.Active), default);
+        using ParsedJsonDocument<CatalogVersion>? reactivated = await store.UpdateMetadataAsync("svc", 1, new CatalogMetadataPatch("carol", Status: CatalogStatus.Active), default);
 
         reactivated.ShouldNotBeNull();
-        CatalogVersion reactivatedValue = reactivated.Value;
+        CatalogVersion reactivatedValue = reactivated.RootElement;
         reactivatedValue.StatusValue.ShouldBe(CatalogStatus.Active);
         reactivatedValue.ObsoletedByOrNull.ShouldBeNull();
         reactivatedValue.ObsoletedAtValue.ShouldBeNull();
@@ -258,7 +270,7 @@ public abstract class WorkflowCatalogStoreConformance
     public async Task Delete_removes_and_unknown_returns_false()
     {
         IWorkflowCatalogStore store = await this.NewStoreAsync();
-        await store.AddAsync("svc", Package("svc"), Meta(), default);
+        (await store.AddAsync("svc", Package("svc"), Meta(), default)).Dispose();
 
         (await store.DeleteAsync("svc", 1, default)).ShouldBeTrue();
         (await store.GetAsync("svc", 1, default)).ShouldBeNull();
@@ -269,9 +281,9 @@ public abstract class WorkflowCatalogStoreConformance
     public async Task ListObsolete_then_DeleteMany_reaps_them()
     {
         IWorkflowCatalogStore store = await this.NewStoreAsync();
-        await store.AddAsync("svc", Package("svc"), Meta(), default);
-        await store.AddAsync("svc", Package("svc"), Meta(), default);
-        await store.UpdateMetadataAsync("svc", 1, new CatalogMetadataPatch("bob", Status: CatalogStatus.Obsolete), default);
+        (await store.AddAsync("svc", Package("svc"), Meta(), default)).Dispose();
+        (await store.AddAsync("svc", Package("svc"), Meta(), default)).Dispose();
+        (await store.UpdateMetadataAsync("svc", 1, new CatalogMetadataPatch("bob", Status: CatalogStatus.Obsolete), default))?.Dispose();
 
         IReadOnlyList<CatalogVersionRef> obsolete = await store.ListObsoleteAsync(default);
         obsolete.Count.ShouldBe(1);
@@ -279,7 +291,11 @@ public abstract class WorkflowCatalogStoreConformance
 
         await store.DeleteManyAsync(obsolete, default);
         (await store.GetAsync("svc", 1, default)).ShouldBeNull();
-        (await store.GetAsync("svc", 2, default)).ShouldNotBeNull();
+
+        using (ParsedJsonDocument<CatalogVersion>? remaining = await store.GetAsync("svc", 2, default))
+        {
+            remaining.ShouldNotBeNull();
+        }
     }
 
     [TestMethod]
@@ -290,18 +306,19 @@ public abstract class WorkflowCatalogStoreConformance
         // Without this the control-plane client would deny a restricted principal access to its own version.
         IWorkflowCatalogStore store = await this.NewStoreAsync();
         SecurityTag[] tags = [new("tenant", "acme"), new("tenant", "beta"), new("team", "payments")];
-        CatalogVersion added = await store.AddAsync(
+        using ParsedJsonDocument<CatalogVersion> addedDoc = await store.AddAsync(
             "secure-flow",
             Package("secure-flow"),
             new CatalogMetadata(new CatalogOwner("Team A", "team-a@example.com"), "alice", default, SecurityTagSet.FromTags(tags)),
             default);
+        CatalogVersion added = addedDoc.RootElement;
 
         added.SecurityTagsValue.ToList().OrderBy(t => t.Key).ThenBy(t => t.Value).ShouldBe(
             tags.OrderBy(t => t.Key).ThenBy(t => t.Value));
 
-        CatalogVersion? fetched = await store.GetAsync("secure-flow", added.Ref.VersionNumber, default);
+        using ParsedJsonDocument<CatalogVersion>? fetched = await store.GetAsync("secure-flow", added.Ref.VersionNumber, default);
         fetched.ShouldNotBeNull();
-        fetched.Value.SecurityTagsValue.ToList().OrderBy(t => t.Key).ThenBy(t => t.Value).ShouldBe(
+        fetched.RootElement.SecurityTagsValue.ToList().OrderBy(t => t.Key).ThenBy(t => t.Value).ShouldBe(
             tags.OrderBy(t => t.Key).ThenBy(t => t.Value));
     }
 
@@ -326,7 +343,7 @@ public abstract class WorkflowCatalogStoreConformance
         ];
         foreach ((string baseId, SecurityTag[] tags) in rows)
         {
-            await store.AddAsync(baseId, Package(baseId), new CatalogMetadata(new CatalogOwner("Team A", "team-a@example.com"), "alice", default, SecurityTagSet.FromTags(tags)), default);
+            (await store.AddAsync(baseId, Package(baseId), new CatalogMetadata(new CatalogOwner("Team A", "team-a@example.com"), "alice", default, SecurityTagSet.FromTags(tags)), default)).Dispose();
         }
 
         var claims = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal)
@@ -360,7 +377,7 @@ public abstract class WorkflowCatalogStoreConformance
         foreach (string ruleText in ruleShapes)
         {
             var filter = new SecurityFilter([SecurityRule.Compile(ruleText)], claims);
-            CatalogPage page = await store.QueryAsync(new CatalogQuery(Limit: 1000, Security: filter), default);
+            using CatalogPage page = await store.QueryAsync(new CatalogQuery(Limit: 1000, Security: filter), default);
 
             List<string> actual = page.Versions.Select(v => v.Ref.BaseWorkflowId).OrderBy(x => x, StringComparer.Ordinal).ToList();
             List<string> expected = rows.Where(r => filter.IsSatisfiedBy(r.Tags)).Select(r => r.Base).OrderBy(x => x, StringComparer.Ordinal).ToList();
@@ -370,6 +387,13 @@ public abstract class WorkflowCatalogStoreConformance
 
     private static CatalogMetadata Meta(IReadOnlyList<string>? tags = null)
         => new(new CatalogOwner("Team A", "team-a@example.com"), "alice", TagSet.FromTags(tags));
+
+    /// <summary>Runs a query, asserts the returned (pooled, disposable) page holds the expected version count, and returns the page's buffers to the pool.</summary>
+    private async Task QueryCountShouldBe(IWorkflowCatalogStore store, CatalogQuery query, int expected)
+    {
+        using CatalogPage page = await store.QueryAsync(query, default);
+        page.Versions.Count.ShouldBe(expected);
+    }
 
     private static ReadOnlyMemory<byte> Package(string workflowId, string title = "Nightly Reconcile")
     {

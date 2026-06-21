@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Globalization;
+using System.Runtime.InteropServices;
 
 namespace Corvus.Text.Json.Arazzo.Durability;
 
@@ -35,7 +36,7 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
     }
 
     /// <inheritdoc/>
-    public ValueTask<CatalogVersion> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         cancellationToken.ThrowIfCancellationRequested();
@@ -46,7 +47,11 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
         {
             int versionNumber = this.MaxVersion(baseWorkflowId) + 1;
             CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
-            CatalogVersion version = CatalogVersion.Create(
+
+            // Persist the version as its document BYTES (the durable form), then realize a pooled, disposable document
+            // over those owned bytes for the return — the MetadataDb is rented (returned on the caller's Dispose), not
+            // a standalone GC allocation. The stored byte[] outlives every returned document, so Parse may reference it.
+            byte[] versionDoc = CatalogVersion.CreateBytes(
                 baseWorkflowId: baseWorkflowId,
                 versionNumber: versionNumber,
                 workflowId: projection.WorkflowId,
@@ -62,19 +67,28 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
                 runnable: projection.HasExecutor,
                 securityTags: metadata.SecurityTags);
 
-            this.versions[SortKey(baseWorkflowId, versionNumber)] = new Stored(version, projection.CanonicalPackage.ToArray());
-            return ValueTask.FromResult(version);
+            // The projection is the sole owner of its freshly-built canonical-package array, so take it directly rather
+            // than copying — PackPooled returns an exact-sized array, so the ReadOnlyMemory wraps it whole.
+            byte[] packageBytes = MemoryMarshal.TryGetArray(projection.CanonicalPackage, out ArraySegment<byte> segment)
+                && segment.Offset == 0 && segment.Array is { } array && array.Length == segment.Count
+                ? array
+                : projection.CanonicalPackage.ToArray();
+
+            this.versions[SortKey(baseWorkflowId, versionNumber)] = new Stored(versionDoc, packageBytes);
+            return ValueTask.FromResult(ParsedJsonDocument<CatalogVersion>.Parse(versionDoc));
         }
     }
 
     /// <inheritdoc/>
-    public ValueTask<CatalogVersion?> GetAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<CatalogVersion>?> GetAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         lock (this.gate)
         {
             return ValueTask.FromResult(
-                this.versions.TryGetValue(SortKey(baseWorkflowId, versionNumber), out Stored stored) ? (CatalogVersion?)stored.Version : null);
+                this.versions.TryGetValue(SortKey(baseWorkflowId, versionNumber), out Stored stored)
+                    ? ParsedJsonDocument<CatalogVersion>.Parse(stored.VersionDoc)
+                    : null);
         }
     }
 
@@ -109,39 +123,53 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
         cancellationToken.ThrowIfCancellationRequested();
         string? after = WorkflowContinuationToken.Decode(query.ContinuationToken);
         int limit = query.Limit <= 0 ? 100 : query.Limit;
-        var matches = new List<CatalogVersion>();
+
+        // The page is a pooled batch of disposable version documents (the caller disposes the page). Each candidate is
+        // parsed once; matches are kept in the batch, non-matches and the look-ahead row are disposed immediately.
+        var matches = new PooledDocumentList<CatalogVersion>(limit);
         string? continuation = null;
-        lock (this.gate)
+        try
         {
-            foreach (KeyValuePair<string, Stored> entry in this.versions)
+            lock (this.gate)
             {
-                if (after is not null && string.CompareOrdinal(entry.Key, after) <= 0)
+                foreach (KeyValuePair<string, Stored> entry in this.versions)
                 {
-                    continue;
-                }
+                    if (after is not null && string.CompareOrdinal(entry.Key, after) <= 0)
+                    {
+                        continue;
+                    }
 
-                CatalogVersion candidate = entry.Value.Version;
-                if (!Matches(candidate, query))
-                {
-                    continue;
-                }
+                    ParsedJsonDocument<CatalogVersion> candidate = ParsedJsonDocument<CatalogVersion>.Parse(entry.Value.VersionDoc);
+                    if (!Matches(candidate.RootElement, query))
+                    {
+                        candidate.Dispose();
+                        continue;
+                    }
 
-                if (matches.Count == limit)
-                {
-                    // There is at least one more matching row beyond this page.
-                    continuation = WorkflowContinuationToken.Encode(SortKey(matches[^1].Ref.BaseWorkflowId, matches[^1].Ref.VersionNumber));
-                    break;
-                }
+                    if (matches.Count == limit)
+                    {
+                        // There is at least one more matching row beyond this page.
+                        CatalogVersionRef last = matches[matches.Count - 1].Ref;
+                        continuation = WorkflowContinuationToken.Encode(SortKey(last.BaseWorkflowId, last.VersionNumber));
+                        candidate.Dispose();
+                        break;
+                    }
 
-                matches.Add(candidate);
+                    matches.Add(candidate);
+                }
             }
+        }
+        catch
+        {
+            matches.Dispose();
+            throw;
         }
 
         return ValueTask.FromResult(new CatalogPage(matches, continuation));
     }
 
     /// <inheritdoc/>
-    public ValueTask<CatalogVersion?> UpdateMetadataAsync(string baseWorkflowId, int versionNumber, CatalogMetadataPatch patch, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<CatalogVersion>?> UpdateMetadataAsync(string baseWorkflowId, int versionNumber, CatalogMetadataPatch patch, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         DateTimeOffset now = this.timeProvider.GetUtcNow();
@@ -150,36 +178,40 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
             string key = SortKey(baseWorkflowId, versionNumber);
             if (!this.versions.TryGetValue(key, out Stored stored))
             {
-                return ValueTask.FromResult<CatalogVersion?>(null);
+                return ValueTask.FromResult<ParsedJsonDocument<CatalogVersion>?>(null);
             }
 
-            CatalogVersion current = stored.Version;
-            CatalogStatus currentStatus = current.StatusValue;
-            CatalogStatus status = patch.Status ?? currentStatus;
-            bool newlyObsolete = status == CatalogStatus.Obsolete && currentStatus != CatalogStatus.Obsolete;
-            bool reactivated = status == CatalogStatus.Active && currentStatus == CatalogStatus.Obsolete;
+            byte[] updatedDoc;
+            using (ParsedJsonDocument<CatalogVersion> currentDoc = ParsedJsonDocument<CatalogVersion>.Parse(stored.VersionDoc))
+            {
+                CatalogVersion current = currentDoc.RootElement;
+                CatalogStatus currentStatus = current.StatusValue;
+                CatalogStatus status = patch.Status ?? currentStatus;
+                bool newlyObsolete = status == CatalogStatus.Obsolete && currentStatus != CatalogStatus.Obsolete;
+                bool reactivated = status == CatalogStatus.Active && currentStatus == CatalogStatus.Obsolete;
 
-            CatalogVersion updated = CatalogVersion.Create(
-                baseWorkflowId: current.Ref.BaseWorkflowId,
-                versionNumber: current.Ref.VersionNumber,
-                workflowId: current.Ref.WorkflowId,
-                title: (string)current.Title,
-                description: current.DescriptionOrNull,
-                status: status,
-                tags: patch.Tags ?? current.TagsValue,
-                owner: patch.Owner ?? current.OwnerValue,
-                sources: current.SourcesValue,
-                hash: (string)current.Hash,
-                createdBy: (string)current.CreatedBy,
-                createdAt: current.CreatedAtValue,
-                lastUpdatedBy: patch.UpdatedBy,
-                lastUpdatedAt: now,
-                obsoletedBy: newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedByOrNull,
-                obsoletedAt: newlyObsolete ? now : reactivated ? null : current.ObsoletedAtValue,
-                runnable: (bool)current.Runnable);
+                updatedDoc = CatalogVersion.CreateBytes(
+                    baseWorkflowId: current.Ref.BaseWorkflowId,
+                    versionNumber: current.Ref.VersionNumber,
+                    workflowId: current.Ref.WorkflowId,
+                    title: (string)current.Title,
+                    description: current.DescriptionOrNull,
+                    status: status,
+                    tags: patch.Tags ?? current.TagsValue,
+                    owner: patch.Owner ?? current.OwnerValue,
+                    sources: current.SourcesValue,
+                    hash: (string)current.Hash,
+                    createdBy: (string)current.CreatedBy,
+                    createdAt: current.CreatedAtValue,
+                    lastUpdatedBy: patch.UpdatedBy,
+                    lastUpdatedAt: now,
+                    obsoletedBy: newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedByOrNull,
+                    obsoletedAt: newlyObsolete ? now : reactivated ? null : current.ObsoletedAtValue,
+                    runnable: (bool)current.Runnable);
+            }
 
-            this.versions[key] = stored with { Version = updated };
-            return ValueTask.FromResult<CatalogVersion?>(updated);
+            this.versions[key] = stored with { VersionDoc = updatedDoc };
+            return ValueTask.FromResult<ParsedJsonDocument<CatalogVersion>?>(ParsedJsonDocument<CatalogVersion>.Parse(updatedDoc));
         }
     }
 
@@ -199,11 +231,18 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
         cancellationToken.ThrowIfCancellationRequested();
         lock (this.gate)
         {
-            IReadOnlyList<CatalogVersionRef> obsolete = this.versions.Values
-                .Where(s => s.Version.StatusValue == CatalogStatus.Obsolete)
-                .Select(s => s.Version.Ref)
-                .ToList();
-            return ValueTask.FromResult(obsolete);
+            var obsolete = new List<CatalogVersionRef>();
+            foreach (Stored s in this.versions.Values)
+            {
+                using ParsedJsonDocument<CatalogVersion> doc = ParsedJsonDocument<CatalogVersion>.Parse(s.VersionDoc);
+                if (doc.RootElement.StatusValue == CatalogStatus.Obsolete)
+                {
+                    // CatalogVersionRef materializes its strings, so it outlives the document.
+                    obsolete.Add(doc.RootElement.Ref);
+                }
+            }
+
+            return ValueTask.FromResult<IReadOnlyList<CatalogVersionRef>>(obsolete);
         }
     }
 
@@ -278,7 +317,8 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
         int max = 0;
         foreach (Stored stored in this.versions.Values)
         {
-            CatalogVersionRef reference = stored.Version.Ref;
+            using ParsedJsonDocument<CatalogVersion> doc = ParsedJsonDocument<CatalogVersion>.Parse(stored.VersionDoc);
+            CatalogVersionRef reference = doc.RootElement.Ref;
             if (reference.BaseWorkflowId == baseWorkflowId && reference.VersionNumber > max)
             {
                 max = reference.VersionNumber;
@@ -288,5 +328,7 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
         return max;
     }
 
-    private readonly record struct Stored(CatalogVersion Version, byte[] Package);
+    // The persisted version document bytes (the durable form) + the canonical package bytes. The typed CatalogVersion is
+    // realized from VersionDoc only at the leaf (read/return), as a pooled, disposable document — never stored standalone.
+    private readonly record struct Stored(byte[] VersionDoc, byte[] Package);
 }

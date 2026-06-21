@@ -103,14 +103,19 @@ public sealed class HostedWorkflowResumer
             return cached.Workflow;
         }
 
-        CatalogVersion version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false)
-            ?? throw new InvalidOperationException($"Version {versionNumber} of '{baseWorkflowId}' is not in the catalog.");
+        // The version document is owned here only to read its hash (an owned copy, safe after dispose).
+        string hash;
+        using (ParsedJsonDocument<CatalogVersion> versionDoc = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false)
+            ?? throw new InvalidOperationException($"Version {versionNumber} of '{baseWorkflowId}' is not in the catalog."))
+        {
+            hash = (string)versionDoc.RootElement.Hash;
+        }
 
         ReadOnlyMemory<byte> assembly = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorDocumentName, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Version {versionNumber} of '{baseWorkflowId}' is not runnable (no executor in the package).");
         ReadOnlyMemory<byte> manifest = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorManifestDocumentName, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Version {versionNumber} of '{baseWorkflowId}' has an executor but no manifest.");
 
-        return this.loader.Load(baseWorkflowId, versionNumber, assembly, manifest, (string)version.Hash).Workflow;
+        return this.loader.Load(baseWorkflowId, versionNumber, assembly, manifest, hash).Workflow;
     }
 }
