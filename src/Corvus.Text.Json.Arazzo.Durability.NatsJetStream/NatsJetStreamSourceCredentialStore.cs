@@ -138,11 +138,17 @@ public sealed class NatsJetStreamSourceCredentialStore : ISourceCredentialStore,
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, string? pageToken, CancellationToken cancellationToken)
+    public async ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         int pageSize = limit > 0 ? limit : 1;
-        bool hasCursor = SourceCredentialContinuationToken.TryDecode(pageToken, out (string SourceName, string Environment, string TieBreaker) cursor);
+        (string SourceName, string Environment, string TieBreaker) cursor = (string.Empty, string.Empty, string.Empty);
+        bool hasCursor = false;
+        if (pageToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+            hasCursor = SourceCredentialContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
+        }
 
         // KV listing is unordered and there is no server-side range query, so the stable total order — the contractual
         // (sourceName, environment) plus the discriminator as a tie-breaker — is materialised in process from the keys
@@ -172,7 +178,7 @@ public sealed class NatsJetStreamSourceCredentialStore : ISourceCredentialStore,
         });
 
         var docs = new PooledDocumentList<SourceCredentialBinding>(pageSize);
-        string? nextToken = null;
+        bool hasMore = false;
         try
         {
             string lastSource = string.Empty, lastEnv = string.Empty, lastDisc = string.Empty;
@@ -200,7 +206,7 @@ public sealed class NatsJetStreamSourceCredentialStore : ISourceCredentialStore,
                 if (docs.Count == pageSize)
                 {
                     // A further visible row exists beyond the page: emit a token pointing at the last included row.
-                    nextToken = SourceCredentialContinuationToken.Encode(lastSource, lastEnv, lastDisc);
+                    hasMore = true;
                     break;
                 }
 
@@ -210,7 +216,7 @@ public sealed class NatsJetStreamSourceCredentialStore : ISourceCredentialStore,
                 lastDisc = discriminator;
             }
 
-            return new SourceCredentialPage(docs, nextToken);
+            return hasMore ? SourceCredentialPage.Create(docs, lastSource, lastEnv, lastDisc) : SourceCredentialPage.Create(docs);
         }
         catch
         {

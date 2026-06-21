@@ -128,11 +128,17 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, string? pageToken, CancellationToken cancellationToken)
+    public async ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         int pageSize = limit > 0 ? limit : 1;
-        bool hasCursor = SourceCredentialContinuationToken.TryDecode(pageToken, out (string SourceName, string Environment, string TieBreaker) cursor);
+        (string SourceName, string Environment, string TieBreaker) cursor = (string.Empty, string.Empty, string.Empty);
+        bool hasCursor = false;
+        if (pageToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+            hasCursor = SourceCredentialContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
+        }
 
         // The contractual order is (sourceName, environment) with the tag discriminator as the tie-breaker for a stable
         // TOTAL order. Table storage orders by (PartitionKey, RowKey) = (Enc(source), Enc(env)_Enc(disc)), but Enc is
@@ -166,7 +172,7 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
         });
 
         var docs = new PooledDocumentList<SourceCredentialBinding>(pageSize);
-        string? nextToken = null;
+        bool hasMore = false;
         try
         {
             EntityKey last = default;
@@ -194,7 +200,7 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
 
                 if (docs.Count == pageSize)
                 {
-                    nextToken = SourceCredentialContinuationToken.Encode(last.SourceName, last.Environment, last.Discriminator);
+                    hasMore = true;
                     break;
                 }
 
@@ -202,7 +208,9 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
                 last = key;
             }
 
-            return new SourceCredentialPage(docs, nextToken);
+            return hasMore
+                ? SourceCredentialPage.Create(docs, last.SourceName, last.Environment, last.Discriminator)
+                : SourceCredentialPage.Create(docs);
         }
         catch
         {

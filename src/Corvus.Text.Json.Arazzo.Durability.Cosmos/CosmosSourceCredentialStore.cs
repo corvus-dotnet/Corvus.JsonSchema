@@ -148,11 +148,17 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, string? pageToken, CancellationToken cancellationToken)
+    public async ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, Corvus.Text.Json.Arazzo.Durability.JsonString pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         int pageSize = limit > 0 ? limit : 1;
-        bool hasCursor = SourceCredentialContinuationToken.TryDecode(pageToken, out (string SourceName, string Environment, string TieBreaker) cursor);
+        (string SourceName, string Environment, string TieBreaker) cursor = (string.Empty, string.Empty, string.Empty);
+        bool hasCursor = false;
+        if (pageToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+            hasCursor = SourceCredentialContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
+        }
 
         // Keyset seek in the stable total order (sourceName, environment, discriminator). Cosmos cannot push the
         // security-reach predicate — reach is a per-row check applied in memory as we stream — and the discriminator is
@@ -170,7 +176,7 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
             : new QueryDefinition("SELECT c.doc FROM c ORDER BY c.sourceName, c.environment");
 
         var docs = new PooledDocumentList<SourceCredentialBinding>(pageSize);
-        string? nextToken = null;
+        bool hasMore = false;
         try
         {
             string lastSource = string.Empty, lastEnv = string.Empty, lastTie = string.Empty;
@@ -196,7 +202,7 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
 
                 if (docs.Count == pageSize)
                 {
-                    nextToken = SourceCredentialContinuationToken.Encode(lastSource, lastEnv, lastTie);
+                    hasMore = true;
                     break;
                 }
 
@@ -206,7 +212,7 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
                 lastTie = tie;
             }
 
-            return new SourceCredentialPage(docs, nextToken);
+            return hasMore ? SourceCredentialPage.Create(docs, lastSource, lastEnv, lastTie) : SourceCredentialPage.Create(docs);
         }
         catch
         {

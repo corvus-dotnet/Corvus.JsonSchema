@@ -167,12 +167,18 @@ public sealed class RedisSourceCredentialStore : ISourceCredentialStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, string? pageToken, CancellationToken cancellationToken)
+    public async ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         cancellationToken.ThrowIfCancellationRequested();
         int pageSize = limit > 0 ? limit : 1;
-        bool hasCursor = SourceCredentialContinuationToken.TryDecode(pageToken, out (string SourceName, string Environment, string TieBreaker) cursor);
+        (string SourceName, string Environment, string TieBreaker) cursor = (string.Empty, string.Empty, string.Empty);
+        bool hasCursor = false;
+        if (pageToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+            hasCursor = SourceCredentialContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
+        }
 
         // Redis has no server-side ordering for a SET, so the keyset scan runs over the all-index members in memory: the
         // members are the small identity tuples (no documents), so sort them into the stable total order
@@ -198,7 +204,7 @@ public sealed class RedisSourceCredentialStore : ISourceCredentialStore, IAsyncD
         }
 
         var docs = new PooledDocumentList<SourceCredentialBinding>(pageSize);
-        string? nextToken = null;
+        bool hasMore = false;
         try
         {
             string lastSource = string.Empty, lastEnv = string.Empty, lastDisc = string.Empty;
@@ -221,7 +227,7 @@ public sealed class RedisSourceCredentialStore : ISourceCredentialStore, IAsyncD
                 if (docs.Count == pageSize)
                 {
                     // A further visible row beyond the page exists: stop and hand back a cursor at the last included row.
-                    nextToken = SourceCredentialContinuationToken.Encode(lastSource, lastEnv, lastDisc);
+                    hasMore = true;
                     break;
                 }
 
@@ -231,7 +237,7 @@ public sealed class RedisSourceCredentialStore : ISourceCredentialStore, IAsyncD
                 lastDisc = discriminator;
             }
 
-            return new SourceCredentialPage(docs, nextToken);
+            return hasMore ? SourceCredentialPage.Create(docs, lastSource, lastEnv, lastDisc) : SourceCredentialPage.Create(docs);
         }
         catch
         {
