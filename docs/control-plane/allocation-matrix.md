@@ -108,7 +108,8 @@ that exists today (a starting point to be re-baselined, **not** evidence of comp
 | Op | Call tree | R/W | Current pattern / hotspots | Existing bench | Target pattern + grounding | Status |
 |---|---|---|---|---|---|---|
 | `GET /catalog` search | SearchCatalog → SearchAsync | R | `BuildPage` loop; `ToTags` copy | — | confirm projection | ⬜ |
-| `POST /catalog` | AddCatalogVersion → **AddAsync** | W | record `CatalogMetadata` + package bytes; `ToOwner`/`ToTags`; `SecurityTagSet.FromTags` | none (e2e) | carry `CatalogVersion` draft + package bytes | ⬜ |
+| `POST /catalog` | AddCatalogVersion → **AddAsync** | W | record `CatalogMetadata` + package bytes; `ToOwner`/`ToTags`; `SecurityTagSet.FromTags` | `CatalogStoreBenchmarks` (e2e baseline 19.92 KB) | carry `body.Owner` as `JsonElement` bytes-to-bytes through `CatalogMetadata`→`CatalogVersion.Create` (owner record→element); `corvus-bytes-to-bytes`, §13.4.1 | 🔬 baselined; conversion is a 20+-file change to the shared `Create` (add+update, 9 backends) — see Part D |
+| `POST /catalog` *(projection)* | AddAsync → `CatalogPackage.Project` | W | **~19.7 KB**: parse + canonicalise + hash + id-rewrite + version-doc write (the bulk; NOT the record seam) | `CatalogStoreBenchmarks` | NEW ROW (added on review): audit `CatalogPackage.Project` for record/string materialisations (title/description/sources/hash); this is catalog's real perf lever | ⬜ |
 | `GET /catalog/{id}` list | ListCatalogVersions → SearchAsync | R | BuildPage | — | — | ⬜ |
 | `GET …/versions/{n}` | GetCatalogVersion → GetAsync | R | `CatalogVersionSummary.From()` wrap | — | confirm congruent wrap | ⬜ |
 | `PATCH …/versions/{n}` | UpdateCatalogVersion → GetAsync(check) → **UpdateMetadataAsync** | W | record `CatalogMetadataPatch`; `ToOwner`/`ToTags`; 2× GetAsync | none (e2e) | carry patch draft / mutable builder ([[corvus-mutable-documents]]) | ⬜ |
@@ -259,6 +260,31 @@ handler, CLI. Slnx build **0 Warning(s), 0 Error(s)**.
   a distinct seam from the record→draft persistence seam this row targets. Candidate follow-up.
 - **`samples/` (Aspire demo)** is not in the slnx and was not built; it uses only the record extension overload
   (same overload resolution as the green tests), so it compiles, but this was not independently verified here.
+
+### 🔬 `POST /catalog` → `IWorkflowCatalogStore.AddAsync` — baselined, conversion pending
+
+**Baseline measured** (`CatalogStoreBenchmarks.Add_FromRecord`, InMemory, ShortRun, MemoryDiagnoser; owner sourced from a
+parsed body so the `(string)body.Owner.*` transcode is in the measured region): **19.92 KB/op**, Mean 43.6 µs.
+
+**Ledger (store-level).** The bulk — **~19.7 KB** — is `CatalogPackage.Project` (parse + canonicalise + hash + id-rewrite
++ version-doc write), inherent package work, **not** the `CatalogMetadata` record seam. The record seam is **`CatalogOwner`
+(4 strings, ~160 B)** built by the handler's `ToOwner(body.Owner)`; `createdBy` is a server-side value, `tags`/`securityTags`
+are already holders.
+
+**Two findings (both recorded above):**
+1. **Catalog's real perf lever is the projection (~19.7 KB), not the owner record (~160 B).** Added as a new
+   `POST /catalog (projection)` row to Part B — audit `CatalogPackage.Project` for string materialisations.
+2. **The owner conversion is a 20+-file change.** `CatalogVersion.Create` is the *central projection shared by the add
+   **and** update paths across all 9 backends* (~24 call sites), and `IWorkflowCatalogClient.AddAsync(CatalogOwner owner)`
+   has ~15 cold-caller sites (tests). Carrying `owner` as a `JsonElement` ripples through all of them. The ~160 B delta is
+   **sub-noise in the projection-dominated e2e**, so it needs an isolated `CatalogVersion.Create` (record vs element) arm
+   to be proven.
+
+**Plan (ready to execute as a focused unit).** `CatalogVersion.Create` owner `CatalogOwner`→`in JsonElement` (copy the
+element bytes-to-bytes); `CatalogMetadata.Owner`→`JsonElement`; `IWorkflowCatalogClient.AddAsync`(2) + `WorkflowCatalogClient`
++ handler carry `(JsonElement)body.Owner`; cold callers (conformance `Meta()`, the credential-gate/CLI tests, the benchmark)
+hold an owner doc; backends forward `metadata.Owner` unchanged. Status flips to ✅ once the isolated before→after is recorded
+here.
 
 ---
 
