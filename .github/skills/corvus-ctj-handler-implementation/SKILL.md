@@ -115,57 +115,6 @@ A response body's `Source` is **not** consumed when the handler returns — it i
 
 A primitive value written via `b.Create(prop: value)` is copied into the response document during the build — safe for a transient *only if* the build is synchronous and the value is alive throughout it, which the disposable-carrier pattern guarantees.
 
-**Scalar-copied vs `From`-wrapped (the precise rule).** `ResultType.Ok(body, workspace)` runs the body `Source` closure **synchronously** inside `CreateBuilder(workspace, body).RootElement`, so a `using`-scoped carrier is still alive when the closure runs. Within that closure two things behave differently at serialization time:
-- A **scalar** written via `b.Create(token: (JsonString.Source)page.NextPageToken.Span)` is **copied** into the response document during `CreateBuilder` → the carrier's pooled buffer can be disposed right after `Ok` returns (read `.Span` *inside* the closure, never as a captured `Span` local). This is why the page can be `using`-scoped.
-- A **`From(externalDoc)`-wrapped sub-document** (e.g. `CatalogVersionSummary.From(version)` over a pooled store doc) is **referenced**, not copied → it is re-read at post-handler serialization, so its backing must be handed over with `PooledDocumentList<T>.TransferOwnershipTo(workspace)`. A page can do **both**: `TransferOwnershipTo` its wrapped documents *and* `using`-dispose itself to return the pooled token buffer (the token was already copied).
-
-**A carrier that owns a pooled buffer must be a `sealed class : IDisposable`, never a `readonly record struct`.** A record struct is copy-by-value, so two copies share one rented `byte[]` and `Dispose` double-returns it (pool corruption). A record struct may own a `PooledDocumentList` (a class — idempotent dispose) and get away with it, but the moment it also owns a rented buffer, convert it to a class (mirror `SourceCredentialPage`/`ObservedIdentityPage`; `WorkflowRunPage`/`CatalogPage` were converted from record structs for exactly this).
-
-## Response projection: decision order (run this BEFORE writing a projection)
-
-A response body is built from a stored document. Pick the mechanism in **this order** — most projections are over-built because the wrong rung was chosen, and that over-building is pure allocation (managed strings, per-item closures, rebuilt arrays):
-
-1. **Is the response type *congruent* with the stored type?** (Same fields, same required set, nothing the response must hide.) If yes → **whole-document `From()`**, for the single-document response *and* the list:
-   - Single: `return GetXResult.Ok(Models.XView.From(doc.RootElement), workspace)` + `workspace.TakeOwnership(doc)`.
-   - List: per item `array.AddItem(Models.XView.From(item))` + `page.TransferOwnershipTo(workspace)`.
-   - **The single-document and list responses MUST use the same mechanism.** A field-copy *list* whose single-document sibling is a whole-doc `From()` is a missed collapse — check the single-doc site first; if it wraps with `From()`, the list collapses too (per item + ownership transfer). (This was the `ToRuleSource`/`ToViewSource` bug: the list field-copied while create/get/update already wrapped.)
-2. **Must the response hide stored fields?** (e.g. a summary that drops an internal `scopes`/`expiresAt`/`usageTags`.) *Only then* field-select — and carry each selected leaf **bytes-native**: `Models.JsonString.From(stored.RawAccessor)` / `Models.JsonDateTime.From(stored.RawAccessor)`, never `(string)stored.X` or the nullable `XxxValue`/`XxxOrNull` accessors (see below).
-3. **Build the list/object closure-free.** Thread the context (`Build<TContext>`), don't capture in a lambda — see `corvus-builder-context-threading`. The list `Build<TContext>` is ref-scoped to its `in` argument, so build it **inline in the handler**, not in a returned helper.
-
-### The `XxxOrNull` / `XxxValue` anti-pattern (the realising ternary)
-
-Never feed a generated builder from the nullable convenience accessors:
-
-```csharp
-// ❌ XxxValue/XxxOrNull DISCARD Undefined-ness → the ternary's `default` writes a REAL value
-//    (DateTimeOffset default = the EPOCH; string = null/empty), not an omitted field. Latent bug.
-lastUpdatedAt: stored.UpdatedAtValue is { } v ? v : default,
-description:   stored.DescriptionOrNull is { } d ? d : default,
-
-// ✅ bare From() of the RAW accessor PROPAGATES Undefined → an absent field is OMITTED, no ternary
-lastUpdatedAt: Models.JsonDateTime.From(stored.LastUpdatedAt),
-description:   Models.JsonString.From(stored.Description),
-```
-
-The `if (x.IsNotUndefined()) { local = From(x); }` guard is the same smell — redundant, since `From()` already propagates Undefined.
-
-### Up-front sweep — grep when you START projection work (find ALL instances at once, not serially)
-
-```bash
-# nullable-accessor-into-builder smell (then READ each hit to classify — see "not the smell" below)
-grep -rnE "OrNull is \{ ?\}|Value is \{ ?\}" src/ --include=*.cs | grep -v /Generated/
-# closure-based projection (prefer Build<TContext> context-threading). Matches the builder-lambda
-# signature `((ref T.Builder x)` so it catches BOTH `new T.Source((ref …)` and the `=> new((ref …)`
-# shorthand (a `new Models\.…Source` pattern misses the shorthand); does not match static BuildX(in ctx, ref …).
-grep -rnE "\(\(ref [A-Za-z].*\.Builder " src/ --include=*.cs | grep -v /Generated/
-```
-
-**Not the smell** (leave alone): nullable accessors used as query-filter predicates, expiry comparisons (`ExpiresAtValue is { } e && e <= now`), hand-written `Utf8JsonWriter` envelope projections to a *different* shape (unix-millis dates, table columns), and `string?`→`Source` CLI-settings bridges (a plain `string?`, no CTJ Undefined concept).
-
-### Distrust a "can't use `From` here" comment
-
-A comment that rules out a whole-doc `From()` ("the batch is disposed before serialization, so a `From()` wrap would dangle") may predate the ownership-transfer pattern. Re-derive against the current rule: `TransferOwnershipTo(workspace)` keeps the batch alive, so the list **can** wrap. Trusting that one stale comment hid the `ToViewSource` collapse for an entire campaign — see `corvus-builder-context-threading` and the memories on verifying before declaring impossible.
-
 ## Zero-Copy Cross-Namespace Values: From\<T\>()
 
 Every generated type has a static `From<T>()` method that reinterprets backing memory as a different type — zero allocation:
@@ -179,16 +128,6 @@ Directory.JsonUuid.From(accepted.Ticket)
 ```
 
 Use `From<T>()` whenever passing values between types from different generated namespaces. Within the same namespace, implicit conversion works directly.
-
-`From<T>()` **propagates undefined**: `From(source)` of an undefined `source` is an undefined target (it reinterprets the same backing memory, which is still undefined). So do **not** guard it with an `IsNotUndefined()` ternary when the consumer already treats undefined as absent:
-
-```csharp
-// ❌ redundant — From() of an undefined PageToken is already an undefined JsonString
-JsonString pageToken = parameters.PageToken.IsNotUndefined() ? JsonString.From(parameters.PageToken) : default;
-
-// ✅ undefined flows straight through; the store's `if (pageToken.IsNotUndefined())` sees it either way
-JsonString pageToken = JsonString.From(parameters.PageToken);
-```
 
 ## Array Enumeration
 
@@ -232,18 +171,19 @@ private static bool TryFindItem(TodoList list, JsonString todoId, out TodoItem f
 For optional properties that may be undefined:
 
 ```csharp
-// Mutating a builder: guard the Set (you don't want to overwrite with undefined)
+// Check before accessing
 if (!item.DueDate.IsUndefined())
 {
     mutableItem.SetDueDate(update.DueDate);
 }
 
-// Projecting INTO a builder: do NOT ternary-guard From() — it propagates Undefined,
-// so an absent field is omitted with no ternary (see "The XxxOrNull/XxxValue anti-pattern").
-email: Directory.JsonEmail.From(user.Email)
+// Ternary for Source construction
+email: user.HasValue && !user.Value.Email.IsUndefined()
+    ? Directory.JsonEmail.From(user.Value.Email)
+    : default
 ```
 
-`default` for a `Source` produces an undefined value (omitted from output) — but you rarely need to write `default` explicitly, because a bare `From()` of an undefined source already yields it. Reach for a ternary only when the *true* branch is a non-CTJ type (a C# `string?`/`DateTimeOffset` with no source element to wrap — e.g. a CLI settings value); then cast the true branch to the `Source` type so `default` stays `default(Source)`.
+`default` for a `Source` produces an undefined value (omitted from output).
 
 ## AddItem on Array Builders
 
@@ -285,9 +225,6 @@ await blob.UploadAsync(ms, options, ct);
 | `From()` within same namespace | Unnecessary — implicit conversion works | Remove `From()`, use value directly |
 | Returning `T?` from lookup helpers | Forces boxing/nullable overhead on struct types | Use `bool TryX(out T result)` pattern |
 | Using `System.Text.Json.Utf8JsonWriter` | Wrong writer type; won't serialize CTJ types | Use `Corvus.Text.Json.Utf8JsonWriter` |
-| `XxxOrNull`/`XxxValue is { } v ? v : default` into a builder | Nullable accessor discards Undefined → `default` writes the epoch/empty, not an omitted field | Bare `Models.JsonX.From(stored.RawAccessor)` (propagates Undefined) |
-| Field-copying a list whose single-doc sibling uses whole-doc `From()` | Over-allocation (managed strings + closures) for a congruent type | Collapse the list to per-item `From()` + `TransferOwnershipTo` |
-| Capturing-lambda `new X.Source((ref b) => …)` per list item | A heap closure per item/array/list | `Build<TContext>` context-threading (inline in the handler) |
 
 ## Cross-References
 
