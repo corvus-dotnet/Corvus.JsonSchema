@@ -106,6 +106,15 @@ return OkResult(body: (TodoItem)mutableItem, workspace);
 
 **Note:** The CTJ002 analyzer may incorrectly flag this cast as unnecessary (see issue #775). Suppress or ignore — the cast is required.
 
+### Emitting store-produced data the body holds past the handler (the deferred-body rule)
+
+A response body's `Source` is **not** consumed when the handler returns — it is re-read later, during response validation/serialization (`ValidateBody`). So anything the body references must stay valid until *then*, not just until the handler exits:
+
+- **A pooled document the body projects** must be handed to the workspace — single value `workspace.TakeOwnership(doc)`; a page/list `PooledDocumentList<T>.TransferOwnershipTo(workspace)` — so it outlives the handler. `using`-disposing it at handler return is a use-after-free (`ObjectDisposedException` at serialization). Inspect-and-discard checks that never reach the body are the only safe `using`.
+- **A pooled/transient scalar written via a builder** (e.g. an opaque continuation token emitted `(JsonString.Source)tokenUtf8.Span`): a builder lambda **cannot capture a `Span`**, and a `stackalloc`/just-disposed buffer would dangle. Carry it as a **capturable `ReadOnlyMemory<byte>` owned by a disposable carrier** (the page) that the handler `using`-scopes: the synchronous `Ok(...)`/`Build(...)` copies the bytes into the response document while the carrier is alive; the carrier's `Dispose` returns the pooled buffer afterwards. Centralise the rent+encode in a page `Create(...)` factory so every backend call site stays a leak-free one-liner.
+
+A primitive value written via `b.Create(prop: value)` is copied into the response document during the build — safe for a transient *only if* the build is synchronous and the value is alive throughout it, which the disposable-carrier pattern guarantees.
+
 ## Zero-Copy Cross-Namespace Values: From\<T\>()
 
 Every generated type has a static `From<T>()` method that reinterprets backing memory as a different type — zero allocation:

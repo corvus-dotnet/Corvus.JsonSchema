@@ -69,6 +69,20 @@ full-name sort, which removed the `List` + per-source name string outright (`Pac
 anchoring-on-existing-code failure (deriving the replacement from what the old code happened to do)
 applied to behaviour instead of style.
 
+### Opaque tokens are a carrier seam too ("store-minted, so it stays a string" is a rationalization)
+
+An opaque pagination/continuation token round-trips between two UTF-8 ends — emitted into a JSON
+response, carried back in the next JSON request (a CTJ `JsonString`) — so "it is store-minted, not domain
+data, so it stays a string" is a genuine-leaf rationalization: both ends are bytes. Encode it bytes-native
+with `System.Buffers.Text.Base64Url` (`GetEncodedLength` + `EncodeToUtf8` straight into the destination;
+`GetMaxDecodedLength` + `DecodeFromUtf8` from the request's `pageToken.GetUtf8String().Span`) — no
+`EncodeToString`/`DecodeFromChars` char detour, and no per-part `ToString()`/concat/`GetBytes` (assemble
+the key into a `stackalloc`/`ArrayPool` UTF-8 buffer with a separator byte). The token must survive into
+the response, but **owned ≠ GC**: pool it in a disposable carrier rather than minting a `string` (the only
+*necessarily*-GC form). The cross-root request→store `JsonString` is bridged with `JsonString.From(...)`
+(free rewrap). The lifetime that governs *emitting* it is the deferred-body rule — see
+`corvus-ctj-handler-implementation`.
+
 ## The fix recipe — bytes-native default + opt-in string
 
 Mirror `IdentityBuilder.Add(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value)` (the fast path) vs
