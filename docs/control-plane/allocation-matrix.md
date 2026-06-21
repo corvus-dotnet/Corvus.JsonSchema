@@ -109,7 +109,7 @@ that exists today (a starting point to be re-baselined, **not** evidence of comp
 |---|---|---|---|---|---|---|
 | `GET /catalog` search | SearchCatalog → SearchAsync | R | `BuildPage` loop; `ToTags` copy | — | confirm projection | ⬜ |
 | `POST /catalog` | AddCatalogVersion → **AddAsync** | W | record `CatalogMetadata` + package bytes; `ToOwner`/`ToTags`; `SecurityTagSet.FromTags` | `CatalogStoreBenchmarks` (e2e baseline 19.92 KB) | owner is a **queryable indexed decomposition** (`Owner*` columns + read-reconstruct), not a string seam — confirmed genuine (Part D) | ➖ owner genuine (indexed); ↓ projection row is the real lever |
-| `POST /catalog` *(projection)* | AddAsync → `CatalogPackage.Project` | W | **~19.7 KB**: parse + canonicalise + hash + id-rewrite + version-doc write (the bulk; NOT the record seam) | `CatalogStoreBenchmarks` | NEW ROW (added on review): audit `CatalogPackage.Project` for record/string materialisations (title/description/sources/hash); this is catalog's real perf lever | ⬜ |
+| `POST /catalog` *(projection)* | AddAsync → `CatalogPackage.Project` | W | parse + canonicalise + hash + id-rewrite + version-doc write + ZIP pack/unpack (the bulk; NOT the record seam) | `CatalogStoreBenchmarks` | single-parse + zero-alloc SHA256 + ZIP no-copy/right-sized reads (done); entry-buffer pooling (provider-API change) pending | 🔧 **19.92→18.24 KB** (3 wins); rent pending — Part D |
 | `GET /catalog/{id}` list | ListCatalogVersions → SearchAsync | R | BuildPage | — | — | ⬜ |
 | `GET …/versions/{n}` | GetCatalogVersion → GetAsync | R | `CatalogVersionSummary.From()` wrap | — | confirm congruent wrap | ⬜ |
 | `PATCH …/versions/{n}` | UpdateCatalogVersion → GetAsync(check) → **UpdateMetadataAsync** | W | record `CatalogMetadataPatch`; `ToOwner`/`ToTags`; 2× GetAsync | none (e2e) | carry patch draft / mutable builder ([[corvus-mutable-documents]]) | ⬜ |
@@ -284,8 +284,29 @@ are already holders.
    not a string-seam anti-pattern; the conversion was reverted.
 
 **Conclusion.** Owner seam → **➖ confirmed genuine** (indexed decomposition; leave as `CatalogOwner`). The ~160 B owner
-transcode is the price of a searchable owner. Catalog's real allocation lever is the **package projection (~19.7 KB)** —
-the separate `POST /catalog (projection)` row. `CatalogStoreBenchmarks` (19.92 KB) is committed and retained for it.
+transcode is the price of a searchable owner. Catalog's real allocation lever is the **package projection** — the separate
+`POST /catalog (projection)` row (below).
+
+### 🔧 `POST /catalog (projection)` → `CatalogPackage.Project` — 3 wins done, entry-buffer rent pending
+
+**Before → after (3 local, no-API-change wins; `CatalogStoreBenchmarks.Add_FromRecord`, InMemory, ShortRun): 19.92 KB →
+18.24 KB/op (−1.68 KB, −8.4%).** Build 0/0; catalog/package/conformance tests green.
+
+1. **Single parse of the workflow.** `Project` re-parsed the *rewritten* workflow only to read title/description/sources;
+   those are id-independent, so they're now read during the id-rewrite pass (`RewriteWorkflowId` returns them) — one parse.
+2. **Zero-alloc content hash.** `ComputeContentHash` now uses `SHA256.HashData(span, stackalloc span)` (no per-call SHA256
+   instance, no heap digest array) + `Convert.ToHexStringLower`.
+3. **ZIP I/O.** `Open` wraps the package's backing array directly (`MemoryMarshal.TryGetArray`, no full-package `ToArray`
+   copy); `ReadEntryStream` reads each entry into a right-sized array via its known uncompressed length (no growing
+   `MemoryStream`, no `Stream.CopyTo` scratch buffer).
+
+**Pending (chosen: full rent).** The ZIP entry **documents** (workflow + sources) still allocate one right-sized array each
+because they flow downstream as `byte[]` into `WorkflowPackage.Pack` + the **public** `IWorkflowMetadataProvider`/
+`IWorkflowExecutorProvider` interfaces + the public `Unpack`/`GetDocument` returns. Renting them = a disposable pooled
+`WorkflowPackageContents` exposing `ReadOnlyMemory<byte>`, those `byte[]` contracts → `ReadOnlyMemory<byte>` (incl. the two
+provider interfaces), and copy-out on the escape paths. Borrow-only consumers (`Project`/`HashCanonical`/`Validate`) `using`
+the contents → pool returns. The irreducible floor is `ZipArchive`'s own framework allocation, which pooling our entry
+buffers does not touch.
 
 ---
 
