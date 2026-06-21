@@ -312,39 +312,72 @@ public static class WorkflowPackage
     /// <returns>The hex-encoded content hash.</returns>
     public static string ComputeContentHash(ReadOnlyMemory<byte> workflowUtf8, IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> sources)
     {
+        using ParsedJsonDocument<JsonElement> workflow = ParsedJsonDocument<JsonElement>.Parse(workflowUtf8);
+        return ComputeContentHashCore(workflow.RootElement, sources, alreadySorted: false);
+    }
+
+    /// <summary>Computes the content hash from an <strong>already-parsed</strong> workflow element and sources the caller
+    /// guarantees are already ordered by name (ordinal) — the form the catalog projection supplies (it parses the rewritten
+    /// workflow once and <see cref="OpenPooled"/> sorts the sources) — so the hash neither re-parses the workflow nor
+    /// re-sorts. The hash value is identical to <see cref="ComputeContentHash(ReadOnlyMemory{byte}, IReadOnlyList{KeyValuePair{string, ReadOnlyMemory{byte}}})"/>
+    /// for the same content.</summary>
+    /// <param name="workflow">The parsed (already id-rewritten) Arazzo workflow document.</param>
+    /// <param name="sortedSources">The referenced source documents, already ordered by name (ordinal).</param>
+    /// <returns>The hex-encoded content hash.</returns>
+    internal static string ComputeContentHashPreSorted(in JsonElement workflow, IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> sortedSources)
+        => ComputeContentHashCore(workflow, sortedSources, alreadySorted: true);
+
+    private static string ComputeContentHashCore(in JsonElement workflow, IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> sources, bool alreadySorted)
+    {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter buffer);
         try
         {
-            using (ParsedJsonDocument<JsonElement> workflow = ParsedJsonDocument<JsonElement>.Parse(workflowUtf8))
+            writer.WriteStartObject();
+            writer.WritePropertyName("sources"u8);
+            writer.WriteStartObject();
+            if (alreadySorted)
             {
-                writer.WriteStartObject();
-                writer.WritePropertyName("sources"u8);
-                writer.WriteStartObject();
+                // Caller-sorted: iterate by index so there is no OrderBy (and no interface-enumerator) allocation.
+                for (int i = 0; i < sources.Count; i++)
+                {
+                    WriteSource(writer, sources[i]);
+                }
+            }
+            else
+            {
                 foreach (KeyValuePair<string, ReadOnlyMemory<byte>> source in sources.OrderBy(s => s.Key, StringComparer.Ordinal))
                 {
-                    using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(source.Value);
-                    writer.WritePropertyName(source.Key);
-                    document.RootElement.WriteTo(writer);
+                    WriteSource(writer, source);
                 }
-
-                writer.WriteEndObject();
-                writer.WritePropertyName("workflow"u8);
-                workflow.RootElement.WriteTo(writer);
-                writer.WriteEndObject();
             }
 
+            writer.WriteEndObject();
+            writer.WritePropertyName("workflow"u8);
+            workflow.WriteTo(writer);
+            writer.WriteEndObject();
             writer.Flush();
 
-            // Canonicalize the assembled content over a pooled document of the written span, hashing straight from a
-            // pooled canonical buffer — no per-call canonical byte[] and no SHA256 instance; the only heap output is the
-            // hex string (the genuine result). The same assembled bytes are canonicalized as before, so the hash is unchanged.
-            using ParsedJsonDocument<JsonElement> assembled = PersistedJson.ToPooledDocument<JsonElement>(buffer.WrittenSpan);
-            return HashCanonical(assembled.RootElement, buffer.WrittenSpan.Length);
+            // Canonicalize the assembled content by parsing it zero-copy directly over the workspace buffer
+            // (ParsedJsonDocument.Parse(ReadOnlyMemory) references the memory; it copies nothing and owns no buffer), then
+            // hashing straight from a pooled canonical buffer — no copy of the assembled bytes, no per-call canonical
+            // byte[], and no SHA256 instance; the only heap output is the hex string. The assembled doc is read
+            // synchronously and disposed before the workspace buffer is returned below, so the reference stays valid.
+            using ParsedJsonDocument<JsonElement> assembled = ParsedJsonDocument<JsonElement>.Parse(buffer.WrittenMemory);
+            return HashCanonical(assembled.RootElement, buffer.WrittenMemory.Length);
         }
         finally
         {
             workspace.ReturnWriterAndBuffer(writer, buffer);
+        }
+
+        static void WriteSource(Utf8JsonWriter writer, KeyValuePair<string, ReadOnlyMemory<byte>> source)
+        {
+            // Write the source's JSON straight into the assembled document — no per-source parse. The assembled object is
+            // re-parsed and canonicalized below, so a verbatim raw copy yields the identical canonical bytes (hence the
+            // identical hash); WriteRawValue still validates the tokens, more cheaply than a full parse.
+            writer.WritePropertyName(source.Key);
+            writer.WriteRawValue(source.Value.Span);
         }
     }
 
