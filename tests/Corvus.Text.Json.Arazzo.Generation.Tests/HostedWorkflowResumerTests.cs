@@ -68,7 +68,8 @@ public class HostedWorkflowResumerTests
     public async Task Resolves_a_runnable_catalog_version_loads_it_and_runs_the_run_to_completion()
     {
         var catalog = new InMemoryWorkflowCatalogStore(executorProvider: new WorkflowExecutorProvider());
-        CatalogVersion version = await catalog.AddAsync("adopt", Package(), Meta(), default);
+        using ParsedJsonDocument<CatalogVersion> versionDoc = await catalog.AddAsync("adopt", Package(), Meta(), default);
+        CatalogVersion version = versionDoc.RootElement;
         version.Ref.WorkflowId.ShouldBe("adopt-v1");
         ((bool)version.Runnable).ShouldBeTrue();
 
@@ -97,7 +98,8 @@ public class HostedWorkflowResumerTests
     public async Task An_expired_source_credential_faults_the_run_as_credentials_expired()
     {
         var catalog = new InMemoryWorkflowCatalogStore(executorProvider: new WorkflowExecutorProvider());
-        CatalogVersion version = await catalog.AddAsync("adopt", Package(), Meta(), default);
+        using ParsedJsonDocument<CatalogVersion> versionDoc = await catalog.AddAsync("adopt", Package(), Meta(), default);
+        CatalogVersion version = versionDoc.RootElement;
 
         var runStore = new InMemoryWorkflowStateStore();
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
@@ -126,7 +128,9 @@ public class HostedWorkflowResumerTests
     {
         // No executor provider → the catalogued version carries no executor.
         var catalog = new InMemoryWorkflowCatalogStore();
-        await catalog.AddAsync("adopt", Package(), Meta(), default);
+        using (await catalog.AddAsync("adopt", Package(), Meta(), default))
+        {
+        }
 
         var runStore = new InMemoryWorkflowStateStore();
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));

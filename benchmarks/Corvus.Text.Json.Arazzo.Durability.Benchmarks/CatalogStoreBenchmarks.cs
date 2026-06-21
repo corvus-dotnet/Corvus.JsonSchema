@@ -66,12 +66,12 @@ public class CatalogStoreBenchmarks
             o.Url.IsNotUndefined() ? (string)o.Url : null);
 
         var store = new InMemoryWorkflowCatalogStore();
-        CatalogVersion version = store.AddAsync(
+        using ParsedJsonDocument<CatalogVersion> version = store.AddAsync(
             BaseWorkflowId,
             Package,
             new CatalogMetadata(ownerRecord, "alice", this.tags, this.securityTags),
             default).AsTask().GetAwaiter().GetResult();
-        return version.Ref.VersionNumber;
+        return version.RootElement.Ref.VersionNumber;
     }
 
     private static ReadOnlyMemory<byte> BuildPackage()
