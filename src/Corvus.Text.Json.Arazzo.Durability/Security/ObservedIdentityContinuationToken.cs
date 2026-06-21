@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Buffers.Text;
 using System.Text;
 
@@ -14,12 +15,63 @@ namespace Corvus.Text.Json.Arazzo.Durability.Security;
 /// carries the last row's <c>(subjectValue, subjectKind)</c> so the next request can seek strictly past it; it is opaque
 /// and <b>backend-scoped</b> (a token is only ever presented back to the store that issued it).
 /// </summary>
+/// <remarks>
+/// The token is <c>base64url(subjectValue \0 subjectKind)</c>. The <see cref="ReadOnlySpan{T}"/> overloads are the warm
+/// seam: <see cref="EncodeToUtf8"/> writes the token straight into a caller buffer (the response writer / a pooled page
+/// buffer) and <see cref="TryDecode(ReadOnlySpan{byte}, out (string, string))"/> reads it straight from the request's
+/// UTF-8 — neither mints an intermediate string or <c>byte[]</c>. The <c>string</c> overloads are CLI/test convenience.
+/// </remarks>
 public static class ObservedIdentityContinuationToken
 {
-    // The null control char cannot appear in a subjectValue/subjectKind token, so it separates the two key parts.
-    private static readonly char Separator = (char)0;
+    // The null control byte cannot appear in a subjectValue/subjectKind token, so it separates the two key parts.
+    private const byte Separator = 0;
 
-    /// <summary>Encodes the last page row's key into a continuation token.</summary>
+    // Subject values/kinds are short, so the assemble/decode scratch fits the stack in the common case; the ArrayPool
+    // fallback covers the rare long key.
+    private const int StackThreshold = 256;
+
+    /// <summary>Gets the exact length, in bytes, of the Base64URL token <see cref="EncodeToUtf8"/> writes for these key parts.</summary>
+    /// <param name="subjectValue">The last row's subject value.</param>
+    /// <param name="subjectKind">The last row's subject kind token (the tie-breaker).</param>
+    /// <returns>The encoded token length in bytes.</returns>
+    public static int GetEncodedLength(string subjectValue, string subjectKind)
+    {
+        ArgumentNullException.ThrowIfNull(subjectValue);
+        ArgumentNullException.ThrowIfNull(subjectKind);
+        return Base64Url.GetEncodedLength(RawLength(subjectValue, subjectKind));
+    }
+
+    /// <summary>Writes the opaque continuation token for the last page row's key as UTF-8 into <paramref name="destination"/>
+    /// (size it with <see cref="GetEncodedLength"/>) — the warm path's bytes-native encode, with no intermediate string or
+    /// <c>byte[]</c>.</summary>
+    /// <param name="subjectValue">The last row's subject value.</param>
+    /// <param name="subjectKind">The last row's subject kind token (the tie-breaker).</param>
+    /// <param name="destination">The buffer to write the Base64URL token into.</param>
+    /// <returns>The number of bytes written.</returns>
+    public static int EncodeToUtf8(string subjectValue, string subjectKind, Span<byte> destination)
+    {
+        ArgumentNullException.ThrowIfNull(subjectValue);
+        ArgumentNullException.ThrowIfNull(subjectKind);
+
+        int rawLength = RawLength(subjectValue, subjectKind);
+        byte[]? rented = rawLength > StackThreshold ? ArrayPool<byte>.Shared.Rent(rawLength) : null;
+        Span<byte> raw = rented ?? stackalloc byte[StackThreshold];
+        try
+        {
+            Span<byte> filled = raw[..AssembleKey(subjectValue, subjectKind, raw)];
+            Base64Url.EncodeToUtf8(filled, destination, out _, out int written);
+            return written;
+        }
+        finally
+        {
+            if (rented is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rented);
+            }
+        }
+    }
+
+    /// <summary>Encodes the last page row's key into a continuation token string (CLI/test convenience).</summary>
     /// <param name="subjectValue">The last row's subject value.</param>
     /// <param name="subjectKind">The last row's subject kind token (the tie-breaker).</param>
     /// <returns>An opaque, URL-safe continuation token.</returns>
@@ -27,10 +79,61 @@ public static class ObservedIdentityContinuationToken
     {
         ArgumentNullException.ThrowIfNull(subjectValue);
         ArgumentNullException.ThrowIfNull(subjectKind);
-        return Base64Url.EncodeToString(Encoding.UTF8.GetBytes(string.Concat(subjectValue, Separator.ToString(), subjectKind)));
+
+        int rawLength = RawLength(subjectValue, subjectKind);
+        byte[]? rented = rawLength > StackThreshold ? ArrayPool<byte>.Shared.Rent(rawLength) : null;
+        Span<byte> raw = rented ?? stackalloc byte[StackThreshold];
+        try
+        {
+            // Assemble the key once into the scratch buffer, then Base64URL it straight to the token string — no
+            // per-part ToString(), no concat string, no separate GetBytes byte[].
+            return Base64Url.EncodeToString(raw[..AssembleKey(subjectValue, subjectKind, raw)]);
+        }
+        finally
+        {
+            if (rented is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rented);
+            }
+        }
     }
 
-    /// <summary>Decodes a continuation token back to the <c>(subjectValue, subjectKind)</c> cursor to page after.</summary>
+    /// <summary>Decodes a continuation token's UTF-8 (as carried verbatim by the request) back to the
+    /// <c>(subjectValue, subjectKind)</c> cursor to page strictly after — the warm path's bytes-native decode.</summary>
+    /// <param name="tokenUtf8">The token's UTF-8 bytes from a previous page's <c>nextPageToken</c>, or empty for the first page.</param>
+    /// <param name="cursor">The decoded cursor to page strictly after (exclusive).</param>
+    /// <returns><see langword="true"/> if a cursor was decoded; <see langword="false"/> for the first page.</returns>
+    /// <exception cref="FormatException">The token is not a valid continuation token.</exception>
+    public static bool TryDecode(ReadOnlySpan<byte> tokenUtf8, out (string SubjectValue, string SubjectKind) cursor)
+    {
+        cursor = default;
+        if (tokenUtf8.IsEmpty)
+        {
+            return false;
+        }
+
+        int maxLength = Base64Url.GetMaxDecodedLength(tokenUtf8.Length);
+        byte[]? rented = maxLength > StackThreshold ? ArrayPool<byte>.Shared.Rent(maxLength) : null;
+        Span<byte> buffer = rented ?? stackalloc byte[StackThreshold];
+        try
+        {
+            if (Base64Url.DecodeFromUtf8(tokenUtf8, buffer, out _, out int decoded) != OperationStatus.Done)
+            {
+                throw new FormatException("The observed-identity page token is not valid base64url.");
+            }
+
+            return TryReadCursor(buffer[..decoded], out cursor);
+        }
+        finally
+        {
+            if (rented is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rented);
+            }
+        }
+    }
+
+    /// <summary>Decodes a continuation token string back to the cursor to page after (CLI/test convenience).</summary>
     /// <param name="token">A token from a previous page's <c>nextPageToken</c>, or <see langword="null"/>/empty for the first page.</param>
     /// <param name="cursor">The decoded cursor to page strictly after (exclusive).</param>
     /// <returns><see langword="true"/> if a cursor was decoded; <see langword="false"/> for the first page.</returns>
@@ -43,23 +146,51 @@ public static class ObservedIdentityContinuationToken
             return false;
         }
 
-        string decoded;
+        int maxLength = Base64Url.GetMaxDecodedLength(token.Length);
+        byte[]? rented = maxLength > StackThreshold ? ArrayPool<byte>.Shared.Rent(maxLength) : null;
+        Span<byte> buffer = rented ?? stackalloc byte[StackThreshold];
         try
         {
-            decoded = Encoding.UTF8.GetString(Base64Url.DecodeFromChars(token));
+            if (Base64Url.DecodeFromChars(token, buffer, out _, out int decoded) != OperationStatus.Done)
+            {
+                throw new FormatException($"'{token}' is not a valid observed-identity page token.");
+            }
+
+            return TryReadCursor(buffer[..decoded], out cursor);
         }
-        catch (FormatException ex)
+        finally
         {
-            throw new FormatException($"'{token}' is not a valid observed-identity page token.", ex);
+            if (rented is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rented);
+            }
+        }
+    }
+
+    // Writes subjectValue \0 subjectKind as UTF-8 into raw, returning the byte count.
+    private static int AssembleKey(string subjectValue, string subjectKind, Span<byte> raw)
+    {
+        int pos = Encoding.UTF8.GetBytes(subjectValue, raw);
+        raw[pos++] = Separator;
+        pos += Encoding.UTF8.GetBytes(subjectKind, raw[pos..]);
+        return pos;
+    }
+
+    // Splits the decoded key on the separator byte and materializes the two cursor parts (genuine string leaves — the
+    // stores bind them as ordering/seek parameters). No intermediate decoded string, no Split array.
+    private static bool TryReadCursor(ReadOnlySpan<byte> key, out (string SubjectValue, string SubjectKind) cursor)
+    {
+        cursor = default;
+        int separator = key.IndexOf(Separator);
+        if (separator < 0)
+        {
+            throw new FormatException("The observed-identity page token is malformed.");
         }
 
-        string[] parts = decoded.Split(Separator);
-        if (parts.Length != 2)
-        {
-            throw new FormatException($"'{token}' is not a valid observed-identity page token.");
-        }
-
-        cursor = (parts[0], parts[1]);
+        cursor = (Encoding.UTF8.GetString(key[..separator]), Encoding.UTF8.GetString(key[(separator + 1)..]));
         return true;
     }
+
+    private static int RawLength(string subjectValue, string subjectKind)
+        => Encoding.UTF8.GetByteCount(subjectValue) + 1 + Encoding.UTF8.GetByteCount(subjectKind);
 }

@@ -139,11 +139,17 @@ public sealed class MongoSourceCredentialStore : ISourceCredentialStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, string? pageToken, CancellationToken cancellationToken)
+    public async ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         int pageSize = limit > 0 ? limit : 1;
-        bool hasCursor = SourceCredentialContinuationToken.TryDecode(pageToken, out (string SourceName, string Environment, string TieBreaker) cursor);
+        (string SourceName, string Environment, string TieBreaker) cursor = (string.Empty, string.Empty, string.Empty);
+        bool hasCursor = false;
+        if (pageToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+            hasCursor = SourceCredentialContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
+        }
 
         // Keyset seek past the cursor in composite _id (s, e, t) order — an indexed range scan over the unique _id, not a
         // collection load. The standard 3-field keyset predicate ("strictly after" the cursor) plus a matching ascending
@@ -161,7 +167,7 @@ public sealed class MongoSourceCredentialStore : ISourceCredentialStore, IAsyncD
         SortDefinition<BsonDocument> sort = Builders<BsonDocument>.Sort.Ascending("_id.s").Ascending("_id.e").Ascending("_id.t");
 
         var docs = new PooledDocumentList<SourceCredentialBinding>(pageSize);
-        string? nextToken = null;
+        bool hasMore = false;
         try
         {
             // Reach (§14.2) is a per-row predicate applied in memory as we stream; the cursor is consumed only until the
@@ -183,7 +189,7 @@ public sealed class MongoSourceCredentialStore : ISourceCredentialStore, IAsyncD
 
                     if (docs.Count == pageSize)
                     {
-                        nextToken = SourceCredentialContinuationToken.Encode(lastSource, lastEnv, lastTags);
+                        hasMore = true;
                         stop = true;
                         break;
                     }
@@ -196,7 +202,9 @@ public sealed class MongoSourceCredentialStore : ISourceCredentialStore, IAsyncD
                 }
             }
 
-            return new SourceCredentialPage(docs, nextToken);
+            return hasMore
+                ? SourceCredentialPage.Create(docs, lastSource, lastEnv, lastTags)
+                : SourceCredentialPage.Create(docs);
         }
         catch
         {
