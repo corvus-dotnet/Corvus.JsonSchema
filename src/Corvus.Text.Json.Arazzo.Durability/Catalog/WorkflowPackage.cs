@@ -266,19 +266,6 @@ public static class WorkflowPackage
     /// <returns>The hex-encoded content hash.</returns>
     public static string ComputeContentHash(ReadOnlyMemory<byte> workflowUtf8, IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> sources)
     {
-        // Hash into a stack span via the static span-destination overload — no per-call SHA256 instance and no heap
-        // digest array; the only allocation is the hex string (the genuine output) and the canonical content it hashes.
-        Span<byte> digest = stackalloc byte[SHA256.HashSizeInBytes];
-        SHA256.HashData(CanonicalContent(workflowUtf8, sources), digest);
-        return Convert.ToHexStringLower(digest);
-    }
-
-    /// <summary>Builds the RFC 8785 canonical bytes of the logical <c>{ workflow, sources }</c> content.</summary>
-    /// <param name="workflowUtf8">The Arazzo workflow document as UTF-8 JSON.</param>
-    /// <param name="sources">The referenced source documents.</param>
-    /// <returns>The canonical content bytes.</returns>
-    internal static byte[] CanonicalContent(ReadOnlyMemory<byte> workflowUtf8, IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> sources)
-    {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter buffer);
         try
@@ -303,14 +290,42 @@ public static class WorkflowPackage
 
             writer.Flush();
 
-            // Canonicalize the assembled content over a pooled document of the written span. Same written bytes as
-            // before, so the content hash is unchanged.
+            // Canonicalize the assembled content over a pooled document of the written span, hashing straight from a
+            // pooled canonical buffer — no per-call canonical byte[] and no SHA256 instance; the only heap output is the
+            // hex string (the genuine result). The same assembled bytes are canonicalized as before, so the hash is unchanged.
             using ParsedJsonDocument<JsonElement> assembled = PersistedJson.ToPooledDocument<JsonElement>(buffer.WrittenSpan);
-            return JsonCanonicalizer.Canonicalize(assembled.RootElement);
+            return HashCanonical(assembled.RootElement, buffer.WrittenSpan.Length);
         }
         finally
         {
             workspace.ReturnWriterAndBuffer(writer, buffer);
+        }
+    }
+
+    // Canonicalizes the element into an ArrayPool-rented buffer (growing on overflow) and returns the lower-hex SHA-256
+    // of the canonical bytes — the canonical form is hashed in place, never materialized to its own array. The size hint
+    // (the assembled content length) right-sizes the first rent so the common case fits without a grow.
+    private static string HashCanonical(in JsonElement element, int sizeHint)
+    {
+        int bufferSize = Math.Max(DefaultBufferSize, sizeHint);
+        while (true)
+        {
+            byte[] rented = ArrayPool<byte>.Shared.Rent(bufferSize);
+            try
+            {
+                if (JsonCanonicalizer.TryCanonicalize(element, rented, out int written))
+                {
+                    Span<byte> digest = stackalloc byte[SHA256.HashSizeInBytes];
+                    SHA256.HashData(rented.AsSpan(0, written), digest);
+                    return Convert.ToHexStringLower(digest);
+                }
+
+                bufferSize = checked(bufferSize * 2);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(rented);
+            }
         }
     }
 
