@@ -169,7 +169,7 @@ public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, string? pageToken, CancellationToken cancellationToken)
+    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         int pageSize = limit > 0 ? limit : 1;
@@ -178,7 +178,16 @@ public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
         // The prefix is matched ordinally against the SubjectValue key string, so it reifies once for the per-row
         // StartsWith break (and its length guard) below (undefined prefix matches all).
         string prefixStr = prefix.IsNotUndefined() ? (string)prefix : string.Empty;
-        bool hasCursor = ObservedIdentityContinuationToken.TryDecode(pageToken, out (string SubjectValue, string SubjectKind) cursor);
+
+        // The opaque page token arrives as its JSON value; decode the (subjectValue, subjectKind) cursor straight from the
+        // request UTF-8 (no managed token string). Init to empties so the unused-when-!hasCursor tuple is never null.
+        (string SubjectValue, string SubjectKind) cursor = (string.Empty, string.Empty);
+        bool hasCursor = false;
+        if (pageToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+            hasCursor = ObservedIdentityContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
+        }
 
         // The read reach is constant for the call; an unrestricted (System) reach admits everything without materialising
         // a single candidate's tags — only a scoped reach pays the per-candidate materialise-and-check cost (§17.1).
@@ -224,7 +233,7 @@ public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
         });
 
         var docs = new PooledDocumentList<ObservedIdentity>(pageSize);
-        string? nextToken = null;
+        string? nextValue = null, nextKind = null;
         try
         {
             EntityKey last = default;
@@ -264,7 +273,8 @@ public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
                 if (docs.Count == pageSize)
                 {
                     // At least one further admitted row remains → there is a next page; resume after the last included row.
-                    nextToken = ObservedIdentityContinuationToken.Encode(last.SubjectValue, last.SubjectKind);
+                    nextValue = last.SubjectValue;
+                    nextKind = last.SubjectKind;
                     break;
                 }
 
@@ -272,7 +282,7 @@ public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
                 last = key;
             }
 
-            return new ObservedIdentityPage(docs, nextToken);
+            return nextValue is not null ? ObservedIdentityPage.Create(docs, nextValue, nextKind!) : ObservedIdentityPage.Create(docs);
         }
         catch
         {

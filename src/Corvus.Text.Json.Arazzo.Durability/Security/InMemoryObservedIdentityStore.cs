@@ -133,7 +133,7 @@ public sealed class InMemoryObservedIdentityStore : IObservedIdentityStore
     }
 
     /// <inheritdoc/>
-    public ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, string? pageToken, CancellationToken cancellationToken)
+    public ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         int pageSize = limit > 0 ? limit : 1;
@@ -144,7 +144,16 @@ public sealed class InMemoryObservedIdentityStore : IObservedIdentityStore
         // The dictionary keys are strings (the in-memory storage leaf), so the prefix reifies once for the ordinal
         // StartsWith (undefined prefix matches all) — a backend pushes the prefix predicate to its index instead.
         string prefixStr = prefix.IsNotUndefined() ? (string)prefix : string.Empty;
-        bool hasCursor = ObservedIdentityContinuationToken.TryDecode(pageToken, out (string SubjectValue, string SubjectKind) cursor);
+
+        // The opaque page token arrives as its JSON value; decode the (subjectValue, subjectKind) cursor straight from the
+        // request UTF-8 (no managed token string). Init to empties so the unused-when-!hasCursor tuple is never null.
+        (string SubjectValue, string SubjectKind) cursor = (string.Empty, string.Empty);
+        bool hasCursor = false;
+        if (pageToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+            hasCursor = ObservedIdentityContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
+        }
 
         // The keyset order every backend pages by is (subjectValue, subjectKind). Rather than materialise + sort the whole
         // matching set, keep only the pageSize+1 SMALLEST past-cursor matches in a capped, insertion-sorted buffer — the
@@ -214,12 +223,13 @@ public sealed class InMemoryObservedIdentityStore : IObservedIdentityStore
                     docs.Add(PersistedJson.ToPooledDocument<ObservedIdentity>(top[i].Json));
                 }
 
-                // A (pageSize+1)th smallest match exists → there is a next page; the token resumes after the last included row.
-                string? nextToken = top.Count > pageSize
-                    ? ObservedIdentityContinuationToken.Encode(top[pageSize - 1].Value, top[pageSize - 1].Kind)
-                    : null;
+                // A (pageSize+1)th smallest match exists → there is a next page; the token resumes after the last included
+                // row, encoded straight into the page's pooled buffer (no token string).
+                ObservedIdentityPage page = top.Count > pageSize
+                    ? ObservedIdentityPage.Create(docs, top[pageSize - 1].Value, top[pageSize - 1].Kind)
+                    : ObservedIdentityPage.Create(docs);
 
-                return new ValueTask<ObservedIdentityPage>(new ObservedIdentityPage(docs, nextToken));
+                return new ValueTask<ObservedIdentityPage>(page);
             }
             catch
             {

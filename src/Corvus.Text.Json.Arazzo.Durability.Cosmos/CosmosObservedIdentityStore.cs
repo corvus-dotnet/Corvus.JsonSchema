@@ -124,12 +124,22 @@ public sealed class CosmosObservedIdentityStore : IObservedIdentityStore, IAsync
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, Corvus.Text.Json.Arazzo.Durability.JsonString prefix, int limit, string? pageToken, CancellationToken cancellationToken)
+    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, Corvus.Text.Json.Arazzo.Durability.JsonString prefix, int limit, Corvus.Text.Json.Arazzo.Durability.JsonString pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         int pageSize = limit > 0 ? limit : 1;
         string? kindToken = kind.IsNotUndefined() ? kind.ToToken() : null;
-        bool hasCursor = ObservedIdentityContinuationToken.TryDecode(pageToken, out (string SubjectValue, string SubjectKind) cursor);
+
+        // The opaque page token arrives as its JSON value; decode the (subjectValue, subjectKind) cursor straight from the
+        // request UTF-8 (no managed token string). Init to empties so the unused-when-!hasCursor tuple is never null.
+        (string SubjectValue, string SubjectKind) cursor = (string.Empty, string.Empty);
+        bool hasCursor = false;
+        if (pageToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+            hasCursor = ObservedIdentityContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
+        }
+
         SecurityFilter? readReach = context.Reach(AccessVerb.Read);
 
         // subjectValue is stored as a string column, so the prefix reifies once for the STARTSWITH @prefix param.
@@ -176,7 +186,7 @@ public sealed class CosmosObservedIdentityStore : IObservedIdentityStore, IAsync
         }
 
         var docs = new PooledDocumentList<ObservedIdentity>(pageSize);
-        string? nextToken = null;
+        string? nextValue = null, nextKind = null;
         try
         {
             string lastValue = string.Empty, lastKind = string.Empty;
@@ -186,7 +196,8 @@ public sealed class CosmosObservedIdentityStore : IObservedIdentityStore, IAsync
                 {
                     // Fetched one beyond the page (every filter, including reach, was applied server-side) — a next page
                     // exists; the cursor resumes after the LAST INCLUDED row, not this overflow row.
-                    nextToken = ObservedIdentityContinuationToken.Encode(lastValue, lastKind);
+                    nextValue = lastValue;
+                    nextKind = lastKind;
                     break;
                 }
 
@@ -195,7 +206,7 @@ public sealed class CosmosObservedIdentityStore : IObservedIdentityStore, IAsync
                 lastKind = rowKind;
             }
 
-            return new ObservedIdentityPage(docs, nextToken);
+            return nextValue is not null ? ObservedIdentityPage.Create(docs, nextValue, nextKind!) : ObservedIdentityPage.Create(docs);
         }
         catch
         {
