@@ -68,6 +68,38 @@ Use `NonRecursive` variants only when you can prove the call site is not recursi
 4. **Always use `try/finally`** to guarantee the rented array is returned
 5. **For fixed-size buffers always ≤ threshold** (e.g., a 128-byte scratch buffer), plain `stackalloc` without pool fallback is acceptable
 
+### Sizing the buffer: `GetMaxByteCount`, not `GetByteCount`
+
+When the `length` that sizes a transient UTF-8 scratch buffer comes from a `string`/`char` span, size it with
+**`Encoding.UTF8.GetMaxByteCount(chars.Length)`** (a multiply — `chars.Length * 3 + 3`), **not**
+`Encoding.UTF8.GetByteCount(chars)` (a full transcoding scan of every code point). `GetMaxByteCount` returns a
+safe upper bound, so the buffer is never under-sized; the **exact** filled length is whatever the subsequent
+`Encoding.UTF8.GetBytes(chars, buffer)` (or your assemble routine) **returns**, and you slice the buffer by that
+return value. The pattern is already "rent ≥ requested, then slice to actual", so an over-estimate of a few bytes
+costs nothing and skips the scan. Assembling several parts: sum each part's `GetMaxByteCount` plus exact-width
+separators.
+
+```csharp
+// ✅ multiply, not a scan — buffer is an upper bound; `written` is the exact length the rest of the code uses
+int max = Encoding.UTF8.GetMaxByteCount(text.Length);
+byte[]? rented = max > Threshold ? ArrayPool<byte>.Shared.Rent(max) : null;
+Span<byte> buffer = rented ?? stackalloc byte[Threshold];
+int written = Encoding.UTF8.GetBytes(text, buffer);
+Use(buffer[..written]);   // never the `max`
+```
+
+A public "how big a buffer do I need" helper that uses this should be **named for the upper bound it returns**
+(`GetMaxEncodedLength`, not `GetEncodedLength`) and documented as a safe size, not an exact count — otherwise a
+caller may trust it as exact. See the Arazzo `*ContinuationToken.GetMaxEncodedLength` / `EncodeToUtf8(out written)`
+pair.
+
+**`GetByteCount` (exact) is still required — do NOT switch these to `GetMaxByteCount`:** an *exact* single-shot
+output allocation (`new byte[total]` where `total` is the precise serialized size, e.g. `WorkflowPackage.PackPooled`),
+a structural **length field** written into a format (a `ushort` entry-name length), an **offset** you then copy at
+(`dest[exactPrefixLen..]`), or `IBufferWriter.AppendSpan(n)` / `GetSpan(n)`-style APIs that **commit exactly `n`**
+(over-sizing commits uninitialised trailing bytes). The rule is: *transient scratch sliced by the actual written
+length* → `GetMaxByteCount`; *a value that is itself exact output, a committed length, or a copy offset* → `GetByteCount`.
+
 ### char buffer variant
 
 ```csharp
@@ -204,6 +236,7 @@ The bridge between `ArrayPool` and `IBufferWriter<byte>`. Wraps an `ArrayBuffer`
 | Forgetting to slice rented buffer | Processing garbage bytes beyond `length` | Always `buffer.Slice(0, length)` |
 | Returning rented array twice | Pool corruption | Use `Interlocked.Exchange(ref arr, null)` |
 | Creating `string` from UTF-8 on a hot path | Unnecessary GC pressure | Use `ReadOnlySpan<byte>` throughout, transcode only at the boundary |
+| `GetByteCount(chars)` to size a transient scratch buffer | A full transcoding scan where a multiply would do | `GetMaxByteCount(chars.Length)`, slice by the actual `GetBytes` return — but keep `GetByteCount` for an exact output allocation, a length field, or a copy offset |
 | Using `NonRecursive` threshold in recursive code | Stack overflow | Only use when call site is provably non-recursive |
 
 ## Cross-References

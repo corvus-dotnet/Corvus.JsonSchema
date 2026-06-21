@@ -32,21 +32,24 @@ public static class SourceCredentialContinuationToken
     // stack in the common case; the ArrayPool fallback covers the rare long key.
     private const int StackThreshold = 256;
 
-    /// <summary>Gets the exact length, in bytes, of the Base64URL token <see cref="EncodeToUtf8"/> writes for these key parts.</summary>
+    /// <summary>Gets an upper bound, in bytes, on the Base64URL token <see cref="EncodeToUtf8"/> writes for these key parts —
+    /// safe to size a destination buffer with (the exact count is <see cref="EncodeToUtf8"/>'s return value). Computed from
+    /// <see cref="Encoding.GetMaxByteCount(int)"/> (a multiply, not a scan), so it over-estimates by a few bytes but never
+    /// under-sizes.</summary>
     /// <param name="sourceName">The last row's source name.</param>
     /// <param name="environment">The last row's environment.</param>
     /// <param name="tieBreaker">The last row's tie-breaker (e.g. the tag discriminator).</param>
-    /// <returns>The encoded token length in bytes.</returns>
-    public static int GetEncodedLength(string sourceName, string environment, string tieBreaker)
+    /// <returns>An upper bound on the encoded token length in bytes.</returns>
+    public static int GetMaxEncodedLength(string sourceName, string environment, string tieBreaker)
     {
         ArgumentNullException.ThrowIfNull(sourceName);
         ArgumentNullException.ThrowIfNull(environment);
         ArgumentNullException.ThrowIfNull(tieBreaker);
-        return Base64Url.GetEncodedLength(RawLength(sourceName, environment, tieBreaker));
+        return Base64Url.GetEncodedLength(MaxRawLength(sourceName, environment, tieBreaker));
     }
 
     /// <summary>Writes the opaque continuation token for the last page row's key as UTF-8 into <paramref name="destination"/>
-    /// (size it with <see cref="GetEncodedLength"/>) — the warm path's bytes-native encode, with no intermediate string or
+    /// (size it with <see cref="GetMaxEncodedLength"/>) — the warm path's bytes-native encode, with no intermediate string or
     /// <c>byte[]</c>.</summary>
     /// <param name="sourceName">The last row's source name.</param>
     /// <param name="environment">The last row's environment.</param>
@@ -59,7 +62,7 @@ public static class SourceCredentialContinuationToken
         ArgumentNullException.ThrowIfNull(environment);
         ArgumentNullException.ThrowIfNull(tieBreaker);
 
-        int rawLength = RawLength(sourceName, environment, tieBreaker);
+        int rawLength = MaxRawLength(sourceName, environment, tieBreaker);
         byte[]? rented = rawLength > StackThreshold ? ArrayPool<byte>.Shared.Rent(rawLength) : null;
         Span<byte> raw = rented ?? stackalloc byte[StackThreshold];
         try
@@ -88,7 +91,7 @@ public static class SourceCredentialContinuationToken
         ArgumentNullException.ThrowIfNull(environment);
         ArgumentNullException.ThrowIfNull(tieBreaker);
 
-        int rawLength = RawLength(sourceName, environment, tieBreaker);
+        int rawLength = MaxRawLength(sourceName, environment, tieBreaker);
         byte[]? rented = rawLength > StackThreshold ? ArrayPool<byte>.Shared.Rent(rawLength) : null;
         Span<byte> raw = rented ?? stackalloc byte[StackThreshold];
         try
@@ -211,6 +214,8 @@ public static class SourceCredentialContinuationToken
         return true;
     }
 
-    private static int RawLength(string sourceName, string environment, string tieBreaker)
-        => Encoding.UTF8.GetByteCount(sourceName) + 1 + Encoding.UTF8.GetByteCount(environment) + 1 + Encoding.UTF8.GetByteCount(tieBreaker);
+    // An upper bound on the assembled key's byte count (each part's GetMaxByteCount + the two 1-byte separators); used only
+    // to size the scratch buffer, so over-estimating is free and AssembleKey returns the exact filled length.
+    private static int MaxRawLength(string sourceName, string environment, string tieBreaker)
+        => Encoding.UTF8.GetMaxByteCount(sourceName.Length) + 1 + Encoding.UTF8.GetMaxByteCount(environment.Length) + 1 + Encoding.UTF8.GetMaxByteCount(tieBreaker.Length);
 }
