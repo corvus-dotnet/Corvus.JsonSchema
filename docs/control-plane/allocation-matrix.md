@@ -109,7 +109,7 @@ that exists today (a starting point to be re-baselined, **not** evidence of comp
 |---|---|---|---|---|---|---|
 | `GET /catalog` search | SearchCatalog → SearchAsync | R | `BuildPage` loop; `ToTags` copy | — | confirm projection | ⬜ |
 | `POST /catalog` | AddCatalogVersion → **AddAsync** | W | record `CatalogMetadata` + package bytes; `ToOwner`/`ToTags`; `SecurityTagSet.FromTags` | `CatalogStoreBenchmarks` (e2e baseline 19.92 KB) | owner is a **queryable indexed decomposition** (`Owner*` columns + read-reconstruct), not a string seam — confirmed genuine (Part D) | ➖ owner genuine (indexed); ↓ projection row is the real lever |
-| `POST /catalog` *(projection)* | AddAsync → `CatalogPackage.Project` | W | parse + canonicalise + hash + id-rewrite + version-doc write + ZIP pack/unpack (the bulk; NOT the record seam) | `CatalogStoreBenchmarks` | **`.awp`** container (span read/write, zero-copy `OpenPooled`) + parse-once fusion + raw-value sources + zero-copy assembled parse + **pooled-disposable store seam** (`ParsedJsonDocument<CatalogVersion>`; pooled `MetadataDb`; `workspace.TakeOwnership`/`TransferOwnershipTo`) + InMemory take-don't-copy package | ✅ **19.92→3.95 KB (−80%)**; ZipArchive floor + rewrite/double/per-source parse + standalone version-record `MetadataDb` all gone (Part D) |
+| `POST /catalog` *(projection)* | AddAsync → `CatalogPackage.Project` | W | parse + canonicalise + hash + id-rewrite + version-doc write + ZIP pack/unpack (the bulk; NOT the record seam) | `CatalogStoreBenchmarks` | **`.awp`** container (span read/write, zero-copy `OpenPooled`) + parse-once fusion + raw-value sources + zero-copy assembled parse + **pooled-disposable store seam** (`ParsedJsonDocument<CatalogVersion>`; pooled `MetadataDb`; `workspace.TakeOwnership`/`TransferOwnershipTo`) + InMemory take-don't-copy package + UTF-8 entry names (no per-source name string) | ✅ **19.92→3.72 KB (−81%)**; ZipArchive floor + rewrite/double/per-source parse + standalone version-record `MetadataDb` + `PackPooled` entry list/name strings all gone (Part D) |
 | `GET /catalog/{id}` list | ListCatalogVersions → SearchAsync | R | BuildPage | — | — | ⬜ |
 | `GET …/versions/{n}` | GetCatalogVersion → GetAsync | R | `CatalogVersionSummary.From()` wrap | — | confirm congruent wrap | ⬜ |
 | `PATCH …/versions/{n}` | UpdateCatalogVersion → GetAsync(check) → **UpdateMetadataAsync** | W | record `CatalogMetadataPatch`; `ToOwner`/`ToTags`; 2× GetAsync | none (e2e) | carry patch draft / mutable builder ([[corvus-mutable-documents]]) | ⬜ |
@@ -289,10 +289,11 @@ transcode is the price of a searchable owner. Catalog's real allocation lever is
 
 ### ✅ `POST /catalog (projection)` → `CatalogPackage.Project` — DONE (`.awp` container + pooled-disposable store seam)
 
-**Before → after (`CatalogStoreBenchmarks.Add_FromRecord`, InMemory, ShortRun): 19.92 KB → 3.95 KB/op (−15.97 KB,
-−80%).** Build 0/0; full suite green (durability 294, generation 17, server 131, CLI 34; content hash byte-identical;
+**Before → after (`CatalogStoreBenchmarks.Add_FromRecord`, InMemory, ShortRun): 19.92 KB → 3.72 KB/op (−16.20 KB,
+−81%).** Build 0/0; full suite green (durability 294, generation 17, server 131, CLI 34; content hash byte-identical;
 cross-language browser fixture re-locked). Parts 1–4 (the `.awp` container + projection-transient elimination) took it to
-5.03 KB; **Part 5 (the pooled-disposable store seam) → 4.34 KB and Part 6 (InMemory take-don't-copy) → 3.95 KB.**
+5.03 KB; **Part 5 (the pooled-disposable store seam) → 4.34 KB, Part 6 (InMemory take-don't-copy) → 3.95 KB, and Part 7
+(UTF-8 entry names — no per-source name string) → 3.72 KB.**
 
 > **Part 5 — pooled, disposable `CatalogVersion` store seam, 5.03 → 4.34 KB.** `IWorkflowCatalogStore`/`IWorkflowCatalogClient`
 > returned a **standalone GC-owned** `CatalogVersion` (built via the `[Obsolete]` `ParseValue` — unpooled GC bytes + GC
@@ -311,6 +312,17 @@ cross-language browser fixture re-locked). Parts 1–4 (the `.awp` container + p
 > **Part 6 — InMemory takes the canonical package array, 4.34 → 3.95 KB.** `AddAsync` stored `projection.CanonicalPackage.ToArray()`
 > — a redundant copy of an array the projection solely owns. It now takes the underlying array directly (`MemoryMarshal.TryGetArray`,
 > exact-sized so the `ReadOnlyMemory` wraps it whole), copying only the rare non-array-backed case.
+>
+> **Part 7 — UTF-8 entry names, no per-source name string, 3.95 → 3.72 KB.** `PackPooled` built a `List<PackEntry>` and a
+> per-source `"sources/" + key + ".json"` concat string for every entry, then sorted the list by full entry name. It now
+> orders the sources by **key** in a single **pooled** scratch array (`ArrayPool`, returned after the write) and emits
+> entries in a fixed bucket order — workflow, sorted sources, metadata — writing each entry name straight into the output
+> as UTF-8 (`"sources/"u8` + the transcoded key + `".json"u8`, the `uint16` length back-patched from the bytes written).
+> No `List`, no per-source name string. The reader locates entries by name (not position) and the catalog re-packs to
+> canonical on add, so the new fixed order is a safe stored-layout change; the content hash is unaffected (it canonicalises
+> only `{ workflow, sources }`, never the container — `Identical_packages_hash_identically` and the browser fixture still
+> pass). Measured: `PackCanonicalPackage` 0.73 → **0.49 KB**, `Project` 2.25 → **2.02 KB** (2304 → 2064 B), e2e 3.95 →
+> **3.72 KB**. The win scales with source count — one concat string + one list slot eliminated per source.
 
 This landed in two parts. **Part 1 — incremental wins within the ZIP (committed `1da51c1`), 19.92 → 17.7 KB:**
 
@@ -376,26 +388,27 @@ string with a `u8` switch (`BuildVersionDocument` 1.56 → 1.54 KB) and the proj
 intermediate with `string.Create(InvariantCulture, $"…")` (below BDN's rounding). These are floor-level (~24 B) — recorded
 to show the sweep is exhausted, not because they move the number.
 
-**Where the remaining 5.03 KB lives — pipeline vs store** (measured anchors: `Project` = 2304 B,
-`ProjectAndBuildVersion` = 3992 B, `Add_FromRecord` = ~5.03 KB; the deltas isolate each layer):
+**Where the remaining 3.72 KB lives — pipeline vs store** (measured anchors: `Project` = 2064 B,
+`ProjectAndBuildVersion` = 2448 B, `Add_FromRecord` = 3.72 KB; the deltas isolate each layer):
 
 | Layer | Allocated | Store-independent? | Constituents |
 |---|---|---|---|
-| Projection pipeline (`Project`) | **2.25 KB** | yes — every consumer pays | the rewritten workflow parsed **once** (pooled doc) + `ComputeContentHashPreSorted` (canonicalise working set + 64-char hash string, no re-parse/re-sort/per-source-parse, zero-copy assembled) + `PackPooled` (canonical-package `byte[]` + entry list) + `OpenPooled`/`workflowId`/metadata reads (views, no doc copy) |
-| Version record (`ProjectAndBuildVersion − Project`) | **~1.65 KB** | yes — store-agnostic | `CatalogVersion.Create` ~1.54 KB (the persisted governance document) + `SourceSet.FromSources` ~0.11 KB |
-| InMemory store + bench harness (`Add − ProjectAndBuildVersion`) | **~1.05 KB** | no | owner-record transcode (`new CatalogOwner`, 4 strings) ~0.28 KB (handler seam) + `new InMemoryWorkflowCatalogStore()` ~0.15 KB + `.AsTask()` ~0.09 KB (harness; real async path has none) + `CanonicalPackage.ToArray()` ~0.3 KB (persistence copy — every backend pays a form) + `SortKey` + `SortedDictionary` node ~0.13 KB (InMemory-only) |
+| Projection pipeline (`Project`) | **2.02 KB** | yes — every consumer pays | the rewritten workflow parsed **once** (pooled doc) + `ComputeContentHashPreSorted` (canonicalise working set + 64-char hash string, no re-parse/re-sort/per-source-parse, zero-copy assembled) + `PackPooled` (canonical-package `byte[]`; sources ordered in a **pooled** scratch array, each entry name written as UTF-8 — no per-entry list, no per-source name string) + `OpenPooled`/`workflowId`/metadata reads (views, no doc copy) |
+| Version record (`ProjectAndBuildVersion − Project`) | **~0.37 KB** | yes — store-agnostic | `CatalogVersion.Create` ~0.27 KB (the persisted governance document — **pooled** `MetadataDb`) + `SourceSet.FromSources` ~0.11 KB |
+| InMemory store + bench harness (`Add − ProjectAndBuildVersion`) | **~1.33 KB** | no | the persisted **version-document** `byte[]` (`CreateBytes`, the durable governance record this path stores) + owner-record transcode (`new CatalogOwner`, 4 strings) ~0.28 KB (handler seam) + `new InMemoryWorkflowCatalogStore()` + `.AsTask()` (harness; the real async path has neither) + `SortKey`/`SortedDictionary` node (InMemory-only). The canonical-package copy is gone (Part 6 takes the projection's array directly). |
 
-**Conclusion — measured floor at 3.95 KB (−80%).** Of the e2e `Add` (measured anchors: `Project` 2304 B,
-`ProjectAndBuildVersion` 2688 B, `Add_FromRecord` 3.95 KB): ~2.3 KB is the projection pipeline (every consumer pays),
+**Conclusion — measured floor at 3.72 KB (−81%).** Of the e2e `Add` (measured anchors: `Project` 2064 B,
+`ProjectAndBuildVersion` 2448 B, `Add_FromRecord` 3.72 KB): ~2.0 KB is the projection pipeline (every consumer pays),
 ~0.4 KB the persisted version record (pooled metadata now), the rest the InMemory persistence byte[] + owner decomposition
 + benchmark harness (`new` store + `.AsTask()` — not the real async path). Every reducible transient is gone — the ZIP
 container, the rewrite intermediate, the double-parse, the redundant re-sort, the per-source parse, the assembled-bytes
 copy, the residual enum/number strings, the **standalone version-record `MetadataDb`** (now pooled via the disposable
-seam), and the **redundant InMemory package copy**. What remains is **durable output + irreducible parse machinery**: the
-canonical package (stored), the version document (persisted), the content-hash string, the source/title/description strings
-(stored or returned), and the few unavoidable `ParsedJsonDocument` wrappers. The owner stays a **record** (queryable
-indexed decomposition; SQL backends need the column strings). Going lower means attacking the RFC 8785 canonicaliser's
-working set or the per-source name framing (~150 B, fragile) — sharply diminishing returns against correctness risk.
+seam), the **redundant InMemory package copy**, and the **`PackPooled` entry list + per-source name strings** (entry names
+now written as UTF-8 directly). What remains is **durable output + irreducible parse machinery**: the canonical package
+(stored), the version document (persisted), the content-hash hex string (written into the version document and bound as a
+query column), the source/title/description strings (stored or returned), and the few unavoidable `ParsedJsonDocument`
+wrappers. The owner stays a **record** (queryable indexed decomposition; SQL backends need the column strings). Going
+lower means attacking the RFC 8785 canonicaliser's working set — sharply diminishing returns against correctness risk.
 **Row done.**
 
 ## Cross-references
