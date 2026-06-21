@@ -10,24 +10,19 @@ namespace Corvus.Text.Json.Arazzo.Durability.Tests;
 /// <summary>
 /// Locks cross-language compatibility between the zero-build browser package builder
 /// (<c>web/arazzo-control-plane-ui/src/workflow-package.js</c>) and the .NET <see cref="WorkflowPackage"/>
-/// reader. The bytes below are the verbatim output of <c>packWorkflowPackage(...)</c> (a store-method ZIP);
-/// if the JS builder changes shape, regenerate them and confirm these still pass.
+/// reader. The bytes below are the verbatim output of <c>packWorkflowPackage(...)</c> (the length-prefixed
+/// container, stored encoding); if the JS builder changes shape, regenerate them and confirm these still pass.
 /// </summary>
 [TestClass]
 public sealed class BrowserBuiltPackageTests
 {
-    // packWorkflowPackage(workflow "nightly-reconcile", sources: [petstore]) — store-method ZIP, base64.
+    // packWorkflowPackage(workflow "nightly-reconcile", sources: [petstore]) — length-prefixed container, base64.
     private const string BrowserBuiltPackageBase64 =
-        "UEsDBBQAAAAAAAAAIQCPkO7abQAAAG0AAAANAAAAbWFuaWZlc3QuanNvbnsiZm9ybWF0VmVyc2lvbiI6MSwid29ya2Zsb3ciOiJ3" +
-        "b3JrZmxvdy5qc29uIiwic291cmNlcyI6W3sibmFtZSI6InBldHN0b3JlIiwicGF0aCI6InNvdXJjZXMvcGV0c3RvcmUuanNvbiJ9" +
-        "XX1QSwMEFAAAAAAAAAAhADEIYj6vAAAArwAAAA0AAAB3b3JrZmxvdy5qc29ueyJhcmF6em8iOiIxLjEuMCIsImluZm8iOnsidGl0" +
-        "bGUiOiJOaWdodGx5IFJlY29uY2lsZSJ9LCJzb3VyY2VEZXNjcmlwdGlvbnMiOlt7Im5hbWUiOiJwZXRzdG9yZSIsInR5cGUiOiJv" +
-        "cGVuYXBpIn1dLCJ3b3JrZmxvd3MiOlt7IndvcmtmbG93SWQiOiJuaWdodGx5LXJlY29uY2lsZSIsInN0ZXBzIjpbXX1dfVBLAwQU" +
-        "AAAAAAAAACEA/L28fEEAAABBAAAAFQAAAHNvdXJjZXMvcGV0c3RvcmUuanNvbnsib3BlbmFwaSI6IjMuMS4wIiwiaW5mbyI6eyJ0" +
-        "aXRsZSI6IlBldHN0b3JlIiwidmVyc2lvbiI6IjEuMC4wIn19UEsBAhQAFAAAAAAAAAAhAI+Q7tptAAAAbQAAAA0AAAAAAAAAAAAA" +
-        "AAAAAAAAAG1hbmlmZXN0Lmpzb25QSwECFAAUAAAAAAAAACEAMQhiPq8AAACvAAAADQAAAAAAAAAAAAAAAACYAAAAd29ya2Zsb3cu" +
-        "anNvblBLAQIUABQAAAAAAAAAIQD8vbx8QQAAAEEAAAAVAAAAAAAAAAAAAAAAAHIBAABzb3VyY2VzL3BldHN0b3JlLmpzb25QSwUG" +
-        "AAAAAAMAAwC5AAAA5gEAAAAA";
+        "QVdQAQIAAAAVAHNvdXJjZXMvcGV0c3RvcmUuanNvbgBBAAAAeyJvcGVuYXBpIjoiMy4xLjAiLCJpbmZvIjp7InRpdG" +
+        "xlIjoiUGV0c3RvcmUiLCJ2ZXJzaW9uIjoiMS4wLjAifX0NAHdvcmtmbG93Lmpzb24ArwAAAHsiYXJhenpvIjoiMS4x" +
+        "LjAiLCJpbmZvIjp7InRpdGxlIjoiTmlnaHRseSBSZWNvbmNpbGUifSwic291cmNlRGVzY3JpcHRpb25zIjpbeyJuYW" +
+        "1lIjoicGV0c3RvcmUiLCJ0eXBlIjoib3BlbmFwaSJ9XSwid29ya2Zsb3dzIjpbeyJ3b3JrZmxvd0lkIjoibmlnaHRs" +
+        "eS1yZWNvbmNpbGUiLCJzdGVwcyI6W119XX0=";
 
     [TestMethod]
     public void OpenReadsTheBrowserBuiltArchive()

@@ -108,7 +108,7 @@ Compilation reuses the validator's `DynamicCompiler` Roslyn path (which is why a
 
 ### 3.3 Packaging, hash, and signing
 
-Add to the package zip, following the `metadata/schemas.json` precedent exactly:
+Add to the package, following the `metadata/schemas.json` precedent exactly:
 
 | Entry | Constant | Notes |
 |---|---|---|
@@ -116,7 +116,7 @@ Add to the package zip, following the `metadata/schemas.json` precedent exactly:
 | `metadata/executor-manifest.json` | `ExecutorManifestEntryName` | descriptor (below) |
 
 Reserved document name `$executor` / `$executorManifest` for `GetDocument`. The **content hash is unchanged by
-construction** — it canonicalises only `{ workflow, sources }`, never the zip framing or `metadata/*`.
+construction** — it canonicalises only `{ workflow, sources }`, never the container framing or `metadata/*`.
 
 **Integrity, not code-signing (decision §12).** We only need to verify *the assembly belongs to this
 workflow version* — i.e. that a runner doesn't load a stale/mismatched DLL. So the manifest records the
