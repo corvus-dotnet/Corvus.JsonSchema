@@ -27,8 +27,8 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// </para>
 /// <list type="bullet">
 /// <item><description>Header: magic <c>"AWP"</c> (3 bytes) + format version (1 byte) + entry count (<c>uint32</c>).</description></item>
-/// <item><description>Entry (repeated, sorted by name ordinal): name length (<c>uint16</c>) + name (UTF-8) +
-/// encoding (<c>byte</c>: <c>0</c> = stored; other values reserved for a future per-entry compression) +
+/// <item><description>Entry (repeated, in a deterministic fixed order — see below): name length (<c>uint16</c>) +
+/// name (UTF-8) + encoding (<c>byte</c>: <c>0</c> = stored; other values reserved for a future per-entry compression) +
 /// data length (<c>uint32</c>) + data (opaque bytes — UTF-8 JSON or binary).</description></item>
 /// </list>
 /// <para>Logical entries by name:</para>
@@ -40,9 +40,10 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// <item><description><c>metadata/executor-manifest.json</c> — optional executor manifest.</description></item>
 /// </list>
 /// <para>
-/// Entries are written in name order, so identical content yields identical bytes. The content hash is computed over
-/// the RFC 8785 canonical form of the logical <c>{ workflow, sources }</c> content — independent of the container
-/// framing — so it is stable across repacks and container revisions.
+/// Entries are written in a deterministic fixed order — the workflow document, then the source documents ordered by
+/// name (ordinal), then any metadata entries — so identical content yields identical bytes. The content hash is
+/// computed over the RFC 8785 canonical form of the logical <c>{ workflow, sources }</c> content — independent of the
+/// container framing (and so of entry order) — so it is stable across repacks and container revisions.
 /// </para>
 /// </remarks>
 public static class WorkflowPackage
@@ -91,9 +92,17 @@ public static class WorkflowPackage
     // static data span (no allocation).
     private static ReadOnlySpan<byte> Magic => [0x41, 0x57, 0x50, (byte)FormatVersion];
 
-    private static readonly Comparison<PackEntry> ByEntryName = static (a, b) => string.CompareOrdinal(a.Name, b.Name);
+    // The fixed (non-source) entry names as UTF-8, written byte-for-byte with no intermediate string — these mirror the
+    // WorkflowEntryName / SchemasEntryName / ExecutorEntryName / ExecutorManifestEntryName string constants above.
+    private static ReadOnlySpan<byte> WorkflowEntryNameUtf8 => "workflow.json"u8;
+
+    private static ReadOnlySpan<byte> SchemasEntryNameUtf8 => "metadata/schemas.json"u8;
+
+    private static ReadOnlySpan<byte> ExecutorEntryNameUtf8 => "metadata/executor.dll"u8;
+
+    private static ReadOnlySpan<byte> ExecutorManifestEntryNameUtf8 => "metadata/executor-manifest.json"u8;
+
     private static readonly Comparison<KeyValuePair<string, byte[]>> BySourceKey = static (a, b) => string.CompareOrdinal(a.Key, b.Key);
-    private static readonly Comparison<KeyValuePair<string, ReadOnlyMemory<byte>>> BySourceKeyMemory = static (a, b) => string.CompareOrdinal(a.Key, b.Key);
 
     /// <summary>Packs an Arazzo workflow document and its referenced source documents into a deterministic package.</summary>
     /// <param name="workflowUtf8">The Arazzo workflow document as UTF-8 JSON.</param>
@@ -131,63 +140,134 @@ public static class WorkflowPackage
     {
         ArgumentNullException.ThrowIfNull(sources);
 
-        // Build the entry table (logical name -> payload), then sort by name for a deterministic container.
-        var entries = new List<PackEntry>(sources.Count + 4) { new(WorkflowEntryName, workflowUtf8) };
-        foreach (KeyValuePair<string, ReadOnlyMemory<byte>> source in sources)
-        {
-            entries.Add(new(SourcesPrefix + source.Key + ".json", source.Value));
-        }
+        int sourceCount = sources.Count;
 
-        if (!schemas.IsEmpty)
+        // Order the sources by key for a deterministic container. We sort the source *keys* (a plain ordinal compare —
+        // no per-source "sources/<key>.json" name to build) and then emit entries in a fixed bucket order: the workflow
+        // document, the sorted sources, then any metadata entries. The reader locates entries by name, not position, so
+        // any deterministic order yields a stable, content-addressable artifact while letting each name be written as
+        // UTF-8 directly. The sort scratch array is rented (returned in the finally); a package with no sources skips it.
+        KeyValuePair<string, ReadOnlyMemory<byte>>[]? sortedSources = null;
+        if (sourceCount > 0)
         {
-            entries.Add(new(SchemasEntryName, schemas));
-        }
-
-        if (!executor.IsEmpty)
-        {
-            entries.Add(new(ExecutorEntryName, executor));
-        }
-
-        if (!executorManifest.IsEmpty)
-        {
-            entries.Add(new(ExecutorManifestEntryName, executorManifest));
-        }
-
-        entries.Sort(ByEntryName);
-
-        // Exact output size: header + per entry (entry header + UTF-8 name + payload). One allocation — the package
-        // itself, the genuine leaf — written in place with spans; no ZIP object graph and no growing stream.
-        int total = HeaderSize;
-        foreach (PackEntry entry in entries)
-        {
-            int nameLength = Encoding.UTF8.GetByteCount(entry.Name);
-            if (nameLength > ushort.MaxValue)
+            sortedSources = ArrayPool<KeyValuePair<string, ReadOnlyMemory<byte>>>.Shared.Rent(sourceCount);
+            for (int i = 0; i < sourceCount; i++)
             {
-                throw new ArgumentException($"Package entry name '{entry.Name}' is too long.", nameof(sources));
+                sortedSources[i] = sources[i];
             }
 
-            total = checked(total + EntryHeaderSize + nameLength + entry.Data.Length);
+            Array.Sort(sortedSources, 0, sourceCount, SourceKeyComparer.Instance);
         }
 
-        byte[] result = new byte[total];
-        Span<byte> span = result;
-        Magic.CopyTo(span);
-        BinaryPrimitives.WriteUInt32LittleEndian(span[MagicSize..], (uint)entries.Count);
-
-        int pos = HeaderSize;
-        foreach (PackEntry entry in entries)
+        try
         {
-            int nameLength = Encoding.UTF8.GetBytes(entry.Name, span[(pos + 2)..]);
-            BinaryPrimitives.WriteUInt16LittleEndian(span[pos..], (ushort)nameLength);
-            pos += 2 + nameLength;
-            span[pos++] = StoredEncoding;
-            BinaryPrimitives.WriteUInt32LittleEndian(span[pos..], (uint)entry.Data.Length);
-            pos += 4;
-            entry.Data.Span.CopyTo(span[pos..]);
-            pos += entry.Data.Length;
+            // Exact output size: header + per entry (entry header + UTF-8 name + payload). Source names are measured (and
+            // below written) as "sources/" + UTF-8(key) + ".json" with no intermediate string.
+            int entryCount = 1; // workflow.json is always present.
+            int total = checked(HeaderSize + EntryHeaderSize + WorkflowEntryNameUtf8.Length + workflowUtf8.Length);
+
+            for (int i = 0; i < sourceCount; i++)
+            {
+                string key = sortedSources![i].Key;
+                int nameLength = "sources/"u8.Length + Encoding.UTF8.GetByteCount(key) + ".json"u8.Length;
+                if (nameLength > ushort.MaxValue)
+                {
+                    throw new ArgumentException($"Package entry name 'sources/{key}.json' is too long.", nameof(sources));
+                }
+
+                total = checked(total + EntryHeaderSize + nameLength + sortedSources[i].Value.Length);
+                entryCount++;
+            }
+
+            if (!schemas.IsEmpty)
+            {
+                total = checked(total + EntryHeaderSize + SchemasEntryNameUtf8.Length + schemas.Length);
+                entryCount++;
+            }
+
+            if (!executor.IsEmpty)
+            {
+                total = checked(total + EntryHeaderSize + ExecutorEntryNameUtf8.Length + executor.Length);
+                entryCount++;
+            }
+
+            if (!executorManifest.IsEmpty)
+            {
+                total = checked(total + EntryHeaderSize + ExecutorManifestEntryNameUtf8.Length + executorManifest.Length);
+                entryCount++;
+            }
+
+            // One allocation — the package itself, the genuine leaf — written in place with spans; no ZIP object graph,
+            // no growing stream, and no per-entry name string.
+            byte[] result = new byte[total];
+            Span<byte> span = result;
+            Magic.CopyTo(span);
+            BinaryPrimitives.WriteUInt32LittleEndian(span[MagicSize..], (uint)entryCount);
+
+            int pos = HeaderSize;
+            pos = WriteEntry(span, pos, WorkflowEntryNameUtf8, workflowUtf8.Span);
+            for (int i = 0; i < sourceCount; i++)
+            {
+                pos = WriteSourceEntry(span, pos, sortedSources![i].Key, sortedSources[i].Value.Span);
+            }
+
+            if (!schemas.IsEmpty)
+            {
+                pos = WriteEntry(span, pos, SchemasEntryNameUtf8, schemas.Span);
+            }
+
+            if (!executor.IsEmpty)
+            {
+                pos = WriteEntry(span, pos, ExecutorEntryNameUtf8, executor.Span);
+            }
+
+            if (!executorManifest.IsEmpty)
+            {
+                _ = WriteEntry(span, pos, ExecutorManifestEntryNameUtf8, executorManifest.Span);
+            }
+
+            return result;
+        }
+        finally
+        {
+            if (sortedSources is not null)
+            {
+                ArrayPool<KeyValuePair<string, ReadOnlyMemory<byte>>>.Shared.Return(sortedSources, clearArray: true);
+            }
         }
 
-        return result;
+        // Writes one entry (length-prefixed name + stored encoding + length-prefixed data) at pos, returning the new pos.
+        static int WriteEntry(Span<byte> span, int pos, ReadOnlySpan<byte> name, ReadOnlySpan<byte> data)
+        {
+            BinaryPrimitives.WriteUInt16LittleEndian(span[pos..], (ushort)name.Length);
+            pos += 2;
+            name.CopyTo(span[pos..]);
+            pos += name.Length;
+            span[pos++] = StoredEncoding;
+            BinaryPrimitives.WriteUInt32LittleEndian(span[pos..], (uint)data.Length);
+            pos += 4;
+            data.CopyTo(span[pos..]);
+            return pos + data.Length;
+        }
+
+        // Writes a "sources/<key>.json" entry, composing the name straight into the output (prefix, transcoded key,
+        // suffix) and back-patching the name-length prefix from the bytes actually written — no intermediate name string.
+        static int WriteSourceEntry(Span<byte> span, int pos, string key, ReadOnlySpan<byte> data)
+        {
+            int lengthPos = pos;
+            pos += 2; // reserve the uint16 name length.
+            "sources/"u8.CopyTo(span[pos..]);
+            pos += "sources/"u8.Length;
+            pos += Encoding.UTF8.GetBytes(key, span[pos..]);
+            ".json"u8.CopyTo(span[pos..]);
+            pos += ".json"u8.Length;
+            BinaryPrimitives.WriteUInt16LittleEndian(span[lengthPos..], (ushort)(pos - lengthPos - 2));
+            span[pos++] = StoredEncoding;
+            BinaryPrimitives.WriteUInt32LittleEndian(span[pos..], (uint)data.Length);
+            pos += 4;
+            data.CopyTo(span[pos..]);
+            return pos + data.Length;
+        }
     }
 
     /// <summary>Opens a package, materializing its workflow and source documents.</summary>
@@ -291,7 +371,7 @@ public static class WorkflowPackage
             throw new ArgumentException("The package has no 'workflow.json' document.", nameof(package));
         }
 
-        sources.Sort(BySourceKeyMemory);
+        sources.Sort(SourceKeyComparer.Instance);
         return new PooledPackageContents(workflow, sources);
     }
 
@@ -442,8 +522,16 @@ public static class WorkflowPackage
         return false;
     }
 
-    // A single (name, payload) entry being packed.
-    private readonly record struct PackEntry(string Name, ReadOnlyMemory<byte> Data);
+    // Orders sources by key (ordinal) for a deterministic container — a plain key compare (the "sources/" prefix and
+    // ".json" suffix are identical across all source entries, so the full entry name never needs to be materialized to
+    // sort). A cached singleton, so the range/list sort takes no per-call comparer allocation.
+    private sealed class SourceKeyComparer : IComparer<KeyValuePair<string, ReadOnlyMemory<byte>>>
+    {
+        public static readonly SourceKeyComparer Instance = new();
+
+        public int Compare(KeyValuePair<string, ReadOnlyMemory<byte>> x, KeyValuePair<string, ReadOnlyMemory<byte>> y)
+            => string.CompareOrdinal(x.Key, y.Key);
+    }
 
     // Forward-only reader over a package's bytes: validates the magic + entry count up front, then yields each entry's
     // name span and the absolute [offset, length) of its payload (so the caller takes either a span or a memory view).

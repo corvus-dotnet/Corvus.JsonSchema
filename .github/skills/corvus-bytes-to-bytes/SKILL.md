@@ -30,8 +30,8 @@ projection was **5.88 KB -> 2.01 KB (0.34x)** once value/label flowed as spans i
 ## The genuine-leaf proof (run this BEFORE you write a string)
 
 The words **"genuine leaf"**, **"marginal"**, **"admin-rare"**, **"low-frequency"**, **"pragmatic"**,
-**"good enough"**, **"consistency win"** are red flags: they are usually a justification reached for
-*first*, to license skipping the bytes mechanism. Before any of them excuses a managed string on a
+**"good enough"**, **"consistency win"**, **"too fragile"**, **"edge case"**, **"one X's worth"** are red
+flags: they are usually a justification reached for *first*, to license skipping the bytes mechanism. Before any of them excuses a managed string on a
 warm/hot path, write a **two-ended trace** and check both ends:
 
 | | Source end | Destination end |
@@ -49,6 +49,25 @@ a leaf: assemble it into a pooled/stack UTF-8 buffer, not a string. The mechanis
 | Write UTF-8 into a generated model, no closure | `T.Build<TContext>` / `CreateBuilder<TContext>` | corvus-builder-context-threading |
 | Compare UTF-8 vs a fixed string | pre-encode the string to `u8`/`byte[]` once, `SequenceEqual` | this skill |
 | Re-transcode a holder's bytes | `Utf8JsonWriter` -> `TagSet.CopyFromJsonArray` | corvus-mutable-documents |
+
+### When the excuse is "too fragile" / "edge case" (a self-imposed invariant)
+
+Sometimes the string (or the `List` + per-item concat that builds it) isn't defended as a *leaf* but as
+too risky to remove — "the sort has a `'-'` vs `'.'` edge case needing a careful comparer", "I'd have to
+reproduce the exact output bytes", "it's only one row's worth". That difficulty is almost always
+**self-imposed**: it comes from preserving the existing code's *incidental* output shape (an entry/element
+order, a container layout, an insertion order), not from the task itself. Before you skip it: (1) name the
+exact invariant making it fragile; (2) read the **consumer** — the reader, the sink, the comparer — and
+check whether it actually requires that invariant. An order-independent reader (finds entries by
+name/key, not position), a sink that re-normalises/re-canonicalises, or a content-addressed-by-hash
+artifact does **not**. When no consumer requires it, the invariant is incidental — drop it and the clean
+low-alloc form falls out. Example: `WorkflowPackage.PackPooled` sorts sources by **key** in a pooled
+scratch array and emits a fixed bucket order (workflow, sources, metadata), writing each entry name as
+UTF-8 directly (`"sources/"u8` + key + `".json"u8`, length back-patched) — instead of reproducing the old
+full-name sort, which removed the `List` + per-source name string outright (`PackCanonicalPackage`
+0.73 -> 0.49 KB, scales per source). Treating incidental output shape as a contract is the
+anchoring-on-existing-code failure (deriving the replacement from what the old code happened to do)
+applied to behaviour instead of style.
 
 ## The fix recipe — bytes-native default + opt-in string
 
