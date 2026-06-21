@@ -79,7 +79,9 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
     // leaves; NO builder closure, NO per-item closure, NO re-materialisation — the ~2.0 KB closure-free floor):
     //   kindToken ............. pooled UnescapedUtf8JsonString lease, disposed at end of the parse `if`.
     //   prefix ................ the request Q as its JSON value (From(), no reify, no rental) — passed to the store; reified only at the directory string leaf.
-    //   source/pageToken/NextPageToken  string — LEAF (request params + store NextPageToken are string-typed).
+    //   pageToken ............. the request PageToken as its JSON value (From(), no reify, no string) — store decodes the cursor bytes-native.
+    //   NextPageToken ......... the store's pooled UTF-8 in the page (no token string); written straight into the response body, freed on page dispose.
+    //   source ................ string — LEAF (request param).
     //   found + (string)prefix  list/string — LEAF (IPrincipalDirectory seam is string-typed: LDAP filter / HTTP URI).
     //   page .................. ObservedIdentityPage (class, IDisposable) — `using`; identities read during the one Ok pass, before dispose.
     //   state/item ........... RefTuple<…> ref structs (stack, no heap) carrying the projection/per-grantee context to the static builders.
@@ -95,14 +97,19 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
 
         string source = parameters.Source.IsNotUndefined() ? (string)parameters.Source : "observed";
         int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : DefaultLimit;
-        string? pageToken = parameters.PageToken.IsNotUndefined() ? (string)parameters.PageToken : null;
+
+        // The opaque page token flows to the observed store as its JSON value (From() rewraps parameters.PageToken — free,
+        // no reify, no managed string; an undefined token rewraps to an undefined JsonString the store reads as "first
+        // page"); the store decodes it bytes-native from the request UTF-8.
+        JsonString pageToken = JsonString.From(parameters.PageToken);
 
         // Reach-scope discovery to the caller's read reach (§17.1) — the same AccessContext idiom every other store uses.
         AccessContext context = this.access.Current();
 
         // The search prefix flows to the observed store as its JSON value (From() rewraps parameters.Q, no reify, no
-        // managed string); the backend reifies it only at its index leaf. Undefined Q means "match all".
-        JsonString prefix = parameters.Q.IsNotUndefined() ? JsonString.From(parameters.Q) : default;
+        // managed string; an undefined Q rewraps to an undefined JsonString); the backend reifies it only at its index
+        // leaf. Undefined Q means "match all".
+        JsonString prefix = JsonString.From(parameters.Q);
 
         // Project the discovered principals/identities into the GranteeList body CLOSURE-FREE with a single
         // materialisation: a context-threaded GranteeList.Source<TContext> (the generated Build<TContext> + static build
@@ -128,12 +135,13 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
 
         using ObservedIdentityPage page = await this.observed.SearchAsync(context, kind, prefix, limit, pageToken, cancellationToken).ConfigureAwait(false);
 
-        // The opaque page token is a genuine string leaf; it threads through Build's nextPageToken only when set.
+        // The opaque page token is the store's pooled UTF-8 (alive until the page is disposed, after the synchronous Ok
+        // build); write it straight into the response body — no managed token string. Empty means "last page".
         var observedState = new RefTuple<ObservedIdentityPage, ControlPlaneAccess>(page, this.access);
         var observedBody = Models.GranteeList.Build(
             in observedState,
             grantees: Models.GranteeList.ResolvedGranteeArray.Build(in observedState, BuildObservedGrantees),
-            nextPageToken: page.NextPageToken is { } token ? (Models.JsonString.Source)token : default);
+            nextPageToken: page.NextPageToken.IsEmpty ? default : (Models.JsonString.Source)page.NextPageToken.Span);
         return SearchGranteesResult.Ok(observedBody, workspace);
     }
 

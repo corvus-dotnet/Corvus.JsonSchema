@@ -132,7 +132,8 @@ that exists today (a starting point to be re-baselined, **not** evidence of comp
 |---|---|---|---|---|---|---|
 | `GET /identity/whoami` | Whoami → (ControlPlaneAccess) | R | builds identity array | — | confirm | ⬜ |
 | `GET /identity/capabilities` | Capabilities → (ControlPlaneAccess) | R | builds kind array | — | confirm | ⬜ |
-| `GET /identity/grantees` | SearchGrantees → ObservedIdentity.SearchAsync / PrincipalDirectory.SearchAsync | R | RefTuple closure-free projection; directory path builds `List<ResolvedPrincipal>` | `GranteeProjectionBenchmarks` | re-baseline; confirm directory list is genuine leaf | ⬜ |
+| `GET /identity/grantees` | SearchGrantees → ObservedIdentity.SearchAsync / PrincipalDirectory.SearchAsync | R | RefTuple closure-free projection; directory path builds `List<ResolvedPrincipal>` | `GranteeProjectionBenchmarks` | re-baseline; confirm directory list is genuine leaf | ⬜ projection floor genuine |
+| `GET /identity/grantees` *(page token)* | SearchGrantees → `ObservedIdentityStore.SearchAsync` | R | `string? pageToken` in / `string? NextPageToken` out (the keyset continuation — a store-minted Base64URL token string per page) | `ObservedIdentityStoreBenchmarks` (Search_Page) | continuation-token **carrier seam**: `JsonString pageToken` in (`From()`), pooled `ReadOnlyMemory<byte>` `NextPageToken` out via page `Create(...)`; decode bytes-native from request UTF-8 | ✅ **2.03→1.98 KB (Part D)** |
 
 ### Administrators — `ArazzoControlPlaneAdministratorsHandler` → `IWorkflowAdministratorStore` / `IObservedIdentityStore`
 
@@ -410,6 +411,38 @@ query column), the source/title/description strings (stored or returned), and th
 wrappers. The owner stays a **record** (queryable indexed decomposition; SQL backends need the column strings). Going
 lower means attacking the RFC 8785 canonicaliser's working set — sharply diminishing returns against correctness risk.
 **Row done.**
+
+### ✅ Continuation-token carrier seam — observed-identity `Search` (+ the shared token helpers)
+
+The keyset paging tokens (`*ContinuationToken` helpers + `*Page` results + store `pageToken` params + handlers) were a
+**carrier seam**: an opaque token round-trips between two UTF-8 ends — emitted into a JSON response, carried back in the
+next JSON request (a CTJ `JsonString`) — yet the old code minted a managed `string` at both ends ("store-minted, not
+identity data, so it stays a string" — the genuine-leaf rationalization, [[arazzo-tag-string-alloc-conventions]] /
+skill `corvus-bytes-to-bytes`). Both ends are bytes. Converted bytes-native via `System.Buffers.Text.Base64Url`.
+
+This row is the **observed-identity** feature (the credentials feature was the reference, committed `0a303fcd05`;
+**workflow-run** remains). The shape (mirrors credentials exactly):
+
+| Element | Before | After |
+|---|---|---|
+| `IObservedIdentityStore.SearchAsync` page token | `string? pageToken` | `JsonString pageToken` (handler bridges the request value with `JsonString.From(...)`; decode bytes-native from `pageToken.GetUtf8String().Span`) |
+| `ObservedIdentityPage.NextPageToken` | `string?` (a Base64URL token **string** per token-emitting page) | pooled `ReadOnlyMemory<byte>` via factory `Create(identities[, subjectValue, subjectKind])` (rent + `EncodeToUtf8`; `Dispose` returns the buffer) |
+| handler emit | `(JsonString.Source)token` from the string | `(Models.JsonString.Source) page.NextPageToken.Span` — pooled UTF-8 written straight into the response body (the **deferred-body lifetime**: the buffer outlives the synchronous `Ok` build, freed on page dispose) |
+| 10 backends (InMemory + Sqlite by hand, 8 via parallel agents) | `Encode(...)` → `new ObservedIdentityPage(docs, nextToken)` | `Page.Create(docs, lastValue, lastKind)` / `Page.Create(docs)` |
+
+**Measured (`ObservedIdentityStoreBenchmarks.Search_Page`, InMemory, prefix matches 100, limit 10 → a token-emitting
+page): 2.03 → 1.98 KB.** The eliminated GC allocation is the one Base64URL token string per token-emitting page (~51 B
+— small, the directive's full-convert-every-seam mandate, not a headline). The token helpers themselves are 0-B on the
+warm path: `ContinuationTokenBenchmarks` shows **encode 112–136 B → 0 B** (assemble the cursor into a stack/`ArrayPool`
+UTF-8 buffer + separator byte → `Base64Url.EncodeToUtf8` straight into the destination; no `EncodeToString`/concat/
+per-part `ToString()`). The rest of `Search_Page`'s ~1.98 KB is the closure-free projection floor + InMemory keyset
+working set (the `top` capped buffer) — a real backend pushes `ORDER BY … LIMIT` down and has no `top`.
+
+Buffer sizing uses `Encoding.UTF8.GetMaxByteCount(len)` (a multiply, not a scan) — the helper is `GetMaxEncodedLength`
+(an upper bound; the exact length is `EncodeToUtf8`'s `written` return), see [[getmaxbytecount-for-scratch-buffers]].
+Verified: full slnx **0/0**; observed conformance **InMemory + Sqlite pass** (token round-tripped through the `JsonString`
+seam, malformed token still rejected); identity API server tests pass. **Row done** (workflow-run is the last carrier
+feature).
 
 ## Cross-references
 
