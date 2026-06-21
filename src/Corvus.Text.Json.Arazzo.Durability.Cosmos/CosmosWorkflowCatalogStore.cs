@@ -151,14 +151,14 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
     public static CosmosClientOptions CreateClientOptions() => new();
 
     /// <inheritdoc/>
-    public ValueTask<CatalogVersion> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         return this.AddCoreAsync(baseWorkflowId, packageUtf8.ToArray(), metadata, cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<CatalogVersion?> GetAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<CatalogVersion>?> GetAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
         (CatalogDocument Document, string Etag)? read = await this.ReadOneAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
         return read is { } r ? r.Document.ToVersion() : null;
@@ -289,26 +289,36 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
             definition = definition.WithParameter("@after", after);
         }
 
-        var versions = new List<CatalogVersion>();
+        // The page is a pooled batch of disposable version documents (the caller disposes the page). One extra row is
+        // fetched as a look-ahead to detect a further page; it is not added to the batch.
+        var versions = new PooledDocumentList<CatalogVersion>(limit);
         string? continuation = null;
-        await foreach (ReadOnlyMemory<byte> element in QueryElementsAsync(this.catalog, definition, cancellationToken).ConfigureAwait(false))
+        try
         {
-            if (versions.Count == limit)
+            await foreach (ReadOnlyMemory<byte> element in QueryElementsAsync(this.catalog, definition, cancellationToken).ConfigureAwait(false))
             {
-                // Fetched one beyond the page — a next page exists.
-                CatalogVersion last = versions[^1];
-                continuation = WorkflowContinuationToken.Encode(CatalogDocument.ComputeSortKey(last.Ref.BaseWorkflowId, last.Ref.VersionNumber));
-                return new CatalogPage(versions, continuation);
-            }
+                if (versions.Count == limit)
+                {
+                    // Fetched one beyond the page — a next page exists; the last kept row is the cursor.
+                    CatalogVersionRef last = versions[versions.Count - 1].Ref;
+                    continuation = WorkflowContinuationToken.Encode(CatalogDocument.ComputeSortKey(last.BaseWorkflowId, last.VersionNumber));
+                    break;
+                }
 
-            versions.Add(CatalogDocument.FromJson(element).ToVersion());
+                versions.Add(CatalogDocument.FromJson(element).ToVersion());
+            }
+        }
+        catch
+        {
+            versions.Dispose();
+            throw;
         }
 
         return new CatalogPage(versions, continuation);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<CatalogVersion?> UpdateMetadataAsync(string baseWorkflowId, int versionNumber, CatalogMetadataPatch patch, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<CatalogVersion>?> UpdateMetadataAsync(string baseWorkflowId, int versionNumber, CatalogMetadataPatch patch, CancellationToken cancellationToken)
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         var partition = new PartitionKey(baseWorkflowId);
@@ -319,51 +329,61 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
             return null;
         }
 
-        CatalogVersion current = found.Document.ToVersion();
-        CatalogStatus currentStatus = current.StatusValue;
-        CatalogStatus status = patch.Status ?? currentStatus;
-        bool newlyObsolete = status == CatalogStatus.Obsolete && currentStatus != CatalogStatus.Obsolete;
-        bool reactivated = status == CatalogStatus.Active && currentStatus == CatalogStatus.Obsolete;
-
-        CatalogOwner ownerValue = patch.Owner ?? current.OwnerValue;
-        TagSet tags = patch.Tags ?? current.TagsValue;
-        string? obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedByOrNull;
-        DateTimeOffset? obsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAtValue;
-        SecurityTagSet securityTags = current.SecurityTagsValue;
-
-        CatalogVersion updated = CatalogVersion.Create(
-            baseWorkflowId: current.Ref.BaseWorkflowId,
-            versionNumber: current.Ref.VersionNumber,
-            workflowId: current.Ref.WorkflowId,
-            title: (string)current.Title,
-            description: current.DescriptionOrNull,
-            status: status,
-            tags: tags,
-            owner: ownerValue,
-            sources: current.SourcesValue,
-            hash: (string)current.Hash,
-            createdBy: (string)current.CreatedBy,
-            createdAt: current.CreatedAtValue,
-            lastUpdatedBy: patch.UpdatedBy,
-            lastUpdatedAt: now,
-            obsoletedBy: obsoletedBy,
-            obsoletedAt: obsoletedAt,
-            runnable: (bool)current.Runnable,
-            securityTags: securityTags);
-
-        var options = new ItemRequestOptions { IfMatchEtag = found.Etag };
-        using var stream = CosmosJson.WriteToStream(
-            (Version: updated, Package: found.Document.PackageBytes()),
-            static (Utf8JsonWriter writer, in (CatalogVersion Version, byte[] Package) c) => CatalogDocument.WriteJson(writer, c.Version, c.Package));
-        using ResponseMessage response = await this.catalog.ReplaceItemStreamAsync(
-            stream, CatalogDocument.DocumentId(baseWorkflowId, versionNumber), partition, options, cancellationToken).ConfigureAwait(false);
-        if (response.StatusCode == HttpStatusCode.NotFound)
+        // Build the updated version document from the current row's fields. The current version is read into a pooled,
+        // disposable document only to source the unchanged fields; its accessors return OWNED COPIES, so they (and the
+        // updated document built from them) stay valid after the current document is disposed.
+        ParsedJsonDocument<CatalogVersion> updated;
+        using (ParsedJsonDocument<CatalogVersion> currentDoc = found.Document.ToVersion())
         {
-            return null;
+            CatalogVersion current = currentDoc.RootElement;
+            CatalogStatus currentStatus = current.StatusValue;
+            CatalogStatus status = patch.Status ?? currentStatus;
+            bool newlyObsolete = status == CatalogStatus.Obsolete && currentStatus != CatalogStatus.Obsolete;
+            bool reactivated = status == CatalogStatus.Active && currentStatus == CatalogStatus.Obsolete;
+
+            updated = CatalogVersion.Create(
+                baseWorkflowId: current.Ref.BaseWorkflowId,
+                versionNumber: current.Ref.VersionNumber,
+                workflowId: current.Ref.WorkflowId,
+                title: (string)current.Title,
+                description: current.DescriptionOrNull,
+                status: status,
+                tags: patch.Tags ?? current.TagsValue,
+                owner: patch.Owner ?? current.OwnerValue,
+                sources: current.SourcesValue,
+                hash: (string)current.Hash,
+                createdBy: (string)current.CreatedBy,
+                createdAt: current.CreatedAtValue,
+                lastUpdatedBy: patch.UpdatedBy,
+                lastUpdatedAt: now,
+                obsoletedBy: newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedByOrNull,
+                obsoletedAt: newlyObsolete ? now : reactivated ? null : current.ObsoletedAtValue,
+                runnable: (bool)current.Runnable,
+                securityTags: current.SecurityTagsValue);
         }
 
-        response.EnsureSuccessStatusCode();
-        return updated;
+        try
+        {
+            var options = new ItemRequestOptions { IfMatchEtag = found.Etag };
+            using var stream = CosmosJson.WriteToStream(
+                (Version: updated.RootElement, Package: found.Document.PackageBytes()),
+                static (Utf8JsonWriter writer, in (CatalogVersion Version, byte[] Package) c) => CatalogDocument.WriteJson(writer, c.Version, c.Package));
+            using ResponseMessage response = await this.catalog.ReplaceItemStreamAsync(
+                stream, CatalogDocument.DocumentId(baseWorkflowId, versionNumber), partition, options, cancellationToken).ConfigureAwait(false);
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                updated.Dispose();
+                return null;
+            }
+
+            response.EnsureSuccessStatusCode();
+            return updated;
+        }
+        catch
+        {
+            updated.Dispose();
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -452,7 +472,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         }
     }
 
-    private async ValueTask<CatalogVersion> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
+    private async ValueTask<ParsedJsonDocument<CatalogVersion>> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         var partition = new PartitionKey(baseWorkflowId);
@@ -464,7 +484,10 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
             cancellationToken.ThrowIfCancellationRequested();
             int versionNumber = await this.MaxVersionAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false) + 1;
             CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
-            CatalogVersion version = CatalogVersion.Create(
+
+            // The version is a pooled, disposable document the caller owns on success; on a concurrency conflict it is
+            // disposed and rebuilt against the recomputed max.
+            ParsedJsonDocument<CatalogVersion> version = CatalogVersion.Create(
                 baseWorkflowId: baseWorkflowId,
                 versionNumber: versionNumber,
                 workflowId: projection.WorkflowId,
@@ -480,18 +503,27 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
                 runnable: projection.HasExecutor,
                 securityTags: securityTags);
 
-            using var stream = CosmosJson.WriteToStream(
-                (Version: version, Package: projection.CanonicalPackage.ToArray()),
-                static (Utf8JsonWriter writer, in (CatalogVersion Version, byte[] Package) c) => CatalogDocument.WriteJson(writer, c.Version, c.Package));
-            using ResponseMessage response = await this.catalog.CreateItemStreamAsync(stream, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
-            if (response.StatusCode == HttpStatusCode.Conflict)
+            try
             {
-                // A concurrent add already claimed this version number; recompute the max and retry.
-                continue;
-            }
+                using var stream = CosmosJson.WriteToStream(
+                    (Version: version.RootElement, Package: projection.CanonicalPackage.ToArray()),
+                    static (Utf8JsonWriter writer, in (CatalogVersion Version, byte[] Package) c) => CatalogDocument.WriteJson(writer, c.Version, c.Package));
+                using ResponseMessage response = await this.catalog.CreateItemStreamAsync(stream, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
+                if (response.StatusCode == HttpStatusCode.Conflict)
+                {
+                    // A concurrent add already claimed this version number; recompute the max and retry.
+                    version.Dispose();
+                    continue;
+                }
 
-            response.EnsureSuccessStatusCode();
-            return version;
+                response.EnsureSuccessStatusCode();
+                return version;
+            }
+            catch
+            {
+                version.Dispose();
+                throw;
+            }
         }
     }
 

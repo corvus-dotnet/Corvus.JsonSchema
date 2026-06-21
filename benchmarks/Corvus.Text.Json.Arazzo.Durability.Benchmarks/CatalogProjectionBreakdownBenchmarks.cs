@@ -81,7 +81,7 @@ public class CatalogProjectionBreakdownBenchmarks
     public int ProjectAndBuildVersion()
     {
         CatalogPackageProjection projection = CatalogPackage.Project(this.package, BaseWorkflowId, 1);
-        CatalogVersion version = CatalogVersion.Create(
+        using ParsedJsonDocument<CatalogVersion> version = CatalogVersion.Create(
             baseWorkflowId: BaseWorkflowId,
             versionNumber: 1,
             workflowId: projection.WorkflowId,
@@ -96,14 +96,15 @@ public class CatalogProjectionBreakdownBenchmarks
             createdAt: DateTimeOffset.UnixEpoch,
             runnable: projection.HasExecutor,
             securityTags: this.securityTags);
-        return version.Ref.VersionNumber;
+        return version.RootElement.Ref.VersionNumber;
     }
 
     /// <summary>Stage: build the persisted version document.</summary>
     /// <returns>The version number (prevents dead-code elimination).</returns>
     [Benchmark]
     public int BuildVersionDocument()
-        => CatalogVersion.Create(
+    {
+        using ParsedJsonDocument<CatalogVersion> doc = CatalogVersion.Create(
             baseWorkflowId: BaseWorkflowId,
             versionNumber: 1,
             workflowId: "nightly-reconcile-v1",
@@ -117,5 +118,7 @@ public class CatalogProjectionBreakdownBenchmarks
             createdBy: "alice",
             createdAt: DateTimeOffset.UnixEpoch,
             runnable: false,
-            securityTags: this.securityTags).Ref.VersionNumber;
+            securityTags: this.securityTags);
+        return doc.RootElement.Ref.VersionNumber;
+    }
 }

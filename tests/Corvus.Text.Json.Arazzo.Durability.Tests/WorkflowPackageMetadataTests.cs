@@ -44,7 +44,8 @@ public class WorkflowPackageMetadataTests
     public async Task Store_bakes_and_serves_schemas_via_GetDocument()
     {
         var store = new InMemoryWorkflowCatalogStore(metadataProvider: new FakeProvider());
-        CatalogVersion version = await store.AddAsync("flow", WorkflowPackage.Pack(Workflow("flow"), []), Meta(), default);
+        using ParsedJsonDocument<CatalogVersion> versionDoc = await store.AddAsync("flow", WorkflowPackage.Pack(Workflow("flow"), []), Meta(), default);
+        CatalogVersion version = versionDoc.RootElement;
 
         ReadOnlyMemory<byte>? schemas = await store.GetDocumentAsync(version.Ref.BaseWorkflowId, version.Ref.VersionNumber, WorkflowPackage.SchemasDocumentName, default);
         schemas.ShouldNotBeNull();

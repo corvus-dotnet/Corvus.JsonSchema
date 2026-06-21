@@ -155,9 +155,10 @@ public readonly partial struct CatalogDocument
         return doc.RootElement.Clone();
     }
 
-    /// <summary>Projects this document back to a <see cref="CatalogVersion"/>.</summary>
-    /// <returns>The catalog version.</returns>
-    public CatalogVersion ToVersion()
+    /// <summary>Projects this document back to a catalog version, as a pooled, disposable document the caller owns.</summary>
+    /// <returns>A pooled, disposable document of the catalog version; the caller disposes it (or transfers ownership to a
+    /// <see cref="JsonWorkspace"/>) so its rented backing returns to the pool.</returns>
+    public ParsedJsonDocument<CatalogVersion> ToVersion()
     {
         SecurityTagSet securityTags = this.ReadSecurityTags();
 

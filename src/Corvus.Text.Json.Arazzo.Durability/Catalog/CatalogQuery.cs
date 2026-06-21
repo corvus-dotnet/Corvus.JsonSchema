@@ -31,8 +31,14 @@ public readonly record struct CatalogQuery(
     string? ContinuationToken = null,
     SecurityFilter? Security = null);
 
-/// <summary>A page of catalog versions matching a <see cref="CatalogQuery"/> (metadata only — no documents).</summary>
+/// <summary>A page of catalog versions matching a <see cref="CatalogQuery"/> (metadata only — no documents). The versions
+/// are a pooled, disposable batch the caller owns: <c>using</c> the page (or otherwise <see cref="Dispose"/> it) once the
+/// response has been projected, returning every backing buffer to the pool.</summary>
 /// <param name="Versions">The matching versions (at most <see cref="CatalogQuery.Limit"/>), ordered by (base workflow id, version number).</param>
 /// <param name="ContinuationToken">The opaque token to pass as the next query's <see cref="CatalogQuery.ContinuationToken"/>,
 /// or <see langword="null"/> when this is the last page.</param>
-public readonly record struct CatalogPage(IReadOnlyList<CatalogVersion> Versions, string? ContinuationToken = null);
+public readonly record struct CatalogPage(PooledDocumentList<CatalogVersion> Versions, string? ContinuationToken = null) : IDisposable
+{
+    /// <summary>Returns the page's pooled version documents to the pool.</summary>
+    public void Dispose() => this.Versions.Dispose();
+}

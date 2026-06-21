@@ -26,15 +26,16 @@ public interface IWorkflowCatalogStore
     /// <param name="packageUtf8">The submitted package envelope (<c>{ workflow, sources }</c>) as UTF-8 JSON.</param>
     /// <param name="metadata">The governance metadata (owner, tags) and the adding actor.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The added version's metadata.</returns>
-    ValueTask<CatalogVersion> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken);
+    /// <returns>The added version's metadata as a pooled, disposable document — the caller owns it (dispose it, or
+    /// transfer ownership to the request workspace via <c>workspace.TakeOwnership(doc)</c> when its value reaches a response).</returns>
+    ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken);
 
     /// <summary>Gets a version's metadata (no documents).</summary>
     /// <param name="baseWorkflowId">The base workflow id.</param>
     /// <param name="versionNumber">The version number.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The version, or <see langword="null"/> if no such version exists.</returns>
-    ValueTask<CatalogVersion?> GetAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken);
+    /// <returns>The version as a pooled, disposable document (the caller owns it), or <see langword="null"/> if no such version exists.</returns>
+    ValueTask<ParsedJsonDocument<CatalogVersion>?> GetAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken);
 
     /// <summary>Gets the whole stored canonical package envelope for a version.</summary>
     /// <param name="baseWorkflowId">The base workflow id.</param>
@@ -66,8 +67,8 @@ public interface IWorkflowCatalogStore
     /// <param name="versionNumber">The version number.</param>
     /// <param name="patch">The metadata changes and the updating actor.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The updated version, or <see langword="null"/> if no such version exists.</returns>
-    ValueTask<CatalogVersion?> UpdateMetadataAsync(string baseWorkflowId, int versionNumber, CatalogMetadataPatch patch, CancellationToken cancellationToken);
+    /// <returns>The updated version as a pooled, disposable document (the caller owns it), or <see langword="null"/> if no such version exists.</returns>
+    ValueTask<ParsedJsonDocument<CatalogVersion>?> UpdateMetadataAsync(string baseWorkflowId, int versionNumber, CatalogMetadataPatch patch, CancellationToken cancellationToken);
 
     /// <summary>Deletes a single version. The caller is responsible for the referential-integrity check first.</summary>
     /// <param name="baseWorkflowId">The base workflow id.</param>
