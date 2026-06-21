@@ -99,16 +99,25 @@ public static partial class CatalogPackage
         ArgumentNullException.ThrowIfNull(baseWorkflowId);
         string workflowId = $"{baseWorkflowId}-v{versionNumber.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
 
-        WorkflowPackageContents contents = WorkflowPackage.Open(packageZip);
+        // Pooled, borrow-only read of the package's workflow + sources: the documents are ArrayPool-rented and returned
+        // on dispose, so the publish hot path reads them with no per-document heap allocation. Everything that outlives
+        // this scope (rewritten workflow, canonical package, hash, projected metadata) is freshly owned, never a view
+        // over these pooled buffers — so disposing here is safe.
+        using PooledPackageContents contents = WorkflowPackage.OpenPooled(packageZip);
 
         // Single parse of the workflow: rewrite the id AND read the (id-independent) title/description/sources in the
         // same pass, rather than re-parsing the rewritten document a second time just to project its metadata.
         (byte[] rewrittenWorkflow, string title, string? description, IReadOnlyList<CatalogSourceRef> sources) =
             RewriteWorkflowId(contents.Workflow, workflowId);
         string hash = WorkflowPackage.ComputeContentHash(rewrittenWorkflow, contents.Sources);
-        ReadOnlyMemory<byte> schemas = metadataProvider?.BuildSchemas(rewrittenWorkflow, contents.Sources) ?? default;
-        WorkflowExecutorArtifact? executor = executorProvider?.BuildExecutor(rewrittenWorkflow, contents.Sources, hash);
-        byte[] canonicalPackage = WorkflowPackage.Pack(rewrittenWorkflow, contents.Sources, schemas, executor?.Assembly ?? default, executor?.Manifest ?? default);
+
+        // The optional providers consume sources as byte[]; materialise once (only when one is configured — the common
+        // path has neither, so the pooled sources are never copied).
+        IReadOnlyList<KeyValuePair<string, byte[]>>? providerSources =
+            metadataProvider is not null || executorProvider is not null ? MaterializeSources(contents.Sources) : null;
+        ReadOnlyMemory<byte> schemas = metadataProvider?.BuildSchemas(rewrittenWorkflow, providerSources!) ?? default;
+        WorkflowExecutorArtifact? executor = executorProvider?.BuildExecutor(rewrittenWorkflow, providerSources!, hash);
+        byte[] canonicalPackage = WorkflowPackage.PackPooled(rewrittenWorkflow, contents.Sources, schemas, executor?.Assembly ?? default, executor?.Manifest ?? default);
 
         return new CatalogPackageProjection(canonicalPackage, workflowId, hash, title, description, sources, executor.HasValue);
     }
@@ -274,6 +283,19 @@ public static partial class CatalogPackage
         }
 
         return sources;
+    }
+
+    // Copies pooled source views to owned arrays for the optional metadata/executor providers (which take byte[]); only
+    // called when a provider is configured, so the common publish path never materialises the pooled sources.
+    private static IReadOnlyList<KeyValuePair<string, byte[]>> MaterializeSources(IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> sources)
+    {
+        var list = new List<KeyValuePair<string, byte[]>>(sources.Count);
+        foreach (KeyValuePair<string, ReadOnlyMemory<byte>> source in sources)
+        {
+            list.Add(new KeyValuePair<string, byte[]>(source.Key, source.Value.ToArray()));
+        }
+
+        return list;
     }
 
     private static (byte[] Rewritten, string Title, string? Description, IReadOnlyList<CatalogSourceRef> Sources) RewriteWorkflowId(ReadOnlyMemory<byte> workflowUtf8, string newWorkflowId)
