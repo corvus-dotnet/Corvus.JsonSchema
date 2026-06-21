@@ -108,7 +108,7 @@ that exists today (a starting point to be re-baselined, **not** evidence of comp
 | Op | Call tree | R/W | Current pattern / hotspots | Existing bench | Target pattern + grounding | Status |
 |---|---|---|---|---|---|---|
 | `GET /catalog` search | SearchCatalog → SearchAsync | R | `BuildPage` loop; `ToTags` copy | — | confirm projection | ⬜ |
-| `POST /catalog` | AddCatalogVersion → **AddAsync** | W | record `CatalogMetadata` + package bytes; `ToOwner`/`ToTags`; `SecurityTagSet.FromTags` | `CatalogStoreBenchmarks` (e2e baseline 19.92 KB) | carry `body.Owner` as `JsonElement` bytes-to-bytes through `CatalogMetadata`→`CatalogVersion.Create` (owner record→element); `corvus-bytes-to-bytes`, §13.4.1 | 🔬 baselined; conversion is a 20+-file change to the shared `Create` (add+update, 9 backends) — see Part D |
+| `POST /catalog` | AddCatalogVersion → **AddAsync** | W | record `CatalogMetadata` + package bytes; `ToOwner`/`ToTags`; `SecurityTagSet.FromTags` | `CatalogStoreBenchmarks` (e2e baseline 19.92 KB) | owner is a **queryable indexed decomposition** (`Owner*` columns + read-reconstruct), not a string seam — confirmed genuine (Part D) | ➖ owner genuine (indexed); ↓ projection row is the real lever |
 | `POST /catalog` *(projection)* | AddAsync → `CatalogPackage.Project` | W | **~19.7 KB**: parse + canonicalise + hash + id-rewrite + version-doc write (the bulk; NOT the record seam) | `CatalogStoreBenchmarks` | NEW ROW (added on review): audit `CatalogPackage.Project` for record/string materialisations (title/description/sources/hash); this is catalog's real perf lever | ⬜ |
 | `GET /catalog/{id}` list | ListCatalogVersions → SearchAsync | R | BuildPage | — | — | ⬜ |
 | `GET …/versions/{n}` | GetCatalogVersion → GetAsync | R | `CatalogVersionSummary.From()` wrap | — | confirm congruent wrap | ⬜ |
@@ -274,17 +274,18 @@ are already holders.
 **Two findings (both recorded above):**
 1. **Catalog's real perf lever is the projection (~19.7 KB), not the owner record (~160 B).** Added as a new
    `POST /catalog (projection)` row to Part B — audit `CatalogPackage.Project` for string materialisations.
-2. **The owner conversion is a 20+-file change.** `CatalogVersion.Create` is the *central projection shared by the add
-   **and** update paths across all 9 backends* (~24 call sites), and `IWorkflowCatalogClient.AddAsync(CatalogOwner owner)`
-   has ~15 cold-caller sites (tests). Carrying `owner` as a `JsonElement` ripples through all of them. The ~160 B delta is
-   **sub-noise in the projection-dominated e2e**, so it needs an isolated `CatalogVersion.Create` (record vs element) arm
-   to be proven.
+2. **The owner is an INDEXED decomposition, not a record↔document seam — conversion attempted and REVERTED.** Building the
+   `owner`→`JsonElement` change (Create owner `CatalogOwner`→element; `CatalogMetadata`/`Patch.Owner`→element; client +
+   handler + all backends) the compiler proved it incompatible with the data model: the SQL/Azure backends store the
+   governance owner as **queryable columns** (`OwnerName`/`OwnerEmail`/`OwnerTeam`/`OwnerUrl`, backing the catalog `owner`
+   search filter) and **reconstruct** the version via `CatalogVersion.Create` from those columns on read. Carrying `owner`
+   as opaque bytes would force every relational/Mongo backend to (a) re-extract the same four strings for its columns
+   (zero alloc win) and (b) rebuild an owner doc on read (a *regression*). So `CatalogOwner` is a **genuine indexed field**,
+   not a string-seam anti-pattern; the conversion was reverted.
 
-**Plan (ready to execute as a focused unit).** `CatalogVersion.Create` owner `CatalogOwner`→`in JsonElement` (copy the
-element bytes-to-bytes); `CatalogMetadata.Owner`→`JsonElement`; `IWorkflowCatalogClient.AddAsync`(2) + `WorkflowCatalogClient`
-+ handler carry `(JsonElement)body.Owner`; cold callers (conformance `Meta()`, the credential-gate/CLI tests, the benchmark)
-hold an owner doc; backends forward `metadata.Owner` unchanged. Status flips to ✅ once the isolated before→after is recorded
-here.
+**Conclusion.** Owner seam → **➖ confirmed genuine** (indexed decomposition; leave as `CatalogOwner`). The ~160 B owner
+transcode is the price of a searchable owner. Catalog's real allocation lever is the **package projection (~19.7 KB)** —
+the separate `POST /catalog (projection)` row. `CatalogStoreBenchmarks` (19.92 KB) is committed and retained for it.
 
 ---
 
