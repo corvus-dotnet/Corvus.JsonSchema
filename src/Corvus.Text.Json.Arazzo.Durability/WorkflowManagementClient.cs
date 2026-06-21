@@ -85,8 +85,10 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
 
     private static string DeterministicRunId(string workflowId, string idempotencyKey)
     {
-        int count = System.Text.Encoding.UTF8.GetByteCount(workflowId) + 1 + System.Text.Encoding.UTF8.GetByteCount(idempotencyKey);
-        byte[] buffer = ArrayPool<byte>.Shared.Rent(count);
+        // Upper bound (GetMaxByteCount is a multiply, not a scan) to size the scratch — the exact filled length comes from
+        // the GetBytes returns below, and the hash is taken over buffer[..written].
+        int maxCount = System.Text.Encoding.UTF8.GetMaxByteCount(workflowId.Length) + 1 + System.Text.Encoding.UTF8.GetMaxByteCount(idempotencyKey.Length);
+        byte[] buffer = ArrayPool<byte>.Shared.Rent(maxCount);
         try
         {
             int written = System.Text.Encoding.UTF8.GetBytes(workflowId, buffer);

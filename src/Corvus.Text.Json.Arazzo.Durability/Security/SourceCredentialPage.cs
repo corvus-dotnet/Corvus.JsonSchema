@@ -50,8 +50,8 @@ public sealed class SourceCredentialPage : IDisposable
     /// <returns>The page, owning the pooled token buffer.</returns>
     public static SourceCredentialPage Create(PooledDocumentList<SourceCredentialBinding> bindings, string sourceName, string environment, string tieBreaker)
     {
-        int length = SourceCredentialContinuationToken.GetEncodedLength(sourceName, environment, tieBreaker);
-        byte[] buffer = ArrayPool<byte>.Shared.Rent(length);
+        int maxLength = SourceCredentialContinuationToken.GetMaxEncodedLength(sourceName, environment, tieBreaker);
+        byte[] buffer = ArrayPool<byte>.Shared.Rent(maxLength);
         try
         {
             int written = SourceCredentialContinuationToken.EncodeToUtf8(sourceName, environment, tieBreaker, buffer);

@@ -54,7 +54,7 @@ public class ContinuationTokenBenchmarks
     [Benchmark]
     public int Run_Encode_Utf8()
     {
-        Span<byte> buffer = stackalloc byte[WorkflowContinuationToken.GetEncodedLength(RunId)];
+        Span<byte> buffer = stackalloc byte[WorkflowContinuationToken.GetMaxEncodedLength(RunId)];
         return WorkflowContinuationToken.EncodeToUtf8(RunId, buffer);
     }
 
@@ -66,7 +66,7 @@ public class ContinuationTokenBenchmarks
     [Benchmark]
     public int Identity_Encode_Utf8()
     {
-        Span<byte> buffer = stackalloc byte[ObservedIdentityContinuationToken.GetEncodedLength(SubjectValue, SubjectKind)];
+        Span<byte> buffer = stackalloc byte[ObservedIdentityContinuationToken.GetMaxEncodedLength(SubjectValue, SubjectKind)];
         return ObservedIdentityContinuationToken.EncodeToUtf8(SubjectValue, SubjectKind, buffer);
     }
 
@@ -78,7 +78,7 @@ public class ContinuationTokenBenchmarks
     [Benchmark]
     public int Credential_Encode_Utf8()
     {
-        Span<byte> buffer = stackalloc byte[SourceCredentialContinuationToken.GetEncodedLength(SourceName, Environment, TieBreaker)];
+        Span<byte> buffer = stackalloc byte[SourceCredentialContinuationToken.GetMaxEncodedLength(SourceName, Environment, TieBreaker)];
         return SourceCredentialContinuationToken.EncodeToUtf8(SourceName, Environment, TieBreaker, buffer);
     }
 

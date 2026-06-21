@@ -70,8 +70,9 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 100;
 
         // The opaque page token flows to the store as its JSON value (From() rewraps parameters.PageToken — free, no
-        // reify, no managed string); the store decodes it bytes-native from the request UTF-8.
-        JsonString pageToken = parameters.PageToken.IsNotUndefined() ? JsonString.From(parameters.PageToken) : default;
+        // reify, no managed string; an undefined token rewraps to an undefined JsonString); the store decodes it
+        // bytes-native from the request UTF-8.
+        JsonString pageToken = JsonString.From(parameters.PageToken);
         using SourceCredentialPage page = await this.store.ListAsync(this.access.Current(), limit, pageToken, cancellationToken).ConfigureAwait(false);
         return ListCredentialsResult.Ok(this.ToList(page.Bindings, page.NextPageToken), workspace);
     }

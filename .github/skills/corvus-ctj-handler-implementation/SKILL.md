@@ -129,6 +129,16 @@ Directory.JsonUuid.From(accepted.Ticket)
 
 Use `From<T>()` whenever passing values between types from different generated namespaces. Within the same namespace, implicit conversion works directly.
 
+`From<T>()` **propagates undefined**: `From(source)` of an undefined `source` is an undefined target (it reinterprets the same backing memory, which is still undefined). So do **not** guard it with an `IsNotUndefined()` ternary when the consumer already treats undefined as absent:
+
+```csharp
+// ❌ redundant — From() of an undefined PageToken is already an undefined JsonString
+JsonString pageToken = parameters.PageToken.IsNotUndefined() ? JsonString.From(parameters.PageToken) : default;
+
+// ✅ undefined flows straight through; the store's `if (pageToken.IsNotUndefined())` sees it either way
+JsonString pageToken = JsonString.From(parameters.PageToken);
+```
+
 ## Array Enumeration
 
 Generated array types do NOT implement `IEnumerable<T>`. You must call `EnumerateArray()`:
