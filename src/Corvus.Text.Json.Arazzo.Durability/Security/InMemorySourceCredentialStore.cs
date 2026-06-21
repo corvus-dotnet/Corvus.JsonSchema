@@ -69,11 +69,17 @@ public sealed class InMemorySourceCredentialStore : ISourceCredentialStore
     }
 
     /// <inheritdoc/>
-    public ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, string? pageToken, CancellationToken cancellationToken)
+    public ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         int pageSize = limit > 0 ? limit : 1;
-        bool hasCursor = SourceCredentialContinuationToken.TryDecode(pageToken, out (string SourceName, string Environment, string TieBreaker) cursor);
+        (string SourceName, string Environment, string TieBreaker) cursor = (string.Empty, string.Empty, string.Empty);
+        bool hasCursor = false;
+        if (pageToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+            hasCursor = SourceCredentialContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
+        }
 
         lock (this.gate)
         {
@@ -91,7 +97,7 @@ public sealed class InMemorySourceCredentialStore : ISourceCredentialStore
             ordered.Sort(static (x, y) => CompareKey(x.Source, x.Env, x.Disc, y.Source, y.Env, y.Disc));
 
             var docs = new PooledDocumentList<SourceCredentialBinding>(Math.Min(pageSize, ordered.Count));
-            string? nextToken = null;
+            bool hasMore = false;
             string lastSource = string.Empty, lastEnv = string.Empty, lastDisc = string.Empty;
             try
             {
@@ -111,7 +117,7 @@ public sealed class InMemorySourceCredentialStore : ISourceCredentialStore
                     if (docs.Count == pageSize)
                     {
                         // A further visible row exists → there is a next page; the token resumes after the last included row.
-                        nextToken = SourceCredentialContinuationToken.Encode(lastSource, lastEnv, lastDisc);
+                        hasMore = true;
                         break;
                     }
 
@@ -121,7 +127,9 @@ public sealed class InMemorySourceCredentialStore : ISourceCredentialStore
                     lastDisc = row.Disc;
                 }
 
-                return new ValueTask<SourceCredentialPage>(new SourceCredentialPage(docs, nextToken));
+                return new ValueTask<SourceCredentialPage>(hasMore
+                    ? SourceCredentialPage.Create(docs, lastSource, lastEnv, lastDisc)
+                    : SourceCredentialPage.Create(docs));
             }
             catch
             {

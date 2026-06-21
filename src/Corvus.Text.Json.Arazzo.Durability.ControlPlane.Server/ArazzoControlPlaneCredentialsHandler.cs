@@ -68,7 +68,10 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     public async ValueTask<ListCredentialsResult> HandleListCredentialsAsync(ListCredentialsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 100;
-        string? pageToken = parameters.PageToken.IsNotUndefined() ? (string)parameters.PageToken : null;
+
+        // The opaque page token flows to the store as its JSON value (From() rewraps parameters.PageToken — free, no
+        // reify, no managed string); the store decodes it bytes-native from the request UTF-8.
+        JsonString pageToken = parameters.PageToken.IsNotUndefined() ? JsonString.From(parameters.PageToken) : default;
         using SourceCredentialPage page = await this.store.ListAsync(this.access.Current(), limit, pageToken, cancellationToken).ConfigureAwait(false);
         return ListCredentialsResult.Ok(this.ToList(page.Bindings, page.NextPageToken), workspace);
     }
@@ -386,7 +389,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     private static Models.CredentialConfigEntry.Source ToConfigEntry(string key, string value)
         => new((ref Models.CredentialConfigEntry.Builder b) => b.Create(key, value));
 
-    private Models.CredentialBindingList.Source ToList(IReadOnlyList<SourceCredentialBinding> bindings, string? nextPageToken)
+    private Models.CredentialBindingList.Source ToList(IReadOnlyList<SourceCredentialBinding> bindings, ReadOnlyMemory<byte> nextPageToken)
         => new((ref Models.CredentialBindingList.Builder b) => b.Create(
             credentials: new Models.CredentialBindingList.CredentialBindingSummaryArray.Source((ref Models.CredentialBindingList.CredentialBindingSummaryArray.Builder ab) =>
             {
@@ -395,7 +398,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
                     ab.AddItem(this.ToSummary(binding));
                 }
             }),
-            nextPageToken: nextPageToken is { } token ? (Models.JsonString.Source)token : default));
+            nextPageToken: nextPageToken.IsEmpty ? default : (Models.JsonString.Source)nextPageToken.Span));
 
     private static Models.ProblemDetails.Source NotFoundProblem(string sourceName, string environment)
         => Problem("credential-not-found", "Credential not found", 404, $"No source credential binding for '{sourceName}@{environment}' exists.");
