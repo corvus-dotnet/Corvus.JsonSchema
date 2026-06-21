@@ -100,20 +100,15 @@ public static partial class CatalogPackage
         string workflowId = $"{baseWorkflowId}-v{versionNumber.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
 
         WorkflowPackageContents contents = WorkflowPackage.Open(packageZip);
-        byte[] rewrittenWorkflow = RewriteWorkflowId(contents.Workflow, workflowId);
+
+        // Single parse of the workflow: rewrite the id AND read the (id-independent) title/description/sources in the
+        // same pass, rather than re-parsing the rewritten document a second time just to project its metadata.
+        (byte[] rewrittenWorkflow, string title, string? description, IReadOnlyList<CatalogSourceRef> sources) =
+            RewriteWorkflowId(contents.Workflow, workflowId);
         string hash = WorkflowPackage.ComputeContentHash(rewrittenWorkflow, contents.Sources);
         ReadOnlyMemory<byte> schemas = metadataProvider?.BuildSchemas(rewrittenWorkflow, contents.Sources) ?? default;
         WorkflowExecutorArtifact? executor = executorProvider?.BuildExecutor(rewrittenWorkflow, contents.Sources, hash);
         byte[] canonicalPackage = WorkflowPackage.Pack(rewrittenWorkflow, contents.Sources, schemas, executor?.Assembly ?? default, executor?.Manifest ?? default);
-
-        string title;
-        string? description;
-        IReadOnlyList<CatalogSourceRef> sources;
-        using (ParsedJsonDocument<JsonElement> workflow = ParsedJsonDocument<JsonElement>.Parse(rewrittenWorkflow))
-        {
-            (title, description) = ReadTitleAndDescription(workflow.RootElement);
-            sources = ReadSources(workflow.RootElement);
-        }
 
         return new CatalogPackageProjection(canonicalPackage, workflowId, hash, title, description, sources, executor.HasValue);
     }
@@ -281,12 +276,18 @@ public static partial class CatalogPackage
         return sources;
     }
 
-    private static byte[] RewriteWorkflowId(ReadOnlyMemory<byte> workflowUtf8, string newWorkflowId)
+    private static (byte[] Rewritten, string Title, string? Description, IReadOnlyList<CatalogSourceRef> Sources) RewriteWorkflowId(ReadOnlyMemory<byte> workflowUtf8, string newWorkflowId)
     {
         using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(workflowUtf8);
-        return PersistedJson.ToArray(
+
+        // Read the (id-independent) metadata from this same parse — the id rewrite changes only workflows[0].workflowId,
+        // so title/description/sources are identical in the original and rewritten documents.
+        (string title, string? description) = ReadTitleAndDescription(document.RootElement);
+        IReadOnlyList<CatalogSourceRef> sources = ReadSources(document.RootElement);
+        byte[] rewritten = PersistedJson.ToArray(
             (Root: document.RootElement, NewWorkflowId: newWorkflowId),
             static (Utf8JsonWriter writer, in (JsonElement Root, string NewWorkflowId) c) => WriteWorkflowWithId(c.Root, writer, c.NewWorkflowId));
+        return (rewritten, title, description, sources);
     }
 
     private static void WriteWorkflowWithId(JsonElement workflow, Utf8JsonWriter writer, string newWorkflowId)
