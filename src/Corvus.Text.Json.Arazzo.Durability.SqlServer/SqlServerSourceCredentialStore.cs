@@ -104,15 +104,21 @@ public sealed class SqlServerSourceCredentialStore : ISourceCredentialStore, IAs
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, string? pageToken, CancellationToken cancellationToken)
+    public async ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         int pageSize = limit > 0 ? limit : 1;
-        bool hasCursor = SourceCredentialContinuationToken.TryDecode(pageToken, out (string SourceName, string Environment, string TieBreaker) cursor);
+        (string SourceName, string Environment, string TieBreaker) cursor = (string.Empty, string.Empty, string.Empty);
+        bool hasCursor = false;
+        if (pageToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+            hasCursor = SourceCredentialContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
+        }
 
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         var docs = new PooledDocumentList<SourceCredentialBinding>(pageSize);
-        string? nextToken = null;
+        bool hasMore = false;
         try
         {
             // Keyset seek past the cursor in (SourceName, Environment, TagsHash) order — an indexed range scan over the
@@ -152,7 +158,7 @@ public sealed class SqlServerSourceCredentialStore : ISourceCredentialStore, IAs
 
                 if (docs.Count == pageSize)
                 {
-                    nextToken = SourceCredentialContinuationToken.Encode(lastSource, lastEnv, lastTie);
+                    hasMore = true;
                     break;
                 }
 
@@ -162,7 +168,9 @@ public sealed class SqlServerSourceCredentialStore : ISourceCredentialStore, IAs
                 lastTie = tie;
             }
 
-            return new SourceCredentialPage(docs, nextToken);
+            return hasMore
+                ? SourceCredentialPage.Create(docs, lastSource, lastEnv, lastTie)
+                : SourceCredentialPage.Create(docs);
         }
         catch
         {

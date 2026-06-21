@@ -60,11 +60,11 @@ public interface ISourceCredentialStore
     /// </summary>
     /// <param name="context">The caller's row-access grant (use <see cref="AccessContext.System"/> for full reach).</param>
     /// <param name="limit">The maximum number of bindings to return in the page (the store treats a non-positive value as 1).</param>
-    /// <param name="pageToken">An opaque token from a previous page's <see cref="SourceCredentialPage.NextPageToken"/>, or <see langword="null"/> for the first page.</param>
+    /// <param name="pageToken">The opaque token (its JSON value) from a previous page's <see cref="SourceCredentialPage.NextPageToken"/>, or undefined for the first page; decoded bytes-native from its UTF-8.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The page (visible bindings + an optional next-page token), as a disposable batch the caller must dispose.</returns>
     /// <exception cref="FormatException"><paramref name="pageToken"/> is not a valid continuation token.</exception>
-    ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, string? pageToken, CancellationToken cancellationToken);
+    ValueTask<SourceCredentialPage> ListAsync(AccessContext context, int limit, JsonString pageToken, CancellationToken cancellationToken);
 
     /// <summary>Updates the binding for (<paramref name="sourceName"/>, <paramref name="environment"/>) the caller's
     /// write reach admits, under optimistic concurrency. The (sourceName, environment) identity, the security tags, and
