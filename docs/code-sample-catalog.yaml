@@ -1731,9 +1731,9 @@ skills:
       - {index: 3, language: csharp, lines: [104, 110], category: compilable, verified: false}
   - path: ".github/skills/corvus-bytes-to-bytes/SKILL.md"
     blocks:
-      - {index: 0, language: csharp, lines: [60, 70], category: compilable, verified: false}
-      - {index: 1, language: csharp, lines: [83, 96], category: compilable, verified: false}
-      - {index: 2, language: csharp, lines: [100, 113], category: compilable, verified: false}
+      - {index: 0, language: csharp, lines: [79, 89], category: compilable, verified: false}
+      - {index: 1, language: csharp, lines: [102, 115], category: compilable, verified: false}
+      - {index: 2, language: csharp, lines: [119, 132], category: compilable, verified: false}
   - path: ".github/skills/corvus-codegen/SKILL.md"
     blocks:
       - {index: 0, language: csharp, lines: [22, 25], category: compilable, verified: false}
