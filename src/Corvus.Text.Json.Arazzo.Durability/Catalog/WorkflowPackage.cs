@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.IO.Compression;
 using System.Security.Cryptography;
 using Corvus.Text.Json;
@@ -15,7 +16,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// archive bundling an Arazzo workflow document with the OpenAPI/AsyncAPI source documents it references, plus a
 /// small manifest describing the contents. It is an opaque binary artifact — moved as a file (multipart upload /
 /// streamed download) and stored verbatim — whose internal format is documented here and whose logical content
-/// is content-addressable via <see cref="ComputeContentHash"/>.
+/// is content-addressable via <c>ComputeContentHash</c>.
 /// </summary>
 /// <remarks>
 /// <para>Archive layout (all entries UTF-8 JSON):</para>
@@ -93,6 +94,23 @@ public static class WorkflowPackage
         ReadOnlyMemory<byte> schemas = default,
         ReadOnlyMemory<byte> executor = default,
         ReadOnlyMemory<byte> executorManifest = default)
+        => PackPooled(workflowUtf8, ToMemorySources(sources), schemas, executor, executorManifest);
+
+    /// <summary>Assembles a package archive, taking the source documents as <see cref="ReadOnlyMemory{T}"/> (so a pooled
+    /// reader can pack without materialising each source to its own array) — a distinct name from <c>Pack</c> so an empty
+    /// collection literal does not become an ambiguous overload at the call site.</summary>
+    /// <param name="workflowUtf8">The Arazzo workflow document as UTF-8 JSON.</param>
+    /// <param name="sources">The referenced source documents, keyed by name.</param>
+    /// <param name="schemas">An optional precomputed schema-metadata document.</param>
+    /// <param name="executor">An optional compiled executor assembly.</param>
+    /// <param name="executorManifest">An optional executor manifest.</param>
+    /// <returns>The package archive bytes (a ZIP).</returns>
+    internal static byte[] PackPooled(
+        ReadOnlyMemory<byte> workflowUtf8,
+        IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> sources,
+        ReadOnlyMemory<byte> schemas = default,
+        ReadOnlyMemory<byte> executor = default,
+        ReadOnlyMemory<byte> executorManifest = default)
     {
         ArgumentNullException.ThrowIfNull(sources);
 
@@ -105,9 +123,9 @@ public static class WorkflowPackage
         {
             WriteEntry(archive, ManifestEntryName, manifest);
             WriteEntry(archive, WorkflowEntryName, workflowUtf8.Span);
-            foreach (KeyValuePair<string, byte[]> source in orderedSources)
+            foreach (KeyValuePair<string, ReadOnlyMemory<byte>> source in orderedSources)
             {
-                WriteEntry(archive, SourcesPrefix + source.Key + ".json", source.Value);
+                WriteEntry(archive, SourcesPrefix + source.Key + ".json", source.Value.Span);
             }
 
             if (!schemas.IsEmpty)
@@ -135,11 +153,7 @@ public static class WorkflowPackage
     /// <exception cref="ArgumentException">The archive is not a valid package (no workflow document).</exception>
     public static WorkflowPackageContents Open(ReadOnlyMemory<byte> packageZip)
     {
-        // Wrap the package's backing array directly (no full-package copy) when it is array-backed — the common case,
-        // since stores hand the persisted bytes back as a byte[]; fall back to a copy only for non-array-backed memory.
-        using MemoryStream buffer = System.Runtime.InteropServices.MemoryMarshal.TryGetArray(packageZip, out ArraySegment<byte> segment) && segment.Array is not null
-            ? new MemoryStream(segment.Array, segment.Offset, segment.Count, writable: false)
-            : new MemoryStream(packageZip.ToArray(), writable: false);
+        using MemoryStream buffer = AsReadStream(packageZip);
         using var archive = new ZipArchive(buffer, ZipArchiveMode.Read);
 
         byte[]? workflow = ReadEntry(archive, WorkflowEntryName);
@@ -168,6 +182,74 @@ public static class WorkflowPackage
     }
 
     /// <summary>
+    /// Opens a package's workflow + source documents into <strong>pooled</strong> buffers — the borrow-only counterpart
+    /// of <see cref="Open"/> for the catalog-add hot path: the documents are read into <see cref="ArrayPool{T}"/>-rented
+    /// arrays and exposed as <see cref="ReadOnlyMemory{T}"/>, returned to the pool on <see cref="IDisposable.Dispose"/>.
+    /// The caller must <c>using</c> the result and must not retain any of its <see cref="ReadOnlyMemory{T}"/> past the
+    /// dispose (the buffers are recycled). Schemas/executor are not read — they are produced by the providers at add time.
+    /// </summary>
+    /// <param name="packageZip">The package archive bytes.</param>
+    /// <returns>The pooled, disposable contents.</returns>
+    /// <exception cref="ArgumentException">The archive is not a valid package (no workflow document).</exception>
+    internal static PooledPackageContents OpenPooled(ReadOnlyMemory<byte> packageZip)
+    {
+        using MemoryStream buffer = AsReadStream(packageZip);
+        using var archive = new ZipArchive(buffer, ZipArchiveMode.Read);
+
+        ZipArchiveEntry workflowEntry = archive.GetEntry(WorkflowEntryName)
+            ?? throw new ArgumentException("The package archive has no 'workflow.json' document.", nameof(packageZip));
+
+        var rented = new List<byte[]>();
+        try
+        {
+            byte[] workflowBuffer = RentEntry(workflowEntry, out int workflowLength);
+            rented.Add(workflowBuffer);
+
+            var sources = new List<KeyValuePair<string, ReadOnlyMemory<byte>>>();
+            foreach (ZipArchiveEntry entry in archive.Entries)
+            {
+                if (entry.FullName.StartsWith(SourcesPrefix, StringComparison.Ordinal) && entry.FullName.EndsWith(".json", StringComparison.Ordinal))
+                {
+                    string name = entry.FullName[SourcesPrefix.Length..^".json".Length];
+                    byte[] sourceBuffer = RentEntry(entry, out int sourceLength);
+                    rented.Add(sourceBuffer);
+                    sources.Add(new KeyValuePair<string, ReadOnlyMemory<byte>>(name, sourceBuffer.AsMemory(0, sourceLength)));
+                }
+            }
+
+            sources.Sort((a, b) => string.CompareOrdinal(a.Key, b.Key));
+            return new PooledPackageContents(workflowBuffer.AsMemory(0, workflowLength), sources, rented);
+        }
+        catch
+        {
+            foreach (byte[] b in rented)
+            {
+                ArrayPool<byte>.Shared.Return(b);
+            }
+
+            throw;
+        }
+    }
+
+    // Reads a ZIP entry into a right-sized, pooled buffer using its known uncompressed length; the caller owns the
+    // returned array's pool lifetime (it is tracked by the PooledPackageContents and returned on dispose).
+    private static byte[] RentEntry(ZipArchiveEntry entry, out int length)
+    {
+        length = (int)entry.Length;
+        byte[] buffer = ArrayPool<byte>.Shared.Rent(length);
+        using Stream stream = entry.Open();
+        stream.ReadExactly(buffer.AsSpan(0, length));
+        return buffer;
+    }
+
+    // Wraps the package's backing array directly (no full-package copy) when it is array-backed — the common case, since
+    // stores hand the persisted bytes back as a byte[]; falls back to a copy only for non-array-backed memory.
+    private static MemoryStream AsReadStream(ReadOnlyMemory<byte> packageZip)
+        => System.Runtime.InteropServices.MemoryMarshal.TryGetArray(packageZip, out ArraySegment<byte> segment) && segment.Array is not null
+            ? new MemoryStream(segment.Array, segment.Offset, segment.Count, writable: false)
+            : new MemoryStream(packageZip.ToArray(), writable: false);
+
+    /// <summary>
     /// Computes the SHA-256 (lower-hex) of the RFC 8785 canonical form of the logical <c>{ workflow, sources }</c>
     /// content — independent of the ZIP container — so it is stable across repacks.
     /// </summary>
@@ -175,6 +257,14 @@ public static class WorkflowPackage
     /// <param name="sources">The referenced source documents.</param>
     /// <returns>The hex-encoded content hash.</returns>
     public static string ComputeContentHash(ReadOnlyMemory<byte> workflowUtf8, IReadOnlyList<KeyValuePair<string, byte[]>> sources)
+        => ComputeContentHash(workflowUtf8, ToMemorySources(sources));
+
+    /// <summary>Computes the content hash taking the sources as <see cref="ReadOnlyMemory{T}"/> — the form a pooled
+    /// package reader supplies (so the hash runs without materialising each source to its own array).</summary>
+    /// <param name="workflowUtf8">The Arazzo workflow document as UTF-8 JSON.</param>
+    /// <param name="sources">The referenced source documents.</param>
+    /// <returns>The hex-encoded content hash.</returns>
+    public static string ComputeContentHash(ReadOnlyMemory<byte> workflowUtf8, IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> sources)
     {
         // Hash into a stack span via the static span-destination overload — no per-call SHA256 instance and no heap
         // digest array; the only allocation is the hex string (the genuine output) and the canonical content it hashes.
@@ -187,7 +277,7 @@ public static class WorkflowPackage
     /// <param name="workflowUtf8">The Arazzo workflow document as UTF-8 JSON.</param>
     /// <param name="sources">The referenced source documents.</param>
     /// <returns>The canonical content bytes.</returns>
-    internal static byte[] CanonicalContent(ReadOnlyMemory<byte> workflowUtf8, IReadOnlyList<KeyValuePair<string, byte[]>> sources)
+    internal static byte[] CanonicalContent(ReadOnlyMemory<byte> workflowUtf8, IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> sources)
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter buffer);
@@ -198,7 +288,7 @@ public static class WorkflowPackage
                 writer.WriteStartObject();
                 writer.WritePropertyName("sources"u8);
                 writer.WriteStartObject();
-                foreach (KeyValuePair<string, byte[]> source in sources.OrderBy(s => s.Key, StringComparer.Ordinal))
+                foreach (KeyValuePair<string, ReadOnlyMemory<byte>> source in sources.OrderBy(s => s.Key, StringComparer.Ordinal))
                 {
                     using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(source.Value);
                     writer.WritePropertyName(source.Key);
@@ -224,16 +314,30 @@ public static class WorkflowPackage
         }
     }
 
-    private static byte[] BuildManifest(IReadOnlyList<KeyValuePair<string, byte[]>> orderedSources)
+    // Converts a byte[]-keyed source list to the ReadOnlyMemory form the canonical Pack/hash take (cold callers — Build,
+    // tests — pay this small wrapper list; the warm publish path supplies pooled ReadOnlyMemory directly).
+    private static IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> ToMemorySources(IReadOnlyList<KeyValuePair<string, byte[]>> sources)
+    {
+        ArgumentNullException.ThrowIfNull(sources);
+        var list = new List<KeyValuePair<string, ReadOnlyMemory<byte>>>(sources.Count);
+        foreach (KeyValuePair<string, byte[]> source in sources)
+        {
+            list.Add(new KeyValuePair<string, ReadOnlyMemory<byte>>(source.Key, source.Value));
+        }
+
+        return list;
+    }
+
+    private static byte[] BuildManifest(IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> orderedSources)
         => PersistedJson.ToArray(
             orderedSources,
-            static (Utf8JsonWriter writer, in IReadOnlyList<KeyValuePair<string, byte[]>> sources) =>
+            static (Utf8JsonWriter writer, in IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> sources) =>
             {
                 writer.WriteStartObject();
                 writer.WriteNumber("formatVersion"u8, FormatVersion);
                 writer.WriteString("workflow"u8, WorkflowEntryName);
                 writer.WriteStartArray("sources"u8);
-                foreach (KeyValuePair<string, byte[]> source in sources)
+                foreach (KeyValuePair<string, ReadOnlyMemory<byte>> source in sources)
                 {
                     writer.WriteStartObject();
                     writer.WriteString("name"u8, source.Key);
@@ -318,5 +422,44 @@ public readonly record struct WorkflowPackageContents(byte[] Workflow, IReadOnly
         }
 
         return null;
+    }
+}
+
+/// <summary>
+/// The pooled, borrow-only documents of a package opened via <see cref="WorkflowPackage.OpenPooled"/>: the workflow and
+/// source documents as <see cref="ReadOnlyMemory{T}"/> views over <see cref="ArrayPool{T}"/>-rented buffers, returned to
+/// the pool on <see cref="Dispose"/>. Consume synchronously and do not retain any view past the dispose (buffers recycle).
+/// </summary>
+internal sealed class PooledPackageContents : IDisposable
+{
+    private readonly List<byte[]> rentedBuffers;
+    private bool disposed;
+
+    internal PooledPackageContents(ReadOnlyMemory<byte> workflow, IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> sources, List<byte[]> rentedBuffers)
+    {
+        this.Workflow = workflow;
+        this.Sources = sources;
+        this.rentedBuffers = rentedBuffers;
+    }
+
+    /// <summary>Gets the Arazzo workflow document bytes (a view over a pooled buffer).</summary>
+    public ReadOnlyMemory<byte> Workflow { get; }
+
+    /// <summary>Gets the referenced source documents (name → bytes), ordered by name (views over pooled buffers).</summary>
+    public IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> Sources { get; }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        if (this.disposed)
+        {
+            return;
+        }
+
+        this.disposed = true;
+        foreach (byte[] buffer in this.rentedBuffers)
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
     }
 }

@@ -109,7 +109,7 @@ that exists today (a starting point to be re-baselined, **not** evidence of comp
 |---|---|---|---|---|---|---|
 | `GET /catalog` search | SearchCatalog → SearchAsync | R | `BuildPage` loop; `ToTags` copy | — | confirm projection | ⬜ |
 | `POST /catalog` | AddCatalogVersion → **AddAsync** | W | record `CatalogMetadata` + package bytes; `ToOwner`/`ToTags`; `SecurityTagSet.FromTags` | `CatalogStoreBenchmarks` (e2e baseline 19.92 KB) | owner is a **queryable indexed decomposition** (`Owner*` columns + read-reconstruct), not a string seam — confirmed genuine (Part D) | ➖ owner genuine (indexed); ↓ projection row is the real lever |
-| `POST /catalog` *(projection)* | AddAsync → `CatalogPackage.Project` | W | parse + canonicalise + hash + id-rewrite + version-doc write + ZIP pack/unpack (the bulk; NOT the record seam) | `CatalogStoreBenchmarks` | single-parse + zero-alloc SHA256 + ZIP no-copy/right-sized reads (done); entry-buffer pooling (provider-API change) pending | 🔧 **19.92→18.24 KB** (3 wins); rent pending — Part D |
+| `POST /catalog` *(projection)* | AddAsync → `CatalogPackage.Project` | W | parse + canonicalise + hash + id-rewrite + version-doc write + ZIP pack/unpack (the bulk; NOT the record seam) | `CatalogStoreBenchmarks` | single-parse + zero-alloc SHA256 + ZIP no-copy/right-sized reads + contained entry-buffer rent (`OpenPooled`/`PackPooled`) | ✅ **19.92→18.07 KB**; remaining ~71% is `ZipArchive` framework floor (proven, Part D) |
 | `GET /catalog/{id}` list | ListCatalogVersions → SearchAsync | R | BuildPage | — | — | ⬜ |
 | `GET …/versions/{n}` | GetCatalogVersion → GetAsync | R | `CatalogVersionSummary.From()` wrap | — | confirm congruent wrap | ⬜ |
 | `PATCH …/versions/{n}` | UpdateCatalogVersion → GetAsync(check) → **UpdateMetadataAsync** | W | record `CatalogMetadataPatch`; `ToOwner`/`ToTags`; 2× GetAsync | none (e2e) | carry patch draft / mutable builder ([[corvus-mutable-documents]]) | ⬜ |
@@ -300,13 +300,29 @@ transcode is the price of a searchable owner. Catalog's real allocation lever is
    copy); `ReadEntryStream` reads each entry into a right-sized array via its known uncompressed length (no growing
    `MemoryStream`, no `Stream.CopyTo` scratch buffer).
 
-**Pending (chosen: full rent).** The ZIP entry **documents** (workflow + sources) still allocate one right-sized array each
-because they flow downstream as `byte[]` into `WorkflowPackage.Pack` + the **public** `IWorkflowMetadataProvider`/
-`IWorkflowExecutorProvider` interfaces + the public `Unpack`/`GetDocument` returns. Renting them = a disposable pooled
-`WorkflowPackageContents` exposing `ReadOnlyMemory<byte>`, those `byte[]` contracts → `ReadOnlyMemory<byte>` (incl. the two
-provider interfaces), and copy-out on the escape paths. Borrow-only consumers (`Project`/`HashCanonical`/`Validate`) `using`
-the contents → pool returns. The irreducible floor is `ZipArchive`'s own framework allocation, which pooling our entry
-buffers does not touch.
+**Entry-buffer rent — DONE (contained, no public-API churn).** Implemented as a `CatalogPackage.Project`-only pooled read
+(`WorkflowPackage.OpenPooled` → `PooledPackageContents`, ArrayPool-rented, disposed after the synchronous projection) +
+`PackPooled`/`ComputeContentHash` `ReadOnlyMemory`-sources overloads (the `byte[]` overloads stay as thin wrappers, so the
+public `Open`/`WorkflowPackageContents`/provider interfaces + every test are unchanged; the optional providers, rare,
+materialise). **18.24 KB → 18.07 KB/op**, build 0/0, catalog/package tests green.
+
+**Why only −0.17 KB — measured per-stage attribution** (`CatalogProjectionBreakdownBenchmarks`, each public stage isolated;
+`Project` = 14.98 KB, store `Add` = 18.07 KB):
+
+| Stage | Allocated | Note |
+|---|---|---|
+| `OpenInputZip` (`ZipArchive(Read)`) | 7.25 KB | framework floor (the rent shaved only the entry arrays) |
+| `PackCanonicalZip` (`ZipArchive(Create)` + output) | 5.54 KB | framework + the genuine canonical-package leaf |
+| `ComputeHash` (canonicalise + SHA-256) | 1.36 KB | the canonical-content array is a chaseable transient |
+| `BuildVersionDocument` (`CatalogVersion.Create`) | 1.56 KB | the genuine stored version-doc leaf |
+| store overhead (`Add` − `Project`) | ~3.1 KB | version doc + canonical-package storage copy + dict |
+
+**Conclusion: ~71% of the publish allocation is `System.IO.Compression.ZipArchive`** (read 7.25 + write 5.54 ≈ 12.8 KB) — an
+**unpoolable framework floor**; "100% rented" is unreachable while the package is a ZIP. Genuine stored leaves (canonical
+package + version doc) come next. The only remaining *chaseable* transients (~1–2 KB) are the canonical-content hash buffer
+(needs a pooled `JsonCanonicalizer` output), the rewritten-workflow array, and `PackPooled`'s growing `MemoryStream`. A
+materially larger cut would require **changing the package format away from `ZipArchive`** — a wire/disk compatibility
+change, out of campaign scope.
 
 ---
 
