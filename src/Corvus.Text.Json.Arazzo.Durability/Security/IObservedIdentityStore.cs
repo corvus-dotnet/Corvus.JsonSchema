@@ -57,11 +57,11 @@ public interface IObservedIdentityStore
     /// <param name="kind">Restrict to one grantee kind (as a JSON value), or undefined for all kinds — the backend reifies it only at its index leaf.</param>
     /// <param name="prefix">The case-sensitive <c>subjectValue</c> prefix to match (undefined/empty matches all), as a JSON value the backend reifies only at its index leaf.</param>
     /// <param name="limit">The maximum number of identities to return in the page (a non-positive value is treated as 1).</param>
-    /// <param name="pageToken">An opaque token from a previous page's <see cref="ObservedIdentityPage.NextPageToken"/>, or <see langword="null"/> for the first page (a store-minted continuation, not identity data, so it stays a string).</param>
+    /// <param name="pageToken">An opaque token from a previous page's <see cref="ObservedIdentityPage.NextPageToken"/> as its JSON value, or undefined for the first page. Carried bytes-native: the backend decodes it straight from the request UTF-8 (no managed token string).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The page (matched identities + an optional next-page token), as a disposable batch the caller must dispose.</returns>
     /// <exception cref="FormatException"><paramref name="pageToken"/> is not a valid continuation token.</exception>
-    ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, string? pageToken, CancellationToken cancellationToken);
+    ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, JsonString pageToken, CancellationToken cancellationToken);
 
     /// <summary>
     /// Probes for an identity collision (design §16.5.4): returns an existing grantee whose <c>sys:</c> identity is

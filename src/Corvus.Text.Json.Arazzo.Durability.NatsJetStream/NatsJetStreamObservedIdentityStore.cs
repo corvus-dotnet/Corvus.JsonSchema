@@ -142,7 +142,7 @@ public sealed class NatsJetStreamObservedIdentityStore : IObservedIdentityStore,
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, string? pageToken, CancellationToken cancellationToken)
+    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         int pageSize = limit > 0 ? limit : 1;
@@ -151,7 +151,17 @@ public sealed class NatsJetStreamObservedIdentityStore : IObservedIdentityStore,
         // Candidates' subjectValue is recovered as a string from each key, so the prefix reifies once for the in-memory
         // lower-bound StartsWith predicate (undefined prefix matches all).
         string prefixStr = prefix.IsNotUndefined() ? (string)prefix : string.Empty;
-        bool hasCursor = ObservedIdentityContinuationToken.TryDecode(pageToken, out (string SubjectValue, string SubjectKind) cursor);
+
+        // The opaque page token arrives as its JSON value; decode the (subjectValue, subjectKind) cursor straight from the
+        // request UTF-8 (no managed token string). Init to empties so the unused-when-!hasCursor tuple is never null.
+        (string SubjectValue, string SubjectKind) cursor = (string.Empty, string.Empty);
+        bool hasCursor = false;
+        if (pageToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+            hasCursor = ObservedIdentityContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
+        }
+
         string? afterSortKey = hasCursor ? SortKey(cursor.SubjectValue, cursor.SubjectKind) : null;
 
         // The read reach (§17.1) is constant for the call; an unrestricted (System) reach admits everything without
@@ -216,12 +226,13 @@ public sealed class NatsJetStreamObservedIdentityStore : IObservedIdentityStore,
 
         matches.Sort(static (a, b) => string.CompareOrdinal(a.SortKey, b.SortKey));
 
-        string? nextToken = null;
+        string? nextValue = null, nextKind = null;
         if (matches.Count > pageSize)
         {
             // A (pageSize+1)th match exists → there is a next page; the token resumes after the last included row.
             (_, string lastValue, string lastKind, _) = matches[pageSize - 1];
-            nextToken = ObservedIdentityContinuationToken.Encode(lastValue, lastKind);
+            nextValue = lastValue;
+            nextKind = lastKind;
         }
 
         int resultCount = Math.Min(pageSize, matches.Count);
@@ -233,7 +244,7 @@ public sealed class NatsJetStreamObservedIdentityStore : IObservedIdentityStore,
                 docs.Add(PersistedJson.ToPooledDocument<ObservedIdentity>(matches[i].Json));
             }
 
-            return new ObservedIdentityPage(docs, nextToken);
+            return nextValue is not null ? ObservedIdentityPage.Create(docs, nextValue, nextKind!) : ObservedIdentityPage.Create(docs);
         }
         catch
         {

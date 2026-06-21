@@ -156,7 +156,7 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, string? pageToken, CancellationToken cancellationToken)
+    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         cancellationToken.ThrowIfCancellationRequested();
@@ -166,7 +166,17 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
         // The prefix is the in-memory StartsWith predicate (and its .Length gate), so it reifies once here (undefined
         // prefix matches all).
         string prefixStr = prefix.IsNotUndefined() ? (string)prefix : string.Empty;
-        bool hasCursor = ObservedIdentityContinuationToken.TryDecode(pageToken, out (string SubjectValue, string SubjectKind) cursor);
+
+        // The opaque page token arrives as its JSON value; decode the (subjectValue, subjectKind) cursor straight from the
+        // request UTF-8 (no managed token string). Init to empties so the unused-when-!hasCursor tuple is never null.
+        (string SubjectValue, string SubjectKind) cursor = (string.Empty, string.Empty);
+        bool hasCursor = false;
+        if (pageToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+            hasCursor = ObservedIdentityContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
+        }
+
         SecurityFilter? readReach = context.Reach(AccessVerb.Read);
 
         // Redis has no server-side ordering for a sorted set's members by value, so the keyset scan runs over the index
@@ -177,7 +187,7 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
         string? cursorSortKey = hasCursor ? SortKey(cursor.SubjectValue, cursor.SubjectKind) : null;
 
         var docs = new PooledDocumentList<ObservedIdentity>(pageSize);
-        string? nextToken = null;
+        string? nextValue = null, nextKind = null;
         try
         {
             // A FURTHER admitted row beyond the page is the signal to emit a continuation token — the (value, kind) of
@@ -225,7 +235,8 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
 
                 if (docs.Count == pageSize)
                 {
-                    nextToken = ObservedIdentityContinuationToken.Encode(lastValue, lastKind);
+                    nextValue = lastValue;
+                    nextKind = lastKind;
                     break;
                 }
 
@@ -234,7 +245,7 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
                 lastKind = subjectKind;
             }
 
-            return new ObservedIdentityPage(docs, nextToken);
+            return nextValue is not null ? ObservedIdentityPage.Create(docs, nextValue, nextKind!) : ObservedIdentityPage.Create(docs);
         }
         catch
         {

@@ -67,7 +67,7 @@ public class ObservedIdentityStoreBenchmarks
     public int Search_Page()
     {
         using ObservedIdentityPage page =
-            this.store.SearchAsync(AccessContext.System, PersonKind, SearchPrefix, 10, null, default).AsTask().GetAwaiter().GetResult();
+            this.store.SearchAsync(AccessContext.System, PersonKind, SearchPrefix, 10, default, default).AsTask().GetAwaiter().GetResult();
         return page.Identities.Count;
     }
 

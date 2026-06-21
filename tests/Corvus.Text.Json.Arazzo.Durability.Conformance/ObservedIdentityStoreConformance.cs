@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Linq;
+using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
@@ -45,7 +46,7 @@ public abstract class ObservedIdentityStoreConformance
         SecurityTagSet identity = SecurityTagSet.FromTags([new SecurityTag("sys:tenant", "acme"), new SecurityTag("sys:sub", "alice")]);
         await store.SeenAsync(Person, Str("alice"), Str("Alice Smith"), identity, true, "accessRequest", default);
 
-        using ObservedIdentityPage page = await store.SearchAsync(AccessContext.System, Person, Str("ali"), 10, null, default);
+        using ObservedIdentityPage page = await store.SearchAsync(AccessContext.System, Person, Str("ali"), 10, default, default);
         ObservedIdentity o = page.Identities.Single();
         o.SubjectKindValue.ShouldBe("person");
         o.SubjectValueValue.ShouldBe("alice");
@@ -53,7 +54,7 @@ public abstract class ObservedIdentityStoreConformance
         o.IdentityTagsValue.ToList().ShouldBe(identity.ToList(), ignoreOrder: true);
         o.CompleteValue.ShouldBeTrue();
         Provenance(o).ShouldBe(["accessRequest"]);
-        page.NextPageToken.ShouldBeNull();
+        page.NextPageToken.IsEmpty.ShouldBeTrue();
     }
 
     [TestMethod]
@@ -64,7 +65,7 @@ public abstract class ObservedIdentityStoreConformance
         await store.SeenAsync(Team, Str("acme"), Str("Acme"), identity, true, "catalogVersion", default);
         await store.SeenAsync(Team, Str("acme"), Str("Acme Corp"), identity, true, "administrator", default);
 
-        using ObservedIdentityPage page = await store.SearchAsync(AccessContext.System, Team, Str("acme"), 10, null, default);
+        using ObservedIdentityPage page = await store.SearchAsync(AccessContext.System, Team, Str("acme"), 10, default, default);
         ObservedIdentity o = page.Identities.Single(); // one record, not two
         o.LabelOrNull.ShouldBe("Acme Corp"); // refreshed by the later sighting
         Provenance(o).ShouldBe(["catalogVersion", "administrator"], ignoreOrder: true);
@@ -81,17 +82,17 @@ public abstract class ObservedIdentityStoreConformance
         await store.SeenAsync(Team, Str("alpha"), default, id, true, "x", default);
         await store.SeenAsync(Person, Str("bob"), default, id, true, "x", default);
 
-        using (ObservedIdentityPage all = await store.SearchAsync(AccessContext.System, AllKinds, Str("al"), 10, null, default))
+        using (ObservedIdentityPage all = await store.SearchAsync(AccessContext.System, AllKinds, Str("al"), 10, default, default))
         {
             all.Identities.Count.ShouldBe(3); // alice, albert, alpha
         }
 
-        using (ObservedIdentityPage people = await store.SearchAsync(AccessContext.System, Person, Str("al"), 10, null, default))
+        using (ObservedIdentityPage people = await store.SearchAsync(AccessContext.System, Person, Str("al"), 10, default, default))
         {
             people.Identities.Count.ShouldBe(2); // alice, albert
         }
 
-        using (ObservedIdentityPage teams = await store.SearchAsync(AccessContext.System, Team, Str(string.Empty), 10, null, default))
+        using (ObservedIdentityPage teams = await store.SearchAsync(AccessContext.System, Team, Str(string.Empty), 10, default, default))
         {
             teams.Identities.Single().SubjectValueValue.ShouldBe("alpha"); // empty prefix matches all of the kind
         }
@@ -115,19 +116,23 @@ public abstract class ObservedIdentityStoreConformance
             await store.SeenAsync(kind, Str(value), default, id, true, "x", default);
         }
 
+        // Walk every page via the continuation token; round-trip it through the JsonString seam exactly as the HTTP layer
+        // does (the store emits it as UTF-8, the next request carries it as a JSON string). The page owns the token buffer
+        // (freed on dispose), so copy it out per page.
         var seen = new List<string>();
-        string? token = null;
+        byte[]? token = null;
         int pages = 0;
         do
         {
-            using ObservedIdentityPage page = await store.SearchAsync(AccessContext.System, AllKinds, Str(string.Empty), 3, token, default);
+            using ParsedJsonDocument<JsonString>? tokenDoc = token is null ? null : AsPageToken(token);
+            using ObservedIdentityPage page = await store.SearchAsync(AccessContext.System, AllKinds, Str(string.Empty), 3, tokenDoc?.RootElement ?? default, default);
             page.Identities.Count.ShouldBeLessThanOrEqualTo(3);
             foreach (ObservedIdentity o in page.Identities)
             {
                 seen.Add($"{o.SubjectValueValue}/{o.SubjectKindValue}");
             }
 
-            token = page.NextPageToken;
+            token = page.NextPageToken.IsEmpty ? null : page.NextPageToken.ToArray();
             pages++;
         }
         while (token is not null);
@@ -142,8 +147,20 @@ public abstract class ObservedIdentityStoreConformance
         // A malformed token is rejected (rather than silently restarting).
         await Should.ThrowAsync<FormatException>(async () =>
         {
-            using ObservedIdentityPage bad = await store.SearchAsync(AccessContext.System, AllKinds, Str(string.Empty), 3, "this~is~not~a~token", default);
+            using ParsedJsonDocument<JsonString> badToken = AsPageToken("this~is~not~a~token"u8);
+            using ObservedIdentityPage bad = await store.SearchAsync(AccessContext.System, AllKinds, Str(string.Empty), 3, badToken.RootElement, default);
         });
+    }
+
+    // Wraps an opaque page token's UTF-8 as the JSON string value a request carries it as — the conformance feeds a
+    // previous page's NextPageToken (the store's emitted bytes) back through the JsonString seam, mirroring HTTP.
+    private static ParsedJsonDocument<JsonString> AsPageToken(ReadOnlySpan<byte> tokenUtf8)
+    {
+        byte[] quoted = new byte[tokenUtf8.Length + 2];
+        quoted[0] = (byte)'"';
+        tokenUtf8.CopyTo(quoted.AsSpan(1));
+        quoted[^1] = (byte)'"';
+        return ParsedJsonDocument<JsonString>.Parse(quoted);
     }
 
     [TestMethod]
@@ -154,13 +171,13 @@ public abstract class ObservedIdentityStoreConformance
         await store.SeenAsync(Team, Str("globex"), Str("Globex"), SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), true, "test", default);
 
         // A caller reach-scoped to tenant=acme discovers acme's identity only; globex's is invisible (non-disclosing, §17.1).
-        using (ObservedIdentityPage acme = await store.SearchAsync(ScopeBy("tenant", "acme"), AllKinds, Str(string.Empty), 10, null, default))
+        using (ObservedIdentityPage acme = await store.SearchAsync(ScopeBy("tenant", "acme"), AllKinds, Str(string.Empty), 10, default, default))
         {
             acme.Identities.Single().SubjectValueValue.ShouldBe("acme");
         }
 
         // System reach sees both.
-        using (ObservedIdentityPage all = await store.SearchAsync(AccessContext.System, AllKinds, Str(string.Empty), 10, null, default))
+        using (ObservedIdentityPage all = await store.SearchAsync(AccessContext.System, AllKinds, Str(string.Empty), 10, default, default))
         {
             all.Identities.Count.ShouldBe(2);
         }
