@@ -337,7 +337,7 @@ export class ArazzoControlPlaneClient {
     }
     const form = new FormData();
     const blob = request.package instanceof Blob ? request.package : new Blob([request.package], { type: 'application/octet-stream' });
-    form.append('package', blob, 'package.zip');
+    form.append('package', blob, 'package.awp');
     form.append('owner', new Blob([JSON.stringify(request.owner)], { type: 'application/json' }));
     for (const tag of request.tags ?? []) {
       if (tag) form.append('tags', tag);

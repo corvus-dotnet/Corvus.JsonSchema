@@ -320,7 +320,7 @@ class ArazzoCatalogDetail extends ArazzoElement {
 
   renderDownloads() {
     return `<div class="block" part="downloads"><h4>Download</h4><div class="downloads">
-      <button class="dl-package" type="button">Package (.zip)</button>
+      <button class="dl-package" type="button">Package (.awp)</button>
       <button class="ghost dl-workflow" type="button">Workflow (.json)</button>
     </div></div>`;
   }
@@ -336,7 +336,7 @@ class ArazzoCatalogDetail extends ArazzoElement {
       let blob; let filename;
       if (kind === 'package') {
         blob = await this.client.getCatalogPackage(v.baseWorkflowId, v.versionNumber);
-        filename = `${v.baseWorkflowId}-v${v.versionNumber}.zip`;
+        filename = `${v.baseWorkflowId}-v${v.versionNumber}.awp`;
       } else if (kind === 'workflow') {
         const doc = await this.client.getCatalogWorkflow(v.baseWorkflowId, v.versionNumber);
         blob = new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' });
