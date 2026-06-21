@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Text.RegularExpressions;
+using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 
 namespace Corvus.Text.Json.Arazzo.Durability;
@@ -98,17 +99,22 @@ public static partial class CatalogPackage
         ArgumentNullException.ThrowIfNull(baseWorkflowId);
         string workflowId = $"{baseWorkflowId}-v{versionNumber.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
 
-        // Pooled, borrow-only read of the package's workflow + sources: the documents are ArrayPool-rented and returned
-        // on dispose, so the publish hot path reads them with no per-document heap allocation. Everything that outlives
-        // this scope (rewritten workflow, canonical package, hash, projected metadata) is freshly owned, never a view
-        // over these pooled buffers — so disposing here is safe.
+        // Pooled, borrow-only read of the package's workflow + sources: the documents are views over the package buffer,
+        // so the publish hot path reads them with no per-document heap allocation. Everything that outlives this scope
+        // (canonical package, hash, projected metadata) is freshly owned, never a view over these buffers — so disposing
+        // here is safe.
         using PooledPackageContents contents = WorkflowPackage.OpenPooled(packageZip);
 
-        // Single parse of the workflow: rewrite the id AND read the (id-independent) title/description/sources in the
-        // same pass, rather than re-parsing the rewritten document a second time just to project its metadata.
-        (byte[] rewrittenWorkflow, string title, string? description, IReadOnlyList<CatalogSourceRef> sources) =
-            RewriteWorkflowId(contents.Workflow, workflowId);
-        string hash = WorkflowPackage.ComputeContentHash(rewrittenWorkflow, contents.Sources);
+        // Parse the original workflow once: read the (id-independent) title/description/sources and write the id-rewritten
+        // document into a pooled, parsed buffer. That single rewritten document is then BOTH the hash input (its parsed
+        // element) and the packed workflow bytes (its raw UTF-8, via JsonMarshal) — parsed once, with no separate
+        // intermediate array and no re-parse for the hash.
+        using ParsedJsonDocument<JsonElement> rewritten = RewriteWorkflowToDocument(contents.Workflow, workflowId, out string title, out string? description, out IReadOnlyList<CatalogSourceRef> sources);
+        ReadOnlyMemory<byte> rewrittenWorkflow = JsonMarshal.GetRawUtf8Value(rewritten.RootElement).Memory;
+
+        // OpenPooled returns the sources already sorted by name, so the hash skips its defensive re-sort and the workflow
+        // is the element we already parsed (no re-parse).
+        string hash = WorkflowPackage.ComputeContentHashPreSorted(rewritten.RootElement, contents.Sources);
 
         // The optional providers consume sources as byte[]; materialise once (only when one is configured — the common
         // path has neither, so the pooled sources are never copied).
@@ -297,18 +303,17 @@ public static partial class CatalogPackage
         return list;
     }
 
-    private static (byte[] Rewritten, string Title, string? Description, IReadOnlyList<CatalogSourceRef> Sources) RewriteWorkflowId(ReadOnlyMemory<byte> workflowUtf8, string newWorkflowId)
+    // Rewrites the first workflow's id and reads the (id-independent) title/description/sources from one parse of the
+    // original, writing the rewritten document into a pooled, parsed document (the caller disposes it). The rewrite changes
+    // only workflows[0].workflowId, so title/description/sources are identical in the original and rewritten documents.
+    private static ParsedJsonDocument<JsonElement> RewriteWorkflowToDocument(ReadOnlyMemory<byte> workflowUtf8, string newWorkflowId, out string title, out string? description, out IReadOnlyList<CatalogSourceRef> sources)
     {
-        using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(workflowUtf8);
-
-        // Read the (id-independent) metadata from this same parse — the id rewrite changes only workflows[0].workflowId,
-        // so title/description/sources are identical in the original and rewritten documents.
-        (string title, string? description) = ReadTitleAndDescription(document.RootElement);
-        IReadOnlyList<CatalogSourceRef> sources = ReadSources(document.RootElement);
-        byte[] rewritten = PersistedJson.ToArray(
-            (Root: document.RootElement, NewWorkflowId: newWorkflowId),
+        using ParsedJsonDocument<JsonElement> original = ParsedJsonDocument<JsonElement>.Parse(workflowUtf8);
+        (title, description) = ReadTitleAndDescription(original.RootElement);
+        sources = ReadSources(original.RootElement);
+        return PersistedJson.ToPooledDocument<JsonElement, (JsonElement Root, string NewWorkflowId)>(
+            (original.RootElement, newWorkflowId),
             static (Utf8JsonWriter writer, in (JsonElement Root, string NewWorkflowId) c) => WriteWorkflowWithId(c.Root, writer, c.NewWorkflowId));
-        return (rewritten, title, description, sources);
     }
 
     private static void WriteWorkflowWithId(JsonElement workflow, Utf8JsonWriter writer, string newWorkflowId)
