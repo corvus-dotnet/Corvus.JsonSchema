@@ -133,14 +133,14 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
     }
 
     /// <inheritdoc/>
-    public ValueTask<CatalogVersion> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         return this.AddCoreAsync(baseWorkflowId, packageUtf8.ToArray(), metadata, cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<CatalogVersion?> GetAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<CatalogVersion>?> GetAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
         BsonDocument? document = await this.LoadAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
         return document is null ? null : ReadVersion(document);
@@ -222,41 +222,52 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             find = find.Limit(limit + 1);
         }
 
-        var matches = new List<CatalogVersion>();
-        using (IAsyncCursor<BsonDocument> cursor = await find.ToCursorAsync(cancellationToken).ConfigureAwait(false))
+        // The page is a pooled batch of disposable version documents (the caller disposes the page). Each candidate is
+        // parsed once into a pooled, disposable document; the row-security reach (§14.2) is applied in process over the
+        // version's persisted security tags, so non-matches and the look-ahead row are disposed immediately rather than
+        // kept in the batch.
+        var matches = new PooledDocumentList<CatalogVersion>(limit);
+        string? continuation = null;
+        try
         {
-            while (matches.Count <= limit && await cursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
+            using IAsyncCursor<BsonDocument> cursor = await find.ToCursorAsync(cancellationToken).ConfigureAwait(false);
+            bool full = false;
+            while (!full && await cursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
             {
                 foreach (BsonDocument document in cursor.Current)
                 {
-                    CatalogVersion candidate = ReadVersion(document);
-                    if (query.Security is { } security && !security.IsSatisfiedBy(candidate.SecurityTagsValue))
+                    ParsedJsonDocument<CatalogVersion> candidate = ReadVersion(document);
+                    if (query.Security is { } security && !security.IsSatisfiedBy(candidate.RootElement.SecurityTagsValue))
                     {
+                        candidate.Dispose();
                         continue;
                     }
 
-                    matches.Add(candidate);
-                    if (matches.Count > limit)
+                    if (matches.Count == limit)
                     {
+                        // There is at least one more matching row beyond this page; the last kept row is the cursor.
+                        CatalogVersionRef last = matches[matches.Count - 1].Ref;
+                        continuation = WorkflowContinuationToken.Encode(SortKey(last.BaseWorkflowId, last.VersionNumber));
+                        candidate.Dispose();
+                        full = true;
                         break;
                     }
+
+                    matches.Add(candidate);
                 }
             }
         }
-
-        string? continuation = null;
-        if (matches.Count > limit)
+        catch
         {
-            matches.RemoveAt(matches.Count - 1);
-            CatalogVersion last = matches[^1];
-            continuation = WorkflowContinuationToken.Encode(SortKey(last.Ref.BaseWorkflowId, last.Ref.VersionNumber));
+            matches.Dispose();
+            throw;
         }
 
         return new CatalogPage(matches, continuation);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<CatalogVersion?> UpdateMetadataAsync(string baseWorkflowId, int versionNumber, CatalogMetadataPatch patch, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<CatalogVersion>?> UpdateMetadataAsync(string baseWorkflowId, int versionNumber, CatalogMetadataPatch patch, CancellationToken cancellationToken)
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         BsonDocument? document = await this.LoadAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
@@ -265,16 +276,27 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             return null;
         }
 
-        CatalogVersion current = ReadVersion(document);
-        CatalogStatus currentStatus = current.StatusValue;
-        CatalogStatus status = patch.Status ?? currentStatus;
-        bool newlyObsolete = status == CatalogStatus.Obsolete && currentStatus != CatalogStatus.Obsolete;
-        bool reactivated = status == CatalogStatus.Active && currentStatus == CatalogStatus.Obsolete;
+        CatalogStatus status;
+        CatalogOwner owner;
+        TagSet tags;
+        string? obsoletedBy;
+        DateTimeOffset? obsoletedAt;
 
-        CatalogOwner owner = patch.Owner ?? current.OwnerValue;
-        TagSet tags = patch.Tags ?? current.TagsValue;
-        string? obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedByOrNull;
-        DateTimeOffset? obsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAtValue;
+        // The current row is read into a pooled, disposable document only to source the unchanged fields; its field
+        // accessors return OWNED COPIES, so the values are safe after the document is disposed.
+        using (ParsedJsonDocument<CatalogVersion> currentDoc = ReadVersion(document))
+        {
+            CatalogVersion current = currentDoc.RootElement;
+            CatalogStatus currentStatus = current.StatusValue;
+            status = patch.Status ?? currentStatus;
+            bool newlyObsolete = status == CatalogStatus.Obsolete && currentStatus != CatalogStatus.Obsolete;
+            bool reactivated = status == CatalogStatus.Active && currentStatus == CatalogStatus.Obsolete;
+
+            owner = patch.Owner ?? current.OwnerValue;
+            tags = patch.Tags ?? current.TagsValue;
+            obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedByOrNull;
+            obsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAtValue;
+        }
 
         var update = new BsonDocument("$set", new BsonDocument
         {
@@ -293,24 +315,8 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Eq("_id", Id(baseWorkflowId, versionNumber));
         await this.versions.UpdateOneAsync(filter, update, options: null, cancellationToken).ConfigureAwait(false);
 
-        return CatalogVersion.Create(
-            baseWorkflowId: current.Ref.BaseWorkflowId,
-            versionNumber: current.Ref.VersionNumber,
-            workflowId: current.Ref.WorkflowId,
-            title: (string)current.Title,
-            description: current.DescriptionOrNull,
-            status: status,
-            tags: tags,
-            owner: owner,
-            sources: current.SourcesValue,
-            hash: (string)current.Hash,
-            createdBy: (string)current.CreatedBy,
-            createdAt: current.CreatedAtValue,
-            lastUpdatedBy: patch.UpdatedBy,
-            lastUpdatedAt: now,
-            obsoletedBy: obsoletedBy,
-            obsoletedAt: obsoletedAt,
-            runnable: (bool)current.Runnable);
+        BsonDocument? updated = await this.LoadAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+        return updated is null ? null : ReadVersion(updated);
     }
 
     /// <inheritdoc/>
@@ -371,7 +377,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
 
     private static string EscapeRegex(string value) => System.Text.RegularExpressions.Regex.Escape(value);
 
-    private static CatalogVersion ReadVersion(BsonDocument document)
+    private static ParsedJsonDocument<CatalogVersion> ReadVersion(BsonDocument document)
         => CatalogVersion.Create(
             baseWorkflowId: document["baseWorkflowId"].AsString,
             versionNumber: (int)document["versionNumber"].AsInt32,
@@ -422,7 +428,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         return SourceSet.FromSources(sources);
     }
 
-    private async ValueTask<CatalogVersion> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
+    private async ValueTask<ParsedJsonDocument<CatalogVersion>> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         TagSet tags = metadata.Tags;
@@ -437,7 +443,11 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             cancellationToken.ThrowIfCancellationRequested();
             int versionNumber = await this.MaxVersionAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false) + 1;
             CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
-            CatalogVersion version = CatalogVersion.Create(
+            SourceSet sources = SourceSet.FromSources(projection.Sources);
+
+            // Bind the BSON fields directly from the projected/governance source values (no round-trip through the
+            // CatalogVersion document); the pooled document is built once, for the return value.
+            BsonDocument document = BuildDocument(
                 baseWorkflowId: baseWorkflowId,
                 versionNumber: versionNumber,
                 workflowId: projection.WorkflowId,
@@ -446,18 +456,31 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
                 status: CatalogStatus.Active,
                 tags: tags,
                 owner: metadata.Owner,
-                sources: SourceSet.FromSources(projection.Sources),
+                sources: sources,
+                securityTags: securityTags,
                 hash: projection.Hash,
+                runnable: projection.HasExecutor,
                 createdBy: metadata.CreatedBy,
                 createdAt: now,
-                runnable: projection.HasExecutor,
-                securityTags: securityTags);
-
-            BsonDocument document = BuildDocument(version, projection.CanonicalPackage.ToArray());
+                package: projection.CanonicalPackage.ToArray());
             try
             {
                 await this.versions.InsertOneAsync(document, options: null, cancellationToken).ConfigureAwait(false);
-                return version;
+                return CatalogVersion.Create(
+                    baseWorkflowId: baseWorkflowId,
+                    versionNumber: versionNumber,
+                    workflowId: projection.WorkflowId,
+                    title: projection.Title,
+                    description: projection.Description,
+                    status: CatalogStatus.Active,
+                    tags: tags,
+                    owner: metadata.Owner,
+                    sources: sources,
+                    hash: projection.Hash,
+                    createdBy: metadata.CreatedBy,
+                    createdAt: now,
+                    runnable: projection.HasExecutor,
+                    securityTags: securityTags);
             }
             catch (MongoWriteException ex) when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
             {
@@ -492,11 +515,24 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         return document?["package"].AsBsonBinaryData.Bytes;
     }
 
-    private static BsonDocument BuildDocument(CatalogVersion version, byte[] package)
+    private static BsonDocument BuildDocument(
+        string baseWorkflowId,
+        int versionNumber,
+        string workflowId,
+        string title,
+        string? description,
+        CatalogStatus status,
+        TagSet tags,
+        CatalogOwner owner,
+        SourceSet sources,
+        SecurityTagSet securityTags,
+        string hash,
+        bool runnable,
+        string createdBy,
+        DateTimeOffset createdAt,
+        byte[] package)
     {
-        CatalogVersionRef versionRef = version.Ref;
-        CatalogOwner owner = version.OwnerValue;
-        var sources = new BsonArray(version.SourcesValue.ToList().Select(s => new BsonDocument
+        var sourcesBson = new BsonArray(sources.ToList().Select(s => new BsonDocument
         {
             ["name"] = s.Name,
             ["type"] = (BsonValue?)s.Type ?? BsonNull.Value,
@@ -504,31 +540,31 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
 
         return new BsonDocument
         {
-            ["_id"] = Id(versionRef.BaseWorkflowId, versionRef.VersionNumber),
-            ["sortKey"] = SortKey(versionRef.BaseWorkflowId, versionRef.VersionNumber),
-            ["baseWorkflowId"] = versionRef.BaseWorkflowId,
-            ["versionNumber"] = versionRef.VersionNumber,
-            ["workflowId"] = versionRef.WorkflowId,
-            ["workflowIdLower"] = versionRef.WorkflowId.ToLowerInvariant(),
-            ["title"] = (string)version.Title,
-            ["description"] = (BsonValue?)version.DescriptionOrNull ?? BsonNull.Value,
-            ["status"] = version.StatusValue.ToString(),
-            ["tags"] = new BsonArray(version.TagsValue.ToList()),
-            ["securityTags"] = MongoSecurityTags.ToBson(version.SecurityTagsValue),
+            ["_id"] = Id(baseWorkflowId, versionNumber),
+            ["sortKey"] = SortKey(baseWorkflowId, versionNumber),
+            ["baseWorkflowId"] = baseWorkflowId,
+            ["versionNumber"] = versionNumber,
+            ["workflowId"] = workflowId,
+            ["workflowIdLower"] = workflowId.ToLowerInvariant(),
+            ["title"] = title,
+            ["description"] = (BsonValue?)description ?? BsonNull.Value,
+            ["status"] = status.ToString(),
+            ["tags"] = new BsonArray(tags.ToList()),
+            ["securityTags"] = MongoSecurityTags.ToBson(securityTags),
             ["ownerName"] = owner.Name,
             ["ownerEmail"] = owner.Email,
             ["ownerTeam"] = (BsonValue?)owner.Team ?? BsonNull.Value,
             ["ownerUrl"] = (BsonValue?)owner.Url ?? BsonNull.Value,
-            ["sources"] = sources,
-            ["hash"] = (string)version.Hash,
-            ["runnable"] = (bool)version.Runnable,
+            ["sources"] = sourcesBson,
+            ["hash"] = hash,
+            ["runnable"] = runnable,
             ["package"] = new BsonBinaryData(package),
-            ["createdBy"] = (string)version.CreatedBy,
-            ["createdAt"] = version.CreatedAtValue.ToUnixTimeMilliseconds(),
-            ["lastUpdatedBy"] = (BsonValue?)version.LastUpdatedByOrNull ?? BsonNull.Value,
-            ["lastUpdatedAt"] = version.LastUpdatedAtValue is { } lua ? lua.ToUnixTimeMilliseconds() : BsonNull.Value,
-            ["obsoletedBy"] = (BsonValue?)version.ObsoletedByOrNull ?? BsonNull.Value,
-            ["obsoletedAt"] = version.ObsoletedAtValue is { } oa ? oa.ToUnixTimeMilliseconds() : BsonNull.Value,
+            ["createdBy"] = createdBy,
+            ["createdAt"] = createdAt.ToUnixTimeMilliseconds(),
+            ["lastUpdatedBy"] = BsonNull.Value,
+            ["lastUpdatedAt"] = BsonNull.Value,
+            ["obsoletedBy"] = BsonNull.Value,
+            ["obsoletedAt"] = BsonNull.Value,
         };
     }
 

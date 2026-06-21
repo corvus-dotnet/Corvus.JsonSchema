@@ -41,7 +41,8 @@ public sealed class WorkflowCatalogClientCredentialGateTests
         ex.DeniedSources.ShouldBe(["petstore"]);
 
         // An entitled submitter may.
-        CatalogVersion added = await catalog.AddAsync(Package("acme-flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
+        using ParsedJsonDocument<CatalogVersion> addedDoc = await catalog.AddAsync(Package("acme-flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
+        CatalogVersion added = addedDoc.RootElement;
         ((string)added.WorkflowId).ShouldContain("acme-flow");
     }
 
@@ -51,7 +52,8 @@ public sealed class WorkflowCatalogClientCredentialGateTests
         // petstore has no credential binding at all — it is unauthenticated (or bindings come later), so declaring it
         // is allowed for any submitter.
         var catalog = new WorkflowCatalogClient(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops", new InMemorySourceCredentialStore());
-        CatalogVersion version = await catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), default);
+        using ParsedJsonDocument<CatalogVersion> versionDoc = await catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), default);
+        CatalogVersion version = versionDoc.RootElement;
         ((string)version.WorkflowId).ShouldContain("flow");
     }
 
@@ -60,7 +62,8 @@ public sealed class WorkflowCatalogClientCredentialGateTests
     {
         // No credential store wired → no catalog-time check (back-compat).
         var catalog = new WorkflowCatalogClient(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops");
-        CatalogVersion version = await catalog.AddAsync(Package("flow"), Owner, default, default, default);
+        using ParsedJsonDocument<CatalogVersion> versionDoc = await catalog.AddAsync(Package("flow"), Owner, default, default, default);
+        CatalogVersion version = versionDoc.RootElement;
         ((string)version.WorkflowId).ShouldContain("flow");
     }
 
@@ -71,8 +74,8 @@ public sealed class WorkflowCatalogClientCredentialGateTests
         SecurityTagSet acme = SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]);
 
         // acme establishes administration of base id "flow" and may publish further versions.
-        await catalog.AddAsync(Package("flow"), Owner, default, acme, default);
-        await catalog.AddAsync(Package("flow"), Owner, default, acme, default);
+        (await catalog.AddAsync(Package("flow"), Owner, default, acme, default)).Dispose();
+        (await catalog.AddAsync(Package("flow"), Owner, default, acme, default)).Dispose();
 
         // globex may not squat the same base id (its immutable workflow identity is administered by acme).
         await Should.ThrowAsync<WorkflowAdministrationException>(async () =>

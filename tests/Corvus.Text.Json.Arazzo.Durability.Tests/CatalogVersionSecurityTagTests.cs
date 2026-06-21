@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text.Json;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 
@@ -21,13 +22,14 @@ public sealed class CatalogVersionSecurityTagTests
     public void Security_tags_round_trip_through_the_catalog_version_document()
     {
         SecurityTag[] security = [new("tenant", "acme"), new("team", "payments")];
-        CatalogVersion version = CatalogVersion.Create(
+        using ParsedJsonDocument<CatalogVersion> versionDoc = CatalogVersion.Create(
             "orders", 1, "orders-v1", "Orders", null, CatalogStatus.Active,
             tags: TagSet.FromTags(["nightly"]),
             owner: new CatalogOwner("Team", "team@example.com"),
             sources: SourceSet.FromSources([new CatalogSourceRef("petstore", "openapi")]),
             hash: "abc", createdBy: "ops", createdAt: CreatedAt,
             securityTags: SecurityTagSet.FromTags(security));
+        CatalogVersion version = versionDoc.RootElement;
 
         CatalogVersion roundTripped = CatalogVersion.FromJson(version.ToJsonBytes());
 
@@ -38,12 +40,13 @@ public sealed class CatalogVersionSecurityTagTests
     [TestMethod]
     public void A_version_with_no_security_tags_reports_an_empty_list()
     {
-        CatalogVersion version = CatalogVersion.Create(
+        using ParsedJsonDocument<CatalogVersion> versionDoc = CatalogVersion.Create(
             "orders", 1, "orders-v1", "Orders", null, CatalogStatus.Active,
             tags: TagSet.FromTags(["nightly"]),
             owner: new CatalogOwner("Team", "team@example.com"),
             sources: SourceSet.FromSources([new CatalogSourceRef("petstore", "openapi")]),
             hash: "abc", createdBy: "ops", createdAt: CreatedAt);
+        CatalogVersion version = versionDoc.RootElement;
 
         CatalogVersion.FromJson(version.ToJsonBytes()).SecurityTagsValue.ToList().ShouldBeEmpty();
     }

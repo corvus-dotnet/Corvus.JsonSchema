@@ -90,14 +90,14 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
     }
 
     /// <inheritdoc/>
-    public ValueTask<CatalogVersion> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         return this.AddCoreAsync(baseWorkflowId, packageUtf8.ToArray(), metadata, cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<CatalogVersion?> GetAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<CatalogVersion>?> GetAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
@@ -203,19 +203,30 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
                 select.CommandText = select.CommandText.Replace("{{securityPredicate}}", string.Empty);
             }
 
-            var versions = new List<CatalogVersion>();
-            using SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
-            {
-                versions.Add(ReadVersion(reader));
-            }
-
+            // The page is a pooled batch of disposable version documents (the caller disposes the page). One extra row
+            // is fetched as a look-ahead to detect a further page; it is not added to the batch.
+            var versions = new PooledDocumentList<CatalogVersion>(limit);
             string? continuation = null;
-            if (versions.Count > limit)
+            try
             {
-                versions.RemoveAt(versions.Count - 1);
-                CatalogVersion last = versions[^1];
-                continuation = WorkflowContinuationToken.Encode(SortKey(last.Ref.BaseWorkflowId, last.Ref.VersionNumber));
+                using SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    if (versions.Count == limit)
+                    {
+                        // There is at least one more matching row beyond this page; the last kept row is the cursor.
+                        CatalogVersionRef last = versions[versions.Count - 1].Ref;
+                        continuation = WorkflowContinuationToken.Encode(SortKey(last.BaseWorkflowId, last.VersionNumber));
+                        break;
+                    }
+
+                    versions.Add(ReadVersion(reader));
+                }
+            }
+            catch
+            {
+                versions.Dispose();
+                throw;
             }
 
             return new CatalogPage(versions, continuation);
@@ -227,27 +238,39 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
     }
 
     /// <inheritdoc/>
-    public async ValueTask<CatalogVersion?> UpdateMetadataAsync(string baseWorkflowId, int versionNumber, CatalogMetadataPatch patch, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<CatalogVersion>?> UpdateMetadataAsync(string baseWorkflowId, int versionNumber, CatalogMetadataPatch patch, CancellationToken cancellationToken)
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            CatalogVersion? current = await this.ReadOneAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
-            if (current is not { } cur)
+            CatalogStatus currentStatus;
+            CatalogOwner owner;
+            TagSet tags;
+            string? obsoletedBy;
+            DateTimeOffset? obsoletedAt;
+            CatalogStatus status;
+
+            // The current row is read into a pooled, disposable document only to source the unchanged fields; its
+            // field accessors return OWNED COPIES, so the values are safe after the document is disposed.
+            using (ParsedJsonDocument<CatalogVersion>? currentDoc = await this.ReadOneAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false))
             {
-                return null;
+                if (currentDoc is not { } cur)
+                {
+                    return null;
+                }
+
+                CatalogVersion current = cur.RootElement;
+                currentStatus = current.StatusValue;
+                status = patch.Status ?? currentStatus;
+                bool newlyObsolete = status == CatalogStatus.Obsolete && currentStatus != CatalogStatus.Obsolete;
+                bool reactivated = status == CatalogStatus.Active && currentStatus == CatalogStatus.Obsolete;
+
+                owner = patch.Owner ?? current.OwnerValue;
+                tags = patch.Tags ?? current.TagsValue;
+                obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedByOrNull;
+                obsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAtValue;
             }
-
-            CatalogStatus currentStatus = cur.StatusValue;
-            CatalogStatus status = patch.Status ?? currentStatus;
-            bool newlyObsolete = status == CatalogStatus.Obsolete && currentStatus != CatalogStatus.Obsolete;
-            bool reactivated = status == CatalogStatus.Active && currentStatus == CatalogStatus.Obsolete;
-
-            CatalogOwner owner = patch.Owner ?? cur.OwnerValue;
-            TagSet tags = patch.Tags ?? cur.TagsValue;
-            string? obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : cur.ObsoletedByOrNull;
-            DateTimeOffset? obsoletedAt = newlyObsolete ? now : reactivated ? null : cur.ObsoletedAtValue;
 
             using SqliteCommand update = this.connection.CreateCommand();
             update.CommandText =
@@ -356,7 +379,7 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         return this.connection.DisposeAsync();
     }
 
-    private async ValueTask<CatalogVersion> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
+    private async ValueTask<ParsedJsonDocument<CatalogVersion>> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -445,7 +468,7 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         }
     }
 
-    private async ValueTask<CatalogVersion?> ReadOneAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    private async ValueTask<ParsedJsonDocument<CatalogVersion>?> ReadOneAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
         using SqliteCommand select = this.connection.CreateCommand();
         select.CommandText = $"SELECT {ColumnList} FROM CatalogVersions WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;";
@@ -473,7 +496,7 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         }
     }
 
-    private static CatalogVersion ReadVersion(SqliteDataReader reader)
+    private static ParsedJsonDocument<CatalogVersion> ReadVersion(SqliteDataReader reader)
         => CatalogVersion.Create(
             baseWorkflowId: reader.GetString(0),
             versionNumber: (int)reader.GetInt64(1),

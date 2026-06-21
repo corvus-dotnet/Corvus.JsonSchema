@@ -26,6 +26,7 @@ public sealed class PooledDocumentList<T> : IReadOnlyList<T>, IDisposable
 
     private ParsedJsonDocument<T>[]? rented;
     private int count;
+    private bool ownershipTransferred;
 
     /// <summary>Initializes a new, empty batch; the backing array is rented lazily on the first <see cref="Add"/>.</summary>
     public PooledDocumentList()
@@ -104,6 +105,25 @@ public sealed class PooledDocumentList<T> : IReadOnlyList<T>, IDisposable
     /// <inheritdoc/>
     IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
+    /// <summary>
+    /// Hands ownership of every document to <paramref name="workspace"/>, which then disposes them when it is disposed
+    /// (at the end of the request). Use this when the batch's values must outlive the batch — e.g. a handler that
+    /// projects the documents into a response body whose Source is materialized <em>after</em> the handler returns
+    /// (response validation/serialization). The documents stay enumerable from this batch for that projection; a
+    /// subsequent <see cref="Dispose"/> returns only the rented backing array, not the (now workspace-owned) documents.
+    /// </summary>
+    /// <param name="workspace">The workspace that will own and dispose the documents.</param>
+    public void TransferOwnershipTo(JsonWorkspace workspace)
+    {
+        ArgumentNullException.ThrowIfNull(workspace);
+        for (int i = 0; i < this.count; i++)
+        {
+            workspace.TakeOwnership(this.rented![i]);
+        }
+
+        this.ownershipTransferred = true;
+    }
+
     /// <inheritdoc/>
     public void Dispose()
     {
@@ -112,9 +132,14 @@ public sealed class PooledDocumentList<T> : IReadOnlyList<T>, IDisposable
             return;
         }
 
-        for (int i = 0; i < this.count; i++)
+        // When ownership has been transferred to a workspace, the documents are disposed there — return only our own
+        // rented backing array here.
+        if (!this.ownershipTransferred)
         {
-            this.rented[i]?.Dispose();
+            for (int i = 0; i < this.count; i++)
+            {
+                this.rented[i]?.Dispose();
+            }
         }
 
         ArrayPool<ParsedJsonDocument<T>>.Shared.Return(this.rented, clearArray: true);
