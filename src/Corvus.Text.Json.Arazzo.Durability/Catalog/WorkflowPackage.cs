@@ -135,7 +135,11 @@ public static class WorkflowPackage
     /// <exception cref="ArgumentException">The archive is not a valid package (no workflow document).</exception>
     public static WorkflowPackageContents Open(ReadOnlyMemory<byte> packageZip)
     {
-        using var buffer = new MemoryStream(packageZip.ToArray(), writable: false);
+        // Wrap the package's backing array directly (no full-package copy) when it is array-backed — the common case,
+        // since stores hand the persisted bytes back as a byte[]; fall back to a copy only for non-array-backed memory.
+        using MemoryStream buffer = System.Runtime.InteropServices.MemoryMarshal.TryGetArray(packageZip, out ArraySegment<byte> segment) && segment.Array is not null
+            ? new MemoryStream(segment.Array, segment.Offset, segment.Count, writable: false)
+            : new MemoryStream(packageZip.ToArray(), writable: false);
         using var archive = new ZipArchive(buffer, ZipArchiveMode.Read);
 
         byte[]? workflow = ReadEntry(archive, WorkflowEntryName);
@@ -172,7 +176,11 @@ public static class WorkflowPackage
     /// <returns>The hex-encoded content hash.</returns>
     public static string ComputeContentHash(ReadOnlyMemory<byte> workflowUtf8, IReadOnlyList<KeyValuePair<string, byte[]>> sources)
     {
-        return Convert.ToHexStringLower(SHA256.HashData(CanonicalContent(workflowUtf8, sources)));
+        // Hash into a stack span via the static span-destination overload — no per-call SHA256 instance and no heap
+        // digest array; the only allocation is the hex string (the genuine output) and the canonical content it hashes.
+        Span<byte> digest = stackalloc byte[SHA256.HashSizeInBytes];
+        SHA256.HashData(CanonicalContent(workflowUtf8, sources), digest);
+        return Convert.ToHexStringLower(digest);
     }
 
     /// <summary>Builds the RFC 8785 canonical bytes of the logical <c>{ workflow, sources }</c> content.</summary>
@@ -253,10 +261,12 @@ public static class WorkflowPackage
 
     private static byte[] ReadEntryStream(ZipArchiveEntry entry)
     {
+        // Read straight into a right-sized array using the entry's known uncompressed length — no growing MemoryStream
+        // and no Stream.CopyTo scratch buffer; the returned array is the document's genuine bytes.
+        byte[] content = new byte[entry.Length];
         using Stream stream = entry.Open();
-        using var memory = new MemoryStream();
-        stream.CopyTo(memory);
-        return memory.ToArray();
+        stream.ReadExactly(content);
+        return content;
     }
 }
 
