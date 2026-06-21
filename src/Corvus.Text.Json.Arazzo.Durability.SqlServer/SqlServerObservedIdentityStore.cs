@@ -125,7 +125,7 @@ public sealed class SqlServerObservedIdentityStore : IObservedIdentityStore
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, string? pageToken, CancellationToken cancellationToken)
+    public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         int pageSize = limit > 0 ? limit : 1;
@@ -134,12 +134,22 @@ public sealed class SqlServerObservedIdentityStore : IObservedIdentityStore
         // The SubjectValue column is NVARCHAR, so the prefix reifies once for the @p lower bound + the StartsWith break
         // (undefined prefix matches all).
         string prefixStr = prefix.IsNotUndefined() ? (string)prefix : string.Empty;
-        bool hasCursor = ObservedIdentityContinuationToken.TryDecode(pageToken, out (string SubjectValue, string SubjectKind) cursor);
+
+        // The opaque page token arrives as its JSON value; decode the (subjectValue, subjectKind) cursor straight from the
+        // request UTF-8 (no managed token string). Init to empties so the unused-when-!hasCursor tuple is never null.
+        (string SubjectValue, string SubjectKind) cursor = (string.Empty, string.Empty);
+        bool hasCursor = false;
+        if (pageToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+            hasCursor = ObservedIdentityContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
+        }
+
         SecurityFilter? readReach = context.Reach(AccessVerb.Read);
 
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         var docs = new PooledDocumentList<ObservedIdentity>(pageSize);
-        string? nextToken = null;
+        string? nextValue = null, nextKind = null;
         try
         {
             await using SqlCommand select = connection.CreateCommand();
@@ -202,7 +212,8 @@ public sealed class SqlServerObservedIdentityStore : IObservedIdentityStore
 
                 if (docs.Count == pageSize)
                 {
-                    nextToken = ObservedIdentityContinuationToken.Encode(lastValue, lastKind);
+                    nextValue = lastValue;
+                    nextKind = lastKind;
                     break;
                 }
 
@@ -211,7 +222,7 @@ public sealed class SqlServerObservedIdentityStore : IObservedIdentityStore
                 lastKind = rowKind;
             }
 
-            return new ObservedIdentityPage(docs, nextToken);
+            return nextValue is not null ? ObservedIdentityPage.Create(docs, nextValue, nextKind!) : ObservedIdentityPage.Create(docs);
         }
         catch
         {
