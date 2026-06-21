@@ -25,17 +25,20 @@ public static class WorkflowContinuationToken
     // the rare long id.
     private const int StackThreshold = 256;
 
-    /// <summary>Gets the exact length, in bytes, of the Base64URL token <see cref="EncodeToUtf8"/> writes for this run id.</summary>
+    /// <summary>Gets an upper bound, in bytes, on the Base64URL token <see cref="EncodeToUtf8"/> writes for this run id —
+    /// safe to size a destination buffer with (the exact count is <see cref="EncodeToUtf8"/>'s return value). Computed
+    /// from <see cref="Encoding.GetMaxByteCount(int)"/> (a multiply, not a scan), so it over-estimates by a few bytes
+    /// but never under-sizes.</summary>
     /// <param name="lastRunId">The last run id returned in the page.</param>
-    /// <returns>The encoded token length in bytes.</returns>
-    public static int GetEncodedLength(string lastRunId)
+    /// <returns>An upper bound on the encoded token length in bytes.</returns>
+    public static int GetMaxEncodedLength(string lastRunId)
     {
         ArgumentNullException.ThrowIfNull(lastRunId);
-        return Base64Url.GetEncodedLength(Encoding.UTF8.GetByteCount(lastRunId));
+        return Base64Url.GetEncodedLength(Encoding.UTF8.GetMaxByteCount(lastRunId.Length));
     }
 
     /// <summary>Writes the opaque continuation token for the last run id as UTF-8 into <paramref name="destination"/>
-    /// (size it with <see cref="GetEncodedLength"/>) — the warm path's bytes-native encode, with no intermediate
+    /// (size it with <see cref="GetMaxEncodedLength"/>) — the warm path's bytes-native encode, with no intermediate
     /// <c>byte[]</c>.</summary>
     /// <param name="lastRunId">The last run id returned in the page.</param>
     /// <param name="destination">The buffer to write the Base64URL token into.</param>
@@ -44,7 +47,7 @@ public static class WorkflowContinuationToken
     {
         ArgumentNullException.ThrowIfNull(lastRunId);
 
-        int rawLength = Encoding.UTF8.GetByteCount(lastRunId);
+        int rawLength = Encoding.UTF8.GetMaxByteCount(lastRunId.Length);
         byte[]? rented = rawLength > StackThreshold ? ArrayPool<byte>.Shared.Rent(rawLength) : null;
         Span<byte> raw = rented ?? stackalloc byte[StackThreshold];
         try
@@ -69,7 +72,7 @@ public static class WorkflowContinuationToken
     {
         ArgumentNullException.ThrowIfNull(lastRunId);
 
-        int rawLength = Encoding.UTF8.GetByteCount(lastRunId);
+        int rawLength = Encoding.UTF8.GetMaxByteCount(lastRunId.Length);
         byte[]? rented = rawLength > StackThreshold ? ArrayPool<byte>.Shared.Rent(rawLength) : null;
         Span<byte> raw = rented ?? stackalloc byte[StackThreshold];
         try

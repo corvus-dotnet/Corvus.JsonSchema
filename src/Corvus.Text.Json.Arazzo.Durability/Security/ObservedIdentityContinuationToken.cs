@@ -30,19 +30,22 @@ public static class ObservedIdentityContinuationToken
     // fallback covers the rare long key.
     private const int StackThreshold = 256;
 
-    /// <summary>Gets the exact length, in bytes, of the Base64URL token <see cref="EncodeToUtf8"/> writes for these key parts.</summary>
+    /// <summary>Gets an upper bound, in bytes, on the Base64URL token <see cref="EncodeToUtf8"/> writes for these key parts —
+    /// safe to size a destination buffer with (the exact count is <see cref="EncodeToUtf8"/>'s return value). Computed from
+    /// <see cref="Encoding.GetMaxByteCount(int)"/> (a multiply, not a scan), so it over-estimates by a few bytes but never
+    /// under-sizes.</summary>
     /// <param name="subjectValue">The last row's subject value.</param>
     /// <param name="subjectKind">The last row's subject kind token (the tie-breaker).</param>
-    /// <returns>The encoded token length in bytes.</returns>
-    public static int GetEncodedLength(string subjectValue, string subjectKind)
+    /// <returns>An upper bound on the encoded token length in bytes.</returns>
+    public static int GetMaxEncodedLength(string subjectValue, string subjectKind)
     {
         ArgumentNullException.ThrowIfNull(subjectValue);
         ArgumentNullException.ThrowIfNull(subjectKind);
-        return Base64Url.GetEncodedLength(RawLength(subjectValue, subjectKind));
+        return Base64Url.GetEncodedLength(MaxRawLength(subjectValue, subjectKind));
     }
 
     /// <summary>Writes the opaque continuation token for the last page row's key as UTF-8 into <paramref name="destination"/>
-    /// (size it with <see cref="GetEncodedLength"/>) — the warm path's bytes-native encode, with no intermediate string or
+    /// (size it with <see cref="GetMaxEncodedLength"/>) — the warm path's bytes-native encode, with no intermediate string or
     /// <c>byte[]</c>.</summary>
     /// <param name="subjectValue">The last row's subject value.</param>
     /// <param name="subjectKind">The last row's subject kind token (the tie-breaker).</param>
@@ -53,7 +56,7 @@ public static class ObservedIdentityContinuationToken
         ArgumentNullException.ThrowIfNull(subjectValue);
         ArgumentNullException.ThrowIfNull(subjectKind);
 
-        int rawLength = RawLength(subjectValue, subjectKind);
+        int rawLength = MaxRawLength(subjectValue, subjectKind);
         byte[]? rented = rawLength > StackThreshold ? ArrayPool<byte>.Shared.Rent(rawLength) : null;
         Span<byte> raw = rented ?? stackalloc byte[StackThreshold];
         try
@@ -80,7 +83,7 @@ public static class ObservedIdentityContinuationToken
         ArgumentNullException.ThrowIfNull(subjectValue);
         ArgumentNullException.ThrowIfNull(subjectKind);
 
-        int rawLength = RawLength(subjectValue, subjectKind);
+        int rawLength = MaxRawLength(subjectValue, subjectKind);
         byte[]? rented = rawLength > StackThreshold ? ArrayPool<byte>.Shared.Rent(rawLength) : null;
         Span<byte> raw = rented ?? stackalloc byte[StackThreshold];
         try
@@ -191,6 +194,8 @@ public static class ObservedIdentityContinuationToken
         return true;
     }
 
-    private static int RawLength(string subjectValue, string subjectKind)
-        => Encoding.UTF8.GetByteCount(subjectValue) + 1 + Encoding.UTF8.GetByteCount(subjectKind);
+    // An upper bound on the assembled key's byte count (each part's GetMaxByteCount + the 1-byte separator); used only to
+    // size the scratch buffer, so over-estimating is free and AssembleKey returns the exact filled length.
+    private static int MaxRawLength(string subjectValue, string subjectKind)
+        => Encoding.UTF8.GetMaxByteCount(subjectValue.Length) + 1 + Encoding.UTF8.GetMaxByteCount(subjectKind.Length);
 }
