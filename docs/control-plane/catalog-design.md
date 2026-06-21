@@ -56,13 +56,22 @@ is a new version record. Only governance metadata is mutable.
 
 ### Package format
 
-A package is a **self-contained, nupkg-style ZIP archive** — an opaque binary artifact moved as a file
-(multipart upload / streamed download) and stored verbatim. Its documented internal layout (JSON entries
-except the binary executor assembly), implemented by `WorkflowPackage` (the pack/unpack runtime tools in
-`Corvus.Text.Json.Arazzo.Durability`):
+A package (`.awp`) is a **self-contained, length-prefixed binary container** — an opaque artifact moved as a
+file (multipart upload / streamed download) and stored verbatim. It is **not** a ZIP: it is a tiny TLV framing
+that reads and writes with spans and a single buffer (no per-entry object graph, no compression streams),
+implemented by `WorkflowPackage` (the pack/unpack runtime tools in `Corvus.Text.Json.Arazzo.Durability`).
+
+Container layout (all multi-byte integers little-endian):
 
 ```
-manifest.json     { "formatVersion": 1, "workflow": "workflow.json", "sources": [ { "name", "path" } ] }
+header   magic "AWP" (3 bytes) + formatVersion (1 byte) + entryCount (uint32)
+entry    nameLen (uint16) + name (UTF-8) + encoding (1 byte; 0 = stored) + dataLen (uint32) + data
+         entries are written sorted by name
+```
+
+Logical entries by name (JSON except the binary executor assembly):
+
+```
 workflow.json     the Arazzo workflow document
 sources/<name>.json   each referenced source document (name = the workflow's sourceDescriptions[].name)
 metadata/schemas.json          optional precomputed schema metadata
@@ -70,13 +79,16 @@ metadata/executor.dll          optional compiled workflow executor assembly (bin
 metadata/executor-manifest.json   optional executor manifest (target framework, integrity binding, entry type)
 ```
 
-The archive is written **deterministically** (fixed entry order + timestamps) so identical content yields
+The `encoding` byte is `0` (stored/uncompressed) today; non-zero values are reserved for a future per-entry
+compression (e.g. the span-struct `BrotliEncoder`/`BrotliDecoder`) added as a server-side optimisation without a
+format break. The container is written **deterministically** (entries in name order) so identical content yields
 identical bytes. The **content hash** (`hash`) is SHA-256 over the RFC 8785 canonical form of the *logical*
-`{ workflow, sources }` content — independent of the ZIP container — so it is stable across repacks, zip
-implementations, property ordering, and insignificant whitespace. On add, the store validates that every
-non-arazzo `sourceDescriptions` entry has a matching source document in the archive. `WorkflowPackage.Pack` /
-`Open` (and the CLI's `pack` / `unpack` / `verify`) are the .NET tools for producing and consuming it; the
-future code-generation service consumes the same archive.
+`{ workflow, sources }` content — independent of the container framing — so it is stable across repacks,
+property ordering, and insignificant whitespace. On add, the store validates that every non-arazzo
+`sourceDescriptions` entry has a matching source document in the package. `WorkflowPackage.Pack` / `Open` (and
+the CLI's `pack` / `unpack` / `verify`, and the zero-dependency browser builder
+`web/arazzo-control-plane-ui/src/workflow-package.js`) are the tools for producing and consuming it; the future
+code-generation service consumes the same container.
 
 ### Workflow-id rewrite
 
@@ -100,7 +112,7 @@ retrieval endpoints.
 | `GET` | `/catalog` | `catalog:read` | Search versions — filters: `q` (title/description), `baseWorkflowId`, `tag` (repeatable, AND), `status`, `owner`; keyset paged. Returns version summaries (metadata). |
 | `GET` | `/catalog/{baseWorkflowId}` | `catalog:read` | List the versions of a base id. |
 | `GET` | `/catalog/{baseWorkflowId}/versions/{versionNumber}` | `catalog:read` | Get a version's **metadata** (no documents embedded). |
-| `GET` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/package` | `catalog:read` | **Download** the whole package archive (`application/octet-stream`, streamed — the opaque binary ZIP). |
+| `GET` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/package` | `catalog:read` | **Download** the whole package (`application/octet-stream`, streamed — the opaque binary `.awp`). |
 | `GET` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/workflow` | `catalog:read` | Get just the Arazzo workflow document (`application/json`) — the common UI case. |
 | `GET` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/sources/{sourceName}` | `catalog:read` | Get one referenced source document (OpenAPI/AsyncAPI) by its `sourceDescriptions` name (`application/json`). |
 | `GET` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/schemas` | `catalog:read` | Get the precomputed schema-metadata document (`application/json`). |
@@ -125,7 +137,7 @@ repo's OpenAPI generator supports this (a `format: binary` multipart part is bou
   canonicalises + hashes it, projects title/description/sources, rewrites the workflow id, and stores it.
   Responds `201` with the version metadata.
 - **Whole-package download** — `…/package` returns the package archive as `application/octet-stream`, streamed
-  (the package is the opaque, self-contained, hash-verifiable binary ZIP — for backup/export or the future
+  (the package is the opaque, self-contained, hash-verifiable binary `.awp` — for backup/export or the future
   code-generation service). The server generator now has a raw byte-stream response path, so the archive is
   streamed verbatim rather than re-serialised through a JSON writer; the JS client reads it as a `Blob`
   (`getCatalogPackage(...)`, `arazzo-client.js`). The compiled-assembly download (`…/executor`) uses the same

@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.IO.Compression;
 using System.Text.RegularExpressions;
 using Corvus.Text.Json;
 
@@ -12,8 +11,8 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// The catalog's processing of a <see cref="WorkflowPackage"/> archive: reading the base workflow id, projecting
 /// a submitted package into the stored form (the workflow id rewritten to the versioned form, the archive
 /// repacked canonically and content-hashed, and the searchable metadata extracted), slicing an individual
-/// document out, and the offline build / unpack / verify the CLI uses. The package itself is an opaque ZIP
-/// (see <see cref="WorkflowPackage"/>); this type is the catalog-facing logic over it.
+/// document out, and the offline build / unpack / verify the CLI uses. The package itself is an opaque binary
+/// artifact (see <see cref="WorkflowPackage"/>); this type is the catalog-facing logic over it.
 /// </summary>
 public static partial class CatalogPackage
 {

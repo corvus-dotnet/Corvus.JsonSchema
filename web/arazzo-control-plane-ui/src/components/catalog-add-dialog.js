@@ -106,7 +106,7 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
           <div class="content">
             <div class="modes" part="modes">
               <label class="mode"><input type="radio" name="mode" value="build" checked> Build from documents</label>
-              <label class="mode"><input type="radio" name="mode" value="upload"> Upload package (.zip)</label>
+              <label class="mode"><input type="radio" name="mode" value="upload"> Upload package (.awp)</label>
             </div>
 
             <fieldset class="mode-fields" data-mode="build">
@@ -120,7 +120,7 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
 
             <fieldset class="mode-fields" data-mode="upload" hidden>
               <legend>Package</legend>
-              <div><label for="packageFile">Package archive (.zip from <code>arazzo catalog pack</code>)</label><input id="packageFile" type="file" accept=".zip,application/zip,application/octet-stream"></div>
+              <div><label for="packageFile">Package file (.awp from <code>arazzo catalog pack</code>)</label><input id="packageFile" type="file" accept=".awp,application/octet-stream"></div>
             </fieldset>
 
             <fieldset>
@@ -258,7 +258,7 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
     let pkg;
     if (this.mode === 'upload') {
       const file = this.$('#packageFile').files?.[0];
-      if (!file) throw new Error('Choose a package archive (.zip) to upload.');
+      if (!file) throw new Error('Choose a package file (.awp) to upload.');
       pkg = file;
     } else {
       const workflowFile = this.$('#workflowFile').files?.[0];
