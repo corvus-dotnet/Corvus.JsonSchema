@@ -17,8 +17,9 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// <param name="Status">Restrict to versions in this status, if set.</param>
 /// <param name="Owner">Restrict to versions whose owner name or email contains this value (case-insensitive), if set.</param>
 /// <param name="Limit">The maximum number of versions to return in this page.</param>
-/// <param name="ContinuationToken">The opaque token from a previous page's <see cref="CatalogPage.ContinuationToken"/>, or
-/// <see langword="null"/> for the first page.</param>
+/// <param name="ContinuationToken">The opaque token from a previous page's <see cref="CatalogPage.NextPageToken"/> as its
+/// JSON value, or undefined for the first page. Carried bytes-native: the backend decodes it straight from the request
+/// UTF-8 (no managed token string).</param>
 /// <param name="Security">A row-authorization filter restricting results to versions whose security tags satisfy the principal's rule(s) (§14.2); <see langword="null"/> is unrestricted.</param>
 public readonly record struct CatalogQuery(
     string? Text = null,
@@ -28,17 +29,5 @@ public readonly record struct CatalogQuery(
     CatalogStatus? Status = null,
     string? Owner = null,
     int Limit = 100,
-    string? ContinuationToken = null,
+    JsonString ContinuationToken = default,
     SecurityFilter? Security = null);
-
-/// <summary>A page of catalog versions matching a <see cref="CatalogQuery"/> (metadata only — no documents). The versions
-/// are a pooled, disposable batch the caller owns: <c>using</c> the page (or otherwise <see cref="Dispose"/> it) once the
-/// response has been projected, returning every backing buffer to the pool.</summary>
-/// <param name="Versions">The matching versions (at most <see cref="CatalogQuery.Limit"/>), ordered by (base workflow id, version number).</param>
-/// <param name="ContinuationToken">The opaque token to pass as the next query's <see cref="CatalogQuery.ContinuationToken"/>,
-/// or <see langword="null"/> when this is the last page.</param>
-public readonly record struct CatalogPage(PooledDocumentList<CatalogVersion> Versions, string? ContinuationToken = null) : IDisposable
-{
-    /// <summary>Returns the page's pooled version documents to the pool.</summary>
-    public void Dispose() => this.Versions.Dispose();
-}

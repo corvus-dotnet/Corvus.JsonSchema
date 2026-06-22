@@ -174,7 +174,14 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
     /// <inheritdoc/>
     public async ValueTask<CatalogPage> QueryAsync(CatalogQuery query, CancellationToken cancellationToken)
     {
-        string? after = WorkflowContinuationToken.Decode(query.ContinuationToken);
+        // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
+        string? after = null;
+        if (query.ContinuationToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
+            after = WorkflowContinuationToken.Decode(tokenUtf8.Span);
+        }
+
         int limit = query.Limit <= 0 ? 100 : query.Limit;
 
         // The KV bucket has no server-side ordering or filtering, so collect the matching header bytes, sort them by
@@ -200,10 +207,10 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
 
         matches.Sort(static (a, b) => string.CompareOrdinal(a.SortKey, b.SortKey));
 
-        string? continuation = null;
+        string? nextSortKey = null;
         if (matches.Count > limit)
         {
-            continuation = WorkflowContinuationToken.Encode(matches[limit - 1].SortKey);
+            nextSortKey = matches[limit - 1].SortKey;
             matches = matches.GetRange(0, limit);
         }
 
@@ -223,7 +230,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
             throw;
         }
 
-        return new CatalogPage(versions, continuation);
+        return nextSortKey is not null ? CatalogPage.Create(versions, nextSortKey) : CatalogPage.Create(versions);
     }
 
     /// <inheritdoc/>

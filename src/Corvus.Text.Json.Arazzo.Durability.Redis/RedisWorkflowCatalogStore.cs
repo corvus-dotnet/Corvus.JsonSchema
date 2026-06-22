@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Globalization;
+using Corvus.Text.Json;
 using StackExchange.Redis;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Redis;
@@ -161,7 +162,14 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
     {
         // Redis has no server-side ordering over the metadata, so page over the lexicographically-ordered index
         // sort keys and filter client-side, mirroring the run store's keyset paging.
-        string? after = WorkflowContinuationToken.Decode(query.ContinuationToken);
+        // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
+        string? after = null;
+        if (query.ContinuationToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
+            after = WorkflowContinuationToken.Decode(tokenUtf8.Span);
+        }
+
         int limit = query.Limit <= 0 ? 100 : query.Limit;
 
         RedisValue[] sortKeys = await this.database.SortedSetRangeByRankAsync(IndexKey).ConfigureAwait(false);
@@ -170,7 +178,7 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         // The page is a pooled batch of disposable version documents (the caller disposes the page). Each candidate is
         // parsed once; matches are kept in the batch, non-matches and the look-ahead row are disposed immediately.
         var matches = new PooledDocumentList<CatalogVersion>(limit);
-        string? continuation = null;
+        string? nextSortKey = null;
         try
         {
             foreach (RedisValue member in sortKeys)
@@ -199,7 +207,7 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
                 {
                     // There is at least one more matching row beyond this page.
                     CatalogVersionRef last = matches[matches.Count - 1].Ref;
-                    continuation = WorkflowContinuationToken.Encode(SortKey(last.BaseWorkflowId, last.VersionNumber));
+                    nextSortKey = SortKey(last.BaseWorkflowId, last.VersionNumber);
                     candidate.Dispose();
                     break;
                 }
@@ -213,7 +221,7 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             throw;
         }
 
-        return new CatalogPage(matches, continuation);
+        return nextSortKey is not null ? CatalogPage.Create(matches, nextSortKey) : CatalogPage.Create(matches);
     }
 
     /// <inheritdoc/>
