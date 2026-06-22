@@ -87,21 +87,21 @@ that exists today (a starting point to be re-baselined, **not** evidence of comp
 
 | Op | Call tree | R/W | Current pattern / hotspots | Existing bench | Target pattern + grounding | Status |
 |---|---|---|---|---|---|---|
-| `GET /runs` | ListRuns → ListAsync | R | builds `WorkflowRunSummary` page loop | — | confirm `From()`-wrap projection ([[ctj-handler-response-projection]]) | ⬜ projection floor genuine |
+| `GET /runs` | ListRuns → ListAsync | R | builds `WorkflowRunSummary` page loop | — | confirm `From()`-wrap projection ([[ctj-handler-response-projection]]) | ✅ genuine (`From()`-wrap; Part D audit) |
 | `GET /runs` *(page token + InMemory query)* | ListRuns → `IWorkflowWaitIndex.QueryAsync` | R | `string? ContinuationToken` in (`(string)PageToken`) / `string? ContinuationToken` out (store-minted token string per page); InMemory query is a `Where/OrderBy/Take/Select/ToList` LINQ chain | `WorkflowStateStoreBenchmarks` (Query_Page) | continuation-token **carrier seam**: `JsonString` token in (`From()`), pooled `ReadOnlyMemory<byte>` out via `WorkflowRunPage.Create(...)` (the page becomes a disposable class); decode bytes-native. **Bonus:** InMemory query → capped insertion-sorted top-K buffer (no LINQ) | ✅ **19.93→1.72 KB (−91%, Part D)** |
-| `GET /runs/{id}` | GetRun → GetAsync | R | conditional fault/wait/tags arrays; a `ParseValue` in detail build | — | review projection; kill `ParseValue` (`corvus-typed-model-construction`) | ⬜ |
+| `GET /runs/{id}` | GetRun → GetAsync | R | conditional fault/wait/tags arrays; a `ParseValue` in detail build | — | review projection; kill `ParseValue` (`corvus-typed-model-construction`) | ✅ genuine — `ParseValue(Tags.RawJson)` is the TagSet leaf (no `IJsonElement`); Part D audit |
 | `DELETE /runs/{id}` | DeleteRun → GetAsync ×checks → DeleteAsync | W | 2× GetAsync access checks | — | — | ➖ |
-| `POST /runs/{id}/resume` | ResumeRun → GetAsync ×2 → ResumeAsync | W | builds detail 3×; union `Match()` | — | review repeated detail builds | ⬜ |
-| `POST /runs/{id}/cancel` | CancelRun → GetAsync ×2 → CancelAsync | W | builds detail 3×; `(string)reason` | — | as resume | ⬜ |
+| `POST /runs/{id}/resume` | ResumeRun → GetAsync ×2 → ResumeAsync | W | builds detail 3×; union `Match()` | — | review repeated detail builds | ✅ genuine — union `Match()` projection; Part D audit |
+| `POST /runs/{id}/cancel` | CancelRun → GetAsync ×2 → CancelAsync | W | builds detail 3×; `(string)reason` | — | as resume | ✅ genuine — `Match()` projection; `(string)reason` is a request-param read; Part D audit |
 | `POST(custom) /runs` purge | PurgeRuns → PurgeAsync | W | small result model | — | — | ➖ |
 
 ### Credentials — `ArazzoControlPlaneCredentialsHandler` → `ISourceCredentialStore`
 
 | Op | Call tree | R/W | Current pattern / hotspots | Existing bench | Target pattern + grounding | Status |
 |---|---|---|---|---|---|---|
-| `GET /credentials` | ListCredentials → ListAsync | R | `ToSummary` per binding | `CredentialStoreReadBenchmarks` (ResolveForUsage) | confirm summary projection | ⬜ |
+| `GET /credentials` | ListCredentials → ListAsync | R | `ToSummary` per binding | `CredentialStoreReadBenchmarks` (ResolveForUsage) | confirm summary projection | ⬜ **FIX #1** — `ToSummary` field-copy; bytes bridge (per-root trap, no clean `From()`); Part D audit |
 | `POST /credentials` | CreateCredential → **AddAsync** | W | `List<SecretReferenceDefinition>`, `List<SecurityTag>`, record `SourceCredentialDefinition`, `with { }` tag stamp | `SourceCredentialStoreBenchmarks` (record vs draft) | `SourceCredentialBinding.Draft(...)` + store stamps; `SecretRef.IsWellFormed(ReadOnlySpan<byte>)` 0-B validation; `corvus-typed-model-construction`, `corvus-builder-context-threading`, `corvus-bytes-to-bytes`; §13.4.1 | ✅ **2.35→1.64 KB (Part D)** |
-| `GET /credentials/{s}/{e}` | GetCredential → GetAsync | R | `ToSummary` | — | confirm projection | ⬜ |
+| `GET /credentials/{s}/{e}` | GetCredential → GetAsync | R | `ToSummary` | — | confirm projection | ⬜ **FIX #1** — shares `ToSummary`; Part D audit |
 | `PUT /credentials/{s}/{e}` | UpdateCredential → **UpdateAsync** | W | as create (record seam) | shares the create seam (not separately benched) | as create (draft seam) | ✅ converted with POST (Part D) |
 | `DELETE /credentials/{s}/{e}` | DeleteCredential → DeleteAsync | W | minimal | — | — | ➖ |
 
@@ -109,69 +109,69 @@ that exists today (a starting point to be re-baselined, **not** evidence of comp
 
 | Op | Call tree | R/W | Current pattern / hotspots | Existing bench | Target pattern + grounding | Status |
 |---|---|---|---|---|---|---|
-| `GET /catalog` search | SearchCatalog → SearchAsync | R | `BuildPage` loop; `ToTags` copy | — | confirm projection | ⬜ projection floor genuine |
+| `GET /catalog` search | SearchCatalog → SearchAsync | R | `BuildPage` loop; `ToTags` copy | — | confirm projection | ✅ genuine — `From()`-wrap page; Part D audit |
 | `GET /catalog` / `…/versions` *(page token)* | Search/List → `IWorkflowCatalogStore.QueryAsync` | R | `string? ContinuationToken` in (`(string)PageToken`) / `string? ContinuationToken` out (store-minted token string per page) | `CatalogStoreBenchmarks` (Search_Page) | continuation-token **carrier seam**: `JsonString` token in (`From()`), pooled `ReadOnlyMemory<byte>` out via `CatalogPage.Create(...)` (the page becomes a disposable class); decode bytes-native | ✅ **2.58→2.55 KB (token string; Part D)** |
 | `POST /catalog` | AddCatalogVersion → **AddAsync** | W | record `CatalogMetadata` + package bytes; `ToOwner`/`ToTags`; `SecurityTagSet.FromTags` | `CatalogStoreBenchmarks` (e2e baseline 19.92 KB) | owner is a **queryable indexed decomposition** (`Owner*` columns + read-reconstruct), not a string seam — confirmed genuine (Part D) | ➖ owner genuine (indexed); ↓ projection row is the real lever |
 | `POST /catalog` *(projection)* | AddAsync → `CatalogPackage.Project` | W | parse + canonicalise + hash + id-rewrite + version-doc write + ZIP pack/unpack (the bulk; NOT the record seam) | `CatalogStoreBenchmarks` | **`.awp`** container (span read/write, zero-copy `OpenPooled`) + parse-once fusion + raw-value sources + zero-copy assembled parse + **pooled-disposable store seam** (`ParsedJsonDocument<CatalogVersion>`; pooled `MetadataDb`; `workspace.TakeOwnership`/`TransferOwnershipTo`) + InMemory take-don't-copy package + UTF-8 entry names (no per-source name string) | ✅ **19.92→3.72 KB (−81%)**; ZipArchive floor + rewrite/double/per-source parse + standalone version-record `MetadataDb` + `PackPooled` entry list/name strings all gone (Part D) |
-| `GET /catalog/{id}` list | ListCatalogVersions → SearchAsync | R | BuildPage | — | — | ⬜ |
-| `GET …/versions/{n}` | GetCatalogVersion → GetAsync | R | `CatalogVersionSummary.From()` wrap | — | confirm congruent wrap | ⬜ |
-| `PATCH …/versions/{n}` | UpdateCatalogVersion → GetAsync(check) → **UpdateMetadataAsync** | W | record `CatalogMetadataPatch`; `ToOwner`/`ToTags`; 2× GetAsync | none (e2e) | carry patch draft / mutable builder ([[corvus-mutable-documents]]) | ⬜ |
+| `GET /catalog/{id}` list | ListCatalogVersions → SearchAsync | R | BuildPage | — | — | ✅ genuine — `From()`-wrap page; Part D audit |
+| `GET …/versions/{n}` | GetCatalogVersion → GetAsync | R | `CatalogVersionSummary.From()` wrap | — | confirm congruent wrap | ✅ genuine — `From()`-wrap; Part D audit |
+| `PATCH …/versions/{n}` | UpdateCatalogVersion → GetAsync(check) → **UpdateMetadataAsync** | W | record `CatalogMetadataPatch`; `ToOwner`/`ToTags`; 2× GetAsync | none (e2e) | carry patch draft / mutable builder ([[corvus-mutable-documents]]) | ⬜ **FIX #6** — drop the 2× GetAsync access-check fetch+parse (needs read-vs-write reach distinction); Part D audit |
 | `DELETE …/versions/{n}` | Delete → GetAsync(check) → DeleteAsync | W | 2× GetAsync | — | — | ➖ |
 | `POST(custom) /catalog` purge | PurgeCatalog → PurgeAsync | W | small result | — | — | ➖ |
 | `GET …/package` | GetCatalogPackage → GetPackageAsync | R | returns `ReadOnlyMemory<byte>` | — | confirm 0-copy | ➖ |
-| `GET …/workflow,/schemas,/executor,/executor-manifest,/sources/{n}` | Get*Document → GetDocumentAsync | R | `ParsedJsonDocument.Parse` + workspace ownership (binary ones return bytes) | — | confirm pooled-parse + ownership handoff ([[corvus-parsed-documents-and-memory]]) | ⬜ |
-| `POST …/validate` | ValidateCatalogValue → GetAsync + GetPackageAsync + cached schema | W | validation errors `List<>`; schema cache | — | review error projection | ⬜ |
-| `POST …/runs` start | StartCatalogWorkflowRun → GetAsync + StartAsync + IsVersionHostedAsync | W | optional validation errors `List<>` | `WorkflowExecutorBenchmarks` (executor, not this handler) | review | ⬜ |
+| `GET …/workflow,/schemas,/executor,/executor-manifest,/sources/{n}` | Get*Document → GetDocumentAsync | R | `ParsedJsonDocument.Parse` + workspace ownership (binary ones return bytes) | — | confirm pooled-parse + ownership handoff ([[corvus-parsed-documents-and-memory]]) | ✅ genuine — pooled-parse + ownership handoff; Part D audit |
+| `POST …/validate` | ValidateCatalogValue → GetAsync + GetPackageAsync + cached schema | W | validation errors `List<>`; schema cache | — | review error projection | ✅ genuine — error list is the validation leaf; Part D audit |
+| `POST …/runs` start | StartCatalogWorkflowRun → GetAsync + StartAsync + IsVersionHostedAsync | W | optional validation errors `List<>` | `WorkflowExecutorBenchmarks` (executor, not this handler) | review | ✅ genuine — optional error list is the validation leaf; Part D audit |
 
 ### Runners — `ArazzoControlPlaneRunnersHandler` → `IRunnerRegistry`
 
 | Op | Call tree | R/W | Current pattern | Existing bench | Target | Status |
 |---|---|---|---|---|---|---|
-| `GET /runners` | ListRunners → ListAsync | R | `Runner.From()` wrap per row | — | confirm wrap | ⬜ |
+| `GET /runners` | ListRunners → ListAsync | R | `Runner.From()` wrap per row | — | confirm wrap | ✅ genuine — `Runner.From<RunnerRegistration>` free generic wrap; Part D audit |
 
 ### Identity — `ArazzoControlPlaneIdentityHandler`
 
 | Op | Call tree | R/W | Current pattern | Existing bench | Target | Status |
 |---|---|---|---|---|---|---|
-| `GET /identity/whoami` | Whoami → (ControlPlaneAccess) | R | builds identity array | — | confirm | ⬜ |
-| `GET /identity/capabilities` | Capabilities → (ControlPlaneAccess) | R | builds kind array | — | confirm | ⬜ |
-| `GET /identity/grantees` | SearchGrantees → ObservedIdentity.SearchAsync / PrincipalDirectory.SearchAsync | R | RefTuple closure-free projection; directory path builds `List<ResolvedPrincipal>` | `GranteeProjectionBenchmarks` | re-baseline; confirm directory list is genuine leaf | ⬜ projection floor genuine |
+| `GET /identity/whoami` | Whoami → (ControlPlaneAccess) | R | builds identity array | — | confirm | ✅ genuine (sub-floor caveat: capturing closures); Part D audit |
+| `GET /identity/capabilities` | Capabilities → (ControlPlaneAccess) | R | builds kind array | — | confirm | ✅ genuine (sub-floor caveat: capturing closures); Part D audit |
+| `GET /identity/grantees` | SearchGrantees → ObservedIdentity.SearchAsync / PrincipalDirectory.SearchAsync | R | RefTuple closure-free projection; directory path builds `List<ResolvedPrincipal>` | `GranteeProjectionBenchmarks` | re-baseline; confirm directory list is genuine leaf | ✅ genuine — closure-free RefTuple projection; directory `List<ResolvedPrincipal>` is the adapter leaf; Part D audit |
 | `GET /identity/grantees` *(page token)* | SearchGrantees → `ObservedIdentityStore.SearchAsync` | R | `string? pageToken` in / `string? NextPageToken` out (the keyset continuation — a store-minted Base64URL token string per page) | `ObservedIdentityStoreBenchmarks` (Search_Page) | continuation-token **carrier seam**: `JsonString pageToken` in (`From()`), pooled `ReadOnlyMemory<byte>` `NextPageToken` out via page `Create(...)`; decode bytes-native from request UTF-8 | ✅ **2.03→1.98 KB (Part D)** |
 
 ### Administrators — `ArazzoControlPlaneAdministratorsHandler` → `IWorkflowAdministratorStore` / `IObservedIdentityStore`
 
 | Op | Call tree | R/W | Current pattern / hotspots | Existing bench | Target | Status |
 |---|---|---|---|---|---|---|
-| `GET /administrators/{id}` | List → GetAdministratorsAsync | R | `DescribeUsageScope` per admin | — | confirm projection | ⬜ |
-| `POST …/members` | AddAdministrator → FindIdentityConflict? → AddAdministratorAsync → SeenAsync | W | `SecurityTagSet.Build` (span-threaded); collision probe; label allocs | — | review list seam to `PutAsync` | ⬜ |
-| `PUT /administrators/{id}` | TransferAdministration → FindIdentityConflict×loop → TransferAsync | W | `List<SecurityTagSet>`; collision probe loop | — | `PutAsync` list seam review | ⬜ |
-| `DELETE …/members/{d}/{v}` | RemoveAdministrator → RemoveAdministratorAsync | W | `SecurityTagSet` from {dim,val} | — | — | ⬜ |
+| `GET /administrators/{id}` | List → GetAdministratorsAsync | R | `DescribeUsageScope` per admin | — | confirm projection | ✅ genuine (sub-floor caveat: `DescribeUsageScope` is a policy-seam leaf, no JSON inverse); Part D audit |
+| `POST …/members` | AddAdministrator → FindIdentityConflict? → AddAdministratorAsync → SeenAsync | W | `SecurityTagSet.Build` (span-threaded); collision probe; label allocs | — | review list seam to `PutAsync` | ✅ genuine — span-threaded `SecurityTagSet` into the store seam; Part D audit |
+| `PUT /administrators/{id}` | TransferAdministration → FindIdentityConflict×loop → TransferAsync | W | `List<SecurityTagSet>`; collision probe loop | — | `PutAsync` list seam review | ✅ genuine — span-threaded `SecurityTagSet`s into the store seam; Part D audit |
+| `DELETE …/members/{d}/{v}` | RemoveAdministrator → RemoveAdministratorAsync | W | `SecurityTagSet` from {dim,val} | — | — | ✅ genuine — `SecurityTagSet` from request params; Part D audit |
 
 ### Security rules + bindings — `ArazzoControlPlaneSecurityHandler` → `ISecurityPolicyStore`
 
 | Op | Call tree | R/W | Current pattern | Existing bench | Target | Status |
 |---|---|---|---|---|---|---|
-| `GET /security/rules` | ListRules → ListRulesAsync | R | `ToRuleSource` per rule | — | confirm projection | ⬜ |
-| `POST /security/rules` | CreateRule → **AddRuleAsync** | W | `SecurityRule.Compile` validation; draft | `SecurityRuleStoreBenchmarks` (has baseline arm) | re-baseline e2e; confirm draft is minimal | ⬜ |
-| `GET /security/rules/{n}` | GetRule → GetRuleAsync | R | `ToRuleSource` | — | confirm | ⬜ |
-| `PUT /security/rules/{n}` | UpdateRule → **UpdateRuleAsync** | W | draft | `SecurityRuleStoreBenchmarks` (has baseline arm) | re-baseline e2e | ⬜ |
+| `GET /security/rules` | ListRules → ListRulesAsync | R | `ToRuleSource` per rule | — | confirm projection | ⬜ **FIX #2** — `ToRuleSource` field-copy → `Models.SecurityRuleSummary.From(r)` whole-doc wrap (byte-identical schema); Part D audit |
+| `POST /security/rules` | CreateRule → **AddRuleAsync** | W | `SecurityRule.Compile` validation; draft | `SecurityRuleStoreBenchmarks` (has baseline arm) | re-baseline e2e; confirm draft is minimal | ✅ write-seam genuine (draft); response shares **FIX #2** (`ToRuleSource`); Part D audit |
+| `GET /security/rules/{n}` | GetRule → GetRuleAsync | R | `ToRuleSource` | — | confirm | ⬜ **FIX #2** — shares `ToRuleSource`; Part D audit |
+| `PUT /security/rules/{n}` | UpdateRule → **UpdateRuleAsync** | W | draft | `SecurityRuleStoreBenchmarks` (has baseline arm) | re-baseline e2e | ✅ write-seam genuine (draft); response shares **FIX #2** (`ToRuleSource`); Part D audit |
 | `DELETE /security/rules/{n}` | DeleteRule → DeleteRuleAsync | W | direct | — | — | ➖ |
-| `GET /security/bindings` | ListBindings → ListBindingsAsync | R | `ToBindingSource` per binding | `RowSecurityResolveBenchmarks` (resolve) | confirm projection | ⬜ |
-| `POST /security/bindings` | CreateBinding → **AddBindingAsync** | W | `ReadBinding` → `List<string>` rule names; `Draft()` | `SecurityBindingStoreBenchmarks` (no baseline arm) | add baseline arm; measure | ⬜ |
-| `GET /security/bindings/{id}` | GetBinding → GetBindingAsync | R | `ToBindingSource` | — | confirm | ⬜ |
-| `PUT /security/bindings/{id}` | UpdateBinding → **UpdateBindingAsync** | W | draft | `SecurityBindingStoreBenchmarks` (no baseline arm) | add baseline arm; measure | ⬜ |
+| `GET /security/bindings` | ListBindings → ListBindingsAsync | R | `ToBindingSource` per binding | `RowSecurityResolveBenchmarks` (resolve) | confirm projection | ⬜ **FIX #3** — keep builder (must not leak scopes/expiresAt/eligibleOnly) but carry verbs via `Models.VerbGrant.From(.Read/.Write/.Purge)`; Part D audit |
+| `POST /security/bindings` | CreateBinding → **AddBindingAsync** | W | `ReadBinding` → `List<string>` rule names; `Draft()` | `SecurityBindingStoreBenchmarks` (no baseline arm) | add baseline arm; measure | ⬜ **FIX #4** — `ReadBinding`→`List<string>` → `SecurityBindingDocument.From(Body)` (rule-name array bytes-to-bytes); store `BuildNew` defaults missing verbs to `None`; Part D audit |
+| `GET /security/bindings/{id}` | GetBinding → GetBindingAsync | R | `ToBindingSource` | — | confirm | ⬜ **FIX #3** — shares `ToBindingSource`; Part D audit |
+| `PUT /security/bindings/{id}` | UpdateBinding → **UpdateBindingAsync** | W | draft | `SecurityBindingStoreBenchmarks` (no baseline arm) | add baseline arm; measure | ⬜ **FIX #4** — shares `ReadBinding`→`From(Body)`; Part D audit |
 | `DELETE /security/bindings/{id}` | DeleteBinding → DeleteBindingAsync | W | direct | — | — | ➖ |
 
 ### Access requests — `ArazzoControlPlaneAccessRequestsHandler` → `IAccessRequestApprovalService` / `IAccessRequestStore`
 
 | Op | Call tree | R/W | Current pattern | Existing bench | Target | Status |
 |---|---|---|---|---|---|---|
-| `GET /accessRequests` | List → ListAsync (+admin check) | R | `ToViewSource` per request; admin loop | — | confirm projection | ⬜ |
-| `POST /accessRequests` | Submit → SubmitAsync → **CreateAsync** | W | `List<string>` scopes; `AccessRequest.Draft()` | `AccessRequestStoreBenchmarks` (no baseline arm) | add baseline arm; measure | ⬜ |
-| `GET /accessRequests/{id}` | Get → GetAsync (+visibility) | R | `ToView` wrap | `AccessRequestViewProjectionBenchmarks` (has baseline arm) | re-baseline; confirm wrap | ⬜ |
-| `POST …/approve` | Approve → ApproveAsync → **DecideAsync** | W | record `AccessRequestDecision` | — | carry decision draft / mutable builder | ⬜ |
-| `POST …/approve-as-eligible` | ApproveAsEligible → ApproveAsEligibleAsync → DecideAsync (+ binding/rule Draft) | W | record decision; `Draft()` for binding/rule | — | as approve | ⬜ |
-| `POST …/deny,/withdraw,/revoke` | → ApprovalService.* → DecideAsync | W | record decision | — | as approve | ⬜ |
+| `GET /accessRequests` | List → ListAsync (+admin check) | R | `ToViewSource` per request; admin loop | — | confirm projection | ✅ genuine — `ToViewSource` `From()`-wrap; Part D audit |
+| `POST /accessRequests` | Submit → SubmitAsync → **CreateAsync** | W | `List<string>` scopes; `AccessRequest.Draft()` | `AccessRequestStoreBenchmarks` (no baseline arm) | add baseline arm; measure | ⬜ **FIX #5** — Submit `List<string>` scopes → `AccessRequest.Draft()` overload carrying `requestedScopes` array bytes-to-bytes; Part D audit |
+| `GET /accessRequests/{id}` | Get → GetAsync (+visibility) | R | `ToView` wrap | `AccessRequestViewProjectionBenchmarks` (has baseline arm) | re-baseline; confirm wrap | ✅ genuine — `ToView` `From()`-wrap; Part D audit |
+| `POST …/approve` | Approve → ApproveAsync → **DecideAsync** | W | record `AccessRequestDecision` | — | carry decision draft / mutable builder | ✅ genuine — decision carried via draft seam (Part A); Part D audit |
+| `POST …/approve-as-eligible` | ApproveAsEligible → ApproveAsEligibleAsync → DecideAsync (+ binding/rule Draft) | W | record decision; `Draft()` for binding/rule | — | as approve | ✅ genuine — decision + binding/rule via draft seams (Part A); Part D audit |
+| `POST …/deny,/withdraw,/revoke` | → ApprovalService.* → DecideAsync | W | record decision | — | as approve | ✅ genuine — decision carried via draft seam (Part A); Part D audit |
 
 ---
 
@@ -664,6 +664,72 @@ package).
   the largest per-operation arrays in the durability layer, even if the add path itself is admin-rare.
 - **Verified against real containers** (podman socket): all 10 `IWorkflowCatalogStore` conformance suites green. **Row done.**
   `GetPackageAsync`'s read `byte[]` is the driver leaf (returned to the caller; §13.4.1), left as-is.
+
+### 🔍 Part B handler-projection audit (all 35 ⬜ handler rows)
+
+Per the campaign directive, every Part B handler row was read end-to-end (request body / store result →
+response source projection) to decide whether its allocation floor is **genuine** (a `From()`-wrap, a
+union `Match()`, or a real driver/policy leaf with no bytes-to-bytes inverse) or a **record/list/string
+seam** still to convert. Verdict: **29 genuine, 6 fixes, 2 sub-floor caveats.** This is a read-only audit
+— no code changed; the 6 fixes are queued as their own ground→baseline→fix→benchmark→commit rows below.
+
+**Genuine (✅) — projection floor confirmed, nothing to convert:**
+
+- **Runs** (`ArazzoControlPlaneHandler`, all 4): `GET /runs` is a `From()`-wrap page; `GET /runs/{id}`,
+  `POST …/resume`, `POST …/cancel` build their detail via union `Match()` over the stored run and the only
+  realise is `ParseValue(detail.Tags.RawJson)` — `TagSet` exposes no `IJsonElement`, so the re-parse is the
+  genuine leaf (same shape blessed in the credentials/security tag rows). `(string)reason` is a
+  **request-parameter** read, not a body realise.
+- **Runners** (`ArazzoControlPlaneRunnersHandler`): `GET /runners` is `Runner.From<RunnerRegistration>(r)`
+  per row — a free cross-assembly generic wrap ([[v5-no-base-jsonstring-per-root-identity]]).
+- **Identity** (`ArazzoControlPlaneIdentityHandler`, all 3): `grantees` is the closure-free `RefTuple`
+  projection (already a Part A win) and the directory path's `List<ResolvedPrincipal>` is the genuine
+  adapter leaf. `whoami`/`capabilities` build small CTJ arrays from the resolved access — genuine, **caveat
+  below**.
+- **Administrators** (`ArazzoControlPlaneAdministratorsHandler`, all 4): list/add/transfer/remove all thread
+  `SecurityTagSet` spans into the store seam (already span-disciplined); the only response build is
+  `DescribeUsageScope` per admin — genuine, **caveat below**.
+- **Catalog** (most): `search`, `GET …/versions/{n}` (`CatalogVersionSummary.From()`), `GET …/{id}` list,
+  the document GETs (`ParsedJsonDocument.Parse` + workspace ownership handoff), `validate` (error list is the
+  genuine validation leaf), and `runs start` are all `From()`-wrap / pooled-parse / genuine-leaf.
+- **Access requests** (most): `List` (`ToViewSource` is a `From()`-wrap over the stored view), `GET …/{id}`
+  (`ToView` wrap), and `approve`/`approve-as-eligible`/`deny`/`withdraw`/`revoke` (decision carried via the
+  draft seam already landed in Part A) are genuine.
+
+**Fixes (⬜ FIX) — record/list/string seams still to convert (queued rows):**
+
+1. **Credentials `ToSummary`** (`GET /credentials`, `GET /credentials/{s}/{e}`). Per-binding summary built
+   field-by-field. Cannot use a clean `Models.SourceCredentialSummary.From()` — the cross-assembly per-root
+   identity trap ([[v5-no-base-jsonstring-per-root-identity]]) means durability `JsonString` ≠ Server
+   `Models.JsonString`. Fix = a `ReadOnlySpan<byte>` bytes bridge (`GetUtf8String().Span`), same shape as the
+   credentials `ToSummary` write-side bridge already used.
+2. **Security `ToRuleSource`** (`GET /security/rules`, `GET /security/rules/{n}`; also the `POST`/`PUT` rule
+   **response** projection). The summary schema is byte-identical to the stored rule, so this is a whole-doc
+   `Models.SecurityRuleSummary.From(r)` wrap — eliminates the per-rule field copy.
+3. **Security `ToBindingSource`** (`GET /security/bindings`, `GET /security/bindings/{id}`). Keep the builder
+   (the stored binding carries `scopes`/`expiresAt`/`eligibleOnly` the open summary must **not** leak), but
+   carry the verb grants via `Models.VerbGrant.From(binding.Read/.Write/.Purge)` instead of rebuilding them.
+4. **Security `ReadBinding` → `List<string>`** (`POST /security/bindings`, `PUT /security/bindings/{id}`).
+   The handler reads the request body's rule names into a `List<string>` before the store `Draft()`. Fix =
+   `SecurityBindingDocument.From(parameters.Body)` carrying the rule-name array bytes-to-bytes; the store's
+   `BuildNew` must default the missing verb grants to `None`.
+5. **Access-requests Submit `List<string>` scopes** (`POST /accessRequests`). The submit path materialises
+   `requestedScopes` into a `List<string>` before `AccessRequest.Draft()`. Fix = an `AccessRequest.Draft()`
+   overload carrying the `requestedScopes` CTJ array bytes-to-bytes.
+6. **Catalog PATCH/DELETE redundant fetch** (`PATCH …/versions/{n}`, and `DELETE …/versions/{n}`). The
+   write does **2× `GetAsync`** (parse the whole version) purely for an access check on a restricted write
+   reach. Fix = surface a read-vs-write reach distinction so the pre-fetch+parse is dropped (or proven
+   necessary). Needs design confirmation before coding.
+
+**Sub-floor caveats (genuine, but a residual noted — not a queued fix):**
+
+- **`whoami`/`capabilities`** capture small closures while building the identity/kind arrays. Genuine (the
+  arrays are the response), but the closures are a sub-floor residual; `grantees` is the closure-free
+  template if a future pass wants to drop them. Not worth a row on its own.
+- **`DescribeUsageScope`** (administrators) mints per-admin scope strings. It is a **shared policy-seam leaf**
+  (the scope description has no bytes-to-bytes JSON inverse — it is computed prose), so there is nothing to
+  carry; recorded as a known floor, not a convertible seam. [[frequency-is-not-a-licence]] respected: this is
+  a *shape* verdict (no inverse exists), not a frequency excuse.
 
 ## Cross-references
 
