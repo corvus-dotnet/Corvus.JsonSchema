@@ -74,6 +74,11 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         // bytes-native from the request UTF-8.
         JsonString pageToken = JsonString.From(parameters.PageToken);
         using SourceCredentialPage page = await this.store.ListAsync(this.access.Current(), limit, pageToken, cancellationToken).ConfigureAwait(false);
+
+        // Each summary references its pooled binding document (the per-field From() projection is a zero-copy element
+        // wrap), and the body is validated/serialized after this handler returns — so hand the documents to the
+        // workspace (it disposes them at request end); `using page` then only returns the batch's backing array.
+        page.Bindings.TransferOwnershipTo(workspace);
         return ListCredentialsResult.Ok(this.ToList(page.Bindings, page.NextPageToken), workspace);
     }
 
@@ -151,7 +156,12 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
                 rotatedAt: (JsonElement)body.RotatedAt,
                 managementTags: managementTags,
                 usageTags: usageTags);
-            using ParsedJsonDocument<SourceCredentialBinding> created = await this.store.AddAsync(draft.RootElement, this.actor, cancellationToken).ConfigureAwait(false);
+
+            // The summary references the pooled binding document (per-field From() zero-copy wrap), so hand it to the
+            // workspace — it disposes it after the response is written — rather than `using`-disposing at method exit
+            // (the body is validated/serialized after this returns). The draft is the input only, so it stays scoped.
+            ParsedJsonDocument<SourceCredentialBinding> created = await this.store.AddAsync(draft.RootElement, this.actor, cancellationToken).ConfigureAwait(false);
+            workspace.TakeOwnership(created);
             return CreateCredentialResult.Created(ToSummary(created.RootElement), workspace);
         }
         catch (ArgumentException ex)
@@ -169,10 +179,16 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     {
         string sourceName = (string)parameters.SourceName;
         string environment = (string)parameters.Environment;
-        using ParsedJsonDocument<SourceCredentialBinding>? binding = await this.store.GetAsync(sourceName, environment, this.access.Current(), cancellationToken).ConfigureAwait(false);
-        return binding is { } b
-            ? GetCredentialResult.Ok(ToSummary(b.RootElement), workspace)
-            : GetCredentialResult.NotFound(NotFoundProblem(sourceName, environment), workspace);
+        ParsedJsonDocument<SourceCredentialBinding>? binding = await this.store.GetAsync(sourceName, environment, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (binding is not { } b)
+        {
+            return GetCredentialResult.NotFound(NotFoundProblem(sourceName, environment), workspace);
+        }
+
+        // The summary references the pooled binding document (per-field From() zero-copy wrap) — hand it to the
+        // workspace so the deferred body validation/serialization is safe (it disposes the document afterwards).
+        workspace.TakeOwnership(b);
+        return GetCredentialResult.Ok(ToSummary(b.RootElement), workspace);
     }
 
     /// <inheritdoc/>
@@ -205,10 +221,16 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
                 rotatedAt: (JsonElement)body.RotatedAt,
                 managementTags: default,
                 usageTags: default);
-            using ParsedJsonDocument<SourceCredentialBinding>? updated = await this.store.UpdateAsync(sourceName, environment, draft.RootElement, WorkflowEtag.None, this.actor, this.access.Current(), cancellationToken).ConfigureAwait(false);
-            return updated is { } b
-                ? UpdateCredentialResult.Ok(ToSummary(b.RootElement), workspace)
-                : UpdateCredentialResult.NotFound(NotFoundProblem(sourceName, environment), workspace);
+            ParsedJsonDocument<SourceCredentialBinding>? updated = await this.store.UpdateAsync(sourceName, environment, draft.RootElement, WorkflowEtag.None, this.actor, this.access.Current(), cancellationToken).ConfigureAwait(false);
+            if (updated is not { } b)
+            {
+                return UpdateCredentialResult.NotFound(NotFoundProblem(sourceName, environment), workspace);
+            }
+
+            // The summary references the pooled binding document (per-field From() zero-copy wrap) — hand it to the
+            // workspace so the deferred body validation/serialization is safe (it disposes the document afterwards).
+            workspace.TakeOwnership(b);
+            return UpdateCredentialResult.Ok(ToSummary(b.RootElement), workspace);
         }
         catch (ArgumentException ex)
         {
@@ -276,15 +298,15 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         => new((ref Models.CredentialBindingSummary.Builder b) =>
         {
             Models.JsonString.Source description = default;
-            if (binding.DescriptionOrNull is { } d)
+            if (binding.Description.IsNotUndefined())
             {
-                description = d;
+                description = Models.JsonString.From(binding.Description);
             }
 
             Models.JsonString.Source lastUpdatedBy = default;
-            if (binding.LastUpdatedByOrNull is { } u)
+            if (binding.LastUpdatedBy.IsNotUndefined())
             {
-                lastUpdatedBy = u;
+                lastUpdatedBy = Models.JsonString.From(binding.LastUpdatedBy);
             }
 
             Models.JsonDateTime.Source lastUpdatedAt = default;
@@ -316,7 +338,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
                 {
                     foreach (SourceCredentialBinding.CredentialConfigEntry entry in binding.Config.EnumerateArray())
                     {
-                        ab.AddItem(ToConfigEntry((string)entry.Key, (string)entry.Value));
+                        ab.AddItem(ToConfigEntry(entry));
                     }
                 });
             }
@@ -351,13 +373,13 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
             b.Create(
                 authKind: binding.AuthKindValue.ToJsonToken(),
                 createdAt: binding.CreatedAtValue,
-                createdBy: binding.CreatedByValue,
+                createdBy: Models.JsonString.From(binding.CreatedBy),
                 credentialStatus: ToStatusToken(status),
-                environment: binding.EnvironmentValue,
-                etag: binding.EtagValue.Value ?? string.Empty,
-                id: binding.IdValue,
+                environment: Models.JsonString.From(binding.Environment),
+                etag: Models.JsonString.From(binding.Etag),
+                id: Models.JsonString.From(binding.Id),
                 secretRefs: ToSecretRefs(binding),
-                sourceName: binding.SourceNameValue,
+                sourceName: Models.JsonString.From(binding.SourceName),
                 config: config,
                 description: description,
                 expiresAt: expiresAt,
@@ -381,14 +403,12 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         {
             foreach (SourceCredentialBinding.SecretReference reference in binding.SecretRefs.EnumerateArray())
             {
-                string name = (string)reference.Name;
-                string referenceValue = (string)reference.Ref;
-                ab.AddItem(new Models.SecretReference.Source((ref Models.SecretReference.Builder sb) => sb.Create(name, referenceValue)));
+                ab.AddItem(new Models.SecretReference.Source((ref Models.SecretReference.Builder sb) => sb.Create(Models.JsonString.From(reference.Name), Models.JsonString.From(reference.Ref))));
             }
         });
 
-    private static Models.CredentialConfigEntry.Source ToConfigEntry(string key, string value)
-        => new((ref Models.CredentialConfigEntry.Builder b) => b.Create(key, value));
+    private static Models.CredentialConfigEntry.Source ToConfigEntry(SourceCredentialBinding.CredentialConfigEntry entry)
+        => new((ref Models.CredentialConfigEntry.Builder b) => b.Create(Models.JsonString.From(entry.Key), Models.JsonString.From(entry.Value)));
 
     private Models.CredentialBindingList.Source ToList(IReadOnlyList<SourceCredentialBinding> bindings, ReadOnlyMemory<byte> nextPageToken)
         => new((ref Models.CredentialBindingList.Builder b) => b.Create(
