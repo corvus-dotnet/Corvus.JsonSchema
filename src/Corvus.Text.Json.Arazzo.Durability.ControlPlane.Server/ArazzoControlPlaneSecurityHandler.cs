@@ -133,6 +133,11 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     public async ValueTask<ListSecurityBindingsResult> HandleListSecurityBindingsAsync(ListSecurityBindingsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         using PooledDocumentList<SecurityBindingDocument> bindings = await this.store.ListBindingsAsync(cancellationToken).ConfigureAwait(false);
+
+        // Each summary references its pooled binding document (the per-field From() projection is a zero-copy element
+        // wrap), and the body is validated/serialized after this handler returns — so hand the documents to the
+        // workspace (it disposes them at request end); `using bindings` then only returns the batch's backing array.
+        bindings.TransferOwnershipTo(workspace);
         return ListSecurityBindingsResult.Ok(ToBindingList(bindings), workspace);
     }
 
@@ -143,7 +148,11 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         {
             using (draft)
             {
-                using ParsedJsonDocument<SecurityBindingDocument> created = await this.store.AddBindingAsync(draft!.RootElement, this.actor, cancellationToken).ConfigureAwait(false);
+                // The summary references the pooled binding document (per-field From() zero-copy wrap), so hand it to the
+                // workspace — it disposes it after the response is written; ownership transfers before RefreshAsync so a
+                // refresh failure cannot leak the document. The draft is the input only, so it stays scoped.
+                ParsedJsonDocument<SecurityBindingDocument> created = await this.store.AddBindingAsync(draft!.RootElement, this.actor, cancellationToken).ConfigureAwait(false);
+                workspace.TakeOwnership(created);
                 await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
                 return CreateSecurityBindingResult.Created(ToBindingSource(created.RootElement), workspace);
             }
@@ -156,10 +165,16 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     public async ValueTask<GetSecurityBindingResult> HandleGetSecurityBindingAsync(GetSecurityBindingParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string id = (string)parameters.BindingId;
-        using ParsedJsonDocument<SecurityBindingDocument>? binding = await this.store.GetBindingAsync(id, cancellationToken).ConfigureAwait(false);
-        return binding is { } b
-            ? GetSecurityBindingResult.Ok(ToBindingSource(b.RootElement), workspace)
-            : GetSecurityBindingResult.NotFound(NotFoundProblem("binding", id), workspace);
+        ParsedJsonDocument<SecurityBindingDocument>? binding = await this.store.GetBindingAsync(id, cancellationToken).ConfigureAwait(false);
+        if (binding is not { } b)
+        {
+            return GetSecurityBindingResult.NotFound(NotFoundProblem("binding", id), workspace);
+        }
+
+        // The summary references the pooled binding document (per-field From() zero-copy wrap) — hand it to the
+        // workspace so the deferred body validation/serialization is safe (it disposes the document afterwards).
+        workspace.TakeOwnership(b);
+        return GetSecurityBindingResult.Ok(ToBindingSource(b.RootElement), workspace);
     }
 
     /// <inheritdoc/>
@@ -173,12 +188,15 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
 
         using (draft)
         {
-            using ParsedJsonDocument<SecurityBindingDocument>? updated = await this.store.UpdateBindingAsync(id, draft!.RootElement, WorkflowEtag.None, this.actor, cancellationToken).ConfigureAwait(false);
+            ParsedJsonDocument<SecurityBindingDocument>? updated = await this.store.UpdateBindingAsync(id, draft!.RootElement, WorkflowEtag.None, this.actor, cancellationToken).ConfigureAwait(false);
             if (updated is not { } b)
             {
                 return UpdateSecurityBindingResult.NotFound(NotFoundProblem("binding", id), workspace);
             }
 
+            // The summary references the pooled binding document (per-field From() zero-copy wrap) — hand it to the
+            // workspace; ownership transfers before RefreshAsync so a refresh failure cannot leak the document.
+            workspace.TakeOwnership(b);
             await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
             return UpdateSecurityBindingResult.Ok(ToBindingSource(b.RootElement), workspace);
         }
@@ -262,29 +280,6 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         return names.Count == 0 ? DurabilityVerbGrant.None : DurabilityVerbGrant.Rules([.. names]);
     }
 
-    private static Models.VerbGrant.Source ToGrantSource(DurabilityVerbGrant grant)
-    {
-        bool unrestricted = grant.IsUnrestrictedValue;
-        bool hasRules = !unrestricted && grant.HasRuleNames;
-        return new((ref Models.VerbGrant.Builder b) =>
-        {
-            Models.VerbGrant.JsonStringArray.Source ruleNames = default;
-            if (hasRules)
-            {
-                ruleNames = new Models.VerbGrant.JsonStringArray.Source((ref Models.VerbGrant.JsonStringArray.Builder ab) =>
-                {
-                    // Enumerate the grant's rule-name array directly; (string) realises each name only at the AddItem leaf.
-                    foreach (JsonString name in grant.RuleNames.EnumerateArray())
-                    {
-                        ab.AddItem((string)name);
-                    }
-                });
-            }
-
-            b.Create(ruleNames: ruleNames, unrestricted: unrestricted);
-        });
-    }
-
     private static Models.SecurityRuleSummary.Source ToRuleSource(SecurityRuleDocument r)
         => new((ref Models.SecurityRuleSummary.Builder b) =>
         {
@@ -331,21 +326,21 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         => new((ref Models.SecurityBindingSummary.Builder b) =>
         {
             Models.JsonString.Source claimValue = default;
-            if (binding.ClaimValueOrNull is { } cv)
+            if (binding.ClaimValue.IsNotUndefined())
             {
-                claimValue = cv;
+                claimValue = Models.JsonString.From(binding.ClaimValue);
             }
 
             Models.JsonString.Source description = default;
-            if (binding.DescriptionOrNull is { } d)
+            if (binding.Description.IsNotUndefined())
             {
-                description = d;
+                description = Models.JsonString.From(binding.Description);
             }
 
             Models.JsonString.Source lastUpdatedBy = default;
-            if (binding.UpdatedByOrNull is { } u)
+            if (binding.LastUpdatedBy.IsNotUndefined())
             {
-                lastUpdatedBy = u;
+                lastUpdatedBy = Models.JsonString.From(binding.LastUpdatedBy);
             }
 
             Models.JsonDateTime.Source lastUpdatedAt = default;
@@ -354,16 +349,19 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
                 lastUpdatedAt = ua;
             }
 
+            // Scalars carried bytes-native (Models.JsonString.From — zero-copy element wrap); the three verb grants are
+            // congruent with the stored VerbGrantInfo, so they wrap verbatim (Models.VerbGrant.From). The summary
+            // deliberately omits the stored scopes/expiresAt/eligibleOnly — per-field selection keeps them out.
             b.Create(
-                claimType: binding.ClaimTypeValue,
+                claimType: Models.JsonString.From(binding.ClaimType),
                 createdAt: binding.CreatedAtValue,
-                createdBy: binding.CreatedByValue,
-                etag: binding.EtagValue.Value ?? string.Empty,
-                id: binding.IdValue,
+                createdBy: Models.JsonString.From(binding.CreatedBy),
+                etag: Models.JsonString.From(binding.Etag),
+                id: Models.JsonString.From(binding.Id),
                 order: binding.OrderValue,
-                purge: ToGrantSource(binding.Purge),
-                read: ToGrantSource(binding.Read),
-                write: ToGrantSource(binding.Write),
+                purge: Models.VerbGrant.From(binding.Purge),
+                read: Models.VerbGrant.From(binding.Read),
+                write: Models.VerbGrant.From(binding.Write),
                 claimValue: claimValue,
                 description: description,
                 lastUpdatedAt: lastUpdatedAt,
