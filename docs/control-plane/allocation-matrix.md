@@ -156,9 +156,9 @@ that exists today (a starting point to be re-baselined, **not** evidence of comp
 | `GET /security/rules/{n}` | GetRule → GetRuleAsync | R | `ToRuleSource` | — | confirm | ✅ response now `SecurityRuleSummary.From()` zero-copy wrap (FIX #2, Part D) |
 | `PUT /security/rules/{n}` | UpdateRule → **UpdateRuleAsync** | W | draft | `SecurityRuleStoreBenchmarks` (has baseline arm) | re-baseline e2e | ✅ write-seam genuine (draft); response now `SecurityRuleSummary.From()` zero-copy wrap (FIX #2, Part D) |
 | `DELETE /security/rules/{n}` | DeleteRule → DeleteRuleAsync | W | direct | — | — | ➖ |
-| `GET /security/bindings` | ListBindings → ListBindingsAsync | R | `ToBindingSource` per binding | `RowSecurityResolveBenchmarks` (resolve) | confirm projection | ⬜ **FIX #3** — keep builder (must not leak scopes/expiresAt/eligibleOnly) but carry verbs via `Models.VerbGrant.From(.Read/.Write/.Purge)`; Part D audit |
+| `GET /security/bindings` | ListBindings → ListBindingsAsync | R | `ToBindingSource` per binding | `RowSecurityResolveBenchmarks` (resolve) | confirm projection | ✅ per-field `JsonString.From` + `VerbGrant.From` bytes bridge + `TransferOwnershipTo`; scopes/expiresAt/eligibleOnly non-leak preserved (FIX #3, Part D) |
 | `POST /security/bindings` | CreateBinding → **AddBindingAsync** | W | `ReadBinding` → `List<string>` rule names; `Draft()` | `SecurityBindingStoreBenchmarks` (no baseline arm) | add baseline arm; measure | ⬜ **FIX #4** — `ReadBinding`→`List<string>` → `SecurityBindingDocument.From(Body)` (rule-name array bytes-to-bytes); store `BuildNew` defaults missing verbs to `None`; Part D audit |
-| `GET /security/bindings/{id}` | GetBinding → GetBindingAsync | R | `ToBindingSource` | — | confirm | ⬜ **FIX #3** — shares `ToBindingSource`; Part D audit |
+| `GET /security/bindings/{id}` | GetBinding → GetBindingAsync | R | `ToBindingSource` | — | confirm | ✅ shares `ToBindingSource` bytes bridge + `TakeOwnership` (FIX #3, Part D) |
 | `PUT /security/bindings/{id}` | UpdateBinding → **UpdateBindingAsync** | W | draft | `SecurityBindingStoreBenchmarks` (no baseline arm) | add baseline arm; measure | ⬜ **FIX #4** — shares `ReadBinding`→`From(Body)`; Part D audit |
 | `DELETE /security/bindings/{id}` | DeleteBinding → DeleteBindingAsync | W | direct | — | — | ➖ |
 
@@ -714,7 +714,9 @@ seam** still to convert. Verdict: **29 genuine, 6 fixes, 2 sub-floor caveats.** 
    floor (re-classified ✅ genuine, not a fix).
 3. **Security `ToBindingSource`** (`GET /security/bindings`, `GET /security/bindings/{id}`). Keep the builder
    (the stored binding carries `scopes`/`expiresAt`/`eligibleOnly` the open summary must **not** leak), but
-   carry the verb grants via `Models.VerbGrant.From(binding.Read/.Write/.Purge)` instead of rebuilding them.
+   carry the scalars via `Models.JsonString.From` and the verb grants via `Models.VerbGrant.From(binding.Read/.Write/.Purge)`
+   instead of rebuilding them. **DONE — see ✅ FIX #3 (Part D)** (`ToGrantSource` deleted; `TakeOwnership`/`TransferOwnershipTo`
+   per the FIX #1 lifetime rule; non-leak preserved by per-field selection; 392→0 B convertible).
 4. **Security `ReadBinding` → `List<string>`** (`POST /security/bindings`, `PUT /security/bindings/{id}`).
    The handler reads the request body's rule names into a `List<string>` before the store `Draft()`. Fix =
    `SecurityBindingDocument.From(parameters.Body)` carrying the rule-name array bytes-to-bytes; the store's
@@ -795,6 +797,32 @@ wrap → implicit `Models.JsonString.Source`).
 - **Verified.** `ControlPlaneCredentialsApiTests` 10/10 (full create/get/list/update/delete lifecycle + management-tag/
   usage-grant assertions); Sqlite `SourceCredentialStore` conformance 13/13; slnx build **0 Warning(s), 0 Error(s)**.
   **Row done.**
+
+### ✅ FIX #3 — Security `ToBindingSource` bytes-bridge (392→0 B convertible)
+
+The third Part B fix. A whole-doc `From()` is impossible — the stored binding carries
+`scopes`/`expiresAt`/`eligibleOnly` that the **open** summary must not leak (summary `additionalProperties` is
+permissive, so a verbatim wrap would carry them through) — so `ToBindingSource` field-selects a subset. Each selected leaf
+is now carried bytes-native:
+
+- **Scalars** (`id`/`claimType`/`createdBy`/`etag` + optional `claimValue`/`description`/`lastUpdatedBy`) →
+  `Models.JsonString.From(binding.X)` (the FIX #1 element wrap).
+- **Verb grants** (`read`/`write`/`purge`) → `Models.VerbGrant.From(binding.Read/.Write/.Purge)`, replacing the
+  `ToGrantSource` rebuild (which realised a managed string per rule name). Verified the stored `VerbGrantInfo` is congruent
+  with the summary `VerbGrant` (same optional `unrestricted`/`ruleNames`), and `VerbGrantInfo.Rules`/`None`/`Full` always
+  carry `unrestricted` — so `From()` reproduces exactly what `ToGrantSource` emitted (same fields/values).
+  `ToGrantSource` is **deleted** (was used only here; the input inverse `ToGrant` stays).
+- **Lifetime** (the FIX #1 rule): per-field `From()` makes the builder reference the binding doc → the 3 single-doc sites
+  `workspace.TakeOwnership(binding)` (Create/Update transfer before `RefreshAsync`) and the list
+  `bindings.TransferOwnershipTo(workspace)`. `order`/`createdAt`/`lastUpdatedAt` stay value-type accessors (no string).
+- **Non-leak preserved:** per-field selection keeps `scopes`/`expiresAt`/`eligibleOnly` out — verified by
+  `ControlPlaneSecurityApiTests` (the binding test asserts the open summary does not carry them).
+- **Measured** (`SecurityBindingSummaryProjectionBenchmarks`, convertible fields — 6 scalars + 3 verb grants incl. a
+  2-rule read; `order`/dates identical in both arms). `Materialize_fieldByField` (baseline — `(string)` + grant rebuild)
+  **392 B / 2.58 µs** → `BytesNative_From` **0 B / 2.06 µs** (−392 B, **−100%**, ~1.25× faster); 392 B is a conservative
+  lower bound (the real handler also runs the generated result builder).
+- **Verified.** `ControlPlaneSecurityApiTests` 5/5; Sqlite `SecurityPolicyStore` conformance 7/7; slnx build
+  **0 Warning(s), 0 Error(s)**. **Row done.**
 
 ## Cross-references
 
