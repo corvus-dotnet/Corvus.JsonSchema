@@ -167,7 +167,7 @@ that exists today (a starting point to be re-baselined, **not** evidence of comp
 | Op | Call tree | R/W | Current pattern | Existing bench | Target | Status |
 |---|---|---|---|---|---|---|
 | `GET /accessRequests` | List → ListAsync (+admin check) | R | `ToViewSource` per request; admin loop | — | confirm projection | ✅ genuine — `ToViewSource` `From()`-wrap; Part D audit |
-| `POST /accessRequests` | Submit → SubmitAsync → **CreateAsync** | W | `List<string>` scopes; `AccessRequest.Draft()` | `AccessRequestStoreBenchmarks` (no baseline arm) | add baseline arm; measure | ⬜ **FIX #5** — Submit `List<string>` scopes → `AccessRequest.Draft()` overload carrying `requestedScopes` array bytes-to-bytes; Part D audit |
+| `POST /accessRequests` | Submit → SubmitAsync → **CreateAsync** | W | `List<string>` scopes; `AccessRequest.Draft()` | `AccessRequestDraftBenchmarks` | add baseline arm; measure | ✅ bytes-native `Draft(JsonElement…)` overload — `requestedScopes`/`baseWorkflowId`/`reason` carried verbatim, no `List<string>` (FIX #5, Part D; 520→152 B, −71%) |
 | `GET /accessRequests/{id}` | Get → GetAsync (+visibility) | R | `ToView` wrap | `AccessRequestViewProjectionBenchmarks` (has baseline arm) | re-baseline; confirm wrap | ✅ genuine — `ToView` `From()`-wrap; Part D audit |
 | `POST …/approve` | Approve → ApproveAsync → **DecideAsync** | W | record `AccessRequestDecision` | — | carry decision draft / mutable builder | ✅ genuine — decision carried via draft seam (Part A); Part D audit |
 | `POST …/approve-as-eligible` | ApproveAsEligible → ApproveAsEligibleAsync → DecideAsync (+ binding/rule Draft) | W | record decision; `Draft()` for binding/rule | — | as approve | ✅ genuine — decision + binding/rule via draft seams (Part A); Part D audit |
@@ -723,7 +723,8 @@ seam** still to convert. Verdict: **29 genuine, 6 fixes, 2 sub-floor caveats.** 
    `BuildNew` must default the missing verb grants to `None`.
 5. **Access-requests Submit `List<string>` scopes** (`POST /accessRequests`). The submit path materialises
    `requestedScopes` into a `List<string>` before `AccessRequest.Draft()`. Fix = an `AccessRequest.Draft()`
-   overload carrying the `requestedScopes` CTJ array bytes-to-bytes.
+   overload carrying the `requestedScopes` CTJ array bytes-to-bytes. **DONE — see ✅ FIX #5 (Part D)** (also carries
+   `baseWorkflowId`/`reason` as JsonElement; 520→152 B, −71%; residual is the irreducible pooled draft).
 6. **Catalog PATCH/DELETE redundant fetch** (`PATCH …/versions/{n}`, and `DELETE …/versions/{n}`). The
    write does **2× `GetAsync`** (parse the whole version) purely for an access check on a restricted write
    reach. Fix = surface a read-vs-write reach distinction so the pre-fetch+parse is dropped (or proven
@@ -822,6 +823,26 @@ is now carried bytes-native:
   **392 B / 2.58 µs** → `BytesNative_From` **0 B / 2.06 µs** (−392 B, **−100%**, ~1.25× faster); 392 B is a conservative
   lower bound (the real handler also runs the generated result builder).
 - **Verified.** `ControlPlaneSecurityApiTests` 5/5; Sqlite `SecurityPolicyStore` conformance 7/7; slnx build
+  **0 Warning(s), 0 Error(s)**. **Row done.**
+
+### ✅ FIX #5 — Access-request Submit bytes-native `Draft` (520→152 B)
+
+The fourth Part B fix, and the first **write-side** one (a draft build, not a response projection). The Submit handler
+read the body's `requestedScopes` into a `List<string>` (a transcode per scope) and realised `baseWorkflowId`/`reason`
+via `(string)` before `AccessRequest.Draft` rebuilt them — a bytes→string→bytes u-turn. Added a bytes-native
+`AccessRequest.Draft(in JsonElement baseWorkflowId, in JsonElement requestedScopes, …, in JsonElement reason, …)` overload
+(mirroring `SourceCredentialBinding.Draft(JsonElement…)`): the body-sourced fields are carried verbatim (the whole
+`requestedScopes` array copied with `WriteTo`, no list), while the principal-derived `subject`/`subjectClaimType`/
+`requesterLabel` stay the strings they already are. The string-list overload is kept for cold/programmatic callers + tests.
+
+- **Lifetime:** none of the new concern — the draft is built into a fresh pooled document (`ToPooledDocument`); the
+  `JsonElement`s are read synchronously during that build (the body is alive), then the draft is independent. The
+  `created` response doc already gets `workspace.TakeOwnership` (unchanged).
+- **Measured** (`AccessRequestDraftBenchmarks`, parsed body → draft → dispose, mirroring the handler).
+  `Draft_FromStrings` (baseline — `List<string>` + `(string)`) **520 B / 1.19 µs** → `Draft_FromElements` **152 B /
+  1.14 µs** (−368 B, **−71%**). The residual **152 B is the pooled draft document itself** (present in both arms — the
+  irreducible seam the draft carries); the eliminated 368 B = the `List<string>` + scope strings + `baseWorkflowId`/`reason`.
+- **Verified.** `ControlPlaneAccessRequestsApiTests` 5/5; Sqlite `AccessRequestStore` conformance green; slnx build
   **0 Warning(s), 0 Error(s)**. **Row done.**
 
 ## Cross-references

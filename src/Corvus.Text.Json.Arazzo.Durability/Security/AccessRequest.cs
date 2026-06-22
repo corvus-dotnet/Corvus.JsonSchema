@@ -168,6 +168,62 @@ public readonly partial struct AccessRequest
             });
     }
 
+    /// <summary>Builds a draft Pending request carrying the request body's already-parsed JSON values bytes-to-bytes —
+    /// the warm HTTP path: <paramref name="baseWorkflowId"/>, <paramref name="requestedScopes"/> (the whole array, no
+    /// intermediate <see cref="System.Collections.Generic.List{T}"/> of managed strings) and <paramref name="reason"/>
+    /// are copied straight from the body, while the principal-derived subject/label are carried as the strings they
+    /// already are. The store stamps id/etag/createdAt; the eligibility predicate and <c>SubmitAsync</c> read the draft.</summary>
+    /// <param name="baseWorkflowId">The target workflow id, as the body's JSON value.</param>
+    /// <param name="requestedScopes">The requested scopes array, as the body's JSON value (copied verbatim).</param>
+    /// <param name="subjectClaimType">The principal's subject claim type (the grant is scoped to it).</param>
+    /// <param name="subjectClaimValue">The principal's subject claim value.</param>
+    /// <param name="requesterLabel">An optional human-facing requester label (the authentication name).</param>
+    /// <param name="reason">An optional reason, as the body's JSON value (skipped when undefined).</param>
+    /// <param name="requestedDurationSeconds">An optional requested grant duration.</param>
+    /// <returns>The pooled draft document (the caller disposes it).</returns>
+    public static ParsedJsonDocument<AccessRequest> Draft(
+        in JsonElement baseWorkflowId,
+        in JsonElement requestedScopes,
+        string subjectClaimType,
+        string subjectClaimValue,
+        string? requesterLabel,
+        in JsonElement reason,
+        long? requestedDurationSeconds)
+    {
+        ArgumentNullException.ThrowIfNull(subjectClaimType);
+        ArgumentNullException.ThrowIfNull(subjectClaimValue);
+        var state = new DraftElementState(baseWorkflowId, requestedScopes, subjectClaimType, subjectClaimValue, requesterLabel, reason, requestedDurationSeconds);
+        return PersistedJson.ToPooledDocument<AccessRequest, DraftElementState>(
+            in state,
+            static (Utf8JsonWriter writer, in DraftElementState c) =>
+            {
+                writer.WriteStartObject();
+                writer.WritePropertyName("baseWorkflowId"u8);
+                c.BaseWorkflowId.WriteTo(writer);
+                writer.WritePropertyName("requestedScopes"u8);
+                c.RequestedScopes.WriteTo(writer);
+                writer.WriteString("subjectClaimType"u8, c.SubjectClaimType);
+                writer.WriteString("subjectClaimValue"u8, c.SubjectClaimValue);
+                if (c.RequesterLabel is { } requesterLabel)
+                {
+                    writer.WriteString("requesterLabel"u8, requesterLabel);
+                }
+
+                if (c.Reason.ValueKind != JsonValueKind.Undefined)
+                {
+                    writer.WritePropertyName("reason"u8);
+                    c.Reason.WriteTo(writer);
+                }
+
+                if (c.RequestedDurationSeconds is { } duration)
+                {
+                    writer.WriteNumber("requestedDurationSeconds"u8, duration);
+                }
+
+                writer.WriteEndObject();
+            });
+    }
+
     /// <summary>Realises a decided copy of this request (status + decision fields set; everything else carried through)
     /// and writes its JSON to the caller's (pooled) writer.</summary>
     /// <param name="writer">The writer to serialize into.</param>
@@ -222,6 +278,32 @@ public readonly partial struct AccessRequest
         public string? RequesterLabel { get; } = requesterLabel;
 
         public string? Reason { get; } = reason;
+
+        public long? RequestedDurationSeconds { get; } = requestedDurationSeconds;
+    }
+
+    // The bytes-to-bytes draft context: the request body's already-parsed JSON values (baseWorkflowId/requestedScopes/
+    // reason) plus the principal-derived subject/label strings.
+    private readonly struct DraftElementState(
+        JsonElement baseWorkflowId,
+        JsonElement requestedScopes,
+        string subjectClaimType,
+        string subjectClaimValue,
+        string? requesterLabel,
+        JsonElement reason,
+        long? requestedDurationSeconds)
+    {
+        public JsonElement BaseWorkflowId { get; } = baseWorkflowId;
+
+        public JsonElement RequestedScopes { get; } = requestedScopes;
+
+        public string SubjectClaimType { get; } = subjectClaimType;
+
+        public string SubjectClaimValue { get; } = subjectClaimValue;
+
+        public string? RequesterLabel { get; } = requesterLabel;
+
+        public JsonElement Reason { get; } = reason;
 
         public long? RequestedDurationSeconds { get; } = requestedDurationSeconds;
     }
