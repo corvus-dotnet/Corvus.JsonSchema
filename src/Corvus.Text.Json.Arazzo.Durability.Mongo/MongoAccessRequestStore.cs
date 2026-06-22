@@ -92,7 +92,7 @@ public sealed class MongoAccessRequestStore : IAccessRequestStore, IAsyncDisposa
     {
         ArgumentNullException.ThrowIfNull(id);
         byte[]? doc = await this.DocumentAsync(id, cancellationToken).ConfigureAwait(false);
-        return doc is null ? null : PersistedJson.ToPooledDocument<AccessRequest>(doc);
+        return doc is null ? null : ParsedJsonDocument<AccessRequest>.Parse(doc.AsMemory());
     }
 
     /// <inheritdoc/>
@@ -123,7 +123,7 @@ public sealed class MongoAccessRequestStore : IAccessRequestStore, IAsyncDisposa
         List<BsonDocument> documents = await this.requests.Find(filter).Sort(OldestFirst).ToListAsync(cancellationToken).ConfigureAwait(false);
         foreach (BsonDocument document in documents)
         {
-            list.Add(PersistedJson.ToPooledDocument<AccessRequest>(document["doc"].AsBsonBinaryData.Bytes));
+            list.Add(ParsedJsonDocument<AccessRequest>.Parse(document["doc"].AsBsonBinaryData.Bytes.AsMemory()));
         }
 
         return list;
@@ -141,7 +141,8 @@ public sealed class MongoAccessRequestStore : IAccessRequestStore, IAsyncDisposa
         }
 
         WorkflowEtag etag = NewEtag();
-        byte[] json = AccessRequestSerialization.SerializeDecision(doc, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), etag);
+        using ParsedJsonDocument<AccessRequest> current = ParsedJsonDocument<AccessRequest>.Parse(doc.AsMemory());
+        byte[] json = AccessRequestSerialization.SerializeDecision(current.RootElement, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), etag);
         UpdateDefinition<BsonDocument> update = Builders<BsonDocument>.Update
             .Set("status", AccessRequestStatusNames.ToWire(decision.Status))
             .Set("doc", new BsonBinaryData(json));

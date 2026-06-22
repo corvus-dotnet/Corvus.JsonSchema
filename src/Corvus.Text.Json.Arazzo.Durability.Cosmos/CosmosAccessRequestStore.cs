@@ -135,8 +135,16 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
     public async ValueTask<ParsedJsonDocument<AccessRequest>?> GetAsync(string id, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
-        byte[]? doc = await this.DocumentAsync(id, cancellationToken).ConfigureAwait(false);
-        return doc is null ? null : PersistedJson.ToPooledDocument<AccessRequest>(doc);
+        using CosmosJson.RentedResponse? payload = await this.ReadResponseAsync(id, cancellationToken).ConfigureAwait(false);
+        if (payload is not { } page)
+        {
+            return null;
+        }
+
+        // The embedded doc is raw nested JSON (a slice of the live pooled response). Copy it into an owned pooled
+        // document (no GC array) before the response buffer is returned at the end of this using.
+        ReadOnlyMemory<byte> doc = CosmosJson.GetRawValue(page.Memory, DocProperty);
+        return doc.IsEmpty ? null : PersistedJson.ToPooledDocument<AccessRequest>(doc.Span);
     }
 
     /// <inheritdoc/>
@@ -210,35 +218,53 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
     {
         ArgumentNullException.ThrowIfNull(id);
         ArgumentNullException.ThrowIfNull(actor);
-        byte[]? existing = await this.DocumentAsync(id, cancellationToken).ConfigureAwait(false);
-        if (existing is null)
+        ParsedJsonDocument<AccessRequest> document;
+        Stream stream;
+        using (CosmosJson.RentedResponse? payload = await this.ReadResponseAsync(id, cancellationToken).ConfigureAwait(false))
         {
-            return null;
+            if (payload is not { } page)
+            {
+                return null;
+            }
+
+            ReadOnlyMemory<byte> doc = CosmosJson.GetRawValue(page.Memory, DocProperty);
+            if (doc.IsEmpty)
+            {
+                return null;
+            }
+
+            // Parse the existing document NON-COPYING over the live response (no GC array, no pooled copy) to check the
+            // etag and carry its immutable fields forward; a stale etag throws AccessRequestConflictException. The status
+            // mirror moves to the decided value; the workflow/subject/creation mirrors are immutable, so they carry
+            // through from the stored record (read off the same parsed model, like the other backends). The parse and its
+            // synchronous consumers (SerializeDecision, the mirror reads, EnvelopeStream) all complete before the response
+            // buffer is returned at the end of this using.
+            using ParsedJsonDocument<AccessRequest> current = ParsedJsonDocument<AccessRequest>.Parse(doc);
+            byte[] json = AccessRequestSerialization.SerializeDecision(current.RootElement, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), NewEtag());
+            var fields = new EnvelopeFields(
+                id,
+                current.RootElement.BaseWorkflowIdValue,
+                current.RootElement.SubjectClaimTypeValue,
+                current.RootElement.SubjectClaimValueValue,
+                AccessRequestStatusNames.ToWire(decision.Status),
+                current.RootElement.CreatedAtValue.UtcDateTime.ToString("o", CultureInfo.InvariantCulture),
+                json);
+            stream = EnvelopeStream(in fields, out document);
         }
 
-        // Parse the existing document once (pooled, inside SerializeDecision) to check the etag and carry its immutable
-        // fields forward; a stale etag throws AccessRequestConflictException. The status mirror moves to the decided
-        // value; the workflow/subject/creation mirrors are immutable, so they carry through from the stored record.
-        byte[] json = AccessRequestSerialization.SerializeDecision(existing, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        var fields = new EnvelopeFields(
-            id,
-            EnvelopeString(existing, "bw"u8),
-            EnvelopeString(existing, "st"u8),
-            EnvelopeString(existing, "sv"u8),
-            AccessRequestStatusNames.ToWire(decision.Status),
-            EnvelopeString(existing, "createdAt"u8),
-            json);
-        using Stream stream = EnvelopeStream(in fields, out ParsedJsonDocument<AccessRequest> document);
-        try
+        using (stream)
         {
-            using ResponseMessage response = await this.container.ReplaceItemStreamAsync(stream, id, new PartitionKey(id), cancellationToken: cancellationToken).ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
-            return document;
-        }
-        catch
-        {
-            document.Dispose();
-            throw;
+            try
+            {
+                using ResponseMessage response = await this.container.ReplaceItemStreamAsync(stream, id, new PartitionKey(id), cancellationToken: cancellationToken).ConfigureAwait(false);
+                response.EnsureSuccessStatusCode();
+                return document;
+            }
+            catch
+            {
+                document.Dispose();
+                throw;
+            }
         }
     }
 
@@ -289,30 +315,6 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
         }
     }
 
-    // Reads a mirrored top-level string from the stored ENVELOPE (not the embedded doc). DocumentAsync hands back only
-    // the embedded doc, so DecideAsync re-reads the envelope's immutable mirrors (bw/st/sv/createdAt) here to re-stamp
-    // them on the replacement. Always present on a record this store wrote.
-    private static string EnvelopeString(ReadOnlySpan<byte> envelope, ReadOnlySpan<byte> propertyUtf8)
-    {
-        var reader = new Utf8JsonReader(envelope);
-        if (reader.Read() && reader.TokenType == JsonTokenType.StartObject)
-        {
-            while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
-            {
-                bool match = reader.ValueTextEquals(propertyUtf8);
-                reader.Read();
-                if (match)
-                {
-                    return reader.GetString() ?? string.Empty;
-                }
-
-                reader.Skip();
-            }
-        }
-
-        return string.Empty;
-    }
-
     private static async ValueTask ProvisionAsync(CosmosClient client, string databaseName, CancellationToken cancellationToken)
     {
         Database database = await client.CreateDatabaseIfNotExistsAsync(databaseName, cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -326,10 +328,11 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
         return new CosmosAccessRequestStore(client, container, timeProvider ?? TimeProvider.System, ownsClient);
     }
 
-    // Reads the single record for a request id by its id — a single-partition point read, NotFound by status code (not
-    // an exception). The embedded doc is raw nested JSON (no base64); copy it out, as it outlives the pooled response
-    // page (the caller parses it, or DecideAsync checks its etag and replaces from it).
-    private async ValueTask<byte[]?> DocumentAsync(string id, CancellationToken cancellationToken)
+    // Point-reads the single record for a request id by its id into a pooled response (no GC array) — a single-partition
+    // point read, NotFound by status code (not an exception). Returns null on NotFound; otherwise the caller slices the
+    // embedded doc off the LIVE response (CosmosJson.GetRawValue) and copies/parses it before this response is returned
+    // to the pool — disposing the returned RentedResponse releases the buffer.
+    private async ValueTask<CosmosJson.RentedResponse?> ReadResponseAsync(string id, CancellationToken cancellationToken)
     {
         using ResponseMessage response = await this.container.ReadItemStreamAsync(id, new PartitionKey(id), cancellationToken: cancellationToken).ConfigureAwait(false);
         if (response.StatusCode == HttpStatusCode.NotFound)
@@ -338,9 +341,7 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
         }
 
         response.EnsureSuccessStatusCode();
-        using CosmosJson.RentedResponse payload = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
-        ReadOnlyMemory<byte> doc = CosmosJson.GetRawValue(payload.Memory, DocProperty);
-        return doc.IsEmpty ? null : doc.ToArray();
+        return await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
     }
 
     // Yields each matched request's embedded doc raw UTF-8 bytes (a slice into the pooled response page) — no base64

@@ -4,6 +4,7 @@
 
 using System.Globalization;
 using System.Text;
+using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using MySqlConnector;
@@ -86,22 +87,35 @@ public sealed class MySqlAccessRequestStore : IAccessRequestStore, IAsyncDisposa
         string id = "req-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
         WorkflowEtag etag = NewEtag();
         DateTimeOffset now = this.timeProvider.GetUtcNow();
-        byte[] json = AccessRequestSerialization.SerializeNew(id, draft, actor, now, etag);
-        await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-        await using MySqlCommand insert = connection.CreateCommand();
-        insert.CommandText =
-            "INSERT INTO AccessRequests (Id, BaseWorkflowId, SubjectClaimType, SubjectClaimValue, Status, CreatedAt, Etag, Document) " +
-            "VALUES (@id, @bw, @st, @sv, @status, @createdAt, @etag, @doc);";
-        insert.Parameters.AddWithValue("@id", id);
-        insert.Parameters.AddWithValue("@bw", draft.BaseWorkflowIdValue);
-        insert.Parameters.AddWithValue("@st", draft.SubjectClaimTypeValue);
-        insert.Parameters.AddWithValue("@sv", draft.SubjectClaimValueValue);
-        insert.Parameters.AddWithValue("@status", AccessRequestStatusNames.Pending);
-        insert.Parameters.AddWithValue("@createdAt", now.UtcDateTime.ToString("o", CultureInfo.InvariantCulture));
-        insert.Parameters.AddWithValue("@etag", etag.Value!);
-        insert.Parameters.AddWithValue("@doc", json);
-        await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        return PersistedJson.ToPooledDocument<AccessRequest>(json);
+
+        // Serialize once into the pooled buffer the returned document owns; bind its exact bytes as the LONGBLOB parameter
+        // (MySqlConnector carries the exact length for a ReadOnlyMemory blob — no GC document array, no second copy). The
+        // document is returned on success, disposed on failure.
+        ParsedJsonDocument<AccessRequest> doc = AccessRequestSerialization.SerializeNewDoc(id, draft, actor, now, etag);
+        try
+        {
+            ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory;
+            await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+            await using MySqlCommand insert = connection.CreateCommand();
+            insert.CommandText =
+                "INSERT INTO AccessRequests (Id, BaseWorkflowId, SubjectClaimType, SubjectClaimValue, Status, CreatedAt, Etag, Document) " +
+                "VALUES (@id, @bw, @st, @sv, @status, @createdAt, @etag, @doc);";
+            insert.Parameters.AddWithValue("@id", id);
+            insert.Parameters.AddWithValue("@bw", draft.BaseWorkflowIdValue);
+            insert.Parameters.AddWithValue("@st", draft.SubjectClaimTypeValue);
+            insert.Parameters.AddWithValue("@sv", draft.SubjectClaimValueValue);
+            insert.Parameters.AddWithValue("@status", AccessRequestStatusNames.Pending);
+            insert.Parameters.AddWithValue("@createdAt", now.UtcDateTime.ToString("o", CultureInfo.InvariantCulture));
+            insert.Parameters.AddWithValue("@etag", etag.Value!);
+            insert.Parameters.AddWithValue("@doc", utf8);
+            await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            return doc;
+        }
+        catch
+        {
+            doc.Dispose();
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -110,7 +124,7 @@ public sealed class MySqlAccessRequestStore : IAccessRequestStore, IAsyncDisposa
         ArgumentNullException.ThrowIfNull(id);
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         byte[]? doc = await DocumentAsync(connection, id, cancellationToken).ConfigureAwait(false);
-        return doc is null ? null : PersistedJson.ToPooledDocument<AccessRequest>(doc);
+        return doc is null ? null : ParsedJsonDocument<AccessRequest>.Parse(doc.AsMemory());
     }
 
     /// <inheritdoc/>
@@ -155,7 +169,7 @@ public sealed class MySqlAccessRequestStore : IAccessRequestStore, IAsyncDisposa
         await using MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
-            list.Add(PersistedJson.ToPooledDocument<AccessRequest>(reader.GetFieldValue<byte[]>(0)));
+            list.Add(ParsedJsonDocument<AccessRequest>.Parse(reader.GetFieldValue<byte[]>(0).AsMemory()));
         }
 
         return list;
@@ -174,15 +188,28 @@ public sealed class MySqlAccessRequestStore : IAccessRequestStore, IAsyncDisposa
         }
 
         WorkflowEtag etag = NewEtag();
-        byte[] json = AccessRequestSerialization.SerializeDecision(doc, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), etag);
-        await using MySqlCommand update = connection.CreateCommand();
-        update.CommandText = "UPDATE AccessRequests SET Status = @status, Etag = @etag, Document = @doc WHERE Id = @k;";
-        update.Parameters.AddWithValue("@status", AccessRequestStatusNames.ToWire(decision.Status));
-        update.Parameters.AddWithValue("@etag", etag.Value!);
-        update.Parameters.AddWithValue("@doc", json);
-        update.Parameters.AddWithValue("@k", id);
-        await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        return PersistedJson.ToPooledDocument<AccessRequest>(json);
+
+        // Parse the existing document NON-COPYING over the driver's array (the read leaf), check the etag, and serialize the
+        // merged result into the pooled buffer the returned document owns — bound as the LONGBLOB parameter (no GC array, no copy).
+        using ParsedJsonDocument<AccessRequest> current = ParsedJsonDocument<AccessRequest>.Parse(doc.AsMemory());
+        ParsedJsonDocument<AccessRequest> updated = AccessRequestSerialization.SerializeDecisionDoc(current.RootElement, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), etag);
+        try
+        {
+            ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(updated.RootElement).Memory;
+            await using MySqlCommand update = connection.CreateCommand();
+            update.CommandText = "UPDATE AccessRequests SET Status = @status, Etag = @etag, Document = @doc WHERE Id = @k;";
+            update.Parameters.AddWithValue("@status", AccessRequestStatusNames.ToWire(decision.Status));
+            update.Parameters.AddWithValue("@etag", etag.Value!);
+            update.Parameters.AddWithValue("@doc", utf8);
+            update.Parameters.AddWithValue("@k", id);
+            await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            return updated;
+        }
+        catch
+        {
+            updated.Dispose();
+            throw;
+        }
     }
 
     /// <inheritdoc/>
