@@ -133,9 +133,9 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         in WorkflowRunIndexEntry index,
         WorkflowEtag expected,
         CancellationToken cancellationToken)
-        => this.SaveCoreAsync(id, checkpointUtf8.ToArray(), index, expected, cancellationToken);
+        => this.SaveCoreAsync(id, checkpointUtf8, index, expected, cancellationToken);
 
-    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunId id, byte[] checkpoint, WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunId id, ReadOnlyMemory<byte> checkpoint, WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
     {
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         if (expected.IsNone)
@@ -453,10 +453,10 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         return WorkflowContinuationToken.Paginate(runs, query.Limit);
     }
 
-    private static void BindRun(NpgsqlCommand command, WorkflowRunId id, byte[] checkpoint, in WorkflowRunIndexEntry index)
+    private static void BindRun(NpgsqlCommand command, WorkflowRunId id, ReadOnlyMemory<byte> checkpoint, in WorkflowRunIndexEntry index)
     {
         command.Parameters.AddWithValue("id", id.Value);
-        command.Parameters.AddWithValue("checkpoint", checkpoint);
+        command.Parameters.Add(new NpgsqlParameter<ReadOnlyMemory<byte>>("checkpoint", checkpoint));
         command.Parameters.AddWithValue("status", index.Status.ToString());
         command.Parameters.AddWithValue("workflow_id", index.WorkflowId);
         command.Parameters.AddWithValue("created_at", index.CreatedAt.ToUnixTimeMilliseconds());
