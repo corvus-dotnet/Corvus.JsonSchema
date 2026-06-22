@@ -101,7 +101,7 @@ public sealed class MongoWorkflowAdministratorStore : IWorkflowAdministratorStor
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         byte[]? json = await this.ReadDocumentAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
-        return json is null ? null : PersistedJson.ToPooledDocument<WorkflowAdministrators>(json);
+        return json is null ? null : ParsedJsonDocument<WorkflowAdministrators>.Parse(json.AsMemory());
     }
 
     /// <inheritdoc/>
@@ -116,18 +116,21 @@ public sealed class MongoWorkflowAdministratorStore : IWorkflowAdministratorStor
         }
 
         byte[]? existing = await this.ReadDocumentAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
+        WorkflowEtag etag = NewEtag();
         byte[] json;
         if (existing is not null)
         {
-            // A record exists: the caller must hold its current etag (None means "I expected no record").
-            if (expectedEtag.IsNone || expectedEtag != WorkflowAdministratorsSerialization.EtagOf(existing))
+            // Parse the existing record ONCE, NON-COPYING over the driver's array (the read leaf) — used for both the etag
+            // check and the carried-forward merge. The caller must hold its current etag (None means "I expected no record").
+            using ParsedJsonDocument<WorkflowAdministrators> current = ParsedJsonDocument<WorkflowAdministrators>.Parse(existing.AsMemory());
+            if (expectedEtag.IsNone || expectedEtag != current.RootElement.EtagValue)
             {
                 throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
             }
 
-            json = WorkflowAdministratorsSerialization.SerializeUpdated(existing, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
+            json = WorkflowAdministratorsSerialization.SerializeUpdated(current.RootElement, administrators, actor, this.timeProvider.GetUtcNow(), etag);
             var update = Builders<BsonDocument>.Update
-                .Set("etag", WorkflowAdministratorsSerialization.EtagOf(json).Value!)
+                .Set("etag", etag.Value!)
                 .Set("doc", new BsonBinaryData(json));
             await this.administrators.UpdateOneAsync(
                 Builders<BsonDocument>.Filter.Eq("_id", baseWorkflowId),
@@ -143,11 +146,11 @@ public sealed class MongoWorkflowAdministratorStore : IWorkflowAdministratorStor
                 throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
             }
 
-            json = WorkflowAdministratorsSerialization.SerializeNew(baseWorkflowId, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
+            json = WorkflowAdministratorsSerialization.SerializeNew(baseWorkflowId, administrators, actor, this.timeProvider.GetUtcNow(), etag);
             var document = new BsonDocument
             {
                 ["_id"] = baseWorkflowId,
-                ["etag"] = WorkflowAdministratorsSerialization.EtagOf(json).Value!,
+                ["etag"] = etag.Value!,
                 ["doc"] = new BsonBinaryData(json),
             };
             await this.administrators.InsertOneAsync(document, options: null, cancellationToken).ConfigureAwait(false);
