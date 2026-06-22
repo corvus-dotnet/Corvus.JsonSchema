@@ -37,6 +37,7 @@ public class CatalogStoreBenchmarks
     private ParsedJsonDocument<Models.CatalogOwner> owner = null!;
     private TagSet tags;
     private SecurityTagSet securityTags;
+    private InMemoryWorkflowCatalogStore searchStore = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -46,6 +47,19 @@ public class CatalogStoreBenchmarks
         // Precomputed so the measured region is the owner seam + the package projection, not the tag construction.
         this.tags = TagSet.FromTags(["prod", "billing"]);
         this.securityTags = SecurityTagSet.FromTags([new SecurityTag("sys:tenant", "contoso")]);
+
+        // A pre-seeded catalog so Search_Page measures the keyset query path. 25 distinct base ids » the limit of 10, so
+        // the page emits a continuation token (the carrier-seam allocation the row targets).
+        var ownerRecord = new CatalogOwner("Team A", "team-a@example.com", "payments", "https://runbooks.example.com/team-a");
+        this.searchStore = new InMemoryWorkflowCatalogStore();
+        for (int i = 0; i < 25; i++)
+        {
+            using ParsedJsonDocument<CatalogVersion> seeded = this.searchStore.AddAsync(
+                $"wf-{i:D3}",
+                Package,
+                new CatalogMetadata(ownerRecord, "alice", this.tags, this.securityTags),
+                default).AsTask().GetAwaiter().GetResult();
+        }
     }
 
     [GlobalCleanup]
@@ -72,6 +86,16 @@ public class CatalogStoreBenchmarks
             new CatalogMetadata(ownerRecord, "alice", this.tags, this.securityTags),
             default).AsTask().GetAwaiter().GetResult();
         return version.RootElement.Ref.VersionNumber;
+    }
+
+    /// <summary>One keyset page of the catalog search — the warm operator/type-ahead read path. The page emits a
+    /// continuation token (25 versions, limit 10); pooled version documents, ordered keyset, no STJ.</summary>
+    /// <returns>The page size (prevents dead-code elimination).</returns>
+    [Benchmark]
+    public int Search_Page()
+    {
+        using CatalogPage page = this.searchStore.QueryAsync(new CatalogQuery(Limit: 10), default).AsTask().GetAwaiter().GetResult();
+        return page.Versions.Count;
     }
 
     private static ReadOnlyMemory<byte> BuildPackage()

@@ -176,7 +176,14 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
     /// <inheritdoc/>
     public async ValueTask<CatalogPage> QueryAsync(CatalogQuery query, CancellationToken cancellationToken)
     {
-        string? after = WorkflowContinuationToken.Decode(query.ContinuationToken);
+        // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
+        string? after = null;
+        if (query.ContinuationToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
+            after = WorkflowContinuationToken.Decode(tokenUtf8.Span);
+        }
+
         int limit = query.Limit <= 0 ? 100 : query.Limit;
 
         // Table storage returns entities ordered by PartitionKey then RowKey; PartitionKey is the base workflow
@@ -199,7 +206,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
         // The page is a pooled batch of disposable version documents (the caller disposes the page). Each candidate is
         // parsed once; matches are kept in the batch, non-matches and the look-ahead row are disposed immediately.
         var matches = new PooledDocumentList<CatalogVersion>(limit);
-        string? continuation = null;
+        string? nextSortKey = null;
         try
         {
             await foreach (TableEntity entity in this.catalog.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
@@ -221,7 +228,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
                 {
                     // There is at least one more matching row beyond this page.
                     CatalogVersionRef lastRef = matches[matches.Count - 1].Ref;
-                    continuation = WorkflowContinuationToken.Encode(SortKey(lastRef.BaseWorkflowId, lastRef.VersionNumber));
+                    nextSortKey = SortKey(lastRef.BaseWorkflowId, lastRef.VersionNumber);
                     candidate.Dispose();
                     break;
                 }
@@ -235,7 +242,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
             throw;
         }
 
-        return new CatalogPage(matches, continuation);
+        return nextSortKey is not null ? CatalogPage.Create(matches, nextSortKey) : CatalogPage.Create(matches);
     }
 
     /// <inheritdoc/>

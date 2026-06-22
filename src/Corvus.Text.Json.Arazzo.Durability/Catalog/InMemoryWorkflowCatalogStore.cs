@@ -121,13 +121,21 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
     public ValueTask<CatalogPage> QueryAsync(CatalogQuery query, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        string? after = WorkflowContinuationToken.Decode(query.ContinuationToken);
+
+        // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
+        string? after = null;
+        if (query.ContinuationToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
+            after = WorkflowContinuationToken.Decode(tokenUtf8.Span);
+        }
+
         int limit = query.Limit <= 0 ? 100 : query.Limit;
 
         // The page is a pooled batch of disposable version documents (the caller disposes the page). Each candidate is
         // parsed once; matches are kept in the batch, non-matches and the look-ahead row are disposed immediately.
         var matches = new PooledDocumentList<CatalogVersion>(limit);
-        string? continuation = null;
+        string? nextSortKey = null;
         try
         {
             lock (this.gate)
@@ -150,7 +158,7 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
                     {
                         // There is at least one more matching row beyond this page.
                         CatalogVersionRef last = matches[matches.Count - 1].Ref;
-                        continuation = WorkflowContinuationToken.Encode(SortKey(last.BaseWorkflowId, last.VersionNumber));
+                        nextSortKey = SortKey(last.BaseWorkflowId, last.VersionNumber);
                         candidate.Dispose();
                         break;
                     }
@@ -165,7 +173,7 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
             throw;
         }
 
-        return ValueTask.FromResult(new CatalogPage(matches, continuation));
+        return ValueTask.FromResult(nextSortKey is not null ? CatalogPage.Create(matches, nextSortKey) : CatalogPage.Create(matches));
     }
 
     /// <inheritdoc/>

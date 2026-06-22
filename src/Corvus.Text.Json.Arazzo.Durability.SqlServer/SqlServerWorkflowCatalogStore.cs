@@ -119,7 +119,14 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore, ISupp
     /// <inheritdoc/>
     public async ValueTask<CatalogPage> QueryAsync(CatalogQuery query, CancellationToken cancellationToken)
     {
-        string? after = WorkflowContinuationToken.Decode(query.ContinuationToken);
+        // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
+        string? after = null;
+        if (query.ContinuationToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
+            after = WorkflowContinuationToken.Decode(tokenUtf8.Span);
+        }
+
         int limit = query.Limit <= 0 ? 100 : query.Limit;
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using SqlCommand select = connection.CreateCommand();
@@ -193,7 +200,7 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore, ISupp
         // The page is a pooled batch of disposable version documents (the caller disposes the page). One extra row
         // is fetched as a look-ahead to detect a further page; it is not added to the batch.
         var versions = new PooledDocumentList<CatalogVersion>(limit);
-        string? continuation = null;
+        string? nextSortKey = null;
         try
         {
             await using SqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
@@ -203,7 +210,7 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore, ISupp
                 {
                     // There is at least one more matching row beyond this page; the last kept row is the cursor.
                     CatalogVersionRef last = versions[versions.Count - 1].Ref;
-                    continuation = WorkflowContinuationToken.Encode(SortKey(last.BaseWorkflowId, last.VersionNumber));
+                    nextSortKey = SortKey(last.BaseWorkflowId, last.VersionNumber);
                     break;
                 }
 
@@ -216,7 +223,7 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore, ISupp
             throw;
         }
 
-        return new CatalogPage(versions, continuation);
+        return nextSortKey is not null ? CatalogPage.Create(versions, nextSortKey) : CatalogPage.Create(versions);
     }
 
     /// <inheritdoc/>
