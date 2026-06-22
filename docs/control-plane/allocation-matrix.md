@@ -99,9 +99,9 @@ that exists today (a starting point to be re-baselined, **not** evidence of comp
 
 | Op | Call tree | R/W | Current pattern / hotspots | Existing bench | Target pattern + grounding | Status |
 |---|---|---|---|---|---|---|
-| `GET /credentials` | ListCredentials → ListAsync | R | `ToSummary` per binding | `CredentialStoreReadBenchmarks` (ResolveForUsage) | confirm summary projection | ⬜ **FIX #1** — `ToSummary` field-copy; bytes bridge (per-root trap, no clean `From()`); Part D audit |
+| `GET /credentials` | ListCredentials → ListAsync | R | `ToSummary` per binding | `CredentialStoreReadBenchmarks` (ResolveForUsage) | confirm summary projection | ✅ per-field `Models.JsonString.From()` bytes bridge + `TransferOwnershipTo` (FIX #1, Part D); `credentialStatus`/`usageGrants` genuine floors |
 | `POST /credentials` | CreateCredential → **AddAsync** | W | `List<SecretReferenceDefinition>`, `List<SecurityTag>`, record `SourceCredentialDefinition`, `with { }` tag stamp | `SourceCredentialStoreBenchmarks` (record vs draft) | `SourceCredentialBinding.Draft(...)` + store stamps; `SecretRef.IsWellFormed(ReadOnlySpan<byte>)` 0-B validation; `corvus-typed-model-construction`, `corvus-builder-context-threading`, `corvus-bytes-to-bytes`; §13.4.1 | ✅ **2.35→1.64 KB (Part D)** |
-| `GET /credentials/{s}/{e}` | GetCredential → GetAsync | R | `ToSummary` | — | confirm projection | ⬜ **FIX #1** — shares `ToSummary`; Part D audit |
+| `GET /credentials/{s}/{e}` | GetCredential → GetAsync | R | `ToSummary` | — | confirm projection | ✅ shares `ToSummary` bytes bridge + `TakeOwnership` (FIX #1, Part D) |
 | `PUT /credentials/{s}/{e}` | UpdateCredential → **UpdateAsync** | W | as create (record seam) | shares the create seam (not separately benched) | as create (draft seam) | ✅ converted with POST (Part D) |
 | `DELETE /credentials/{s}/{e}` | DeleteCredential → DeleteAsync | W | minimal | — | — | ➖ |
 
@@ -699,10 +699,13 @@ seam** still to convert. Verdict: **29 genuine, 6 fixes, 2 sub-floor caveats.** 
 **Fixes (⬜ FIX) — record/list/string seams still to convert (queued rows):**
 
 1. **Credentials `ToSummary`** (`GET /credentials`, `GET /credentials/{s}/{e}`). Per-binding summary built
-   field-by-field. Cannot use a clean `Models.SourceCredentialSummary.From()` — the cross-assembly per-root
-   identity trap ([[v5-no-base-jsonstring-per-root-identity]]) means durability `JsonString` ≠ Server
-   `Models.JsonString`. Fix = a `ReadOnlySpan<byte>` bytes bridge (`GetUtf8String().Span`), same shape as the
-   credentials `ToSummary` write-side bridge already used.
+   field-by-field; **whole-doc `From()` impossible** — verified non-congruent (summary requires the derived
+   `credentialStatus`, and exposes inverse-mapped `usageGrants` for the hidden internal `usageTags`). **DONE — see
+   ✅ FIX #1 (Part D).** Fix = per-field `Models.JsonString.From(binding.X)` zero-copy element wrap (cleaner than the
+   `GetUtf8String().Span` the audit guessed) for the directly-copied scalars + `secretRefs`/`config`, with
+   `credentialStatus`/`usageGrants` as kept floors. *Lifetime learning:* a per-field `From()` makes the builder
+   **reference** the source doc, so the binding must be `TakeOwnership`/`TransferOwnershipTo`-handed to the workspace
+   (the deferred `ValidateBody` reads it) — a `(string)`/span `Source` is copied and would not.
 2. **Security `ToRuleSource`** (`GET /security/rules/{n}`; also the `POST`/`PUT` rule **response** projection). The
    summary schema is byte-identical to the stored rule, so this is a whole-doc `Models.SecurityRuleSummary.From(r)` wrap —
    eliminates the per-rule field copy. **DONE — see ✅ FIX #2 (Part D).** *Refinement found during implementation:* the
@@ -760,6 +763,38 @@ the same required set (`name`, `expression`, `createdBy`, `createdAt`, `etag`); 
   handler also ran the generated result builder on top of the field-copy.
 - **Verified.** `ControlPlaneSecurityApiTests` (handler response-body assertions) green; Sqlite `SecurityPolicyStore`
   conformance 7/7; slnx build **0 Warning(s), 0 Error(s)**. **Row done.**
+
+### ✅ FIX #1 — Credentials `ToSummary` per-field bytes bridge (448→0 B convertible)
+
+The second Part B fix. Unlike the rule summary, `CredentialBindingSummary` is **not** congruent with the stored
+`SourceCredentialBinding` — verified: the summary *requires* `credentialStatus` (derived from `expiresAt` vs now, never
+persisted) and exposes operator-facing `usageGrants` where the stored doc has internal `usageTags` (the raw tags are
+deliberately hidden). So a whole-doc `From()` is impossible and `ToSummary` must field-copy. The fix replaces the
+per-field `(string)binding.X` managed-string realisations with `Models.JsonString.From(binding.X)` — the per-field analog
+of FIX #2's whole-doc wrap (`Durability.JsonString` is a `struct : IJsonElement<T>`, so `From<T>` is a zero-copy element
+wrap → implicit `Models.JsonString.Source`).
+
+- **Converted** (the directly-copied leaves): scalars `id`/`sourceName`/`environment`/`createdBy`/`etag` +
+  optional `description`/`lastUpdatedBy`, and the `secretRefs` (name/ref) and `config` (key/value) arrays.
+- **Genuine floors kept:** `credentialStatus` (derived token), `usageGrants` (`access.DescribeUsageScope` — the
+  inverse-mapped policy-seam leaf, same caveat as the administrators audit). **Follow-ups (not this row):**
+  `managementTags` (a raw-array `binding.ManagementTags` bridge — needs an ordering check vs the `SecurityTagSet`) and the
+  `ToSummary` lambda **closure** (a `Source<TContext>` refactor) — left so this row's before→after stays the clean
+  field-bridge delta.
+- **Lifetime fix (the subtle part).** A per-field `From()` makes the result builder hold a **reference** into the
+  binding's pooled document (not a copy), and the response body is validated/serialised **after** the handler returns —
+  so the binding document must outlive the handler. The first attempt (`From()` under the existing `using`-dispose) threw
+  `ObjectDisposedException` in the deferred `ValidateBody`. Fixed exactly as FIX #2 / the catalog list: the 3 single-doc
+  sites `workspace.TakeOwnership(binding)` (no `using`), and the list `page.Bindings.TransferOwnershipTo(workspace)`.
+  (A `(string)`/span `Source` is *copied* by the builder and would not need this — the element `From()` is what
+  references the source; recorded for the campaign.)
+- **Measured** (`CredentialBindingSummaryProjectionBenchmarks`, the convertible fields only — 5 scalars + 1 secretRef +
+  1 config entry; the two floors are identical in both arms and excluded). `Materialize_fieldByField` (baseline —
+  `(string)`) **448 B / 3.02 µs** → `BytesBridge_utf8` **0 B / 1.32 µs** (−448 B, **−100%**, ~2.3× faster); scales with
+  secretRef/config count. 448 B is a conservative lower bound (the real handler also runs the generated result builder).
+- **Verified.** `ControlPlaneCredentialsApiTests` 10/10 (full create/get/list/update/delete lifecycle + management-tag/
+  usage-grant assertions); Sqlite `SourceCredentialStore` conformance 13/13; slnx build **0 Warning(s), 0 Error(s)**.
+  **Row done.**
 
 ## Cross-references
 
