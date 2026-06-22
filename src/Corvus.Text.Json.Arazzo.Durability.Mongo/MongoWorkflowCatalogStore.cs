@@ -208,9 +208,14 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             filter = b.And(filter, b.All("tags", query.Tags.ToList())); // $all = contains every queried tag
         }
 
-        if (WorkflowContinuationToken.Decode(query.ContinuationToken) is { } after)
+        // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
+        if (query.ContinuationToken.IsNotUndefined())
         {
-            filter = b.And(filter, b.Gt("sortKey", after));
+            using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
+            if (WorkflowContinuationToken.Decode(tokenUtf8.Span) is { } after)
+            {
+                filter = b.And(filter, b.Gt("sortKey", after));
+            }
         }
 
         // Row-security reach (§14.2) is applied in process over each version's persisted security tags (see the
@@ -227,7 +232,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         // version's persisted security tags, so non-matches and the look-ahead row are disposed immediately rather than
         // kept in the batch.
         var matches = new PooledDocumentList<CatalogVersion>(limit);
-        string? continuation = null;
+        string? nextSortKey = null;
         try
         {
             using IAsyncCursor<BsonDocument> cursor = await find.ToCursorAsync(cancellationToken).ConfigureAwait(false);
@@ -247,7 +252,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
                     {
                         // There is at least one more matching row beyond this page; the last kept row is the cursor.
                         CatalogVersionRef last = matches[matches.Count - 1].Ref;
-                        continuation = WorkflowContinuationToken.Encode(SortKey(last.BaseWorkflowId, last.VersionNumber));
+                        nextSortKey = SortKey(last.BaseWorkflowId, last.VersionNumber);
                         candidate.Dispose();
                         full = true;
                         break;
@@ -263,7 +268,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             throw;
         }
 
-        return new CatalogPage(matches, continuation);
+        return nextSortKey is not null ? CatalogPage.Create(matches, nextSortKey) : CatalogPage.Create(matches);
     }
 
     /// <inheritdoc/>
