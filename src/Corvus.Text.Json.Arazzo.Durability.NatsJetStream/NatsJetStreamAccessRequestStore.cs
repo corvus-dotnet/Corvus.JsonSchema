@@ -119,7 +119,7 @@ public sealed class NatsJetStreamAccessRequestStore : IAccessRequestStore, IAsyn
     {
         ArgumentNullException.ThrowIfNull(id);
         NatsKVEntry<byte[]>? entry = await this.TryGetAsync(RequestPrefix + Enc(id), cancellationToken).ConfigureAwait(false);
-        return entry is { Value: { } bytes } ? PersistedJson.ToPooledDocument<AccessRequest>(bytes) : null;
+        return entry is { Value: { } bytes } ? ParsedJsonDocument<AccessRequest>.Parse(bytes.AsMemory()) : null;
     }
 
     /// <inheritdoc/>
@@ -140,7 +140,7 @@ public sealed class NatsJetStreamAccessRequestStore : IAccessRequestStore, IAsyn
                 continue;
             }
 
-            ParsedJsonDocument<AccessRequest> document = PersistedJson.ToPooledDocument<AccessRequest>(bytes);
+            ParsedJsonDocument<AccessRequest> document = ParsedJsonDocument<AccessRequest>.Parse(bytes.AsMemory());
             if (Matches(document.RootElement, status, query))
             {
                 list.Add(document);
@@ -167,7 +167,8 @@ public sealed class NatsJetStreamAccessRequestStore : IAccessRequestStore, IAsyn
         }
 
         WorkflowEtag etag = NewEtag();
-        byte[] json = AccessRequestSerialization.SerializeDecision(bytes, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), etag);
+        using ParsedJsonDocument<AccessRequest> current = ParsedJsonDocument<AccessRequest>.Parse(bytes.AsMemory());
+        byte[] json = AccessRequestSerialization.SerializeDecision(current.RootElement, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), etag);
         await this.store.PutAsync(RequestPrefix + Enc(id), json, cancellationToken: cancellationToken).ConfigureAwait(false);
         return PersistedJson.ToPooledDocument<AccessRequest>(json);
     }

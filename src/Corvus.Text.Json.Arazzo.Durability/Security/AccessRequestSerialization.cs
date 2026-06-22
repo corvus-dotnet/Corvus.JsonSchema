@@ -28,8 +28,23 @@ public static class AccessRequestSerialization
             static (Utf8JsonWriter writer, in (string Id, AccessRequest Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
                 => AccessRequest.WriteNew(writer, c.Id, c.Draft, c.Actor, c.At, c.Tag));
 
-    /// <summary>Parses the stored request (pooled), checks the etag, and serializes the decided record.</summary>
-    /// <param name="existing">The stored request's current UTF-8 JSON bytes.</param>
+    /// <summary>Serializes a brand-new request into a pooled buffer the returned document owns (no GC array), for a driver
+    /// that binds a <see cref="ReadOnlyMemory{T}"/> / stream. The store binds the document's bytes
+    /// (<c>JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory</c>) during the write and returns the document.</summary>
+    /// <param name="id">The assigned request id.</param>
+    /// <param name="draft">The draft request carrying the create-content as JSON values (read bytes-to-bytes).</param>
+    /// <param name="actor">The creating identity (the requester; audit).</param>
+    /// <param name="createdAt">The creation timestamp.</param>
+    /// <param name="etag">The new record etag.</param>
+    /// <returns>The pooled document that owns the persisted bytes.</returns>
+    public static ParsedJsonDocument<AccessRequest> SerializeNewDoc(string id, AccessRequest draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+        => PersistedJson.ToPooledDocument<AccessRequest, (string Id, AccessRequest Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
+            (id, draft, actor, createdAt, etag),
+            static (Utf8JsonWriter writer, in (string Id, AccessRequest Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
+                => AccessRequest.WriteNew(writer, c.Id, c.Draft, c.Actor, c.At, c.Tag));
+
+    /// <summary>Checks the etag and serializes the decided record to owned JSON bytes, for a byte[]-leaf driver.</summary>
+    /// <param name="existing">The stored request, already parsed by the backend leaf (read synchronously here).</param>
     /// <param name="id">The request id (for a conflict message).</param>
     /// <param name="expectedEtag">The expected current etag (<see cref="WorkflowEtag.None"/> overwrites unconditionally).</param>
     /// <param name="decision">The decision to apply.</param>
@@ -38,22 +53,44 @@ public static class AccessRequestSerialization
     /// <param name="etag">The new record etag.</param>
     /// <returns>The owned UTF-8 JSON bytes.</returns>
     /// <exception cref="AccessRequestConflictException">The expected etag no longer matches.</exception>
-    public static byte[] SerializeDecision(ReadOnlySpan<byte> existing, string id, WorkflowEtag expectedEtag, AccessRequestDecision decision, string actor, DateTimeOffset decidedAt, WorkflowEtag etag)
+    public static byte[] SerializeDecision(in AccessRequest existing, string id, WorkflowEtag expectedEtag, AccessRequestDecision decision, string actor, DateTimeOffset decidedAt, WorkflowEtag etag)
     {
-        using ParsedJsonDocument<AccessRequest> current = PersistedJson.ToPooledDocument<AccessRequest>(existing);
-        EnsureEtag(id, expectedEtag, current.RootElement.EtagValue);
+        EnsureEtag(id, expectedEtag, existing.EtagValue);
         return PersistedJson.ToArray(
-            (Current: current.RootElement, decision, actor, decidedAt, etag),
+            (Current: existing, decision, actor, decidedAt, etag),
             static (Utf8JsonWriter writer, in (AccessRequest Current, AccessRequestDecision Dec, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
                 => c.Current.WriteDecision(writer, c.Dec, c.Actor, c.At, c.Tag));
     }
 
-    /// <summary>Reads a stored request's etag through a pooled, disposed document — for a delete/decision concurrency check.</summary>
-    /// <param name="document">The stored request's current UTF-8 JSON bytes.</param>
-    /// <returns>The request's current etag (its <see cref="string"/> value outlives the pooled document).</returns>
+    /// <summary>Checks the etag and serializes the decided record into a pooled buffer the returned document owns (no GC
+    /// array), for a driver that binds a <see cref="ReadOnlyMemory{T}"/> / stream. The store binds the document's bytes
+    /// (<c>JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory</c>) during the write and returns the document.</summary>
+    /// <param name="existing">The stored request, already parsed by the backend leaf (read synchronously here).</param>
+    /// <param name="id">The request id (for a conflict message).</param>
+    /// <param name="expectedEtag">The expected current etag (<see cref="WorkflowEtag.None"/> overwrites unconditionally).</param>
+    /// <param name="decision">The decision to apply.</param>
+    /// <param name="actor">The deciding identity (audit).</param>
+    /// <param name="decidedAt">The decision timestamp.</param>
+    /// <param name="etag">The new record etag.</param>
+    /// <returns>The pooled document that owns the persisted bytes.</returns>
+    /// <exception cref="AccessRequestConflictException">The expected etag no longer matches.</exception>
+    public static ParsedJsonDocument<AccessRequest> SerializeDecisionDoc(in AccessRequest existing, string id, WorkflowEtag expectedEtag, AccessRequestDecision decision, string actor, DateTimeOffset decidedAt, WorkflowEtag etag)
+    {
+        EnsureEtag(id, expectedEtag, existing.EtagValue);
+        return PersistedJson.ToPooledDocument<AccessRequest, (AccessRequest Current, AccessRequestDecision Dec, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
+            (existing, decision, actor, decidedAt, etag),
+            static (Utf8JsonWriter writer, in (AccessRequest Current, AccessRequestDecision Dec, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
+                => c.Current.WriteDecision(writer, c.Dec, c.Actor, c.At, c.Tag));
+    }
+
+    /// <summary>Reads a stored request's etag NON-COPYING over the caller's owned bytes (no detached clone, no pooled copy)
+    /// — for a delete/decision concurrency check. The <c>byte[]</c> parameter keeps the method-group delegate conversion
+    /// the backends pass to their generic helpers.</summary>
+    /// <param name="document">The stored request's current UTF-8 JSON bytes (the driver's own array, alive for this call).</param>
+    /// <returns>The request's current etag (its <see cref="string"/> value outlives the parsed document).</returns>
     public static WorkflowEtag EtagOf(byte[] document)
     {
-        using ParsedJsonDocument<AccessRequest> current = PersistedJson.ToPooledDocument<AccessRequest>(document);
+        using ParsedJsonDocument<AccessRequest> current = ParsedJsonDocument<AccessRequest>.Parse(document.AsMemory());
         return current.RootElement.EtagValue;
     }
 

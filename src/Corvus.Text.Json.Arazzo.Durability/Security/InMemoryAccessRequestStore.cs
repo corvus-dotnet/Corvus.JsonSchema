@@ -95,7 +95,10 @@ public sealed class InMemoryAccessRequestStore : IAccessRequestStore
                 return new ValueTask<ParsedJsonDocument<AccessRequest>?>((ParsedJsonDocument<AccessRequest>?)null);
             }
 
-            byte[] json = AccessRequestSerialization.SerializeDecision(existing, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
+            // Parse the existing document NON-COPYING over the stored array (alive in the dictionary through this
+            // synchronous decision under the lock) — the merge reads its etag + carried-forward fields, no per-read copy.
+            using ParsedJsonDocument<AccessRequest> current = ParsedJsonDocument<AccessRequest>.Parse(existing.AsMemory());
+            byte[] json = AccessRequestSerialization.SerializeDecision(current.RootElement, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
             this.requests[id] = json;
             return new ValueTask<ParsedJsonDocument<AccessRequest>?>(PersistedJson.ToPooledDocument<AccessRequest>(json));
         }
