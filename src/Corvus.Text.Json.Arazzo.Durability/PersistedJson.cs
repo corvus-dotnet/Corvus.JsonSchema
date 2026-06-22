@@ -53,6 +53,38 @@ public static class PersistedJson
     }
 
     /// <summary>
+    /// Serializes JSON into an <see cref="ArrayPool{T}"/>-rented buffer and returns it as a disposable <see cref="PooledUtf8"/>
+    /// — <b>no GC document array</b>. The same shape as <see cref="ToArray{TContext}"/>, but the result is pooled: a backend
+    /// whose driver accepts a <see cref="ReadOnlyMemory{T}"/> / span parameter binds <see cref="PooledUtf8.Memory"/> and
+    /// <c>using</c>s the value across the (awaited) write, returning the buffer to the pool when the command completes. The
+    /// transient writer scratch is thread-affine, so the written bytes are copied into the pooled result here (synchronously,
+    /// before any caller <c>await</c>) exactly as <see cref="ToArray{TContext}"/> copies into its owned array.
+    /// </summary>
+    /// <typeparam name="TContext">The write-callback state type.</typeparam>
+    /// <param name="context">The state passed to <paramref name="write"/>.</param>
+    /// <param name="write">Writes the JSON (pass a <see langword="static"/> lambda to avoid a closure).</param>
+    /// <returns>The pooled UTF-8 JSON; dispose it (after the write completes) to return the buffer.</returns>
+    public static PooledUtf8 RentDocument<TContext>(in TContext context, WriteCallback<TContext> write)
+        where TContext : allows ref struct
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(DefaultBufferSize, out IByteBufferWriter buffer);
+        try
+        {
+            write(writer, in context);
+            writer.Flush();
+            ReadOnlySpan<byte> written = buffer.WrittenSpan;
+            byte[] rented = ArrayPool<byte>.Shared.Rent(written.Length);
+            written.CopyTo(rented);
+            return new PooledUtf8(rented, written.Length);
+        }
+        finally
+        {
+            workspace.ReturnWriterAndBuffer(writer, buffer);
+        }
+    }
+
+    /// <summary>
     /// Serializes JSON into a pooled buffer and writes it as a base64 string property on <paramref name="destination"/> —
     /// straight from the span, with no intermediate base64 string or owned byte array. The scratch is pooled.
     /// </summary>

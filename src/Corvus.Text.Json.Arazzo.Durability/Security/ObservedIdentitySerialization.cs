@@ -34,6 +34,19 @@ public static class ObservedIdentitySerialization
     public static byte[] SerializeNew(in ObservedIdentity.GranteeKind kind, in JsonString value, in JsonString label, SecurityTagSet identity, bool complete, DateTimeOffset now, string provenance)
         => Serialize(kind, value, label, identity, complete, now, now, [provenance]);
 
+    /// <summary>The pooled-buffer form of <see cref="SerializeNew"/> for backends whose driver binds a <see cref="ReadOnlyMemory{T}"/>
+    /// (no GC document array). <c>using</c> the result across the awaited write; dispose returns the buffer to the pool.</summary>
+    /// <param name="kind">The grantee kind as a JSON value.</param>
+    /// <param name="value">The grantee value as a JSON value.</param>
+    /// <param name="label">An optional display label as a JSON value (undefined for none).</param>
+    /// <param name="identity">The grantee's exact <c>sys:</c> identity.</param>
+    /// <param name="complete">Whether <paramref name="identity"/> is the principal's whole stamped identity (§17.2).</param>
+    /// <param name="now">The sighting instant.</param>
+    /// <param name="provenance">Where this identity was seen (an interned provenance literal).</param>
+    /// <returns>The pooled UTF-8 JSON document.</returns>
+    public static PooledUtf8 SerializeNewPooled(in ObservedIdentity.GranteeKind kind, in JsonString value, in JsonString label, SecurityTagSet identity, bool complete, DateTimeOffset now, string provenance)
+        => SerializePooled(kind, value, label, identity, complete, now, now, [provenance]);
+
     /// <summary>
     /// Serializes an upsert over an existing record: preserves its first-seen, bumps last-seen to <paramref name="now"/>,
     /// unions <paramref name="provenance"/> into its sighting sources, and refreshes the label (falling back to the
@@ -59,6 +72,26 @@ public static class ObservedIdentitySerialization
         // a JsonString without reifying.
         JsonString effectiveLabel = label.IsNotUndefined() ? label : JsonString.From(e.Label);
         return Serialize(kind, value, effectiveLabel, identity, complete, e.FirstSeenAtValue, now, MergeProvenance(e, provenance));
+    }
+
+    /// <summary>The pooled-buffer form of <see cref="SerializeUpserted"/> for backends whose driver binds a
+    /// <see cref="ReadOnlyMemory{T}"/> / stream (no GC document array). <c>using</c> the result across the awaited write.</summary>
+    /// <param name="existing">The existing persisted document for this (kind, value).</param>
+    /// <param name="kind">The grantee kind as a JSON value.</param>
+    /// <param name="value">The grantee value as a JSON value.</param>
+    /// <param name="label">An optional display label as a JSON value; undefined keeps the existing label.</param>
+    /// <param name="identity">The grantee's exact <c>sys:</c> identity.</param>
+    /// <param name="complete">Whether <paramref name="identity"/> is the principal's whole stamped identity (§17.2).</param>
+    /// <param name="now">The sighting instant.</param>
+    /// <param name="provenance">Where this identity was seen (unioned into the existing sources).</param>
+    /// <returns>The pooled UTF-8 JSON document.</returns>
+    public static PooledUtf8 SerializeUpsertedPooled(byte[] existing, in ObservedIdentity.GranteeKind kind, in JsonString value, in JsonString label, SecurityTagSet identity, bool complete, DateTimeOffset now, string provenance)
+    {
+        ArgumentNullException.ThrowIfNull(existing);
+        using ParsedJsonDocument<ObservedIdentity> current = PersistedJson.ToPooledDocument<ObservedIdentity>(existing);
+        ObservedIdentity e = current.RootElement;
+        JsonString effectiveLabel = label.IsNotUndefined() ? label : JsonString.From(e.Label);
+        return SerializePooled(kind, value, effectiveLabel, identity, complete, e.FirstSeenAtValue, now, MergeProvenance(e, provenance));
     }
 
     // Unions the new provenance source into the existing record's sources (order-preserving, deduped). Provenance tokens
@@ -88,6 +121,17 @@ public static class ObservedIdentitySerialization
     {
         var state = new WriteState(kind, value, label, identity, complete, firstSeen, lastSeen, provenance);
         return PersistedJson.ToArray(
+            in state,
+            static (Utf8JsonWriter writer, in WriteState s)
+                => ObservedIdentity.WriteNew(writer, s.Kind, s.Value, s.Label, s.Identity, s.Complete, s.First, s.Last, s.Prov));
+    }
+
+    // The pooled-buffer counterpart of Serialize: the same WriteState + bytes-to-bytes write, into an ArrayPool buffer the
+    // caller binds and disposes (no GC document array). The ref-struct state is used only inside this synchronous call.
+    private static PooledUtf8 SerializePooled(in ObservedIdentity.GranteeKind kind, in JsonString value, in JsonString label, SecurityTagSet identity, bool complete, DateTimeOffset firstSeen, DateTimeOffset lastSeen, IReadOnlyList<string> provenance)
+    {
+        var state = new WriteState(kind, value, label, identity, complete, firstSeen, lastSeen, provenance);
+        return PersistedJson.RentDocument(
             in state,
             static (Utf8JsonWriter writer, in WriteState s)
                 => ObservedIdentity.WriteNew(writer, s.Kind, s.Value, s.Label, s.Identity, s.Complete, s.First, s.Last, s.Prov));

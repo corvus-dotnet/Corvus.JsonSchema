@@ -59,7 +59,7 @@ only at the genuine leaf — [[no-handrolled-records-use-codegen-jsonschema]],
 
 | Store write method | Persisted doc | Serialization helper | Current seam shape | Status |
 |---|---|---|---|---|
-| `IObservedIdentityStore.SeenAsync` | `ObservedIdentity` | `ObservedIdentitySerialization` | `params` (CTJ kind + JsonString value/label + SecurityTagSet) | ⬜ |
+| `IObservedIdentityStore.SeenAsync` | `ObservedIdentity` | `ObservedIdentitySerialization` | `params` (CTJ kind + JsonString value/label + SecurityTagSet) — seam bytes-native; the **write document** is realized into a pooled buffer (`SerializeXPooled → PooledUtf8`) and bound memory/stream where the driver supports it, owned `byte[]` only where it requires an array | ✅ **write 376→56 B (−85%); 10 backends container-verified (Part D)** |
 | `ISecurityPolicyStore.Add/UpdateRule` | `SecurityRuleDocument` | `SecurityPolicySerialization` | `draft` | ⬜ |
 | `ISecurityPolicyStore.Add/UpdateBinding` | `SecurityBindingDocument` | `SecurityPolicySerialization` | `draft` | ⬜ |
 | `IAccessRequestStore.CreateAsync` | `AccessRequest` | `AccessRequestSerialization` | `draft` | ⬜ |
@@ -69,6 +69,7 @@ only at the genuine leaf — [[no-handrolled-records-use-codegen-jsonschema]],
 | `IWorkflowCatalogStore.UpdateMetadataAsync` | `CatalogVersion` | (catalog serialization) | `record` (`CatalogMetadataPatch`) | ⬜ |
 | `IWorkflowAdministratorStore.PutAsync` | `WorkflowAdministrators` | `WorkflowAdministratorsSerialization` | `list` (`IReadOnlyList<SecurityTagSet>`) | ⬜ |
 | `IWorkflowStateStore.SaveAsync` | opaque checkpoint | (executor-owned) | `bytes` + index | ➖ (confirm) |
+| **(read seam, all backends)** read-existing on every upsert (`ReadDocumentAsync → byte[]`) | the persisted doc | — | the upsert merge reads the existing document into a **GC `byte[]`** (ADO `GetFieldValue<byte[]>`, `(byte[])RedisValue`, Cosmos/Mongo/Azure read) then `SerializeUpserted(byte[])` re-parses it — a per-write read allocation, sibling of the write-realization row | ⬜ **allocate-on-read row** — read into a pooled buffer (driver `GetStream`/`GetBytes`/`ReadOnlyMemory`) + `SerializeUpserted(ReadOnlySpan<byte>)`, across all 10 backends |
 
 **Backend leaf-realisation (all seams, §13.4.1 static audit — to re-confirm per worked row):** every
 backend persists the same document bytes; realisations only at the driver leaf — indexed key columns
@@ -503,6 +504,31 @@ first→second paging round-trip through the `JsonString` seam); catalog API ser
 workflow-run, catalog-search) carry their tokens bytes-native.** Both ends of every opaque token are UTF-8 with no managed
 token string on the warm path; the `WorkflowContinuationToken` / `*ContinuationToken` helpers are 0-B
 (`ContinuationTokenBenchmarks`). **Row done.**
+
+### ✅ Persistence write-realization — `IObservedIdentityStore.SeenAsync` document (the pattern-setter)
+
+The store serializers realized the persisted document as an **owned GC `byte[]`** (`PersistedJson.ToArray`) on *every*
+write, for *every* backend — defensible only where the driver genuinely needs an array. Most drivers don't: they bind a
+`ReadOnlyMemory`/`ArraySegment`, a span, or stream the BLOB. So the document is now realized into a **pooled buffer** and
+the byte[] kept only at the leaves that require it.
+
+- **Infra (shared, `Corvus.Text.Json.Arazzo.Durability`):** `PooledUtf8` (a disposable `readonly struct` — ArrayPool
+  buffer + length, exposing `.Memory`/`.Span`/`.Segment`); `PersistedJson.RentDocument(in ctx, write) → PooledUtf8` (the
+  pooled-result counterpart of `ToArray`); `ReadOnlyMemoryStream` (a **pooled, dual-mode** read-only seekable stream —
+  `Rent(memory)` borrows / `RentOwned(buf,len)` owns — object-pooled via a `ConcurrentQueue`, so no per-write stream
+  allocation; it supersedes the non-poolable `CosmosJson.PooledWriteStream`, which `WriteToStream` now uses, pooling every
+  Cosmos write's stream instance). The serializer gains `SerializeXPooled(...) → PooledUtf8` beside `SerializeX → byte[]`.
+- **Per-backend bind (the backend picks the form its driver needs):** SqlServer streams `VARBINARY(MAX)` from a
+  `ReadOnlyMemoryStream`; Postgres binds `NpgsqlParameter<ReadOnlyMemory<byte>>` (`bytea`); MySql binds `ReadOnlyMemory`;
+  Redis passes a memory `RedisValue`; Cosmos `WriteRawValue(doc.Span)` into the envelope. **byte[] kept (genuine leaf):**
+  Mongo `BsonBinaryData(byte[])`, NATS `NatsKVStore<byte[]>`, Azure Table binary, Sqlite `SqliteParameter`, InMemory storage.
+- **Measured:** `ObservedIdentityStoreBenchmarks.Serialize_ToArray` **376 B → `Serialize_Pooled` 56 B (0.15×)** — the ~320 B
+  document array eliminated per write on the memory/stream backends (the 56 B residual is the provenance list, common to both).
+- **Verified against real containers** (podman socket, [[broker-integration-tests-wsl-podman]]): all 10 `IObservedIdentityStore`
+  conformance suites green — SqlServer / Postgres / Redis / MySql / Cosmos (converted) **and** Mongo / Nats / AzureStorage /
+  Sqlite / InMemory (byte[]-leaf, unchanged), 7/7 each. **Row done** (the write-realization pattern-setter; the same shape
+  rolls out to the other serialization helpers — SourceCredential, CatalogVersion, SecurityRule/Binding, AccessRequest,
+  WorkflowAdministrators, WorkflowCheckpoint, RunnerRegistration — and the sibling **allocate-on-read** row in Part A).
 
 ## Cross-references
 
