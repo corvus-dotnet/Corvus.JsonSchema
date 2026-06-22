@@ -374,7 +374,15 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         // Table storage returns entities ordered by PartitionKey then RowKey, and the run id is the RowKey
         // within the single index partition — so results arrive in ascending run-id order and a RowKey keyset
         // gives the continuation.
-        if (WorkflowContinuationToken.Decode(query.ContinuationToken) is { } after)
+        // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
+        string? after = null;
+        if (query.ContinuationToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
+            after = WorkflowContinuationToken.Decode(tokenUtf8.Span);
+        }
+
+        if (after is { })
         {
             filter += TableClient.CreateQueryFilter($" and RowKey gt {after}");
         }

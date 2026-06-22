@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Text;
+using Corvus.Text.Json;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 
@@ -349,18 +350,23 @@ public abstract class WorkflowStateStoreConformance
 
         var index = (IWorkflowWaitIndex)store;
         var collected = new List<string>();
-        string? token = null;
+
+        // Round-trip the token through the JsonString seam exactly as the HTTP layer does: the store emits it as UTF-8,
+        // the next request carries it as a JSON string. The page owns the token buffer (freed on dispose), so copy it
+        // out per page.
+        byte[]? token = null;
         int pages = 0;
         do
         {
-            WorkflowRunPage page = await index.QueryAsync(new WorkflowQuery(Limit: 2, ContinuationToken: token), default);
+            using ParsedJsonDocument<JsonString>? tokenDoc = token is null ? null : AsPageToken(token);
+            using WorkflowRunPage page = await index.QueryAsync(new WorkflowQuery(Limit: 2, ContinuationToken: tokenDoc?.RootElement ?? default), default);
             page.Runs.Count.ShouldBeLessThanOrEqualTo(2);
             foreach (WorkflowRunListing listing in page.Runs)
             {
                 collected.Add(listing.Id.Value);
             }
 
-            token = page.ContinuationToken;
+            token = page.NextPageToken.IsEmpty ? null : page.NextPageToken.ToArray();
             (++pages).ShouldBeLessThanOrEqualTo(10); // guard against a non-terminating cursor
         }
         while (token is not null);
@@ -473,6 +479,17 @@ public abstract class WorkflowStateStoreConformance
         => new("wf", WorkflowRunStatus.Suspended, T0, T0, dueAt, channel, correlationId);
 
     private static byte[] Bytes(string value) => Encoding.UTF8.GetBytes(value);
+
+    // Wraps an opaque page token's UTF-8 as the JSON string value a request carries it as — the conformance feeds a
+    // previous page's NextPageToken (the store's emitted bytes) back through the JsonString seam, mirroring HTTP.
+    private static ParsedJsonDocument<JsonString> AsPageToken(ReadOnlySpan<byte> tokenUtf8)
+    {
+        byte[] quoted = new byte[tokenUtf8.Length + 2];
+        quoted[0] = (byte)'"';
+        tokenUtf8.CopyTo(quoted.AsSpan(1));
+        quoted[^1] = (byte)'"';
+        return ParsedJsonDocument<JsonString>.Parse(quoted);
+    }
 
     private static async ValueTask<List<WorkflowRunId>> Collect(IAsyncEnumerable<WorkflowRunId> source)
     {

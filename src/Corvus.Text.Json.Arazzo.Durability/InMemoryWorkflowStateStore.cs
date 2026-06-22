@@ -153,37 +153,67 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
     public ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        string? after = WorkflowContinuationToken.Decode(query.ContinuationToken);
-        List<WorkflowRunListing> runs;
+
+        // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
+        string? after = null;
+        if (query.ContinuationToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
+            after = WorkflowContinuationToken.Decode(tokenUtf8.Span);
+        }
+
+        // Keyset page by ascending run id. Rather than materialise + LINQ-sort the whole matching set, keep only the
+        // Limit+1 SMALLEST past-cursor matches in a capped, insertion-sorted buffer — the in-memory analogue of
+        // ORDER BY run-id LIMIT Limit+1. One bounded List instead of the Where/OrderBy/Select iterator+closure chain;
+        // the +1 row detects "more remain" (and seeds the next-page token). Paginate trims it and mints the token.
+        int cap = query.Limit + 1;
+        var top = new List<WorkflowRunListing>(cap);
         lock (this.gate)
         {
-            // Keyset page by ascending run id, taking one extra row to detect whether a next page exists.
-            runs = this.entries
-                .Where(kvp =>
-                    (query.Status is not { } status || kvp.Value.Index.Status == status)
-                    && (query.WorkflowId is not { } workflowId || kvp.Value.Index.WorkflowId == workflowId)
-                    && (query.CreatedAfter is not { } createdAfter || kvp.Value.Index.CreatedAt >= createdAfter)
-                    && (query.CreatedBefore is not { } createdBefore || kvp.Value.Index.CreatedAt < createdBefore)
-                    && (query.UpdatedAfter is not { } updatedAfter || kvp.Value.Index.UpdatedAt >= updatedAfter)
-                    && (query.UpdatedBefore is not { } updatedBefore || kvp.Value.Index.UpdatedAt < updatedBefore)
-                    && (query.CorrelationId is not { } correlationId || kvp.Value.Index.CorrelationId == correlationId)
-                    && query.Tags.AllContainedIn(kvp.Value.Index.Tags)
-                    && (query.Security?.IsSatisfiedBy(kvp.Value.Index.SecurityTags) ?? true)
-                    && (after is null || string.CompareOrdinal(kvp.Key, after) > 0))
-                .OrderBy(kvp => kvp.Key, StringComparer.Ordinal)
-                .Take(query.Limit + 1)
-                .Select(kvp => new WorkflowRunListing(new WorkflowRunId(kvp.Key), kvp.Value.Index))
-                .ToList();
+            foreach (KeyValuePair<string, Entry> kvp in this.entries)
+            {
+                WorkflowRunIndexEntry index = kvp.Value.Index;
+                if ((query.Status is { } status && index.Status != status)
+                    || (query.WorkflowId is { } workflowId && index.WorkflowId != workflowId)
+                    || (query.CreatedAfter is { } createdAfter && index.CreatedAt < createdAfter)
+                    || (query.CreatedBefore is { } createdBefore && index.CreatedAt >= createdBefore)
+                    || (query.UpdatedAfter is { } updatedAfter && index.UpdatedAt < updatedAfter)
+                    || (query.UpdatedBefore is { } updatedBefore && index.UpdatedAt >= updatedBefore)
+                    || (query.CorrelationId is { } correlationId && index.CorrelationId != correlationId)
+                    || !query.Tags.AllContainedIn(index.Tags)
+                    || !(query.Security?.IsSatisfiedBy(index.SecurityTags) ?? true)
+                    || (after is not null && string.CompareOrdinal(kvp.Key, after) <= 0))
+                {
+                    continue;
+                }
+
+                var listing = new WorkflowRunListing(new WorkflowRunId(kvp.Key), index);
+                if (top.Count < cap)
+                {
+                    InsertSorted(top, listing);
+                }
+                else if (string.CompareOrdinal(kvp.Key, top[cap - 1].Id.Value) < 0)
+                {
+                    top.RemoveAt(cap - 1);
+                    InsertSorted(top, listing);
+                }
+            }
         }
 
-        string? continuation = null;
-        if (runs.Count > query.Limit)
+        return ValueTask.FromResult(WorkflowContinuationToken.Paginate(top, query.Limit));
+    }
+
+    // Inserts a listing into the capped buffer at its ascending-run-id position (linear from the end — the buffer is
+    // Limit+1 small and stays within its preallocated capacity, so no backing array reallocates).
+    private static void InsertSorted(List<WorkflowRunListing> buffer, WorkflowRunListing listing)
+    {
+        int i = buffer.Count;
+        while (i > 0 && string.CompareOrdinal(buffer[i - 1].Id.Value, listing.Id.Value) > 0)
         {
-            runs.RemoveAt(runs.Count - 1);
-            continuation = WorkflowContinuationToken.Encode(runs[^1].Id.Value);
+            i--;
         }
 
-        return ValueTask.FromResult(new WorkflowRunPage(runs, continuation));
+        buffer.Insert(i, listing);
     }
 
     /// <inheritdoc/>
