@@ -147,7 +147,7 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
     public ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
-        return this.AddCoreAsync(baseWorkflowId, packageUtf8.ToArray(), metadata, cancellationToken);
+        return this.AddCoreAsync(baseWorkflowId, packageUtf8, metadata, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -391,7 +391,7 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         }
     }
 
-    private async ValueTask<ParsedJsonDocument<CatalogVersion>> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
+    private async ValueTask<ParsedJsonDocument<CatalogVersion>> AddCoreAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
@@ -437,7 +437,7 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         insert.Parameters.AddWithValue("@obsoletedAt", DBNull.Value);
         insert.Parameters.AddWithValue("@runnable", projection.HasExecutor ? 1 : 0);
         insert.Parameters.AddWithValue("@securityTags", (object?)securityTags.ToSecurityDelimitedOrNull(SecurityTagPairSeparator, SecurityTagKeyValueSeparator) ?? DBNull.Value);
-        insert.Parameters.AddWithValue("@package", projection.CanonicalPackage.ToArray());
+        insert.Parameters.AddWithValue("@package", projection.CanonicalPackage);
         await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
 
         // Persist the version's security tags for indexed reach-filtering (§14.4); versions are immutable.
