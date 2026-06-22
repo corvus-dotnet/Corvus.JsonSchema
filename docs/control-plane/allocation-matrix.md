@@ -65,8 +65,8 @@ only at the genuine leaf — [[no-handrolled-records-use-codegen-jsonschema]],
 | `IAccessRequestStore.CreateAsync` (+ `DecideAsync`) | `AccessRequest` | `AccessRequestSerialization` | `draft` — create/decide serialized into the pooled buffer the **returned** document owns (`SerializeNewDoc`/`SerializeDecisionDoc → ParsedJsonDocument`), bound via `JsonMarshal`; decide takes the **parsed model** (`in AccessRequest`), parsed non-copying at each leaf | ✅ **write-realization + allocate-on-read; 10 backends conformance-green (Part D)** |
 | `IAccessRequestStore.DecideAsync` | `AccessRequest` | `AccessRequestSerialization` | `record` (`AccessRequestDecision`) | ➖ **n/a** — `AccessRequestDecision` is a `readonly record struct` (a **value type, zero heap**): the decision *input* (status/reason/binding/expiry), not a persisted shape. The persisted `AccessRequest` is already done; converting the input to a draft doc would *add* allocation |
 | `ISourceCredentialStore.Add/UpdateAsync` | `SourceCredentialBinding` | `SourceCredentialSerialization` | `draft` (seam carries the generated doc; `SourceCredentialDefinition` retained only as the cold-caller convenience input via `Draft(definition)` + extension) | ✅ (Part D) |
-| `IWorkflowCatalogStore.AddAsync` | `CatalogVersion` | (catalog serialization) | `record` (`CatalogMetadata`) + `bytes` package | ⬜ |
-| `IWorkflowCatalogStore.UpdateMetadataAsync` | `CatalogVersion` | (catalog serialization) | `record` (`CatalogMetadataPatch`) | ⬜ |
+| `IWorkflowCatalogStore.AddAsync` | `CatalogVersion` | (catalog serialization) | `CatalogMetadata` (a generated **CTJ struct**, not a hand-rolled record) + `bytes` package — the submitted + canonical **package** (potentially large) bound memory/stream (SqlServer streams, Pg/MySql/Redis memory, Cosmos base64 `.Span`, Azure `BinaryData.FromBytes(ReadOnlyMemory)`, NATS envelope `.Span`); byte[]-leaf (Sqlite/Mongo) take the array zero-copy via `MemoryMarshal.TryGetArray`; the CatalogVersion doc is columns + an owned return doc (no blob) | ✅ **package write de-arrayed; 10 backends conformance-green (Part D)** |
+| `IWorkflowCatalogStore.UpdateMetadataAsync` | `CatalogVersion` | (catalog serialization) | `CatalogMetadataPatch` (a generated **CTJ struct**) | ✅ **n/a beyond done** — column-only update (no package/doc blob), the existing-read is already a pooled `ParsedJsonDocument` (catalog-version row); nothing to realize |
 | `IWorkflowAdministratorStore.PutAsync` | `WorkflowAdministrators` | `WorkflowAdministratorsSerialization` | `list` (`IReadOnlyList<SecurityTagSet>`) — put serialized into the pooled buffer the **returned** document owns (`SerializeNewDoc`/`SerializeUpdatedDoc → ParsedJsonDocument`), bound via `JsonMarshal`; update takes the **parsed model** (`in WorkflowAdministrators`), parsed **once** non-copying (replacing the old `EtagOf(existing)` + `SerializeUpdated` double-parse); `EtagOf` removed (column etag from the generated value) | ✅ **write-realization + allocate-on-read; 10 backends conformance-green (Part D)** |
 | `IWorkflowStateStore.SaveAsync` | opaque checkpoint | (executor-owned) | `bytes` + index — opaque `ReadOnlyMemory<byte>` seam; the memory/stream backends bind it directly (SqlServer streams, Pg/MySql `ReadOnlyMemory`, Redis memory `RedisValue`, Cosmos base64 `.Span` into the run-doc envelope) instead of the old per-save `checkpointUtf8.ToArray()`; `byte[]` only at Sqlite/Mongo/Azure leaves; NATS already encodes from `.Span`; InMemory dict canonical | ✅ **write-realization (hot path); 5 memory/stream backends de-arrayed; Part D** |
 | **(read seam, all backends)** read-existing + projection reads | the persisted doc | — | the seam now carries the **parsed model** (`SerializeUpserted(in ObservedIdentity)`), parsed at each leaf the leanest way; merge parses **non-copying** over the owned bytes (no `ToPooledDocument` re-copy). Driver-minted arrays (ADO `GetFieldValue<byte[]>`, Mongo/NATS/Azure) **are the leaf** (confirms §13.4.1 — no GC win there, only the copy elided); genuine GC eliminated at Cosmos (`.ToArray`→pooled) and Redis (`(byte[])`→`Lease<byte>`) | ✅ **done — Part D** (Sqlite in-process unchanged 8864→8865 B upsert / 7872→7873 B search = relational read array IS the driver leaf; Cosmos/Redis GC win container-verified; 10 backends conformance-green) |
@@ -265,7 +265,12 @@ handler, CLI. Slnx build **0 Warning(s), 0 Error(s)**.
 - **`samples/` (Aspire demo)** is not in the slnx and was not built; it uses only the record extension overload
   (same overload resolution as the green tests), so it compiles, but this was not independently verified here.
 
-### 🔬 `POST /catalog` → `IWorkflowCatalogStore.AddAsync` — baselined, conversion pending
+### 🔬 `POST /catalog` → `IWorkflowCatalogStore.AddAsync` — package bind done; projection is the remaining lever (Part B)
+
+**Driver package write-realization DONE** (see the ✅ catalog row above): the two whole-package `.ToArray()` copies on the
+add path were eliminated across the driver backends (memory/stream bind / `TryGetArray` / Blob `BinaryData`). That win is
+**container-only** — the InMemory baseline below already avoids the package copy (`MemoryMarshal.TryGetArray`), so the
+number is unchanged in-process; the remaining in-process cost is the projection, a separate Part B item.
 
 **Baseline measured** (`CatalogStoreBenchmarks.Add_FromRecord`, InMemory, ShortRun, MemoryDiagnoser; owner sourced from a
 parsed body so the `(string)body.Owner.*` transcode is in the measured region): **19.92 KB/op**, Mean 43.6 µs.
@@ -638,6 +643,27 @@ workflow step). The checkpoint is opaque (no serializer), so the fix is purely t
 - **Verified against real containers** (podman socket): the `IWorkflowStateStore` conformance suites green on the changed
   backends (SqlServer/Postgres/MySql/Redis/Cosmos) + InMemory + Sqlite in-process. **Row done.** (`LoadAsync`'s read
   `byte[]` is the driver leaf — §13.4.1 — left as-is.)
+
+### ✅ Catalog store — package write de-arrayed (`IWorkflowCatalogStore.AddAsync`)
+
+The last Part A write row. The catalog stores **decomposed columns** + a (potentially large) **package** blob — the
+CatalogVersion document is reconstructed from columns on read and built only for the return value (no Document blob). The
+read was already pooled (catalog-version row); `CatalogMetadata`/`CatalogMetadataPatch` are generated CTJ structs (not
+hand-rolled records). So the only remaining allocation was the **package**, copied to a GC array **twice** per add:
+`packageUtf8.ToArray()` (the whole submitted package) + `projection.CanonicalPackage.ToArray()` (the whole canonical
+package).
+
+- **Fix.** `AddCoreAsync` takes the package as `ReadOnlyMemory<byte>` (`CatalogPackage.Project` already accepts it); the
+  canonical package is bound without a copy: SqlServer streams it (`ReadOnlyMemoryStream`); Postgres
+  `NpgsqlParameter<ReadOnlyMemory<byte>>`, MySql `AddWithValue(memory)`, Redis a memory `RedisValue`; Cosmos
+  `WriteBase64String(..., .Span)` into the item; Azure uploads the block blob via `BinaryData.FromBytes(ReadOnlyMemory)`;
+  NATS embeds it into its envelope from `.Span`; Sqlite/Mongo take the array **zero-copy** via `MemoryMarshal.TryGetArray`
+  (the canonical package is an exact-sized array, so no copy), falling back to `ToArray` only if not whole-array-backed.
+  InMemory already did this.
+- **Impact.** The two eliminated copies are the size of the **whole package** (an Arazzo workflow + its sources) — by far
+  the largest per-operation arrays in the durability layer, even if the add path itself is admin-rare.
+- **Verified against real containers** (podman socket): all 10 `IWorkflowCatalogStore` conformance suites green. **Row done.**
+  `GetPackageAsync`'s read `byte[]` is the driver leaf (returned to the caller; §13.4.1), left as-is.
 
 ## Cross-references
 
