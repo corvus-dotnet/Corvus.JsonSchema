@@ -62,7 +62,7 @@ only at the genuine leaf — [[no-handrolled-records-use-codegen-jsonschema]],
 | `IObservedIdentityStore.SeenAsync` | `ObservedIdentity` | `ObservedIdentitySerialization` | `params` (CTJ kind + JsonString value/label + SecurityTagSet) — seam bytes-native; the **write document** is realized into a pooled buffer (`SerializeXPooled → PooledUtf8`) and bound memory/stream where the driver supports it, owned `byte[]` only where it requires an array | ✅ **write 376→56 B (−85%); 10 backends container-verified (Part D)** |
 | `ISecurityPolicyStore.Add/UpdateRule` | `SecurityRuleDocument` | `SecurityPolicySerialization` | `draft` — write serialized once into the pooled buffer the **returned** document owns (`SerializeXDoc → ParsedJsonDocument`), bound memory/stream via `JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory`; update merge takes the **parsed model** (`in SecurityRuleDocument`), parsed non-copying at each leaf | ✅ **write-realization + allocate-on-read; 10 backends conformance-green (Part D)** |
 | `ISecurityPolicyStore.Add/UpdateBinding` | `SecurityBindingDocument` | `SecurityPolicySerialization` | `draft` — same as rule (owned-doc write + non-copying parsed-model update) | ✅ **Part D** |
-| `IAccessRequestStore.CreateAsync` | `AccessRequest` | `AccessRequestSerialization` | `draft` | ⬜ |
+| `IAccessRequestStore.CreateAsync` (+ `DecideAsync`) | `AccessRequest` | `AccessRequestSerialization` | `draft` — create/decide serialized into the pooled buffer the **returned** document owns (`SerializeNewDoc`/`SerializeDecisionDoc → ParsedJsonDocument`), bound via `JsonMarshal`; decide takes the **parsed model** (`in AccessRequest`), parsed non-copying at each leaf | ✅ **write-realization + allocate-on-read; 10 backends conformance-green (Part D)** |
 | `IAccessRequestStore.DecideAsync` | `AccessRequest` | `AccessRequestSerialization` | `record` (`AccessRequestDecision`) | ⬜ |
 | `ISourceCredentialStore.Add/UpdateAsync` | `SourceCredentialBinding` | `SourceCredentialSerialization` | `draft` (seam carries the generated doc; `SourceCredentialDefinition` retained only as the cold-caller convenience input via `Draft(definition)` + extension) | ✅ (Part D) |
 | `IWorkflowCatalogStore.AddAsync` | `CatalogVersion` | (catalog serialization) | `record` (`CatalogMetadata`) + `bytes` package | ⬜ |
@@ -580,6 +580,26 @@ the caller (the store returns the persisted `ParsedJsonDocument`). One pooled bu
   standalone array). The memory/stream backends' end-to-end GC win (array eliminated) is container-side, not in-process.
 - **Verified against real containers** (podman socket): all 10 `ISecurityPolicyStore` conformance suites green
   (Postgres/MySql/Redis/Mongo/NATS/AzureStorage/SqlServer/Cosmos 7/7, InMemory 9/9 + Sqlite 7/7 in-process). **Row done.**
+
+### ✅ Access-request store — write-realization + allocate-on-read (`IAccessRequestStore`)
+
+The security-store treatment applied verbatim to `IAccessRequestStore` (one doc type — `AccessRequest` — create + decide):
+`AccessRequestSerialization.Serialize{New,Decision}Doc(...) → ParsedJsonDocument<AccessRequest>` serialize once into the
+pooled buffer the **returned** document owns (memory/stream backends bind `JsonMarshal.GetRawUtf8Value(doc.RootElement).
+Memory`); `SerializeDecision` takes the **parsed model** (`in AccessRequest`), parsed non-copying at each leaf; projection
+reads (`GetAsync`/`ListAsync`) parse non-copying over the driver's array; `EtagOf(byte[])` keeps its delegate signature
+(parses non-copying internally). byte[]-leaf backends (Mongo/NATS/Azure/Sqlite/InMemory) keep the `byte[]` write.
+
+- **Measured** (`AccessRequestStoreBenchmarks`, in-process): `Create_FromDraft` **1270 → 1264 B** (flat — InMemory
+  reference, no regression). Write-realization at the serializer: `Serialize_New_ToArray` **728 B** (GC array) vs
+  `Serialize_New_Doc` **512 B** (the owning pooled document the store returns; buffer pooled, GC array dropped).
+- **Bonus correctness fix (Cosmos).** Converting `DecideAsync` surfaced a latent bug: it re-stamped the envelope's
+  query mirrors (`bw`/`st`/`sv`/`createdAt`) by reading those *short* names from the **embedded doc** (which uses the long
+  `baseWorkflowId`/… names) → empty mirrors + a `createdAt` format mismatch after a decision, so a decided request dropped
+  out of list-by-workflow/subject queries. Now derived from the parsed model (matching the create path and the other
+  backends). Cosmos's `DocumentAsync` (a `.ToArray()`) became `ReadResponseAsync` reading off the live pooled response.
+- **Verified against real containers** (podman socket): all 10 `IAccessRequestStore` conformance suites green
+  (Postgres/MySql/Redis/Mongo/NATS/AzureStorage/SqlServer/Cosmos 6/6, InMemory + Sqlite 6/6 in-process). **Row done.**
 
 ## Cross-references
 
