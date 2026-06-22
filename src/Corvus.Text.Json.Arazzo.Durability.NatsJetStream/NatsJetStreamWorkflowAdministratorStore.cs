@@ -107,7 +107,7 @@ public sealed class NatsJetStreamWorkflowAdministratorStore : IWorkflowAdministr
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         NatsKVEntry<byte[]>? entry = await this.TryGetAsync(Key(baseWorkflowId), cancellationToken).ConfigureAwait(false);
-        return entry is { Value: { } bytes } ? PersistedJson.ToPooledDocument<WorkflowAdministrators>(bytes) : null;
+        return entry is { Value: { } bytes } ? ParsedJsonDocument<WorkflowAdministrators>.Parse(bytes.AsMemory()) : null;
     }
 
     /// <inheritdoc/>
@@ -123,16 +123,20 @@ public sealed class NatsJetStreamWorkflowAdministratorStore : IWorkflowAdministr
 
         string key = Key(baseWorkflowId);
         NatsKVEntry<byte[]>? existing = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+        WorkflowEtag etag = NewEtag();
         byte[] json;
-        if (existing is { Value: { } current })
+        if (existing is { Value: { } existingBytes })
         {
-            // A record exists: the caller must hold its current etag (None means "I expected no record").
-            if (expectedEtag.IsNone || expectedEtag != WorkflowAdministratorsSerialization.EtagOf(current))
+            // A record exists: parse it ONCE, NON-COPYING over the KV entry's array (the read leaf) — used for both the etag
+            // check (None means "I expected no record") and the carried-forward merge. The KV value we write keeps its byte[]
+            // shape (the driver leaf); the returned document parses those same bytes non-copying.
+            using ParsedJsonDocument<WorkflowAdministrators> current = ParsedJsonDocument<WorkflowAdministrators>.Parse(existingBytes.AsMemory());
+            if (expectedEtag.IsNone || expectedEtag != current.RootElement.EtagValue)
             {
                 throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
             }
 
-            json = WorkflowAdministratorsSerialization.SerializeUpdated(current, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
+            json = WorkflowAdministratorsSerialization.SerializeUpdated(current.RootElement, administrators, actor, this.timeProvider.GetUtcNow(), etag);
         }
         else
         {
@@ -142,11 +146,11 @@ public sealed class NatsJetStreamWorkflowAdministratorStore : IWorkflowAdministr
                 throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
             }
 
-            json = WorkflowAdministratorsSerialization.SerializeNew(baseWorkflowId, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
+            json = WorkflowAdministratorsSerialization.SerializeNew(baseWorkflowId, administrators, actor, this.timeProvider.GetUtcNow(), etag);
         }
 
         await this.store.PutAsync(key, json, cancellationToken: cancellationToken).ConfigureAwait(false);
-        return PersistedJson.ToPooledDocument<WorkflowAdministrators>(json);
+        return ParsedJsonDocument<WorkflowAdministrators>.Parse(json.AsMemory());
     }
 
     /// <inheritdoc/>

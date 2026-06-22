@@ -96,7 +96,7 @@ public sealed class AzureStorageWorkflowAdministratorStore : IWorkflowAdministra
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         byte[]? json = await this.ReadDocumentAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
-        return json is null ? null : PersistedJson.ToPooledDocument<WorkflowAdministrators>(json);
+        return json is null ? null : ParsedJsonDocument<WorkflowAdministrators>.Parse(json.AsMemory());
     }
 
     /// <inheritdoc/>
@@ -111,16 +111,22 @@ public sealed class AzureStorageWorkflowAdministratorStore : IWorkflowAdministra
         }
 
         byte[]? existing = await this.ReadDocumentAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
+        WorkflowEtag etag = NewEtag();
         byte[] json;
         if (existing is not null)
         {
+            // Parse the existing record ONCE, NON-COPYING over the driver's array (the read leaf) — used for both the etag
+            // check and the carried-forward merge. Azure Table stores the document in a binary column, so the write stays a
+            // byte[] leaf; the column etag is the one we just generated.
+            using ParsedJsonDocument<WorkflowAdministrators> current = ParsedJsonDocument<WorkflowAdministrators>.Parse(existing.AsMemory());
+
             // A record exists: the caller must hold its current etag (None means "I expected no record").
-            if (expectedEtag.IsNone || expectedEtag != WorkflowAdministratorsSerialization.EtagOf(existing))
+            if (expectedEtag.IsNone || expectedEtag != current.RootElement.EtagValue)
             {
                 throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
             }
 
-            json = WorkflowAdministratorsSerialization.SerializeUpdated(existing, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
+            json = WorkflowAdministratorsSerialization.SerializeUpdated(current.RootElement, administrators, actor, this.timeProvider.GetUtcNow(), etag);
         }
         else
         {
@@ -130,12 +136,12 @@ public sealed class AzureStorageWorkflowAdministratorStore : IWorkflowAdministra
                 throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
             }
 
-            json = WorkflowAdministratorsSerialization.SerializeNew(baseWorkflowId, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
+            json = WorkflowAdministratorsSerialization.SerializeNew(baseWorkflowId, administrators, actor, this.timeProvider.GetUtcNow(), etag);
         }
 
         var entity = new TableEntity(AdministratorsPartition, RowKey(baseWorkflowId))
         {
-            [EtagColumn] = WorkflowAdministratorsSerialization.EtagOf(json).Value!,
+            [EtagColumn] = etag.Value!,
             [DocumentColumn] = json,
         };
         await this.administrators.UpsertEntityAsync(entity, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
