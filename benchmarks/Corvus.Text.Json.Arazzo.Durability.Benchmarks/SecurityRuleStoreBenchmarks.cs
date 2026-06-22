@@ -3,6 +3,7 @@
 // </copyright>
 
 using BenchmarkDotNet.Attributes;
+using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 
@@ -29,6 +30,9 @@ public class SecurityRuleStoreBenchmarks
 {
     private const string Expression = "team == $claim.team";
     private const string Description = "Team scope.";
+
+    private static readonly DateTimeOffset At = DateTimeOffset.UnixEpoch;
+    private static readonly WorkflowEtag Etag = new("etag-bench");
 
     private InMemorySecurityPolicyStore store = null!;
 
@@ -68,5 +72,22 @@ public class SecurityRuleStoreBenchmarks
         using ParsedJsonDocument<SecurityRuleDocument>? updated = this.store
             .UpdateRuleAsync("r", draft.RootElement, WorkflowEtag.None, "admin", default)
             .AsTask().GetAwaiter().GetResult();
+    }
+
+    /// <summary>The write-realization seam as the byte[]-leaf backends (Mongo/Nats/Azure/Sqlite + InMemory) realize it:
+    /// one owned GC document array.</summary>
+    /// <returns>The document length (prevents dead-code elimination).</returns>
+    [Benchmark]
+    public int Serialize_NewRule_ToArray()
+        => SecurityPolicySerialization.SerializeNewRule("r", this.requestBody.RootElement, "admin", At, Etag).Length;
+
+    /// <summary>The same document as the memory/stream backends (SqlServer/Postgres/MySql/Redis) realize it: serialized
+    /// once into the pooled buffer the returned document owns and bound via <c>JsonMarshal</c> — no GC document array.</summary>
+    /// <returns>The document length (prevents dead-code elimination).</returns>
+    [Benchmark]
+    public int Serialize_NewRule_Doc()
+    {
+        using ParsedJsonDocument<SecurityRuleDocument> doc = SecurityPolicySerialization.SerializeNewRuleDoc("r", this.requestBody.RootElement, "admin", At, Etag);
+        return JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory.Length;
     }
 }

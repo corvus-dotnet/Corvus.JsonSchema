@@ -93,7 +93,10 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
                 return new ValueTask<ParsedJsonDocument<SecurityRuleDocument>?>((ParsedJsonDocument<SecurityRuleDocument>?)null);
             }
 
-            byte[] json = SecurityPolicySerialization.SerializeUpdatedRule(existing, "rule", name, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
+            // Parse the existing document NON-COPYING over the stored array (alive in the dictionary through this
+            // synchronous merge under the lock) — the merge reads its etag + audit fields, no per-read pooled copy.
+            using ParsedJsonDocument<SecurityRuleDocument> current = ParsedJsonDocument<SecurityRuleDocument>.Parse(existing.AsMemory());
+            byte[] json = SecurityPolicySerialization.SerializeUpdatedRule(current.RootElement, "rule", name, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
             this.rules[name] = json;
             this.generation++;
             return new ValueTask<ParsedJsonDocument<SecurityRuleDocument>?>(PersistedJson.ToPooledDocument<SecurityRuleDocument>(json));
@@ -113,7 +116,7 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
 
             if (!expectedEtag.IsNone)
             {
-                using ParsedJsonDocument<SecurityRuleDocument> current = PersistedJson.ToPooledDocument<SecurityRuleDocument>(existing);
+                using ParsedJsonDocument<SecurityRuleDocument> current = ParsedJsonDocument<SecurityRuleDocument>.Parse(existing.AsMemory());
                 SecurityPolicySerialization.EnsureEtag("rule", name, expectedEtag, current.RootElement.EtagValue);
             }
 
@@ -171,7 +174,10 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
                 return new ValueTask<ParsedJsonDocument<SecurityBindingDocument>?>((ParsedJsonDocument<SecurityBindingDocument>?)null);
             }
 
-            byte[] json = SecurityPolicySerialization.SerializeUpdatedBinding(existing, "binding", id, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
+            // Parse the existing document NON-COPYING over the stored array (alive in the dictionary through this
+            // synchronous merge under the lock) — the merge reads its etag + audit fields, no per-read pooled copy.
+            using ParsedJsonDocument<SecurityBindingDocument> current = ParsedJsonDocument<SecurityBindingDocument>.Parse(existing.AsMemory());
+            byte[] json = SecurityPolicySerialization.SerializeUpdatedBinding(current.RootElement, "binding", id, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
             this.bindings[id] = json;
             this.generation++;
             return new ValueTask<ParsedJsonDocument<SecurityBindingDocument>?>(PersistedJson.ToPooledDocument<SecurityBindingDocument>(json));
@@ -191,7 +197,7 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
 
             if (!expectedEtag.IsNone)
             {
-                using ParsedJsonDocument<SecurityBindingDocument> current = PersistedJson.ToPooledDocument<SecurityBindingDocument>(existing);
+                using ParsedJsonDocument<SecurityBindingDocument> current = ParsedJsonDocument<SecurityBindingDocument>.Parse(existing.AsMemory());
                 SecurityPolicySerialization.EnsureEtag("binding", id, expectedEtag, current.RootElement.EtagValue);
             }
 
