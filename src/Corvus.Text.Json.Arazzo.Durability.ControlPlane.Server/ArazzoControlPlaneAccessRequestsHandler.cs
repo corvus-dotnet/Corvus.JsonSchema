@@ -71,21 +71,17 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
             return SubmitAccessRequestResult.BadRequest(Problem("no-subject", "No requesting subject", 400, $"The caller has no '{this.subjectClaimType}' claim to scope a grant to."), workspace);
         }
 
-        var scopes = new List<string>();
-        foreach (Models.JsonString scope in parameters.Body.RequestedScopes.EnumerateArray())
-        {
-            scopes.Add((string)scope);
-        }
-
-        // The draft request the approval pipeline + store carry: the body fields + the principal-derived subject, as a
-        // pooled, disposable document the eligibility predicate and SubmitAsync read; the store stamps id/etag/created.
+        // The draft request the approval pipeline + store carry: the body's already-parsed JSON values
+        // (baseWorkflowId/requestedScopes/reason) copied bytes-to-bytes — no List<string>, no per-field strings — plus the
+        // principal-derived subject/label. It is a pooled, disposable document the eligibility predicate and SubmitAsync
+        // read; the store stamps id/etag/created.
         using ParsedJsonDocument<AccessRequest> draft = AccessRequest.Draft(
-            (string)parameters.Body.BaseWorkflowId,
-            scopes,
+            (JsonElement)parameters.Body.BaseWorkflowId,
+            (JsonElement)parameters.Body.RequestedScopes,
             this.subjectClaimType,
             subject,
             principal.Identity?.Name,
-            parameters.Body.Reason.IsNotUndefined() ? (string)parameters.Body.Reason : null,
+            (JsonElement)parameters.Body.Reason,
             parameters.Body.RequestedDurationSeconds.IsNotUndefined() ? (long)parameters.Body.RequestedDurationSeconds : null);
 
         bool eligible = this.eligibility?.Invoke(principal, draft.RootElement) ?? false;
