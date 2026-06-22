@@ -142,8 +142,16 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> GetRuleAsync(string name, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
-        byte[]? doc = await this.DocumentAsync(name, RulePartition, cancellationToken).ConfigureAwait(false);
-        return doc is null ? null : PersistedJson.ToPooledDocument<SecurityRuleDocument>(doc);
+        using CosmosJson.RentedResponse? payload = await this.ReadResponseAsync(name, RulePartition, cancellationToken).ConfigureAwait(false);
+        if (payload is not { } page)
+        {
+            return null;
+        }
+
+        // The embedded doc is raw nested JSON (a slice of the live pooled response). Copy it into an owned pooled
+        // document (no GC array) before the response buffer is returned at the end of this using.
+        ReadOnlyMemory<byte> doc = CosmosJson.GetRawValue(page.Memory, DocProperty);
+        return doc.IsEmpty ? null : PersistedJson.ToPooledDocument<SecurityRuleDocument>(doc.Span);
     }
 
     /// <inheritdoc/>
@@ -155,34 +163,50 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     {
         ArgumentNullException.ThrowIfNull(name);
         ArgumentNullException.ThrowIfNull(actor);
-        byte[]? doc = await this.DocumentAsync(name, RulePartition, cancellationToken).ConfigureAwait(false);
-        if (doc is null)
+        ParsedJsonDocument<SecurityRuleDocument> document;
+        Stream stream;
+        using (CosmosJson.RentedResponse? payload = await this.ReadResponseAsync(name, RulePartition, cancellationToken).ConfigureAwait(false))
         {
-            return null;
+            if (payload is not { } page)
+            {
+                return null;
+            }
+
+            ReadOnlyMemory<byte> doc = CosmosJson.GetRawValue(page.Memory, DocProperty);
+            if (doc.IsEmpty)
+            {
+                return null;
+            }
+
+            // Parse the existing document NON-COPYING over the live response (no GC array, no pooled copy) to check the
+            // etag and carry its immutable audit fields forward; both the parse and its consumption (EnvelopeStream's
+            // synchronous WriteUpdated) complete before the response buffer is returned at the end of this using. The
+            // updated document is serialized straight into the envelope.
+            using ParsedJsonDocument<SecurityRuleDocument> current = ParsedJsonDocument<SecurityRuleDocument>.Parse(doc);
+            SecurityPolicySerialization.EnsureEtag("rule", name, expectedEtag, current.RootElement.EtagValue);
+            stream = EnvelopeStream<SecurityRuleDocument, (SecurityRuleDocument Cur, SecurityRuleDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
+                name,
+                RulePartition,
+                (current.RootElement, draft, actor, this.timeProvider.GetUtcNow(), NewEtag()),
+                static (Utf8JsonWriter writer, in (SecurityRuleDocument Cur, SecurityRuleDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
+                    => c.Cur.WriteUpdated(writer, c.Draft, c.Actor, c.At, c.Tag),
+                out document);
         }
 
-        // Parse the existing document once (pooled) to check the etag and carry its immutable audit fields forward; the
-        // updated document is serialized straight into the envelope (no owned byte[]).
-        using ParsedJsonDocument<SecurityRuleDocument> current = PersistedJson.ToPooledDocument<SecurityRuleDocument>(doc);
-        SecurityPolicySerialization.EnsureEtag("rule", name, expectedEtag, current.RootElement.EtagValue);
-        using Stream stream = EnvelopeStream<SecurityRuleDocument, (SecurityRuleDocument Cur, SecurityRuleDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
-            name,
-            RulePartition,
-            (current.RootElement, draft, actor, this.timeProvider.GetUtcNow(), NewEtag()),
-            static (Utf8JsonWriter writer, in (SecurityRuleDocument Cur, SecurityRuleDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
-                => c.Cur.WriteUpdated(writer, c.Draft, c.Actor, c.At, c.Tag),
-            out ParsedJsonDocument<SecurityRuleDocument> document);
-        try
+        using (stream)
         {
-            using ResponseMessage response = await this.container.ReplaceItemStreamAsync(stream, name, new PartitionKey(RulePartition), cancellationToken: cancellationToken).ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
-            await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-            return document;
-        }
-        catch
-        {
-            document.Dispose();
-            throw;
+            try
+            {
+                using ResponseMessage response = await this.container.ReplaceItemStreamAsync(stream, name, new PartitionKey(RulePartition), cancellationToken: cancellationToken).ConfigureAwait(false);
+                response.EnsureSuccessStatusCode();
+                await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
+                return document;
+            }
+            catch
+            {
+                document.Dispose();
+                throw;
+            }
         }
     }
 
@@ -220,8 +244,16 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> GetBindingAsync(string id, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
-        byte[]? doc = await this.DocumentAsync(id, BindingPartition, cancellationToken).ConfigureAwait(false);
-        return doc is null ? null : PersistedJson.ToPooledDocument<SecurityBindingDocument>(doc);
+        using CosmosJson.RentedResponse? payload = await this.ReadResponseAsync(id, BindingPartition, cancellationToken).ConfigureAwait(false);
+        if (payload is not { } page)
+        {
+            return null;
+        }
+
+        // The embedded doc is raw nested JSON (a slice of the live pooled response). Copy it into an owned pooled
+        // document (no GC array) before the response buffer is returned at the end of this using.
+        ReadOnlyMemory<byte> doc = CosmosJson.GetRawValue(page.Memory, DocProperty);
+        return doc.IsEmpty ? null : PersistedJson.ToPooledDocument<SecurityBindingDocument>(doc.Span);
     }
 
     /// <inheritdoc/>
@@ -233,34 +265,50 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     {
         ArgumentNullException.ThrowIfNull(id);
         ArgumentNullException.ThrowIfNull(actor);
-        byte[]? doc = await this.DocumentAsync(id, BindingPartition, cancellationToken).ConfigureAwait(false);
-        if (doc is null)
+        ParsedJsonDocument<SecurityBindingDocument> document;
+        Stream stream;
+        using (CosmosJson.RentedResponse? payload = await this.ReadResponseAsync(id, BindingPartition, cancellationToken).ConfigureAwait(false))
         {
-            return null;
+            if (payload is not { } page)
+            {
+                return null;
+            }
+
+            ReadOnlyMemory<byte> doc = CosmosJson.GetRawValue(page.Memory, DocProperty);
+            if (doc.IsEmpty)
+            {
+                return null;
+            }
+
+            // Parse the existing document NON-COPYING over the live response (no GC array, no pooled copy) to check the
+            // etag and carry its immutable audit fields forward; both the parse and its consumption (EnvelopeStream's
+            // synchronous WriteUpdated) complete before the response buffer is returned at the end of this using. The
+            // updated document is serialized straight into the envelope.
+            using ParsedJsonDocument<SecurityBindingDocument> current = ParsedJsonDocument<SecurityBindingDocument>.Parse(doc);
+            SecurityPolicySerialization.EnsureEtag("binding", id, expectedEtag, current.RootElement.EtagValue);
+            stream = EnvelopeStream<SecurityBindingDocument, (SecurityBindingDocument Cur, SecurityBindingDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
+                id,
+                BindingPartition,
+                (current.RootElement, draft, actor, this.timeProvider.GetUtcNow(), NewEtag()),
+                static (Utf8JsonWriter writer, in (SecurityBindingDocument Cur, SecurityBindingDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
+                    => c.Cur.WriteUpdated(writer, c.Draft, c.Actor, c.At, c.Tag),
+                out document);
         }
 
-        // Parse the existing document once (pooled) to check the etag and carry its immutable audit fields forward; the
-        // updated document is serialized straight into the envelope (no owned byte[]).
-        using ParsedJsonDocument<SecurityBindingDocument> current = PersistedJson.ToPooledDocument<SecurityBindingDocument>(doc);
-        SecurityPolicySerialization.EnsureEtag("binding", id, expectedEtag, current.RootElement.EtagValue);
-        using Stream stream = EnvelopeStream<SecurityBindingDocument, (SecurityBindingDocument Cur, SecurityBindingDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
-            id,
-            BindingPartition,
-            (current.RootElement, draft, actor, this.timeProvider.GetUtcNow(), NewEtag()),
-            static (Utf8JsonWriter writer, in (SecurityBindingDocument Cur, SecurityBindingDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
-                => c.Cur.WriteUpdated(writer, c.Draft, c.Actor, c.At, c.Tag),
-            out ParsedJsonDocument<SecurityBindingDocument> document);
-        try
+        using (stream)
         {
-            using ResponseMessage response = await this.container.ReplaceItemStreamAsync(stream, id, new PartitionKey(BindingPartition), cancellationToken: cancellationToken).ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
-            await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
-            return document;
-        }
-        catch
-        {
-            document.Dispose();
-            throw;
+            try
+            {
+                using ResponseMessage response = await this.container.ReplaceItemStreamAsync(stream, id, new PartitionKey(BindingPartition), cancellationToken: cancellationToken).ConfigureAwait(false);
+                response.EnsureSuccessStatusCode();
+                await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
+                return document;
+            }
+            catch
+            {
+                document.Dispose();
+                throw;
+            }
         }
     }
 
@@ -342,7 +390,10 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         return new CosmosSecurityPolicyStore(client, container, timeProvider ?? TimeProvider.System, ownsClient);
     }
 
-    private async ValueTask<byte[]?> DocumentAsync(string id, string partition, CancellationToken cancellationToken)
+    // Point-reads the item's envelope into a pooled response (no GC array). Returns null on NotFound; otherwise the
+    // caller slices c.doc off the LIVE response (CosmosJson.GetRawValue) and copies/parses it before this response is
+    // returned to the pool — disposing the returned RentedResponse releases the buffer.
+    private async ValueTask<CosmosJson.RentedResponse?> ReadResponseAsync(string id, string partition, CancellationToken cancellationToken)
     {
         using ResponseMessage response = await this.container.ReadItemStreamAsync(id, new PartitionKey(partition), cancellationToken: cancellationToken).ConfigureAwait(false);
         if (response.StatusCode == HttpStatusCode.NotFound)
@@ -351,11 +402,7 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         }
 
         response.EnsureSuccessStatusCode();
-        using CosmosJson.RentedResponse payload = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
-
-        // The embedded doc is raw nested JSON (no base64). Copy it out — it outlives the pooled response page.
-        ReadOnlyMemory<byte> doc = CosmosJson.GetRawValue(payload.Memory, DocProperty);
-        return doc.IsEmpty ? null : doc.ToArray();
+        return await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<PooledDocumentList<SecurityRuleDocument>> ReadRulesAsync(CancellationToken cancellationToken)
@@ -438,13 +485,27 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     private async ValueTask<bool> DeleteAsync(string id, string partition, string kind, WorkflowEtag expectedEtag, Func<byte[], WorkflowEtag> etagOf, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
-        byte[]? doc = await this.DocumentAsync(id, partition, cancellationToken).ConfigureAwait(false);
-        if (doc is null)
+        WorkflowEtag actual;
+        using (CosmosJson.RentedResponse? payload = await this.ReadResponseAsync(id, partition, cancellationToken).ConfigureAwait(false))
         {
-            return false;
+            if (payload is not { } page)
+            {
+                return false;
+            }
+
+            ReadOnlyMemory<byte> doc = CosmosJson.GetRawValue(page.Memory, DocProperty);
+            if (doc.IsEmpty)
+            {
+                return false;
+            }
+
+            // The concurrency check goes through the shared byte[] etagOf delegate (its signature is unchanged across the
+            // backends), so the doc slice must be materialized as a byte[] here — this array is required by the delegate,
+            // not an incidental allocate-on-read; it is computed and consumed before the live response is returned.
+            actual = etagOf(doc.ToArray());
         }
 
-        SecurityPolicySerialization.EnsureEtag(kind, id, expectedEtag, etagOf(doc));
+        SecurityPolicySerialization.EnsureEtag(kind, id, expectedEtag, actual);
         using ResponseMessage response = await this.container.DeleteItemStreamAsync(id, new PartitionKey(partition), cancellationToken: cancellationToken).ConfigureAwait(false);
         if (response.StatusCode != HttpStatusCode.NotFound)
         {
