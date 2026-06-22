@@ -45,7 +45,7 @@ public sealed class SecurityFilterTests
         await SeedAsync(store, "run-untagged");
 
         var filter = new SecurityFilter([SecurityRule.Compile("tenant == $claim.tenant")], Claims(("tenant", "acme")));
-        WorkflowRunPage page = await management.ListAsync(new WorkflowQuery(Status: null), AccessContext.Uniform(filter), default);
+        using WorkflowRunPage page = await management.ListAsync(new WorkflowQuery(Status: null), AccessContext.Uniform(filter), default);
 
         page.Runs.Select(r => r.Id.Value).ShouldBe(["run-acme"]);
     }
@@ -71,7 +71,7 @@ public sealed class SecurityFilterTests
         await SeedAsync(store, "run-acme", new SecurityTag("tenant", "acme"));
         await SeedAsync(store, "run-globex", new SecurityTag("tenant", "globex"));
 
-        WorkflowRunPage page = await management.ListAsync(new WorkflowQuery(Status: null), AccessContext.System, default);
+        using WorkflowRunPage page = await management.ListAsync(new WorkflowQuery(Status: null), AccessContext.System, default);
 
         page.Runs.Count.ShouldBe(2);
     }
@@ -106,7 +106,7 @@ public sealed class SecurityFilterTests
 
         // A permissive-looking rule still must not surface the unclassified run.
         var filter = new SecurityFilter([SecurityRule.Compile("tenant != 'globex'")], Claims());
-        WorkflowRunPage page = await management.ListAsync(new WorkflowQuery(Status: null), AccessContext.Uniform(filter), default);
+        using WorkflowRunPage page = await management.ListAsync(new WorkflowQuery(Status: null), AccessContext.Uniform(filter), default);
 
         page.Runs.Select(r => r.Id.Value).ShouldBe(["run-acme"]);
     }
@@ -124,7 +124,7 @@ public sealed class SecurityFilterTests
         var filter = new SecurityFilter(
             [SecurityRule.Compile("tenant == $claim.tenant"), SecurityRule.Compile("team == 'payments'")],
             Claims(("tenant", "acme")));
-        WorkflowRunPage page = await management.ListAsync(new WorkflowQuery(Status: null), AccessContext.Uniform(filter), default);
+        using WorkflowRunPage page = await management.ListAsync(new WorkflowQuery(Status: null), AccessContext.Uniform(filter), default);
 
         page.Runs.Select(r => r.Id.Value).ShouldBe(["run-acme-payments"]);
     }

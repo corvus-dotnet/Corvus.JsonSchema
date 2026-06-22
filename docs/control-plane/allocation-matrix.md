@@ -86,7 +86,8 @@ that exists today (a starting point to be re-baselined, **not** evidence of comp
 
 | Op | Call tree | R/W | Current pattern / hotspots | Existing bench | Target pattern + grounding | Status |
 |---|---|---|---|---|---|---|
-| `GET /runs` | ListRuns → ListAsync | R | builds `WorkflowRunSummary` page loop | — | confirm `From()`-wrap projection ([[ctj-handler-response-projection]]) | ⬜ |
+| `GET /runs` | ListRuns → ListAsync | R | builds `WorkflowRunSummary` page loop | — | confirm `From()`-wrap projection ([[ctj-handler-response-projection]]) | ⬜ projection floor genuine |
+| `GET /runs` *(page token + InMemory query)* | ListRuns → `IWorkflowWaitIndex.QueryAsync` | R | `string? ContinuationToken` in (`(string)PageToken`) / `string? ContinuationToken` out (store-minted token string per page); InMemory query is a `Where/OrderBy/Take/Select/ToList` LINQ chain | `WorkflowStateStoreBenchmarks` (Query_Page) | continuation-token **carrier seam**: `JsonString` token in (`From()`), pooled `ReadOnlyMemory<byte>` out via `WorkflowRunPage.Create(...)` (the page becomes a disposable class); decode bytes-native. **Bonus:** InMemory query → capped insertion-sorted top-K buffer (no LINQ) | ✅ **19.93→1.72 KB (−91%, Part D)** |
 | `GET /runs/{id}` | GetRun → GetAsync | R | conditional fault/wait/tags arrays; a `ParseValue` in detail build | — | review projection; kill `ParseValue` (`corvus-typed-model-construction`) | ⬜ |
 | `DELETE /runs/{id}` | DeleteRun → GetAsync ×checks → DeleteAsync | W | 2× GetAsync access checks | — | — | ➖ |
 | `POST /runs/{id}/resume` | ResumeRun → GetAsync ×2 → ResumeAsync | W | builds detail 3×; union `Match()` | — | review repeated detail builds | ⬜ |
@@ -443,6 +444,44 @@ Buffer sizing uses `Encoding.UTF8.GetMaxByteCount(len)` (a multiply, not a scan)
 Verified: full slnx **0/0**; observed conformance **InMemory + Sqlite pass** (token round-tripped through the `JsonString`
 seam, malformed token still rejected); identity API server tests pass. **Row done** (workflow-run is the last carrier
 feature).
+
+### ✅ Continuation-token carrier seam — workflow-run `Query` (+ the InMemory capped-buffer bonus)
+
+The last carrier feature: the run-list keyset token (`WorkflowQuery.ContinuationToken` in ↔ `WorkflowRunPage` out),
+both managed `string`s before. The structurally-different one — `WorkflowRunPage` was a `readonly record struct`, so it
+**became a `sealed class : IDisposable`** to own the pooled token buffer (a record struct owning a rented `byte[]`
+double-returns on value-copy; `CatalogPage` only gets away with it because it owns a class `PooledDocumentList`).
+
+| Element | Before | After |
+|---|---|---|
+| `WorkflowQuery.ContinuationToken` (input) | `string?` (handler did `(string)parameters.PageToken`) | `JsonString` (handler bridges `JsonString.From(parameters.PageToken)`; every store decodes the run-id cursor from `query.ContinuationToken.GetUtf8String().Span`) |
+| `WorkflowRunPage` (output) | `readonly record struct (Runs, string? ContinuationToken)` | `sealed class : IDisposable` — `Runs` + pooled `ReadOnlyMemory<byte> NextPageToken` via `Create(runs[, lastRunId])` |
+| `WorkflowContinuationToken.Paginate` | `new WorkflowRunPage(rows, Encode(...))` | `WorkflowRunPage.Create(rows, rows[^1].Id.Value)` — covers all 9 SQL/NoSQL backends (they delegate to `Paginate`) |
+| handler emit | `(JsonString.Source)page.ContinuationToken` | `(Models.JsonString.Source)page.NextPageToken.Span` (the body `Source` closure runs synchronously inside `Ok` → `CreateBuilder`, copying the span while the `using`-scoped page is alive — the deferred-body rule) |
+| internal `WorkflowManagementClient.PurgeAsync` paging loop | `string? token` round-trip | re-presents `page.NextPageToken` through the `JsonString` seam via a pooled `WrapContinuationToken` (quote+parse) — net-neutral (the store no longer mints a token string; the loop wraps the bytes instead) |
+| 10 state stores | `Decode(query.ContinuationToken)` (string) | bytes-native span decode (InMemory + Sqlite by hand, the other 8 mechanically) |
+
+**Bonus — InMemory query rewrite (the headline).** `InMemoryWorkflowStateStore.QueryAsync` built its page with a
+`Where().OrderBy().Take().Select().ToList()` LINQ chain over the whole entry set — the dominant allocation. Replaced with
+a **capped, insertion-sorted top-K buffer** (one bounded `List<WorkflowRunListing>(Limit+1)`, the in-memory analogue of
+`ORDER BY run-id LIMIT Limit+1`, mirroring the observed-identity InMemory store), eliminating the LINQ iterators +
+closures + the unbounded `OrderBy` buffer.
+
+**Measured (`WorkflowStateStoreBenchmarks.Query_Page`, InMemory, 100 rows, limit 10 → a token-emitting page): 19.93 →
+1.72 KB (−91%).** The carrier conversion removes the per-page token string (the 0-B token helper proof is
+`ContinuationTokenBenchmarks`); the capped buffer removes the LINQ working set (the bulk). The token elimination applies
+to **all 10 backends** (production SQL/NoSQL too), not just InMemory.
+
+Verified: full slnx **0/0**; WorkflowStateStore conformance **InMemory + Sqlite pass** (the paging round-trip through the
+`JsonString` seam, ascending-id order preserved); the runs API server tests, `WorkflowManagementClientTests` (list +
+purge), the trigger/worker tests all pass. **Row done.**
+
+### ⬜ Remaining — catalog-search continuation token (the last string-token seam)
+
+`CatalogQuery.ContinuationToken` / `CatalogPage.ContinuationToken` share the same `WorkflowContinuationToken` helper and
+are **still `string`** (the catalog *projection* row is done; its *search paging* token was never converted). `CatalogPage`
+is already `IDisposable`, so it is the easier shape (pooled-token `Create()` factory + `JsonString` query token), the same
+pattern as the three completed carrier features. The next carrier row.
 
 ## Cross-references
 
