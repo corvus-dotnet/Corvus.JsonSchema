@@ -58,9 +58,15 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
 
         try
         {
-            using ParsedJsonDocument<SecurityRuleDocument> created = await this.store.AddRuleAsync(name, SecurityRuleDocument.From(body), this.actor, cancellationToken).ConfigureAwait(false);
+            ParsedJsonDocument<SecurityRuleDocument> created = await this.store.AddRuleAsync(name, SecurityRuleDocument.From(body), this.actor, cancellationToken).ConfigureAwait(false);
+
+            // The summary is a zero-copy view over the rule document (a congruent projection — identical property
+            // names/types/required set), so hand the pooled document to the workspace (it disposes it after the
+            // response is written) and wrap with From() (a pointer reinterpret). Ownership transfers before
+            // RefreshAsync so a refresh failure cannot leak the document.
+            workspace.TakeOwnership(created);
             await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
-            return CreateSecurityRuleResult.Created(ToRuleSource(created.RootElement), workspace);
+            return CreateSecurityRuleResult.Created(Models.SecurityRuleSummary.From(created.RootElement), workspace);
         }
         catch (InvalidOperationException)
         {
@@ -73,10 +79,16 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     public async ValueTask<GetSecurityRuleResult> HandleGetSecurityRuleAsync(GetSecurityRuleParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string name = (string)parameters.RuleName;
-        using ParsedJsonDocument<SecurityRuleDocument>? rule = await this.store.GetRuleAsync(name, cancellationToken).ConfigureAwait(false);
-        return rule is { } r
-            ? GetSecurityRuleResult.Ok(ToRuleSource(r.RootElement), workspace)
-            : GetSecurityRuleResult.NotFound(NotFoundProblem("rule", name), workspace);
+        ParsedJsonDocument<SecurityRuleDocument>? rule = await this.store.GetRuleAsync(name, cancellationToken).ConfigureAwait(false);
+        if (rule is not { } r)
+        {
+            return GetSecurityRuleResult.NotFound(NotFoundProblem("rule", name), workspace);
+        }
+
+        // Zero-copy view over the pooled rule document handed to the workspace (it disposes it after the response is
+        // written); From() reinterprets the stored element (congruent projection) and serializes its backing verbatim.
+        workspace.TakeOwnership(r);
+        return GetSecurityRuleResult.Ok(Models.SecurityRuleSummary.From(r.RootElement), workspace);
     }
 
     /// <inheritdoc/>
@@ -90,14 +102,17 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             return UpdateSecurityRuleResult.BadRequest(problem, workspace);
         }
 
-        using ParsedJsonDocument<SecurityRuleDocument>? updated = await this.store.UpdateRuleAsync(name, SecurityRuleDocument.From(body), WorkflowEtag.None, this.actor, cancellationToken).ConfigureAwait(false);
+        ParsedJsonDocument<SecurityRuleDocument>? updated = await this.store.UpdateRuleAsync(name, SecurityRuleDocument.From(body), WorkflowEtag.None, this.actor, cancellationToken).ConfigureAwait(false);
         if (updated is not { } r)
         {
             return UpdateSecurityRuleResult.NotFound(NotFoundProblem("rule", name), workspace);
         }
 
+        // Zero-copy view over the pooled rule document handed to the workspace; ownership transfers before RefreshAsync
+        // so a refresh failure cannot leak the document.
+        workspace.TakeOwnership(r);
         await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
-        return UpdateSecurityRuleResult.Ok(ToRuleSource(r.RootElement), workspace);
+        return UpdateSecurityRuleResult.Ok(Models.SecurityRuleSummary.From(r.RootElement), workspace);
     }
 
     /// <inheritdoc/>
