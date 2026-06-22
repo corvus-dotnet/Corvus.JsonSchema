@@ -124,7 +124,7 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
     {
         ArgumentNullException.ThrowIfNull(name);
         byte[]? doc = await DocumentAsync(this.rules, RulePartition, Enc(name), cancellationToken).ConfigureAwait(false);
-        return doc is null ? null : PersistedJson.ToPooledDocument<SecurityRuleDocument>(doc);
+        return doc is null ? null : ParsedJsonDocument<SecurityRuleDocument>.Parse(doc.AsMemory());
     }
 
     /// <inheritdoc/>
@@ -143,7 +143,8 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
         }
 
         WorkflowEtag etag = NewEtag();
-        byte[] json = SecurityPolicySerialization.SerializeUpdatedRule(doc, "rule", name, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), etag);
+        using ParsedJsonDocument<SecurityRuleDocument> current = ParsedJsonDocument<SecurityRuleDocument>.Parse(doc.AsMemory());
+        byte[] json = SecurityPolicySerialization.SerializeUpdatedRule(current.RootElement, "rule", name, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), etag);
         var entity = new TableEntity(RulePartition, Enc(name)) { ["Doc"] = json };
         await this.rules.UpsertEntityAsync(entity, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
@@ -154,7 +155,7 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
     public ValueTask<bool> DeleteRuleAsync(string name, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
         => this.DeleteAsync(this.rules, RulePartition, "rule", name, expectedEtag, static doc =>
         {
-            using ParsedJsonDocument<SecurityRuleDocument> parsed = PersistedJson.ToPooledDocument<SecurityRuleDocument>(doc);
+            using ParsedJsonDocument<SecurityRuleDocument> parsed = ParsedJsonDocument<SecurityRuleDocument>.Parse(doc.AsMemory());
             return parsed.RootElement.EtagValue;
         }, cancellationToken);
 
@@ -176,7 +177,7 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
     {
         ArgumentNullException.ThrowIfNull(id);
         byte[]? doc = await DocumentAsync(this.bindings, BindingPartition, Enc(id), cancellationToken).ConfigureAwait(false);
-        return doc is null ? null : PersistedJson.ToPooledDocument<SecurityBindingDocument>(doc);
+        return doc is null ? null : ParsedJsonDocument<SecurityBindingDocument>.Parse(doc.AsMemory());
     }
 
     /// <inheritdoc/>
@@ -195,7 +196,8 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
         }
 
         WorkflowEtag etag = NewEtag();
-        byte[] json = SecurityPolicySerialization.SerializeUpdatedBinding(doc, "binding", id, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), etag);
+        using ParsedJsonDocument<SecurityBindingDocument> current = ParsedJsonDocument<SecurityBindingDocument>.Parse(doc.AsMemory());
+        byte[] json = SecurityPolicySerialization.SerializeUpdatedBinding(current.RootElement, "binding", id, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), etag);
         var entity = new TableEntity(BindingPartition, Enc(id)) { ["Doc"] = json };
         await this.bindings.UpsertEntityAsync(entity, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
@@ -206,7 +208,7 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
     public ValueTask<bool> DeleteBindingAsync(string id, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
         => this.DeleteAsync(this.bindings, BindingPartition, "binding", id, expectedEtag, static doc =>
         {
-            using ParsedJsonDocument<SecurityBindingDocument> parsed = PersistedJson.ToPooledDocument<SecurityBindingDocument>(doc);
+            using ParsedJsonDocument<SecurityBindingDocument> parsed = ParsedJsonDocument<SecurityBindingDocument>.Parse(doc.AsMemory());
             return parsed.RootElement.EtagValue;
         }, cancellationToken);
 
@@ -238,7 +240,7 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
         {
             if (entity.GetBinary("Doc") is { } bytes)
             {
-                list.Add(PersistedJson.ToPooledDocument<SecurityRuleDocument>(bytes));
+                list.Add(ParsedJsonDocument<SecurityRuleDocument>.Parse(bytes.AsMemory()));
             }
         }
 
@@ -253,7 +255,7 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
         {
             if (entity.GetBinary("Doc") is { } bytes)
             {
-                list.Add(PersistedJson.ToPooledDocument<SecurityBindingDocument>(bytes));
+                list.Add(ParsedJsonDocument<SecurityBindingDocument>.Parse(bytes.AsMemory()));
             }
         }
 

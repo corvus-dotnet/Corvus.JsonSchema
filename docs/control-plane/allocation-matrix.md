@@ -60,8 +60,8 @@ only at the genuine leaf — [[no-handrolled-records-use-codegen-jsonschema]],
 | Store write method | Persisted doc | Serialization helper | Current seam shape | Status |
 |---|---|---|---|---|
 | `IObservedIdentityStore.SeenAsync` | `ObservedIdentity` | `ObservedIdentitySerialization` | `params` (CTJ kind + JsonString value/label + SecurityTagSet) — seam bytes-native; the **write document** is realized into a pooled buffer (`SerializeXPooled → PooledUtf8`) and bound memory/stream where the driver supports it, owned `byte[]` only where it requires an array | ✅ **write 376→56 B (−85%); 10 backends container-verified (Part D)** |
-| `ISecurityPolicyStore.Add/UpdateRule` | `SecurityRuleDocument` | `SecurityPolicySerialization` | `draft` | ⬜ |
-| `ISecurityPolicyStore.Add/UpdateBinding` | `SecurityBindingDocument` | `SecurityPolicySerialization` | `draft` | ⬜ |
+| `ISecurityPolicyStore.Add/UpdateRule` | `SecurityRuleDocument` | `SecurityPolicySerialization` | `draft` — write serialized once into the pooled buffer the **returned** document owns (`SerializeXDoc → ParsedJsonDocument`), bound memory/stream via `JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory`; update merge takes the **parsed model** (`in SecurityRuleDocument`), parsed non-copying at each leaf | ✅ **write-realization + allocate-on-read; 10 backends conformance-green (Part D)** |
+| `ISecurityPolicyStore.Add/UpdateBinding` | `SecurityBindingDocument` | `SecurityPolicySerialization` | `draft` — same as rule (owned-doc write + non-copying parsed-model update) | ✅ **Part D** |
 | `IAccessRequestStore.CreateAsync` | `AccessRequest` | `AccessRequestSerialization` | `draft` | ⬜ |
 | `IAccessRequestStore.DecideAsync` | `AccessRequest` | `AccessRequestSerialization` | `record` (`AccessRequestDecision`) | ⬜ |
 | `ISourceCredentialStore.Add/UpdateAsync` | `SourceCredentialBinding` | `SourceCredentialSerialization` | `draft` (seam carries the generated doc; `SourceCredentialDefinition` retained only as the cold-caller convenience input via `Draft(definition)` + extension) | ✅ (Part D) |
@@ -553,6 +553,33 @@ so each backend reads+parses at its leaf the leanest way, and the merge reads it
 - **Verified against real containers** (podman socket): all 10 `IObservedIdentityStore` conformance suites green
   (Postgres / MySql / Redis / Mongo / NATS / AzureStorage / SqlServer / Cosmos 7/7, InMemory + Sqlite in-process 7/7).
   **Row done.** The same parse-non-copying-at-the-leaf read shape rolls out to the other stores' read paths next.
+
+### ✅ Security store — write-realization + allocate-on-read (`ISecurityPolicyStore`, rule + binding)
+
+The ObservedIdentity treatment applied to the security store, where the write document is **both persisted and returned** to
+the caller (the store returns the persisted `ParsedJsonDocument`). One pooled buffer now does both jobs.
+
+- **Write-realization (memory/stream backends — SqlServer/Postgres/MySql/Redis).** New `SecurityPolicySerialization.
+  Serialize{New,Updated}{Rule,Binding}Doc(...) → ParsedJsonDocument<T>` serialize once into the pooled buffer the
+  **returned** document owns; the store binds those exact bytes via `JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory`
+  (`Corvus.Runtime.InteropServices.JsonMarshal` — no `out` plumbing, no public raw accessor needed) and returns the same
+  document (disposing it only on a write failure). Eliminates the standalone GC document array the old `SerializeNewRule →
+  byte[]` + `ToPooledDocument(json)` minted **in addition** to the returned doc. byte[]-leaf backends (Mongo/NATS/Azure/
+  Sqlite/InMemory) keep the `byte[]` write (the driver needs an exact array; InMemory's dict is canonical).
+- **Allocate-on-read (all backends).** `SerializeUpdated{Rule,Binding}` now take the existing record as the **parsed model**
+  (`in SecurityRuleDocument` / `in SecurityBindingDocument`); each backend parses the stored bytes **non-copying** at its
+  leaf (`ParsedJsonDocument<T>.Parse(driverArray.AsMemory())`) instead of the old `ToPooledDocument` re-copy. Projection
+  reads (Get/List/Snapshot) likewise parse non-copying over the driver's array. Cosmos reads off the **live** pooled query
+  response (its `DocumentAsync` → `ReadResponseAsync`, dropping a `.ToArray()`); Redis reads a pooled `Lease<byte>`.
+  `RuleEtagOf`/`BindingEtagOf` keep their `byte[]` signature (a `Func<byte[],WorkflowEtag>` delete delegate) but parse
+  non-copying internally.
+- **Measured** (`SecurityRuleStoreBenchmarks`, in-process): `Update_FromRequest` **1086 → 1088 B** (flat — the InMemory
+  reference's dict array is canonical and the read re-copy was `ArrayPool`, not GC, so MemoryDiagnoser is rightly flat, as
+  for the ObservedIdentity read row). The write-realization shows at the serializer: `Serialize_NewRule_ToArray` **552 B**
+  (GC array) vs `Serialize_NewRule_Doc` **512 B** (the owning pooled document the store returns — its buffer pooled, no
+  standalone array). The memory/stream backends' end-to-end GC win (array eliminated) is container-side, not in-process.
+- **Verified against real containers** (podman socket): all 10 `ISecurityPolicyStore` conformance suites green
+  (Postgres/MySql/Redis/Mongo/NATS/AzureStorage/SqlServer/Cosmos 7/7, InMemory 9/9 + Sqlite 7/7 in-process). **Row done.**
 
 ## Cross-references
 

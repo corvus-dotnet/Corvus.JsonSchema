@@ -107,7 +107,7 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         try
         {
             byte[]? doc = await this.DocumentAsync("SecurityRules", "Name", name, cancellationToken).ConfigureAwait(false);
-            return doc is null ? null : PersistedJson.ToPooledDocument<SecurityRuleDocument>(doc);
+            return doc is null ? null : ParsedJsonDocument<SecurityRuleDocument>.Parse(doc.AsMemory());
         }
         finally
         {
@@ -144,7 +144,8 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
             }
 
             WorkflowEtag etag = NewEtag();
-            byte[] json = SecurityPolicySerialization.SerializeUpdatedRule(doc, "rule", name, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), etag);
+            using ParsedJsonDocument<SecurityRuleDocument> current = ParsedJsonDocument<SecurityRuleDocument>.Parse(doc.AsMemory());
+            byte[] json = SecurityPolicySerialization.SerializeUpdatedRule(current.RootElement, "rule", name, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), etag);
             using SqliteCommand update = this.connection.CreateCommand();
             update.CommandText = "UPDATE SecurityRules SET Etag = @etag, Document = @doc WHERE Name = @k;";
             update.Parameters.AddWithValue("@etag", etag.Value!);
@@ -198,7 +199,7 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         try
         {
             byte[]? doc = await this.DocumentAsync("SecurityBindings", "Id", id, cancellationToken).ConfigureAwait(false);
-            return doc is null ? null : PersistedJson.ToPooledDocument<SecurityBindingDocument>(doc);
+            return doc is null ? null : ParsedJsonDocument<SecurityBindingDocument>.Parse(doc.AsMemory());
         }
         finally
         {
@@ -235,7 +236,8 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
             }
 
             WorkflowEtag etag = NewEtag();
-            byte[] json = SecurityPolicySerialization.SerializeUpdatedBinding(doc, "binding", id, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), etag);
+            using ParsedJsonDocument<SecurityBindingDocument> current = ParsedJsonDocument<SecurityBindingDocument>.Parse(doc.AsMemory());
+            byte[] json = SecurityPolicySerialization.SerializeUpdatedBinding(current.RootElement, "binding", id, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), etag);
             using SqliteCommand update = this.connection.CreateCommand();
             update.CommandText = "UPDATE SecurityBindings SET SortOrder = @order, Etag = @etag, Document = @doc WHERE Id = @k;";
             update.Parameters.AddWithValue("@order", draft.OrderValue);
@@ -301,7 +303,7 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         using SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
-            list.Add(PersistedJson.ToPooledDocument<SecurityRuleDocument>(reader.GetFieldValue<byte[]>(0)));
+            list.Add(ParsedJsonDocument<SecurityRuleDocument>.Parse(reader.GetFieldValue<byte[]>(0).AsMemory()));
         }
 
         return list;
@@ -315,7 +317,7 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         using SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
-            list.Add(PersistedJson.ToPooledDocument<SecurityBindingDocument>(reader.GetFieldValue<byte[]>(0)));
+            list.Add(ParsedJsonDocument<SecurityBindingDocument>.Parse(reader.GetFieldValue<byte[]>(0).AsMemory()));
         }
 
         return list;

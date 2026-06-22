@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Globalization;
+using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using StackExchange.Redis;
@@ -85,15 +86,28 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         ArgumentException.ThrowIfNullOrEmpty(name);
         ArgumentNullException.ThrowIfNull(actor);
         WorkflowEtag etag = NewEtag();
-        byte[] json = SecurityPolicySerialization.SerializeNewRule(name, draft, actor, this.timeProvider.GetUtcNow(), etag);
-        if (!await this.database.StringSetAsync(RulePrefix + name, json, when: When.NotExists).ConfigureAwait(false))
-        {
-            throw new InvalidOperationException($"A security rule named '{name}' already exists.");
-        }
 
-        await this.database.SetAddAsync(RuleIndexKey, name).ConfigureAwait(false);
-        await this.BumpGenerationAsync().ConfigureAwait(false);
-        return PersistedJson.ToPooledDocument<SecurityRuleDocument>(json);
+        // Serialize once into the pooled buffer the returned document owns; bind its exact bytes as the RedisValue (a
+        // ReadOnlyMemory<byte> carries the precise length, so there is no GC document array and no second copy). The
+        // document is returned on success, disposed on failure.
+        ParsedJsonDocument<SecurityRuleDocument> doc = SecurityPolicySerialization.SerializeNewRuleDoc(name, draft, actor, this.timeProvider.GetUtcNow(), etag);
+        try
+        {
+            ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory;
+            if (!await this.database.StringSetAsync(RulePrefix + name, utf8, when: When.NotExists).ConfigureAwait(false))
+            {
+                throw new InvalidOperationException($"A security rule named '{name}' already exists.");
+            }
+
+            await this.database.SetAddAsync(RuleIndexKey, name).ConfigureAwait(false);
+            await this.BumpGenerationAsync().ConfigureAwait(false);
+            return doc;
+        }
+        catch
+        {
+            doc.Dispose();
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -101,8 +115,11 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     {
         ArgumentNullException.ThrowIfNull(name);
         cancellationToken.ThrowIfCancellationRequested();
-        RedisValue value = await this.database.StringGetAsync(RulePrefix + name).ConfigureAwait(false);
-        return value.IsNullOrEmpty ? null : PersistedJson.ToPooledDocument<SecurityRuleDocument>((byte[])value!);
+
+        // Read into a pooled lease (no GC read array); the returned document must own its buffer, so copy the lease span
+        // into an owned pooled document — the lease returns to the pool here.
+        using Lease<byte>? lease = await this.database.StringGetLeaseAsync(RulePrefix + name).ConfigureAwait(false);
+        return lease is { Length: > 0 } ? PersistedJson.ToPooledDocument<SecurityRuleDocument>(lease.Span) : null;
     }
 
     /// <inheritdoc/>
@@ -117,17 +134,33 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     {
         ArgumentNullException.ThrowIfNull(name);
         ArgumentNullException.ThrowIfNull(actor);
-        RedisValue value = await this.database.StringGetAsync(RulePrefix + name).ConfigureAwait(false);
-        if (value.IsNullOrEmpty)
+
+        // Read the existing document into a pooled lease (no GC read array) and parse it NON-COPYING over the lease (the
+        // lease stays alive through the synchronous etag check + merge).
+        using Lease<byte>? lease = await this.database.StringGetLeaseAsync(RulePrefix + name).ConfigureAwait(false);
+        if (lease is not { Length: > 0 })
         {
             return null;
         }
 
         WorkflowEtag etag = NewEtag();
-        byte[] json = SecurityPolicySerialization.SerializeUpdatedRule((byte[])value!, "rule", name, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), etag);
-        await this.database.StringSetAsync(RulePrefix + name, json).ConfigureAwait(false);
-        await this.BumpGenerationAsync().ConfigureAwait(false);
-        return PersistedJson.ToPooledDocument<SecurityRuleDocument>(json);
+        using ParsedJsonDocument<SecurityRuleDocument> current = ParsedJsonDocument<SecurityRuleDocument>.Parse(lease.Memory);
+
+        // Serialize the merged result into the pooled buffer the returned document owns and bind its exact bytes (no GC
+        // array, no second copy); return on success, dispose on a write failure.
+        ParsedJsonDocument<SecurityRuleDocument> updated = SecurityPolicySerialization.SerializeUpdatedRuleDoc(current.RootElement, "rule", name, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), etag);
+        try
+        {
+            ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(updated.RootElement).Memory;
+            await this.database.StringSetAsync(RulePrefix + name, utf8).ConfigureAwait(false);
+            await this.BumpGenerationAsync().ConfigureAwait(false);
+            return updated;
+        }
+        catch
+        {
+            updated.Dispose();
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -140,11 +173,23 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         ArgumentNullException.ThrowIfNull(actor);
         string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
         WorkflowEtag etag = NewEtag();
-        byte[] json = SecurityPolicySerialization.SerializeNewBinding(id, draft, actor, this.timeProvider.GetUtcNow(), etag);
-        await this.database.StringSetAsync(BindingPrefix + id, json).ConfigureAwait(false);
-        await this.database.SetAddAsync(BindingIndexKey, id).ConfigureAwait(false);
-        await this.BumpGenerationAsync().ConfigureAwait(false);
-        return PersistedJson.ToPooledDocument<SecurityBindingDocument>(json);
+
+        // Serialize once into the pooled buffer the returned document owns; bind its exact bytes as the RedisValue (no GC
+        // document array, no second copy). The document is returned on success, disposed on failure.
+        ParsedJsonDocument<SecurityBindingDocument> doc = SecurityPolicySerialization.SerializeNewBindingDoc(id, draft, actor, this.timeProvider.GetUtcNow(), etag);
+        try
+        {
+            ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory;
+            await this.database.StringSetAsync(BindingPrefix + id, utf8).ConfigureAwait(false);
+            await this.database.SetAddAsync(BindingIndexKey, id).ConfigureAwait(false);
+            await this.BumpGenerationAsync().ConfigureAwait(false);
+            return doc;
+        }
+        catch
+        {
+            doc.Dispose();
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -152,8 +197,11 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     {
         ArgumentNullException.ThrowIfNull(id);
         cancellationToken.ThrowIfCancellationRequested();
-        RedisValue value = await this.database.StringGetAsync(BindingPrefix + id).ConfigureAwait(false);
-        return value.IsNullOrEmpty ? null : PersistedJson.ToPooledDocument<SecurityBindingDocument>((byte[])value!);
+
+        // Read into a pooled lease (no GC read array); the returned document must own its buffer, so copy the lease span
+        // into an owned pooled document — the lease returns to the pool here.
+        using Lease<byte>? lease = await this.database.StringGetLeaseAsync(BindingPrefix + id).ConfigureAwait(false);
+        return lease is { Length: > 0 } ? PersistedJson.ToPooledDocument<SecurityBindingDocument>(lease.Span) : null;
     }
 
     /// <inheritdoc/>
@@ -168,17 +216,33 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     {
         ArgumentNullException.ThrowIfNull(id);
         ArgumentNullException.ThrowIfNull(actor);
-        RedisValue value = await this.database.StringGetAsync(BindingPrefix + id).ConfigureAwait(false);
-        if (value.IsNullOrEmpty)
+
+        // Read the existing document into a pooled lease (no GC read array) and parse it NON-COPYING over the lease (the
+        // lease stays alive through the synchronous etag check + merge).
+        using Lease<byte>? lease = await this.database.StringGetLeaseAsync(BindingPrefix + id).ConfigureAwait(false);
+        if (lease is not { Length: > 0 })
         {
             return null;
         }
 
         WorkflowEtag etag = NewEtag();
-        byte[] json = SecurityPolicySerialization.SerializeUpdatedBinding((byte[])value!, "binding", id, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), etag);
-        await this.database.StringSetAsync(BindingPrefix + id, json).ConfigureAwait(false);
-        await this.BumpGenerationAsync().ConfigureAwait(false);
-        return PersistedJson.ToPooledDocument<SecurityBindingDocument>(json);
+        using ParsedJsonDocument<SecurityBindingDocument> current = ParsedJsonDocument<SecurityBindingDocument>.Parse(lease.Memory);
+
+        // Serialize the merged result into the pooled buffer the returned document owns and bind its exact bytes (no GC
+        // array, no second copy); return on success, dispose on a write failure.
+        ParsedJsonDocument<SecurityBindingDocument> updated = SecurityPolicySerialization.SerializeUpdatedBindingDoc(current.RootElement, "binding", id, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), etag);
+        try
+        {
+            ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(updated.RootElement).Memory;
+            await this.database.StringSetAsync(BindingPrefix + id, utf8).ConfigureAwait(false);
+            await this.BumpGenerationAsync().ConfigureAwait(false);
+            return updated;
+        }
+        catch
+        {
+            updated.Dispose();
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -211,10 +275,12 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         var list = new PooledDocumentList<SecurityRuleDocument>();
         foreach (RedisValue member in await this.database.SetMembersAsync(RuleIndexKey).ConfigureAwait(false))
         {
-            RedisValue value = await this.database.StringGetAsync(RulePrefix + (string)member!).ConfigureAwait(false);
-            if (!value.IsNullOrEmpty)
+            // Read each candidate into a pooled lease (no GC read array); a list document must own its buffer, so copy the
+            // lease span into an owned pooled document — the lease returns to the pool here.
+            using Lease<byte>? lease = await this.database.StringGetLeaseAsync(RulePrefix + (string)member!).ConfigureAwait(false);
+            if (lease is { Length: > 0 })
             {
-                list.Add(PersistedJson.ToPooledDocument<SecurityRuleDocument>((byte[])value!));
+                list.Add(PersistedJson.ToPooledDocument<SecurityRuleDocument>(lease.Span));
             }
         }
 
@@ -227,10 +293,12 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         var list = new PooledDocumentList<SecurityBindingDocument>();
         foreach (RedisValue member in await this.database.SetMembersAsync(BindingIndexKey).ConfigureAwait(false))
         {
-            RedisValue value = await this.database.StringGetAsync(BindingPrefix + (string)member!).ConfigureAwait(false);
-            if (!value.IsNullOrEmpty)
+            // Read each candidate into a pooled lease (no GC read array); a list document must own its buffer, so copy the
+            // lease span into an owned pooled document — the lease returns to the pool here.
+            using Lease<byte>? lease = await this.database.StringGetLeaseAsync(BindingPrefix + (string)member!).ConfigureAwait(false);
+            if (lease is { Length: > 0 })
             {
-                list.Add(PersistedJson.ToPooledDocument<SecurityBindingDocument>((byte[])value!));
+                list.Add(PersistedJson.ToPooledDocument<SecurityBindingDocument>(lease.Span));
             }
         }
 
