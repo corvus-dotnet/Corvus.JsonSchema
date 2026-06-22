@@ -151,10 +151,10 @@ that exists today (a starting point to be re-baselined, **not** evidence of comp
 
 | Op | Call tree | R/W | Current pattern | Existing bench | Target | Status |
 |---|---|---|---|---|---|---|
-| `GET /security/rules` | ListRules → ListRulesAsync | R | `ToRuleSource` per rule | — | confirm projection | ⬜ **FIX #2** — `ToRuleSource` field-copy → `Models.SecurityRuleSummary.From(r)` whole-doc wrap (byte-identical schema); Part D audit |
-| `POST /security/rules` | CreateRule → **AddRuleAsync** | W | `SecurityRule.Compile` validation; draft | `SecurityRuleStoreBenchmarks` (has baseline arm) | re-baseline e2e; confirm draft is minimal | ✅ write-seam genuine (draft); response shares **FIX #2** (`ToRuleSource`); Part D audit |
-| `GET /security/rules/{n}` | GetRule → GetRuleAsync | R | `ToRuleSource` | — | confirm | ⬜ **FIX #2** — shares `ToRuleSource`; Part D audit |
-| `PUT /security/rules/{n}` | UpdateRule → **UpdateRuleAsync** | W | draft | `SecurityRuleStoreBenchmarks` (has baseline arm) | re-baseline e2e | ✅ write-seam genuine (draft); response shares **FIX #2** (`ToRuleSource`); Part D audit |
+| `GET /security/rules` | ListRules → ListRulesAsync | R | `ToRuleSource` per rule | — | confirm projection | ✅ genuine — list items reference a pooled batch freed before serialize, so `ToRuleSource` materialization is required ([[ctj-handler-response-projection]]); FIX #2 (Part D) |
+| `POST /security/rules` | CreateRule → **AddRuleAsync** | W | `SecurityRule.Compile` validation; draft | `SecurityRuleStoreBenchmarks` (has baseline arm) | re-baseline e2e; confirm draft is minimal | ✅ write-seam genuine (draft); response now `SecurityRuleSummary.From()` zero-copy wrap (FIX #2, Part D) |
+| `GET /security/rules/{n}` | GetRule → GetRuleAsync | R | `ToRuleSource` | — | confirm | ✅ response now `SecurityRuleSummary.From()` zero-copy wrap (FIX #2, Part D) |
+| `PUT /security/rules/{n}` | UpdateRule → **UpdateRuleAsync** | W | draft | `SecurityRuleStoreBenchmarks` (has baseline arm) | re-baseline e2e | ✅ write-seam genuine (draft); response now `SecurityRuleSummary.From()` zero-copy wrap (FIX #2, Part D) |
 | `DELETE /security/rules/{n}` | DeleteRule → DeleteRuleAsync | W | direct | — | — | ➖ |
 | `GET /security/bindings` | ListBindings → ListBindingsAsync | R | `ToBindingSource` per binding | `RowSecurityResolveBenchmarks` (resolve) | confirm projection | ⬜ **FIX #3** — keep builder (must not leak scopes/expiresAt/eligibleOnly) but carry verbs via `Models.VerbGrant.From(.Read/.Write/.Purge)`; Part D audit |
 | `POST /security/bindings` | CreateBinding → **AddBindingAsync** | W | `ReadBinding` → `List<string>` rule names; `Draft()` | `SecurityBindingStoreBenchmarks` (no baseline arm) | add baseline arm; measure | ⬜ **FIX #4** — `ReadBinding`→`List<string>` → `SecurityBindingDocument.From(Body)` (rule-name array bytes-to-bytes); store `BuildNew` defaults missing verbs to `None`; Part D audit |
@@ -703,9 +703,12 @@ seam** still to convert. Verdict: **29 genuine, 6 fixes, 2 sub-floor caveats.** 
    identity trap ([[v5-no-base-jsonstring-per-root-identity]]) means durability `JsonString` ≠ Server
    `Models.JsonString`. Fix = a `ReadOnlySpan<byte>` bytes bridge (`GetUtf8String().Span`), same shape as the
    credentials `ToSummary` write-side bridge already used.
-2. **Security `ToRuleSource`** (`GET /security/rules`, `GET /security/rules/{n}`; also the `POST`/`PUT` rule
-   **response** projection). The summary schema is byte-identical to the stored rule, so this is a whole-doc
-   `Models.SecurityRuleSummary.From(r)` wrap — eliminates the per-rule field copy.
+2. **Security `ToRuleSource`** (`GET /security/rules/{n}`; also the `POST`/`PUT` rule **response** projection). The
+   summary schema is byte-identical to the stored rule, so this is a whole-doc `Models.SecurityRuleSummary.From(r)` wrap —
+   eliminates the per-rule field copy. **DONE — see ✅ FIX #2 (Part D).** *Refinement found during implementation:* the
+   `GET /security/rules` **list** cannot use `From()` (its items reference a pooled batch freed before the array
+   serialises), so only the three single-document responses were convertible; the list row is a genuine materialisation
+   floor (re-classified ✅ genuine, not a fix).
 3. **Security `ToBindingSource`** (`GET /security/bindings`, `GET /security/bindings/{id}`). Keep the builder
    (the stored binding carries `scopes`/`expiresAt`/`eligibleOnly` the open summary must **not** leak), but
    carry the verb grants via `Models.VerbGrant.From(binding.Read/.Write/.Purge)` instead of rebuilding them.
@@ -730,6 +733,33 @@ seam** still to convert. Verdict: **29 genuine, 6 fixes, 2 sub-floor caveats.** 
   (the scope description has no bytes-to-bytes JSON inverse — it is computed prose), so there is nothing to
   carry; recorded as a known floor, not a convertible seam. [[frequency-is-not-a-licence]] respected: this is
   a *shape* verdict (no inverse exists), not a frequency excuse.
+
+### ✅ FIX #2 — Security `ToRuleSource` → `From()` (single-document rule responses)
+
+The first Part B fix. `ToRuleSource` rebuilt a `SecurityRuleSummary` field-by-field (name, expression, description,
+createdBy, createdAt, lastUpdatedBy, lastUpdatedAt, etag), realising a managed value per scalar into the result-builder
+arena. The summary is a **congruent** projection of the stored rule — schemas verified identical property names/types and
+the same required set (`name`, `expression`, `createdBy`, `createdAt`, `etag`); the summary is merely more permissive on
+`additionalProperties` — so a valid stored rule is automatically valid as a summary and the projection collapses to a
+`Models.SecurityRuleSummary.From(doc)` pointer-reinterpret (the cross-assembly `From<T>` bridge; `SecurityRuleDocument`
+*is* a Corvus.Text.Json value — [[v5-no-base-jsonstring-per-root-identity]]). The catalog handler's
+`CatalogVersionSummary.From` + `workspace.TakeOwnership` is the template.
+
+- **Scope — single-document responses only.** `GET /security/rules/{name}`, the `POST /security/rules` response, and the
+  `PUT /security/rules/{name}` response now wrap the stored element with `From()` and hand the pooled
+  `ParsedJsonDocument<SecurityRuleDocument>` to the workspace (`TakeOwnership`) so it lives until the response is written
+  (the `using` dispose-at-method-exit is gone; for Create/Update ownership transfers **before** `RefreshAsync` so a refresh
+  failure cannot leak the document).
+- **`GET /security/rules` (the list) stays materialised — and that floor is genuine, not a missed fix.** Its items come
+  from a `PooledDocumentList` disposed when the handler returns, so a `From()` wrap (a reference into the pooled buffers)
+  would be read after free when the array serialises ([[ctj-handler-response-projection]]). `ToRuleSource` is retained for
+  exactly this path.
+- **Measured** (`SecurityRuleSummaryProjectionBenchmarks`, projection in isolation, ShortRun/MemoryDiagnoser, same run; a
+  fully-populated rule = all 8 fields). `Materialize_fieldByField` (baseline — field-copy) **264 B / 1399.6 ns** →
+  `ElementWrap_From` **0 B / 518.9 ns** (−264 B, **−100%**; ~2.7× faster). 264 B is a conservative lower bound — the real
+  handler also ran the generated result builder on top of the field-copy.
+- **Verified.** `ControlPlaneSecurityApiTests` (handler response-body assertions) green; Sqlite `SecurityPolicyStore`
+  conformance 7/7; slnx build **0 Warning(s), 0 Error(s)**. **Row done.**
 
 ## Cross-references
 
