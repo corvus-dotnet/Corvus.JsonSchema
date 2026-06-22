@@ -115,6 +115,12 @@ A response body's `Source` is **not** consumed when the handler returns — it i
 
 A primitive value written via `b.Create(prop: value)` is copied into the response document during the build — safe for a transient *only if* the build is synchronous and the value is alive throughout it, which the disposable-carrier pattern guarantees.
 
+**Scalar-copied vs `From`-wrapped (the precise rule).** `ResultType.Ok(body, workspace)` runs the body `Source` closure **synchronously** inside `CreateBuilder(workspace, body).RootElement`, so a `using`-scoped carrier is still alive when the closure runs. Within that closure two things behave differently at serialization time:
+- A **scalar** written via `b.Create(token: (JsonString.Source)page.NextPageToken.Span)` is **copied** into the response document during `CreateBuilder` → the carrier's pooled buffer can be disposed right after `Ok` returns (read `.Span` *inside* the closure, never as a captured `Span` local). This is why the page can be `using`-scoped.
+- A **`From(externalDoc)`-wrapped sub-document** (e.g. `CatalogVersionSummary.From(version)` over a pooled store doc) is **referenced**, not copied → it is re-read at post-handler serialization, so its backing must be handed over with `PooledDocumentList<T>.TransferOwnershipTo(workspace)`. A page can do **both**: `TransferOwnershipTo` its wrapped documents *and* `using`-dispose itself to return the pooled token buffer (the token was already copied).
+
+**A carrier that owns a pooled buffer must be a `sealed class : IDisposable`, never a `readonly record struct`.** A record struct is copy-by-value, so two copies share one rented `byte[]` and `Dispose` double-returns it (pool corruption). A record struct may own a `PooledDocumentList` (a class — idempotent dispose) and get away with it, but the moment it also owns a rented buffer, convert it to a class (mirror `SourceCredentialPage`/`ObservedIdentityPage`; `WorkflowRunPage`/`CatalogPage` were converted from record structs for exactly this).
+
 ## Zero-Copy Cross-Namespace Values: From\<T\>()
 
 Every generated type has a static `From<T>()` method that reinterprets backing memory as a different type — zero allocation:
