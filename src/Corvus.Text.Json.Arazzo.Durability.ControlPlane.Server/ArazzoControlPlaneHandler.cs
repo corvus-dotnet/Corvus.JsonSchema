@@ -45,7 +45,11 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         WorkflowRunStatus? status = parameters.Status.IsNotUndefined() ? Enum.Parse<WorkflowRunStatus>((string)parameters.Status) : null;
         string? workflowId = parameters.WorkflowId.IsNotUndefined() ? (string)parameters.WorkflowId : null;
         int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 100;
-        string? pageToken = parameters.PageToken.IsNotUndefined() ? (string)parameters.PageToken : null;
+
+        // The opaque page token flows to the store as its JSON value (From() rewraps parameters.PageToken — free, no
+        // reify, no managed string; an undefined token rewraps to an undefined JsonString the store reads as "first
+        // page"); the store decodes the run-id cursor bytes-native from the request UTF-8.
+        JsonString pageToken = JsonString.From(parameters.PageToken);
         DateTimeOffset? createdAfter = ParseInstant(parameters.CreatedAfter);
         DateTimeOffset? createdBefore = ParseInstant(parameters.CreatedBefore);
         DateTimeOffset? updatedAfter = ParseInstant(parameters.UpdatedAfter);
@@ -53,7 +57,9 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         string? correlationId = parameters.CorrelationId.IsNotUndefined() ? (string)parameters.CorrelationId : null;
         TagSet tags = ParseTags(parameters.Tag);
 
-        WorkflowRunPage page = await this.management.ListAsync(
+        // `using`: the page owns the pooled continuation-token buffer; BuildPage's Source closure copies it into the
+        // response workspace synchronously inside Ok (CreateBuilder materialises eagerly), so disposing after Ok is safe.
+        using WorkflowRunPage page = await this.management.ListAsync(
             new WorkflowQuery(status, workflowId, limit, pageToken, createdAfter, createdBefore, updatedAfter, updatedBefore, correlationId, tags),
             this.access.Current(),
             cancellationToken).ConfigureAwait(false);
@@ -251,12 +257,9 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
     private static Models.WorkflowRunPage.Source BuildPage(WorkflowRunPage page)
         => new((ref Models.WorkflowRunPage.Builder b) =>
         {
-            Models.JsonString.Source nextPageToken = default;
-            if (page.ContinuationToken is { } token)
-            {
-                nextPageToken = token;
-            }
-
+            // The token is the page's pooled UTF-8 (alive through this synchronous build); write it straight into the
+            // response — no managed token string. Empty means "last page". (.Span is taken here, inside the closure
+            // CreateBuilder runs synchronously during Ok, while the page is still owned by the handler.)
             b.Create(
                 runs: new Models.WorkflowRunPage.WorkflowRunSummaryArray.Source(
                     (ref Models.WorkflowRunPage.WorkflowRunSummaryArray.Builder ab) =>
@@ -266,7 +269,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
                             ab.AddItem(BuildSummary(listing));
                         }
                     }),
-                nextPageToken: nextPageToken);
+                nextPageToken: page.NextPageToken.IsEmpty ? default : (Models.JsonString.Source)page.NextPageToken.Span);
         });
 
     private static Models.WorkflowRunSummary.Source BuildSummary(WorkflowRunListing listing)

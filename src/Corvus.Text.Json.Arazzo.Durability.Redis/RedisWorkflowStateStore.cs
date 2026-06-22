@@ -310,7 +310,14 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     public async ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
     {
         // Redis has no server-side ordering over the run set, so sort the ids and keyset-page client-side.
-        string? after = WorkflowContinuationToken.Decode(query.ContinuationToken);
+        // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
+        string? after = null;
+        if (query.ContinuationToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
+            after = WorkflowContinuationToken.Decode(tokenUtf8.Span);
+        }
+
         RedisValue[] members = await this.database.SetMembersAsync(AllKey).ConfigureAwait(false);
         string[] ids = [.. members.Select(v => (string)v!).OrderBy(static s => s, StringComparer.Ordinal)];
 

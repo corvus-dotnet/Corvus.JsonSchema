@@ -104,10 +104,10 @@ public static class WorkflowContinuationToken
         if (rows.Count > limit)
         {
             rows.RemoveAt(rows.Count - 1);
-            return new WorkflowRunPage(rows, Encode(rows[^1].Id.Value));
+            return WorkflowRunPage.Create(rows, rows[^1].Id.Value);
         }
 
-        return new WorkflowRunPage(rows);
+        return WorkflowRunPage.Create(rows);
     }
 
     /// <summary>Decodes a continuation token's UTF-8 (as carried verbatim by the request) back to the run id to resume

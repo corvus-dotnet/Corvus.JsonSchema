@@ -374,9 +374,14 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             filter = b.And(filter, b.All("tags", query.Tags.ToList()));
         }
 
-        if (WorkflowContinuationToken.Decode(query.ContinuationToken) is { } after)
+        // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
+        if (query.ContinuationToken.IsNotUndefined())
         {
-            filter = b.And(filter, b.Gt("_id", after));
+            using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
+            if (WorkflowContinuationToken.Decode(tokenUtf8.Span) is { } after)
+            {
+                filter = b.And(filter, b.Gt("_id", after));
+            }
         }
 
         // Row-security reach (§14.2) is applied in process over the embedded securityTags array (see the class

@@ -46,7 +46,7 @@ public sealed class WorkflowManagementClientTests
         await CompleteRunAsync(store, "done-1");
         var client = new WorkflowManagementClient(store, owner: "ops");
 
-        WorkflowRunPage page = await client.ListAsync(new WorkflowQuery(WorkflowRunStatus.Faulted), AccessContext.System, default);
+        using WorkflowRunPage page = await client.ListAsync(new WorkflowQuery(WorkflowRunStatus.Faulted), AccessContext.System, default);
 
         page.Runs.Select(r => r.Id.Value).ShouldBe(["faulted-1"]);
     }
