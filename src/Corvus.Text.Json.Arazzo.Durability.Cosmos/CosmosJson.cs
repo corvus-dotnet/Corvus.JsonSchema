@@ -33,7 +33,7 @@ internal static class CosmosJson
     /// <typeparam name="T">The Corvus.Text.Json document type.</typeparam>
     /// <param name="value">The document to serialize.</param>
     /// <returns>A readable stream over the document's UTF-8 JSON, positioned at the start.</returns>
-    public static MemoryStream WriteToStream<T>(in T value)
+    public static Stream WriteToStream<T>(in T value)
         where T : IJsonElement
         => WriteToStream(value, static (Utf8JsonWriter writer, in T v) => v.WriteTo(writer));
 
@@ -43,14 +43,14 @@ internal static class CosmosJson
     /// returned <strong>synchronously here</strong> (the cache is thread-affine and must not cross an <c>await</c>); the
     /// resulting bytes are copied into an <see cref="ArrayPool{T}"/>-rented buffer wrapped by a non-growing stream that
     /// returns the buffer to the pool on <see cref="IDisposable.Dispose"/> (safe to dispose on any thread, after the
-    /// Cosmos call). The only per-write GC allocation is the stream wrapper the SDK's <see cref="Stream"/> contract
-    /// forces; the writer, scratch buffer, and payload bytes are all pooled.
+    /// Cosmos call). Nothing is GC-allocated per write: the writer, scratch buffer, and payload bytes are pooled, and the
+    /// stream wrapper itself is a pooled <see cref="ReadOnlyMemoryStream"/> instance.
     /// </summary>
     /// <typeparam name="TContext">The write-callback state type.</typeparam>
     /// <param name="context">The state passed to <paramref name="write"/>.</param>
     /// <param name="write">Writes the JSON (pass a <see langword="static"/> lambda to avoid a closure).</param>
     /// <returns>A readable stream over the written UTF-8 JSON, positioned at the start.</returns>
-    public static MemoryStream WriteToStream<TContext>(in TContext context, PersistedJson.WriteCallback<TContext> write)
+    public static Stream WriteToStream<TContext>(in TContext context, PersistedJson.WriteCallback<TContext> write)
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter buffer);
@@ -63,7 +63,7 @@ internal static class CosmosJson
             int length = written.Length;
             payload = ArrayPool<byte>.Shared.Rent(length);
             written.CopyTo(payload);
-            var stream = new PooledWriteStream(payload, length);
+            ReadOnlyMemoryStream stream = ReadOnlyMemoryStream.RentOwned(payload, length);
             payload = null; // ownership transferred to the stream
             return stream;
         }
@@ -401,29 +401,6 @@ internal static class CosmosJson
             if (this.rented is not null)
             {
                 ArrayPool<byte>.Shared.Return(this.rented);
-            }
-        }
-    }
-
-    // A read-only, non-growing MemoryStream over an ArrayPool-rented buffer that returns the buffer to the pool on
-    // Dispose. The buffer is rented synchronously when the stream is built and returned when the caller disposes the
-    // stream after the Cosmos call (ArrayPool.Return is thread-safe, so disposing on a continuation thread is fine).
-    private sealed class PooledWriteStream : MemoryStream
-    {
-        private byte[]? rented;
-
-        public PooledWriteStream(byte[] rented, int length)
-            : base(rented, 0, length, writable: false, publiclyVisible: false)
-            => this.rented = rented;
-
-        protected override void Dispose(bool disposing)
-        {
-            byte[]? toReturn = this.rented;
-            this.rented = null;
-            base.Dispose(disposing);
-            if (toReturn is not null)
-            {
-                ArrayPool<byte>.Shared.Return(toReturn);
             }
         }
     }

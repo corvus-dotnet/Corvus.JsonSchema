@@ -140,9 +140,12 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
         // lastSeen, unions provenance, and refreshes label/identity/completeness (the shared merge every backend uses).
         RedisValue existingValue = await this.database.StringGetAsync(IdentityKey(kindToken, valueKey)).ConfigureAwait(false);
         byte[]? existing = existingValue.IsNullOrEmpty ? null : (byte[])existingValue!;
-        byte[] json = existing is null
-            ? ObservedIdentitySerialization.SerializeNew(kind, value, label, identity, complete, now, provenance)
-            : ObservedIdentitySerialization.SerializeUpserted(existing, kind, value, label, identity, complete, now, provenance);
+
+        // Serialize the document into a pooled buffer and pass it as the script value via ReadOnlyMemory (RedisValue carries
+        // the exact length) — no GC document array. The buffer is returned once the script call completes.
+        using PooledUtf8 doc = existing is null
+            ? ObservedIdentitySerialization.SerializeNewPooled(kind, value, label, identity, complete, now, provenance)
+            : ObservedIdentitySerialization.SerializeUpsertedPooled(existing, kind, value, label, identity, complete, now, provenance);
 
         // Store the document, ensure its sortKey is in the ordering index, and maintain the collision-probe digest index,
         // atomically. The key and sortKey are deterministic from (kind, value), so a re-sighting overwrites the document
@@ -151,7 +154,7 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
         // digest ('' below) and is not indexed (it never collides).
         string digest = SecurityIdentityDigest.Compute(identity) ?? string.Empty;
         RedisKey[] keys = [IdentityKey(kindToken, valueKey), IndexKey, DigestOfKey(kindToken, valueKey)];
-        RedisValue[] argv = [json, SortKey(valueKey, kindToken), digest, DigestSetPrefix];
+        RedisValue[] argv = [doc.Memory, SortKey(valueKey, kindToken), digest, DigestSetPrefix];
         await this.database.ScriptEvaluateAsync(StoreScript, keys, argv).ConfigureAwait(false);
     }
 

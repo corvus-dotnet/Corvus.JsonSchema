@@ -61,7 +61,7 @@ public class WriteToStreamBenchmarks
     [Benchmark]
     public int Pooled_WriteToStream()
     {
-        using MemoryStream stream = CosmosJson.WriteToStream(this.ruleDoc);
+        using Stream stream = CosmosJson.WriteToStream(this.ruleDoc);
         return (int)stream.Length;
     }
 }
