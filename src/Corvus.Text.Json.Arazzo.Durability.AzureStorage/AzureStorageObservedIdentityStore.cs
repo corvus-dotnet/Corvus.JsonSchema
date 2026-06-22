@@ -121,10 +121,19 @@ public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
         // provenance, and refreshes label/identity/completeness (the shared merge). The re-sighting overwrites via
         // UpsertEntity (Replace), so the (kind, value) stays one entity. The existing read also yields the prior identity
         // digest, so a re-sighting that changes the identity can retract the stale digest-index entity below.
+        // The driver mints the existing document array (the table entity's binary column); parse it NON-COPYING (it stays
+        // alive through the synchronous merge) — no pooled read buffer, no copy.
         (byte[]? existing, string? oldDigest) = await this.ReadDocumentAsync(kindToken, valueKey, cancellationToken).ConfigureAwait(false);
-        byte[] json = existing is null
-            ? ObservedIdentitySerialization.SerializeNew(kind, value, label, identity, complete, now, provenance)
-            : ObservedIdentitySerialization.SerializeUpserted(existing, kind, value, label, identity, complete, now, provenance);
+        byte[] json;
+        if (existing is null)
+        {
+            json = ObservedIdentitySerialization.SerializeNew(kind, value, label, identity, complete, now, provenance);
+        }
+        else
+        {
+            using ParsedJsonDocument<ObservedIdentity> current = ParsedJsonDocument<ObservedIdentity>.Parse(existing.AsMemory());
+            json = ObservedIdentitySerialization.SerializeUpserted(current.RootElement, kind, value, label, identity, complete, now, provenance);
+        }
 
         // The new digest is carried on the primary entity (so the next re-sighting knows which index entity to retract)
         // and is the partition of the secondary index entity. The empty identity has no digest: no index entry, and the

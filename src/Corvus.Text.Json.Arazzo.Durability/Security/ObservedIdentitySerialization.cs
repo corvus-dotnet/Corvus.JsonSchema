@@ -52,7 +52,9 @@ public static class ObservedIdentitySerialization
     /// unions <paramref name="provenance"/> into its sighting sources, and refreshes the label (falling back to the
     /// existing one when none is supplied), identity, and completeness.
     /// </summary>
-    /// <param name="existing">The existing persisted document for this (kind, value).</param>
+    /// <param name="existing">The existing record, already parsed by the backend leaf (each backend reads+parses the
+    /// stored bytes the leanest way its driver allows — the seam carries the JSON value, not raw bytes); read
+    /// synchronously here, so the backend's backing document need only stay alive across this call.</param>
     /// <param name="kind">The grantee kind as a JSON value — written bytes-to-bytes (the store reifies it only at its own key leaf).</param>
     /// <param name="value">The grantee value as unescaped UTF-8.</param>
     /// <param name="label">An optional display label as a JSON value; undefined keeps the existing label.</param>
@@ -61,22 +63,19 @@ public static class ObservedIdentitySerialization
     /// <param name="now">The sighting instant.</param>
     /// <param name="provenance">Where this identity was seen (unioned into the existing sources).</param>
     /// <returns>The owned UTF-8 JSON document.</returns>
-    public static byte[] SerializeUpserted(byte[] existing, in ObservedIdentity.GranteeKind kind, in JsonString value, in JsonString label, SecurityTagSet identity, bool complete, DateTimeOffset now, string provenance)
+    public static byte[] SerializeUpserted(in ObservedIdentity existing, in ObservedIdentity.GranteeKind kind, in JsonString value, in JsonString label, SecurityTagSet identity, bool complete, DateTimeOffset now, string provenance)
     {
-        ArgumentNullException.ThrowIfNull(existing);
-        using ParsedJsonDocument<ObservedIdentity> current = PersistedJson.ToPooledDocument<ObservedIdentity>(existing);
-        ObservedIdentity e = current.RootElement;
-
-        // Keep the existing label (its own JSON value, written bytes-to-bytes) when no new one is supplied — the existing
-        // document lease stays alive through the synchronous Serialize, then is returned to the pool. From() rewraps it as
-        // a JsonString without reifying.
-        JsonString effectiveLabel = label.IsNotUndefined() ? label : JsonString.From(e.Label);
-        return Serialize(kind, value, effectiveLabel, identity, complete, e.FirstSeenAtValue, now, MergeProvenance(e, provenance));
+        // Keep the existing label (its own JSON value, written bytes-to-bytes) when no new one is supplied. From()
+        // rewraps it as a JsonString without reifying. The existing model is read synchronously, so the backend's backing
+        // bytes (a pooled read buffer, a non-copying parse over the driver's own array, or a live response slice) need
+        // only outlive this call.
+        JsonString effectiveLabel = label.IsNotUndefined() ? label : JsonString.From(existing.Label);
+        return Serialize(kind, value, effectiveLabel, identity, complete, existing.FirstSeenAtValue, now, MergeProvenance(existing, provenance));
     }
 
     /// <summary>The pooled-buffer form of <see cref="SerializeUpserted"/> for backends whose driver binds a
     /// <see cref="ReadOnlyMemory{T}"/> / stream (no GC document array). <c>using</c> the result across the awaited write.</summary>
-    /// <param name="existing">The existing persisted document for this (kind, value).</param>
+    /// <param name="existing">The existing record, already parsed by the backend leaf (read synchronously here).</param>
     /// <param name="kind">The grantee kind as a JSON value.</param>
     /// <param name="value">The grantee value as a JSON value.</param>
     /// <param name="label">An optional display label as a JSON value; undefined keeps the existing label.</param>
@@ -85,13 +84,10 @@ public static class ObservedIdentitySerialization
     /// <param name="now">The sighting instant.</param>
     /// <param name="provenance">Where this identity was seen (unioned into the existing sources).</param>
     /// <returns>The pooled UTF-8 JSON document.</returns>
-    public static PooledUtf8 SerializeUpsertedPooled(byte[] existing, in ObservedIdentity.GranteeKind kind, in JsonString value, in JsonString label, SecurityTagSet identity, bool complete, DateTimeOffset now, string provenance)
+    public static PooledUtf8 SerializeUpsertedPooled(in ObservedIdentity existing, in ObservedIdentity.GranteeKind kind, in JsonString value, in JsonString label, SecurityTagSet identity, bool complete, DateTimeOffset now, string provenance)
     {
-        ArgumentNullException.ThrowIfNull(existing);
-        using ParsedJsonDocument<ObservedIdentity> current = PersistedJson.ToPooledDocument<ObservedIdentity>(existing);
-        ObservedIdentity e = current.RootElement;
-        JsonString effectiveLabel = label.IsNotUndefined() ? label : JsonString.From(e.Label);
-        return SerializePooled(kind, value, effectiveLabel, identity, complete, e.FirstSeenAtValue, now, MergeProvenance(e, provenance));
+        JsonString effectiveLabel = label.IsNotUndefined() ? label : JsonString.From(existing.Label);
+        return SerializePooled(kind, value, effectiveLabel, identity, complete, existing.FirstSeenAtValue, now, MergeProvenance(existing, provenance));
     }
 
     // Unions the new provenance source into the existing record's sources (order-preserving, deduped). Provenance tokens
