@@ -118,7 +118,7 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
         string itemId = ItemId(tags);
         byte[] json = SourceCredentialSerialization.SerializeNew(id, draft, actor, this.timeProvider.GetUtcNow(), NewEtag());
 
-        using MemoryStream stream = EnvelopeStream(itemId, partition, json, out ParsedJsonDocument<SourceCredentialBinding> document);
+        using Stream stream = EnvelopeStream(itemId, partition, json, out ParsedJsonDocument<SourceCredentialBinding> document);
         try
         {
             using ResponseMessage response = await this.container.CreateItemStreamAsync(stream, new PartitionKey(partition), cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -236,7 +236,7 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
         string partition = PartitionKey(sourceName, environment);
         byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, $"{sourceName}@{environment}", expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), NewEtag());
 
-        using MemoryStream stream = EnvelopeStream(ItemId(tags!), partition, json, out ParsedJsonDocument<SourceCredentialBinding> document);
+        using Stream stream = EnvelopeStream(ItemId(tags!), partition, json, out ParsedJsonDocument<SourceCredentialBinding> document);
         try
         {
             using ResponseMessage response = await this.container.ReplaceItemStreamAsync(stream, ItemId(tags!), new PartitionKey(partition), cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -351,7 +351,7 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
     // caller's pooled return document from the same binding bytes. The binding doc is base64'd verbatim (no SDK
     // serializer); sourceName/environment are projected so EvaluateSourceAccessAsync can query by source across
     // partitions. On any failure building the stream, the return document is disposed before the exception escapes.
-    private static MemoryStream EnvelopeStream(string id, string partition, byte[] doc, out ParsedJsonDocument<SourceCredentialBinding> document)
+    private static Stream EnvelopeStream(string id, string partition, byte[] doc, out ParsedJsonDocument<SourceCredentialBinding> document)
     {
         document = PersistedJson.ToPooledDocument<SourceCredentialBinding>(doc);
         try

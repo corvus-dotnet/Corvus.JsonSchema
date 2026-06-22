@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Data;
 using System.Globalization;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.Data.SqlClient;
@@ -78,19 +79,24 @@ public sealed class SqlServerObservedIdentityStore : IObservedIdentityStore
         await using SqlTransaction transaction = (SqlTransaction)await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
 
         byte[]? existing = await ReadDocumentAsync(connection, transaction, kindToken, valueKey, cancellationToken).ConfigureAwait(false);
-        byte[] json = existing is null
-            ? ObservedIdentitySerialization.SerializeNew(kind, value, label, identity, complete, now, provenance)
-            : ObservedIdentitySerialization.SerializeUpserted(existing, kind, value, label, identity, complete, now, provenance);
 
         await using (SqlCommand write = connection.CreateCommand())
         {
+            // Serialize the document into a pooled buffer and stream it as the VARBINARY(MAX) parameter (SqlClient uploads
+            // a BLOB straight from a Stream) — no GC document array. The buffer + stream are pooled and returned once the
+            // command completes (ExecuteNonQueryAsync finishing is the guarantee the driver has consumed them).
+            using PooledUtf8 doc = existing is null
+                ? ObservedIdentitySerialization.SerializeNewPooled(kind, value, label, identity, complete, now, provenance)
+                : ObservedIdentitySerialization.SerializeUpsertedPooled(existing, kind, value, label, identity, complete, now, provenance);
+            using ReadOnlyMemoryStream docStream = ReadOnlyMemoryStream.Rent(doc.Memory);
+
             write.Transaction = transaction;
             write.CommandText = existing is null
                 ? "INSERT INTO ObservedIdentities (SubjectKind, SubjectValue, Document, IdentityDigest) VALUES (@k, @v, @doc, @digest);"
                 : "UPDATE ObservedIdentities SET Document = @doc, IdentityDigest = @digest WHERE SubjectKind = @k AND SubjectValue = @v;";
             write.Parameters.AddWithValue("@k", kindToken);
             write.Parameters.AddWithValue("@v", valueKey);
-            write.Parameters.AddWithValue("@doc", json);
+            write.Parameters.Add(new SqlParameter("@doc", SqlDbType.VarBinary, -1) { Value = docStream });
             write.Parameters.AddWithValue("@digest", (object?)SecurityIdentityDigest.Compute(identity) ?? DBNull.Value);
             await write.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }

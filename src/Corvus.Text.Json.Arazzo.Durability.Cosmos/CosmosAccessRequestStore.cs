@@ -117,7 +117,7 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
             AccessRequestStatusNames.Pending,
             now.UtcDateTime.ToString("o", CultureInfo.InvariantCulture),
             json);
-        using MemoryStream stream = EnvelopeStream(in fields, out ParsedJsonDocument<AccessRequest> document);
+        using Stream stream = EnvelopeStream(in fields, out ParsedJsonDocument<AccessRequest> document);
         try
         {
             using ResponseMessage response = await this.container.CreateItemStreamAsync(stream, new PartitionKey(id), cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -228,7 +228,7 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
             AccessRequestStatusNames.ToWire(decision.Status),
             EnvelopeString(existing, "createdAt"u8),
             json);
-        using MemoryStream stream = EnvelopeStream(in fields, out ParsedJsonDocument<AccessRequest> document);
+        using Stream stream = EnvelopeStream(in fields, out ParsedJsonDocument<AccessRequest> document);
         try
         {
             using ResponseMessage response = await this.container.ReplaceItemStreamAsync(stream, id, new PartitionKey(id), cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -260,7 +260,7 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
     // nested value — no base64 wrap (which would be a spurious encode here + decode on read). It is valid JSON we
     // produced, so skip validation. On any failure building the stream, the return document is disposed before the
     // exception escapes.
-    private static MemoryStream EnvelopeStream(in EnvelopeFields fields, out ParsedJsonDocument<AccessRequest> document)
+    private static Stream EnvelopeStream(in EnvelopeFields fields, out ParsedJsonDocument<AccessRequest> document)
     {
         document = PersistedJson.ToPooledDocument<AccessRequest>(fields.Doc);
         try

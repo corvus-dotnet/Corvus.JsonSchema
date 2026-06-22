@@ -102,19 +102,22 @@ public sealed class MySqlObservedIdentityStore : IObservedIdentityStore, IAsyncD
         await using MySqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
 
         byte[]? existing = await ReadDocumentAsync(connection, transaction, kindToken, valueKey, cancellationToken).ConfigureAwait(false);
-        byte[] json = existing is null
-            ? ObservedIdentitySerialization.SerializeNew(kind, value, label, identity, complete, now, provenance)
-            : ObservedIdentitySerialization.SerializeUpserted(existing, kind, value, label, identity, complete, now, provenance);
 
         await using (MySqlCommand write = connection.CreateCommand())
         {
+            // Serialize the document into a pooled buffer and bind it via ReadOnlyMemory (MySqlConnector carries the exact
+            // length for a blob) — no GC document array. The buffer is returned once the command completes.
+            using PooledUtf8 doc = existing is null
+                ? ObservedIdentitySerialization.SerializeNewPooled(kind, value, label, identity, complete, now, provenance)
+                : ObservedIdentitySerialization.SerializeUpsertedPooled(existing, kind, value, label, identity, complete, now, provenance);
+
             write.Transaction = transaction;
             write.CommandText = existing is null
                 ? "INSERT INTO ObservedIdentities (SubjectKind, SubjectValue, Document, IdentityDigest) VALUES (@k, @v, @doc, @digest);"
                 : "UPDATE ObservedIdentities SET Document = @doc, IdentityDigest = @digest WHERE SubjectKind = @k AND SubjectValue = @v;";
             write.Parameters.AddWithValue("@k", kindToken);
             write.Parameters.AddWithValue("@v", valueKey);
-            write.Parameters.AddWithValue("@doc", json);
+            write.Parameters.AddWithValue("@doc", doc.Memory);
             write.Parameters.AddWithValue("@digest", (object?)SecurityIdentityDigest.Compute(identity) ?? DBNull.Value);
             await write.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
