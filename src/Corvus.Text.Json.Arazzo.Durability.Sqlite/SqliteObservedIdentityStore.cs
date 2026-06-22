@@ -92,10 +92,12 @@ public sealed class SqliteObservedIdentityStore : IObservedIdentityStore, IAsync
         {
             // Read-merge-write under the gate: a first sighting inserts; an existing one preserves firstSeen, bumps
             // lastSeen, unions provenance, and refreshes label/identity/completeness (the shared merge).
-            byte[]? existing = await this.ReadDocumentAsync(kindToken, valueKey, cancellationToken).ConfigureAwait(false);
+            // Read the existing document straight into a pooled document (GetStream → pooled parse) — no GC read array.
+            // The parsed model is read synchronously by the merge below, so it need only outlive that call.
+            using ParsedJsonDocument<ObservedIdentity>? existing = await this.ReadDocumentAsync(kindToken, valueKey, cancellationToken).ConfigureAwait(false);
             byte[] json = existing is null
                 ? ObservedIdentitySerialization.SerializeNew(kind, value, label, identity, complete, now, provenance)
-                : ObservedIdentitySerialization.SerializeUpserted(existing, kind, value, label, identity, complete, now, provenance);
+                : ObservedIdentitySerialization.SerializeUpserted(existing.RootElement, kind, value, label, identity, complete, now, provenance);
 
             await using SqliteTransaction transaction = (SqliteTransaction)await this.connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
 
@@ -245,7 +247,7 @@ public sealed class SqliteObservedIdentityStore : IObservedIdentityStore, IAsync
                         break;
                     }
 
-                    docs.Add(PersistedJson.ToPooledDocument<ObservedIdentity>(reader.GetFieldValue<byte[]>(2)));
+                    docs.Add(ReadDocument(reader, 2));
                     lastValue = rowValue;
                     lastKind = rowKind;
                 }
@@ -291,7 +293,7 @@ public sealed class SqliteObservedIdentityStore : IObservedIdentityStore, IAsync
             // Hand back the conflicting grantee as its own JSON document (the caller disposes it); its kind/value/label
             // live in the record, so nothing is reified into a separate POCO here.
             return await reader.ReadAsync(cancellationToken).ConfigureAwait(false)
-                ? PersistedJson.ToPooledDocument<ObservedIdentity>(reader.GetFieldValue<byte[]>(2))
+                ? ReadDocument(reader, 2)
                 : (ParsedJsonDocument<ObservedIdentity>?)null;
         }
         finally
@@ -303,14 +305,19 @@ public sealed class SqliteObservedIdentityStore : IObservedIdentityStore, IAsync
     /// <inheritdoc/>
     public async ValueTask DisposeAsync() => await this.connection.DisposeAsync().ConfigureAwait(false);
 
-    private async ValueTask<byte[]?> ReadDocumentAsync(string kindToken, string value, CancellationToken cancellationToken)
+    // The driver mints the Document column as a byte[] (the read leaf — GetFieldValue); parse it NON-COPYING (it is a fresh
+    // managed array kept alive by the returned document) — no redundant pooled copy of bytes we already own.
+    private static ParsedJsonDocument<ObservedIdentity> ReadDocument(SqliteDataReader reader, int ordinal)
+        => ParsedJsonDocument<ObservedIdentity>.Parse(reader.GetFieldValue<byte[]>(ordinal).AsMemory());
+
+    private async ValueTask<ParsedJsonDocument<ObservedIdentity>?> ReadDocumentAsync(string kindToken, string value, CancellationToken cancellationToken)
     {
         using SqliteCommand select = this.connection.CreateCommand();
         select.CommandText = "SELECT Document FROM ObservedIdentities WHERE SubjectKind = @k AND SubjectValue = @v;";
         select.Parameters.AddWithValue("@k", kindToken);
         select.Parameters.AddWithValue("@v", value);
         using SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-        return await reader.ReadAsync(cancellationToken).ConfigureAwait(false) ? reader.GetFieldValue<byte[]>(0) : null;
+        return await reader.ReadAsync(cancellationToken).ConfigureAwait(false) ? ReadDocument(reader, 0) : null;
     }
 
     private const string SchemaSql =

@@ -69,7 +69,7 @@ only at the genuine leaf — [[no-handrolled-records-use-codegen-jsonschema]],
 | `IWorkflowCatalogStore.UpdateMetadataAsync` | `CatalogVersion` | (catalog serialization) | `record` (`CatalogMetadataPatch`) | ⬜ |
 | `IWorkflowAdministratorStore.PutAsync` | `WorkflowAdministrators` | `WorkflowAdministratorsSerialization` | `list` (`IReadOnlyList<SecurityTagSet>`) | ⬜ |
 | `IWorkflowStateStore.SaveAsync` | opaque checkpoint | (executor-owned) | `bytes` + index | ➖ (confirm) |
-| **(read seam, all backends)** read-existing on every upsert (`ReadDocumentAsync → byte[]`) | the persisted doc | — | the upsert merge reads the existing document into a **GC `byte[]`** (ADO `GetFieldValue<byte[]>`, `(byte[])RedisValue`, Cosmos/Mongo/Azure read) then `SerializeUpserted(byte[])` re-parses it — a per-write read allocation, sibling of the write-realization row | ⬜ **allocate-on-read row** — read into a pooled buffer (driver `GetStream`/`GetBytes`/`ReadOnlyMemory`) + `SerializeUpserted(ReadOnlySpan<byte>)`, across all 10 backends |
+| **(read seam, all backends)** read-existing + projection reads | the persisted doc | — | the seam now carries the **parsed model** (`SerializeUpserted(in ObservedIdentity)`), parsed at each leaf the leanest way; merge parses **non-copying** over the owned bytes (no `ToPooledDocument` re-copy). Driver-minted arrays (ADO `GetFieldValue<byte[]>`, Mongo/NATS/Azure) **are the leaf** (confirms §13.4.1 — no GC win there, only the copy elided); genuine GC eliminated at Cosmos (`.ToArray`→pooled) and Redis (`(byte[])`→`Lease<byte>`) | ✅ **done — Part D** (Sqlite in-process unchanged 8864→8865 B upsert / 7872→7873 B search = relational read array IS the driver leaf; Cosmos/Redis GC win container-verified; 10 backends conformance-green) |
 
 **Backend leaf-realisation (all seams, §13.4.1 static audit — to re-confirm per worked row):** every
 backend persists the same document bytes; realisations only at the driver leaf — indexed key columns
@@ -529,6 +529,30 @@ the byte[] kept only at the leaves that require it.
   Sqlite / InMemory (byte[]-leaf, unchanged), 7/7 each. **Row done** (the write-realization pattern-setter; the same shape
   rolls out to the other serialization helpers — SourceCredential, CatalogVersion, SecurityRule/Binding, AccessRequest,
   WorkflowAdministrators, WorkflowCheckpoint, RunnerRegistration — and the sibling **allocate-on-read** row in Part A).
+
+### ✅ Allocate-on-read — `IObservedIdentityStore` read paths (upsert merge + projection)
+
+The sibling of the write row: every read minted a document `byte[]` and the upsert merge then **re-parsed** it through
+`PersistedJson.ToPooledDocument` (an `ArrayPool` rent + copy of bytes we already owned). The fix carries the **parsed
+model** on the serializer seam (`SerializeUpserted(in ObservedIdentity)` / `SerializeUpsertedPooled(in ObservedIdentity)`)
+so each backend reads+parses at its leaf the leanest way, and the merge reads it **non-copying**.
+
+- **Per-backend read.** ADO (`GetFieldValue<byte[]>`) / Mongo (`BsonBinaryData.Bytes`) / NATS (`NatsKVEntry<byte[]>`) /
+  Azure (`GetBinary`) / InMemory (dict array): the driver mints a managed array — **the read leaf** — so we parse
+  **non-copying** over it (no `ToPooledDocument` re-copy). Cosmos: parse off the live pooled query response (drop the
+  `.ToArray()` GC copy). Redis: `StringGetLeaseAsync` → pooled `Lease<byte>` (replacing the `(byte[])RedisValue` GC cast),
+  parsed non-copying for the merge / copied into a pooled doc for a returned projection.
+- **This confirms §13.4.1, it does not reverse it.** The relational/driver-minted read array genuinely *is* the driver
+  leaf: the measured in-process floor is **unchanged** — `ObservedIdentityUpsertReadBenchmarks` over a real embedded SQLite
+  driver: `Sqlite_Upsert` **8864 → 8865 B**, `Sqlite_Search` **7872 → 7873 B** (InMemory floor 912 B / 2032 B unchanged).
+  What the row removes there is the redundant `ArrayPool` copy + parse pass (CPU / pool-churn, not GC — so MemoryDiagnoser
+  is rightly flat). A `GetStream`/`Parse(Stream)` attempt to pool the read **regressed** it (SQLite buffers internally:
+  `Sqlite_Search` 7872 → 16960 B) and was reverted. The genuine GC eliminations are **Cosmos** (`.ToArray`) and **Redis**
+  (`(byte[])` cast) — both backends that minted an *extra* array on top of an already-pooled buffer — verified by
+  conformance + byte-flow audit, not micro-bench (no in-process driver for them; §13.4.1's tool of record).
+- **Verified against real containers** (podman socket): all 10 `IObservedIdentityStore` conformance suites green
+  (Postgres / MySql / Redis / Mongo / NATS / AzureStorage / SqlServer / Cosmos 7/7, InMemory + Sqlite in-process 7/7).
+  **Row done.** The same parse-non-copying-at-the-leaf read shape rolls out to the other stores' read paths next.
 
 ## Cross-references
 

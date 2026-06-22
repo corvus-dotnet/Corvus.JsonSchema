@@ -137,15 +137,19 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
         string valueKey = (string)value;
 
         // Read-merge-write keyed by (kind, value): a first sighting inserts; an existing one preserves firstSeen, bumps
-        // lastSeen, unions provenance, and refreshes label/identity/completeness (the shared merge every backend uses).
-        RedisValue existingValue = await this.database.StringGetAsync(IdentityKey(kindToken, valueKey)).ConfigureAwait(false);
-        byte[]? existing = existingValue.IsNullOrEmpty ? null : (byte[])existingValue!;
+        // lastSeen, unions provenance, and refreshes label/identity/completeness (the shared merge every backend uses). The
+        // existing document is read into a pooled lease and parsed NON-COPYING over it (the lease stays alive through the
+        // synchronous merge) — no GC read array.
+        using Lease<byte>? existingLease = await this.database.StringGetLeaseAsync(IdentityKey(kindToken, valueKey)).ConfigureAwait(false);
+        using ParsedJsonDocument<ObservedIdentity>? existing = existingLease is { Length: > 0 }
+            ? ParsedJsonDocument<ObservedIdentity>.Parse(existingLease.Memory)
+            : null;
 
         // Serialize the document into a pooled buffer and pass it as the script value via ReadOnlyMemory (RedisValue carries
         // the exact length) — no GC document array. The buffer is returned once the script call completes.
         using PooledUtf8 doc = existing is null
             ? ObservedIdentitySerialization.SerializeNewPooled(kind, value, label, identity, complete, now, provenance)
-            : ObservedIdentitySerialization.SerializeUpsertedPooled(existing, kind, value, label, identity, complete, now, provenance);
+            : ObservedIdentitySerialization.SerializeUpsertedPooled(existing.RootElement, kind, value, label, identity, complete, now, provenance);
 
         // Store the document, ensure its sortKey is in the ordering index, and maintain the collision-probe digest index,
         // atomically. The key and sortKey are deterministic from (kind, value), so a re-sighting overwrites the document
@@ -216,20 +220,21 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
                 }
 
                 cancellationToken.ThrowIfCancellationRequested();
-                RedisValue value = await this.database.StringGetAsync(IdentityKey(subjectKind, subjectValue)).ConfigureAwait(false);
-                if (value.IsNullOrEmpty)
+
+                // Read the candidate into a pooled lease (no GC read array): the reach check parses it NON-COPYING over the
+                // lease; a candidate that makes the page is copied into an owned pooled document (the lease returns here).
+                using Lease<byte>? lease = await this.database.StringGetLeaseAsync(IdentityKey(subjectKind, subjectValue)).ConfigureAwait(false);
+                if (lease is not { Length: > 0 })
                 {
                     continue;
                 }
 
-                byte[] json = (byte[])value!;
-
-                // Reach (§17.1): a scoped caller discovers an identity only when their read-reach admits its tags —
-                // materialise the candidate to read its identity tags, the same per-row reach idiom the credential and
-                // catalog stores use. An unrestricted (System) reach skips this entirely (no materialisation).
+                // Reach (§17.1): a scoped caller discovers an identity only when their read-reach admits its tags — parse
+                // the candidate over the lease to read its identity tags, the same per-row reach idiom the credential and
+                // catalog stores use. An unrestricted (System) reach skips this entirely (no parse).
                 if (readReach is not null)
                 {
-                    using ParsedJsonDocument<ObservedIdentity> candidate = PersistedJson.ToPooledDocument<ObservedIdentity>(json);
+                    using ParsedJsonDocument<ObservedIdentity> candidate = ParsedJsonDocument<ObservedIdentity>.Parse(lease.Memory);
                     if (!readReach.IsSatisfiedBy(candidate.RootElement.IdentityTagsValue))
                     {
                         continue; // not reach-visible to this caller (non-disclosing)
@@ -243,7 +248,7 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
                     break;
                 }
 
-                docs.Add(PersistedJson.ToPooledDocument<ObservedIdentity>(json));
+                docs.Add(PersistedJson.ToPooledDocument<ObservedIdentity>(lease.Span));
                 lastValue = subjectValue;
                 lastKind = subjectKind;
             }
@@ -282,15 +287,15 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
             }
 
             (string conflictValue, string conflictKindToken) = SplitSortKey(sortKey);
-            RedisValue document = await this.database.StringGetAsync(IdentityKey(conflictKindToken, conflictValue)).ConfigureAwait(false);
-            if (document.IsNullOrEmpty)
+            using Lease<byte>? document = await this.database.StringGetLeaseAsync(IdentityKey(conflictKindToken, conflictValue)).ConfigureAwait(false);
+            if (document is not { Length: > 0 })
             {
                 continue; // the document was removed between the index read and the fetch — skip the stale member
             }
 
-            // Hand back the conflicting grantee as its own JSON document (the caller disposes it); its kind/value/label
-            // live in the record, so nothing is reified into a separate POCO here.
-            return PersistedJson.ToPooledDocument<ObservedIdentity>((byte[])document!);
+            // Hand back the conflicting grantee as its own JSON document (copied off the lease, which returns to the pool
+            // here; the caller disposes the document); its kind/value/label live in the record — no separate POCO.
+            return PersistedJson.ToPooledDocument<ObservedIdentity>(document.Span);
         }
 
         return null;

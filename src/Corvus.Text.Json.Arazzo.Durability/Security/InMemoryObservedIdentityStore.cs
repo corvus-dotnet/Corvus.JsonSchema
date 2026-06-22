@@ -58,10 +58,19 @@ public sealed class InMemoryObservedIdentityStore : IObservedIdentityStore
             (string, string) key = (kindToken, valueKey);
 
             // Upsert (preserve firstSeen, bump lastSeen, union provenance, refresh label/identity/completeness) vs first
-            // sighting — the merge is the shared serialization every backend uses, so the semantics are identical.
-            byte[] json = this.identities.TryGetValue(key, out byte[]? existing)
-                ? ObservedIdentitySerialization.SerializeUpserted(existing, kind, value, label, identity, complete, now, provenance)
-                : ObservedIdentitySerialization.SerializeNew(kind, value, label, identity, complete, now, provenance);
+            // sighting — the merge is the shared serialization every backend uses, so the semantics are identical. The
+            // existing document is parsed NON-COPYING over the stored array (it stays alive in the dictionary through this
+            // synchronous merge under the lock) — no per-read pooled buffer, no copy.
+            byte[] json;
+            if (this.identities.TryGetValue(key, out byte[]? existing))
+            {
+                using ParsedJsonDocument<ObservedIdentity> current = ParsedJsonDocument<ObservedIdentity>.Parse(existing.AsMemory());
+                json = ObservedIdentitySerialization.SerializeUpserted(current.RootElement, kind, value, label, identity, complete, now, provenance);
+            }
+            else
+            {
+                json = ObservedIdentitySerialization.SerializeNew(kind, value, label, identity, complete, now, provenance);
+            }
 
             this.identities[key] = json;
             this.ReindexDigest(key, identity);

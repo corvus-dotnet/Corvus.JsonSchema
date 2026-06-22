@@ -112,14 +112,15 @@ public sealed class CosmosObservedIdentityStore : IObservedIdentityStore, IAsync
         string valueKey = (string)value;
         string partition = PartitionKey(kindToken, valueKey);
 
-        // Read the existing document (single partition) to merge; then upsert the whole envelope.
-        byte[]? existing = await this.ReadDocumentAsync(kindToken, valueKey, partition, cancellationToken).ConfigureAwait(false);
+        // Read the existing document (single partition) into a pooled document — copied off the live query response, not a
+        // GC array — to merge; then upsert the whole envelope. The parsed model is read synchronously by the merge below.
+        using ParsedJsonDocument<ObservedIdentity>? existing = await this.ReadDocumentAsync(kindToken, valueKey, partition, cancellationToken).ConfigureAwait(false);
 
         // Serialize the document into a pooled buffer; its span is written straight into the envelope (no GC document
         // array). The buffer is alive through the synchronous envelope build, then returned to the pool.
         using PooledUtf8 doc = existing is null
             ? ObservedIdentitySerialization.SerializeNewPooled(kind, value, label, identity, complete, now, provenance)
-            : ObservedIdentitySerialization.SerializeUpsertedPooled(existing, kind, value, label, identity, complete, now, provenance);
+            : ObservedIdentitySerialization.SerializeUpsertedPooled(existing.RootElement, kind, value, label, identity, complete, now, provenance);
 
         using Stream stream = EnvelopeStream(ItemId(kindToken, valueKey), partition, kindToken, valueKey, SecurityIdentityDigest.Compute(identity), identity.ToList(), doc.Memory);
         using ResponseMessage response = await this.container.UpsertItemStreamAsync(stream, new PartitionKey(partition), cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -332,8 +333,9 @@ public sealed class CosmosObservedIdentityStore : IObservedIdentityStore, IAsync
         return new CosmosObservedIdentityStore(client, container, timeProvider ?? TimeProvider.System, ownsClient);
     }
 
-    // Reads the existing identity document bytes for (subjectKind, subjectValue) from its single partition, or null.
-    private async ValueTask<byte[]?> ReadDocumentAsync(string subjectKind, string subjectValue, string partition, CancellationToken cancellationToken)
+    // Reads the existing identity document for (subjectKind, subjectValue) from its single partition into a pooled document
+    // (copied off the live response buffer, no GC array), or null. The caller disposes the returned document.
+    private async ValueTask<ParsedJsonDocument<ObservedIdentity>?> ReadDocumentAsync(string subjectKind, string subjectValue, string partition, CancellationToken cancellationToken)
     {
         var query = new QueryDefinition("SELECT c.doc FROM c WHERE c.subjectKind = @kind AND c.subjectValue = @value")
             .WithParameter("@kind", subjectKind)
@@ -347,7 +349,9 @@ public sealed class CosmosObservedIdentityStore : IObservedIdentityStore, IAsync
             using CosmosJson.RentedResponse page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
             foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page.Memory))
             {
-                return CosmosJson.GetRawValue(element, "doc"u8).ToArray();
+                // Copy the doc slice off the live response buffer into an owned pooled document (no GC array); the copy
+                // completes before the response buffer is returned at the end of this using.
+                return PersistedJson.ToPooledDocument<ObservedIdentity>(CosmosJson.GetRawValue(element, "doc"u8).Span);
             }
         }
 
