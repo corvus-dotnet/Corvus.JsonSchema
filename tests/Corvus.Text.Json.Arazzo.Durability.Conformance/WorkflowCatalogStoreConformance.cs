@@ -193,11 +193,14 @@ public abstract class WorkflowCatalogStoreConformance
 
         using CatalogPage first = await store.QueryAsync(new CatalogQuery(Limit: 2), default);
         first.Versions.Count.ShouldBe(2);
-        first.ContinuationToken.ShouldNotBeNull();
+        first.NextPageToken.IsEmpty.ShouldBeFalse();
 
-        using CatalogPage second = await store.QueryAsync(new CatalogQuery(Limit: 2, ContinuationToken: first.ContinuationToken), default);
+        // Round-trip the token through the JsonString seam exactly as the HTTP layer does (store emits UTF-8, the next
+        // request carries it as a JSON string).
+        using ParsedJsonDocument<JsonString> tokenDoc = AsPageToken(first.NextPageToken.Span);
+        using CatalogPage second = await store.QueryAsync(new CatalogQuery(Limit: 2, ContinuationToken: tokenDoc.RootElement), default);
         second.Versions.Count.ShouldBe(1);
-        second.ContinuationToken.ShouldBeNull();
+        second.NextPageToken.IsEmpty.ShouldBeTrue();
 
         // Materialize the ids while both pages are still alive (their version values are valid only until disposal).
         first.Versions.Select(v => v.Ref.BaseWorkflowId)
@@ -387,6 +390,17 @@ public abstract class WorkflowCatalogStoreConformance
 
     private static CatalogMetadata Meta(IReadOnlyList<string>? tags = null)
         => new(new CatalogOwner("Team A", "team-a@example.com"), "alice", TagSet.FromTags(tags));
+
+    // Wraps an opaque page token's UTF-8 as the JSON string value a request carries it as — the conformance feeds a
+    // previous page's NextPageToken (the store's emitted bytes) back through the JsonString seam, mirroring HTTP.
+    private static ParsedJsonDocument<JsonString> AsPageToken(ReadOnlySpan<byte> tokenUtf8)
+    {
+        byte[] quoted = new byte[tokenUtf8.Length + 2];
+        quoted[0] = (byte)'"';
+        tokenUtf8.CopyTo(quoted.AsSpan(1));
+        quoted[^1] = (byte)'"';
+        return ParsedJsonDocument<JsonString>.Parse(quoted);
+    }
 
     /// <summary>Runs a query, asserts the returned (pooled, disposable) page holds the expected version count, and returns the page's buffers to the pool.</summary>
     private async Task QueryCountShouldBe(IWorkflowCatalogStore store, CatalogQuery query, int expected)

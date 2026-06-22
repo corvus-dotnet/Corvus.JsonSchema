@@ -108,7 +108,8 @@ that exists today (a starting point to be re-baselined, **not** evidence of comp
 
 | Op | Call tree | R/W | Current pattern / hotspots | Existing bench | Target pattern + grounding | Status |
 |---|---|---|---|---|---|---|
-| `GET /catalog` search | SearchCatalog → SearchAsync | R | `BuildPage` loop; `ToTags` copy | — | confirm projection | ⬜ |
+| `GET /catalog` search | SearchCatalog → SearchAsync | R | `BuildPage` loop; `ToTags` copy | — | confirm projection | ⬜ projection floor genuine |
+| `GET /catalog` / `…/versions` *(page token)* | Search/List → `IWorkflowCatalogStore.QueryAsync` | R | `string? ContinuationToken` in (`(string)PageToken`) / `string? ContinuationToken` out (store-minted token string per page) | `CatalogStoreBenchmarks` (Search_Page) | continuation-token **carrier seam**: `JsonString` token in (`From()`), pooled `ReadOnlyMemory<byte>` out via `CatalogPage.Create(...)` (the page becomes a disposable class); decode bytes-native | ✅ **2.58→2.55 KB (token string; Part D)** |
 | `POST /catalog` | AddCatalogVersion → **AddAsync** | W | record `CatalogMetadata` + package bytes; `ToOwner`/`ToTags`; `SecurityTagSet.FromTags` | `CatalogStoreBenchmarks` (e2e baseline 19.92 KB) | owner is a **queryable indexed decomposition** (`Owner*` columns + read-reconstruct), not a string seam — confirmed genuine (Part D) | ➖ owner genuine (indexed); ↓ projection row is the real lever |
 | `POST /catalog` *(projection)* | AddAsync → `CatalogPackage.Project` | W | parse + canonicalise + hash + id-rewrite + version-doc write + ZIP pack/unpack (the bulk; NOT the record seam) | `CatalogStoreBenchmarks` | **`.awp`** container (span read/write, zero-copy `OpenPooled`) + parse-once fusion + raw-value sources + zero-copy assembled parse + **pooled-disposable store seam** (`ParsedJsonDocument<CatalogVersion>`; pooled `MetadataDb`; `workspace.TakeOwnership`/`TransferOwnershipTo`) + InMemory take-don't-copy package + UTF-8 entry names (no per-source name string) | ✅ **19.92→3.72 KB (−81%)**; ZipArchive floor + rewrite/double/per-source parse + standalone version-record `MetadataDb` + `PackPooled` entry list/name strings all gone (Part D) |
 | `GET /catalog/{id}` list | ListCatalogVersions → SearchAsync | R | BuildPage | — | — | ⬜ |
@@ -476,12 +477,32 @@ Verified: full slnx **0/0**; WorkflowStateStore conformance **InMemory + Sqlite 
 `JsonString` seam, ascending-id order preserved); the runs API server tests, `WorkflowManagementClientTests` (list +
 purge), the trigger/worker tests all pass. **Row done.**
 
-### ⬜ Remaining — catalog-search continuation token (the last string-token seam)
+### ✅ Continuation-token carrier seam — catalog-search `Query` (the seam closed)
 
-`CatalogQuery.ContinuationToken` / `CatalogPage.ContinuationToken` share the same `WorkflowContinuationToken` helper and
-are **still `string`** (the catalog *projection* row is done; its *search paging* token was never converted). `CatalogPage`
-is already `IDisposable`, so it is the easier shape (pooled-token `Create()` factory + `JsonString` query token), the same
-pattern as the three completed carrier features. The next carrier row.
+The fourth and final carrier feature. `CatalogQuery.ContinuationToken` (in) ↔ `CatalogPage.ContinuationToken` (out) shared
+the `WorkflowContinuationToken` helper and were both managed `string`s (the catalog *projection* row was done; its *search
+paging* token had never been converted). `CatalogPage` was a `readonly record struct : IDisposable` (it already owns a
+`PooledDocumentList<CatalogVersion>`) → **became a `sealed class`** to also own the pooled token buffer (the same record-
+struct-can't-own-a-rented-buffer reasoning as `WorkflowRunPage`).
+
+| Element | Before | After |
+|---|---|---|
+| `CatalogQuery.ContinuationToken` (input) | `string?` (handler did `(string)parameters.PageToken`, two call sites) | `JsonString` (handler bridges `JsonString.From(...)`; each store decodes the `(baseWorkflowId, versionNumber)` sort-key cursor from `query.ContinuationToken.GetUtf8String().Span`) |
+| `CatalogPage` (output) | `readonly record struct (Versions, string? ContinuationToken) : IDisposable` | `sealed class : IDisposable` — `Versions` + pooled `ReadOnlyMemory<byte> NextPageToken` via `Create(versions[, sortKey])` |
+| 10 catalog stores | `Decode(query.ContinuationToken)` + `Encode(SortKey(...))` + `new CatalogPage(...)` | span decode + `CatalogPage.Create(versions, sortKey)` / `Create(versions)` (no shared `Paginate` — each store changes both ends; InMemory + Sqlite by hand, 8 mechanically; Mongo's inline-pattern decode) |
+| handler (2 search sites) | `(string)PageToken` in; `(JsonString.Source)page.ContinuationToken` out | `JsonString.From(...)` in; `(Models.JsonString.Source)page.NextPageToken.Span` out (the token is a scalar copied into the body synchronously during `Ok`→`CreateBuilder`, while the `using` page is alive — the `From`-wrapped versions are the ones the existing `TransferOwnershipTo` handles) |
+
+**Measured (`CatalogStoreBenchmarks.Search_Page`, new; InMemory, 25 versions, limit 10 → a token-emitting page): 2.58 →
+2.55 KB.** A small no-regression token elimination (the per-page Base64URL token string; the pooled `CatalogVersion`
+document working set dominates the rest) — same magnitude as observed-identity, with the 0-B token proof from
+`ContinuationTokenBenchmarks`. **No capped-buffer bonus**: the InMemory catalog store already iterates a `SortedDictionary`
+into a `PooledDocumentList` (no LINQ). Verified: full slnx **0/0**; catalog conformance **InMemory + Sqlite pass** (the
+first→second paging round-trip through the `JsonString` seam); catalog API server tests pass.
+
+**The continuation-token carrier seam is now closed — all four paging features (credentials, observed-identity,
+workflow-run, catalog-search) carry their tokens bytes-native.** Both ends of every opaque token are UTF-8 with no managed
+token string on the warm path; the `WorkflowContinuationToken` / `*ContinuationToken` helpers are 0-B
+(`ContinuationTokenBenchmarks`). **Row done.**
 
 ## Cross-references
 

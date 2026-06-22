@@ -118,7 +118,10 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         CatalogStatus? status = parameters.Status.IsNotUndefined() ? Enum.Parse<CatalogStatus>((string)parameters.Status) : null;
         string? owner = parameters.Owner.IsNotUndefined() ? (string)parameters.Owner : null;
         int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 100;
-        string? pageToken = parameters.PageToken.IsNotUndefined() ? (string)parameters.PageToken : null;
+
+        // The opaque page token flows to the store as its JSON value (From() rewraps parameters.PageToken — free, no
+        // reify, no managed string; undefined → undefined = first page); the store decodes the cursor bytes-native.
+        JsonString pageToken = JsonString.From(parameters.PageToken);
 
         using CatalogPage page = await this.catalog.SearchAsync(
             new CatalogQuery(text, baseWorkflowId, workflowIdPrefix, tags, status, owner, limit, pageToken), this.access.Current(), cancellationToken).ConfigureAwait(false);
@@ -135,7 +138,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     {
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
         int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 100;
-        string? pageToken = parameters.PageToken.IsNotUndefined() ? (string)parameters.PageToken : null;
+        JsonString pageToken = JsonString.From(parameters.PageToken);
 
         using CatalogPage page = await this.catalog.SearchAsync(
             new CatalogQuery(BaseWorkflowId: baseWorkflowId, Limit: limit, ContinuationToken: pageToken), this.access.Current(), cancellationToken).ConfigureAwait(false);
@@ -567,7 +570,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     private static Models.CatalogPage.Source BuildPage(CatalogPage page)
         => new((ref Models.CatalogPage.Builder b) =>
         {
-            Models.JsonString.Source nextPageToken = page.ContinuationToken is { } token ? (Models.JsonString.Source)token : default;
+            Models.JsonString.Source nextPageToken = page.NextPageToken.IsEmpty ? default : (Models.JsonString.Source)page.NextPageToken.Span;
             b.Create(
                 versions: new Models.CatalogPage.CatalogVersionSummaryArray.Source(
                     (ref Models.CatalogPage.CatalogVersionSummaryArray.Builder ab) =>
