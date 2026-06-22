@@ -91,7 +91,7 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore, ISupp
     public ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
-        return this.AddCoreAsync(baseWorkflowId, packageUtf8.ToArray(), metadata, cancellationToken);
+        return this.AddCoreAsync(baseWorkflowId, packageUtf8, metadata, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -381,7 +381,7 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore, ISupp
     private static SqlParameter NullableBigint(string name, long? value)
         => new(name, SqlDbType.BigInt) { Value = (object?)value ?? DBNull.Value };
 
-    private async ValueTask<ParsedJsonDocument<CatalogVersion>> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
+    private async ValueTask<ParsedJsonDocument<CatalogVersion>> AddCoreAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
@@ -399,7 +399,9 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore, ISupp
         SecurityTagSet securityTags = metadata.SecurityTags;
 
         // Bind the columns directly from the projected/governance source values (no round-trip through the
-        // CatalogVersion document); the document is built once, for the return value.
+        // CatalogVersion document); the document is built once, for the return value. The (potentially large) canonical
+        // package is streamed straight from its memory as the VARBINARY(MAX) parameter — no GC copy of the whole package.
+        using ReadOnlyMemoryStream packageStream = ReadOnlyMemoryStream.Rent(projection.CanonicalPackage);
         await using SqlCommand insert = connection.CreateCommand();
         insert.CommandText =
             $"""
@@ -427,7 +429,7 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore, ISupp
         insert.Parameters.Add(NullableBigint("@obsoletedAt", null));
         insert.Parameters.AddWithValue("@runnable", projection.HasExecutor);
         insert.Parameters.Add(NullableText("@securityTags", securityTags.ToSecurityDelimitedOrNull(SecurityTagPairSeparator, SecurityTagKeyValueSeparator)));
-        insert.Parameters.AddWithValue("@package", projection.CanonicalPackage.ToArray());
+        insert.Parameters.Add(new SqlParameter("@package", SqlDbType.VarBinary, -1) { Value = packageStream });
         await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
 
         // Persist the version's security tags for indexed reach-filtering (§14.4); versions are immutable.

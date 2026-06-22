@@ -142,7 +142,7 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
     public ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
-        return this.AddCoreAsync(baseWorkflowId, packageUtf8.ToArray(), metadata, cancellationToken);
+        return this.AddCoreAsync(baseWorkflowId, packageUtf8, metadata, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -433,7 +433,7 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
     private static NpgsqlParameter NullableBigint(string name, long? value)
         => new(name, NpgsqlDbType.Bigint) { Value = (object?)value ?? DBNull.Value };
 
-    private async ValueTask<ParsedJsonDocument<CatalogVersion>> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
+    private async ValueTask<ParsedJsonDocument<CatalogVersion>> AddCoreAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
@@ -496,7 +496,7 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
             insert.Parameters.Add(NullableBigint("obsoletedAt", null));
             insert.Parameters.AddWithValue("runnable", projection.HasExecutor);
             insert.Parameters.Add(NullableText("securityTags", securityTags.ToSecurityDelimitedOrNull(SecurityTagPairSeparator, SecurityTagKeyValueSeparator)));
-            insert.Parameters.AddWithValue("package", projection.CanonicalPackage.ToArray());
+            insert.Parameters.Add(new NpgsqlParameter<ReadOnlyMemory<byte>>("package", projection.CanonicalPackage));
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 

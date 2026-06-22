@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Globalization;
+using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.Data.Sqlite;
 
@@ -93,7 +94,7 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
     public ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
-        return this.AddCoreAsync(baseWorkflowId, packageUtf8.ToArray(), metadata, cancellationToken);
+        return this.AddCoreAsync(baseWorkflowId, packageUtf8, metadata, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -386,7 +387,7 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         return this.connection.DisposeAsync();
     }
 
-    private async ValueTask<ParsedJsonDocument<CatalogVersion>> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
+    private async ValueTask<ParsedJsonDocument<CatalogVersion>> AddCoreAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -433,7 +434,14 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
             insert.Parameters.AddWithValue("@obsoletedAt", DBNull.Value);
             insert.Parameters.AddWithValue("@runnable", projection.HasExecutor ? 1 : 0);
             insert.Parameters.AddWithValue("@securityTags", (object?)securityTags.ToSecurityDelimitedOrNull(SecurityTagPairSeparator, SecurityTagKeyValueSeparator) ?? DBNull.Value);
-            insert.Parameters.AddWithValue("@package", projection.CanonicalPackage.ToArray());
+
+            // The projection is the sole owner of its freshly-built canonical-package array (PackPooled returns an
+            // exact-sized array, so the ReadOnlyMemory wraps it whole), so bind it directly rather than copying.
+            byte[] packageBytes = MemoryMarshal.TryGetArray(projection.CanonicalPackage, out ArraySegment<byte> segment)
+                && segment.Offset == 0 && segment.Array is { } array && array.Length == segment.Count
+                ? array
+                : projection.CanonicalPackage.ToArray();
+            insert.Parameters.AddWithValue("@package", packageBytes);
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
 
             // Persist the version's security tags into the child table for indexed reach-filtering (§14.4).

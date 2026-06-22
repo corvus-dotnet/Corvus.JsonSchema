@@ -51,7 +51,7 @@ public readonly partial struct CatalogDocument
     /// <param name="writer">The writer to write the document to.</param>
     /// <param name="version">The catalog version.</param>
     /// <param name="package">The canonical package bytes.</param>
-    public static void WriteJson(Utf8JsonWriter writer, CatalogVersion version, byte[] package)
+    public static void WriteJson(Utf8JsonWriter writer, CatalogVersion version, ReadOnlyMemory<byte> package)
     {
         CatalogVersionRef reference = version.Ref;
         CatalogOwner owner = version.OwnerValue;
@@ -120,7 +120,7 @@ public readonly partial struct CatalogDocument
 
         // Base64-encode the package straight into the writer — no intermediate base64 string (which would scale with
         // package size on every write). Read back by CatalogDocument.PackageBytes via Convert.FromBase64String.
-        writer.WriteBase64String(JsonPropertyNames.PackageUtf8, package);
+        writer.WriteBase64String(JsonPropertyNames.PackageUtf8, package.Span);
         writer.WriteString(JsonPropertyNames.CreatedByUtf8, (string)version.CreatedBy);
         writer.WriteNumber(JsonPropertyNames.CreatedAtUtf8, version.CreatedAtValue.ToUnixTimeMilliseconds());
         if (version.LastUpdatedByOrNull is { } lastUpdatedBy)

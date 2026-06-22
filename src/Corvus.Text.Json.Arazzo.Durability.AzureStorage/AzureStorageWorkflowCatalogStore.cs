@@ -143,7 +143,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
     public ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
-        return this.AddCoreAsync(baseWorkflowId, packageUtf8.ToArray(), metadata, cancellationToken);
+        return this.AddCoreAsync(baseWorkflowId, packageUtf8, metadata, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -473,7 +473,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
     private static SecurityTagSet DecodeSecurityTags(string? encoded)
         => SecurityTagSet.FromJsonStringOrEmpty(encoded);
 
-    private async ValueTask<ParsedJsonDocument<CatalogVersion>> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
+    private async ValueTask<ParsedJsonDocument<CatalogVersion>> AddCoreAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         TagSet tags = metadata.Tags;
@@ -512,7 +512,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
             try
             {
                 await this.packages.GetBlobClient(BlobName(baseWorkflowId, versionNumber))
-                    .UploadAsync(BinaryData.FromBytes(projection.CanonicalPackage.ToArray()), overwrite: true, cancellationToken)
+                    .UploadAsync(BinaryData.FromBytes(projection.CanonicalPackage), overwrite: true, cancellationToken)
                     .ConfigureAwait(false);
 
                 await this.catalog.AddEntityAsync(BuildEntity(version.RootElement), cancellationToken).ConfigureAwait(false);

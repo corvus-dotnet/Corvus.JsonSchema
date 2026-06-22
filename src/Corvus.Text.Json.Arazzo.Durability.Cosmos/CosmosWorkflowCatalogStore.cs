@@ -154,7 +154,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
     public ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
-        return this.AddCoreAsync(baseWorkflowId, packageUtf8.ToArray(), metadata, cancellationToken);
+        return this.AddCoreAsync(baseWorkflowId, packageUtf8, metadata, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -479,7 +479,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         }
     }
 
-    private async ValueTask<ParsedJsonDocument<CatalogVersion>> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
+    private async ValueTask<ParsedJsonDocument<CatalogVersion>> AddCoreAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         var partition = new PartitionKey(baseWorkflowId);
@@ -513,8 +513,8 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
             try
             {
                 using var stream = CosmosJson.WriteToStream(
-                    (Version: version.RootElement, Package: projection.CanonicalPackage.ToArray()),
-                    static (Utf8JsonWriter writer, in (CatalogVersion Version, byte[] Package) c) => CatalogDocument.WriteJson(writer, c.Version, c.Package));
+                    (Version: version.RootElement, Package: projection.CanonicalPackage),
+                    static (Utf8JsonWriter writer, in (CatalogVersion Version, ReadOnlyMemory<byte> Package) c) => CatalogDocument.WriteJson(writer, c.Version, c.Package));
                 using ResponseMessage response = await this.catalog.CreateItemStreamAsync(stream, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
                 if (response.StatusCode == HttpStatusCode.Conflict)
                 {
