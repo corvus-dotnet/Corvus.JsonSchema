@@ -166,6 +166,6 @@ public sealed class WorkflowWorkerTests
 #pragma warning restore CS1998
 
         public ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
-            => ValueTask.FromResult(new WorkflowRunPage([]));
+            => ValueTask.FromResult(WorkflowRunPage.Create([]));
     }
 }

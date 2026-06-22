@@ -378,7 +378,14 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     /// <inheritdoc/>
     public async ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
     {
-        string? after = WorkflowContinuationToken.Decode(query.ContinuationToken);
+        // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
+        string? after = null;
+        if (query.ContinuationToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
+            after = WorkflowContinuationToken.Decode(tokenUtf8.Span);
+        }
+
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using MySqlCommand select = connection.CreateCommand();
         select.CommandText =

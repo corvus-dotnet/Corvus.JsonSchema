@@ -456,7 +456,14 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             conditions.Add(security.ToSqlPredicate(emitter));
         }
 
-        string? after = WorkflowContinuationToken.Decode(query.ContinuationToken);
+        // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
+        string? after = null;
+        if (query.ContinuationToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
+            after = WorkflowContinuationToken.Decode(tokenUtf8.Span);
+        }
+
         if (after is not null)
         {
             conditions.Add("c.id > @after");

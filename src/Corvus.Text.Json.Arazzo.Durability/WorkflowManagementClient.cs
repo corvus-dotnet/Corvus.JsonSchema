@@ -104,6 +104,18 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
         }
     }
 
+    // Re-presents an opaque page token (the store's pooled UTF-8) as the JSON string value the query seam carries, for
+    // an in-process paging loop (purge) that feeds a previous page's NextPageToken into the next query. The parsed
+    // document references the quoted buffer; dispose it once the query has consumed the token.
+    private static ParsedJsonDocument<JsonString> WrapContinuationToken(ReadOnlySpan<byte> tokenUtf8)
+    {
+        byte[] quoted = new byte[tokenUtf8.Length + 2];
+        quoted[0] = (byte)'"';
+        tokenUtf8.CopyTo(quoted.AsSpan(1));
+        quoted[^1] = (byte)'"';
+        return ParsedJsonDocument<JsonString>.Parse(quoted);
+    }
+
     /// <inheritdoc/>
     public ValueTask<WorkflowRunPage> ListAsync(WorkflowQuery query, AccessContext context, CancellationToken cancellationToken)
     {
@@ -353,34 +365,48 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
         int purged = 0;
         foreach (WorkflowRunStatus status in new[] { WorkflowRunStatus.Completed, WorkflowRunStatus.Cancelled })
         {
-            // Page through every run of this status (keyset paging is unaffected by the deletions we make).
-            string? token = null;
-            do
+            // Page through every run of this status (keyset paging is unaffected by the deletions we make). This is an
+            // in-process loop: re-present the page's opaque token (the store's pooled UTF-8) to the next query through
+            // the JsonString seam (the store decodes it bytes-native).
+            ParsedJsonDocument<JsonString>? tokenDoc = null;
+            try
             {
-                // Reuse the row-filtered query path so the purge reaps only rows within the caller's purge reach
-                // (§14.2): a tenant admin purges only their tenant's runs, a service operator (null reach) purges all.
-                WorkflowRunPage page = await waitIndex.QueryAsync(new WorkflowQuery(status, null, query.Limit, token, Security: context.Reach(AccessVerb.Purge)), cancellationToken).ConfigureAwait(false);
-                foreach (WorkflowRunListing listing in page.Runs)
+                do
                 {
-                    if (purged >= query.Limit)
+                    // Reuse the row-filtered query path so the purge reaps only rows within the caller's purge reach
+                    // (§14.2): a tenant admin purges only their tenant's runs, a service operator (null reach) purges all.
+                    using WorkflowRunPage page = await waitIndex.QueryAsync(
+                        new WorkflowQuery(status, null, query.Limit, tokenDoc?.RootElement ?? default, Security: context.Reach(AccessVerb.Purge)),
+                        cancellationToken).ConfigureAwait(false);
+                    foreach (WorkflowRunListing listing in page.Runs)
                     {
-                        activity?.SetTag("corvus.arazzo.purged_count", purged);
-                        ArazzoTelemetry.WorkflowsPurged.Add(purged);
-                        return purged;
+                        if (purged >= query.Limit)
+                        {
+                            activity?.SetTag("corvus.arazzo.purged_count", purged);
+                            ArazzoTelemetry.WorkflowsPurged.Add(purged);
+                            return purged;
+                        }
+
+                        if (listing.Index.UpdatedAt >= query.OlderThan)
+                        {
+                            continue;
+                        }
+
+                        await this.store.DeleteAsync(listing.Id, cancellationToken).ConfigureAwait(false);
+                        purged++;
                     }
 
-                    if (listing.Index.UpdatedAt >= query.OlderThan)
-                    {
-                        continue;
-                    }
-
-                    await this.store.DeleteAsync(listing.Id, cancellationToken).ConfigureAwait(false);
-                    purged++;
+                    // The previous token has been consumed by the query above; swap in the next page's (if any).
+                    ParsedJsonDocument<JsonString>? consumed = tokenDoc;
+                    tokenDoc = page.NextPageToken.IsEmpty ? null : WrapContinuationToken(page.NextPageToken.Span);
+                    consumed?.Dispose();
                 }
-
-                token = page.ContinuationToken;
+                while (tokenDoc is not null);
             }
-            while (token is not null);
+            finally
+            {
+                tokenDoc?.Dispose();
+            }
         }
 
         activity?.SetTag("corvus.arazzo.purged_count", purged);
