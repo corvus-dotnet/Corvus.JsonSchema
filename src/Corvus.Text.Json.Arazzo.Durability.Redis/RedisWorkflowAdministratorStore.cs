@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Globalization;
+using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using StackExchange.Redis;
@@ -109,8 +110,11 @@ public sealed class RedisWorkflowAdministratorStore : IWorkflowAdministratorStor
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         cancellationToken.ThrowIfCancellationRequested();
-        RedisValue value = await this.database.HashGetAsync(RecordKey(baseWorkflowId), DocField).ConfigureAwait(false);
-        return value.IsNullOrEmpty ? null : PersistedJson.ToPooledDocument<WorkflowAdministrators>((byte[])value!);
+
+        // Read into a pooled lease (no GC read array); the returned document must own its buffer, so copy the lease span
+        // into an owned pooled document — the lease returns to the pool here.
+        using Lease<byte>? lease = await this.database.HashGetLeaseAsync(RecordKey(baseWorkflowId), DocField).ConfigureAwait(false);
+        return lease is { Length: > 0 } ? PersistedJson.ToPooledDocument<WorkflowAdministrators>(lease.Span) : null;
     }
 
     /// <inheritdoc/>
@@ -127,24 +131,49 @@ public sealed class RedisWorkflowAdministratorStore : IWorkflowAdministratorStor
         cancellationToken.ThrowIfCancellationRequested();
         RedisKey key = RecordKey(baseWorkflowId);
 
-        // Read the current document so the carried-forward update preserves the immutable creation audit. The Lua script
-        // re-checks the etag under the write, so a racing change between this read and the write still yields a conflict.
-        RedisValue existingValue = await this.database.HashGetAsync(key, DocField).ConfigureAwait(false);
-        byte[] json = existingValue.IsNullOrEmpty
-            ? WorkflowAdministratorsSerialization.SerializeNew(baseWorkflowId, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag())
-            : WorkflowAdministratorsSerialization.SerializeUpdated((byte[])existingValue!, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        // The etag for this write is generated ONCE up front; it stamps the document body and is the denormalized copy the
+        // Lua check-and-set stores in the etag field, so no re-derivation from the serialized bytes is needed.
+        WorkflowEtag etag = NewEtag();
 
-        WorkflowEtag newEtag = WorkflowAdministratorsSerialization.EtagOf(json);
-        RedisKey[] keys = [key];
-        RedisValue[] argv = [expectedEtag.IsNone ? NoneSentinel : expectedEtag.Value!, json, newEtag.Value!];
+        // Read the current document into a pooled lease (no GC read array) so the carried-forward update preserves the
+        // immutable creation audit. The Lua script re-checks the etag under the write, so a racing change between this read
+        // and the write still yields a conflict.
+        using Lease<byte>? lease = await this.database.HashGetLeaseAsync(key, DocField).ConfigureAwait(false);
 
-        RedisResult result = await this.database.ScriptEvaluateAsync(PutScript, keys, argv).ConfigureAwait(false);
-        if ((long)result == 0)
+        // Serialize into the pooled buffer the returned document owns and bind its exact bytes as the new-document ARGV (a
+        // ReadOnlyMemory<byte> carries the precise length, so there is no GC document array and no second copy); the document
+        // is returned on success, disposed on a write failure.
+        ParsedJsonDocument<WorkflowAdministrators> doc;
+        if (lease is { Length: > 0 })
         {
-            throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
+            // Parse the existing record NON-COPYING over the lease (the lease stays alive through the synchronous merge).
+            using ParsedJsonDocument<WorkflowAdministrators> current = ParsedJsonDocument<WorkflowAdministrators>.Parse(lease.Memory);
+            doc = WorkflowAdministratorsSerialization.SerializeUpdatedDoc(current.RootElement, administrators, actor, this.timeProvider.GetUtcNow(), etag);
+        }
+        else
+        {
+            doc = WorkflowAdministratorsSerialization.SerializeNewDoc(baseWorkflowId, administrators, actor, this.timeProvider.GetUtcNow(), etag);
         }
 
-        return PersistedJson.ToPooledDocument<WorkflowAdministrators>(json);
+        try
+        {
+            ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory;
+            RedisKey[] keys = [key];
+            RedisValue[] argv = [expectedEtag.IsNone ? NoneSentinel : expectedEtag.Value!, utf8, etag.Value!];
+
+            RedisResult result = await this.database.ScriptEvaluateAsync(PutScript, keys, argv).ConfigureAwait(false);
+            if ((long)result == 0)
+            {
+                throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
+            }
+
+            return doc;
+        }
+        catch
+        {
+            doc.Dispose();
+            throw;
+        }
     }
 
     /// <inheritdoc/>

@@ -106,8 +106,16 @@ public sealed class CosmosWorkflowAdministratorStore : IWorkflowAdministratorSto
     public async ValueTask<ParsedJsonDocument<WorkflowAdministrators>?> GetAsync(string baseWorkflowId, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
-        byte[]? json = await this.DocumentAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
-        return json is null ? null : PersistedJson.ToPooledDocument<WorkflowAdministrators>(json);
+        using CosmosJson.RentedResponse? payload = await this.ReadResponseAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
+        if (payload is not { } page)
+        {
+            return null;
+        }
+
+        // The embedded doc is raw nested JSON (a slice of the live pooled response). Copy it into an owned pooled
+        // document (no GC array) before the response buffer is returned at the end of this using.
+        ReadOnlyMemory<byte> doc = CosmosJson.GetRawValue(page.Memory, DocProperty);
+        return doc.IsEmpty ? null : PersistedJson.ToPooledDocument<WorkflowAdministrators>(doc.Span);
     }
 
     /// <inheritdoc/>
@@ -122,42 +130,60 @@ public sealed class CosmosWorkflowAdministratorStore : IWorkflowAdministratorSto
         }
 
         string id = ItemId(baseWorkflowId);
-        byte[]? existing = await this.DocumentAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
-        if (existing is not null)
+        ParsedJsonDocument<WorkflowAdministrators>? updateDocument = null;
+        Stream? updateStream = null;
+        using (CosmosJson.RentedResponse? payload = await this.ReadResponseAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false))
         {
-            // A record exists: the caller must hold its current etag (None means "I expected no record").
-            if (expectedEtag.IsNone || expectedEtag != WorkflowAdministratorsSerialization.EtagOf(existing))
+            if (payload is { } page && CosmosJson.GetRawValue(page.Memory, DocProperty) is { IsEmpty: false } doc)
             {
-                throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
-            }
+                // Parse the existing document NON-COPYING over the live response (no GC array, no pooled copy) to check the
+                // etag and carry its immutable creation audit forward; both the parse and its consumers (SerializeUpdated +
+                // EnvelopeStream, all synchronous) complete before the response buffer is returned at the end of this using.
+                // SerializeUpdated produces an owned byte[] and EnvelopeStream a pooled stream, so neither outlives the page.
+                using ParsedJsonDocument<WorkflowAdministrators> current = ParsedJsonDocument<WorkflowAdministrators>.Parse(doc);
 
-            byte[] updated = WorkflowAdministratorsSerialization.SerializeUpdated(existing, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
-            using Stream stream = EnvelopeStream(id, updated, out ParsedJsonDocument<WorkflowAdministrators> document);
-            try
-            {
-                using ResponseMessage response = await this.container.ReplaceItemStreamAsync(stream, id, new PartitionKey(id), cancellationToken: cancellationToken).ConfigureAwait(false);
-                response.EnsureSuccessStatusCode();
-                return document;
-            }
-            catch
-            {
-                document.Dispose();
-                throw;
+                // A record exists: the caller must hold its current etag (None means "I expected no record").
+                if (expectedEtag.IsNone || expectedEtag != current.RootElement.EtagValue)
+                {
+                    throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
+                }
+
+                byte[] updated = WorkflowAdministratorsSerialization.SerializeUpdated(current.RootElement, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
+                updateStream = EnvelopeStream(id, updated, out ParsedJsonDocument<WorkflowAdministrators> document);
+                updateDocument = document;
             }
         }
-        else
-        {
-            // No record yet: materialization is only valid against the None etag (the v1-derived default).
-            if (!expectedEtag.IsNone)
-            {
-                throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
-            }
 
-            byte[] created = WorkflowAdministratorsSerialization.SerializeNew(baseWorkflowId, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
-            using Stream stream = EnvelopeStream(id, created, out ParsedJsonDocument<WorkflowAdministrators> document);
+        if (updateStream is not null && updateDocument is { } replaceDocument)
+        {
+            using (updateStream)
+            {
+                try
+                {
+                    using ResponseMessage response = await this.container.ReplaceItemStreamAsync(updateStream, id, new PartitionKey(id), cancellationToken: cancellationToken).ConfigureAwait(false);
+                    response.EnsureSuccessStatusCode();
+                    return replaceDocument;
+                }
+                catch
+                {
+                    replaceDocument.Dispose();
+                    throw;
+                }
+            }
+        }
+
+        // No record yet: materialization is only valid against the None etag (the v1-derived default).
+        if (!expectedEtag.IsNone)
+        {
+            throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
+        }
+
+        byte[] created = WorkflowAdministratorsSerialization.SerializeNew(baseWorkflowId, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        using (Stream createStream = EnvelopeStream(id, created, out ParsedJsonDocument<WorkflowAdministrators> createDocument))
+        {
             try
             {
-                using ResponseMessage response = await this.container.CreateItemStreamAsync(stream, new PartitionKey(id), cancellationToken: cancellationToken).ConfigureAwait(false);
+                using ResponseMessage response = await this.container.CreateItemStreamAsync(createStream, new PartitionKey(id), cancellationToken: cancellationToken).ConfigureAwait(false);
                 if (response.StatusCode == HttpStatusCode.Conflict)
                 {
                     // A concurrent create won the race between the read above and this write — the caller's None etag no
@@ -166,11 +192,11 @@ public sealed class CosmosWorkflowAdministratorStore : IWorkflowAdministratorSto
                 }
 
                 response.EnsureSuccessStatusCode();
-                return document;
+                return createDocument;
             }
             catch
             {
-                document.Dispose();
+                createDocument.Dispose();
                 throw;
             }
         }
@@ -240,10 +266,11 @@ public sealed class CosmosWorkflowAdministratorStore : IWorkflowAdministratorSto
         return new CosmosWorkflowAdministratorStore(client, container, timeProvider ?? TimeProvider.System, ownsClient);
     }
 
-    // Reads the single record for a base workflow id by its deterministic id — a single-partition point read, NotFound
-    // by status code (not an exception). The embedded doc is raw nested JSON (no base64); copy it out, as it outlives
-    // the pooled response page (the caller parses it, or PutAsync checks its etag and replaces from it).
-    private async ValueTask<byte[]?> DocumentAsync(string baseWorkflowId, CancellationToken cancellationToken)
+    // Point-reads the single record for a base workflow id by its deterministic id into a pooled response (no GC array) —
+    // a single-partition point read, NotFound by status code (not an exception). Returns null on NotFound; otherwise the
+    // caller slices the embedded doc off the LIVE response (CosmosJson.GetRawValue, raw nested JSON — no base64) and
+    // copies/parses it before this response is returned to the pool — disposing the returned RentedResponse releases it.
+    private async ValueTask<CosmosJson.RentedResponse?> ReadResponseAsync(string baseWorkflowId, CancellationToken cancellationToken)
     {
         string id = ItemId(baseWorkflowId);
         using ResponseMessage response = await this.container.ReadItemStreamAsync(id, new PartitionKey(id), cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -253,8 +280,6 @@ public sealed class CosmosWorkflowAdministratorStore : IWorkflowAdministratorSto
         }
 
         response.EnsureSuccessStatusCode();
-        using CosmosJson.RentedResponse payload = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
-        ReadOnlyMemory<byte> doc = CosmosJson.GetRawValue(payload.Memory, DocProperty);
-        return doc.IsEmpty ? null : doc.ToArray();
+        return await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
     }
 }

@@ -67,7 +67,7 @@ only at the genuine leaf — [[no-handrolled-records-use-codegen-jsonschema]],
 | `ISourceCredentialStore.Add/UpdateAsync` | `SourceCredentialBinding` | `SourceCredentialSerialization` | `draft` (seam carries the generated doc; `SourceCredentialDefinition` retained only as the cold-caller convenience input via `Draft(definition)` + extension) | ✅ (Part D) |
 | `IWorkflowCatalogStore.AddAsync` | `CatalogVersion` | (catalog serialization) | `record` (`CatalogMetadata`) + `bytes` package | ⬜ |
 | `IWorkflowCatalogStore.UpdateMetadataAsync` | `CatalogVersion` | (catalog serialization) | `record` (`CatalogMetadataPatch`) | ⬜ |
-| `IWorkflowAdministratorStore.PutAsync` | `WorkflowAdministrators` | `WorkflowAdministratorsSerialization` | `list` (`IReadOnlyList<SecurityTagSet>`) | ⬜ |
+| `IWorkflowAdministratorStore.PutAsync` | `WorkflowAdministrators` | `WorkflowAdministratorsSerialization` | `list` (`IReadOnlyList<SecurityTagSet>`) — put serialized into the pooled buffer the **returned** document owns (`SerializeNewDoc`/`SerializeUpdatedDoc → ParsedJsonDocument`), bound via `JsonMarshal`; update takes the **parsed model** (`in WorkflowAdministrators`), parsed **once** non-copying (replacing the old `EtagOf(existing)` + `SerializeUpdated` double-parse); `EtagOf` removed (column etag from the generated value) | ✅ **write-realization + allocate-on-read; 10 backends conformance-green (Part D)** |
 | `IWorkflowStateStore.SaveAsync` | opaque checkpoint | (executor-owned) | `bytes` + index | ➖ (confirm) |
 | **(read seam, all backends)** read-existing + projection reads | the persisted doc | — | the seam now carries the **parsed model** (`SerializeUpserted(in ObservedIdentity)`), parsed at each leaf the leanest way; merge parses **non-copying** over the owned bytes (no `ToPooledDocument` re-copy). Driver-minted arrays (ADO `GetFieldValue<byte[]>`, Mongo/NATS/Azure) **are the leaf** (confirms §13.4.1 — no GC win there, only the copy elided); genuine GC eliminated at Cosmos (`.ToArray`→pooled) and Redis (`(byte[])`→`Lease<byte>`) | ✅ **done — Part D** (Sqlite in-process unchanged 8864→8865 B upsert / 7872→7873 B search = relational read array IS the driver leaf; Cosmos/Redis GC win container-verified; 10 backends conformance-green) |
 
@@ -600,6 +600,25 @@ reads (`GetAsync`/`ListAsync`) parse non-copying over the driver's array; `EtagO
   backends). Cosmos's `DocumentAsync` (a `.ToArray()`) became `ReadResponseAsync` reading off the live pooled response.
 - **Verified against real containers** (podman socket): all 10 `IAccessRequestStore` conformance suites green
   (Postgres/MySql/Redis/Mongo/NATS/AzureStorage/SqlServer/Cosmos 6/6, InMemory + Sqlite 6/6 in-process). **Row done.**
+
+### ✅ Workflow-administrator store — write-realization + allocate-on-read (`IWorkflowAdministratorStore`)
+
+The proven pattern applied to `IWorkflowAdministratorStore` (§15; one doc type — `WorkflowAdministrators` — Put + Get),
+with an extra cleanup: the store previously parsed the existing record **twice** on update (`EtagOf(existing)` for the
+concurrency check, then `SerializeUpdated(existing)` again) and the durable backends additionally re-parsed the
+just-serialized bytes via `EtagOf(json)` for their indexed etag column.
+
+- **Serializer.** `Serialize{New,Updated}Doc(...) → ParsedJsonDocument<WorkflowAdministrators>` (owned, memory/stream;
+  bound via `JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory`); `SerializeUpdated` now takes the **parsed model**
+  (`in WorkflowAdministrators`). **`EtagOf` removed entirely** — the update's concurrency check reads
+  `current.RootElement.EtagValue` from the one non-copying parse, and the indexed column takes the etag the store already
+  generated (no post-serialize reparse). byte[]-leaf backends (Mongo/NATS/Azure/Sqlite/InMemory) keep the `byte[]` write.
+- **Measured** (`WorkflowAdministratorStoreBenchmarks`, serializer in-process): `Serialize_New_ToArray` **360 B** (GC array)
+  → `Serialize_New_Doc` **184 B** (−49%); `Serialize_Updated_ToArray` **520 B** → `Serialize_Updated_Doc` **272 B** (−48%)
+  — the GC document array dropped on the memory/stream backends (residual = the owning pooled document the store returns).
+  The update's double-parse → single non-copying parse is a CPU/`ArrayPool` win (not GC-visible), as for the prior rows.
+- **Verified against real containers** (podman socket): all 10 `IWorkflowAdministratorStore` conformance suites green
+  (Postgres/MySql/Redis/Mongo/NATS/AzureStorage/SqlServer/Cosmos) + InMemory + Sqlite in-process. **Row done.**
 
 ## Cross-references
 

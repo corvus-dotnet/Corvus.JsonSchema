@@ -3,6 +3,8 @@
 // </copyright>
 
 using System.Globalization;
+using Corvus.Runtime.InteropServices;
+using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using MySqlConnector;
 
@@ -87,7 +89,7 @@ public sealed class MySqlWorkflowAdministratorStore : IWorkflowAdministratorStor
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         await using MySqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         byte[]? json = await ReadDocumentAsync(connection, baseWorkflowId, cancellationToken).ConfigureAwait(false);
-        return json is null ? null : PersistedJson.ToPooledDocument<WorkflowAdministrators>(json);
+        return json is null ? null : ParsedJsonDocument<WorkflowAdministrators>.Parse(json.AsMemory());
     }
 
     /// <inheritdoc/>
@@ -103,41 +105,61 @@ public sealed class MySqlWorkflowAdministratorStore : IWorkflowAdministratorStor
 
         await using MySqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         byte[]? existing = await ReadDocumentAsync(connection, baseWorkflowId, cancellationToken).ConfigureAwait(false);
-        byte[] json;
+        WorkflowEtag etag = NewEtag();
         if (existing is not null)
         {
-            // A record exists: the caller must hold its current etag (None means "I expected no record").
-            if (expectedEtag.IsNone || expectedEtag != WorkflowAdministratorsSerialization.EtagOf(existing))
+            // Parse the existing record ONCE, NON-COPYING over the driver's array (the read leaf) — used for both the etag
+            // check and the carried-forward merge. Serialize the result into the pooled buffer the returned document owns and
+            // bind its exact bytes as the LONGBLOB parameter (no GC document array, no second copy); the column etag is the one
+            // we just generated.
+            using ParsedJsonDocument<WorkflowAdministrators> current = ParsedJsonDocument<WorkflowAdministrators>.Parse(existing.AsMemory());
+            if (expectedEtag.IsNone || expectedEtag != current.RootElement.EtagValue)
             {
                 throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
             }
 
-            json = WorkflowAdministratorsSerialization.SerializeUpdated(existing, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
-            await using MySqlCommand update = connection.CreateCommand();
-            update.CommandText = "UPDATE WorkflowAdministrators SET Etag = @etag, Document = @doc WHERE BaseWorkflowId = @id;";
-            update.Parameters.AddWithValue("@etag", WorkflowAdministratorsSerialization.EtagOf(json).Value!);
-            update.Parameters.AddWithValue("@doc", json);
-            update.Parameters.AddWithValue("@id", baseWorkflowId);
-            await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            ParsedJsonDocument<WorkflowAdministrators> updated = WorkflowAdministratorsSerialization.SerializeUpdatedDoc(current.RootElement, administrators, actor, this.timeProvider.GetUtcNow(), etag);
+            try
+            {
+                ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(updated.RootElement).Memory;
+                await using MySqlCommand update = connection.CreateCommand();
+                update.CommandText = "UPDATE WorkflowAdministrators SET Etag = @etag, Document = @doc WHERE BaseWorkflowId = @id;";
+                update.Parameters.AddWithValue("@etag", etag.Value!);
+                update.Parameters.AddWithValue("@doc", utf8);
+                update.Parameters.AddWithValue("@id", baseWorkflowId);
+                await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                return updated;
+            }
+            catch
+            {
+                updated.Dispose();
+                throw;
+            }
         }
-        else
-        {
-            // No record yet: materialization is only valid against the None etag (the v1-derived default).
-            if (!expectedEtag.IsNone)
-            {
-                throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
-            }
 
-            json = WorkflowAdministratorsSerialization.SerializeNew(baseWorkflowId, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        // No record yet: materialization is only valid against the None etag (the v1-derived default).
+        if (!expectedEtag.IsNone)
+        {
+            throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
+        }
+
+        ParsedJsonDocument<WorkflowAdministrators> doc = WorkflowAdministratorsSerialization.SerializeNewDoc(baseWorkflowId, administrators, actor, this.timeProvider.GetUtcNow(), etag);
+        try
+        {
+            ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory;
             await using MySqlCommand insert = connection.CreateCommand();
             insert.CommandText = "INSERT INTO WorkflowAdministrators (BaseWorkflowId, Etag, Document) VALUES (@id, @etag, @doc);";
             insert.Parameters.AddWithValue("@id", baseWorkflowId);
-            insert.Parameters.AddWithValue("@etag", WorkflowAdministratorsSerialization.EtagOf(json).Value!);
-            insert.Parameters.AddWithValue("@doc", json);
+            insert.Parameters.AddWithValue("@etag", etag.Value!);
+            insert.Parameters.AddWithValue("@doc", utf8);
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            return doc;
         }
-
-        return PersistedJson.ToPooledDocument<WorkflowAdministrators>(json);
+        catch
+        {
+            doc.Dispose();
+            throw;
+        }
     }
 
     /// <inheritdoc/>
