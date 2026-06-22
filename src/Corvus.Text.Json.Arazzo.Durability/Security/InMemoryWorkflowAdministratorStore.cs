@@ -55,13 +55,17 @@ public sealed class InMemoryWorkflowAdministratorStore : IWorkflowAdministratorS
             byte[] json;
             if (this.records.TryGetValue(baseWorkflowId, out byte[]? existing))
             {
+                // Parse the existing document ONCE, NON-COPYING over the stored array (alive in the dictionary through this
+                // synchronous update under the lock) — used for both the etag check and the carried-forward merge.
+                using ParsedJsonDocument<WorkflowAdministrators> current = ParsedJsonDocument<WorkflowAdministrators>.Parse(existing.AsMemory());
+
                 // A record already exists: the caller must hold its current etag (None means "I expected no record").
-                if (expectedEtag.IsNone || expectedEtag != WorkflowAdministratorsSerialization.EtagOf(existing))
+                if (expectedEtag.IsNone || expectedEtag != current.RootElement.EtagValue)
                 {
                     throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
                 }
 
-                json = WorkflowAdministratorsSerialization.SerializeUpdated(existing, administrators, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
+                json = WorkflowAdministratorsSerialization.SerializeUpdated(current.RootElement, administrators, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
             }
             else
             {

@@ -75,7 +75,7 @@ public sealed class SqliteWorkflowAdministratorStore : IWorkflowAdministratorSto
         try
         {
             byte[]? json = await this.ReadDocumentAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
-            return json is null ? null : PersistedJson.ToPooledDocument<WorkflowAdministrators>(json);
+            return json is null ? null : ParsedJsonDocument<WorkflowAdministrators>.Parse(json.AsMemory());
         }
         finally
         {
@@ -98,19 +98,22 @@ public sealed class SqliteWorkflowAdministratorStore : IWorkflowAdministratorSto
         try
         {
             byte[]? existing = await this.ReadDocumentAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
+            WorkflowEtag etag = NewEtag();
             byte[] json;
             if (existing is not null)
             {
-                // A record exists: the caller must hold its current etag (None means "I expected no record").
-                if (expectedEtag.IsNone || expectedEtag != WorkflowAdministratorsSerialization.EtagOf(existing))
+                // A record exists: parse it ONCE, NON-COPYING over the driver's array, for both the etag check and the
+                // carried-forward merge. The caller must hold its current etag (None means "I expected no record").
+                using ParsedJsonDocument<WorkflowAdministrators> current = ParsedJsonDocument<WorkflowAdministrators>.Parse(existing.AsMemory());
+                if (expectedEtag.IsNone || expectedEtag != current.RootElement.EtagValue)
                 {
                     throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
                 }
 
-                json = WorkflowAdministratorsSerialization.SerializeUpdated(existing, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
+                json = WorkflowAdministratorsSerialization.SerializeUpdated(current.RootElement, administrators, actor, this.timeProvider.GetUtcNow(), etag);
                 using SqliteCommand update = this.connection.CreateCommand();
                 update.CommandText = "UPDATE WorkflowAdministrators SET Etag = @etag, Document = @doc WHERE BaseWorkflowId = @id;";
-                update.Parameters.AddWithValue("@etag", WorkflowAdministratorsSerialization.EtagOf(json).Value!);
+                update.Parameters.AddWithValue("@etag", etag.Value!);
                 update.Parameters.AddWithValue("@doc", json);
                 update.Parameters.AddWithValue("@id", baseWorkflowId);
                 await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -123,11 +126,11 @@ public sealed class SqliteWorkflowAdministratorStore : IWorkflowAdministratorSto
                     throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
                 }
 
-                json = WorkflowAdministratorsSerialization.SerializeNew(baseWorkflowId, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
+                json = WorkflowAdministratorsSerialization.SerializeNew(baseWorkflowId, administrators, actor, this.timeProvider.GetUtcNow(), etag);
                 using SqliteCommand insert = this.connection.CreateCommand();
                 insert.CommandText = "INSERT INTO WorkflowAdministrators (BaseWorkflowId, Etag, Document) VALUES (@id, @etag, @doc);";
                 insert.Parameters.AddWithValue("@id", baseWorkflowId);
-                insert.Parameters.AddWithValue("@etag", WorkflowAdministratorsSerialization.EtagOf(json).Value!);
+                insert.Parameters.AddWithValue("@etag", etag.Value!);
                 insert.Parameters.AddWithValue("@doc", json);
                 await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
             }
