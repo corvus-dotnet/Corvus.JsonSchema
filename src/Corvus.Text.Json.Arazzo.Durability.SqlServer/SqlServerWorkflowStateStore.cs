@@ -83,10 +83,14 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
         in WorkflowRunIndexEntry index,
         WorkflowEtag expected,
         CancellationToken cancellationToken)
-        => this.SaveCoreAsync(id, checkpointUtf8.ToArray(), index, expected, cancellationToken);
+        => this.SaveCoreAsync(id, checkpointUtf8, index, expected, cancellationToken);
 
-    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunId id, byte[] checkpoint, WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunId id, ReadOnlyMemory<byte> checkpoint, WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
     {
+        // Stream the opaque checkpoint straight from its memory as the VARBINARY(MAX) parameter (SqlClient uploads a BLOB
+        // from a Stream) — no per-save GC array on the run-state hot path. The pooled stream is returned once the command
+        // completes.
+        using ReadOnlyMemoryStream checkpointStream = ReadOnlyMemoryStream.Rent(checkpoint);
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         if (expected.IsNone)
         {
@@ -96,7 +100,7 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
                 INSERT INTO workflow_runs (run_id, [checkpoint], version, status, workflow_id, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type, correlation_id, tags)
                 VALUES (@id, @checkpoint, 1, @status, @workflow_id, @created_at, @updated_at, @due_at, @awaiting_channel, @awaiting_correlation_id, @error_type, @correlation_id, @tags);
                 """;
-            BindRun(insert, id, checkpoint, index);
+            BindRun(insert, id, checkpointStream, index);
             try
             {
                 await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -121,7 +125,7 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
                 correlation_id = @correlation_id, tags = @tags
             WHERE run_id = @id AND version = @expected_version;
             """;
-        BindRun(update, id, checkpoint, index);
+        BindRun(update, id, checkpointStream, index);
         update.Parameters.AddWithValue("@expected_version", expectedVersion);
         int updated = await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         if (updated == 0)
@@ -405,10 +409,10 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
         return WorkflowContinuationToken.Paginate(runs, query.Limit);
     }
 
-    private static void BindRun(SqlCommand command, WorkflowRunId id, byte[] checkpoint, in WorkflowRunIndexEntry index)
+    private static void BindRun(SqlCommand command, WorkflowRunId id, Stream checkpoint, in WorkflowRunIndexEntry index)
     {
         command.Parameters.AddWithValue("@id", id.Value);
-        command.Parameters.AddWithValue("@checkpoint", checkpoint);
+        command.Parameters.Add(new SqlParameter("@checkpoint", SqlDbType.VarBinary, -1) { Value = checkpoint });
         command.Parameters.AddWithValue("@status", index.Status.ToString());
         command.Parameters.AddWithValue("@workflow_id", index.WorkflowId);
         command.Parameters.AddWithValue("@created_at", index.CreatedAt.ToUnixTimeMilliseconds());

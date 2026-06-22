@@ -63,12 +63,12 @@ only at the genuine leaf — [[no-handrolled-records-use-codegen-jsonschema]],
 | `ISecurityPolicyStore.Add/UpdateRule` | `SecurityRuleDocument` | `SecurityPolicySerialization` | `draft` — write serialized once into the pooled buffer the **returned** document owns (`SerializeXDoc → ParsedJsonDocument`), bound memory/stream via `JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory`; update merge takes the **parsed model** (`in SecurityRuleDocument`), parsed non-copying at each leaf | ✅ **write-realization + allocate-on-read; 10 backends conformance-green (Part D)** |
 | `ISecurityPolicyStore.Add/UpdateBinding` | `SecurityBindingDocument` | `SecurityPolicySerialization` | `draft` — same as rule (owned-doc write + non-copying parsed-model update) | ✅ **Part D** |
 | `IAccessRequestStore.CreateAsync` (+ `DecideAsync`) | `AccessRequest` | `AccessRequestSerialization` | `draft` — create/decide serialized into the pooled buffer the **returned** document owns (`SerializeNewDoc`/`SerializeDecisionDoc → ParsedJsonDocument`), bound via `JsonMarshal`; decide takes the **parsed model** (`in AccessRequest`), parsed non-copying at each leaf | ✅ **write-realization + allocate-on-read; 10 backends conformance-green (Part D)** |
-| `IAccessRequestStore.DecideAsync` | `AccessRequest` | `AccessRequestSerialization` | `record` (`AccessRequestDecision`) | ⬜ |
+| `IAccessRequestStore.DecideAsync` | `AccessRequest` | `AccessRequestSerialization` | `record` (`AccessRequestDecision`) | ➖ **n/a** — `AccessRequestDecision` is a `readonly record struct` (a **value type, zero heap**): the decision *input* (status/reason/binding/expiry), not a persisted shape. The persisted `AccessRequest` is already done; converting the input to a draft doc would *add* allocation |
 | `ISourceCredentialStore.Add/UpdateAsync` | `SourceCredentialBinding` | `SourceCredentialSerialization` | `draft` (seam carries the generated doc; `SourceCredentialDefinition` retained only as the cold-caller convenience input via `Draft(definition)` + extension) | ✅ (Part D) |
 | `IWorkflowCatalogStore.AddAsync` | `CatalogVersion` | (catalog serialization) | `record` (`CatalogMetadata`) + `bytes` package | ⬜ |
 | `IWorkflowCatalogStore.UpdateMetadataAsync` | `CatalogVersion` | (catalog serialization) | `record` (`CatalogMetadataPatch`) | ⬜ |
 | `IWorkflowAdministratorStore.PutAsync` | `WorkflowAdministrators` | `WorkflowAdministratorsSerialization` | `list` (`IReadOnlyList<SecurityTagSet>`) — put serialized into the pooled buffer the **returned** document owns (`SerializeNewDoc`/`SerializeUpdatedDoc → ParsedJsonDocument`), bound via `JsonMarshal`; update takes the **parsed model** (`in WorkflowAdministrators`), parsed **once** non-copying (replacing the old `EtagOf(existing)` + `SerializeUpdated` double-parse); `EtagOf` removed (column etag from the generated value) | ✅ **write-realization + allocate-on-read; 10 backends conformance-green (Part D)** |
-| `IWorkflowStateStore.SaveAsync` | opaque checkpoint | (executor-owned) | `bytes` + index | ➖ (confirm) |
+| `IWorkflowStateStore.SaveAsync` | opaque checkpoint | (executor-owned) | `bytes` + index — opaque `ReadOnlyMemory<byte>` seam; the memory/stream backends bind it directly (SqlServer streams, Pg/MySql `ReadOnlyMemory`, Redis memory `RedisValue`, Cosmos base64 `.Span` into the run-doc envelope) instead of the old per-save `checkpointUtf8.ToArray()`; `byte[]` only at Sqlite/Mongo/Azure leaves; NATS already encodes from `.Span`; InMemory dict canonical | ✅ **write-realization (hot path); 5 memory/stream backends de-arrayed; Part D** |
 | **(read seam, all backends)** read-existing + projection reads | the persisted doc | — | the seam now carries the **parsed model** (`SerializeUpserted(in ObservedIdentity)`), parsed at each leaf the leanest way; merge parses **non-copying** over the owned bytes (no `ToPooledDocument` re-copy). Driver-minted arrays (ADO `GetFieldValue<byte[]>`, Mongo/NATS/Azure) **are the leaf** (confirms §13.4.1 — no GC win there, only the copy elided); genuine GC eliminated at Cosmos (`.ToArray`→pooled) and Redis (`(byte[])`→`Lease<byte>`) | ✅ **done — Part D** (Sqlite in-process unchanged 8864→8865 B upsert / 7872→7873 B search = relational read array IS the driver leaf; Cosmos/Redis GC win container-verified; 10 backends conformance-green) |
 
 **Backend leaf-realisation (all seams, §13.4.1 static audit — to re-confirm per worked row):** every
@@ -619,6 +619,25 @@ just-serialized bytes via `EtagOf(json)` for their indexed etag column.
   The update's double-parse → single non-copying parse is a CPU/`ArrayPool` win (not GC-visible), as for the prior rows.
 - **Verified against real containers** (podman socket): all 10 `IWorkflowAdministratorStore` conformance suites green
   (Postgres/MySql/Redis/Mongo/NATS/AzureStorage/SqlServer/Cosmos) + InMemory + Sqlite in-process. **Row done.**
+
+### ✅ Checkpoint store — write-realization on the run-state hot path (`IWorkflowStateStore.SaveAsync`)
+
+The matrix tentatively marked this ➖, but it was **not**: the seam carries the opaque checkpoint as `ReadOnlyMemory<byte>`,
+yet most backends did `checkpointUtf8.ToArray()` on **every** save — a per-save GC array on the run-state hot path (every
+workflow step). The checkpoint is opaque (no serializer), so the fix is purely the per-backend bind:
+
+- **memory/stream backends** (SqlServer/Postgres/MySql/Redis/Cosmos) bind the memory directly — SqlServer streams it as the
+  `VARBINARY(MAX)` parameter (`ReadOnlyMemoryStream`), Postgres `NpgsqlParameter<ReadOnlyMemory<byte>>`, MySql `AddWithValue`,
+  Redis a memory `RedisValue` (Lua `HSET` argv), Cosmos `WriteBase64String(..., checkpoint.Span)` into the pooled run-doc
+  envelope (`RunDocument.WriteJson`). The per-save `.ToArray()` is gone.
+- **byte[]-leaf** (Sqlite/Mongo/Azure) keep the array (the driver needs it); **NATS** already encodes from `.Span`;
+  **InMemory** keeps its canonical dict array.
+- **Measured** (`WorkflowStateStoreBenchmarks`, the bind in isolation): `Checkpoint_Bind_ToArray` **1048 B** (the per-save GC
+  array for a 1 KB checkpoint) → `Checkpoint_Bind_StreamRent` **0 B** (pooled stream) — eliminated entirely, scaling with
+  checkpoint size, on the hottest write path in the system.
+- **Verified against real containers** (podman socket): the `IWorkflowStateStore` conformance suites green on the changed
+  backends (SqlServer/Postgres/MySql/Redis/Cosmos) + InMemory + Sqlite in-process. **Row done.** (`LoadAsync`'s read
+  `byte[]` is the driver leaf — §13.4.1 — left as-is.)
 
 ## Cross-references
 

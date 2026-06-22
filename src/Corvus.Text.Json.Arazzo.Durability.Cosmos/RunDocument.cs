@@ -38,14 +38,14 @@ public readonly partial struct RunDocument
     /// <param name="id">The run id.</param>
     /// <param name="checkpoint">The opaque checkpoint bytes.</param>
     /// <param name="index">The projected index entry.</param>
-    public static void WriteJson(Utf8JsonWriter writer, WorkflowRunId id, byte[] checkpoint, in WorkflowRunIndexEntry index)
+    public static void WriteJson(Utf8JsonWriter writer, WorkflowRunId id, ReadOnlyMemory<byte> checkpoint, in WorkflowRunIndexEntry index)
     {
         writer.WriteStartObject();
         writer.WriteString(JsonPropertyNames.IdUtf8, id.Value);
 
         // Base64-encode the checkpoint straight into the writer — no intermediate base64 string (which would scale with
         // checkpoint size on every write). Read back by RunDocument.CheckpointBytes via Convert.FromBase64String.
-        writer.WriteBase64String(JsonPropertyNames.CheckpointUtf8, checkpoint);
+        writer.WriteBase64String(JsonPropertyNames.CheckpointUtf8, checkpoint.Span);
         writer.WriteString(JsonPropertyNames.StatusUtf8, index.Status.ToString());
         writer.WriteString(JsonPropertyNames.WorkflowIdUtf8, index.WorkflowId);
         writer.WriteNumber(JsonPropertyNames.CreatedAtUtf8, index.CreatedAt.ToUnixTimeMilliseconds());

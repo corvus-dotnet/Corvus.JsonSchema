@@ -148,16 +148,16 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         in WorkflowRunIndexEntry index,
         WorkflowEtag expected,
         CancellationToken cancellationToken)
-        => this.SaveCoreAsync(id, checkpointUtf8.ToArray(), index, expected, cancellationToken);
+        => this.SaveCoreAsync(id, checkpointUtf8, index, expected, cancellationToken);
 
-    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunId id, byte[] checkpoint, WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunId id, ReadOnlyMemory<byte> checkpoint, WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
     {
         var partition = new PartitionKey(id.Value);
 
         // Serialize the run straight into the pooled write stream — no intermediate RunDocument value, no re-serialization.
         using var stream = CosmosJson.WriteToStream(
             (Id: id, Checkpoint: checkpoint, Index: index),
-            static (Utf8JsonWriter writer, in (WorkflowRunId Id, byte[] Checkpoint, WorkflowRunIndexEntry Index) ctx)
+            static (Utf8JsonWriter writer, in (WorkflowRunId Id, ReadOnlyMemory<byte> Checkpoint, WorkflowRunIndexEntry Index) ctx)
                 => RunDocument.WriteJson(writer, ctx.Id, ctx.Checkpoint, ctx.Index));
 
         if (expected.IsNone)
