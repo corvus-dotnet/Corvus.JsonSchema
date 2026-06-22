@@ -114,11 +114,14 @@ public sealed class CosmosObservedIdentityStore : IObservedIdentityStore, IAsync
 
         // Read the existing document (single partition) to merge; then upsert the whole envelope.
         byte[]? existing = await this.ReadDocumentAsync(kindToken, valueKey, partition, cancellationToken).ConfigureAwait(false);
-        byte[] json = existing is null
-            ? ObservedIdentitySerialization.SerializeNew(kind, value, label, identity, complete, now, provenance)
-            : ObservedIdentitySerialization.SerializeUpserted(existing, kind, value, label, identity, complete, now, provenance);
 
-        using MemoryStream stream = EnvelopeStream(ItemId(kindToken, valueKey), partition, kindToken, valueKey, SecurityIdentityDigest.Compute(identity), identity.ToList(), json);
+        // Serialize the document into a pooled buffer; its span is written straight into the envelope (no GC document
+        // array). The buffer is alive through the synchronous envelope build, then returned to the pool.
+        using PooledUtf8 doc = existing is null
+            ? ObservedIdentitySerialization.SerializeNewPooled(kind, value, label, identity, complete, now, provenance)
+            : ObservedIdentitySerialization.SerializeUpsertedPooled(existing, kind, value, label, identity, complete, now, provenance);
+
+        using Stream stream = EnvelopeStream(ItemId(kindToken, valueKey), partition, kindToken, valueKey, SecurityIdentityDigest.Compute(identity), identity.ToList(), doc.Memory);
         using ResponseMessage response = await this.container.UpsertItemStreamAsync(stream, new PartitionKey(partition), cancellationToken: cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
     }
@@ -280,10 +283,10 @@ public sealed class CosmosObservedIdentityStore : IObservedIdentityStore, IAsync
     // validation). identityDigest (the §16.5.4 collision-probe index key) is the set-equal digest of the identity, or
     // null for the empty (unscoped) identity — which never collides; the re-sighting upsert replaces the whole envelope,
     // so the digest tracks any identity change.
-    private static MemoryStream EnvelopeStream(string id, string partition, string subjectKind, string subjectValue, string? identityDigest, IReadOnlyList<SecurityTag> securityTags, byte[] doc)
+    private static Stream EnvelopeStream(string id, string partition, string subjectKind, string subjectValue, string? identityDigest, IReadOnlyList<SecurityTag> securityTags, ReadOnlyMemory<byte> doc)
         => CosmosJson.WriteToStream(
             (Id: id, Partition: partition, Kind: subjectKind, Value: subjectValue, Digest: identityDigest, SortKey: SortKey(subjectValue, subjectKind), Tags: securityTags, Doc: doc),
-            static (Utf8JsonWriter writer, in (string Id, string Partition, string Kind, string Value, string? Digest, string SortKey, IReadOnlyList<SecurityTag> Tags, byte[] Doc) c) =>
+            static (Utf8JsonWriter writer, in (string Id, string Partition, string Kind, string Value, string? Digest, string SortKey, IReadOnlyList<SecurityTag> Tags, ReadOnlyMemory<byte> Doc) c) =>
             {
                 writer.WriteStartObject();
                 writer.WriteString("id"u8, c.Id);
@@ -312,7 +315,7 @@ public sealed class CosmosObservedIdentityStore : IObservedIdentityStore, IAsync
 
                 writer.WriteEndArray();
                 writer.WritePropertyName("doc"u8);
-                writer.WriteRawValue(c.Doc, skipInputValidation: true);
+                writer.WriteRawValue(c.Doc.Span, skipInputValidation: true);
                 writer.WriteEndObject();
             });
 

@@ -59,7 +59,7 @@ public class EnvelopeWriteBenchmarks
     [Benchmark]
     public int New_WriteToStream()
     {
-        using MemoryStream stream = CosmosJson.WriteToStream(
+        using Stream stream = CosmosJson.WriteToStream(
             this.docBytes,
             static (Utf8JsonWriter writer, in byte[] doc) =>
             {

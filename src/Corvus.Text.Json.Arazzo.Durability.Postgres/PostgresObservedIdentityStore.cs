@@ -101,17 +101,21 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
         await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
 
         byte[]? existing = await ReadDocumentAsync(connection, transaction, kindToken, valueKey, cancellationToken).ConfigureAwait(false);
-        byte[] json = existing is null
-            ? ObservedIdentitySerialization.SerializeNew(kind, value, label, identity, complete, now, provenance)
-            : ObservedIdentitySerialization.SerializeUpserted(existing, kind, value, label, identity, complete, now, provenance);
 
         await using (NpgsqlCommand upsert = connection.CreateCommand())
         {
+            // Serialize the document into a pooled buffer and bind it as the bytea parameter via ReadOnlyMemory (Npgsql
+            // carries the exact length) — no GC document array. The buffer is returned to the pool once the command
+            // completes (ExecuteNonQueryAsync finishing is the guarantee the driver has read the parameter).
+            using PooledUtf8 doc = existing is null
+                ? ObservedIdentitySerialization.SerializeNewPooled(kind, value, label, identity, complete, now, provenance)
+                : ObservedIdentitySerialization.SerializeUpsertedPooled(existing, kind, value, label, identity, complete, now, provenance);
+
             upsert.Transaction = transaction;
             upsert.CommandText = "INSERT INTO ObservedIdentities (SubjectKind, SubjectValue, Document, IdentityDigest) VALUES (@k, @v, @doc, @digest) ON CONFLICT (SubjectKind, SubjectValue) DO UPDATE SET Document = EXCLUDED.Document, IdentityDigest = EXCLUDED.IdentityDigest;";
             upsert.Parameters.AddWithValue("k", kindToken);
             upsert.Parameters.AddWithValue("v", valueKey);
-            upsert.Parameters.AddWithValue("doc", json);
+            upsert.Parameters.Add(new NpgsqlParameter<ReadOnlyMemory<byte>>("doc", doc.Memory));
             upsert.Parameters.AddWithValue("digest", (object?)SecurityIdentityDigest.Compute(identity) ?? DBNull.Value);
             await upsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }

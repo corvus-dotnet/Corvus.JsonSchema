@@ -211,7 +211,7 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         var partition = new PartitionKey(id.Value);
 
         // Serialize the lease straight into the pooled write stream — no intermediate LeaseDocument value.
-        MemoryStream BuildLeaseStream() => CosmosJson.WriteToStream(
+        Stream BuildLeaseStream() => CosmosJson.WriteToStream(
             (Id: id.Value, Owner: owner, Token: token, ExpiresAt: expiresAt.ToUnixTimeMilliseconds()),
             static (Utf8JsonWriter writer, in (string Id, string Owner, string Token, long ExpiresAt) ctx)
                 => LeaseDocument.WriteJson(writer, ctx.Id, ctx.Owner, ctx.Token, ctx.ExpiresAt));

@@ -30,7 +30,7 @@ public readonly partial struct RunnerDocument
     /// <param name="runnerId">The runner id.</param>
     /// <param name="registration">The registration to embed.</param>
     /// <returns>A readable stream over the envelope JSON, positioned at the start.</returns>
-    public static MemoryStream WriteEnvelopeStream(string runnerId, RunnerRegistration registration)
+    public static Stream WriteEnvelopeStream(string runnerId, RunnerRegistration registration)
         => BuildEnvelope(runnerId, registration, registration.LastSeenAtValue, advanceLastSeen: false);
 
     /// <summary>Streams the Cosmos envelope for a heartbeated registration (its last-seen advanced to <paramref name="at"/>).</summary>
@@ -38,10 +38,10 @@ public readonly partial struct RunnerDocument
     /// <param name="registration">The existing registration to heartbeat.</param>
     /// <param name="at">The instant of the heartbeat.</param>
     /// <returns>A readable stream over the envelope JSON, positioned at the start.</returns>
-    public static MemoryStream WriteEnvelopeStream(string runnerId, RunnerRegistration registration, DateTimeOffset at)
+    public static Stream WriteEnvelopeStream(string runnerId, RunnerRegistration registration, DateTimeOffset at)
         => BuildEnvelope(runnerId, registration, at, advanceLastSeen: true);
 
-    private static MemoryStream BuildEnvelope(string runnerId, RunnerRegistration registration, DateTimeOffset lastSeenAt, bool advanceLastSeen)
+    private static Stream BuildEnvelope(string runnerId, RunnerRegistration registration, DateTimeOffset lastSeenAt, bool advanceLastSeen)
     {
         // Serialize the registration JSON once into a pooled buffer (a heartbeat advances its last-seen), then write the
         // envelope — id, queryable last-seen, base64 of the registration, and the loaded-version projection — into a

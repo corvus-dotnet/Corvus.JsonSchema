@@ -132,7 +132,7 @@ public sealed class CosmosWorkflowAdministratorStore : IWorkflowAdministratorSto
             }
 
             byte[] updated = WorkflowAdministratorsSerialization.SerializeUpdated(existing, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
-            using MemoryStream stream = EnvelopeStream(id, updated, out ParsedJsonDocument<WorkflowAdministrators> document);
+            using Stream stream = EnvelopeStream(id, updated, out ParsedJsonDocument<WorkflowAdministrators> document);
             try
             {
                 using ResponseMessage response = await this.container.ReplaceItemStreamAsync(stream, id, new PartitionKey(id), cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -154,7 +154,7 @@ public sealed class CosmosWorkflowAdministratorStore : IWorkflowAdministratorSto
             }
 
             byte[] created = WorkflowAdministratorsSerialization.SerializeNew(baseWorkflowId, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
-            using MemoryStream stream = EnvelopeStream(id, created, out ParsedJsonDocument<WorkflowAdministrators> document);
+            using Stream stream = EnvelopeStream(id, created, out ParsedJsonDocument<WorkflowAdministrators> document);
             try
             {
                 using ResponseMessage response = await this.container.CreateItemStreamAsync(stream, new PartitionKey(id), cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -203,7 +203,7 @@ public sealed class CosmosWorkflowAdministratorStore : IWorkflowAdministratorSto
     // same administration-record bytes. The record document is itself JSON, so embed it verbatim as a nested value — no
     // base64 wrap (which would be a spurious encode here + decode on read). It is valid JSON we produced, so skip
     // validation. On any failure building the stream, the return document is disposed before the exception escapes.
-    private static MemoryStream EnvelopeStream(string id, byte[] doc, out ParsedJsonDocument<WorkflowAdministrators> document)
+    private static Stream EnvelopeStream(string id, byte[] doc, out ParsedJsonDocument<WorkflowAdministrators> document)
     {
         document = PersistedJson.ToPooledDocument<WorkflowAdministrators>(doc);
         try

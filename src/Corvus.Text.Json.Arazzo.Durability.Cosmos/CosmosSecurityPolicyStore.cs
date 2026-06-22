@@ -112,7 +112,7 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
         ArgumentNullException.ThrowIfNull(actor);
-        using MemoryStream stream = EnvelopeStream<SecurityRuleDocument, (string Name, SecurityRuleDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
+        using Stream stream = EnvelopeStream<SecurityRuleDocument, (string Name, SecurityRuleDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
             name,
             RulePartition,
             (name, draft, actor, this.timeProvider.GetUtcNow(), NewEtag()),
@@ -165,7 +165,7 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         // updated document is serialized straight into the envelope (no owned byte[]).
         using ParsedJsonDocument<SecurityRuleDocument> current = PersistedJson.ToPooledDocument<SecurityRuleDocument>(doc);
         SecurityPolicySerialization.EnsureEtag("rule", name, expectedEtag, current.RootElement.EtagValue);
-        using MemoryStream stream = EnvelopeStream<SecurityRuleDocument, (SecurityRuleDocument Cur, SecurityRuleDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
+        using Stream stream = EnvelopeStream<SecurityRuleDocument, (SecurityRuleDocument Cur, SecurityRuleDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
             name,
             RulePartition,
             (current.RootElement, draft, actor, this.timeProvider.GetUtcNow(), NewEtag()),
@@ -195,7 +195,7 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     {
         ArgumentNullException.ThrowIfNull(actor);
         string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
-        using MemoryStream stream = EnvelopeStream<SecurityBindingDocument, (string Id, SecurityBindingDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
+        using Stream stream = EnvelopeStream<SecurityBindingDocument, (string Id, SecurityBindingDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
             id,
             BindingPartition,
             (id, draft, actor, this.timeProvider.GetUtcNow(), NewEtag()),
@@ -243,7 +243,7 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         // updated document is serialized straight into the envelope (no owned byte[]).
         using ParsedJsonDocument<SecurityBindingDocument> current = PersistedJson.ToPooledDocument<SecurityBindingDocument>(doc);
         SecurityPolicySerialization.EnsureEtag("binding", id, expectedEtag, current.RootElement.EtagValue);
-        using MemoryStream stream = EnvelopeStream<SecurityBindingDocument, (SecurityBindingDocument Cur, SecurityBindingDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
+        using Stream stream = EnvelopeStream<SecurityBindingDocument, (SecurityBindingDocument Cur, SecurityBindingDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
             id,
             BindingPartition,
             (current.RootElement, draft, actor, this.timeProvider.GetUtcNow(), NewEtag()),
@@ -295,7 +295,7 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     // base64-ing the same bytes. No owned byte[] and no nested writer rent: the doc lives only in the pooled rent
     // (transient) and the returned document's pooled array (caller-disposed); the envelope stream is pooled too. On any
     // failure building the stream, the return document is disposed before the exception escapes.
-    private static MemoryStream EnvelopeStream<T, TContext>(
+    private static Stream EnvelopeStream<T, TContext>(
         string id,
         string partition,
         in TContext context,
@@ -421,7 +421,7 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     private async ValueTask BumpGenerationAsync(CancellationToken cancellationToken)
     {
         long next = await this.ReadGenerationAsync(cancellationToken).ConfigureAwait(false) + 1;
-        using MemoryStream stream = CosmosJson.WriteToStream(
+        using Stream stream = CosmosJson.WriteToStream(
             next,
             static (Utf8JsonWriter writer, in long generation) =>
             {

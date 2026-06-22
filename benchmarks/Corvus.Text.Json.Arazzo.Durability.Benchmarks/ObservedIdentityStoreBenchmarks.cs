@@ -38,7 +38,26 @@ public class ObservedIdentityStoreBenchmarks
     private static readonly JsonString SearchPrefix = JsonString.ParseValue("\"alice0\"");
     private static readonly JsonString ConflictValue = JsonString.ParseValue("\"newgrantee\"");
 
+    private static readonly DateTimeOffset SeenAt = DateTimeOffset.UnixEpoch;
+
     private InMemoryObservedIdentityStore store = null!;
+
+    /// <summary>The document-serialization seam as the byte[]-leaf backends (Mongo/Nats/Azure/Sqlite + InMemory storage)
+    /// realize it: one owned GC document array.</summary>
+    /// <returns>The document length (prevents dead-code elimination).</returns>
+    [Benchmark(Baseline = true)]
+    public int Serialize_ToArray()
+        => Security.ObservedIdentitySerialization.SerializeNew(PersonKind, UpsertValue, UpsertLabel, Identity, true, SeenAt, "administrator").Length;
+
+    /// <summary>The same document as the memory/stream backends (SqlServer/Postgres/Redis/MySql/Cosmos) realize it: an
+    /// ArrayPool buffer the driver binds and the caller returns — no GC document array.</summary>
+    /// <returns>The document length (prevents dead-code elimination).</returns>
+    [Benchmark]
+    public int Serialize_Pooled()
+    {
+        using PooledUtf8 doc = Security.ObservedIdentitySerialization.SerializeNewPooled(PersonKind, UpsertValue, UpsertLabel, Identity, true, SeenAt, "administrator");
+        return doc.Span.Length;
+    }
 
     [GlobalSetup]
     public void Setup()
