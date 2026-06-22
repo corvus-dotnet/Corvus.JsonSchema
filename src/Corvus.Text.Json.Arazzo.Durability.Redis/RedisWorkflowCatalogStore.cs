@@ -108,7 +108,7 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
     public ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
-        return this.AddCoreAsync(baseWorkflowId, packageUtf8.ToArray(), metadata, cancellationToken);
+        return this.AddCoreAsync(baseWorkflowId, packageUtf8, metadata, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -386,7 +386,7 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         return true;
     }
 
-    private async ValueTask<ParsedJsonDocument<CatalogVersion>> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
+    private async ValueTask<ParsedJsonDocument<CatalogVersion>> AddCoreAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         DateTimeOffset now = this.timeProvider.GetUtcNow();
@@ -421,7 +421,7 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         [
             SortKey(baseWorkflowId, versionNumber),
             DocField, versionDoc,
-            PackageField, projection.CanonicalPackage.ToArray(),
+            PackageField, projection.CanonicalPackage,
         ];
 
         await this.database.ScriptEvaluateAsync(StoreScript, [VersionKey(sortKey: SortKey(baseWorkflowId, versionNumber)), IndexKey], argv).ConfigureAwait(false);

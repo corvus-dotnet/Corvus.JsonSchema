@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Globalization;
+using System.Runtime.InteropServices;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
@@ -136,7 +137,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
     public ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
-        return this.AddCoreAsync(baseWorkflowId, packageUtf8.ToArray(), metadata, cancellationToken);
+        return this.AddCoreAsync(baseWorkflowId, packageUtf8, metadata, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -433,7 +434,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         return SourceSet.FromSources(sources);
     }
 
-    private async ValueTask<ParsedJsonDocument<CatalogVersion>> AddCoreAsync(string baseWorkflowId, byte[] packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
+    private async ValueTask<ParsedJsonDocument<CatalogVersion>> AddCoreAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         TagSet tags = metadata.Tags;
@@ -449,6 +450,13 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             int versionNumber = await this.MaxVersionAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false) + 1;
             CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
             SourceSet sources = SourceSet.FromSources(projection.Sources);
+
+            // The projection is the sole owner of its freshly-built canonical-package array, so take it directly rather
+            // than copying — PackPooled returns an exact-sized array, so the ReadOnlyMemory wraps it whole.
+            byte[] packageBytes = MemoryMarshal.TryGetArray(projection.CanonicalPackage, out ArraySegment<byte> segment)
+                && segment.Offset == 0 && segment.Array is { } array && array.Length == segment.Count
+                ? array
+                : projection.CanonicalPackage.ToArray();
 
             // Bind the BSON fields directly from the projected/governance source values (no round-trip through the
             // CatalogVersion document); the pooled document is built once, for the return value.
@@ -467,7 +475,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
                 runnable: projection.HasExecutor,
                 createdBy: metadata.CreatedBy,
                 createdAt: now,
-                package: projection.CanonicalPackage.ToArray());
+                package: packageBytes);
             try
             {
                 await this.versions.InsertOneAsync(document, options: null, cancellationToken).ConfigureAwait(false);
