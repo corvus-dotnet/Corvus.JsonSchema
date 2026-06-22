@@ -100,7 +100,8 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
 
-        byte[]? existing = await ReadDocumentAsync(connection, transaction, kindToken, valueKey, cancellationToken).ConfigureAwait(false);
+        // Read the existing document straight into a pooled document (GetStream → pooled parse) — no GC read array.
+        using ParsedJsonDocument<ObservedIdentity>? existing = await ReadDocumentAsync(connection, transaction, kindToken, valueKey, cancellationToken).ConfigureAwait(false);
 
         await using (NpgsqlCommand upsert = connection.CreateCommand())
         {
@@ -109,7 +110,7 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
             // completes (ExecuteNonQueryAsync finishing is the guarantee the driver has read the parameter).
             using PooledUtf8 doc = existing is null
                 ? ObservedIdentitySerialization.SerializeNewPooled(kind, value, label, identity, complete, now, provenance)
-                : ObservedIdentitySerialization.SerializeUpsertedPooled(existing, kind, value, label, identity, complete, now, provenance);
+                : ObservedIdentitySerialization.SerializeUpsertedPooled(existing.RootElement, kind, value, label, identity, complete, now, provenance);
 
             upsert.Transaction = transaction;
             upsert.CommandText = "INSERT INTO ObservedIdentities (SubjectKind, SubjectValue, Document, IdentityDigest) VALUES (@k, @v, @doc, @digest) ON CONFLICT (SubjectKind, SubjectValue) DO UPDATE SET Document = EXCLUDED.Document, IdentityDigest = EXCLUDED.IdentityDigest;";
@@ -242,7 +243,7 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
                     break;
                 }
 
-                docs.Add(PersistedJson.ToPooledDocument<ObservedIdentity>(reader.GetFieldValue<byte[]>(2)));
+                docs.Add(ReadDocument(reader, 2));
                 lastValue = rowValue;
                 lastKind = rowKind;
             }
@@ -283,7 +284,7 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
         // Hand back the conflicting grantee as its own JSON document (the caller disposes it); its kind/value/label live
         // in the record, so nothing is reified into a separate POCO here.
         return await reader.ReadAsync(cancellationToken).ConfigureAwait(false)
-            ? PersistedJson.ToPooledDocument<ObservedIdentity>(reader.GetFieldValue<byte[]>(2))
+            ? ReadDocument(reader, 2)
             : (ParsedJsonDocument<ObservedIdentity>?)null;
     }
 
@@ -303,7 +304,12 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
         await schema.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    private static async ValueTask<byte[]?> ReadDocumentAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, string kindToken, string value, CancellationToken cancellationToken)
+    // The driver mints the Document column as a byte[] (the read leaf — GetFieldValue); parse it NON-COPYING (it is a fresh
+    // managed array kept alive by the returned document) — no redundant pooled copy of bytes we already own.
+    private static ParsedJsonDocument<ObservedIdentity> ReadDocument(NpgsqlDataReader reader, int ordinal)
+        => ParsedJsonDocument<ObservedIdentity>.Parse(reader.GetFieldValue<byte[]>(ordinal).AsMemory());
+
+    private static async ValueTask<ParsedJsonDocument<ObservedIdentity>?> ReadDocumentAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, string kindToken, string value, CancellationToken cancellationToken)
     {
         await using NpgsqlCommand select = connection.CreateCommand();
         select.Transaction = transaction;
@@ -311,7 +317,7 @@ public sealed class PostgresObservedIdentityStore : IObservedIdentityStore, IAsy
         select.Parameters.AddWithValue("k", kindToken);
         select.Parameters.AddWithValue("v", value);
         await using NpgsqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-        return await reader.ReadAsync(cancellationToken).ConfigureAwait(false) ? reader.GetFieldValue<byte[]>(0) : null;
+        return await reader.ReadAsync(cancellationToken).ConfigureAwait(false) ? ReadDocument(reader, 0) : null;
     }
 
     private ValueTask<NpgsqlConnection> OpenAsync(CancellationToken cancellationToken)

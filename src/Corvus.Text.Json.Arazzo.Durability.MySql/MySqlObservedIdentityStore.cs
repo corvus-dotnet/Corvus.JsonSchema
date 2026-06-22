@@ -101,7 +101,9 @@ public sealed class MySqlObservedIdentityStore : IObservedIdentityStore, IAsyncD
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using MySqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
 
-        byte[]? existing = await ReadDocumentAsync(connection, transaction, kindToken, valueKey, cancellationToken).ConfigureAwait(false);
+        // Read the existing document straight into a pooled document (GetStream → pooled parse) — no GC read array. The
+        // parsed model is read synchronously by the merge below, so it need only outlive that call.
+        using ParsedJsonDocument<ObservedIdentity>? existing = await ReadDocumentAsync(connection, transaction, kindToken, valueKey, cancellationToken).ConfigureAwait(false);
 
         await using (MySqlCommand write = connection.CreateCommand())
         {
@@ -109,7 +111,7 @@ public sealed class MySqlObservedIdentityStore : IObservedIdentityStore, IAsyncD
             // length for a blob) — no GC document array. The buffer is returned once the command completes.
             using PooledUtf8 doc = existing is null
                 ? ObservedIdentitySerialization.SerializeNewPooled(kind, value, label, identity, complete, now, provenance)
-                : ObservedIdentitySerialization.SerializeUpsertedPooled(existing, kind, value, label, identity, complete, now, provenance);
+                : ObservedIdentitySerialization.SerializeUpsertedPooled(existing.RootElement, kind, value, label, identity, complete, now, provenance);
 
             write.Transaction = transaction;
             write.CommandText = existing is null
@@ -244,7 +246,7 @@ public sealed class MySqlObservedIdentityStore : IObservedIdentityStore, IAsyncD
                     break;
                 }
 
-                docs.Add(PersistedJson.ToPooledDocument<ObservedIdentity>(reader.GetFieldValue<byte[]>(2)));
+                docs.Add(ReadDocument(reader, 2));
                 lastValue = rowValue;
                 lastKind = rowKind;
             }
@@ -283,7 +285,7 @@ public sealed class MySqlObservedIdentityStore : IObservedIdentityStore, IAsyncD
         // Hand back the conflicting grantee as its own JSON document (the caller disposes it); its kind/value/label live
         // in the record, so nothing is reified into a separate POCO here.
         return await reader.ReadAsync(cancellationToken).ConfigureAwait(false)
-            ? PersistedJson.ToPooledDocument<ObservedIdentity>(reader.GetFieldValue<byte[]>(2))
+            ? ReadDocument(reader, 2)
             : (ParsedJsonDocument<ObservedIdentity>?)null;
     }
 
@@ -303,7 +305,12 @@ public sealed class MySqlObservedIdentityStore : IObservedIdentityStore, IAsyncD
         await schema.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    private static async ValueTask<byte[]?> ReadDocumentAsync(MySqlConnection connection, MySqlTransaction transaction, string kindToken, string value, CancellationToken cancellationToken)
+    // The driver mints the Document column as a byte[] (the read leaf — GetFieldValue); parse it NON-COPYING (it is a fresh
+    // managed array kept alive by the returned document) — no redundant pooled copy of bytes we already own.
+    private static ParsedJsonDocument<ObservedIdentity> ReadDocument(MySqlDataReader reader, int ordinal)
+        => ParsedJsonDocument<ObservedIdentity>.Parse(reader.GetFieldValue<byte[]>(ordinal).AsMemory());
+
+    private static async ValueTask<ParsedJsonDocument<ObservedIdentity>?> ReadDocumentAsync(MySqlConnection connection, MySqlTransaction transaction, string kindToken, string value, CancellationToken cancellationToken)
     {
         await using MySqlCommand select = connection.CreateCommand();
         select.Transaction = transaction;
@@ -311,7 +318,7 @@ public sealed class MySqlObservedIdentityStore : IObservedIdentityStore, IAsyncD
         select.Parameters.AddWithValue("@k", kindToken);
         select.Parameters.AddWithValue("@v", value);
         await using MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-        return await reader.ReadAsync(cancellationToken).ConfigureAwait(false) ? reader.GetFieldValue<byte[]>(0) : null;
+        return await reader.ReadAsync(cancellationToken).ConfigureAwait(false) ? ReadDocument(reader, 0) : null;
     }
 
     private ValueTask<MySqlConnection> OpenAsync(CancellationToken cancellationToken)

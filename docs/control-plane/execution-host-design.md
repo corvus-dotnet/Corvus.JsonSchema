@@ -656,6 +656,19 @@ CTJ parse + filter primitive, cache-miss): **624 B** in-process (InMemory); thro
 code. Correctness of every backend's read/write path is proven by the shared 12-test `SourceCredentialStoreConformance`
 (incl. the trust-boundary test) run on real containers via Testcontainers.
 
+**Refinement (allocate-on-read work, `IObservedIdentityStore`).** The audit above is **confirmed, not reversed**: the
+read `byte[]` a driver hands back (`GetFieldValue<byte[]>`, `BsonBinaryData.Bytes`, `NatsKVEntry<byte[]>`, `GetBinary`)
+genuinely *is* the leaf — a measured in-process floor over a real embedded SQLite driver is **unchanged** by any read
+reshuffling (`ObservedIdentityUpsertReadBenchmarks`: `Sqlite_Upsert` 8864→8865 B, `Sqlite_Search` 7872→7873 B), and a
+`GetStream`/`Parse(Stream)` attempt to "pool" it **regressed** (SQLite buffers internally). Two narrow refinements still
+apply and are worth doing on read paths generally: (1) parse the existing document **non-copying** (`ParsedJsonDocument
+<T>.Parse(memory)`) over the driver's already-owned array when the consumer is synchronous (a merge/etag check), rather
+than `ToPooledDocument` (which rents + copies bytes we already hold) — reserve the copying `ToPooledDocument` for documents
+**returned to the caller**; (2) a backend that mints an *extra* array on top of an already-pooled buffer can drop it —
+**Cosmos** parses off the live pooled query response (no `.ToArray()`), **Redis** reads a pooled `Lease<byte>` (no
+`(byte[])RedisValue` cast). These are the only genuine GC wins on the read side; the relational/driver-minted array stays
+the leaf. Confidence tool is unchanged: byte-flow audit + the one in-process driver floor + container conformance.
+
 **Decision (§13):** secrets live in a **dedicated secret store, never the Arazzo database**; the durability
 layer persists only an operator-managed **reference + non-sensitive metadata**, resolved to live secret
 material by the runner's `ISecretResolver` at transport-bind time (Key Vault / AWS Secrets Manager /
