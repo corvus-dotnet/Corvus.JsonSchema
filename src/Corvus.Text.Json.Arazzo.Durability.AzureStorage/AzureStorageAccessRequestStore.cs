@@ -120,7 +120,7 @@ public sealed class AzureStorageAccessRequestStore : IAccessRequestStore
     {
         ArgumentNullException.ThrowIfNull(id);
         byte[]? doc = await this.DocumentAsync(id, cancellationToken).ConfigureAwait(false);
-        return doc is null ? null : PersistedJson.ToPooledDocument<AccessRequest>(doc);
+        return doc is null ? null : ParsedJsonDocument<AccessRequest>.Parse(doc.AsMemory());
     }
 
     /// <inheritdoc/>
@@ -132,7 +132,7 @@ public sealed class AzureStorageAccessRequestStore : IAccessRequestStore
         {
             if (entity.GetBinary(DocumentColumn) is { } bytes)
             {
-                list.Add(PersistedJson.ToPooledDocument<AccessRequest>(bytes));
+                list.Add(ParsedJsonDocument<AccessRequest>.Parse(bytes.AsMemory()));
             }
         }
 
@@ -152,7 +152,8 @@ public sealed class AzureStorageAccessRequestStore : IAccessRequestStore
         }
 
         WorkflowEtag etag = NewEtag();
-        byte[] json = AccessRequestSerialization.SerializeDecision(doc, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), etag);
+        using ParsedJsonDocument<AccessRequest> current = ParsedJsonDocument<AccessRequest>.Parse(doc.AsMemory());
+        byte[] json = AccessRequestSerialization.SerializeDecision(current.RootElement, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), etag);
 
         // The immutable filterable columns (workflow/subject/createdAt) carry through from the loaded document so the
         // replaced entity keeps them; only Status and Doc change on a decision.
@@ -160,14 +161,11 @@ public sealed class AzureStorageAccessRequestStore : IAccessRequestStore
         {
             [StatusColumn] = AccessRequestStatusNames.ToWire(decision.Status),
             [DocumentColumn] = json,
+            [BaseWorkflowIdColumn] = current.RootElement.BaseWorkflowIdValue,
+            [SubjectClaimTypeColumn] = current.RootElement.SubjectClaimTypeValue,
+            [SubjectClaimValueColumn] = current.RootElement.SubjectClaimValueValue,
+            [CreatedAtColumn] = current.RootElement.CreatedAtValue.UtcDateTime.ToString("o", CultureInfo.InvariantCulture),
         };
-        using (ParsedJsonDocument<AccessRequest> current = PersistedJson.ToPooledDocument<AccessRequest>(doc))
-        {
-            entity[BaseWorkflowIdColumn] = current.RootElement.BaseWorkflowIdValue;
-            entity[SubjectClaimTypeColumn] = current.RootElement.SubjectClaimTypeValue;
-            entity[SubjectClaimValueColumn] = current.RootElement.SubjectClaimValueValue;
-            entity[CreatedAtColumn] = current.RootElement.CreatedAtValue.UtcDateTime.ToString("o", CultureInfo.InvariantCulture);
-        }
 
         await this.requests.UpsertEntityAsync(entity, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
         return PersistedJson.ToPooledDocument<AccessRequest>(json);

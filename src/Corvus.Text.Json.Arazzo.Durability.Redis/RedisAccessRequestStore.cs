@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Globalization;
+using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using StackExchange.Redis;
@@ -81,10 +82,23 @@ public sealed class RedisAccessRequestStore : IAccessRequestStore, IAsyncDisposa
         cancellationToken.ThrowIfCancellationRequested();
         string id = "req-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
         WorkflowEtag etag = NewEtag();
-        byte[] json = AccessRequestSerialization.SerializeNew(id, draft, actor, this.timeProvider.GetUtcNow(), etag);
-        await this.database.StringSetAsync(RequestPrefix + id, json).ConfigureAwait(false);
-        await this.database.SetAddAsync(RequestIndexKey, id).ConfigureAwait(false);
-        return PersistedJson.ToPooledDocument<AccessRequest>(json);
+
+        // Serialize once into the pooled buffer the returned document owns; bind its exact bytes as the RedisValue (a
+        // ReadOnlyMemory<byte> carries the precise length, so there is no GC document array and no second copy). The
+        // document is returned on success, disposed on failure.
+        ParsedJsonDocument<AccessRequest> doc = AccessRequestSerialization.SerializeNewDoc(id, draft, actor, this.timeProvider.GetUtcNow(), etag);
+        try
+        {
+            ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory;
+            await this.database.StringSetAsync(RequestPrefix + id, utf8).ConfigureAwait(false);
+            await this.database.SetAddAsync(RequestIndexKey, id).ConfigureAwait(false);
+            return doc;
+        }
+        catch
+        {
+            doc.Dispose();
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -92,8 +106,11 @@ public sealed class RedisAccessRequestStore : IAccessRequestStore, IAsyncDisposa
     {
         ArgumentNullException.ThrowIfNull(id);
         cancellationToken.ThrowIfCancellationRequested();
-        RedisValue value = await this.database.StringGetAsync(RequestPrefix + id).ConfigureAwait(false);
-        return value.IsNullOrEmpty ? null : PersistedJson.ToPooledDocument<AccessRequest>((byte[])value!);
+
+        // Read into a pooled lease (no GC read array); the returned document must own its buffer, so copy the lease span
+        // into an owned pooled document — the lease returns to the pool here.
+        using Lease<byte>? lease = await this.database.StringGetLeaseAsync(RequestPrefix + id).ConfigureAwait(false);
+        return lease is { Length: > 0 } ? PersistedJson.ToPooledDocument<AccessRequest>(lease.Span) : null;
     }
 
     /// <inheritdoc/>
@@ -104,13 +121,15 @@ public sealed class RedisAccessRequestStore : IAccessRequestStore, IAsyncDisposa
         var list = new PooledDocumentList<AccessRequest>();
         foreach (RedisValue member in await this.database.SetMembersAsync(RequestIndexKey).ConfigureAwait(false))
         {
-            RedisValue value = await this.database.StringGetAsync(RequestPrefix + (string)member!).ConfigureAwait(false);
-            if (value.IsNullOrEmpty)
+            // Read each candidate into a pooled lease (no GC read array); a list document must own its buffer, so copy the
+            // lease span into an owned pooled document — the lease returns to the pool here.
+            using Lease<byte>? lease = await this.database.StringGetLeaseAsync(RequestPrefix + (string)member!).ConfigureAwait(false);
+            if (lease is not { Length: > 0 })
             {
                 continue;
             }
 
-            ParsedJsonDocument<AccessRequest> document = PersistedJson.ToPooledDocument<AccessRequest>((byte[])value!);
+            ParsedJsonDocument<AccessRequest> document = PersistedJson.ToPooledDocument<AccessRequest>(lease.Span);
             if (Matches(document.RootElement, query, wireStatus))
             {
                 list.Add(document);
@@ -131,16 +150,32 @@ public sealed class RedisAccessRequestStore : IAccessRequestStore, IAsyncDisposa
         ArgumentNullException.ThrowIfNull(id);
         ArgumentNullException.ThrowIfNull(actor);
         cancellationToken.ThrowIfCancellationRequested();
-        RedisValue value = await this.database.StringGetAsync(RequestPrefix + id).ConfigureAwait(false);
-        if (value.IsNullOrEmpty)
+
+        // Read the existing document into a pooled lease (no GC read array) and parse it NON-COPYING over the lease (the
+        // lease stays alive through the synchronous etag check + merge).
+        using Lease<byte>? lease = await this.database.StringGetLeaseAsync(RequestPrefix + id).ConfigureAwait(false);
+        if (lease is not { Length: > 0 })
         {
             return null;
         }
 
         WorkflowEtag etag = NewEtag();
-        byte[] json = AccessRequestSerialization.SerializeDecision((byte[])value!, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), etag);
-        await this.database.StringSetAsync(RequestPrefix + id, json).ConfigureAwait(false);
-        return PersistedJson.ToPooledDocument<AccessRequest>(json);
+        using ParsedJsonDocument<AccessRequest> current = ParsedJsonDocument<AccessRequest>.Parse(lease.Memory);
+
+        // Serialize the merged result into the pooled buffer the returned document owns and bind its exact bytes (no GC
+        // array, no second copy); return on success, dispose on a write failure.
+        ParsedJsonDocument<AccessRequest> updated = AccessRequestSerialization.SerializeDecisionDoc(current.RootElement, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), etag);
+        try
+        {
+            ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(updated.RootElement).Memory;
+            await this.database.StringSetAsync(RequestPrefix + id, utf8).ConfigureAwait(false);
+            return updated;
+        }
+        catch
+        {
+            updated.Dispose();
+            throw;
+        }
     }
 
     /// <inheritdoc/>

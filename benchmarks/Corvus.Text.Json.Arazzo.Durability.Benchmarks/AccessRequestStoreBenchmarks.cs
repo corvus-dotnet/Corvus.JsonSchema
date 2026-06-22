@@ -3,6 +3,7 @@
 // </copyright>
 
 using BenchmarkDotNet.Attributes;
+using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 
@@ -22,10 +23,24 @@ public class AccessRequestStoreBenchmarks
 {
     private static readonly string[] Scopes = ["runs:write", "runs:read"];
 
+    private static readonly DateTimeOffset At = DateTimeOffset.UnixEpoch;
+    private static readonly WorkflowEtag Etag = new("etag-bench");
+
     private InMemoryAccessRequestStore store = null!;
 
+    // A pre-built draft (the request body the create path carries via the draft seam) for the serializer comparison —
+    // disposed in cleanup so the benchmark measures the serialize, not the draft construction.
+    private ParsedJsonDocument<AccessRequest> draft = null!;
+
     [GlobalSetup]
-    public void Setup() => this.store = new InMemoryAccessRequestStore();
+    public void Setup()
+    {
+        this.store = new InMemoryAccessRequestStore();
+        this.draft = AccessRequest.Draft("nightly-reconcile", Scopes, "sub", "alice", "Alice Smith", "on-call", 3600);
+    }
+
+    [GlobalCleanup]
+    public void Cleanup() => this.draft.Dispose();
 
     /// <summary>The create path: build the pooled draft, write the persisted document (scopes carried bytes-to-bytes), stamp id/etag/created + Pending.</summary>
     [Benchmark]
@@ -35,5 +50,22 @@ public class AccessRequestStoreBenchmarks
         using ParsedJsonDocument<AccessRequest> created = this.store
             .CreateAsync(draft.RootElement, "alice", default)
             .AsTask().GetAwaiter().GetResult();
+    }
+
+    /// <summary>The write seam as the byte[]-leaf backends (Mongo/Nats/Azure/Sqlite + InMemory) realize it: one owned GC
+    /// document array.</summary>
+    /// <returns>The document length (prevents dead-code elimination).</returns>
+    [Benchmark]
+    public int Serialize_New_ToArray()
+        => AccessRequestSerialization.SerializeNew("req-1", this.draft.RootElement, "alice", At, Etag).Length;
+
+    /// <summary>The same document as the memory/stream backends (SqlServer/Postgres/MySql/Redis) realize it: serialized once
+    /// into the pooled buffer the returned document owns and bound via <c>JsonMarshal</c> — no GC document array.</summary>
+    /// <returns>The document length (prevents dead-code elimination).</returns>
+    [Benchmark]
+    public int Serialize_New_Doc()
+    {
+        using ParsedJsonDocument<AccessRequest> doc = AccessRequestSerialization.SerializeNewDoc("req-1", this.draft.RootElement, "alice", At, Etag);
+        return JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory.Length;
     }
 }

@@ -47,7 +47,8 @@ public class AccessRequestViewProjectionBenchmarks
             3600);
         byte[] pending = AccessRequestSerialization.SerializeNew("req-7f3c", draft.RootElement, "alice", DateTimeOffset.UnixEpoch, new WorkflowEtag("etag-1"));
         var decision = new AccessRequestDecision(AccessRequestStatus.Approved, "Approved for the export window.", "binding-42", DateTimeOffset.UnixEpoch.AddHours(8));
-        byte[] stored = AccessRequestSerialization.SerializeDecision(pending, "req-7f3c", new WorkflowEtag("etag-1"), decision, "boss", DateTimeOffset.UnixEpoch.AddMinutes(5), new WorkflowEtag("etag-2"));
+        using ParsedJsonDocument<AccessRequest> pendingDoc = ParsedJsonDocument<AccessRequest>.Parse(pending.AsMemory());
+        byte[] stored = AccessRequestSerialization.SerializeDecision(pendingDoc.RootElement, "req-7f3c", new WorkflowEtag("etag-1"), decision, "boss", DateTimeOffset.UnixEpoch.AddMinutes(5), new WorkflowEtag("etag-2"));
 
         this.document = ParsedJsonDocument<AccessRequest>.Parse(stored);
         this.workspace = JsonWorkspace.Create();

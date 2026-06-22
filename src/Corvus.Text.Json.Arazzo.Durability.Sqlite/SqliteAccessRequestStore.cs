@@ -106,7 +106,7 @@ public sealed class SqliteAccessRequestStore : IAccessRequestStore, IAsyncDispos
         try
         {
             byte[]? doc = await this.DocumentAsync(id, cancellationToken).ConfigureAwait(false);
-            return doc is null ? null : PersistedJson.ToPooledDocument<AccessRequest>(doc);
+            return doc is null ? null : ParsedJsonDocument<AccessRequest>.Parse(doc.AsMemory());
         }
         finally
         {
@@ -158,7 +158,7 @@ public sealed class SqliteAccessRequestStore : IAccessRequestStore, IAsyncDispos
             using SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
-                list.Add(PersistedJson.ToPooledDocument<AccessRequest>(reader.GetFieldValue<byte[]>(0)));
+                list.Add(ParsedJsonDocument<AccessRequest>.Parse(reader.GetFieldValue<byte[]>(0).AsMemory()));
             }
 
             return list;
@@ -184,7 +184,8 @@ public sealed class SqliteAccessRequestStore : IAccessRequestStore, IAsyncDispos
             }
 
             WorkflowEtag etag = NewEtag();
-            byte[] json = AccessRequestSerialization.SerializeDecision(doc, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), etag);
+            using ParsedJsonDocument<AccessRequest> current = ParsedJsonDocument<AccessRequest>.Parse(doc.AsMemory());
+            byte[] json = AccessRequestSerialization.SerializeDecision(current.RootElement, id, expectedEtag, decision, actor, this.timeProvider.GetUtcNow(), etag);
             using SqliteCommand update = this.connection.CreateCommand();
             update.CommandText = "UPDATE AccessRequests SET Status = @status, Etag = @etag, Document = @doc WHERE Id = @k;";
             update.Parameters.AddWithValue("@status", AccessRequestStatusNames.ToWire(decision.Status));
