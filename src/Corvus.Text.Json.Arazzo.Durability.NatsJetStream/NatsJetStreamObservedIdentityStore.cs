@@ -132,10 +132,19 @@ public sealed class NatsJetStreamObservedIdentityStore : IObservedIdentityStore,
 
         // Read-merge-write: a first sighting inserts; an existing one preserves firstSeen, bumps lastSeen, unions
         // provenance, and refreshes label/identity/completeness (the shared merge). KV Put overwrites either way.
+        // The driver mints the existing document array (the KV byte[] value); parse it NON-COPYING (it stays alive through
+        // the synchronous merge) — no pooled read buffer, no copy.
         NatsKVEntry<byte[]>? entry = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
-        byte[] json = entry is { Value: { } existing }
-            ? ObservedIdentitySerialization.SerializeUpserted(existing, kind, value, label, identity, complete, now, provenance)
-            : ObservedIdentitySerialization.SerializeNew(kind, value, label, identity, complete, now, provenance);
+        byte[] json;
+        if (entry is { Value: { } existing })
+        {
+            using ParsedJsonDocument<ObservedIdentity> current = ParsedJsonDocument<ObservedIdentity>.Parse(existing.AsMemory());
+            json = ObservedIdentitySerialization.SerializeUpserted(current.RootElement, kind, value, label, identity, complete, now, provenance);
+        }
+        else
+        {
+            json = ObservedIdentitySerialization.SerializeNew(kind, value, label, identity, complete, now, provenance);
+        }
 
         await this.store.PutAsync(key, json, cancellationToken: cancellationToken).ConfigureAwait(false);
         await this.ReindexDigestAsync(kindToken, valueKey, identity, cancellationToken).ConfigureAwait(false);

@@ -121,10 +121,19 @@ public sealed class MongoObservedIdentityStore : IObservedIdentityStore, IAsyncD
         // Read-merge-write keyed by (kind, value): a first sighting inserts; an existing one preserves firstSeen, bumps
         // lastSeen, unions provenance, and refreshes label/identity/completeness (the shared merge). The driver pools
         // connections so concurrent sightings race on the unique _id; ReplaceOne with IsUpsert resolves either case.
+        // The driver mints the existing document array (BsonBinaryData); parse it NON-COPYING (it stays alive through the
+        // synchronous merge) — no pooled read buffer, no copy.
         byte[]? existing = await this.ReadDocumentAsync(kindToken, valueKey, cancellationToken).ConfigureAwait(false);
-        byte[] json = existing is null
-            ? ObservedIdentitySerialization.SerializeNew(kind, value, label, identity, complete, now, provenance)
-            : ObservedIdentitySerialization.SerializeUpserted(existing, kind, value, label, identity, complete, now, provenance);
+        byte[] json;
+        if (existing is null)
+        {
+            json = ObservedIdentitySerialization.SerializeNew(kind, value, label, identity, complete, now, provenance);
+        }
+        else
+        {
+            using ParsedJsonDocument<ObservedIdentity> current = ParsedJsonDocument<ObservedIdentity>.Parse(existing.AsMemory());
+            json = ObservedIdentitySerialization.SerializeUpserted(current.RootElement, kind, value, label, identity, complete, now, provenance);
+        }
 
         var document = new BsonDocument
         {
