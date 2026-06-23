@@ -5,7 +5,6 @@
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
-using DurabilityVerbGrant = Corvus.Text.Json.Arazzo.Durability.Security.SecurityBindingDocument.VerbGrantInfo;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
@@ -144,21 +143,18 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     /// <inheritdoc/>
     public async ValueTask<CreateSecurityBindingResult> HandleCreateSecurityBindingAsync(CreateSecurityBindingParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        if (ReadBinding(parameters.Body, out ParsedJsonDocument<SecurityBindingDocument>? draft, out Models.ProblemDetails.Source problem))
+        if (!ReadBinding(parameters.Body, out SecurityBindingDocument draft, out Models.ProblemDetails.Source problem))
         {
-            using (draft)
-            {
-                // The summary references the pooled binding document (per-field From() zero-copy wrap), so hand it to the
-                // workspace — it disposes it after the response is written; ownership transfers before RefreshAsync so a
-                // refresh failure cannot leak the document. The draft is the input only, so it stays scoped.
-                ParsedJsonDocument<SecurityBindingDocument> created = await this.store.AddBindingAsync(draft!.RootElement, this.actor, cancellationToken).ConfigureAwait(false);
-                workspace.TakeOwnership(created);
-                await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
-                return CreateSecurityBindingResult.Created(ToBindingSource(created.RootElement), workspace);
-            }
+            return CreateSecurityBindingResult.BadRequest(problem, workspace);
         }
 
-        return CreateSecurityBindingResult.BadRequest(problem, workspace);
+        // The draft is a free, zero-copy element view over the request body (the store reads it synchronously) — no pooled
+        // document to dispose. The summary references the returned pooled binding document (per-field From() wrap), so hand
+        // that to the workspace; ownership transfers before RefreshAsync so a refresh failure cannot leak it.
+        ParsedJsonDocument<SecurityBindingDocument> created = await this.store.AddBindingAsync(draft, this.actor, cancellationToken).ConfigureAwait(false);
+        workspace.TakeOwnership(created);
+        await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
+        return CreateSecurityBindingResult.Created(ToBindingSource(created.RootElement), workspace);
     }
 
     /// <inheritdoc/>
@@ -181,25 +177,24 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     public async ValueTask<UpdateSecurityBindingResult> HandleUpdateSecurityBindingAsync(UpdateSecurityBindingParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string id = (string)parameters.BindingId;
-        if (!ReadBinding(parameters.Body, out ParsedJsonDocument<SecurityBindingDocument>? draft, out Models.ProblemDetails.Source problem))
+        if (!ReadBinding(parameters.Body, out SecurityBindingDocument draft, out Models.ProblemDetails.Source problem))
         {
             return UpdateSecurityBindingResult.BadRequest(problem, workspace);
         }
 
-        using (draft)
+        // The draft is a free, zero-copy element view over the request body (the store reads it synchronously) — no pooled
+        // document to dispose.
+        ParsedJsonDocument<SecurityBindingDocument>? updated = await this.store.UpdateBindingAsync(id, draft, WorkflowEtag.None, this.actor, cancellationToken).ConfigureAwait(false);
+        if (updated is not { } b)
         {
-            ParsedJsonDocument<SecurityBindingDocument>? updated = await this.store.UpdateBindingAsync(id, draft!.RootElement, WorkflowEtag.None, this.actor, cancellationToken).ConfigureAwait(false);
-            if (updated is not { } b)
-            {
-                return UpdateSecurityBindingResult.NotFound(NotFoundProblem("binding", id), workspace);
-            }
-
-            // The summary references the pooled binding document (per-field From() zero-copy wrap) — hand it to the
-            // workspace; ownership transfers before RefreshAsync so a refresh failure cannot leak the document.
-            workspace.TakeOwnership(b);
-            await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
-            return UpdateSecurityBindingResult.Ok(ToBindingSource(b.RootElement), workspace);
+            return UpdateSecurityBindingResult.NotFound(NotFoundProblem("binding", id), workspace);
         }
+
+        // The summary references the returned pooled binding document (per-field From() zero-copy wrap) — hand it to the
+        // workspace; ownership transfers before RefreshAsync so a refresh failure cannot leak the document.
+        workspace.TakeOwnership(b);
+        await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
+        return UpdateSecurityBindingResult.Ok(ToBindingSource(b.RootElement), workspace);
     }
 
     /// <inheritdoc/>
@@ -216,8 +211,6 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         return DeleteSecurityBindingResult.NoContent();
     }
 
-    private static string? OptionalString(Models.JsonString value) => value.IsNotUndefined() ? (string)value : null;
-
     private static bool IsInvalidRule(string expression, out Models.ProblemDetails.Source problem)
     {
         try
@@ -233,51 +226,21 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         }
     }
 
-    // Reads the request into a pooled, disposable draft binding the caller passes to the store and disposes. The verb
-    // grants are normalised (None/Full/Rules) into the durability grant; the store stamps id/etag/created.
-    private static bool ReadBinding(Models.SecurityBindingWrite body, out ParsedJsonDocument<SecurityBindingDocument>? draft, out Models.ProblemDetails.Source problem)
+    // Builds the draft binding the store completes: a free, zero-copy element view over the already-parsed request body
+    // (its operator content carried bytes-to-bytes — no grant rebuild, no per-field strings, no pooled draft document).
+    // The store stamps id/etag/created and defaults any omitted verb grant to None (write-body grants are optional).
+    private static bool ReadBinding(Models.SecurityBindingWrite body, out SecurityBindingDocument draft, out Models.ProblemDetails.Source problem)
     {
         problem = default;
-        draft = null;
+        draft = default;
         if (body.ClaimType.IsUndefined())
         {
             problem = Problem("invalid-binding", "Invalid binding", 400, "A 'claimType' is required.");
             return false;
         }
 
-        draft = SecurityBindingDocument.Draft(
-            (string)body.ClaimType,
-            OptionalString(body.ClaimValue),
-            ToGrant(body.Read),
-            ToGrant(body.Write),
-            ToGrant(body.Purge),
-            body.Order.IsNotUndefined() ? (int)body.Order : 0,
-            OptionalString(body.Description));
+        draft = SecurityBindingDocument.From(body);
         return true;
-    }
-
-    private static DurabilityVerbGrant ToGrant(Models.VerbGrant grant)
-    {
-        if (grant.IsUndefined())
-        {
-            return DurabilityVerbGrant.None;
-        }
-
-        if (grant.Unrestricted.IsNotUndefined() && (bool)grant.Unrestricted)
-        {
-            return DurabilityVerbGrant.Full;
-        }
-
-        var names = new List<string>();
-        if (grant.RuleNames.IsNotUndefined())
-        {
-            foreach (Models.JsonString name in grant.RuleNames.EnumerateArray())
-            {
-                names.Add((string)name);
-            }
-        }
-
-        return names.Count == 0 ? DurabilityVerbGrant.None : DurabilityVerbGrant.Rules([.. names]);
     }
 
     private static Models.SecurityRuleSummary.Source ToRuleSource(SecurityRuleDocument r)
