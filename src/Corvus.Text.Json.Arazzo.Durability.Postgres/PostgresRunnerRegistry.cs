@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Globalization;
+
 using Corvus.Text.Json;
 
 using Npgsql;
@@ -153,31 +155,27 @@ public sealed class PostgresRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         ArgumentNullException.ThrowIfNull(runnerId);
         await using NpgsqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
 
-        byte[]? existing;
-        await using (NpgsqlCommand select = connection.CreateCommand())
-        {
-            select.CommandText = "SELECT doc FROM runner_registrations WHERE runner_id = @runnerId;";
-            select.Parameters.AddWithValue("@runnerId", runnerId);
-            existing = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) as byte[];
-        }
-
-        if (existing is null)
-        {
-            return false;
-        }
-
-        byte[] doc = PersistedJson.ToArray((existing, at), static (Utf8JsonWriter writer, in (byte[] Existing, DateTimeOffset At) ctx) =>
-        {
-            using ParsedJsonDocument<RunnerRegistration> parsed = ParsedJsonDocument<RunnerRegistration>.Parse(ctx.Existing);
-            parsed.RootElement.WriteWithLastSeenAt(writer, ctx.At);
-        });
+        // A heartbeat advances only `last_seen_at` and the document's mirrored `lastSeenAt` field. Rather than read
+        // the whole registration back and rewrite it client-side (two round-trips plus a full-payload rewrite), patch
+        // both in a single statement so the indexed column and the JSON document's mirror move together and a
+        // subsequent read reconstructs consistently. The document is stored as UTF-8 bytes, so it is decoded to
+        // jsonb, the one field is replaced, and it is re-encoded — entirely server-side, with no document leaving the
+        // database. The ISO-8601 string is supplied by the caller (round-trip "O" form, the same representation the
+        // generated model emits and parses) and jsonb stores string values verbatim. The update is unconditional
+        // (last-writer-wins, the intended heartbeat semantics); a zero row count means the runner is unknown.
         await using NpgsqlCommand update = connection.CreateCommand();
-        update.CommandText = "UPDATE runner_registrations SET last_seen_at = @lastSeenAt, doc = @doc WHERE runner_id = @runnerId;";
+        update.CommandText =
+            """
+            UPDATE runner_registrations
+            SET last_seen_at = @lastSeenAt,
+                doc = convert_to(jsonb_set(convert_from(doc, 'UTF8')::jsonb, '{lastSeenAt}', to_jsonb(@lastSeenIso))::text, 'UTF8')
+            WHERE runner_id = @runnerId;
+            """;
         update.Parameters.AddWithValue("@runnerId", runnerId);
         update.Parameters.AddWithValue("@lastSeenAt", at.ToUnixTimeMilliseconds());
-        update.Parameters.AddWithValue("@doc", doc);
-        await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        return true;
+        update.Parameters.AddWithValue("@lastSeenIso", at.ToString("O", CultureInfo.InvariantCulture));
+        int affected = await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        return affected > 0;
     }
 
     /// <inheritdoc/>

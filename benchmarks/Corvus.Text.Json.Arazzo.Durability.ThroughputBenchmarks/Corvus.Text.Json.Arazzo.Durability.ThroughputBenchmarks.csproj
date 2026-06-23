@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn);CS1591;CS0618</NoWarn>
+    <Platforms>AnyCPU</Platforms>
+    <LangVersion>Preview</LangVersion>
+  </PropertyGroup>
+  <!-- Container-backed *latency* harness for the control-plane throughput campaign. This is NOT an allocation
+       benchmark (no MemoryDiagnoser): it times high-frequency read-modify-write store operations end-to-end
+       against a real backend in a container (via the pre-tunneled podman socket), reporting round-trips,
+       payload bytes, and mean/p50/p99 latency for the op before/after a native-partial-update change. Run it
+       directly with `dotnet run`; it is deliberately not in any solution. -->
+  <ItemGroup>
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Testcontainers" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability\Corvus.Text.Json.Arazzo.Durability.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability.Postgres\Corvus.Text.Json.Arazzo.Durability.Postgres.csproj" />
+  </ItemGroup>
+</Project>
