@@ -336,37 +336,13 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
             return null;
         }
 
-        // Build the updated version document from the current row's fields. The current version is read into a pooled,
-        // disposable document only to source the unchanged fields; its accessors return OWNED COPIES, so they (and the
-        // updated document built from them) stay valid after the current document is disposed.
+        // Patch only the changed governance fields through the mutable builder; every other field (incl. securityTags) is
+        // carried bytes-to-bytes from the current document — no per-field string realisation. The patched bytes are parsed
+        // into a fresh pooled document that is independent of (and outlives) the current one.
         ParsedJsonDocument<CatalogVersion> updated;
         using (ParsedJsonDocument<CatalogVersion> currentDoc = found.Document.ToVersion())
         {
-            CatalogVersion current = currentDoc.RootElement;
-            CatalogStatus currentStatus = current.StatusValue;
-            CatalogStatus status = patch.Status ?? currentStatus;
-            bool newlyObsolete = status == CatalogStatus.Obsolete && currentStatus != CatalogStatus.Obsolete;
-            bool reactivated = status == CatalogStatus.Active && currentStatus == CatalogStatus.Obsolete;
-
-            updated = CatalogVersion.Create(
-                baseWorkflowId: current.Ref.BaseWorkflowId,
-                versionNumber: current.Ref.VersionNumber,
-                workflowId: current.Ref.WorkflowId,
-                title: (string)current.Title,
-                description: current.DescriptionOrNull,
-                status: status,
-                tags: patch.Tags ?? current.TagsValue,
-                owner: patch.Owner ?? current.OwnerValue,
-                sources: current.SourcesValue,
-                hash: (string)current.Hash,
-                createdBy: (string)current.CreatedBy,
-                createdAt: current.CreatedAtValue,
-                lastUpdatedBy: patch.UpdatedBy,
-                lastUpdatedAt: now,
-                obsoletedBy: newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedByOrNull,
-                obsoletedAt: newlyObsolete ? now : reactivated ? null : current.ObsoletedAtValue,
-                runnable: (bool)current.Runnable,
-                securityTags: current.SecurityTagsValue);
+            updated = ParsedJsonDocument<CatalogVersion>.Parse(CatalogVersion.CreatePatchedBytes(currentDoc.RootElement, patch, now));
         }
 
         try

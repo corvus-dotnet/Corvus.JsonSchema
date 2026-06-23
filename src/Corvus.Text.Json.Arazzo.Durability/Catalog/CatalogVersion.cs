@@ -168,6 +168,88 @@ public readonly partial struct CatalogVersion
         }
     }
 
+    /// <summary>
+    /// Builds the bytes of a metadata-patched copy of <paramref name="current"/> for the document-blob stores. Only the
+    /// changed governance fields are written through the mutable builder — <c>lastUpdatedBy</c>/<c>lastUpdatedAt</c>
+    /// always, <c>status</c> when the patch changes it (with the obsolete/reactivate transition on
+    /// <c>obsoletedBy</c>/<c>obsoletedAt</c>), and <c>owner</c>/<c>tags</c> when the patch replaces them. Every other
+    /// field (title, hash, sources, created*, securityTags, …) is carried bytes-to-bytes from the current document — no
+    /// per-field string realisation. Preserves the exact transition semantics of the field-by-field rebuild it replaces.
+    /// </summary>
+    /// <param name="current">The current persisted version.</param>
+    /// <param name="patch">The metadata patch (updated-by + optional owner/tags/status).</param>
+    /// <param name="now">The update instant (recorded as <c>lastUpdatedAt</c>, and <c>obsoletedAt</c> on newly-obsolete).</param>
+    /// <returns>The patched document's UTF-8 bytes.</returns>
+    public static byte[] CreatePatchedBytes(in CatalogVersion current, in CatalogMetadataPatch patch, DateTimeOffset now)
+    {
+        CatalogStatus currentStatus = current.StatusValue;
+        CatalogStatus status = patch.Status ?? currentStatus;
+        bool newlyObsolete = status == CatalogStatus.Obsolete && currentStatus != CatalogStatus.Obsolete;
+        bool reactivated = status == CatalogStatus.Active && currentStatus == CatalogStatus.Obsolete;
+
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<Mutable> builder = current.CreateBuilder(workspace);
+
+        builder.RootElement.SetLastUpdatedBy(patch.UpdatedBy);
+        builder.RootElement.SetLastUpdatedAt(now);
+        if (status != currentStatus)
+        {
+            builder.RootElement.SetStatus(StatusToUtf8(status));
+        }
+
+        if (newlyObsolete)
+        {
+            builder.RootElement.SetObsoletedBy(patch.UpdatedBy);
+            builder.RootElement.SetObsoletedAt(now);
+        }
+        else if (reactivated)
+        {
+            builder.RootElement.RemoveObsoletedBy();
+            builder.RootElement.RemoveObsoletedAt();
+        }
+
+        if (patch.Owner is { } owner)
+        {
+            builder.RootElement.SetOwner(OwnerSource(owner));
+        }
+
+        if (patch.Tags is { } tags)
+        {
+            builder.RootElement.SetTags(TagsSource(tags));
+        }
+
+        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter buffer);
+        try
+        {
+            builder.RootElement.WriteTo(writer);
+            writer.Flush();
+            return buffer.WrittenSpan.ToArray();
+        }
+        finally
+        {
+            workspace.ReturnWriterAndBuffer(writer, buffer);
+        }
+    }
+
+    // A replacement owner as a builder Source (the four record fields; team/url omitted when null).
+    private static CatalogOwnerInfo.Source OwnerSource(CatalogOwner owner)
+        => new((ref CatalogOwnerInfo.Builder b) => b.Create(
+            email: owner.Email,
+            name: owner.Name,
+            team: owner.Team is { } team ? (JsonString.Source)team : default,
+            url: owner.Url is { } url ? (JsonString.Source)url : default));
+
+    // A replacement tag array as a builder Source. The new tags are being set, so realising them at the AddItem leaf is
+    // inherent (only on the tags-patched path; the common metadata patch leaves tags carried bytes-to-bytes).
+    private static JsonStringArray.Source TagsSource(TagSet tags)
+        => new((ref JsonStringArray.Builder ab) =>
+        {
+            foreach (string tag in tags.ToList())
+            {
+                ab.AddItem(tag);
+            }
+        });
+
     private static void WriteDocument(
         Utf8JsonWriter writer,
         string baseWorkflowId,
