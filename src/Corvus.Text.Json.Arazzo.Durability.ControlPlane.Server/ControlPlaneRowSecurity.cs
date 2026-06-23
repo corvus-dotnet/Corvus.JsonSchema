@@ -30,6 +30,8 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// </remarks>
 public abstract class ControlPlaneRowSecurityPolicy
 {
+    private byte[]? internalTagPrefixUtf8;
+
     /// <summary>
     /// Resolves the caller's access grant from the authenticated principal. The grant's per-verb reach scopes
     /// every list/search and gates each single-row read/write/purge — there is no unscoped path. Return
@@ -72,6 +74,10 @@ public abstract class ControlPlaneRowSecurityPolicy
 
     /// <summary>Gets the reserved internal tag prefix this policy stamps/maps to (default <see cref="SecurityShell.DefaultInternalPrefix"/>).</summary>
     protected virtual string InternalTagPrefix => SecurityShell.DefaultInternalPrefix;
+
+    /// <summary>The reserved internal tag prefix as UTF-8 — computed once per instance from <see cref="InternalTagPrefix"/>
+    /// and cached, so the span-based <see cref="TryDescribeUsageGrant"/> never re-encodes it per tag.</summary>
+    protected ReadOnlySpan<byte> InternalTagPrefixUtf8 => this.internalTagPrefixUtf8 ??= Encoding.UTF8.GetBytes(this.InternalTagPrefix);
 
     // The stack budget for a built internal-tag key (prefix + dimension); both are short identifiers, so this is never
     // exceeded in practice — a longer dimension falls back to a pooled rent.
@@ -163,6 +169,29 @@ public abstract class ControlPlaneRowSecurityPolicy
         }
 
         return grants;
+    }
+
+    /// <summary>The allocation-free, span-based counterpart of <see cref="DescribeUsageScope"/> (the inverse of
+    /// <see cref="ResolveUsageGrantInto"/>): decides whether a stored internal tag key maps to an operator-facing grant
+    /// and, if so, yields its dimension (the key with the reserved prefix stripped) as a slice of the input — no managed
+    /// <see cref="string"/>, no list. The grant value passes through verbatim, so the caller writes
+    /// <c>(dimension, value)</c>. A deployment that overrides <see cref="DescribeUsageScope"/> to remap the inverse
+    /// projection should override this too, to keep the list and span paths consistent (return <see langword="false"/> to
+    /// hide a tag).</summary>
+    /// <param name="keyUtf8">The stored tag key as unescaped UTF-8.</param>
+    /// <param name="dimensionUtf8">The grant dimension (a slice of <paramref name="keyUtf8"/>) when the tag is described.</param>
+    /// <returns><see langword="true"/> if the tag maps to a grant; <see langword="false"/> to skip it.</returns>
+    public virtual bool TryDescribeUsageGrant(ReadOnlySpan<byte> keyUtf8, out ReadOnlySpan<byte> dimensionUtf8)
+    {
+        ReadOnlySpan<byte> prefix = this.InternalTagPrefixUtf8;
+        if (keyUtf8.StartsWith(prefix))
+        {
+            dimensionUtf8 = keyUtf8[prefix.Length..];
+            return true;
+        }
+
+        dimensionUtf8 = default;
+        return false;
     }
 
     /// <summary>
@@ -276,6 +305,23 @@ internal sealed class ControlPlaneAccess
     /// <param name="usageTags">The binding's internal usage tags.</param>
     /// <returns>The usage grants.</returns>
     public IReadOnlyList<CredentialUsageGrant> DescribeUsageScope(SecurityTagSet usageTags) => this.policy?.DescribeUsageScope(usageTags) ?? [];
+
+    /// <summary>The span-based, allocation-free counterpart of <see cref="DescribeUsageScope"/> (see
+    /// <see cref="ControlPlaneRowSecurityPolicy.TryDescribeUsageGrant"/>): an unscoped deployment (no policy) describes
+    /// nothing, so every tag is skipped.</summary>
+    /// <param name="keyUtf8">The stored tag key as unescaped UTF-8.</param>
+    /// <param name="dimensionUtf8">The grant dimension (a slice of <paramref name="keyUtf8"/>) when described.</param>
+    /// <returns><see langword="true"/> if the tag maps to a grant.</returns>
+    public bool TryDescribeUsageGrant(ReadOnlySpan<byte> keyUtf8, out ReadOnlySpan<byte> dimensionUtf8)
+    {
+        if (this.policy is null)
+        {
+            dimensionUtf8 = default;
+            return false;
+        }
+
+        return this.policy.TryDescribeUsageGrant(keyUtf8, out dimensionUtf8);
+    }
 
     /// <summary>Gets the grantee kinds the deployment can resolve (empty when unscoped).</summary>
     /// <returns>The supported grantee kinds.</returns>

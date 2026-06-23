@@ -1105,9 +1105,46 @@ Per-domain write seams also re-confirmed at their pooled-doc floors (`AccessRequ
    lever that would move several rows at once.
 3. The **management-tag `List<SecurityTag>` resolution seam** (noted in [[durability-alloc-campaign-followups]]).
 
-**Recommended next lever:** `DescribeUsageScope` — make the inverse usage-scope mapping allocation-free (pooled/span or a
-struct enumerator) so the credentials/administrators/`whoami`/grantee read paths shed their last shared per-row list. It
-needs its own ground→ledger→benchmark row (it touches the policy seam, not just a handler).
+**Recommended next lever:** ~~`DescribeUsageScope`~~ — **DONE** (see the row below; 568/728 B → 0 B per row across all
+four read paths, via a `SecurityTagSet` unescaped-UTF-8 enumerator + a span-based policy override point). The remaining
+open lever is the management-tag `List<SecurityTag>` resolution seam.
+
+### ✅ `DescribeUsageScope` — the cross-cutting inverse usage-scope leaf (the closeout's recommended lever)
+
+The closeout flagged `ControlPlaneRowSecurityPolicy.DescribeUsageScope` as the biggest *cross-cutting* remaining
+allocation — the inverse usage-scope mapping (stored internal `sys:` tags → operator-facing `(dimension, value)` grants)
+that runs **per row** of the credentials-list, administrators, `whoami` and grantee-search responses. The default built a
+`List<CredentialUsageGrant>`, and the `SecurityTagSet` enumerator materialized a managed key **and** value string per tag,
+plus a prefix-stripped substring per grant — ~3 strings/tag + the list. The credentials/observed sources paid an
+*additional* `SecurityTagSet.CopyFrom` byte[] per row (re-wrapping a CTJ array that was already a model). All of it is
+transient — the response document bytes are the only genuine leaf.
+
+- **Span primitives (mirroring the forward `ResolveUsageGrantInto`).** `SecurityTagSet.EnumerateUtf8()` — a `ref struct`
+  enumerator yielding each tag's key/value as **unescaped UTF-8** (the `ValueSpan`/`ValueIsEscaped`/`CopyString` idiom; a
+  value carrying JSON escapes decodes into a pooled scratch the enumerator returns on `Dispose`, so it is 0-alloc in the
+  common case, correct always). Policy `TryDescribeUsageGrant(ReadOnlySpan<byte> key, out ReadOnlySpan<byte> dimension)` —
+  the span-based prefix strip / skip decision, the `virtual` override point (a deployment that overrides the list
+  `DescribeUsageScope` overrides this too, exactly as `ResolveUsageGrants`/`ResolveUsageGrantInto`), with the prefix cached
+  as UTF-8 once per instance.
+- **Both source paths unified on `SecurityTagSet`, no `CopyFrom`.** CTJ-model sources (credentials `binding.UsageTags`,
+  observed-identity tags) build a **non-owning** `SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(array).Memory)`
+  view over the array's raw UTF-8 (no copy) — the document already outlives the synchronous build; bare-`SecurityTagSet`
+  sources (administrators store, `whoami` internal tags, grantee directory `principal.Identity`) enumerate directly. The
+  four consumers thread the source + access and write each `(dimension, value)` bytes-native via `(JsonString.Source)span`
+  — no list, no managed strings. The list-form `DescribeUsageScope` is kept for override-compatibility + the cold
+  `CallerIdentityGrants`.
+- **Measured** (`DescribeUsageScopeBenchmarks`, a 3-tag identity, the per-row cost): bare-`SecurityTagSet` path
+  `Materialize_ListOfGrants` **568 B → 0 B** (`SpanEnumerated`, −100%, ~2.2× faster); credentials CTJ path (incl. the
+  `CopyFrom` byte[]) `Credentials_CopyFromList` **728 B → 0 B** (`Credentials_SpanDirect`, −100%, ~2.5× faster). This is
+  shed **per row** across all four read endpoints (× page size — e.g. ~7.3 KB off a 10-row credentials page). The
+  existing `CredentialSummaryProjectionBenchmarks`/`GranteeProjectionBenchmarks` deliberately hold the grants constant to
+  isolate closure-vs-context, so they do not move — the isolated micro is the faithful measure.
+- **Correctness.** New `SecurityTagSetUtf8EnumeratorTests` (2/2) proves the span enumeration matches the managed-string
+  enumerator including for escaped keys **and** values (both scratch regions).
+- **Verified.** `ControlPlaneCredentialsApiTests` + `ControlPlaneIdentityApiTests` (incl. grantee search) +
+  `ControlPlaneAdministratorsApiTests` + `ControlPlaneRowSecurityTests` + `ControlPlaneSecurityApiTests` **42/42**;
+  enumerator **2/2**; slnx build **0 Warning(s), 0 Error(s)**. **Row done — the projection/leaf allocation class is now
+  exhausted; the remaining open lever is the management-tag `List<SecurityTag>` resolution seam.**
 
 ## Cross-references
 
