@@ -8,6 +8,8 @@
 //   const mock = createMockControlPlane();
 //   const client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
 
+import { unpackWorkflowPackage } from '../src/workflow-package.js';
+
 const TERMINAL = new Set(['Completed', 'Cancelled']);
 let etagSeq = 1000;
 
@@ -567,6 +569,20 @@ function sameIdentity(a, b) {
   return a.dimension === b.dimension && a.value === b.value;
 }
 
+function seedGrantees() {
+  // Resolvable grantees as the server's GET /identity/grantees returns them: a well-known kind, a value/label,
+  // the exact sys: identity as a {dimension,value} array, where it was resolved (observed/directory), and whether
+  // that identity is the principal's *complete* stamped identity. The picker resolves these — no hand-typed tuples.
+  return [
+    { kind: 'person', value: 'u-1042', label: 'Ada Lovelace', identity: [{ dimension: 'sys:iss', value: 'https://idp.example.com' }, { dimension: 'sys:sub', value: 'u-1042' }], source: 'directory', complete: true },
+    { kind: 'person', value: 'u-2099', label: 'Grace Hopper', identity: [{ dimension: 'sys:sub', value: 'u-2099' }], source: 'observed', complete: false },
+    { kind: 'team', value: 'payments', label: 'Payments', identity: [{ dimension: 'team', value: 'payments' }], source: 'directory', complete: true },
+    { kind: 'role', value: 'sre', label: 'Site Reliability', identity: [{ dimension: 'role', value: 'sre' }], source: 'directory', complete: true },
+    { kind: 'workflow', value: 'onboard-customer', label: 'onboard-customer', identity: [{ dimension: 'workflow', value: 'onboard-customer' }], source: 'observed', complete: true },
+    { kind: 'tenant', value: 'platform', label: 'platform', identity: [{ dimension: 'tenant', value: 'platform' }], source: 'observed', complete: true },
+  ];
+}
+
 function seedAccessRequests() {
   const hr = 60 * 60 * 1000;
   return [
@@ -614,6 +630,7 @@ export function createMockControlPlane(options = {}) {
   const catalog = options.catalogSeed ? structuredClone(options.catalogSeed) : seedCatalog();
   const credentials = options.credentialsSeed ? structuredClone(options.credentialsSeed) : seedCredentials();
   const administrators = options.administratorsSeed ? structuredClone(options.administratorsSeed) : seedAdministrators();
+  const grantees = options.granteesSeed ? structuredClone(options.granteesSeed) : seedGrantees();
   const accessRequests = options.accessRequestsSeed ? structuredClone(options.accessRequestsSeed) : seedAccessRequests();
   const latency = options.latencyMs ?? 250;
   const find = (id) => runs.find((r) => r.id === id);
@@ -635,6 +652,9 @@ export function createMockControlPlane(options = {}) {
 
     const administratorsResponse = handleAdministrators(path, method, body);
     if (administratorsResponse) return administratorsResponse;
+
+    const identityResponse = handleIdentity(path, method, u.searchParams);
+    if (identityResponse) return identityResponse;
 
     const accessRequestsResponse = handleAccessRequests(path, method, u.searchParams, body);
     if (accessRequestsResponse) return accessRequestsResponse;
@@ -879,7 +899,7 @@ export function createMockControlPlane(options = {}) {
     const sources = {};
     const sourceRefs = [];
     try {
-      const entries = await readZip(await pkg.arrayBuffer());
+      const entries = unpackWorkflowPackage(await pkg.arrayBuffer());
       if (entries?.has('workflow.json')) {
         workflowDoc = JSON.parse(entries.get('workflow.json'));
         const wfId = workflowDoc.workflows?.[0]?.workflowId || '';
@@ -1074,6 +1094,38 @@ export function createMockControlPlane(options = {}) {
     return json({ administrators: deduped });
   }
 
+  // ---- identity / grantee resolution (§16.5.4) --------------------------------------------------
+  // The mock is identity-less, so the reach-filtering and complete-reporting are pre-baked into the seed; the
+  // search models q / kind / source filtering and keyset paging so the picker's typeahead and Load-more work.
+
+  function handleIdentity(fullPath, method, params) {
+    const idx = fullPath.indexOf('/identity/');
+    if (idx < 0) return null;
+    const path = fullPath.slice(idx);
+    if (path === '/identity/grantees') {
+      if (method !== 'GET') return problem(405, 'Method not allowed');
+      return searchGrantees(params);
+    }
+    return null;
+  }
+
+  function searchGrantees(params) {
+    const q = (params.get('q') || '').trim().toLowerCase();
+    const kind = params.get('kind') || '';
+    const source = params.get('source') || '';
+    const limit = Math.max(1, Math.min(Number(params.get('limit')) || 20, 100));
+    const matches = grantees.filter((g) => {
+      if (kind && g.kind !== kind) return false;
+      if (source && g.source !== source) return false;
+      if (q && !`${g.value} ${g.label || ''}`.toLowerCase().includes(q)) return false;
+      return true;
+    });
+    const offset = Number(params.get('pageToken')) || 0;
+    const pageItems = matches.slice(offset, offset + limit).map((g) => structuredClone(g));
+    const nextPageToken = offset + limit < matches.length ? String(offset + limit) : null;
+    return json({ grantees: pageItems, nextPageToken });
+  }
+
   // ---- access requests (§16.5) ------------------------------------------------------------------
   // The mock is identity-less, so "my requests" (no baseWorkflowId) returns the whole list and the workflow
   // queue (with baseWorkflowId) filters to that workflow; the requester-only / administrator-only 403s are
@@ -1184,41 +1236,5 @@ function parseMs(value) {
 
 // Minimal ZIP reader (central-directory walk) → Map<entryName, utf8 text>. Handles the store method (the
 // in-browser packer) and DEFLATE (CLI-built packages, via DecompressionStream). Returns null if not a ZIP.
-async function readZip(arrayBuffer) {
-  const dv = new DataView(arrayBuffer);
-  const bytes = new Uint8Array(arrayBuffer);
-  const dec = new TextDecoder();
-  let eocd = -1;
-  for (let i = dv.byteLength - 22; i >= 0; i--) {
-    if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
-  }
-  if (eocd < 0) return null;
-  const count = dv.getUint16(eocd + 10, true);
-  let p = dv.getUint32(eocd + 16, true);
-  const out = new Map();
-  for (let n = 0; n < count; n++) {
-    if (dv.getUint32(p, true) !== 0x02014b50) break;
-    const method = dv.getUint16(p + 10, true);
-    const compSize = dv.getUint32(p + 20, true);
-    const nameLen = dv.getUint16(p + 28, true);
-    const extraLen = dv.getUint16(p + 30, true);
-    const commentLen = dv.getUint16(p + 32, true);
-    const localOff = dv.getUint32(p + 42, true);
-    const name = dec.decode(bytes.subarray(p + 46, p + 46 + nameLen));
-    const lhNameLen = dv.getUint16(localOff + 26, true);
-    const lhExtraLen = dv.getUint16(localOff + 28, true);
-    const dataStart = localOff + 30 + lhNameLen + lhExtraLen;
-    const comp = bytes.subarray(dataStart, dataStart + compSize);
-    if (method === 0) {
-      out.set(name, dec.decode(comp));
-    } else {
-      const stream = new Response(comp).body.pipeThrough(new DecompressionStream('deflate-raw'));
-      out.set(name, dec.decode(await new Response(stream).arrayBuffer()));
-    }
-    p += 46 + nameLen + extraLen + commentLen;
-  }
-  return out;
-}
-
 function btoaSafe(s) { return typeof btoa === 'function' ? btoa(s) : Buffer.from(s).toString('base64'); }
 function atobSafe(s) { if (!s) return ''; return typeof atob === 'function' ? atob(s) : Buffer.from(s, 'base64').toString(); }
