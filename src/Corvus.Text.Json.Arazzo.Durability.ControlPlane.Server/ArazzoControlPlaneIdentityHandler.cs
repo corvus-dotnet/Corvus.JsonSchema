@@ -46,14 +46,13 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
     public ValueTask<GetWhoamiResult> HandleGetWhoamiAsync(GetWhoamiParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         IReadOnlyList<CredentialUsageGrant> identity = this.access.CallerIdentityGrants();
-        Models.WhoAmI.Source body = new((ref Models.WhoAmI.Builder b) => b.Create(
-            identity: new Models.WhoAmI.AdministratorIdentityArray.Source((ref Models.WhoAmI.AdministratorIdentityArray.Builder ab) =>
-            {
-                foreach (CredentialUsageGrant grant in identity)
-                {
-                    ab.AddItem(ToIdentity(grant));
-                }
-            })));
+
+        // Built closure-free (the identity grant list threaded as the context through the static BuildWhoAmIIdentity) and
+        // consumed in place (WhoAmI.Build is ref-scoped to its `in` argument). The grants are synthesized POCO values
+        // (DescribeUsageScope), copied into the response by the build — no pooled document to own.
+        Models.WhoAmI.Source<IReadOnlyList<CredentialUsageGrant>> body = Models.WhoAmI.Build(
+            in identity,
+            identity: Models.WhoAmI.AdministratorIdentityArray.Build(in identity, BuildWhoAmIIdentity));
         return new ValueTask<GetWhoamiResult>(GetWhoamiResult.Ok(body, workspace));
     }
 
@@ -62,15 +61,13 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
     {
         IReadOnlyList<GranteeKind> kinds = this.access.SupportedGranteeKinds();
         bool hasDirectory = this.directory is not null;
-        Models.IdentityCapabilities.Source body = new((ref Models.IdentityCapabilities.Builder b) => b.Create(
+
+        // Built closure-free (the supported-kinds list threaded as the context through the static BuildGranteeKinds) and
+        // consumed in place; directorySearch is a scalar passed straight to the property-parameter Build.
+        Models.IdentityCapabilities.Source<IReadOnlyList<GranteeKind>> body = Models.IdentityCapabilities.Build(
+            in kinds,
             directorySearch: hasDirectory,
-            granteeKinds: new Models.IdentityCapabilities.GranteeKindArray.Source((ref Models.IdentityCapabilities.GranteeKindArray.Builder ab) =>
-            {
-                foreach (GranteeKind kind in kinds)
-                {
-                    ab.AddItem(kind.ToToken());
-                }
-            })));
+            granteeKinds: Models.IdentityCapabilities.GranteeKindArray.Build(in kinds, BuildGranteeKinds));
         return new ValueTask<GetIdentityCapabilitiesResult>(GetIdentityCapabilitiesResult.Ok(body, workspace));
     }
 
@@ -145,8 +142,30 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
         return SearchGranteesResult.Ok(observedBody, workspace);
     }
 
-    private static Models.AdministratorIdentity.Source ToIdentity(CredentialUsageGrant grant)
-        => new((ref Models.AdministratorIdentity.Builder b) => b.Create(grant.Dimension, grant.Value));
+    // Closure-free single-item identity wrap: the grant is threaded as the context, so a `Source<CredentialUsageGrant>`
+    // can be returned from this helper (unlike a list Build) and appended at both the WhoAmI and grantee call sites
+    // without a per-grant closure.
+    private static Models.AdministratorIdentity.Source<CredentialUsageGrant> ToIdentity(CredentialUsageGrant grant)
+        => Models.AdministratorIdentity.Build(in grant, BuildGrantIdentity);
+
+    private static void BuildGrantIdentity(in CredentialUsageGrant grant, ref Models.AdministratorIdentity.Builder b)
+        => b.Create(grant.Dimension, grant.Value);
+
+    private static void BuildWhoAmIIdentity(in IReadOnlyList<CredentialUsageGrant> identity, ref Models.WhoAmI.AdministratorIdentityArray.Builder array)
+    {
+        foreach (CredentialUsageGrant grant in identity)
+        {
+            array.AddItem(ToIdentity(grant));
+        }
+    }
+
+    private static void BuildGranteeKinds(in IReadOnlyList<GranteeKind> kinds, ref Models.IdentityCapabilities.GranteeKindArray.Builder array)
+    {
+        foreach (GranteeKind kind in kinds)
+        {
+            array.AddItem(kind.ToToken());
+        }
+    }
 
     // ── grantee projection (closure-free Build<TContext>; RefTuple contexts; bytes-to-bytes value/label, §16.5.4) ──────
     //

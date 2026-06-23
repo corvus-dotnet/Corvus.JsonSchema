@@ -27,19 +27,22 @@ public sealed class ArazzoControlPlaneRunnersHandler : IApiRunnersHandler
     public async ValueTask<ListRunnersResult> HandleListRunnersAsync(ListRunnersParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         IReadOnlyList<RunnerRegistration> registered = await this.runners.ListAsync(cancellationToken).ConfigureAwait(false);
-        return ListRunnersResult.Ok(BuildPage(registered), workspace);
+
+        // The persisted RunnerRegistration and the API Runner share the same JSON shape, so each runner is a free
+        // whole-document re-wrap (Models.Runner.From) — no per-field projection. The page is built closure-free (the
+        // registration list threaded as the context through the static BuildRunners) and consumed in place
+        // (RunnerPage.Build is ref-scoped to its `in` argument, so it cannot be returned from a helper).
+        Models.RunnerPage.Source<IReadOnlyList<RunnerRegistration>> body = Models.RunnerPage.Build(
+            in registered,
+            runners: Models.RunnerPage.RunnerArray.Build(in registered, BuildRunners));
+        return ListRunnersResult.Ok(body, workspace);
     }
 
-    // The persisted RunnerRegistration and the API Runner share the same JSON shape, so each runner is a free
-    // re-wrap of the stored document — no per-field projection.
-    private static Models.RunnerPage.Source BuildPage(IReadOnlyList<RunnerRegistration> registered)
-        => new((ref Models.RunnerPage.Builder b) =>
-            b.Create(runners: new Models.RunnerPage.RunnerArray.Source(
-                (ref Models.RunnerPage.RunnerArray.Builder ab) =>
-                {
-                    foreach (RunnerRegistration runner in registered)
-                    {
-                        ab.AddItem(Models.Runner.From(runner));
-                    }
-                })));
+    private static void BuildRunners(in IReadOnlyList<RunnerRegistration> registered, ref Models.RunnerPage.RunnerArray.Builder array)
+    {
+        foreach (RunnerRegistration runner in registered)
+        {
+            array.AddItem(Models.Runner.From(runner));
+        }
+    }
 }

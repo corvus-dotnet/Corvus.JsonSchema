@@ -61,7 +61,10 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
     public async ValueTask<ListAdministratorsResult> HandleListAdministratorsAsync(ListAdministratorsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         IReadOnlyList<SecurityTagSet> administrators = await this.catalog.GetAdministratorsAsync((string)parameters.BaseWorkflowId, cancellationToken).ConfigureAwait(false);
-        return ListAdministratorsResult.Ok(this.ToList(administrators), workspace);
+        var listContext = new AdministratorListContext(administrators, this.access);
+        return ListAdministratorsResult.Ok(
+            Models.AdministratorList.Build(in listContext, administrators: Models.AdministratorList.AdministratorIdentityArray.Build(in listContext, BuildAdministrators)),
+            workspace);
     }
 
     /// <inheritdoc/>
@@ -165,7 +168,10 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
                 await this.observed.SeenAsync(kind, value, label, newAdministrator, complete, "administrator", cancellationToken).ConfigureAwait(false);
             }
 
-            return AddAdministratorResult.Ok(this.ToList(administrators), workspace);
+            var listContext = new AdministratorListContext(administrators, this.access);
+            return AddAdministratorResult.Ok(
+                Models.AdministratorList.Build(in listContext, administrators: Models.AdministratorList.AdministratorIdentityArray.Build(in listContext, BuildAdministrators)),
+                workspace);
         }
         catch (WorkflowAdministrationException)
         {
@@ -328,7 +334,10 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
         try
         {
             IReadOnlyList<SecurityTagSet> administrators = await this.catalog.TransferAdministrationAsync(baseWorkflowId, newAdministrators, this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
-            return TransferAdministrationResult.Ok(this.ToList(administrators), workspace);
+            var listContext = new AdministratorListContext(administrators, this.access);
+            return TransferAdministrationResult.Ok(
+                Models.AdministratorList.Build(in listContext, administrators: Models.AdministratorList.AdministratorIdentityArray.Build(in listContext, BuildAdministrators)),
+                workspace);
         }
         catch (ArgumentException ex)
         {
@@ -363,7 +372,10 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
         try
         {
             IReadOnlyList<SecurityTagSet> administrators = await this.catalog.RemoveAdministratorAsync(baseWorkflowId, administrator, this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
-            return RemoveAdministratorResult.Ok(this.ToList(administrators), workspace);
+            var listContext = new AdministratorListContext(administrators, this.access);
+            return RemoveAdministratorResult.Ok(
+                Models.AdministratorList.Build(in listContext, administrators: Models.AdministratorList.AdministratorIdentityArray.Build(in listContext, BuildAdministrators)),
+                workspace);
         }
         catch (ArgumentException ex)
         {
@@ -389,8 +401,13 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
     // management requires a configured policy.
     private SecurityTagSet CallerIdentity() => SecurityTagSet.FromTags(this.access.InternalTags());
 
-    private static Models.AdministratorIdentity.Source ToIdentity(CredentialUsageGrant grant)
-        => new((ref Models.AdministratorIdentity.Builder b) => b.Create(grant.Dimension, grant.Value));
+    // Closure-free single-item identity wrap: the grant is threaded as the context, so the `Source<CredentialUsageGrant>`
+    // can be returned from this helper (unlike a list Build) and appended without a per-grant closure.
+    private static Models.AdministratorIdentity.Source<CredentialUsageGrant> ToIdentity(CredentialUsageGrant grant)
+        => Models.AdministratorIdentity.Build(in grant, BuildGrantIdentity);
+
+    private static void BuildGrantIdentity(in CredentialUsageGrant grant, ref Models.AdministratorIdentity.Builder b)
+        => b.Create(grant.Dimension, grant.Value);
 
     private static Models.ProblemDetails.Source NotAdministratorProblem(string baseWorkflowId)
         => Problem("not-administrator", "Not an administrator", 403, $"You are not a current administrator of '{baseWorkflowId}', or it has no established administration.");
@@ -419,16 +436,24 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
 
     // Describes each administrator (a set of internal identity tags) back as the operator-facing grants it maps from —
     // the inverse of the grant resolution. Internal tags are never exposed raw; unscoped deployments describe nothing.
-    private Models.AdministratorList.Source ToList(IReadOnlyList<SecurityTagSet> administrators)
-        => new((ref Models.AdministratorList.Builder b) => b.Create(
-            administrators: new Models.AdministratorList.AdministratorIdentityArray.Source((ref Models.AdministratorList.AdministratorIdentityArray.Builder ab) =>
+    // Built closure-free: the administrator set + access are threaded as the context. The DescribeUsageScope lists are the
+    // genuine leaf (the inverse-map policy seam); only the projection closures are removed here. The list Build is
+    // ref-scoped to its `in` argument, so each of the four call sites (list/add/transfer/remove) builds it inline.
+    private static void BuildAdministrators(in AdministratorListContext ctx, ref Models.AdministratorList.AdministratorIdentityArray.Builder array)
+    {
+        foreach (SecurityTagSet administrator in ctx.Administrators)
+        {
+            foreach (CredentialUsageGrant grant in ctx.Access.DescribeUsageScope(administrator))
             {
-                foreach (SecurityTagSet administrator in administrators)
-                {
-                    foreach (CredentialUsageGrant grant in this.access.DescribeUsageScope(administrator))
-                    {
-                        ab.AddItem(ToIdentity(grant));
-                    }
-                }
-            })));
+                array.AddItem(ToIdentity(grant));
+            }
+        }
+    }
+
+    private readonly ref struct AdministratorListContext(IReadOnlyList<SecurityTagSet> administrators, ControlPlaneAccess access)
+    {
+        public IReadOnlyList<SecurityTagSet> Administrators { get; } = administrators;
+
+        public ControlPlaneAccess Access { get; } = access;
+    }
 }
