@@ -127,7 +127,17 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
         }
 
         using PooledDocumentList<AccessRequest> list = await this.requests.ListAsync(query, cancellationToken).ConfigureAwait(false);
-        return ListAccessRequestsResult.Ok(ToList(list), workspace);
+
+        // Each item is a whole-document AccessRequestView.From wrap (the congruent projection ToView uses), so it
+        // references its pooled document; the body is validated/serialized after this handler returns, so hand the
+        // documents to the workspace (it disposes them at request end; `using list` then only returns the batch's
+        // backing array). The list body is built closure-free and consumed in place.
+        list.TransferOwnershipTo(workspace);
+        IReadOnlyList<AccessRequest> requestList = list;
+        Models.AccessRequestList.Source<IReadOnlyList<AccessRequest>> body = Models.AccessRequestList.Build(
+            in requestList,
+            accessRequests: Models.AccessRequestList.AccessRequestViewArray.Build(in requestList, BuildAccessRequestViews));
+        return ListAccessRequestsResult.Ok(body, workspace);
     }
 
     /// <inheritdoc/>
@@ -317,97 +327,18 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
     // caller hands that document to the workspace (TakeOwnership) for the response's lifetime.
     private static Models.AccessRequestView ToView(AccessRequest request) => Models.AccessRequestView.From(request);
 
-    // A list response is built from a PooledDocumentList whose documents are disposed when the handler returns, so
-    // each item is materialized into the list builder's own arena as it is added — the security/credentials list
-    // pattern (ArazzoControlPlaneSecurityHandler.ToRuleSource, ...CredentialsHandler.ToSummary). A whole-document
-    // From() wrap cannot be used here: AddItem stores it as a reference into the pooled buffers, which the array's
-    // validation/serialization (run after the handler returns and the batch is disposed) would then read.
-    private static Models.AccessRequestView.Source ToViewSource(AccessRequest request)
-        => new((ref Models.AccessRequestView.Builder b) =>
+    // AccessRequestView is congruent with the stored AccessRequest (see ToView), so a list item is the same whole-document
+    // AccessRequestView.From wrap — no field-copy, no per-field From() ternary, no requestedScopes rebuild. Each wrap
+    // references its pooled document, so HandleListAccessRequestsAsync hands the batch to the workspace
+    // (TransferOwnershipTo) for the response's lifetime. The build is closure-free (the request list is threaded as the
+    // context) and inlined in the handler (the list Build is ref-scoped to its `in` argument).
+    private static void BuildAccessRequestViews(in IReadOnlyList<AccessRequest> requests, ref Models.AccessRequestList.AccessRequestViewArray.Builder array)
+    {
+        foreach (AccessRequest request in requests)
         {
-            Models.JsonDateTime.Source decidedAt = default;
-            if (request.DecidedAtValue is { } decidedAtValue)
-            {
-                decidedAt = decidedAtValue;
-            }
-
-            Models.JsonString.Source decidedBy = default;
-            if (request.DecidedByOrNull is { } decidedByValue)
-            {
-                decidedBy = decidedByValue;
-            }
-
-            Models.JsonString.Source decisionReason = default;
-            if (request.DecisionReasonOrNull is { } decisionReasonValue)
-            {
-                decisionReason = decisionReasonValue;
-            }
-
-            Models.JsonString.Source grantedBindingId = default;
-            if (request.GrantedBindingIdOrNull is { } grantedBindingIdValue)
-            {
-                grantedBindingId = grantedBindingIdValue;
-            }
-
-            Models.JsonDateTime.Source grantedUntil = default;
-            if (request.GrantedUntilValue is { } grantedUntilValue)
-            {
-                grantedUntil = grantedUntilValue;
-            }
-
-            Models.JsonString.Source reason = default;
-            if (request.ReasonOrNull is { } reasonValue)
-            {
-                reason = reasonValue;
-            }
-
-            Models.JsonInt64.Source requestedDurationSeconds = default;
-            if (request.RequestedDurationSecondsOrNull is { } durationValue)
-            {
-                requestedDurationSeconds = durationValue;
-            }
-
-            Models.JsonString.Source requesterLabel = default;
-            if (request.RequesterLabelOrNull is { } requesterLabelValue)
-            {
-                requesterLabel = requesterLabelValue;
-            }
-
-            b.Create(
-                baseWorkflowId: request.BaseWorkflowIdValue,
-                createdAt: request.CreatedAtValue,
-                createdBy: request.CreatedByValue,
-                etag: request.EtagValue.Value ?? string.Empty,
-                id: request.IdValue,
-                requestedScopes: new Models.AccessRequestView.JsonStringArray.Source((ref Models.AccessRequestView.JsonStringArray.Builder array) =>
-                {
-                    foreach (JsonString scope in request.RequestedScopes.EnumerateArray())
-                    {
-                        array.AddItem((string)scope);
-                    }
-                }),
-                status: request.StatusValue,
-                subjectClaimType: request.SubjectClaimTypeValue,
-                subjectClaimValue: request.SubjectClaimValueValue,
-                decidedAt: decidedAt,
-                decidedBy: decidedBy,
-                decisionReason: decisionReason,
-                grantedBindingId: grantedBindingId,
-                grantedUntil: grantedUntil,
-                reason: reason,
-                requestedDurationSeconds: requestedDurationSeconds,
-                requesterLabel: requesterLabel);
-        });
-
-    private static Models.AccessRequestList.Source ToList(PooledDocumentList<AccessRequest> list)
-        => new((ref Models.AccessRequestList.Builder b) => b.Create(
-            accessRequests: new Models.AccessRequestList.AccessRequestViewArray.Source((ref Models.AccessRequestList.AccessRequestViewArray.Builder array) =>
-            {
-                foreach (AccessRequest request in list)
-                {
-                    array.AddItem(ToViewSource(request));
-                }
-            })));
+            array.AddItem(Models.AccessRequestView.From(request));
+        }
+    }
 
     private static Models.AccessRequestList.Source EmptyList()
         => new((ref Models.AccessRequestList.Builder b) => b.Create(
