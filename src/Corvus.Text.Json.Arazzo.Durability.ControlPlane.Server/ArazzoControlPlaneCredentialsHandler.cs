@@ -97,24 +97,26 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     public async ValueTask<CreateCredentialResult> HandleCreateCredentialAsync(CreateCredentialParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         Models.CredentialBindingWrite body = parameters.Body;
-        SecurityTagSet managementTags;
+        ManagementTagsState managementState;
+        bool hasManagementTags;
         UsageTagsState usageState;
         bool hasUsageTags;
         try
         {
             // managementTags = the principal's deployment-internal tenant tag (always stamped, so the owner keeps
             // management) PLUS any operator-supplied management labels. The user tags are validated against the reserved
-            // prefix string-free (a non-owning SecurityTagSet view over the request body's array — no ReadTags list), then
-            // the set is built directly from the internal tags (string-sourced from the policy) + the user tags' UTF-8
-            // spans — no merged List, no per-tag managed string. It is materialized because the Admits write-reach check
-            // needs it (and the draft reuses the same bytes). InternalTags() is resolved once and shared with usage below.
+            // prefix string-free (a non-owning SecurityTagSet view over the request body's array — no ReadTags list). The
+            // tags are NOT materialized here: they are written straight into the draft below (the internal tags
+            // string-sourced from the policy + the user tags' UTF-8 spans), and the Admits write-reach check reads them
+            // back from the draft as a non-owning view — so the draft document is the only materialization. InternalTags()
+            // is resolved once and shared with usage below.
             IReadOnlyList<SecurityTag> internalTags = this.access.InternalTags();
             SecurityTagSet userManagement = body.ManagementTags.IsNotUndefined()
                 ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(body.ManagementTags).Memory)
                 : SecurityTagSet.Empty;
             this.access.ValidateUserTags(userManagement);
-            var managementState = new ManagementTagsState(internalTags, userManagement);
-            managementTags = SecurityTagSet.Build(in managementState, WriteManagementTags);
+            managementState = new ManagementTagsState(internalTags, userManagement);
+            hasManagementTags = internalTags.Count > 0 || !userManagement.IsEmpty;
 
             // usageTags are written straight into the draft (no intermediate SecurityTagSet — the draft document is the
             // leaf): the operator's usage GRANTS resolved BYTES-TO-BYTES to UNFORGEABLE internal tags (e.g.
@@ -144,17 +146,11 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
             return CreateCredentialResult.BadRequest(Problem("invalid-credential", "Invalid credential binding", 400, ex.Message), workspace);
         }
 
-        // Guard against privilege escalation: a principal may not create a binding it could not itself manage.
-        if (!this.access.Current().Admits(AccessVerb.Write, managementTags))
-        {
-            return CreateCredentialResult.BadRequest(
-                Problem("management-out-of-reach", "Management scope out of reach", 400, "The binding's management tags are outside your own management reach."), workspace);
-        }
-
         try
         {
             // The persisted binding carries the request body's reference/metadata JSON values bytes-to-bytes (no
-            // per-field strings, no list) plus the resolved management/usage tags; the store stamps id/createdBy/createdAt/etag.
+            // per-field strings, no list) plus the resolved management/usage tags written straight into the draft (no tag
+            // SecurityTagSet materialization); the store stamps id/createdBy/createdAt/etag.
             using ParsedJsonDocument<SourceCredentialBinding> draft = SourceCredentialBinding.Draft(
                 sourceName: (JsonElement)body.SourceName,
                 environment: (JsonElement)body.Environment,
@@ -164,10 +160,24 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
                 description: (JsonElement)body.Description,
                 expiresAt: (JsonElement)body.ExpiresAt,
                 rotatedAt: (JsonElement)body.RotatedAt,
-                managementTags: managementTags,
+                managementState: managementState,
+                hasManagementTags: hasManagementTags,
+                writeManagementTags: WriteManagementTags,
                 usageState: usageState,
                 hasUsageTags: hasUsageTags,
                 writeUsageTags: WriteUsageTags);
+
+            // Guard against privilege escalation: a principal may not create a binding it could not itself manage. The
+            // binding's management tags are read back from the draft as a non-owning view (the draft is the only
+            // materialization — no separate SecurityTagSet) and checked against the caller's write reach.
+            SecurityTagSet managementTags = hasManagementTags
+                ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(draft.RootElement.ManagementTags).Memory)
+                : SecurityTagSet.Empty;
+            if (!this.access.Current().Admits(AccessVerb.Write, managementTags))
+            {
+                return CreateCredentialResult.BadRequest(
+                    Problem("management-out-of-reach", "Management scope out of reach", 400, "The binding's management tags are outside your own management reach."), workspace);
+            }
 
             // The summary references the pooled binding document (per-field From() zero-copy wrap), so hand it to the
             // workspace — it disposes it after the response is written — rather than `using`-disposing at method exit
@@ -288,7 +298,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         }
     }
 
-    private readonly ref struct ManagementTagsState(IReadOnlyList<SecurityTag> internalTags, SecurityTagSet userTags)
+    private readonly struct ManagementTagsState(IReadOnlyList<SecurityTag> internalTags, SecurityTagSet userTags)
     {
         public IReadOnlyList<SecurityTag> InternalTags { get; } = internalTags;
 
