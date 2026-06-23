@@ -1070,6 +1070,45 @@ is now the builder-lambda signature `((ref …Builder )`.)
   closure sweep is now clean (remaining `((ref …Builder)` hits are single-object responses — `ProblemDetails`,
   `PurgeResult`, `WorkflowRunAccepted`, the empty-list cached delegate — and cold CLI request-building).
 
+### ✅ Cumulative closeout — full re-run, no regressions, next target identified
+
+The campaign's headline per-domain benchmarks re-run together (InMemory, the shipped arms) to confirm the cumulative
+result and check for drift. **Every shipped arm matches its recorded Part D number — no regression introduced by any later
+row.** (Run: the 14 domain benchmarks below, exit 0.)
+
+| Domain / op | Benchmark (arm) | Campaign start | Current | Δ |
+|---|---|---|---|---|
+| Catalog `POST` (package project + store) | `CatalogStoreBenchmarks.Add_FromRecord` | 19.92 KB | **3.72 KB** | −81% |
+| Catalog search (page-token) | `CatalogStoreBenchmarks.Search_Page` | 2.58 KB | **2.55 KB** | −1% |
+| Catalog `PATCH` (write-reach + mutable patch) | `CatalogVersionWriteReachBenchmarks.Update_NoPrefetch` | 2.22 KB | **1.41 KB** | −36% |
+| Run query (page-token + capped buffer) | `WorkflowStateStoreBenchmarks.Query_Page` | 19.93 KB | **1.72 KB** | −91% |
+| Observed-identity write (`SeenAsync`) | `ObservedIdentityStoreBenchmarks.Serialize_Pooled` | 376 B | **56 B** | −85% |
+| Observed-identity search (page-token) | `ObservedIdentityStoreBenchmarks.Search_Page` | 2.03 KB | **1.98 KB** | −2% |
+| Grantee search (closure-free `Ok<TContext>`) | `GranteeProjectionBenchmarks.Target_OkContextThreaded` | 5.88 KB | **2.01 KB** | −66% |
+| Credentials list projection (10) | `CredentialSummaryProjectionBenchmarks.ContextThreaded` | 30.13 KB | **22.98 KB** | −24% |
+| Security-binding list projection (10) | `SecurityBindingListProjectionBenchmarks.ContextThreaded` | 17.24 KB | **16.21 KB** | −6% |
+| Access-request view (per item) | `AccessRequestViewProjectionBenchmarks.ElementWrap_From` | 664 B | **0 B** | −100% |
+| Security-rule view (per item) | `SecurityRuleSummaryProjectionBenchmarks.ElementWrap_From` | 264 B | **0 B** | −100% |
+
+Per-domain write seams also re-confirmed at their pooled-doc floors (`AccessRequestStore.Serialize_New_Doc` 512 B,
+`SecurityRuleStore.Serialize_NewRule_Doc` 512 B, `WorkflowAdministratorStore.Serialize_New_Doc` 184 B,
+`ObservedIdentityStore.Serialize_Pooled` 56 B), and the continuation-token codec at 96–152 B.
+
+**Largest remaining allocations (the next-target read-out):**
+1. **Catalog `POST` 3.72 KB** — the single biggest per-request op, but at its **documented floor** (ZipArchive
+   read/write + the genuine indexed-owner decomposition; the −81% writeup already proved the residual genuine). Not a
+   lever without replacing `System.IO.Compression`.
+2. **The list projections (credentials 22.98 KB, binding 16.21 KB for a 10-row page)** are now dominated by **genuine
+   leaves**, not mechanism: per row the floor is the response document bytes + the **`ControlPlaneAccess.DescribeUsageScope`**
+   inverse-map (a `List<CredentialUsageGrant>` per administrator/binding). `DescribeUsageScope` recurs across **credentials
+   list, administrators, `whoami`, and grantee search** — the biggest *cross-cutting* remaining allocation, and the one
+   lever that would move several rows at once.
+3. The **management-tag `List<SecurityTag>` resolution seam** (noted in [[durability-alloc-campaign-followups]]).
+
+**Recommended next lever:** `DescribeUsageScope` — make the inverse usage-scope mapping allocation-free (pooled/span or a
+struct enumerator) so the credentials/administrators/`whoami`/grantee read paths shed their last shared per-row list. It
+needs its own ground→ledger→benchmark row (it touches the policy seam, not just a handler).
+
 ## Cross-references
 
 - Skills: `corvus-typed-model-construction`, `corvus-builder-context-threading`,
