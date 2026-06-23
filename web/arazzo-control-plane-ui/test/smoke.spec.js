@@ -16,11 +16,13 @@ test('demo loads cleanly, lists runs, and opens the resume dialog for a faulted 
   await expect(rows.first()).toBeVisible();
   expect(await rows.count()).toBeGreaterThan(1);
 
-  // Select the faulted run → its detail panel appears.
-  const faulted = page.locator('arazzo-runs-table tbody tr[data-id]', {
-    has: page.locator('arazzo-status-badge[status="Faulted"]'),
-  });
-  await faulted.first().click();
+  // Select the adopt-pet run that faulted mid-flow (cursor 2, at submitAdoption): it has earlier steps to rewind
+  // to (reservePayment) and rich faulted-step outputs for the skip builder — the seed shapes it for exactly this
+  // flow. (Picking faulted.first() is seed-order dependent and can land on a run faulted at its first step, which
+  // correctly has no earlier step to rewind to.)
+  const faulted = page.locator('arazzo-runs-table tbody tr[data-id="run-b2c3d4e5"]');
+  await expect(faulted).toBeVisible();
+  await faulted.click();
   const detail = page.locator('arazzo-run-detail');
   await expect(detail).toBeVisible();
   await expect(detail.locator('[part="fault"]')).toBeVisible();
@@ -36,8 +38,10 @@ test('demo loads cleanly, lists runs, and opens the resume dialog for a faulted 
   await expect(stepSelect).toBeVisible();
   await expect(stepSelect.locator('option', { hasText: 'reservePayment' })).toHaveCount(1);
 
-  // Switch to Skip: the skip-outputs builder renders a strongly-typed form from the catalog metadata.
+  // Switch to Skip and opt to record outputs for the skipped step: the skip-outputs builder (gated behind that
+  // checkbox) renders a strongly-typed form from the catalog metadata.
   await page.locator('arazzo-resume-dialog input[name="mode"][value="Skip"]').check();
+  await page.locator('arazzo-resume-dialog input.record-outputs').check();
   const skipBuilder = page.locator('arazzo-resume-dialog arazzo-value-editor.skip-builder');
   await expect(skipBuilder.locator('input, select, textarea').first()).toBeVisible();
 

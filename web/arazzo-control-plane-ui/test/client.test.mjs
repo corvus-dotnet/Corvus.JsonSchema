@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { ArazzoControlPlaneClient, ProblemError } from '../src/arazzo-client.js';
-import { packWorkflowPackage } from '../src/workflow-package.js';
+import { packWorkflowPackage, unpackWorkflowPackage } from '../src/workflow-package.js';
 import { createMockControlPlane } from '../demo/mock-api.js';
 
 function workflowJson(workflowId, title, sources = []) {
@@ -257,6 +257,17 @@ test('addCatalogVersion rejects a missing package or owner before calling the se
   await assert.rejects(async () => makeClient().addCatalogVersion({ package: new Blob(['x']) }), TypeError);
 });
 
+test('unpackWorkflowPackage round-trips the AWP container packWorkflowPackage builds', async () => {
+  const wf = workflowJson('round-trip', 'Round Trip', [{ name: 'petstore' }]);
+  const src = JSON.stringify({ openapi: '3.1.0', info: { title: 'Petstore', version: '1.0.0' } });
+  const blob = packWorkflowPackage(wf, [{ name: 'petstore', content: src }]);
+  const entries = unpackWorkflowPackage(await blob.arrayBuffer());
+  assert.deepEqual([...entries.keys()].sort(), ['sources/petstore.json', 'workflow.json']);
+  assert.equal(entries.get('workflow.json'), wf);
+  assert.equal(entries.get('sources/petstore.json'), src);
+  assert.throws(() => unpackWorkflowPackage(new TextEncoder().encode('not a package')), /AWP/);
+});
+
 test('packWorkflowPackage builds an archive the catalog versions by base id (auto-versioning)', async () => {
   const c = makeClient();
   // The seed already has nightly-reconcile v1/v2/v3 → an upload becomes v4 for that base.
@@ -412,4 +423,41 @@ test('removeAdministrator refuses to remove the last administrator (409)', async
 test('addAdministrator / transferAdministration validate before calling the server', async () => {
   await assert.rejects(async () => makeClient().addAdministrator('x', { dimension: 'tenant' }), TypeError);
   await assert.rejects(async () => makeClient().transferAdministration('x', { administrators: [] }), TypeError);
+});
+
+// ---- identity / grantee resolution (§16.5.4) ----------------------------------------------------
+
+test('searchGrantees returns the resolved grantees with their exact identity and complete flag', async () => {
+  const { grantees, nextPageToken } = await makeClient().searchGrantees({ limit: 100 });
+  assert.equal(nextPageToken, null);
+  assert.ok(grantees.length >= 6);
+  const ada = grantees.find((g) => g.value === 'u-1042');
+  assert.equal(ada.kind, 'person');
+  assert.equal(ada.label, 'Ada Lovelace');
+  assert.equal(ada.source, 'directory');
+  assert.equal(ada.complete, true);
+  assert.deepEqual(ada.identity, [{ dimension: 'sys:iss', value: 'https://idp.example.com' }, { dimension: 'sys:sub', value: 'u-1042' }]);
+  const grace = grantees.find((g) => g.value === 'u-2099');
+  assert.equal(grace.complete, false, 'an observed-only identity is reported as not complete');
+});
+
+test('searchGrantees filters by q, kind and source', async () => {
+  const c = makeClient();
+  assert.deepEqual((await c.searchGrantees({ q: 'ada' })).grantees.map((g) => g.value), ['u-1042']);
+  assert.equal((await c.searchGrantees({ kind: 'person' })).grantees.length, 2);
+  assert.ok((await c.searchGrantees({ kind: 'team' })).grantees.every((g) => g.kind === 'team'));
+  assert.ok((await c.searchGrantees({ source: 'directory' })).grantees.every((g) => g.source === 'directory'));
+  assert.equal((await c.searchGrantees({ q: 'nothing-matches-this' })).grantees.length, 0);
+});
+
+test('searchGrantees pages via the keyset nextPageToken', async () => {
+  const c = makeClient();
+  const first = await c.searchGrantees({ limit: 4 });
+  assert.equal(first.grantees.length, 4);
+  assert.equal(first.nextPageToken, '4');
+  const second = await c.searchGrantees({ limit: 4, pageToken: first.nextPageToken });
+  assert.ok(second.grantees.length >= 2);
+  assert.equal(second.nextPageToken, null);
+  const firstValues = new Set(first.grantees.map((g) => g.value));
+  assert.ok(second.grantees.every((g) => !firstValues.has(g.value)), 'pages do not overlap');
 });
