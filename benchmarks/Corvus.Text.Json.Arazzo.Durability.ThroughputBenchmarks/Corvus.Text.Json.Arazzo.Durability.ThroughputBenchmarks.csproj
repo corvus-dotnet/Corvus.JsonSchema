@@ -15,12 +15,15 @@
        payload bytes, and mean/p50/p99 latency for the op before/after a native-partial-update change. Run it
        directly with `dotnet run`; it is deliberately not in any solution. -->
   <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" />
     <PackageReference Include="Npgsql" />
     <PackageReference Include="Testcontainers" />
+    <PackageReference Include="Testcontainers.MsSql" />
     <PackageReference Include="Testcontainers.PostgreSql" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability\Corvus.Text.Json.Arazzo.Durability.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability.Postgres\Corvus.Text.Json.Arazzo.Durability.Postgres.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability.SqlServer\Corvus.Text.Json.Arazzo.Durability.SqlServer.csproj" />
   </ItemGroup>
 </Project>

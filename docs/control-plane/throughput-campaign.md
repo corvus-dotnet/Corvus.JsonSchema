@@ -30,30 +30,43 @@ secondary; the lease is already optimal and the general checkpoint write is genu
 `last_seen_at` is already a column on the relational backends; the avoidable work is the `SELECT` + client-side
 whole-`doc` rewrite. The single-statement form updates the column **and** the doc's mirrored field together:
 
-| Backend | Mechanism |
-|---|---|
-| Postgres | `UPDATE … SET last_seen_at=@at, doc = jsonb_set(doc,'{lastSeenAt}', to_jsonb(@at)) WHERE runner_id=@id` |
-| SqlServer | `UPDATE … SET LastSeenAt=@at, Doc = JSON_MODIFY(Doc,'$.lastSeenAt',@at) …` |
-| Sqlite | `UPDATE … SET last_seen_at=@at, doc = json_set(doc,'$.lastSeenAt',@at) …` |
-| MySql | `UPDATE … SET last_seen_at=@at, doc = JSON_SET(doc,'$.lastSeenAt',@at) …` |
-| Cosmos | `PatchItemAsync` (replace `/lastSeenAt`) — 1 call, no read |
-| Mongo | `UpdateOneAsync($set: { lastSeenAt })` |
-| AzureStorage | `MergeEntity` (partial table-entity update — already field-granular) |
-| Redis | `HSET` the `last_seen_at` field (the registration is a hash) — confirm the doc-mirror story |
-| NATS KV | **blob value, no server-side partial** — KV stores whole values; heartbeat stays RMW (or revision-CAS). Document as the genuine exception. |
-| InMemory | direct field mutation (reference store) |
+> **The mechanisms below were partly wrong at scope time — the column storage matters.** Each backend's
+> `doc` column type decides whether an in-place server-side JSON patch is even possible/safe. Grounded reality
+> (✅ = done & container-verified):
 
-**Heterogeneity is expected** (mirrors the alloc campaign): relational + Cosmos + Mongo + Azure get a true
-native partial update; Redis is field-granular via the hash; **NATS KV genuinely cannot** (whole-value store)
-and stays RMW — that's the ownership boundary, not a miss.
+| Backend | Mechanism (as grounded) | Status |
+|---|---|---|
+| Postgres | `doc` is **BYTEA** (raw UTF-8) — bare `jsonb_set(doc,…)` does **not** apply; decode/re-encode in one statement: `doc = convert_to(jsonb_set(convert_from(doc,'UTF8')::jsonb,'{lastSeenAt}',to_jsonb(@iso))::text,'UTF8')`. Reorders keys (safe — sole reader parses by name). | ✅ done |
+| SqlServer | `doc` was **VARBINARY(UTF-8)** — in-place `JSON_MODIFY` is **unsafe** (CAST varbinary→varchar mis-decodes UTF-8 as CP1252, double-encoding non-ASCII). Column changed to **`VARCHAR(MAX) COLLATE …_UTF8`** + native `JSON_MODIFY(doc,'$.lastSeenAt',@iso)`; write via nvarchar param, read via `CAST(doc AS VARBINARY)` (bytes-native). | ✅ done |
+| Sqlite | **Embedded (in-process, no network round-trip)** — not a throughput candidate; the RMW was already alloc-optimized. `json_set` would save only client CPU + one in-process query. **Skipped** (documented non-candidate, like the lease/NATS exceptions). | ⏭️ skipped |
+| MySql | `doc` column type TBD — `JSON_SET(doc,'$.lastSeenAt',@iso)` if it's a JSON/text column; check the UTF-8 story as for SqlServer | ⬜ next |
+| Cosmos | `PatchItemAsync` (replace `/lastSeenAt`) — 1 call, no read | ⬜ |
+| Mongo | `UpdateOneAsync($set: { lastSeenAt })` | ⬜ |
+| AzureStorage | `MergeEntity` (partial table-entity update — already field-granular) | ⬜ |
+| Redis | `HSET` the `last_seen_at` field (the registration is a hash) — confirm the doc-mirror story | ⬜ |
+| NATS KV | **blob value, no server-side partial** — KV stores whole values; heartbeat stays RMW. Genuine exception. | ⏭️ exception |
+| InMemory | direct field mutation (reference store) | — |
+
+**Heterogeneity is expected** (mirrors the alloc campaign): some backends need a column-type change to support a
+safe in-place patch (SqlServer); embedded Sqlite is a non-candidate; **NATS KV genuinely cannot** (whole-value
+store) and stays RMW — that's the ownership boundary, not a miss.
 
 ## Measurement (the per-row gate — NOT MemoryDiagnoser)
 
-A **container-backed latency benchmark** per backend (BenchmarkDotNet over a live container via the pre-tunneled
-podman socket, [[broker-integration-tests-wsl-podman]]), reporting **mean/p50/p99 latency** and **round-trips**
-and **bytes sent** for the op before→after. Allocation is not the metric here (though the alloc work already
-made the payload bytes-native). A simple round-trip count + payload-size assertion in a conformance-style test
-is an acceptable cheaper proxy where a full latency bench is impractical.
+**Primary metric: round-trips + bytes-sent. Local latency is a secondary, weak signal.** A container-backed
+latency harness exists (`benchmarks/Corvus.Text.Json.Arazzo.Durability.ThroughputBenchmarks`, a Stopwatch harness
+over a live container via the pre-tunneled podman socket, [[broker-integration-tests-wsl-podman]]) reporting
+mean/p50/p99 latency, but it **systematically under-measures round-trip-reduction wins**: a *local* container's
+RTT is tiny, so eliminating a round-trip barely moves wall-clock and can even look slightly worse when a backend
+shifts JSON work server-side (SqlServer `JSON_MODIFY`). Latency-over-a-real-network is ∝ round-trips, so the
+**definitive metric is the structural round-trip count (2→1) and payload (whole-doc→params)**, which the code
+proves directly. Local latency only shows the win cleanly for light backends (Postgres ~900 µs/op, where a saved
+~300 µs RTT is visible). Allocation is not the metric here (the alloc campaign already made payloads bytes-native).
+
+> **Why this changed:** the Postgres row showed a clean ~−70% local latency win, but SqlServer (per-call cost
+> ~4 ms, of which a round-trip is only ~544 µs ≈ 13%) showed no local delta despite a genuine 2→1 collapse —
+> the saved round-trip was swamped by LOB/JSON work + variance. Don't revert correct round-trip reductions for
+> want of a *local* latency delta; judge by round-trips + payload (the network-bound win).
 
 ## Per-row protocol (one op × one backend at a time)
 
@@ -116,6 +129,39 @@ sole reader (`ListAsync` → `RunnerRegistration.FromJson`) parses by name, and 
 network the relative win grows.) **Conformance:** 11/11 `PostgresRunnerRegistryConformanceTests` green against a
 live container (heartbeat-advances-and-reads-back-the-doc mirror, unknown-runner⇒false, prune-by-column, and the
 full register/list/replace/hosted-version suite — jsonb canonicalization broke no reader).
+
+### Row 1 — Runner heartbeat, **Sqlite** ⏭️ skipped (non-candidate)
+
+Sqlite is **embedded** (one in-process connection held for the registry's lifetime, no network). The throughput
+axis (round-trips/network latency) does not apply; the RMW was already alloc-optimized, and a native `json_set`
+(which would need `CAST(doc AS TEXT)` since SQLite reads raw BLOBs as its JSONB binary) saves only client CPU + one
+in-process query. Skipped by decision, documented alongside the lease (already native) and NATS (whole-value) as
+a genuine non-candidate rather than a miss.
+
+### Row 1 — Runner heartbeat, **SqlServer** ✅ (Option B2′: column → UTF-8 `VARCHAR`, native `JSON_MODIFY`)
+
+The `doc` column was `VARBINARY(MAX)` of UTF-8, and an in-place `JSON_MODIFY` is **unsafe** there: every variant
+double-encodes non-ASCII (`rünner-café` → `rÃ¼nner-cafÃ©`) because `CAST(varbinary AS VARCHAR)` commits to the DB
+code page (CP1252) before any `COLLATE` — proven against a live container with a non-ASCII probe (the ASCII-only
+conformance suite cannot catch it). So there is **no safe column-preserving path**; the column was changed to
+`VARCHAR(MAX) COLLATE Latin1_General_100_CI_AS_SC_UTF8` (UTF-8, same byte size), enabling native surgical
+`UPDATE … SET last_seen_at=@at, doc = JSON_MODIFY(doc,'$.lastSeenAt',@iso) WHERE runner_id=@id` (rows-affected = 0
+⇒ unknown ⇒ `false`; key order preserved). Writes pass the doc as an **nvarchar** param (lossless into the UTF-8
+column; a register-time cold-path string), reads stay **bytes-native** (`CAST(doc AS VARBINARY)`). No prior
+production releases, so the schema change has no migration cost.
+
+| metric | before (RMW) | after (native partial) | delta |
+|---|---|---|---|
+| round-trips | 2 (`SELECT doc` + `UPDATE doc`) | **1** (`UPDATE`) | −1 |
+| bytes sent client→server | 586 B (whole doc re-sent) | ~60 B (params only) | ≈ −90% |
+| latency p50 (local) | 3.6–4.6 ms | 4.3–4.6 ms | none (within noise) |
+
+**Local latency shows no win — and that is expected, not a regression.** A bare round-trip to the local container
+is ~544 µs (measured via a `SELECT 1` probe; per-call connection-open adds ~185 µs), but the heartbeat is ~4 ms
+dominated by LOB/JSON work + variance, so a saved round-trip (~13%) is swamped. The win is the structural 2→1
+round-trips + 586→60 B payload, which is **network-bound** (materializes against a remote DB — the realistic
+production case). **Conformance:** 11/11 `SqlServerRunnerRegistryConformanceTests` green (mirror read-back,
+unknown-runner⇒false, prune, register/list/replace/hosted-version; the UTF-8 column round-trips correctly).
 
 ## Kickoff prompt (paste into a fresh session)
 
