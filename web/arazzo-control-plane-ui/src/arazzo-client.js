@@ -551,6 +551,29 @@ export class ArazzoControlPlaneClient {
     return `/administrators/${encodeURIComponent(baseWorkflowId)}`;
   }
 
+  // ---- identity / grantee resolution (§16.5.4) --------------------------------------------------
+
+  /**
+   * `searchGrantees` — resolve real `person`/`team`/`role`/`workflow` grantees to their exact `sys:` identity
+   * for a grant (`GET /identity/grantees`), via the deployment's directory/IdP search and the store-indexed
+   * typeahead over identities Arazzo has already observed. Reach-filtered and `complete`-reported server-side, so
+   * a picker can name a real subject instead of hand-assembling a `{dimension, value}` tuple. Requires
+   * `administrators:read`.
+   * @param {{ q?: string, kind?: string, source?: ('observed'|'directory'), limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ grantees: object[], nextPageToken: (string|null) }>} A {@link GranteeList} — each grantee is
+   *   `{ kind, value, label?, identity: Array<{dimension,value}>, source, complete }`.
+   */
+  async searchGrantees(query = {}) {
+    const search = new URLSearchParams();
+    if (query.q) search.set('q', query.q);
+    if (query.kind) search.set('kind', query.kind);
+    if (query.source) search.set('source', query.source);
+    if (query.limit != null) search.set('limit', String(query.limit));
+    if (query.pageToken) search.set('pageToken', query.pageToken);
+    const page = await this._request('GET', `/identity/grantees${qs(search)}`, { signal: query.signal });
+    return { grantees: page.grantees ?? [], nextPageToken: page.nextPageToken ?? null };
+  }
+
   // ---- access requests (§16.5) ------------------------------------------------------------------
 
   /**
