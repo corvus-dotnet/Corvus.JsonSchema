@@ -115,7 +115,7 @@ that exists today (a starting point to be re-baselined, **not** evidence of comp
 | `POST /catalog` *(projection)* | AddAsync → `CatalogPackage.Project` | W | parse + canonicalise + hash + id-rewrite + version-doc write + ZIP pack/unpack (the bulk; NOT the record seam) | `CatalogStoreBenchmarks` | **`.awp`** container (span read/write, zero-copy `OpenPooled`) + parse-once fusion + raw-value sources + zero-copy assembled parse + **pooled-disposable store seam** (`ParsedJsonDocument<CatalogVersion>`; pooled `MetadataDb`; `workspace.TakeOwnership`/`TransferOwnershipTo`) + InMemory take-don't-copy package + UTF-8 entry names (no per-source name string) | ✅ **19.92→3.72 KB (−81%)**; ZipArchive floor + rewrite/double/per-source parse + standalone version-record `MetadataDb` + `PackPooled` entry list/name strings all gone (Part D) |
 | `GET /catalog/{id}` list | ListCatalogVersions → SearchAsync | R | BuildPage | — | — | ✅ genuine — `From()`-wrap page; Part D audit |
 | `GET …/versions/{n}` | GetCatalogVersion → GetAsync | R | `CatalogVersionSummary.From()` wrap | — | confirm congruent wrap | ✅ genuine — `From()`-wrap; Part D audit |
-| `PATCH …/versions/{n}` | UpdateCatalogVersion → **UpdateAsync** (discriminated outcome) | W | record `CatalogMetadataPatch`; `ToOwner`/`ToTags`; ~~2× GetAsync~~ | none (e2e) | carry patch draft / mutable builder ([[corvus-mutable-documents]]) | ✅ handler pre-fetch dropped — client returns `CatalogUpdateResult` (read-then-write split) (FIX #6, Part D; 2.56→2.22 KB, ~5×). Residual = the `UpdateMetadataAsync` rebuild (separate mutable-builder lever) |
+| `PATCH …/versions/{n}` | UpdateCatalogVersion → **UpdateAsync** (discriminated outcome) | W | record `CatalogMetadataPatch`; `ToOwner`/`ToTags`; ~~2× GetAsync~~ | none (e2e) | carry patch draft / mutable builder ([[corvus-mutable-documents]]) | ✅ handler pre-fetch dropped — client returns `CatalogUpdateResult` (read-then-write split) (FIX #6, Part D; 2.56→2.22 KB, ~5×). Store rebuild → mutable-builder in-place patch done (Part D; 2.22→1.41 KB, +securityTags fix) |
 | `DELETE …/versions/{n}` | Delete → DeleteAsync (Forbidden outcome) | W | ~~2× GetAsync~~ | — | — | ✅ handler pre-fetch dropped — `CatalogDeleteOutcome.Forbidden` carries the 403 (FIX #6, Part D) |
 | `POST(custom) /catalog` purge | PurgeCatalog → PurgeAsync | W | small result | — | — | ➖ |
 | `GET …/package` | GetCatalogPackage → GetPackageAsync | R | returns `ReadOnlyMemory<byte>` | — | confirm 0-copy | ➖ |
@@ -906,6 +906,33 @@ version), so the handler drops its pre-fetch.
 - **Verified.** `ControlPlaneCatalogApiTests` 11/11; Sqlite `WorkflowCatalogStore` conformance green; slnx build
   **0 Warning(s), 0 Error(s)**. Contained to client + interface + handler (+ a `DemoData` dispose for the changed return).
   **Row done.**
+
+### ✅ Catalog metadata UPDATE — mutable-builder in-place patch (+ a latent securityTags-drop fix)
+
+The deeper PATCH-row lever (the FIX #6 residual). The **document-blob** catalog stores implemented `UpdateMetadataAsync`
+by reading the current version, realising **every** field as a managed value, and rebuilding the whole document via
+`CatalogVersion.CreateBytes`/`Create` — a read-realise-rebuild. Replaced with a shared mutable-builder helper,
+`CatalogVersion.CreatePatchedBytes(in CatalogVersion current, in CatalogMetadataPatch patch, DateTimeOffset now)`
+([[corvus-mutable-documents]]): it opens a `JsonDocumentBuilder<CatalogVersion.Mutable>` over the current document and
+`SetXxx` **only** the changed governance fields (`lastUpdatedBy`/`lastUpdatedAt` always; `status` when changed, with the
+obsolete/reactivate transition on `obsoletedBy`/`obsoletedAt`; `owner`/`tags` when the patch replaces them) — every other
+field (title, hash, sources, created*, **securityTags**, …) is carried bytes-to-bytes, no per-field string realisation.
+
+- **Latent security bug fixed.** On InMemory/Redis/NATS the old `CreateBytes` call **omitted `securityTags`**, so every
+  metadata PATCH silently **stripped the version's row-security tags** (they live inside the persisted document and gate
+  §14.2 single-row read authorization — obsoleting/transferring a version would have widened or broken its reach). The
+  mutable-builder carries them. It was untested; added `UpdateMetadata_preserves_the_versions_security_tags` to the
+  catalog conformance base. (Cosmos already passed `securityTags` — no bug there, perf only.)
+- **Scope.** Converted the doc-blob rebuild stores: **InMemory, Redis, NATS** (perf + the securityTags fix) and **Cosmos**
+  (perf; it parses the patched bytes back into its envelope). **AzureStorage** is column-style (`WriteGovernance` sets
+  specific table-entity properties on the read entity, Replace-mode — preserves securityTags) and the 5 relational/Mongo
+  stores do targeted in-DB `UPDATE`/`$set`; all six need **no change** (confirmed genuine by the new test).
+- **Measured** (`CatalogVersionWriteReachBenchmarks.Update_NoPrefetch`, InMemory): **2.22 KB → 1.41 KB (−0.81 KB, −36%)** —
+  the unchanged-field realisations are gone, and the patched document is now *correct* (carries securityTags) yet smaller.
+  The residual is the serialised `updatedDoc` byte[] (the persisted form) + the pooled wrappers.
+- **Verified.** InMemory **18/18** + Sqlite **18/18** in-process; **all 8 container backends 18/18** (Cosmos/Redis/NATS
+  changed + Postgres/SqlServer/MySql/Mongo/AzureStorage unchanged, via the live podman socket), each incl. the new
+  securityTags-on-update test; slnx build **0 Warning(s), 0 Error(s)**. **Row done.**
 
 ## Cross-references
 

@@ -239,30 +239,10 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         byte[] updatedDoc;
         using (ParsedJsonDocument<CatalogVersion> currentDoc = ParsedJsonDocument<CatalogVersion>.Parse((byte[])value!))
         {
-            CatalogVersion current = currentDoc.RootElement;
-            CatalogStatus currentStatus = current.StatusValue;
-            CatalogStatus status = patch.Status ?? currentStatus;
-            bool newlyObsolete = status == CatalogStatus.Obsolete && currentStatus != CatalogStatus.Obsolete;
-            bool reactivated = status == CatalogStatus.Active && currentStatus == CatalogStatus.Obsolete;
-
-            updatedDoc = CatalogVersion.CreateBytes(
-                baseWorkflowId: current.Ref.BaseWorkflowId,
-                versionNumber: current.Ref.VersionNumber,
-                workflowId: current.Ref.WorkflowId,
-                title: (string)current.Title,
-                description: current.DescriptionOrNull,
-                status: status,
-                tags: patch.Tags ?? current.TagsValue,
-                owner: patch.Owner ?? current.OwnerValue,
-                sources: current.SourcesValue,
-                hash: (string)current.Hash,
-                createdBy: (string)current.CreatedBy,
-                createdAt: current.CreatedAtValue,
-                lastUpdatedBy: patch.UpdatedBy,
-                lastUpdatedAt: now,
-                obsoletedBy: newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedByOrNull,
-                obsoletedAt: newlyObsolete ? now : reactivated ? null : current.ObsoletedAtValue,
-                runnable: (bool)current.Runnable);
+            // Patch only the changed governance fields through the mutable builder; every other field — including the
+            // security tags — is carried bytes-to-bytes (no per-field string realisation, and no longer dropping the
+            // securityTags the field-by-field rebuild used to strip).
+            updatedDoc = CatalogVersion.CreatePatchedBytes(currentDoc.RootElement, patch, now);
         }
 
         await this.database.HashSetAsync(key, DocField, updatedDoc).ConfigureAwait(false);
