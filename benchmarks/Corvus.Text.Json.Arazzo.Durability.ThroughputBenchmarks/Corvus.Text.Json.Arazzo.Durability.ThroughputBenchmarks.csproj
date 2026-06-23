@@ -16,14 +16,17 @@
        directly with `dotnet run`; it is deliberately not in any solution. -->
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient" />
+    <PackageReference Include="MySqlConnector" />
     <PackageReference Include="Npgsql" />
     <PackageReference Include="Testcontainers" />
     <PackageReference Include="Testcontainers.MsSql" />
+    <PackageReference Include="Testcontainers.MySql" />
     <PackageReference Include="Testcontainers.PostgreSql" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability\Corvus.Text.Json.Arazzo.Durability.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability.Postgres\Corvus.Text.Json.Arazzo.Durability.Postgres.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability.SqlServer\Corvus.Text.Json.Arazzo.Durability.SqlServer.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability.MySql\Corvus.Text.Json.Arazzo.Durability.MySql.csproj" />
   </ItemGroup>
 </Project>
