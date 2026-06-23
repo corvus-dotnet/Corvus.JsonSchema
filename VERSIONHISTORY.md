@@ -1,5 +1,13 @@
 # Version History
 
+## V5.2.0
+
+V5.2.0 makes generated JSON Schema type names deterministic across operating systems, fixing a rare case where the same schema produced a different generated type name on Windows than on Linux or macOS.
+
+### Breaking changes
+
+- **Generated type names no longer depend on the host operating system** — In a **rare** case, the documentation-based type-name heuristic could derive a different name for the same anonymous (inline) subschema depending on which OS the generator ran on. When such a subschema had a `description` and no `title`, the heuristic only named the type from that description when its length was under a 64-character cap — but the length it measured included a trailing line break assembled with `Environment.NewLine`, which is `"\r\n"` on Windows and `"\n"` on Linux and macOS. A `description` whose length landed exactly on that boundary (or one carrying trailing whitespace) therefore passed the cap on Linux/macOS — yielding a name derived from the description — yet failed it on Windows by a single character, where the generator fell back to the next heuristic (typically the required-property name, e.g. `TheIdentifierOfTheAssociatedRequiredDocument` on Linux/macOS versus `RequiredDocumentId` on Windows). The assembled documentation is now joined with a fixed `'\n'` separator and the length is measured after trimming, so the heuristic reaches the same decision on every platform. This affects only the **narrow** set of schemas whose documentation-derived name sat exactly on the boundary; for those, regenerating may change a generated type name (and any hand-written code that referenced it). Because the fix is in the shared code-generation core, it applies to the V4 and V5 engines, the `corvusjson` CLI, and the source generators. See [#825](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/825).
+
 ## V5.1.19
 
 V5.1.19 adds a KYAML output mode to the JSON→YAML writer.
