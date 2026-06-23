@@ -5,9 +5,7 @@
 //   el.addEventListener('grantee-selected', (e) => use(e.detail.grantee));
 //   const grant = el.grant;             // the resolved grantee { kind, value, label, identity[], complete } | null
 //
-// Attributes : placeholder, kind (lock the search to one kind), kinds (space-separated allow-list — restrict the
-//              selectable kinds, e.g. "person team role" excludes `workflow` for an administrator picker),
-//              source (observed|directory), base-url
+// Attributes : placeholder, kind (lock the search to one kind), source (observed|directory), base-url
 // Properties : .client, .grant (resolved grantee | null), .reset()
 // Events     : grantee-selected {detail:{grantee}}, grantee-cleared, error {detail:{problem}}
 //
@@ -23,15 +21,13 @@ import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 
 const SEARCH_LIMIT = 8;
 const DEBOUNCE_MS = 200;
-// The well-known grantee kinds a user authors within their tenant; a deployment maps each to an unforgeable sys:
-// identity. `tenant` is deliberately ABSENT — tenant is the ambient isolation boundary the deployment stamps
-// (§14.3/§7.4), never a grantee a user picks. (A future increment can source the live set from GET
-// /identity/capabilities' SupportedGranteeKinds.)
-const KINDS = ['person', 'team', 'role', 'workflow'];
+// The well-known grantee kinds §16.5.4 names; a deployment maps each to an unforgeable sys: identity. (A future
+// increment can source the live set from GET /identity/capabilities' SupportedGranteeKinds.)
+const KINDS = ['person', 'team', 'role', 'workflow', 'tenant'];
 
 class ArazzoGranteePicker extends ArazzoElement {
   static get observedAttributes() {
-    return ['placeholder', 'kind', 'kinds', 'source', 'base-url'];
+    return ['placeholder', 'kind', 'source', 'base-url'];
   }
 
   constructor() {
@@ -54,7 +50,7 @@ class ArazzoGranteePicker extends ArazzoElement {
       const input = this.$('.q');
       if (input) input.placeholder = this.getAttribute('placeholder') || 'Find a person, team, role…';
     }
-    if (name === 'kind' || name === 'kinds') this.renderKindFilter();
+    if (name === 'kind') this.renderKindFilter();
   }
 
   requestRender() { /* the client is read lazily on the next search; nothing to redraw eagerly. */ }
@@ -62,16 +58,6 @@ class ArazzoGranteePicker extends ArazzoElement {
   /** The locked kind (search is fixed to it) when the `kind` attribute is set, else the dropdown selection. */
   get kind() {
     return this.getAttribute('kind') || this.$('.kind')?.value || '';
-  }
-
-  /**
-   * The kinds this picker offers: the `kinds` allow-list (intersected with the known kinds) when set, else all kinds.
-   * A subset lets a context exclude a kind that is invalid there — e.g. a workflow is a valid credential-usage grantee
-   * but never a workflow administrator, so the administrators picker passes `kinds="person team role"`.
-   */
-  get allowedKinds() {
-    const requested = (this.getAttribute('kinds') || '').split(/\s+/).filter(Boolean).filter((k) => KINDS.includes(k));
-    return requested.length ? requested : KINDS;
   }
 
   /** The chosen, server-resolved grantee, or null when nothing is selected. */
@@ -132,8 +118,7 @@ class ArazzoGranteePicker extends ArazzoElement {
       this._timer = setTimeout(() => this.runSearch(input.value.trim()), DEBOUNCE_MS);
     });
     input.addEventListener('keydown', (e) => this.onKeyDown(e));
-    // Pop an initial suggestions list the moment the field is focused — no need to type first (run an empty search once).
-    input.addEventListener('focus', () => { if (this._results.length) this.showResults(); else this.runSearch(this.$('.q')?.value.trim() ?? ''); });
+    input.addEventListener('focus', () => { if (this._results.length) this.showResults(); });
     document.addEventListener('pointerdown', this._onDocDown ??= (e) => {
       if (!this.contains(e.target) && !this.shadowRoot.contains(e.composedPath()[0])) this.hideResults();
     });
@@ -148,10 +133,9 @@ class ArazzoGranteePicker extends ArazzoElement {
   renderKindFilter() {
     const select = this.$('.kind');
     if (!select) return; // locked to a single kind via the attribute → no selector
-    const allowed = this.allowedKinds;
     const current = select.value || '';
-    select.innerHTML = `<option value="">Any kind</option>` + allowed.map((k) => `<option value="${k}">${k}</option>`).join('');
-    select.value = allowed.includes(current) ? current : '';
+    select.innerHTML = `<option value="">Any kind</option>` + KINDS.map((k) => `<option value="${k}">${k}</option>`).join('');
+    select.value = current;
     if (!select._wired) {
       select._wired = true;
       select.addEventListener('change', () => this.runSearch(this.$('.q')?.value.trim() ?? ''));
@@ -164,23 +148,15 @@ class ArazzoGranteePicker extends ArazzoElement {
     if (!client) return;
     const seq = ++this._seq;
     this.setMessage('');
-    // The backend search filters by a single `kind`. When the dropdown is on "Any kind" but this picker only allows a
-    // subset (e.g. an admin picker excludes `workflow`), fetch wider and filter to the allowed set client-side so the
-    // page isn't starved by excluded kinds — a prefix-narrowed typeahead, not a scale list.
-    const selectedKind = this.kind;
-    const allowed = this.allowedKinds;
-    const restrict = !selectedKind && allowed.length < KINDS.length;
     try {
       const { grantees } = await client.searchGrantees({
         q: q || undefined,
-        kind: selectedKind || undefined,
+        kind: this.kind || undefined,
         source: this.getAttribute('source') || undefined,
-        limit: restrict ? SEARCH_LIMIT * 3 : SEARCH_LIMIT,
+        limit: SEARCH_LIMIT,
       });
       if (seq !== this._seq) return; // a newer keystroke superseded this response
-      this._results = restrict
-        ? grantees.filter((g) => allowed.includes(g.kind)).slice(0, SEARCH_LIMIT)
-        : grantees;
+      this._results = grantees;
       this.renderResults();
     } catch (problem) {
       if (seq !== this._seq) return;

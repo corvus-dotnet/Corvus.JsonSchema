@@ -211,6 +211,20 @@ test('administrators: each client method emits the contract method + templated p
   assert.equal(calls[3].body.administrators[0].value, 'acme');
 });
 
+test('the contract declares the identity / grantee-resolution operation', () => {
+  assert.ok(OPS.searchGrantees, 'operation searchGrantees present in the OpenAPI document');
+});
+
+test('identity: searchGrantees emits the contract method + path + declared query params', async () => {
+  const { client, calls } = capturing();
+  await client.searchGrantees({ q: 'ada', kind: 'person', source: 'directory', limit: 8, pageToken: 'tok' });
+  assert.equal(calls[0].method, OPS.searchGrantees.method);
+  assert.equal(calls[0].path, OPS.searchGrantees.path);
+  for (const key of calls[0].query.keys()) {
+    assert.ok(OPS.searchGrantees.queryParams.has(key), `grantees query param '${key}' is declared in the contract`);
+  }
+});
+
 test('the contract declares the access-request operations', () => {
   for (const id of ['submitAccessRequest', 'listAccessRequests', 'getAccessRequest', 'approveAccessRequest',
                     'approveAccessRequestAsEligible', 'denyAccessRequest', 'withdrawAccessRequest', 'revokeAccessRequest']) {

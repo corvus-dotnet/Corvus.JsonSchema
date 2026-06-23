@@ -41,6 +41,36 @@ export function packWorkflowPackage(workflow, sources = []) {
   return new Blob([buildPackage(entries)], { type: 'application/octet-stream' });
 }
 
+/**
+ * Unpack a workflow-package container — the inverse of {@link packWorkflowPackage} — into a map of entry name →
+ * UTF-8 text (e.g. `workflow.json`, `sources/<name>.json`). Throws if the bytes are not a valid `AWP` container.
+ * @param {ArrayBuffer|Uint8Array} container The package bytes.
+ * @returns {Map<string, string>} Each entry's name → its decoded UTF-8 text.
+ */
+export function unpackWorkflowPackage(container) {
+  const bytes = container instanceof Uint8Array ? container : new Uint8Array(container);
+  if (bytes.length < 8 || bytes[0] !== 0x41 || bytes[1] !== 0x57 || bytes[2] !== 0x50) {
+    throw new Error('Not a workflow-package container (bad AWP magic).');
+  }
+  if (bytes[3] !== PACKAGE_FORMAT_VERSION) {
+    throw new Error(`Unsupported workflow-package format version ${bytes[3]}.`);
+  }
+
+  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const dec = new TextDecoder();
+  const entryCount = dv.getUint32(4, true);
+  const entries = new Map();
+  let pos = 8;
+  for (let i = 0; i < entryCount; i++) {
+    const nameLen = dv.getUint16(pos, true); pos += 2;
+    const name = dec.decode(bytes.subarray(pos, pos + nameLen)); pos += nameLen;
+    pos += 1; // per-entry encoding byte (0 = stored; the only encoding the packer writes)
+    const dataLen = dv.getUint32(pos, true); pos += 4;
+    entries.set(name, dec.decode(bytes.subarray(pos, pos + dataLen))); pos += dataLen;
+  }
+  return entries;
+}
+
 /** Build the length-prefixed container bytes from `[{ name, data: Uint8Array }]` (entries already sorted by name). */
 function buildPackage(entries) {
   const enc = new TextEncoder();
