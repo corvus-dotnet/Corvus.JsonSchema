@@ -177,7 +177,7 @@ public interface IHostedWorkflow
 - The adapter parses `run.Inputs` into the concrete `TInputs`, calls the generated
   `ExecuteAsync(transport, messageTransport, workspace, inputs, run, ct)`, and maps `WorkflowRunResult<T>` →
   `WorkflowRunResultKind`.
-- This *is* the `WorkflowResumer` the existing `WorkflowWorker`/`WorkflowManagementClient` already expect — so
+- This *is* the `WorkflowResumer` the existing `WorkflowWorker`/`SecuredWorkflowManagement` already expect — so
   **resume, retry, rewind, skip, cancel all work unchanged** once the host can produce an `IHostedWorkflow`.
 - `IHostedWorkflow` + `WorkflowDescriptor` + `IWorkflowRun` + the transport interfaces live in the runtime
   project, so the loaded assembly and the host share one contract.
@@ -823,7 +823,7 @@ into another even if a user rule is misconfigured.
 ### 14.4 Control-plane enforcement (HTTP) — the AccessContext model
 
 Enforcement is **secure by construction, not by remembering to pass a filter**. Every control-plane client
-operation (`IWorkflowManagementClient` / `IWorkflowCatalogClient`) **requires** an `AccessContext` — there is
+operation (`ISecuredWorkflowManagement` / `ISecuredWorkflowCatalog`) **requires** an `AccessContext` — there is
 no contextless/unscoped read on those surfaces, so an unscoped read cannot exist to be misused. The truly
 unscoped reads live one layer down on the **store** (`IWorkflowStateStore` / `IWorkflowWaitIndex`), which is the
 trusted system layer the dispatcher, runner, and integrity checks use and which is never handed to a handler.
@@ -891,7 +891,7 @@ and freely editable. The authority is the **administrator**, and it is a *securi
   submitter's identity, and with the **immutable workflow identity** `sys:workflow=<baseWorkflowId>` that its runs
   inherit — the identity a credential grant names. The administrator identity is the stamped set with `sys:workflow`
   removed (`WorkflowIdentity.AdministratorIdentity`).
-- **Publishing a further version requires being an administrator.** `WorkflowCatalogClient.AddAsync` refuses
+- **Publishing a further version requires being an administrator.** `SecuredWorkflowCatalog.AddAsync` refuses
   (`WorkflowAdministrationException` → 409) a submitter whose stamped identity is not a member of the base id's
   administrator set — so `sys:workflow` cannot be squatted. Membership is order-independent set-equality on the
   stamped identity (`WorkflowIdentity.SameAdministrator`); the catalog Add path carries the stamped identity, not an
@@ -908,7 +908,7 @@ record** that defaults to version 1's identity until first changed:
   in an `IWorkflowAdministratorStore` (per-backend, like the run/catalog/credential stores — **shipped across all nine
   backends**, container-verified on a shared conformance suite). Never empty: the last administrator cannot be removed
   (no orphaning).
-- **Operations** (on `IWorkflowCatalogClient`, authorized by **current-administrator membership**, not row reach):
+- **Operations** (on `ISecuredWorkflowCatalog`, authorized by **current-administrator membership**, not row reach):
   `GetAdministrators`, `AddAdministrator` (idempotent), `RemoveAdministrator` (refuses the last), and
   `TransferAdministration` (replace the set — hand-off; the caller need not remain). Each names administrators with
   the **usage-grant vocabulary** (`{dimension, value}` the policy maps to `sys:` tags), never free-form tags; changes

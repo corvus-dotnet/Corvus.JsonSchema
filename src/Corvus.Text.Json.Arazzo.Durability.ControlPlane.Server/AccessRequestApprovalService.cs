@@ -14,7 +14,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// </summary>
 /// <remarks>
 /// <para><b>§15 gate.</b> Only a §15 administrator of the target workflow may approve, deny, or revoke a request
-/// (<see cref="IWorkflowCatalogClient.GetAdministratorsAsync"/> + <see cref="WorkflowIdentity.SameAdministrator"/>).
+/// (<see cref="ISecuredWorkflowCatalog.GetAdministratorsAsync"/> + <see cref="WorkflowIdentity.SameAdministrator"/>).
 /// <b>Self-elevation</b> (an eligible requester) skips the human approver — eligibility <em>is</em> the
 /// authorization — but is otherwise identical.</para>
 /// <para><b>Platform cap.</b> An approval grants <em>at most</em> the requested scopes intersected with the
@@ -34,7 +34,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
 
     private readonly IAccessRequestStore requests;
     private readonly ISecurityPolicyStore policy;
-    private readonly IWorkflowCatalogClient catalog;
+    private readonly ISecuredWorkflowCatalog catalog;
     private readonly TimeProvider timeProvider;
     private readonly AccessRequestApprovalOptions options;
     private readonly PersistentRowSecurityPolicy? rowSecurity;
@@ -49,7 +49,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
     public AccessRequestApprovalService(
         IAccessRequestStore requests,
         ISecurityPolicyStore policy,
-        IWorkflowCatalogClient catalog,
+        ISecuredWorkflowCatalog catalog,
         TimeProvider? timeProvider = null,
         AccessRequestApprovalOptions? options = null,
         PersistentRowSecurityPolicy? rowSecurity = null)

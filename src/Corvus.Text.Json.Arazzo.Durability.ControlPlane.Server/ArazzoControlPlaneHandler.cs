@@ -10,7 +10,7 @@ using Corvus.Text.Json.Arazzo.Durability;
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
 /// <summary>
-/// Implements the generated <see cref="IApiRunsHandler"/> over an <see cref="IWorkflowManagementClient"/>,
+/// Implements the generated <see cref="IApiRunsHandler"/> over an <see cref="ISecuredWorkflowManagement"/>,
 /// mapping each control-plane REST operation onto the corresponding management-client call and projecting the
 /// .NET result DTOs into the generated response models.
 /// </summary>
@@ -18,12 +18,12 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
 {
     private const string ProblemBase = "https://corvus-oss.org/arazzo/control-plane/problems/";
 
-    private readonly IWorkflowManagementClient management;
+    private readonly ISecuredWorkflowManagement management;
     private readonly ControlPlaneAccess access;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneHandler"/> class (unscoped: full access).</summary>
     /// <param name="management">The control-plane client the endpoints delegate to.</param>
-    public ArazzoControlPlaneHandler(IWorkflowManagementClient management)
+    public ArazzoControlPlaneHandler(ISecuredWorkflowManagement management)
         : this(management, new ControlPlaneAccess())
     {
     }
@@ -31,7 +31,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneHandler"/> class.</summary>
     /// <param name="management">The control-plane client the endpoints delegate to.</param>
     /// <param name="access">Resolves the caller's <see cref="AccessContext"/> per request (§14.2).</param>
-    internal ArazzoControlPlaneHandler(IWorkflowManagementClient management, ControlPlaneAccess access)
+    internal ArazzoControlPlaneHandler(ISecuredWorkflowManagement management, ControlPlaneAccess access)
     {
         ArgumentNullException.ThrowIfNull(management);
         ArgumentNullException.ThrowIfNull(access);

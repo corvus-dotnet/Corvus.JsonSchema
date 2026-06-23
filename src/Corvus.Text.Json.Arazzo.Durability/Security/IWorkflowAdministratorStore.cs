@@ -13,10 +13,10 @@ namespace Corvus.Text.Json.Arazzo.Durability.Security;
 /// <remarks>
 /// <para>The record is materialized lazily — a workflow whose administration has never been mutated has <strong>no</strong>
 /// record here, and its administration defaults to the administrator identity that stamped version 1 (the
-/// <see cref="WorkflowCatalogClient"/> applies that fallback). The first transfer / add-administrator writes the explicit
+/// <see cref="SecuredWorkflowCatalog"/> applies that fallback). The first transfer / add-administrator writes the explicit
 /// record via <see cref="PutAsync"/>.</para>
 /// <para>Authorization (caller must currently be an administrator; the last administrator cannot be removed) is the
-/// <see cref="WorkflowCatalogClient"/>'s concern, not this store's — the store is a CAS key/value persistence seam, like
+/// <see cref="SecuredWorkflowCatalog"/>'s concern, not this store's — the store is a CAS key/value persistence seam, like
 /// the security-policy and source-credential stores, and takes no <see cref="AccessContext"/>. <see cref="PutAsync"/>
 /// enforces optimistic concurrency against the expected etag: <see cref="WorkflowEtag.None"/> expects
 /// <em>no</em> existing record (initial materialization); any other value expects a record with exactly that etag. A

@@ -1,4 +1,4 @@
-// <copyright file="WorkflowCatalogClientCredentialGateTests.cs" company="Endjin Limited">
+// <copyright file="SecuredWorkflowCatalogCredentialGateTests.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
@@ -15,7 +15,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Tests;
 /// to use a binding for that source. This is the earlier of the two usage checks (the run-time bind being the backstop).
 /// </summary>
 [TestClass]
-public sealed class WorkflowCatalogClientCredentialGateTests
+public sealed class SecuredWorkflowCatalogCredentialGateTests
 {
     private static readonly CatalogOwner Owner = new("Team", "team@example.com", null, null);
 
@@ -33,7 +33,7 @@ public sealed class WorkflowCatalogClientCredentialGateTests
             "system",
             default);
 
-        var catalog = new WorkflowCatalogClient(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops", credentials);
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops", credentials);
 
         // A submitter not entitled to the petstore binding may not catalogue a workflow that declares it.
         SourceCredentialAccessDeniedException ex = await Should.ThrowAsync<SourceCredentialAccessDeniedException>(async () =>
@@ -51,7 +51,7 @@ public sealed class WorkflowCatalogClientCredentialGateTests
     {
         // petstore has no credential binding at all — it is unauthenticated (or bindings come later), so declaring it
         // is allowed for any submitter.
-        var catalog = new WorkflowCatalogClient(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops", new InMemorySourceCredentialStore());
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops", new InMemorySourceCredentialStore());
         using ParsedJsonDocument<CatalogVersion> versionDoc = await catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), default);
         CatalogVersion version = versionDoc.RootElement;
         ((string)version.WorkflowId).ShouldContain("flow");
@@ -61,7 +61,7 @@ public sealed class WorkflowCatalogClientCredentialGateTests
     public async Task With_no_credential_store_the_gate_is_off()
     {
         // No credential store wired → no catalog-time check (back-compat).
-        var catalog = new WorkflowCatalogClient(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops");
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops");
         using ParsedJsonDocument<CatalogVersion> versionDoc = await catalog.AddAsync(Package("flow"), Owner, default, default, default);
         CatalogVersion version = versionDoc.RootElement;
         ((string)version.WorkflowId).ShouldContain("flow");
@@ -70,7 +70,7 @@ public sealed class WorkflowCatalogClientCredentialGateTests
     [TestMethod]
     public async Task A_base_id_administered_by_one_identity_cannot_be_versioned_by_another()
     {
-        var catalog = new WorkflowCatalogClient(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops");
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops");
         SecurityTagSet acme = SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]);
 
         // acme establishes administration of base id "flow" and may publish further versions.
