@@ -2334,7 +2334,8 @@
       },
       "CatalogMetadataPatch": {
         "type": "object",
-        "description": "A partial update of a version's mutable governance metadata; omitted fields are left unchanged.",
+        "description": "A partial update of a version's mutable governance metadata; omitted fields are left unchanged. Closed (additionalProperties: false) so an unknown field — e.g. an attempt to set the server-stamped, immutable securityTags — is rejected with 400 rather than silently ignored.",
+        "additionalProperties": false,
         "properties": {
           "owner": { "$ref": "#/components/schemas/CatalogOwner" },
           "tags": { "type": "array", "items": { "type": "string" } },

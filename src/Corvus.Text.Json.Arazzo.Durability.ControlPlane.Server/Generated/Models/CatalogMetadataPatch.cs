@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A partial update of a version&#39;s mutable governance metadata; omitted fields are left unchanged.
+/// A partial update of a version&#39;s mutable governance metadata; omitted fields are left unchanged. Closed (additionalProperties: false) so an unknown field — e.g. an attempt to set the server-stamped, immutable securityTags — is rejected with 400 rather than silently ignored.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -58,105 +58,6 @@ public readonly partial struct CatalogMetadataPatch
     /// Gets the default instance.
     /// </summary>
     public static CatalogMetadataPatch DefaultInstance { get; }
-
-    /// <summary>
-    /// Gets the value of the property with the given name.
-    /// </summary>
-    /// <param name="propertyName">The name of the property.</param>
-    /// <returns>The value of the property with the given name.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-    public JsonElement this[ReadOnlySpan<byte> propertyName]
-    {
-        get
-        {
-            CheckValidInstance();
-            if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement value))
-            {
-                return default;
-            }
-
-            return value;
-        }
-    }
-
-    /// <summary>
-    /// Gets the value of the property with the given name.
-    /// </summary>
-    /// <param name="propertyName">The name of the property.</param>
-    /// <returns>The value of the property with the given name.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-    public JsonElement this[ReadOnlySpan<char> propertyName]
-    {
-        get
-        {
-            CheckValidInstance();
-            if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement value))
-            {
-                return default;
-            }
-
-            return value;
-        }
-    }
-
-    /// <summary>
-    /// Gets the value of the property with the given name.
-    /// </summary>
-    /// <param name="propertyName">The name of the property.</param>
-    /// <returns>The value of the property with the given name.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-    public JsonElement this[string propertyName]
-    {
-        get
-        {
-            CheckValidInstance();
-            if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement value))
-            {
-                return default;
-            }
-
-            return value;
-        }
-    }
-
-    /// <summary>
-    /// Tries to get the value of the property with the given name.
-    /// </summary>
-    /// <param name="propertyName">The name of the property.</param>
-    /// <param name="value">The value of the property, if present.</param>
-    /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-    public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out JsonElement value)
-    {
-        CheckValidInstance();
-        return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
-    }
-
-    /// <summary>
-    /// Tries to get the value of the property with the given name.
-    /// </summary>
-    /// <param name="propertyName">The name of the property.</param>
-    /// <param name="value">The value of the property, if present.</param>
-    /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-    public bool TryGetProperty(ReadOnlySpan<char> propertyName, out JsonElement value)
-    {
-        CheckValidInstance();
-        return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
-    }
-
-    /// <summary>
-    /// Tries to get the value of the property with the given name.
-    /// </summary>
-    /// <param name="propertyName">The name of the property.</param>
-    /// <param name="value">The value of the property, if present.</param>
-    /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-    public bool TryGetProperty(string propertyName, out JsonElement value)
-    {
-        CheckValidInstance();
-        return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
-    }
 
     /// <summary>
     /// Gets the (optional) <c>owner</c> property.
@@ -224,16 +125,6 @@ public readonly partial struct CatalogMetadataPatch
     {
         CheckValidInstance();
         return _parent.GetPropertyCount(_idx);
-    }
-
-    /// <summary>
-    /// Enumerates the object.
-    /// </summary>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-    public ObjectEnumerator<JsonElement> EnumerateObject()
-    {
-        CheckValidInstance();
-        return EnumeratorCreator.CreateObjectEnumerator<JsonElement>(_parent, _idx);
     }
 
     /// <inheritdoc/>
