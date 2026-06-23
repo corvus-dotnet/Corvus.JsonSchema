@@ -1197,6 +1197,33 @@ genuine if a *downstream consumer needs a materialized set* — so trace the con
   round-trips correctly with both tag write-actions); slnx build **0 Warning(s), 0 Error(s)**. The `SecurityShell` list
   overload is kept (its direct test + any list caller).
 
+### 🔍 Matrix review — write-seam tag-materialization sweep (the "is `SecurityTagSet` the right shape" critique, applied across handlers)
+
+After the credential write-seam reached **fully zero tag-materialization** (validation over a non-owning view, both tag
+arrays as `Draft` write-actions, `Admits` reading the management tags back from the draft), swept every control-plane
+handler for the same three shapes: (a) a tag set materialized only to be written into a document, (b) an `Admits`/check
+that materializes when it could read from the doc, (c) a `List` built to feed validation. Findings:
+
+- **Administrators write** (`AddAdministrator`/`TransferAdministration`/`RemoveAdministrator`) — `SecurityTagSet.Build`
+  builds the administrator identity, then it is consumed by the **store persistence seam**
+  (`ISecuredWorkflowCatalog.AddAdministratorAsync(SecurityTagSet)` / `IWorkflowAdministratorStore.PutAsync(IReadOnlyList<SecurityTagSet>)`),
+  the cross-provider uniqueness probe (`FindIdentityConflictAsync`), and `SetEquals` membership. **Same materialize-then-consume
+  shape as the credential case, but multi-consumer and store-seam-bound** — eliminating it needs the store *interface* (+ all
+  9 backends) to accept a write-action/source, a far wider blast radius than the in-process `Draft`/`Admits` we reshaped.
+  The credential case was uniquely clean *because* both its consumers were in-process. **Open lever** (own campaign — see below).
+- **Catalog version create** (`securityTags = FromTags(InternalTags())`) — same store-seam-consumer situation
+  (`IWorkflowCatalogStore`); same conclusion.
+- **Run-write `Admits(Write, d.SecurityTags)`** (delete/resume/cancel) — **not** the pattern: `d` is the *existing* run read
+  from the store; the check is over already-materialized read-path tags, not a new set built to persist. Genuine.
+- **`ResolveUsageGrants` / `DescribeUsageScope` list forms** — kept-for-compat fallbacks; the span forms are the hot paths
+  (done). Not new.
+
+**Conclusion / remaining open lever:** the read/projection class is fully 0-alloc; the credential write tag-path is fully
+zero-materialization. The analogous **administrators + catalog** write paths share the shape but are **bound to the store
+persistence seam**, where `SecurityTagSet` is the natural multi-consumer carrier. Eliminating those is a **separate, larger
+campaign** (store interface + 9 backends accepting tag write-actions/sources) and needs its own ground→baseline→ledger→STOP
+row — deliberately *not* folded into the in-process write-seam work.
+
 ## Cross-references
 
 - Skills: `corvus-typed-model-construction`, `corvus-builder-context-threading`,
