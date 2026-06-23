@@ -8,7 +8,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 
 /// <summary>
 /// A request to start a workflow run, raised by a trigger and serviced by the host's start path
-/// (typically <see cref="IWorkflowManagementClient.StartIdempotentAsync"/>).
+/// (typically <see cref="ISecuredWorkflowManagement.StartIdempotentAsync"/>).
 /// </summary>
 /// <param name="WorkflowId">The versioned workflow id (<c>{base}-v{n}</c>) to run.</param>
 /// <param name="Inputs">The workflow inputs.</param>

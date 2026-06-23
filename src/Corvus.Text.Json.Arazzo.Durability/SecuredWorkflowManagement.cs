@@ -53,12 +53,12 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, SecurityTagSet securityTags, string? environment, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, SecurityTagSet securityTags, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(workflowId);
 
         var id = new WorkflowRunId(Guid.NewGuid().ToString("n", System.Globalization.CultureInfo.InvariantCulture));
-        using WorkflowRun run = WorkflowRun.CreateNew(this.store, id, workflowId, inputs, this.timeProvider, correlationId, tags, securityTags, environment);
+        using WorkflowRun run = WorkflowRun.CreateNew(this.store, id, workflowId, inputs, this.timeProvider, correlationId, tags, securityTags);
         await run.EnqueueAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }
@@ -148,7 +148,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
             return null;
         }
 
-        return new WorkflowRunDetail(state.RunId, state.WorkflowId, state.Status, state.Cursor, state.CreatedAt, state.Wait, state.Fault, cp.Etag, state.CorrelationId, state.Tags, state.SecurityTags, state.Environment);
+        return new WorkflowRunDetail(state.RunId, state.WorkflowId, state.Status, state.Cursor, state.CreatedAt, state.Wait, state.Fault, cp.Etag, state.CorrelationId, state.Tags, state.SecurityTags);
     }
 
     // Whether a run is within the caller's write reach (§14.2): unrestricted writers and a missing run pass (the

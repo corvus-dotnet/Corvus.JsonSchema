@@ -12,7 +12,7 @@
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
     <IsPackable>true</IsPackable>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <Description>An ASP.NET Core server for the Arazzo durability control-plane REST API (generated from its OpenAPI 3.2 description), wiring the generated endpoints to IWorkflowManagementClient.</Description>
+    <Description>An ASP.NET Core server for the Arazzo durability control-plane REST API (generated from its OpenAPI 3.2 description), wiring the generated endpoints to ISecuredWorkflowManagement.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>

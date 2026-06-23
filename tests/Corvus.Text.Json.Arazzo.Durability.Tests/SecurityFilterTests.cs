@@ -39,7 +39,7 @@ public sealed class SecurityFilterTests
     public async Task A_tenant_scoped_filter_returns_only_the_principals_tenant_runs()
     {
         var store = new InMemoryWorkflowStateStore();
-        var management = new WorkflowManagementClient(store, owner: "ops");
+        var management = new SecuredWorkflowManagement(store, owner: "ops");
         await SeedAsync(store, "run-acme", new SecurityTag("tenant", "acme"));
         await SeedAsync(store, "run-globex", new SecurityTag("tenant", "globex"));
         await SeedAsync(store, "run-untagged");
@@ -67,7 +67,7 @@ public sealed class SecurityFilterTests
     public async Task A_null_filter_is_unrestricted()
     {
         var store = new InMemoryWorkflowStateStore();
-        var management = new WorkflowManagementClient(store, owner: "ops");
+        var management = new SecuredWorkflowManagement(store, owner: "ops");
         await SeedAsync(store, "run-acme", new SecurityTag("tenant", "acme"));
         await SeedAsync(store, "run-globex", new SecurityTag("tenant", "globex"));
 
@@ -100,7 +100,7 @@ public sealed class SecurityFilterTests
     public async Task An_untagged_run_is_invisible_to_a_scoped_principal()
     {
         var store = new InMemoryWorkflowStateStore();
-        var management = new WorkflowManagementClient(store, owner: "ops");
+        var management = new SecuredWorkflowManagement(store, owner: "ops");
         await SeedAsync(store, "run-acme", new SecurityTag("tenant", "acme"));
         await SeedAsync(store, "run-untagged");
 
@@ -115,7 +115,7 @@ public sealed class SecurityFilterTests
     public async Task A_conjunction_of_rules_models_the_deployment_wrapper_and_the_user_rule()
     {
         var store = new InMemoryWorkflowStateStore();
-        var management = new WorkflowManagementClient(store, owner: "ops");
+        var management = new SecuredWorkflowManagement(store, owner: "ops");
         await SeedAsync(store, "run-acme-payments", new SecurityTag("tenant", "acme"), new SecurityTag("team", "payments"));
         await SeedAsync(store, "run-acme-hr", new SecurityTag("tenant", "acme"), new SecurityTag("team", "hr"));
         await SeedAsync(store, "run-globex-payments", new SecurityTag("tenant", "globex"), new SecurityTag("team", "payments"));

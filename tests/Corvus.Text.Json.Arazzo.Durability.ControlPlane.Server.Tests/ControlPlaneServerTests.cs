@@ -391,8 +391,8 @@ public sealed class ControlPlaneServerTests
         var clock = new MutableClock(T0);
         var runStore = new InMemoryWorkflowStateStore(clock);
         var catalogStore = new InMemoryWorkflowCatalogStore(clock, new FakeSchemaProvider());
-        var management = new WorkflowManagementClient(runStore, "ops", CompleteResumer, clock);
-        var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock);
+        var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
 
         // Add a version (bare workflow id "flow" → flow-v1); the store bakes the metadata via the provider.
         await catalog.AddAsync(SchemaWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
@@ -422,8 +422,8 @@ public sealed class ControlPlaneServerTests
         var clock = new MutableClock(T0);
         var runStore = new InMemoryWorkflowStateStore(clock);
         var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
-        var management = new WorkflowManagementClient(runStore, "ops", CompleteResumer, clock);
-        var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock);
+        var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
 
         await catalog.AddAsync(SchemaWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
 
@@ -465,8 +465,8 @@ public sealed class ControlPlaneServerTests
         var clock = new MutableClock(T0);
         var runStore = new InMemoryWorkflowStateStore(clock);
         var catalogStore = new InMemoryWorkflowCatalogStore(clock);
-        var management = new WorkflowManagementClient(runStore, "ops", CompleteResumer, clock);
-        var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock);
+        var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
 
         await catalog.AddAsync(SchemaWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
 
@@ -496,8 +496,8 @@ public sealed class ControlPlaneServerTests
         var clock = new MutableClock(T0);
         var runStore = new InMemoryWorkflowStateStore(clock);
         var catalogStore = new InMemoryWorkflowCatalogStore(clock);
-        var management = new WorkflowManagementClient(runStore, "ops", CompleteResumer, clock);
-        var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock);
+        var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
 
         await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
 
@@ -547,8 +547,8 @@ public sealed class ControlPlaneServerTests
         var clock = new MutableClock(T0);
         var runStore = new InMemoryWorkflowStateStore(clock);
         var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
-        var management = new WorkflowManagementClient(runStore, "ops", CompleteResumer, clock);
-        var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock);
+        var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
 
         await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
 
@@ -605,8 +605,8 @@ public sealed class ControlPlaneServerTests
         var clock = new MutableClock(T0);
         var runStore = new InMemoryWorkflowStateStore(clock);
         var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
-        var management = new WorkflowManagementClient(runStore, "ops", CompleteResumer, clock);
-        var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock);
+        var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
 
         SecurityTag[] security = [new("tenant", "acme"), new("team", "payments")];
         await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, SecurityTagSet.FromTags(security), default);
@@ -647,8 +647,8 @@ public sealed class ControlPlaneServerTests
         var clock = new MutableClock(T0);
         var runStore = new InMemoryWorkflowStateStore(clock);
         var catalogStore = new InMemoryWorkflowCatalogStore(clock); // no executor provider → not runnable
-        var management = new WorkflowManagementClient(runStore, "ops", CompleteResumer, clock);
-        var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock);
+        var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
 
         await catalog.AddAsync(SchemaWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
 
@@ -675,8 +675,8 @@ public sealed class ControlPlaneServerTests
         var clock = new MutableClock(T0);
         var runStore = new InMemoryWorkflowStateStore(clock);
         var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
-        var management = new WorkflowManagementClient(runStore, "ops", CompleteResumer, clock);
-        var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock);
+        var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
 
         await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
 
@@ -702,8 +702,8 @@ public sealed class ControlPlaneServerTests
     {
         var clock = new MutableClock(T0);
         var runStore = new InMemoryWorkflowStateStore(clock);
-        var management = new WorkflowManagementClient(runStore, "ops", CompleteResumer, clock);
-        var catalog = new WorkflowCatalogClient(new InMemoryWorkflowCatalogStore(clock), runStore, "ops");
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock);
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(clock), runStore, "ops");
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -772,8 +772,8 @@ public sealed class ControlPlaneServerTests
         var store = new InMemoryWorkflowStateStore(clock);
 
         // The resumer stands in for re-entering a generated executor: it drives a resumed faulted run to completion.
-        var management = new WorkflowManagementClient(store, "ops", resumer ?? CompleteResumer, clock);
-        var catalog = new WorkflowCatalogClient(new InMemoryWorkflowCatalogStore(clock), store, "ops");
+        var management = new SecuredWorkflowManagement(store, "ops", resumer ?? CompleteResumer, clock);
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(clock), store, "ops");
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();

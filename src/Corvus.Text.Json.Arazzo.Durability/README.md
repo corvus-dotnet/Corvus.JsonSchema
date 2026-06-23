@@ -76,11 +76,11 @@ Implement `EnvelopeCheckpointProtector` (or `ICheckpointProtector`) directly for
 
 ## Control plane (run management)
 
-`WorkflowManagementClient` (`IWorkflowManagementClient`) is the operator surface over a store (plan §11) — the
+`SecuredWorkflowManagement` (`ISecuredWorkflowManagement`) is the operator surface over a store (plan §11) — the
 workflow-level analogue of dead-letter inspection and redelivery:
 
 ```csharp
-var management = new WorkflowManagementClient(store, owner: "ops", resumer);
+var management = new SecuredWorkflowManagement(store, owner: "ops", resumer);
 
 await management.ListAsync(new WorkflowQuery(WorkflowRunStatus.Faulted), ct);   // visibility
 await management.GetAsync(runId, ct);                                           // status + fault detail

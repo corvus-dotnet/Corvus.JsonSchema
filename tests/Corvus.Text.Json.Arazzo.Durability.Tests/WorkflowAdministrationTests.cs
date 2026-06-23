@@ -25,7 +25,7 @@ public sealed class WorkflowAdministrationTests
     [TestMethod]
     public async Task An_added_administrator_may_publish_a_new_version()
     {
-        WorkflowCatalogClient catalog = NewCatalog(out _);
+        SecuredWorkflowCatalog catalog = NewCatalog(out _);
 
         // acme establishes the base id; globex cannot version it yet.
         await catalog.AddAsync(Package("flow"), Owner, default, Acme, default);
@@ -41,7 +41,7 @@ public sealed class WorkflowAdministrationTests
     [TestMethod]
     public async Task Only_a_current_administrator_may_change_administration()
     {
-        WorkflowCatalogClient catalog = NewCatalog(out _);
+        SecuredWorkflowCatalog catalog = NewCatalog(out _);
         await catalog.AddAsync(Package("flow"), Owner, default, Acme, default);
 
         // globex is not an administrator, so it cannot add itself (no self-grant).
@@ -52,7 +52,7 @@ public sealed class WorkflowAdministrationTests
     [TestMethod]
     public async Task The_last_administrator_cannot_be_removed()
     {
-        WorkflowCatalogClient catalog = NewCatalog(out _);
+        SecuredWorkflowCatalog catalog = NewCatalog(out _);
         await catalog.AddAsync(Package("flow"), Owner, default, Acme, default);
 
         await Should.ThrowAsync<ArgumentException>(async () =>
@@ -62,7 +62,7 @@ public sealed class WorkflowAdministrationTests
     [TestMethod]
     public async Task Transfer_reassigns_administration_to_a_new_identity()
     {
-        WorkflowCatalogClient catalog = NewCatalog(out _);
+        SecuredWorkflowCatalog catalog = NewCatalog(out _);
         await catalog.AddAsync(Package("flow"), Owner, default, Acme, default);
 
         // acme hands the workflow off to globex entirely.
@@ -78,7 +78,7 @@ public sealed class WorkflowAdministrationTests
     [TestMethod]
     public async Task Removing_an_administrator_revokes_publishing()
     {
-        WorkflowCatalogClient catalog = NewCatalog(out _);
+        SecuredWorkflowCatalog catalog = NewCatalog(out _);
         await catalog.AddAsync(Package("flow"), Owner, default, Acme, default);
         await catalog.AddAdministratorAsync("flow", Globex, callerIdentity: Acme, default);
 
@@ -91,7 +91,7 @@ public sealed class WorkflowAdministrationTests
     [TestMethod]
     public async Task GetAdministrators_falls_back_to_the_version_1_identity()
     {
-        WorkflowCatalogClient catalog = NewCatalog(out _);
+        SecuredWorkflowCatalog catalog = NewCatalog(out _);
         await catalog.AddAsync(Package("flow"), Owner, default, Acme, default);
 
         // No explicit record has been materialized — administration defaults to version 1's stamped identity.
@@ -103,7 +103,7 @@ public sealed class WorkflowAdministrationTests
     [TestMethod]
     public async Task Adding_an_existing_administrator_is_an_idempotent_no_op()
     {
-        WorkflowCatalogClient catalog = NewCatalog(out _);
+        SecuredWorkflowCatalog catalog = NewCatalog(out _);
         await catalog.AddAsync(Package("flow"), Owner, default, Acme, default);
 
         IReadOnlyList<SecurityTagSet> admins = await catalog.AddAdministratorAsync("flow", Acme, callerIdentity: Acme, default);
@@ -113,17 +113,17 @@ public sealed class WorkflowAdministrationTests
     [TestMethod]
     public async Task Without_an_administrator_store_management_is_unsupported()
     {
-        var catalog = new WorkflowCatalogClient(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops");
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops");
         await catalog.AddAsync(Package("flow"), Owner, default, Acme, default);
 
         await Should.ThrowAsync<NotSupportedException>(async () =>
             await catalog.AddAdministratorAsync("flow", Globex, callerIdentity: Acme, default));
     }
 
-    private static WorkflowCatalogClient NewCatalog(out InMemoryWorkflowAdministratorStore administrators)
+    private static SecuredWorkflowCatalog NewCatalog(out InMemoryWorkflowAdministratorStore administrators)
     {
         administrators = new InMemoryWorkflowAdministratorStore();
-        return new WorkflowCatalogClient(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops", credentials: null, administrators: administrators);
+        return new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops", credentials: null, administrators: administrators);
     }
 
     private static ReadOnlyMemory<byte> Package(string workflowId)

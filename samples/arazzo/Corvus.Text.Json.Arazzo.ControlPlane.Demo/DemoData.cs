@@ -30,7 +30,7 @@ public static class DemoData
     /// <param name="runStore">The run state store.</param>
     /// <param name="specsDir">The directory holding the demo's Arazzo workflow + OpenAPI source documents.</param>
     /// <param name="timeProvider">The time provider (defaults to the system clock).</param>
-    public static async ValueTask SeedAsync(WorkflowCatalogClient catalog, IWorkflowStateStore runStore, string specsDir, TimeProvider? timeProvider = null)
+    public static async ValueTask SeedAsync(SecuredWorkflowCatalog catalog, IWorkflowStateStore runStore, string specsDir, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(runStore);
@@ -48,7 +48,7 @@ public static class DemoData
         await catalog.AddAsync(onboarding, OnboardingOwner, TagSet.FromTags(["prod", "kyc"]), adminFounder, default).ConfigureAwait(false);
         await catalog.AddAsync(reconcile, ReconcileOwner, TagSet.FromTags(["prod", "billing"]), adminFounder, default).ConfigureAwait(false);
         await catalog.AddAsync(reconcile, ReconcileOwner, TagSet.FromTags(["prod", "billing", "beta"]), adminFounder, default).ConfigureAwait(false);
-        await catalog.UpdateAsync("nightly-reconcile", 1, owner: null, tags: null, status: CatalogStatus.Obsolete, AccessContext.System, default).ConfigureAwait(false);
+        (await catalog.UpdateAsync("nightly-reconcile", 1, owner: null, tags: null, status: CatalogStatus.Obsolete, AccessContext.System, default).ConfigureAwait(false)).Document?.Dispose();
 
         // Runs across statuses. Faulted runs sit on the steps whose outputs carry the rich shapes, so the
         // resume dialog's "Record outputs" editor shows the union / map / tuple controls — and validates them.

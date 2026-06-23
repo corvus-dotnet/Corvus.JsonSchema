@@ -22,7 +22,7 @@ namespace Corvus.Text.Json.Arazzo.Runner.Demo;
 /// </remarks>
 public sealed class WorkflowDispatchService(
     IWorkflowStateStore store,
-    WorkflowCatalogClient catalog,
+    SecuredWorkflowCatalog catalog,
     RunnerOptions options,
     ILogger<WorkflowDispatchService> logger) : BackgroundService
 {

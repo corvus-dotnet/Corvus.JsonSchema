@@ -70,8 +70,8 @@ public sealed partial class CliIntegrationTests
     {
         var clock = new MutableClock(T0);
         var store = new InMemoryWorkflowStateStore(clock);
-        var management = new WorkflowManagementClient(store, "ops", CompleteResumer, clock);
-        var catalog = new WorkflowCatalogClient(
+        var management = new SecuredWorkflowManagement(store, "ops", CompleteResumer, clock);
+        var catalog = new SecuredWorkflowCatalog(
             new InMemoryWorkflowCatalogStore(clock),
             store,
             "ops",

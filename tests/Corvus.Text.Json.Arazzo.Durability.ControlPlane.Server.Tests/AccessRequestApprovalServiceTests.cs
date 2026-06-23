@@ -322,7 +322,7 @@ public sealed class AccessRequestApprovalServiceTests
         public override DateTimeOffset GetUtcNow() => now;
     }
 
-    // The in-process harness: a real WorkflowCatalogClient (with boss as the workflow's §15 administrator), the
+    // The in-process harness: a real SecuredWorkflowCatalog (with boss as the workflow's §15 administrator), the
     // in-memory access-request + security-policy stores, and the service under test.
     private sealed class Harness
     {
@@ -349,7 +349,7 @@ public sealed class AccessRequestApprovalServiceTests
             var clock = new FixedClock(Now);
             var stateStore = new InMemoryWorkflowStateStore(clock);
             var adminStore = new InMemoryWorkflowAdministratorStore();
-            var catalog = new WorkflowCatalogClient(new InMemoryWorkflowCatalogStore(clock), stateStore, "ops", administrators: adminStore);
+            var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(clock), stateStore, "ops", administrators: adminStore);
             await adminStore.PutAsync(Workflow, [Boss], WorkflowEtag.None, "seed", default);
 
             var requests = new InMemoryAccessRequestStore(clock);

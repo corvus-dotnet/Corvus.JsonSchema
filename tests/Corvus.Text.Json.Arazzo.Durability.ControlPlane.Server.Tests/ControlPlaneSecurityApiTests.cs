@@ -142,8 +142,8 @@ public sealed class ControlPlaneSecurityApiTests
     private static async Task<Scoped> StartAsync()
     {
         var store = new InMemoryWorkflowStateStore();
-        var management = new WorkflowManagementClient(store, "ops");
-        var catalog = new WorkflowCatalogClient(new InMemoryWorkflowCatalogStore(), store, "ops");
+        var management = new SecuredWorkflowManagement(store, "ops");
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops");
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();

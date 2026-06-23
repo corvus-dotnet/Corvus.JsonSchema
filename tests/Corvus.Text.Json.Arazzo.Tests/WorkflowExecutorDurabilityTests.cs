@@ -234,7 +234,7 @@ public partial class WorkflowExecutorEndToEndTests
             return (await pending).Kind;
         }
 
-        var client = new WorkflowManagementClient(store, "ops", Resume);
+        var client = new SecuredWorkflowManagement(store, "ops", Resume);
 
         // Query: the faulted run is visible via get and the status filter.
         (await client.GetAsync(runId, AccessContext.System, default))!.Value.Status.ShouldBe(WorkflowRunStatus.Faulted);

@@ -2,9 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using Corvus.Text.Json.Arazzo.Durability.Security;
-using AdministratorIdentity = Corvus.Text.Json.Arazzo.Durability.Security.WorkflowAdministrators.AdministratorIdentity;
-
 namespace Corvus.Text.Json.Arazzo.Durability;
 
 /// <summary>
@@ -75,17 +72,12 @@ public interface ISecuredWorkflowCatalog
     /// <param name="owner">A replacement owner, if changing it.</param>
     /// <param name="tags">A replacement tag set, if changing it.</param>
     /// <param name="status">A new status, if changing it.</param>
-    /// <param name="securityTags">The caller's new <em>non-internal</em> security tags, if re-tagging the version
-    /// (§14.2); <see langword="null"/> leaves the security tags unchanged. The wrapper preserves the version's existing
-    /// deployment-internal tags and persists the merged result — internal tags are never dropped or user-editable.</param>
-    /// <param name="internalTagPrefix">The reserved internal-tag key prefix, used to preserve the internal tags on
-    /// re-tag; ignored when <paramref name="securityTags"/> is <see langword="null"/>.</param>
     /// <param name="context">The caller's access grant; the version must be within its write reach.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The outcome and, on <see cref="CatalogUpdateOutcome.Updated"/>, the updated version document (which the
     /// caller owns): <see cref="CatalogUpdateOutcome.NotFound"/> if it is absent or outside read reach (non-disclosing),
     /// <see cref="CatalogUpdateOutcome.Forbidden"/> if readable but outside write reach.</returns>
-    ValueTask<CatalogUpdateResult> UpdateAsync(string baseWorkflowId, int versionNumber, CatalogOwner? owner, TagSet? tags, CatalogStatus? status, SecurityTagSet? securityTags, string? internalTagPrefix, AccessContext context, CancellationToken cancellationToken);
+    ValueTask<CatalogUpdateResult> UpdateAsync(string baseWorkflowId, int versionNumber, CatalogOwner? owner, TagSet? tags, CatalogStatus? status, AccessContext context, CancellationToken cancellationToken);
 
     /// <summary>Deletes a single version, refusing while any workflow run references its versioned workflow id, if the caller's write reach admits it (§14.2).</summary>
     /// <param name="baseWorkflowId">The base workflow id.</param>
@@ -106,60 +98,44 @@ public interface ISecuredWorkflowCatalog
     ValueTask<int> PurgeAsync(AccessContext context, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Gets the current administration record of a base workflow id (design §15): the workflow's explicit administrator
-    /// record if one has been materialized, otherwise a synthetic (display-only) record carrying the single identity that
-    /// stamped version 1. Each administrator identity carries its unforgeable, deployment-stamped <c>sys:</c> tags plus the
-    /// resolved grantee <c>kind</c>/<c>label</c> (when known); <em>any</em> administrator may publish further versions and
-    /// administer it. An unknown base id yields <see langword="null"/>.
+    /// Gets the current administrator identities of a base workflow id (design §15): the workflow's explicit
+    /// administrator record if one has been materialized, otherwise the single identity that stamped version 1. Each
+    /// identity is a set of unforgeable, deployment-stamped <c>sys:</c> tags; <em>any</em> administrator may publish
+    /// further versions and administer it. An unknown base id yields an empty list.
     /// </summary>
     /// <param name="baseWorkflowId">The base workflow id (no <c>-vN</c> suffix).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The administration record as a pooled document the caller must dispose, or <see langword="null"/> if the base id is unknown.</returns>
-    ValueTask<ParsedJsonDocument<WorkflowAdministrators>?> GetAdministratorsAsync(string baseWorkflowId, CancellationToken cancellationToken);
+    /// <returns>The administrator identities, or empty if the base id is unknown.</returns>
+    ValueTask<IReadOnlyList<SecurityTagSet>> GetAdministratorsAsync(string baseWorkflowId, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Lists the base workflow ids the given caller identity administers — the approver inbox's workflow set (design
-    /// §15.4/§16.5), resolved from the reverse administration index by the caller's identity digest. Returns an empty list
-    /// when the caller administers nothing (or no administrator store is configured). The set is bounded by the caller's
-    /// administrative scope and is materialized in full, since the inbox then lists access requests across it.
-    /// </summary>
-    /// <param name="callerIdentity">The caller's resolved <c>sys:</c> identity (its digest is the reverse-index key).</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The base workflow ids the caller administers (possibly empty), ordered by base workflow id.</returns>
-    ValueTask<IReadOnlyList<string>> ListAdministeredWorkflowsAsync(SecurityTagSet callerIdentity, CancellationToken cancellationToken);
-
-    /// <summary>
-    /// Adds a resolved administrator identity to a base workflow id's administrator set (design §15), authorized by a
-    /// current administrator. Idempotent: if its identity is already an administrator the set is unchanged. The first change
+    /// Adds <paramref name="newAdministrator"/> to a base workflow id's administrator set (design §15), authorized by a
+    /// current administrator. Idempotent: if it is already an administrator the set is unchanged. The first change
     /// materializes the explicit administrator record from the version-1-derived default.
     /// </summary>
     /// <param name="baseWorkflowId">The base workflow id (no <c>-vN</c> suffix) — the admin-store/catalog key (a string leaf).</param>
-    /// <param name="identity">The resolved identity to add (the unforgeable, deployment-stamped <c>sys:</c> tags of the new administrator).</param>
-    /// <param name="kind">The resolved grantee kind (person/team/role/workflow), written when <paramref name="hasKind"/>.</param>
-    /// <param name="hasKind">Whether <paramref name="kind"/> is present.</param>
-    /// <param name="label">The display label, written when <paramref name="hasLabel"/>.</param>
-    /// <param name="hasLabel">Whether <paramref name="label"/> is present.</param>
+    /// <param name="newAdministrator">The identity to add (the unforgeable, deployment-stamped tags of the new administrator).</param>
     /// <param name="callerIdentity">The caller's own stamped identity; the caller must currently be an administrator.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The administration record after the change, as a pooled document the caller must dispose.</returns>
+    /// <returns>The administrator identities after the change.</returns>
     /// <exception cref="NotSupportedException">No administrator store is configured.</exception>
     /// <exception cref="WorkflowAdministrationException">The caller is not a current administrator (or the base id is unknown).</exception>
-    ValueTask<ParsedJsonDocument<WorkflowAdministrators>> AddAdministratorAsync(string baseWorkflowId, SecurityTagSet identity, AdministratorIdentity.KindEntity kind, bool hasKind, JsonString label, bool hasLabel, SecurityTagSet callerIdentity, CancellationToken cancellationToken);
+    ValueTask<IReadOnlyList<SecurityTagSet>> AddAdministratorAsync(string baseWorkflowId, SecurityTagSet newAdministrator, SecurityTagSet callerIdentity, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Removes the administrator whose resolved-identity digest equals <paramref name="digest"/> from a base workflow id's
-    /// administrator set (design §15), authorized by a current administrator. Idempotent: an unmatched digest leaves the set
-    /// unchanged. Refuses to remove the <em>last</em> administrator — a workflow can never be orphaned.
+    /// Removes <paramref name="administrator"/> from a base workflow id's administrator set (design §15), authorized by
+    /// a current administrator. Idempotent: removing a non-administrator leaves the set unchanged. Refuses to remove the
+    /// <em>last</em> administrator — a workflow can never be orphaned.
     /// </summary>
     /// <param name="baseWorkflowId">The base workflow id (no <c>-vN</c> suffix).</param>
-    /// <param name="digest">The lower-case hex SHA-256 identity digest of the administrator to remove (see <see cref="SecurityIdentityDigest"/>).</param>
+    /// <param name="administrator">The identity to remove.</param>
     /// <param name="callerIdentity">The caller's own stamped identity; the caller must currently be an administrator.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The administration record after the change, as a pooled document the caller must dispose.</returns>
+    /// <returns>The administrator identities after the change.</returns>
     /// <exception cref="NotSupportedException">No administrator store is configured.</exception>
     /// <exception cref="WorkflowAdministrationException">The caller is not a current administrator (or the base id is unknown).</exception>
-    /// <exception cref="ArgumentException">Removing the matched administrator would leave the workflow with no administrators.</exception>
-    ValueTask<ParsedJsonDocument<WorkflowAdministrators>> RemoveAdministratorAsync(string baseWorkflowId, string digest, SecurityTagSet callerIdentity, CancellationToken cancellationToken);
+    /// <exception cref="ArgumentException">Removing <paramref name="administrator"/> would leave the workflow with no administrators.</exception>
+    ValueTask<IReadOnlyList<SecurityTagSet>> RemoveAdministratorAsync(string baseWorkflowId, SecurityTagSet administrator, SecurityTagSet callerIdentity, CancellationToken cancellationToken);
 
     /// <summary>
     /// Replaces a base workflow id's entire administrator set with <paramref name="newAdministrators"/> (design §15) —
@@ -167,15 +143,14 @@ public interface ISecuredWorkflowCatalog
     /// <paramref name="newAdministrators"/> (an administrator may transfer administration away from itself).
     /// </summary>
     /// <param name="baseWorkflowId">The base workflow id (no <c>-vN</c> suffix).</param>
-    /// <param name="newAdministrators">The replacement resolved identities (at least one; duplicates are coalesced by identity).
-    /// Each is a resolved <c>sys:</c> identity (tags); the bulk hand-off form carries no per-administrator kind/label.</param>
+    /// <param name="newAdministrators">The replacement identities (at least one; duplicates are coalesced).</param>
     /// <param name="callerIdentity">The caller's own stamped identity; the caller must currently be an administrator.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The administration record after the change, as a pooled document the caller must dispose.</returns>
+    /// <returns>The administrator identities after the change.</returns>
     /// <exception cref="NotSupportedException">No administrator store is configured.</exception>
     /// <exception cref="WorkflowAdministrationException">The caller is not a current administrator (or the base id is unknown).</exception>
     /// <exception cref="ArgumentException"><paramref name="newAdministrators"/> is empty.</exception>
-    ValueTask<ParsedJsonDocument<WorkflowAdministrators>> TransferAdministrationAsync(string baseWorkflowId, IReadOnlyList<SecurityTagSet> newAdministrators, SecurityTagSet callerIdentity, CancellationToken cancellationToken);
+    ValueTask<IReadOnlyList<SecurityTagSet>> TransferAdministrationAsync(string baseWorkflowId, IReadOnlyList<SecurityTagSet> newAdministrators, SecurityTagSet callerIdentity, CancellationToken cancellationToken);
 }
 
 /// <summary>The outcome of a single-version delete.</summary>

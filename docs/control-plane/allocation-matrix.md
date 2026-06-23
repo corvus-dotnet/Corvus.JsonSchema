@@ -83,7 +83,7 @@ NatsJetStream · AzureStorage.
 `Handler.Method → [Client] → Store.Method`. `R`/`W` = read/write. *Existing bench* = benchmark code
 that exists today (a starting point to be re-baselined, **not** evidence of completion).
 
-### Runs — `ArazzoControlPlaneHandler` → `IWorkflowManagementClient` → `IWorkflowStateStore`
+### Runs — `ArazzoControlPlaneHandler` → `ISecuredWorkflowManagement` → `IWorkflowStateStore`
 
 | Op | Call tree | R/W | Current pattern / hotspots | Existing bench | Target pattern + grounding | Status |
 |---|---|---|---|---|---|---|
@@ -105,7 +105,7 @@ that exists today (a starting point to be re-baselined, **not** evidence of comp
 | `PUT /credentials/{s}/{e}` | UpdateCredential → **UpdateAsync** | W | as create (record seam) | shares the create seam (not separately benched) | as create (draft seam) | ✅ converted with POST (Part D) |
 | `DELETE /credentials/{s}/{e}` | DeleteCredential → DeleteAsync | W | minimal | — | — | ➖ |
 
-### Catalog — `ArazzoControlPlaneCatalogHandler` → `IWorkflowCatalogClient` → `IWorkflowCatalogStore`
+### Catalog — `ArazzoControlPlaneCatalogHandler` → `ISecuredWorkflowCatalog` → `IWorkflowCatalogStore`
 
 | Op | Call tree | R/W | Current pattern / hotspots | Existing bench | Target pattern + grounding | Status |
 |---|---|---|---|---|---|---|
@@ -115,8 +115,8 @@ that exists today (a starting point to be re-baselined, **not** evidence of comp
 | `POST /catalog` *(projection)* | AddAsync → `CatalogPackage.Project` | W | parse + canonicalise + hash + id-rewrite + version-doc write + ZIP pack/unpack (the bulk; NOT the record seam) | `CatalogStoreBenchmarks` | **`.awp`** container (span read/write, zero-copy `OpenPooled`) + parse-once fusion + raw-value sources + zero-copy assembled parse + **pooled-disposable store seam** (`ParsedJsonDocument<CatalogVersion>`; pooled `MetadataDb`; `workspace.TakeOwnership`/`TransferOwnershipTo`) + InMemory take-don't-copy package + UTF-8 entry names (no per-source name string) | ✅ **19.92→3.72 KB (−81%)**; ZipArchive floor + rewrite/double/per-source parse + standalone version-record `MetadataDb` + `PackPooled` entry list/name strings all gone (Part D) |
 | `GET /catalog/{id}` list | ListCatalogVersions → SearchAsync | R | BuildPage | — | — | ✅ genuine — `From()`-wrap page; Part D audit |
 | `GET …/versions/{n}` | GetCatalogVersion → GetAsync | R | `CatalogVersionSummary.From()` wrap | — | confirm congruent wrap | ✅ genuine — `From()`-wrap; Part D audit |
-| `PATCH …/versions/{n}` | UpdateCatalogVersion → GetAsync(check) → **UpdateMetadataAsync** | W | record `CatalogMetadataPatch`; `ToOwner`/`ToTags`; 2× GetAsync | none (e2e) | carry patch draft / mutable builder ([[corvus-mutable-documents]]) | ⬜ **FIX #6** — drop the 2× GetAsync access-check fetch+parse (needs read-vs-write reach distinction); Part D audit |
-| `DELETE …/versions/{n}` | Delete → GetAsync(check) → DeleteAsync | W | 2× GetAsync | — | — | ➖ |
+| `PATCH …/versions/{n}` | UpdateCatalogVersion → **UpdateAsync** (discriminated outcome) | W | record `CatalogMetadataPatch`; `ToOwner`/`ToTags`; ~~2× GetAsync~~ | none (e2e) | carry patch draft / mutable builder ([[corvus-mutable-documents]]) | ✅ handler pre-fetch dropped — client returns `CatalogUpdateResult` (read-then-write split) (FIX #6, Part D; 2.56→2.22 KB, ~5×). Residual = the `UpdateMetadataAsync` rebuild (separate mutable-builder lever) |
+| `DELETE …/versions/{n}` | Delete → DeleteAsync (Forbidden outcome) | W | ~~2× GetAsync~~ | — | — | ✅ handler pre-fetch dropped — `CatalogDeleteOutcome.Forbidden` carries the 403 (FIX #6, Part D) |
 | `POST(custom) /catalog` purge | PurgeCatalog → PurgeAsync | W | small result | — | — | ➖ |
 | `GET …/package` | GetCatalogPackage → GetPackageAsync | R | returns `ReadOnlyMemory<byte>` | — | confirm 0-copy | ➖ |
 | `GET …/workflow,/schemas,/executor,/executor-manifest,/sources/{n}` | Get*Document → GetDocumentAsync | R | `ParsedJsonDocument.Parse` + workspace ownership (binary ones return bytes) | — | confirm pooled-parse + ownership handoff ([[corvus-parsed-documents-and-memory]]) | ✅ genuine — pooled-parse + ownership handoff; Part D audit |
@@ -304,7 +304,7 @@ cross-language browser fixture re-locked). Parts 1–4 (the `.awp` container + p
 5.03 KB; **Part 5 (the pooled-disposable store seam) → 4.34 KB, Part 6 (InMemory take-don't-copy) → 3.95 KB, and Part 7
 (UTF-8 entry names — no per-source name string) → 3.72 KB.**
 
-> **Part 5 — pooled, disposable `CatalogVersion` store seam, 5.03 → 4.34 KB.** `IWorkflowCatalogStore`/`IWorkflowCatalogClient`
+> **Part 5 — pooled, disposable `CatalogVersion` store seam, 5.03 → 4.34 KB.** `IWorkflowCatalogStore`/`ISecuredWorkflowCatalog`
 > returned a **standalone GC-owned** `CatalogVersion` (built via the `[Obsolete]` `ParseValue` — unpooled GC bytes + GC
 > `MetadataDb`). They now return a **pooled, disposable `ParsedJsonDocument<CatalogVersion>`** (`AddAsync`/`GetAsync`/
 > `UpdateAsync`; lists via `PooledDocumentList<CatalogVersion>`; `CatalogPage : IDisposable`): `CatalogVersion.Create` now
@@ -465,7 +465,7 @@ double-returns on value-copy; `CatalogPage` only gets away with it because it ow
 | `WorkflowRunPage` (output) | `readonly record struct (Runs, string? ContinuationToken)` | `sealed class : IDisposable` — `Runs` + pooled `ReadOnlyMemory<byte> NextPageToken` via `Create(runs[, lastRunId])` |
 | `WorkflowContinuationToken.Paginate` | `new WorkflowRunPage(rows, Encode(...))` | `WorkflowRunPage.Create(rows, rows[^1].Id.Value)` — covers all 9 SQL/NoSQL backends (they delegate to `Paginate`) |
 | handler emit | `(JsonString.Source)page.ContinuationToken` | `(Models.JsonString.Source)page.NextPageToken.Span` (the body `Source` closure runs synchronously inside `Ok` → `CreateBuilder`, copying the span while the `using`-scoped page is alive — the deferred-body rule) |
-| internal `WorkflowManagementClient.PurgeAsync` paging loop | `string? token` round-trip | re-presents `page.NextPageToken` through the `JsonString` seam via a pooled `WrapContinuationToken` (quote+parse) — net-neutral (the store no longer mints a token string; the loop wraps the bytes instead) |
+| internal `SecuredWorkflowManagement.PurgeAsync` paging loop | `string? token` round-trip | re-presents `page.NextPageToken` through the `JsonString` seam via a pooled `WrapContinuationToken` (quote+parse) — net-neutral (the store no longer mints a token string; the loop wraps the bytes instead) |
 | 10 state stores | `Decode(query.ContinuationToken)` (string) | bytes-native span decode (InMemory + Sqlite by hand, the other 8 mechanically) |
 
 **Bonus — InMemory query rewrite (the headline).** `InMemoryWorkflowStateStore.QueryAsync` built its page with a
@@ -480,7 +480,7 @@ closures + the unbounded `OrderBy` buffer.
 to **all 10 backends** (production SQL/NoSQL too), not just InMemory.
 
 Verified: full slnx **0/0**; WorkflowStateStore conformance **InMemory + Sqlite pass** (the paging round-trip through the
-`JsonString` seam, ascending-id order preserved); the runs API server tests, `WorkflowManagementClientTests` (list +
+`JsonString` seam, ascending-id order preserved); the runs API server tests, `SecuredWorkflowManagementTests` (list +
 purge), the trigger/worker tests all pass. **Row done.**
 
 ### ✅ Continuation-token carrier seam — catalog-search `Query` (the seam closed)
@@ -728,9 +728,12 @@ seam** still to convert. Verdict: **29 genuine, 6 fixes, 2 sub-floor caveats.** 
    overload carrying the `requestedScopes` CTJ array bytes-to-bytes. **DONE — see ✅ FIX #5 (Part D)** (also carries
    `baseWorkflowId`/`reason` as JsonElement; 520→152 B, −71%; residual is the irreducible pooled draft).
 6. **Catalog PATCH/DELETE redundant fetch** (`PATCH …/versions/{n}`, and `DELETE …/versions/{n}`). The
-   write does **2× `GetAsync`** (parse the whole version) purely for an access check on a restricted write
-   reach. Fix = surface a read-vs-write reach distinction so the pre-fetch+parse is dropped (or proven
-   necessary). Needs design confirmation before coding.
+   write did **2× `GetAsync`** (parse the whole version) purely for the 403/404 access-check split. **DONE — see
+   ✅ FIX #6 (Part D)**: the read-vs-write reach distinction is surfaced by the client (`CatalogUpdateResult` +
+   `CatalogDeleteOutcome.Forbidden`, a read-then-write resolution on one fetch), so the handler pre-fetch is dropped.
+   Security-neutral relocation (read-before-write preserved). Smallest GC win (−0.34 KB; the pre-fetch parse was pooled,
+   its read the §13.4.1 leaf) — the payoff is the eliminated fetch+parse round-trip. *Design decision confirmed with the
+   user before coding (security analysis: byte-identical relocation to the single authoritative reach layer).*
 
 **Sub-floor caveats (genuine, but a residual noted — not a queued fix):**
 
@@ -873,6 +876,36 @@ thing with `SecurityBindingDocument.From(body)` — a **free, zero-copy element 
   description strings + the pooled draft document — all gone (the body is already parsed; `From` is a pure view).
 - **Verified.** `ControlPlaneSecurityApiTests` 5/5 (binding create/update incl. omitted grants); Sqlite
   `SecurityPolicyStore` conformance 7/7; slnx build **0 Warning(s), 0 Error(s)**. **Row done.**
+
+### ✅ FIX #6 — Catalog PATCH/DELETE: 403/404 split folded into the client (2.56→2.22 KB)
+
+The sixth and final Part B fix, and the smallest GC win (as forecast at the design gate). The handler pre-fetched the
+version (`GetAsync` + parse + `Admits`) purely to split **403** (readable but not writable) from **404** (not readable),
+and then the reach-aware `SecuredWorkflowCatalog` fetched it *again* for the actual reach-gated mutation — the version was
+fetched+parsed **twice** per PATCH/DELETE. The fix moves the 403/404 split into the client (which already has the fetched
+version), so the handler drops its pre-fetch.
+
+- **Client change** (`SecuredWorkflowCatalog` + `ISecuredWorkflowCatalog`): `UpdateAsync` now returns a `CatalogUpdateResult`
+  (`CatalogUpdateOutcome {Updated, NotFound, Forbidden}` + the updated doc on `Updated`); `CatalogDeleteOutcome` gains
+  `Forbidden`. A new `ResolveWriteReachAsync` resolves **read-then-write** on a single fetch: outside read reach (or
+  absent) → `NotFound`, readable but outside write reach → `Forbidden`, else writable. The handler maps the outcome →
+  200/403/404 (DELETE also keeps 409 Referenced) and `TakeOwnership`s the returned doc on `Updated`.
+- **Security (byte-identical relocation).** The decision logic is unchanged — only its location moves from the handler to
+  the single authoritative reach-aware layer. The one correctness burden is the **read-before-write ordering** (a caller
+  who cannot read must get 404, never a 403 that leaks existence); `ResolveWriteReachAsync` / `DeleteAsync` check
+  `Admits(Read)` first. The `UpdateAsync` System/unrestricted (`Reach(Write) is null`) no-fetch short-circuit is preserved
+  (existence falls to the mutation); `DeleteAsync` already fetched (it needs the `WorkflowId` for the reference check).
+  Verified by `ControlPlaneCatalogApiTests` (the 403 + non-disclosing 404 cases).
+- **Measured** (`CatalogVersionWriteReachBenchmarks`, the redundant pre-fetch, InMemory, `AccessContext.System`).
+  `Update_WithPrefetch` (baseline) **2.56 KB / ~57 µs** → `Update_NoPrefetch` **2.22 KB / ~12 µs** (−0.34 KB, **−13%**;
+  ~5× faster wall-clock, noisy). The GC delta is modest **by design** — the pre-fetch's parse is pooled (ArrayPool) and
+  its read array is the §13.4.1 driver leaf; the real payoff is the eliminated fetch+parse round-trip. The residual
+  2.22 KB is the actual `UpdateMetadataAsync` rebuild (read every field of the current version → re-serialise a fresh
+  `updatedDoc` byte[]) — a *separate* seam, the PATCH row's deeper "carry patch draft / mutable builder"
+  ([[corvus-mutable-documents]]) lever, out of scope here.
+- **Verified.** `ControlPlaneCatalogApiTests` 11/11; Sqlite `WorkflowCatalogStore` conformance green; slnx build
+  **0 Warning(s), 0 Error(s)**. Contained to client + interface + handler (+ a `DemoData` dispose for the changed return).
+  **Row done.**
 
 ## Cross-references
 

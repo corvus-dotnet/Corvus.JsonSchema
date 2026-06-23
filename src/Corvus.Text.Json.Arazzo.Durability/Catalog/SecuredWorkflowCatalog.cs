@@ -4,11 +4,8 @@
 
 using System.Diagnostics;
 using System.Globalization;
-using System.Text;
-using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Durability.Security;
-using AdministratorIdentity = Corvus.Text.Json.Arazzo.Durability.Security.WorkflowAdministrators.AdministratorIdentity;
 
 namespace Corvus.Text.Json.Arazzo.Durability;
 
@@ -81,8 +78,8 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
         // administrators); only a current administrator may publish further versions, so the immutable workflow identity
         // (sys:workflow) cannot be squatted. The submitted securityTags carry the submitter's stamped identity. An
         // unknown base id has no administrators yet — the submitter establishes administration by publishing version 1.
-        (bool established, bool isAdministrator) = await this.CheckAdministrationAsync(baseWorkflowId, securityTags, cancellationToken).ConfigureAwait(false);
-        if (established && !isAdministrator)
+        (List<SecurityTagSet> currentAdministrators, _) = await this.LoadAdministratorsAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
+        if (currentAdministrators.Count > 0 && !IsMember(currentAdministrators, securityTags))
         {
             activity?.SetTag(ArazzoTelemetry.OutcomeTag, "workflow-not-administered");
             throw new WorkflowAdministrationException(baseWorkflowId);
@@ -117,18 +114,6 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
 
         ParsedJsonDocument<CatalogVersion> version = await this.catalog.AddAsync(
             baseWorkflowId, packageUtf8, new CatalogMetadata(owner, this.actor, tags, effectiveTags), cancellationToken).ConfigureAwait(false);
-
-        // Establish administration explicitly at creation (§15.2): version 1 materializes the per-base-id administrator
-        // record with the creator's stamped identity as the first administrator, so administration is ALWAYS the explicit
-        // store record — never an implicit version-1 derivation. The creator is therefore a normal, removable administrator
-        // (a co-administrator can later remove them, e.g. when they leave the organisation), and the reverse administration
-        // index that powers the approver inbox has an entry for every workflow from birth. Only when an administrator store
-        // is configured; otherwise administration is the single, immutable version-1 identity (§15).
-        if (this.administrators is { } adminStore && version.RootElement.Ref.VersionNumber == 1)
-        {
-            await EstablishAdministrationAsync(adminStore, baseWorkflowId, version.RootElement.SecurityTagsValue, this.actor, cancellationToken).ConfigureAwait(false);
-        }
-
         activity?.SetTag(ArazzoTelemetry.VersionNumberTag, version.RootElement.Ref.VersionNumber);
         activity?.SetTag(ArazzoTelemetry.WorkflowIdTag, version.RootElement.Ref.WorkflowId);
         activity?.SetTag(ArazzoTelemetry.OutcomeTag, "added");
@@ -193,7 +178,7 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
     }
 
     /// <inheritdoc/>
-    public async ValueTask<CatalogUpdateResult> UpdateAsync(string baseWorkflowId, int versionNumber, CatalogOwner? owner, TagSet? tags, CatalogStatus? status, SecurityTagSet? securityTags, string? internalTagPrefix, AccessContext context, CancellationToken cancellationToken)
+    public async ValueTask<CatalogUpdateResult> UpdateAsync(string baseWorkflowId, int versionNumber, CatalogOwner? owner, TagSet? tags, CatalogStatus? status, AccessContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
 
@@ -217,23 +202,8 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
             return new CatalogUpdateResult(CatalogUpdateOutcome.Forbidden, null);
         }
 
-        // Re-tag (§14.2): merge the caller's new non-internal tags with the version's preserved deployment-internal tags
-        // — internal tags (e.g. sys:workflow, sys:tenant) are never dropped and cannot be re-derived from the caller — and
-        // pass the effective set to the store. Read the current tags on this cold admin path only. A concurrent delete
-        // leaves the set null, and the update below then returns NotFound.
-        SecurityTagSet? effectiveSecurityTags = null;
-        if (securityTags is { } newUserTags)
-        {
-            using ParsedJsonDocument<CatalogVersion>? current = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
-            if (current is { } cur)
-            {
-                byte[] prefixUtf8 = System.Text.Encoding.UTF8.GetBytes(internalTagPrefix ?? SecurityShell.DefaultInternalPrefix);
-                effectiveSecurityTags = CatalogVersion.MergeReTaggedSecurityTags(cur.RootElement.SecurityTagsValue, newUserTags, prefixUtf8);
-            }
-        }
-
         ParsedJsonDocument<CatalogVersion>? updated = await this.catalog.UpdateMetadataAsync(
-            baseWorkflowId, versionNumber, new CatalogMetadataPatch(this.actor, owner, tags, status, effectiveSecurityTags), cancellationToken).ConfigureAwait(false);
+            baseWorkflowId, versionNumber, new CatalogMetadataPatch(this.actor, owner, tags, status), cancellationToken).ConfigureAwait(false);
         if (updated is null)
         {
             // Unrestricted write reach with no version present (or a concurrent delete) → not found.
@@ -320,118 +290,22 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<WorkflowAdministrators>?> GetAdministratorsAsync(string baseWorkflowId, CancellationToken cancellationToken)
+    public async ValueTask<IReadOnlyList<SecurityTagSet>> GetAdministratorsAsync(string baseWorkflowId, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
-        if (this.administrators is { } store)
-        {
-            // Administration is governed by the explicit store record, materialized at creation (§15.2) — return it, or
-            // null when the base id is unknown (or a legacy workflow predating explicit establishment). There is NO
-            // implicit version-1 fallback here: when a store is configured, administration is ONLY the explicit grants.
-            return await store.GetAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
-        }
-
-        // No administrator store configured: administration is the single, immutable version-1 identity (§15). Surface it
-        // as a synthetic, display-only record so callers project administration uniformly. An unknown base id yields null.
-        using ParsedJsonDocument<CatalogVersion>? firstVersion = await this.catalog.GetAsync(baseWorkflowId, 1, cancellationToken).ConfigureAwait(false);
-        if (firstVersion is null)
-        {
-            return null;
-        }
-
-        SecurityTagSet ownerIdentity = WorkflowIdentity.AdministratorIdentity(firstVersion.RootElement.SecurityTagsValue);
-        using JsonWorkspace workspace = JsonWorkspace.Create();
-        AdministratorIdentity owner = WorkflowAdministrators.BuildIdentity(workspace, ownerIdentity, default, hasKind: false, default, hasLabel: false);
-        return WorkflowAdministratorsSerialization.SerializeNewDoc(baseWorkflowId, [owner], this.actor, default, WorkflowEtag.None);
+        (List<SecurityTagSet> admins, _) = await this.LoadAdministratorsAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
+        return admins;
     }
 
     /// <inheritdoc/>
-    public async ValueTask<IReadOnlyList<string>> ListAdministeredWorkflowsAsync(SecurityTagSet callerIdentity, CancellationToken cancellationToken)
-    {
-        // The reverse administration index lives on the administrator store and is keyed by the identity digest. With no
-        // store configured (or the empty identity, which has no digest), the caller administers nothing.
-        if (this.administrators is not { } store || SecurityIdentityDigest.Compute(callerIdentity) is not { } digest)
-        {
-            return [];
-        }
-
-        // Drain the (keyset-paged, bounded) reverse index into the full administered set the inbox queries across. The
-        // continuation token round-trips through the JsonString seam (the store decodes it bytes-native); the wrapping
-        // document is held only until the next page's call reads its token.
-        var administered = new List<string>();
-        ParsedJsonDocument<JsonString>? tokenDocument = null;
-        JsonString token = default;
-        try
-        {
-            while (true)
-            {
-                using WorkflowAdministeredPage page = await store.ListAdministeredAsync(digest, 0, token, cancellationToken).ConfigureAwait(false);
-                administered.AddRange(page.BaseWorkflowIds);
-
-                tokenDocument?.Dispose();
-                tokenDocument = null;
-                if (page.NextPageToken.IsEmpty)
-                {
-                    break;
-                }
-
-                tokenDocument = WrapPageToken(page.NextPageToken);
-                token = tokenDocument.RootElement;
-            }
-        }
-        finally
-        {
-            tokenDocument?.Dispose();
-        }
-
-        return administered;
-    }
-
-    // Wraps a continuation token's UTF-8 (a page's NextPageToken) as the JSON string value the store's paged read decodes
-    // it from — the same seam the HTTP layer carries it over, used here to drain the reverse index across pages.
-    private static ParsedJsonDocument<JsonString> WrapPageToken(ReadOnlyMemory<byte> tokenUtf8)
-    {
-        byte[] quoted = new byte[tokenUtf8.Length + 2];
-        quoted[0] = (byte)'"';
-        tokenUtf8.Span.CopyTo(quoted.AsSpan(1));
-        quoted[^1] = (byte)'"';
-        return ParsedJsonDocument<JsonString>.Parse(quoted);
-    }
-
-    // Materializes the initial administrator record for a freshly published version 1 (§15.2): the creator's stamped
-    // identity (the version's tags with sys:workflow removed) becomes the sole, explicit, removable administrator. The
-    // identity is built in an unrented workspace held across the PutAsync await. A concurrent establish (another node
-    // publishing the same base id's version 1) loses the etag-None race harmlessly — administration is already established.
-    private static async ValueTask EstablishAdministrationAsync(IWorkflowAdministratorStore store, string baseWorkflowId, SecurityTagSet versionTags, string actor, CancellationToken cancellationToken)
-    {
-        SecurityTagSet ownerIdentity = WorkflowIdentity.AdministratorIdentity(versionTags);
-        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        AdministratorIdentity owner = WorkflowAdministrators.BuildIdentity(workspace, ownerIdentity, default, hasKind: false, default, hasLabel: false);
-        try
-        {
-            (await store.PutAsync(baseWorkflowId, [owner], WorkflowEtag.None, actor, cancellationToken).ConfigureAwait(false)).Dispose();
-        }
-        catch (WorkflowAdministrationConflictException)
-        {
-            // Already established (idempotent re-publish / concurrent version 1) — administration exists, nothing to do.
-        }
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<WorkflowAdministrators>> AddAdministratorAsync(string baseWorkflowId, SecurityTagSet identity, AdministratorIdentity.KindEntity kind, bool hasKind, JsonString label, bool hasLabel, SecurityTagSet callerIdentity, CancellationToken cancellationToken)
-    {
-        // Build the resolved administrator identity once (workspace held across the etag-retry loop's awaits, so it must be
-        // the unrented, thread-affinity-free workspace); the RMW carries the existing identities forward bytes-to-bytes and
-        // appends this one.
-        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        AdministratorIdentity newAdministrator = WorkflowAdministrators.BuildIdentity(workspace, identity, kind, hasKind, label, hasLabel);
-        return await this.MutateAdministratorsAsync(
+    public ValueTask<IReadOnlyList<SecurityTagSet>> AddAdministratorAsync(string baseWorkflowId, SecurityTagSet newAdministrator, SecurityTagSet callerIdentity, CancellationToken cancellationToken)
+        => this.MutateAdministratorsAsync(
             baseWorkflowId,
             callerIdentity,
             "add",
             static (admins, newAdministrator) =>
             {
-                if (IsMember(admins, TagsOf(newAdministrator)))
+                if (IsMember(admins, newAdministrator))
                 {
                     return null; // already an administrator — idempotent no-op
                 }
@@ -440,36 +314,35 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
                 return admins;
             },
             newAdministrator,
-            cancellationToken).ConfigureAwait(false);
-    }
+            cancellationToken);
 
     /// <inheritdoc/>
-    public ValueTask<ParsedJsonDocument<WorkflowAdministrators>> RemoveAdministratorAsync(string baseWorkflowId, string digest, SecurityTagSet callerIdentity, CancellationToken cancellationToken)
+    public ValueTask<IReadOnlyList<SecurityTagSet>> RemoveAdministratorAsync(string baseWorkflowId, SecurityTagSet administrator, SecurityTagSet callerIdentity, CancellationToken cancellationToken)
         => this.MutateAdministratorsAsync(
             baseWorkflowId,
             callerIdentity,
             "remove",
-            static (admins, digest) =>
+            static (admins, administrator) =>
             {
-                int index = IndexOfDigest(admins, digest);
+                int index = admins.FindIndex(a => WorkflowIdentity.SameAdministrator(a, administrator));
                 if (index < 0)
                 {
-                    return null; // no administrator with that digest — idempotent no-op
+                    return null; // not an administrator — idempotent no-op
                 }
 
                 if (admins.Count == 1)
                 {
-                    throw new ArgumentException("Cannot remove the last administrator of a workflow; a workflow must always have at least one administrator.", nameof(digest));
+                    throw new ArgumentException("Cannot remove the last administrator of a workflow; a workflow must always have at least one administrator.", nameof(administrator));
                 }
 
                 admins.RemoveAt(index);
                 return admins;
             },
-            digest,
+            administrator,
             cancellationToken);
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<WorkflowAdministrators>> TransferAdministrationAsync(string baseWorkflowId, IReadOnlyList<SecurityTagSet> newAdministrators, SecurityTagSet callerIdentity, CancellationToken cancellationToken)
+    public ValueTask<IReadOnlyList<SecurityTagSet>> TransferAdministrationAsync(string baseWorkflowId, IReadOnlyList<SecurityTagSet> newAdministrators, SecurityTagSet callerIdentity, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(newAdministrators);
         if (newAdministrators.Count == 0)
@@ -477,94 +350,42 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
             throw new ArgumentException("A workflow administration transfer requires at least one new administrator.", nameof(newAdministrators));
         }
 
-        // Materialize each resolved identity as the durable AdministratorIdentity (tags only — the bulk hand-off carries no
-        // per-administrator kind/label) in a workspace held across the etag-retry loop's awaits (so it must be the unrented,
-        // thread-affinity-free workspace), then coalesce set-equal duplicates.
-        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        var identities = new List<AdministratorIdentity>(newAdministrators.Count);
-        foreach (SecurityTagSet tags in newAdministrators)
-        {
-            identities.Add(WorkflowAdministrators.BuildIdentity(workspace, tags, default, hasKind: false, default, hasLabel: false));
-        }
-
-        List<AdministratorIdentity> deduped = Dedupe(identities);
-        return await this.MutateAdministratorsAsync(
+        List<SecurityTagSet> deduped = Dedupe(newAdministrators);
+        return this.MutateAdministratorsAsync(
             baseWorkflowId,
             callerIdentity,
             "transfer",
             static (_, replacement) => replacement,
             deduped,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken);
     }
 
-    // Read-only administration probe for the publish gate (§13/§14.2): whether the base id has an established administration
-    // and, if so, whether the candidate (the submitter's stamped identity) is one of its administrators — compared by tags
-    // set-equality, no identity-list materialization. An unknown base id (no explicit record and no version 1) is
-    // unestablished, so the submitter establishes administration by publishing version 1. Works whether or not an explicit
-    // administrator store is configured (the version-1 identity is the implicit default).
-    private async ValueTask<(bool Established, bool IsAdministrator)> CheckAdministrationAsync(string baseWorkflowId, SecurityTagSet candidate, CancellationToken cancellationToken)
+    // Loads the current administrator identities of a base id and the etag to act against: the explicit administrator
+    // record when present, else the version-1-derived default (a single administrator identity, with WorkflowEtag.None
+    // signalling "no record yet"). An unknown base id yields an empty list (no administration established).
+    private async ValueTask<(List<SecurityTagSet> Administrators, WorkflowEtag Etag)> LoadAdministratorsAsync(string baseWorkflowId, CancellationToken cancellationToken)
     {
         if (this.administrators is { } store)
         {
             using ParsedJsonDocument<WorkflowAdministrators>? record = await store.GetAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
             if (record is not null)
             {
-                return (true, record.RootElement.IsAdministeredBy(candidate));
+                return (record.RootElement.AdministratorIdentitiesValue, record.RootElement.EtagValue);
             }
         }
 
         using ParsedJsonDocument<CatalogVersion>? firstVersion = await this.catalog.GetAsync(baseWorkflowId, 1, cancellationToken).ConfigureAwait(false);
-        if (firstVersion is null)
-        {
-            return (false, false);
-        }
-
-        SecurityTagSet ownerIdentity = WorkflowIdentity.AdministratorIdentity(firstVersion.RootElement.SecurityTagsValue);
-        return (true, WorkflowIdentity.SameAdministrator(ownerIdentity, candidate));
+        List<SecurityTagSet> fallback = firstVersion is { } established
+            ? [WorkflowIdentity.AdministratorIdentity(established.RootElement.SecurityTagsValue)]
+            : [];
+        return (fallback, WorkflowEtag.None);
     }
 
-    // Loads the current administrators of a base id for a mutation: the explicit record (returned to keep its identities
-    // alive for bytes-to-bytes carry-forward) with its etag, else the version-1-derived default identity built in a
-    // workspace (with WorkflowEtag.None signalling "no record yet"). An unknown base id yields an empty set. The caller
-    // disposes the returned record / workspace.
-    private async ValueTask<(ParsedJsonDocument<WorkflowAdministrators>? Record, JsonWorkspace? FallbackWorkspace, List<AdministratorIdentity> Administrators, WorkflowEtag Etag)> LoadForMutateAsync(string baseWorkflowId, CancellationToken cancellationToken)
-    {
-        IWorkflowAdministratorStore store = this.administrators!;
-        ParsedJsonDocument<WorkflowAdministrators>? record = await store.GetAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
-        if (record is not null)
-        {
-            WorkflowAdministrators current = record.RootElement;
-            var admins = new List<AdministratorIdentity>(current.AdministratorCount);
-            if (current.Administrators.IsNotUndefined())
-            {
-                admins.AddRange(current.Administrators.EnumerateArray());
-            }
-
-            return (record, null, admins, current.EtagValue);
-        }
-
-        using ParsedJsonDocument<CatalogVersion>? firstVersion = await this.catalog.GetAsync(baseWorkflowId, 1, cancellationToken).ConfigureAwait(false);
-        if (firstVersion is null)
-        {
-            return (null, null, [], WorkflowEtag.None);
-        }
-
-        SecurityTagSet ownerIdentity = WorkflowIdentity.AdministratorIdentity(firstVersion.RootElement.SecurityTagsValue);
-
-        // The caller (MutateAdministratorsAsync) disposes this workspace in a finally that runs after its PutAsync await, so
-        // it may dispose on a different thread — it must be the unrented, thread-affinity-free workspace.
-        JsonWorkspace fallbackWorkspace = JsonWorkspace.CreateUnrented();
-        AdministratorIdentity owner = WorkflowAdministrators.BuildIdentity(fallbackWorkspace, ownerIdentity, default, hasKind: false, default, hasLabel: false);
-        return (null, fallbackWorkspace, [owner], WorkflowEtag.None);
-    }
-
-    // The read-modify-write core for the administration management operations (§15): load the current administrators,
-    // authorize the caller as a current administrator, apply the mutation, and persist under optimistic concurrency —
-    // retrying a bounded number of times if a concurrent change wins the CAS race. Returns the resulting administration
-    // record (the caller projects/owns it). A mutation that returns null is a no-op (idempotent), returning the current
-    // record unchanged. The existing identities are carried forward bytes-to-bytes (referencing the loaded record, held
-    // alive across the write).
-    private async ValueTask<ParsedJsonDocument<WorkflowAdministrators>> MutateAdministratorsAsync<TArg>(string baseWorkflowId, SecurityTagSet callerIdentity, string operation, Func<List<AdministratorIdentity>, TArg, List<AdministratorIdentity>?> mutate, TArg argument, CancellationToken cancellationToken)
+    // The read-modify-write core for the administration management operations (§15): load the current administrator
+    // set, authorize the caller as a current administrator, apply the mutation, and persist under optimistic
+    // concurrency — retrying a bounded number of times if a concurrent change wins the CAS race. A mutation that
+    // returns null is a no-op (the operation was idempotent), so no write happens.
+    private async ValueTask<IReadOnlyList<SecurityTagSet>> MutateAdministratorsAsync<TArg>(string baseWorkflowId, SecurityTagSet callerIdentity, string operation, Func<List<SecurityTagSet>, TArg, List<SecurityTagSet>?> mutate, TArg argument, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         if (this.administrators is not { } store)
@@ -578,61 +399,41 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
 
         for (int attempt = 0; ; attempt++)
         {
-            (ParsedJsonDocument<WorkflowAdministrators>? record, JsonWorkspace? fallbackWorkspace, List<AdministratorIdentity> admins, WorkflowEtag etag) =
-                await this.LoadForMutateAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
-            bool handedOffRecord = false;
+            (List<SecurityTagSet> admins, WorkflowEtag etag) = await this.LoadAdministratorsAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
+
+            // An unknown base id, or a caller who is not a current administrator, is refused identically (non-disclosing).
+            if (admins.Count == 0 || !IsMember(admins, callerIdentity))
+            {
+                activity?.SetTag(ArazzoTelemetry.OutcomeTag, "not-administered");
+                throw new WorkflowAdministrationException(baseWorkflowId);
+            }
+
+            List<SecurityTagSet>? next = mutate(admins, argument);
+            if (next is null)
+            {
+                activity?.SetTag(ArazzoTelemetry.OutcomeTag, "unchanged");
+                return admins;
+            }
+
             try
             {
-                // An unknown base id, or a caller who is not a current administrator, is refused identically (non-disclosing).
-                if (admins.Count == 0 || !IsMember(admins, callerIdentity))
-                {
-                    activity?.SetTag(ArazzoTelemetry.OutcomeTag, "not-administered");
-                    throw new WorkflowAdministrationException(baseWorkflowId);
-                }
-
-                List<AdministratorIdentity>? next = mutate(admins, argument);
-                if (next is null)
-                {
-                    activity?.SetTag(ArazzoTelemetry.OutcomeTag, "unchanged");
-                    if (record is not null)
-                    {
-                        handedOffRecord = true;
-                        return record;
-                    }
-
-                    // No explicit record and nothing changed: materialize the current (fallback) set for the caller.
-                    return WorkflowAdministratorsSerialization.SerializeNewDoc(baseWorkflowId, admins, this.actor, default, WorkflowEtag.None);
-                }
-
-                try
-                {
-                    ParsedJsonDocument<WorkflowAdministrators> updated = await store.PutAsync(baseWorkflowId, next, etag, this.actor, cancellationToken).ConfigureAwait(false);
-                    activity?.SetTag(ArazzoTelemetry.OutcomeTag, operation);
-                    return updated;
-                }
-                catch (WorkflowAdministrationConflictException) when (attempt < AdministrationMutationRetries)
-                {
-                    // A concurrent administration change rotated the etag; reload and retry.
-                }
+                using ParsedJsonDocument<WorkflowAdministrators> updated = await store.PutAsync(baseWorkflowId, next, etag, this.actor, cancellationToken).ConfigureAwait(false);
+                activity?.SetTag(ArazzoTelemetry.OutcomeTag, operation);
+                return updated.RootElement.AdministratorIdentitiesValue;
             }
-            finally
+            catch (WorkflowAdministrationConflictException) when (attempt < AdministrationMutationRetries)
             {
-                if (!handedOffRecord)
-                {
-                    record?.Dispose();
-                }
-
-                fallbackWorkspace?.Dispose();
+                // A concurrent administration change rotated the etag; reload and retry.
             }
         }
     }
 
-    // Whether a candidate identity is a member of a set (order-independent set equality on any entry's tags).
-    private static bool IsMember(List<AdministratorIdentity> admins, SecurityTagSet candidate)
+    // Whether a candidate administrator identity is a member of a set (order-independent set equality on any entry).
+    private static bool IsMember(List<SecurityTagSet> admins, SecurityTagSet candidate)
     {
-        foreach (AdministratorIdentity administrator in admins)
+        foreach (SecurityTagSet administrator in admins)
         {
-            if (WorkflowIdentity.SameAdministrator(TagsOf(administrator), candidate))
+            if (WorkflowIdentity.SameAdministrator(administrator, candidate))
             {
                 return true;
             }
@@ -641,41 +442,13 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
         return false;
     }
 
-    // The index of the administrator whose identity digest equals the (hex, ASCII) target, or -1 if none matches.
-    private static int IndexOfDigest(List<AdministratorIdentity> admins, string digest)
-    {
-        Span<byte> target = stackalloc byte[SecurityIdentityDigest.DigestUtf8Length];
-        if (digest.Length != SecurityIdentityDigest.DigestUtf8Length)
-        {
-            return -1;
-        }
-
-        int targetLength = Encoding.ASCII.GetBytes(digest, target);
-        Span<byte> buffer = stackalloc byte[SecurityIdentityDigest.DigestUtf8Length];
-        for (int i = 0; i < admins.Count; i++)
-        {
-            int written = SecurityIdentityDigest.FormatUtf8(TagsOf(admins[i]), buffer);
-            if (written == targetLength && buffer[..written].SequenceEqual(target[..targetLength]))
-            {
-                return i;
-            }
-        }
-
-        return -1;
-    }
-
-    // A non-owning view of an administrator identity's tags (the raw {key,value} array UTF-8), valid while the backing
-    // document/workspace is alive — no per-identity copy.
-    private static SecurityTagSet TagsOf(in AdministratorIdentity administrator)
-        => SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(administrator.Tags).Memory);
-
     // Coalesces an administrator list, dropping set-equal duplicates so the persisted set carries each identity once.
-    private static List<AdministratorIdentity> Dedupe(IReadOnlyList<AdministratorIdentity> admins)
+    private static List<SecurityTagSet> Dedupe(IReadOnlyList<SecurityTagSet> admins)
     {
-        var deduped = new List<AdministratorIdentity>(admins.Count);
-        foreach (AdministratorIdentity administrator in admins)
+        var deduped = new List<SecurityTagSet>(admins.Count);
+        foreach (SecurityTagSet administrator in admins)
         {
-            if (!IsMember(deduped, TagsOf(administrator)))
+            if (!IsMember(deduped, administrator))
             {
                 deduped.Add(administrator);
             }

@@ -41,7 +41,7 @@ public sealed class WorkflowSecurityTagTests
     public async Task The_management_client_surfaces_security_tags_on_run_detail()
     {
         var store = new InMemoryWorkflowStateStore();
-        var management = new WorkflowManagementClient(store, owner: "ops");
+        var management = new SecuredWorkflowManagement(store, owner: "ops");
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{ "petId": 1 }"""u8.ToArray());
 
         using (WorkflowRun run = WorkflowRun.CreateNew(store, "run-1", "wf", doc.RootElement, Time, securityTags: SecurityTagSet.FromTags([new("tenant", "acme")])))
