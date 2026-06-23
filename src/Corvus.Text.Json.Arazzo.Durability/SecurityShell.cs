@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Text;
+
 namespace Corvus.Text.Json.Arazzo.Durability;
 
 /// <summary>
@@ -23,6 +25,7 @@ public sealed class SecurityShell
     public const string DefaultInternalPrefix = "sys:";
 
     private readonly IReadOnlyList<SecurityRule> mandatedRules;
+    private byte[]? internalPrefixUtf8;
 
     /// <summary>Initializes a new instance of the <see cref="SecurityShell"/> class.</summary>
     /// <param name="mandatedRules">The wrapper rules every principal is constrained by (ANDed with the user rule); empty for a shell that only reserves the prefix.</param>
@@ -38,10 +41,46 @@ public sealed class SecurityShell
     /// <summary>Gets the reserved key prefix that marks deployment-internal security tags.</summary>
     public string InternalPrefix { get; }
 
+    /// <summary>Gets the reserved internal prefix as UTF-8 — computed once and cached, so the span-based validation never
+    /// re-encodes it per tag.</summary>
+    private ReadOnlySpan<byte> InternalPrefixUtf8 => this.internalPrefixUtf8 ??= Encoding.UTF8.GetBytes(this.InternalPrefix);
+
     /// <summary>Whether a tag is a deployment-internal tag (its key carries the reserved prefix).</summary>
     /// <param name="tag">The security tag.</param>
     /// <returns><see langword="true"/> if the tag is internal.</returns>
     public bool IsInternal(SecurityTag tag) => tag.Key.StartsWith(this.InternalPrefix, StringComparison.Ordinal);
+
+    /// <summary>Whether a tag key (as unescaped UTF-8) carries the reserved internal prefix — the span counterpart of
+    /// <see cref="IsInternal(SecurityTag)"/>.</summary>
+    /// <param name="keyUtf8">The tag key as unescaped UTF-8.</param>
+    /// <returns><see langword="true"/> if the key carries the reserved prefix.</returns>
+    public bool IsInternal(ReadOnlySpan<byte> keyUtf8) => keyUtf8.StartsWith(this.InternalPrefixUtf8);
+
+    /// <summary>Validates user-supplied security tags string-free (the span counterpart of
+    /// <see cref="ValidateUserTags(IReadOnlyList{SecurityTag})"/>): an end-user may not create a tag whose key carries the
+    /// reserved internal prefix. The offending key is realized as a managed string only on the (rare) rejection path.</summary>
+    /// <param name="userTags">The user-supplied security tags.</param>
+    /// <exception cref="ArgumentException">A user tag uses the reserved internal prefix.</exception>
+    public void ValidateUserTags(SecurityTagSet userTags)
+    {
+        SecurityTagSet.Utf8Enumerator e = userTags.EnumerateUtf8();
+        try
+        {
+            while (e.MoveNext())
+            {
+                if (this.IsInternal(e.CurrentKey))
+                {
+                    throw new ArgumentException(
+                        $"Security tag key '{Encoding.UTF8.GetString(e.CurrentKey)}' uses the reserved internal prefix '{this.InternalPrefix}'; that keyspace is owned by the deployment.",
+                        nameof(userTags));
+                }
+            }
+        }
+        finally
+        {
+            e.Dispose();
+        }
+    }
 
     /// <summary>
     /// Validates user-supplied security tags: an end-user may not create a tag whose key carries the reserved
