@@ -51,13 +51,19 @@ public sealed class DocumentationNameHeuristic : INameHeuristicBeforeSubschema
             }
         }
 
-        if (typeDeclaration.LongDocumentation() is string longDocumentation &&
-            longDocumentation.Length > 0 && longDocumentation.Length < 64)
+        if (typeDeclaration.LongDocumentation() is string longDocumentation)
         {
-            written = Formatting.FormatTypeNameComponent(typeDeclaration, longDocumentation.AsSpan(), typeNameBuffer);
-            if (written > 1 && written < 64 && !typeDeclaration.CollidesWithParent(typeNameBuffer[..written]))
+            // Measure the trimmed length so trailing whitespace (or any separator introduced
+            // while assembling multi-keyword documentation) cannot influence the decision. This
+            // keeps the heuristic's outcome identical across platforms regardless of newline style.
+            ReadOnlySpan<char> trimmedLongDocumentation = longDocumentation.AsSpan().TrimEnd();
+            if (trimmedLongDocumentation.Length > 0 && trimmedLongDocumentation.Length < 64)
             {
-                return true;
+                written = Formatting.FormatTypeNameComponent(typeDeclaration, trimmedLongDocumentation, typeNameBuffer);
+                if (written > 1 && written < 64 && !typeDeclaration.CollidesWithParent(typeNameBuffer[..written]))
+                {
+                    return true;
+                }
             }
         }
 

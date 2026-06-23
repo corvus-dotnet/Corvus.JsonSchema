@@ -45,7 +45,7 @@ public static class Documentation
     /// <returns><see langword="true"/> if the long form documentation was found.</returns>
     /// <remarks>
     /// Long form documentation is expected to be a multi-line string. If multiple long-form provider keywords are present,
-    /// then the results will be appended in alphabetical order by keyword, to help with stability.
+    /// then the results are joined in alphabetical order by keyword, to help with stability.
     /// </remarks>
     public static bool TryGetLongDocumentation(TypeDeclaration typeDeclaration, [NotNullWhen(true)] out string? longDocumentation)
     {
@@ -54,7 +54,17 @@ public static class Documentation
         {
             if (keyword.TryGetLongDocumentation(typeDeclaration, out string? docs))
             {
-                builder.AppendLine(docs);
+                // Join entries with a fixed '\n' (never Environment.NewLine) and emit no
+                // trailing newline. This assembled length feeds the documentation name
+                // heuristic, so it must be identical on every platform; Environment.NewLine
+                // ("\r\n" on Windows vs "\n" elsewhere) would otherwise make generated type
+                // names depend on the build OS. See DocumentationNameHeuristic.
+                if (builder.Length > 0)
+                {
+                    builder.Append('\n');
+                }
+
+                builder.Append(docs);
             }
         }
 

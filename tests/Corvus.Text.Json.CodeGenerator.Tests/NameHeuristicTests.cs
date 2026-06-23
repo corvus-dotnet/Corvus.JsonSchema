@@ -157,4 +157,97 @@ public class NameHeuristicTests : IDisposable
             !fileNames.Any(f => f.Contains("WithA1AndB2AndC3AndD4AndE5", StringComparison.Ordinal)),
             $"Expected const heuristic to bail out with 5 properties. Got: {string.Join(", ", fileNames)}");
     }
+
+    [TestMethod]
+    public async Task Generate_LongDescriptionAtNewlineBoundary_NamesFromDocumentationNotPlatformDependent()
+    {
+        // Regression for cross-platform naming divergence (issue #825): the documentation
+        // name heuristic gated on a length that included a trailing Environment.NewLine
+        // ("\n" on Linux vs "\r\n" on Windows), so a description whose length landed on the
+        // < 64 boundary produced the documentation name on Linux but fell back to the
+        // required-property name on Windows.
+        //
+        // This description is exactly 63 characters with no `title`, so it lands on that
+        // boundary. The generated type must be named from the description text alone, on
+        // every platform — never from the `identifier` required property.
+        const string description = "Sphinx canonical reference for the associated stored documents.";
+        Assert.AreEqual(63, description.Length, "Test description must be exactly 63 chars to sit on the boundary.");
+
+        string schemaContent = $$"""
+            {
+              "type": "object",
+              "properties": {
+                "widget": {
+                  "type": "object",
+                  "description": "{{description}}",
+                  "required": ["identifier"],
+                  "properties": { "identifier": { "type": "string" } }
+                }
+              }
+            }
+            """;
+
+        string[] fileNames = await GenerateInlineAndGetTypeNamesAsync(schemaContent);
+        string joined = string.Join(", ", fileNames);
+
+        Assert.IsTrue(
+            fileNames.Any(f => f.Contains("SphinxCanonicalReference", StringComparison.Ordinal)),
+            $"Expected the inline type to be named from its description. Got: {joined}");
+        Assert.IsFalse(
+            fileNames.Any(f => f.Contains("RequiredIdentifier", StringComparison.Ordinal)),
+            $"Expected NO required-property fallback name (that is the Windows-only regression). Got: {joined}");
+    }
+
+    [TestMethod]
+    public async Task Generate_LongDescriptionWithTrailingWhitespace_NamesFromTrimmedDocumentation()
+    {
+        // Regression for issue #825: trailing whitespace (or a separator added while
+        // assembling multi-keyword documentation) must not push the documentation length
+        // over the < 64 gate. The name must derive from the trimmed description.
+        string description = "Obelisk summary of the associated stored record" + new string(' ', 20);
+        Assert.IsTrue(description.Length >= 64, "Trailing whitespace must take the raw length over the 64 gate.");
+
+        string schemaContent = $$"""
+            {
+              "type": "object",
+              "properties": {
+                "widget": {
+                  "type": "object",
+                  "description": "{{description}}",
+                  "required": ["identifier"],
+                  "properties": { "identifier": { "type": "string" } }
+                }
+              }
+            }
+            """;
+
+        string[] fileNames = await GenerateInlineAndGetTypeNamesAsync(schemaContent);
+        string joined = string.Join(", ", fileNames);
+
+        Assert.IsTrue(
+            fileNames.Any(f => f.Contains("ObeliskSummaryOfTheAssociatedStoredRecord", StringComparison.Ordinal)),
+            $"Expected the inline type to be named from its trimmed description. Got: {joined}");
+        Assert.IsFalse(
+            fileNames.Any(f => f.Contains("RequiredIdentifier", StringComparison.Ordinal)),
+            $"Expected NO required-property fallback name. Got: {joined}");
+    }
+
+    private async Task<string[]> GenerateInlineAndGetTypeNamesAsync(string schemaContent)
+    {
+        string schemaPath = Path.Combine(_outputDir, "schema.json");
+        await File.WriteAllTextAsync(schemaPath, schemaContent);
+
+        string outputDir = Path.Combine(_outputDir, "output");
+        Directory.CreateDirectory(outputDir);
+
+        ProcessResult result = await CodeGeneratorRunner.RunAsync(
+            $"jsonschema \"{schemaPath}\" --rootNamespace TestGenerated --outputPath \"{outputDir}\"");
+
+        Assert.AreEqual(0, result.ExitCode, $"Generation failed. Stderr: {result.StandardError}");
+
+        string[] files = Directory.GetFiles(outputDir, "*.cs", SearchOption.AllDirectories);
+        Assert.IsTrue(files.Length > 0, $"Expected generated files. Stderr: {result.StandardError}");
+
+        return files.Select(Path.GetFileNameWithoutExtension).ToArray()!;
+    }
 }

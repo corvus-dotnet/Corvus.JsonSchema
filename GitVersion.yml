@@ -20,4 +20,4 @@ branches:
     - feature
     - support
     - hotfix
-next-version: "5.1"
+next-version: "5.2"
