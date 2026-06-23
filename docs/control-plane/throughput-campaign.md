@@ -84,6 +84,39 @@ is an acceptable cheaper proxy where a full latency bench is impractical.
 **Runner heartbeat — Postgres** (the clearest native-partial-update backend), then fan out to the other
 relational + Cosmos/Mongo/Azure backends, then the checkpoint status-bump as a secondary pass.
 
+## Results (measured before→after)
+
+The harness is `benchmarks/Corvus.Text.Json.Arazzo.Durability.ThroughputBenchmarks` — a standalone Stopwatch
+latency harness (NOT BenchmarkDotNet/MemoryDiagnoser; BDN's child-process toolchain fights a live container
+handle). Run it directly per scenario, e.g.
+`DOCKER_HOST=unix:///tmp/podman-arazzo.sock TESTCONTAINERS_RYUK_DISABLED=true dotnet run -c Release --project benchmarks/Corvus.Text.Json.Arazzo.Durability.ThroughputBenchmarks postgres-heartbeat`
+(5000 timed heartbeats after 500 warmup, postgres:16-alpine, representative 586-byte runner doc).
+
+### Row 1 — Runner heartbeat, **Postgres** ✅ (Option A: BYTEA preserved, server-side jsonb round-trip)
+
+The `doc` column is `BYTEA` (raw CTJ UTF-8), so the scope doc's bare `jsonb_set(doc,…)` does not apply: the
+single statement decodes to jsonb, replaces the one field, and re-encodes, all server-side —
+`UPDATE … SET last_seen_at=@at, doc=convert_to(jsonb_set(convert_from(doc,'UTF8')::jsonb,'{lastSeenAt}',to_jsonb(@iso))::text,'UTF8') WHERE runner_id=@id`.
+The existence `SELECT` is gone (rows-affected = 0 ⇒ unknown runner ⇒ `false`). `@iso` is the caller's round-trip
+`"O"` string (the representation the generated model emits/parses; the conformance `Reg` helper proves CTJ
+round-trips it), and jsonb stores string values verbatim. **Trade-off accepted:** routing through `::jsonb`
+reserializes the doc to jsonb-canonical form (object keys reorder after the first heartbeat) — verified safe: the
+sole reader (`ListAsync` → `RunnerRegistration.FromJson`) parses by name, and nothing hashes the doc bytes
+(incidental output shape, not a contract).
+
+| metric | before (RMW) | after (native partial) | delta |
+|---|---|---|---|
+| round-trips | 2 (`SELECT doc` + `UPDATE doc`) | **1** (`UPDATE`) | −1 |
+| bytes sent client→server | 586 B (whole doc re-sent) | ~60 B (params only) | ≈ −90% |
+| latency p50 | 899–943 µs | **308–314 µs** | ≈ −66% |
+| latency mean | 953–1045 µs | **312–314 µs** | ≈ −69% |
+| latency p99 | 1772–2141 µs | **509–531 µs** | ≈ −73% |
+
+(Ranges are two runs each. Even against a *local* container the second round-trip dominates; over a real
+network the relative win grows.) **Conformance:** 11/11 `PostgresRunnerRegistryConformanceTests` green against a
+live container (heartbeat-advances-and-reads-back-the-doc mirror, unknown-runner⇒false, prune-by-column, and the
+full register/list/replace/hosted-version suite — jsonb canonicalization broke no reader).
+
 ## Kickoff prompt (paste into a fresh session)
 
 > Resume the control-plane **throughput** campaign in the worktree
