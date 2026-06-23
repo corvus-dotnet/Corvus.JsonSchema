@@ -326,6 +326,32 @@ public abstract class WorkflowCatalogStoreConformance
     }
 
     [TestMethod]
+    public async Task UpdateMetadata_preserves_the_versions_security_tags()
+    {
+        // A metadata update (status/owner/tags) must NOT strip the version's row-security tags — they gate single-row
+        // read authorization (§14.2), so dropping them on an obsolete/transfer would silently widen or break reach.
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+        SecurityTag[] tags = [new("tenant", "acme"), new("team", "payments")];
+        (await store.AddAsync(
+            "secure-flow",
+            Package("secure-flow"),
+            new CatalogMetadata(new CatalogOwner("Team A", "team-a@example.com"), "alice", default, SecurityTagSet.FromTags(tags)),
+            default)).Dispose();
+
+        using ParsedJsonDocument<CatalogVersion>? updated = await store.UpdateMetadataAsync(
+            "secure-flow", 1, new CatalogMetadataPatch("bob", Status: CatalogStatus.Obsolete), default);
+        updated.ShouldNotBeNull();
+        updated.RootElement.SecurityTagsValue.ToList().OrderBy(t => t.Key).ThenBy(t => t.Value).ShouldBe(
+            tags.OrderBy(t => t.Key).ThenBy(t => t.Value));
+
+        // ...and the persisted document keeps them (a re-read, not just the returned copy).
+        using ParsedJsonDocument<CatalogVersion>? refetched = await store.GetAsync("secure-flow", 1, default);
+        refetched.ShouldNotBeNull();
+        refetched.RootElement.SecurityTagsValue.ToList().OrderBy(t => t.Key).ThenBy(t => t.Value).ShouldBe(
+            tags.OrderBy(t => t.Key).ThenBy(t => t.Value));
+    }
+
+    [TestMethod]
     public async Task Search_applies_a_row_security_reach_filter_matching_the_evaluator()
     {
         IWorkflowCatalogStore store = await this.NewStoreAsync();
