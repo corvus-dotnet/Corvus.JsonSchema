@@ -40,12 +40,12 @@ whole-`doc` rewrite. The single-statement form updates the column **and** the do
 | SqlServer | `doc` was **VARBINARY(UTF-8)** — in-place `JSON_MODIFY` is **unsafe** (CAST varbinary→varchar mis-decodes UTF-8 as CP1252, double-encoding non-ASCII). Column changed to **`VARCHAR(MAX) COLLATE …_UTF8`** + native `JSON_MODIFY(doc,'$.lastSeenAt',@iso)`; write via nvarchar param, read via `CAST(doc AS VARBINARY)` (bytes-native). | ✅ done |
 | Sqlite | **Embedded (in-process, no network round-trip)** — not a throughput candidate; the RMW was already alloc-optimized. `json_set` would save only client CPU + one in-process query. **Skipped** (documented non-candidate, like the lease/NATS exceptions). | ⏭️ skipped |
 | MySql | `doc` is **LONGBLOB** (UTF-8) — but unlike SqlServer, MySQL's `CONVERT(doc USING utf8mb4)` decodes with an explicit charset, so an in-place patch is safe with **no column change**: `doc = CAST(JSON_SET(CONVERT(doc USING utf8mb4),'$.lastSeenAt',@iso) AS BINARY)`. Normalises (reorders keys + spacing) — safe (sole reader parses by name). Non-ASCII round-trip verified. | ✅ done |
-| Cosmos | `PatchItemAsync` (replace `/lastSeenAt`) — 1 call, no read | ⬜ |
-| Mongo | `UpdateOneAsync($set: { lastSeenAt })` | ⬜ |
-| AzureStorage | `MergeEntity` (partial table-entity update — already field-granular) | ⬜ |
-| Redis | `HSET` the `last_seen_at` field (the registration is a hash) — confirm the doc-mirror story | ⬜ |
+| Cosmos | `doc` is a **nested JSON object** in the item — `PatchItemStreamAsync` replaces `/lastSeenAt` (epoch) + `/doc/lastSeenAt` (ISO mirror) in one call, no read. Non-ASCII safe (SDK JSON-encodes). | ✅ done |
+| Mongo | `doc` is a **BSON binary blob** — the `lastSeenAt` mirror is *inside* the opaque blob; `$set` can only replace the whole blob. A native partial needs a BSON-subdocument reshape (invasive, changes the read path). **Not pursued.** | ⏭️ blob — not pursued |
+| AzureStorage | `Doc` is a **binary property** (+ top-level `LastSeenAt`) — `MergeEntity` can't reach inside the blob; the mirror would drift unless the read reconstructs `lastSeenAt` from the property (semantics change). **Not pursued.** | ⏭️ blob — not pursued |
+| Redis | the registration is a single **String** (whole value), not a hash — no in-place field patch. Whole-value, like NATS. **Not pursued.** | ⏭️ whole-value |
 | NATS KV | **blob value, no server-side partial** — KV stores whole values; heartbeat stays RMW. Genuine exception. | ⏭️ exception |
-| InMemory | direct field mutation (reference store) | — |
+| InMemory | direct field mutation (reference store) — in-process, no round-trips. Non-candidate. | — |
 
 **Heterogeneity is expected** (mirrors the alloc campaign): some backends need a column-type change to support a
 safe in-place patch (SqlServer); embedded Sqlite is a non-candidate; **NATS KV genuinely cannot** (whole-value
@@ -182,6 +182,47 @@ safe (sole reader parses by name). No column change, reads stay bytes-native.
 Local latency neutral/noisy (same as SqlServer — round-trips are a small fraction of the ~3 ms local per-call
 cost); the win is the structural round-trip/payload reduction (network-bound). **Conformance:** 11/11
 `MySqlRunnerRegistryConformanceTests` green.
+
+### Row 1 — Runner heartbeat, **Cosmos** ✅ (PatchItem, no read, no reshape)
+
+Cosmos stores `doc` as a **nested JSON object** in the item (`{ id, lastSeenAt, doc, loadedVersions }`), so the
+heartbeat needs no read and no rewrite — a single `PatchItemStreamAsync` replaces both mirrored timestamps:
+`[ Replace("/lastSeenAt", epochMs), Replace("/doc/lastSeenAt", isoString) ]` (a `NotFound` ⇒ unknown ⇒ `false`).
+The loaded-version projection is untouched (a heartbeat never changes hosted versions). Non-ASCII is inherently
+safe (the SDK JSON-encodes the patch values). The previous read→parse→whole-envelope-upsert path
+(`ReadItemStreamAsync` + `UpsertItemStreamAsync`) is gone, and the now-dead heartbeat envelope overload was
+removed (the stale "base64" doc comments — the registration is embedded verbatim as nested JSON — were corrected).
+
+| metric | before (RMW) | after (PatchItem) | delta |
+|---|---|---|---|
+| round-trips | 2 (`ReadItem` + `UpsertItem`) | **1** (`PatchItem`) | −1 |
+| payload | whole envelope re-sent | 2 small patch ops | ≈ −90% |
+
+Latency not separately benched (the Cosmos emulator is heavy/variable under emulation, and the agreed primary
+metric is round-trips + payload, which is structural and definitive here). **Conformance:** 11/11
+`CosmosRunnerRegistryConformanceTests` green against the live emulator (mirror read-back, unknown-runner⇒false,
+prune, register/list/replace/hosted-version).
+
+## Heartbeat row — closeout
+
+| Backend | Outcome |
+|---|---|
+| Postgres | ✅ in-place `jsonb_set` (BYTEA round-trip) |
+| SqlServer | ✅ column → UTF-8 `VARCHAR` + native `JSON_MODIFY` |
+| MySql | ✅ in-place `JSON_SET` (`CONVERT … USING utf8mb4`) |
+| Cosmos | ✅ `PatchItem` (nested JSON, no read) |
+| Sqlite | ⏭️ embedded (no network round-trip) — non-candidate |
+| Mongo | ⏭️ BSON binary blob — native partial needs an invasive subdocument reshape; not pursued |
+| AzureStorage | ⏭️ binary property — would need read-side mirror reconstruction; not pursued |
+| Redis | ⏭️ whole-value String — no in-place field patch |
+| NATS KV | ⏭️ whole-value store — genuine exception |
+| InMemory | — in-process reference store (no round-trips) |
+
+**The heartbeat row is complete:** the four backends that can do a safe server-side partial update (Postgres,
+SqlServer, MySql, Cosmos) now do 1 round-trip instead of 2 with a whole-doc payload; the rest are documented
+non-candidates (blob/whole-value storage or embedded/in-process). Net per-backend win is **2→1 round-trips +
+whole-doc→params payload** — network-bound, so it materializes against remote production stores (local-container
+latency only showed it cleanly for the lightest backend, Postgres).
 
 ## Kickoff prompt (paste into a fresh session)
 

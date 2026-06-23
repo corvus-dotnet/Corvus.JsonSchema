@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Globalization;
 using System.Net;
 using System.Runtime.CompilerServices;
 using Microsoft.Azure.Cosmos;
@@ -10,9 +11,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
 
 /// <summary>
 /// An Azure Cosmos DB-backed <see cref="IRunnerRegistry"/>. Each <see cref="RunnerRegistration"/> is stored as a
-/// document keyed by (and partitioned on) its runner id, holding the canonical registration JSON as a base64 byte
-/// array plus a queryable <c>lastSeenAt</c> column used for pruning. Register is a single-partition upsert and
-/// heartbeat is a single-partition read-modify-write, while list and prune run as cross-partition queries.
+/// document keyed by (and partitioned on) its runner id, holding the canonical registration JSON as a nested
+/// <c>doc</c> object plus a queryable top-level <c>lastSeenAt</c> used for pruning. Register is a single-partition
+/// upsert and heartbeat is a single-partition partial update (a <c>PatchItem</c> that replaces the top-level
+/// <c>lastSeenAt</c> and the nested <c>doc.lastSeenAt</c> mirror — no read), while list and prune run as
+/// cross-partition queries.
 /// </summary>
 /// <remarks>
 /// Documents are written and read through the Cosmos <em>stream</em> APIs so persistence flows through the
@@ -160,20 +163,23 @@ public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         ArgumentNullException.ThrowIfNull(runnerId);
         var partition = new PartitionKey(runnerId);
 
-        using ResponseMessage read = await this.runners.ReadItemStreamAsync(runnerId, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
-        if (read.StatusCode == HttpStatusCode.NotFound)
+        // A heartbeat advances only the timestamps. Rather than read the whole document back and rewrite the envelope
+        // (two round-trips plus a full-payload rewrite), patch the two mirrored fields server-side in one call: the
+        // queryable top-level lastSeenAt (epoch, used by prune) and the nested doc.lastSeenAt (the round-trip "O"
+        // string the read reconstructs from). The loaded-version projection is unaffected (a heartbeat never changes
+        // hosted versions). A NotFound means the runner is unknown.
+        PatchOperation[] operations =
+        [
+            PatchOperation.Replace("/lastSeenAt", at.ToUnixTimeMilliseconds()),
+            PatchOperation.Replace("/doc/lastSeenAt", at.ToString("O", CultureInfo.InvariantCulture)),
+        ];
+
+        using ResponseMessage response = await this.runners.PatchItemStreamAsync(runnerId, partition, operations, cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return false;
         }
 
-        read.EnsureSuccessStatusCode();
-        using CosmosJson.RentedResponse payload = await CosmosJson.ReadAllAsync(read.Content, cancellationToken).ConfigureAwait(false);
-
-        // The registration is embedded as raw nested JSON (no base64) — parse it straight from the doc value's bytes.
-        RunnerRegistration current = RunnerRegistration.FromJson(CosmosJson.GetRawValue(payload.Memory, "doc"u8));
-
-        using var stream = RunnerDocument.WriteEnvelopeStream(runnerId, current, at);
-        using ResponseMessage response = await this.runners.UpsertItemStreamAsync(stream, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         return true;
     }

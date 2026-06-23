@@ -9,11 +9,13 @@ namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
 
 /// <summary>
 /// The Azure Cosmos DB document shape for a runner registration, generated from <c>Schemas/RunnerDocument.json</c>.
-/// It carries the canonical <see cref="RunnerRegistration"/> JSON (base64) plus a queryable last-seen timestamp and
-/// a projected hosted-version list for the hosting index. The write path streams the envelope straight to the Cosmos
-/// request (<see cref="WriteEnvelopeStream(string, RunnerRegistration)"/> / the heartbeat overload), base64-encoding
-/// the registration from a pooled buffer — it never materializes a <see cref="RunnerDocument"/> instance or copies
-/// the document out to a <see cref="byte"/> array. Reads go through <see cref="FromJson"/> / <see cref="ToRegistration"/>.
+/// It carries the canonical <see cref="RunnerRegistration"/> JSON as a nested <c>doc</c> object (embedded verbatim,
+/// not base64) plus a queryable last-seen timestamp and a projected hosted-version list for the hosting index. The
+/// write path streams the envelope straight to the Cosmos request
+/// (<see cref="WriteEnvelopeStream(string, RunnerRegistration)"/> on register), writing the registration's bytes
+/// verbatim as a raw nested value from a pooled buffer — it never materializes a <see cref="RunnerDocument"/>
+/// instance or copies the document out to a <see cref="byte"/> array. A heartbeat instead patches the mirrored
+/// timestamps in place. Reads go through <see cref="FromJson"/> / <see cref="ToRegistration"/>.
 /// </summary>
 [JsonSchemaTypeGenerator("Schemas/RunnerDocument.json")]
 public readonly partial struct RunnerDocument
@@ -26,36 +28,22 @@ public readonly partial struct RunnerDocument
     /// <returns>The document.</returns>
     public static RunnerDocument FromJson(ReadOnlyMemory<byte> utf8) => ParseValue(utf8.Span);
 
-    /// <summary>Streams the Cosmos envelope for a fresh registration straight to a stream (no materialized document).</summary>
+    /// <summary>Streams the Cosmos envelope for a registration straight to a stream (no materialized document).</summary>
     /// <param name="runnerId">The runner id.</param>
     /// <param name="registration">The registration to embed.</param>
     /// <returns>A readable stream over the envelope JSON, positioned at the start.</returns>
+    /// <remarks>A heartbeat does not use this — it patches the two mirrored timestamps in place (no read, no rewrite).</remarks>
     public static Stream WriteEnvelopeStream(string runnerId, RunnerRegistration registration)
-        => BuildEnvelope(runnerId, registration, registration.LastSeenAtValue, advanceLastSeen: false);
-
-    /// <summary>Streams the Cosmos envelope for a heartbeated registration (its last-seen advanced to <paramref name="at"/>).</summary>
-    /// <param name="runnerId">The runner id.</param>
-    /// <param name="registration">The existing registration to heartbeat.</param>
-    /// <param name="at">The instant of the heartbeat.</param>
-    /// <returns>A readable stream over the envelope JSON, positioned at the start.</returns>
-    public static Stream WriteEnvelopeStream(string runnerId, RunnerRegistration registration, DateTimeOffset at)
-        => BuildEnvelope(runnerId, registration, at, advanceLastSeen: true);
-
-    private static Stream BuildEnvelope(string runnerId, RunnerRegistration registration, DateTimeOffset lastSeenAt, bool advanceLastSeen)
     {
-        // Serialize the registration JSON once into a pooled buffer (a heartbeat advances its last-seen), then write the
-        // envelope — id, queryable last-seen, base64 of the registration, and the loaded-version projection — into a
-        // pooled stream, base64-ing the same bytes. No owned byte[], no nested writer rent.
-        using CosmosJson.RentedJson docJson = advanceLastSeen
-            ? CosmosJson.RentJson(
-                (registration, lastSeenAt),
-                static (Utf8JsonWriter docWriter, in (RunnerRegistration Registration, DateTimeOffset At) ctx) => ctx.Registration.WriteWithLastSeenAt(docWriter, ctx.At))
-            : CosmosJson.RentJson(
-                registration,
-                static (Utf8JsonWriter docWriter, in RunnerRegistration r) => r.WriteTo(docWriter));
+        // Serialize the registration JSON once into a pooled buffer, then write the envelope — id, queryable
+        // last-seen, the registration as a raw nested value, and the loaded-version projection — into a pooled
+        // stream, embedding the same bytes verbatim. No owned byte[], no nested writer rent.
+        using CosmosJson.RentedJson docJson = CosmosJson.RentJson(
+            registration,
+            static (Utf8JsonWriter docWriter, in RunnerRegistration r) => r.WriteTo(docWriter));
 
         return CosmosJson.WriteToStream(
-            (RunnerId: runnerId, LastSeenAt: lastSeenAt, Doc: docJson, Registration: registration),
+            (RunnerId: runnerId, LastSeenAt: registration.LastSeenAtValue, Doc: docJson, Registration: registration),
             static (Utf8JsonWriter writer, in (string RunnerId, DateTimeOffset LastSeenAt, CosmosJson.RentedJson Doc, RunnerRegistration Registration) c) =>
             {
                 writer.WriteStartObject();
