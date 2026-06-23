@@ -200,22 +200,31 @@ public readonly partial struct SecurityBindingDocument
     // Realises a new binding into the pooled workspace arena: the draft's operator content is carried bytes-to-bytes (its
     // JSON values flow straight into the builder); id and the server-stamped audit/concurrency fields are added here.
     private static JsonDocumentBuilder<Mutable> BuildNew(JsonWorkspace workspace, string id, in SecurityBindingDocument draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
-        => CreateBuilder(
+    {
+        // The draft may be a request body that omits verb grants / order (both optional on the write body but required on
+        // the stored document); default an omitted grant to None and an omitted order to 0 — the semantics the handler's
+        // Models.VerbGrant -> VerbGrantInfo conversion used to apply before the body was carried bytes-to-bytes.
+        VerbGrantInfo read = draft.Read.IsNotUndefined() ? draft.Read : VerbGrantInfo.None;
+        VerbGrantInfo write = draft.Write.IsNotUndefined() ? draft.Write : VerbGrantInfo.None;
+        VerbGrantInfo purge = draft.Purge.IsNotUndefined() ? draft.Purge : VerbGrantInfo.None;
+        int order = draft.Order.IsNotUndefined() ? (int)draft.Order : 0;
+        return CreateBuilder(
             workspace,
             claimType: draft.ClaimType,
             createdAt: createdAt,
             createdBy: actor,
             etag: etag.Value ?? string.Empty,
             id: id,
-            order: draft.Order,
-            purge: draft.Purge,
-            read: draft.Read,
-            write: draft.Write,
+            order: order,
+            purge: purge,
+            read: read,
+            write: write,
             claimValue: draft.ClaimValue.IsNotUndefined() ? (JsonString.Source)draft.ClaimValue : default,
             description: draft.Description.IsNotUndefined() ? (JsonString.Source)draft.Description : default,
             expiresAt: draft.ExpiresAt.IsNotUndefined() ? (JsonDateTime.Source)draft.ExpiresAt : default,
             eligibleOnly: draft.EligibleOnly.IsNotUndefined() ? (JsonBoolean.Source)draft.EligibleOnly : default,
             scopes: draft.Scopes.IsNotUndefined() ? (JsonStringArray.Source)draft.Scopes : default);
+    }
 
     // Realises a mutable builder over this document and modifies only the fields an update touches, carrying the draft's
     // content bytes-to-bytes; id and the created-* metadata are carried through unchanged (no field-by-field rebuild).
@@ -223,10 +232,13 @@ public readonly partial struct SecurityBindingDocument
     {
         JsonDocumentBuilder<Mutable> builder = this.CreateBuilder(workspace);
         builder.RootElement.SetClaimType(draft.ClaimType);
-        builder.RootElement.SetOrder(draft.Order);
-        builder.RootElement.SetRead(draft.Read);
-        builder.RootElement.SetWrite(draft.Write);
-        builder.RootElement.SetPurge(draft.Purge);
+
+        // As BuildNew: a draft carried from the (optional-field) write body may omit verb grants / order — default an
+        // omitted grant to None and an omitted order to 0 so the replaced binding stays valid (the PUT-replaces semantics).
+        builder.RootElement.SetOrder(draft.Order.IsNotUndefined() ? (int)draft.Order : 0);
+        builder.RootElement.SetRead(draft.Read.IsNotUndefined() ? draft.Read : VerbGrantInfo.None);
+        builder.RootElement.SetWrite(draft.Write.IsNotUndefined() ? draft.Write : VerbGrantInfo.None);
+        builder.RootElement.SetPurge(draft.Purge.IsNotUndefined() ? draft.Purge : VerbGrantInfo.None);
         builder.RootElement.SetEtag(etag.Value ?? string.Empty);
         builder.RootElement.SetLastUpdatedAt(updatedAt);
         builder.RootElement.SetLastUpdatedBy(actor);
