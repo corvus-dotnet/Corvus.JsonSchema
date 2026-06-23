@@ -18,7 +18,14 @@ is [`allocation-matrix.md`](allocation-matrix.md) — read it before doing anyth
 ## Per-row process (exact order — never skip or reorder)
 
 1. **Ground.** Read the named skill(s) + design-doc § for the row. State the target pattern you
-   derived from the conventions.
+   derived from the conventions. **For any response-projection row, run the up-front anti-pattern
+   sweep first** (grep for `XxxOrNull`/`XxxValue`-into-a-builder and closure-based `new …Source((ref`
+   projections — the exact commands + the decision order are in `corvus-ctj-handler-implementation`
+   §"Response projection"). Find every instance of a pattern in one pass — don't discover them
+   serially row-by-row, and don't trust a code comment that says a whole-doc `From()` "can't be used
+   here" (re-derive against the current ownership-transfer rule). Check the single-document sibling: a
+   field-copy list whose single-doc response already uses whole-doc `From()` is a *collapse*, not a
+   field-build.
 2. **Baseline.** Ensure exactly **one** end-to-end benchmark (handler → `InMemory*` store) exists
    for the row; **run it and paste the actual allocation number.** That is the "before".
 3. **Ledger.** Post the ownership ledger for the whole path (every allocation: owner, lifetime,
@@ -41,6 +48,11 @@ is [`allocation-matrix.md`](allocation-matrix.md) — read it before doing anyth
   ask.
 - **Verify the matrix as you go.** Build it bottom-up by checking the doc against the actual code as
   you touch each row; correct the doc where it is wrong.
+- **Never silently defer a known secondary allocation.** If you fix the headline alloc in a row but
+  spot another in the same path (a leftover closure, a residual `XxxOrNull` ternary), either fix it in
+  the row or log it as an **explicit open item in the matrix** — never drop it "to keep this row's
+  before→after clean". (The credentials/security closures survived a whole campaign because FIX #1
+  deferred them for a clean delta and never reticketed; that cost a second optimization pass.)
 
 ## Environment & commands
 
