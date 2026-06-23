@@ -401,14 +401,6 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
     // management requires a configured policy.
     private SecurityTagSet CallerIdentity() => SecurityTagSet.FromTags(this.access.InternalTags());
 
-    // Closure-free single-item identity wrap: the grant is threaded as the context, so the `Source<CredentialUsageGrant>`
-    // can be returned from this helper (unlike a list Build) and appended without a per-grant closure.
-    private static Models.AdministratorIdentity.Source<CredentialUsageGrant> ToIdentity(CredentialUsageGrant grant)
-        => Models.AdministratorIdentity.Build(in grant, BuildGrantIdentity);
-
-    private static void BuildGrantIdentity(in CredentialUsageGrant grant, ref Models.AdministratorIdentity.Builder b)
-        => b.Create(grant.Dimension, grant.Value);
-
     private static Models.ProblemDetails.Source NotAdministratorProblem(string baseWorkflowId)
         => Problem("not-administrator", "Not an administrator", 403, $"You are not a current administrator of '{baseWorkflowId}', or it has no established administration.");
 
@@ -436,19 +428,36 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
 
     // Describes each administrator (a set of internal identity tags) back as the operator-facing grants it maps from —
     // the inverse of the grant resolution. Internal tags are never exposed raw; unscoped deployments describe nothing.
-    // Built closure-free: the administrator set + access are threaded as the context. The DescribeUsageScope lists are the
-    // genuine leaf (the inverse-map policy seam); only the projection closures are removed here. The list Build is
-    // ref-scoped to its `in` argument, so each of the four call sites (list/add/transfer/remove) builds it inline.
+    // Built closure-free AND allocation-free: each administrator is already a SecurityTagSet, enumerated as unescaped
+    // spans, each prefixed tag's (dimension, value) written bytes-native via the policy's span-based TryDescribeUsageGrant
+    // — no List, no managed strings. The list Build is ref-scoped to its `in` argument, so each of the four call sites
+    // (list/add/transfer/remove) builds it inline.
     private static void BuildAdministrators(in AdministratorListContext ctx, ref Models.AdministratorList.AdministratorIdentityArray.Builder array)
     {
+        ControlPlaneAccess access = ctx.Access;
         foreach (SecurityTagSet administrator in ctx.Administrators)
         {
-            foreach (CredentialUsageGrant grant in ctx.Access.DescribeUsageScope(administrator))
+            SecurityTagSet.Utf8Enumerator e = administrator.EnumerateUtf8();
+            try
             {
-                array.AddItem(ToIdentity(grant));
+                while (e.MoveNext())
+                {
+                    if (access.TryDescribeUsageGrant(e.CurrentKey, out ReadOnlySpan<byte> dimension))
+                    {
+                        var spans = new UsageGrantSpans(dimension, e.CurrentValue);
+                        array.AddItem(Models.AdministratorIdentity.Build(in spans, BuildIdentity));
+                    }
+                }
+            }
+            finally
+            {
+                e.Dispose();
             }
         }
     }
+
+    private static void BuildIdentity(in UsageGrantSpans spans, ref Models.AdministratorIdentity.Builder b)
+        => b.Create((Models.JsonString.Source)spans.Dimension, (Models.JsonString.Source)spans.Value);
 
     private readonly ref struct AdministratorListContext(IReadOnlyList<SecurityTagSet> administrators, ControlPlaneAccess access)
     {

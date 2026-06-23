@@ -476,6 +476,15 @@ public readonly struct SecurityTagSet
     /// <returns>The enumerator.</returns>
     public Enumerator GetEnumerator() => new(this.json.Span);
 
+    /// <summary>Enumerates the tags as <strong>unescaped UTF-8</strong> key/value spans — string-free, unlike
+    /// <see cref="GetEnumerator"/> which materializes a managed key and value per tag. A key or value carrying JSON
+    /// escapes is decoded into a pooled scratch buffer the enumerator returns on <see cref="Utf8Enumerator.Dispose"/>;
+    /// an unescaped one is a view straight into the set's backing. The spans are valid until the next
+    /// <see cref="Utf8Enumerator.MoveNext"/> (and the set's backing must outlive the enumeration), so iterate with
+    /// <c>using</c>.</summary>
+    /// <returns>The enumerator (also its own <c>GetEnumerator</c> so it can drive a <c>foreach</c>).</returns>
+    public Utf8Enumerator EnumerateUtf8() => new(this.json.Span);
+
     // The bare-array property names, matching the checkpoint and the generated CatalogVersion's SecurityTagInfo.
     private static ReadOnlySpan<byte> KeyUtf8 => "key"u8;
 
@@ -543,6 +552,126 @@ public readonly struct SecurityTagSet
             }
 
             return false;
+        }
+    }
+
+    /// <summary>A forward-only, string-free enumerator over a <see cref="SecurityTagSet"/>'s tags, yielding each key and
+    /// value as unescaped UTF-8 (see <see cref="EnumerateUtf8"/>).</summary>
+    public ref struct Utf8Enumerator
+    {
+        private readonly bool empty;
+
+        // An upper bound on the unescaped length of ALL content (escaping only shrinks), so the lazily-rented scratch is
+        // sized once and a key+value that are both escaped within one object never force a re-rent (which would dangle an
+        // already-returned span). Reset to offset 0 per object; the caller must consume Current before the next MoveNext.
+        private readonly int jsonLength;
+        private Utf8JsonReader reader;
+        private byte[]? scratch;
+        private int scratchUsed;
+
+        internal Utf8Enumerator(ReadOnlySpan<byte> json)
+        {
+            this.empty = json.IsEmpty;
+            this.jsonLength = json.Length;
+            this.reader = this.empty ? default : new Utf8JsonReader(json);
+            this.CurrentKey = default;
+            this.CurrentValue = default;
+            this.scratch = null;
+            this.scratchUsed = 0;
+        }
+
+        /// <summary>Gets the current tag's key as unescaped UTF-8.</summary>
+        public ReadOnlySpan<byte> CurrentKey { get; private set; }
+
+        /// <summary>Gets the current tag's value as unescaped UTF-8.</summary>
+        public ReadOnlySpan<byte> CurrentValue { get; private set; }
+
+        /// <summary>Returns this enumerator so it can drive a <c>foreach</c> directly.</summary>
+        /// <returns>This enumerator.</returns>
+        public readonly Utf8Enumerator GetEnumerator() => this;
+
+        /// <summary>Advances to the next tag.</summary>
+        /// <returns><see langword="true"/> if there was another tag.</returns>
+        public bool MoveNext()
+        {
+            if (this.empty)
+            {
+                return false;
+            }
+
+            ReadOnlySpan<byte> key = default;
+            ReadOnlySpan<byte> value = default;
+            bool haveKey = false;
+            bool haveValue = false;
+            while (this.reader.Read())
+            {
+                switch (this.reader.TokenType)
+                {
+                    case JsonTokenType.StartObject:
+                        key = default;
+                        value = default;
+                        haveKey = false;
+                        haveValue = false;
+                        this.scratchUsed = 0;
+                        break;
+
+                    case JsonTokenType.PropertyName:
+                        if (this.reader.ValueTextEquals(KeyUtf8))
+                        {
+                            this.reader.Read();
+                            key = this.Unescape();
+                            haveKey = true;
+                        }
+                        else if (this.reader.ValueTextEquals(ValueUtf8))
+                        {
+                            this.reader.Read();
+                            value = this.Unescape();
+                            haveValue = true;
+                        }
+                        else
+                        {
+                            this.reader.Read();
+                            this.reader.Skip();
+                        }
+
+                        break;
+
+                    case JsonTokenType.EndObject:
+                        this.CurrentKey = haveKey ? key : default;
+                        this.CurrentValue = haveValue ? value : default;
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>Returns the pooled scratch buffer, if one was rented for an escaped value.</summary>
+        public void Dispose()
+        {
+            byte[]? rented = this.scratch;
+            this.scratch = null;
+            if (rented is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rented);
+            }
+        }
+
+        // The current string token as unescaped UTF-8: ValueSpan directly when not escaped (a view into the backing),
+        // else decoded into the pooled scratch at `scratchUsed` (so a key and value both escaped in one object occupy
+        // distinct regions and neither is overwritten before EndObject). The scratch is sized to the whole backing once.
+        private ReadOnlySpan<byte> Unescape()
+        {
+            if (!this.reader.ValueIsEscaped)
+            {
+                return this.reader.ValueSpan;
+            }
+
+            this.scratch ??= ArrayPool<byte>.Shared.Rent(this.jsonLength);
+            int written = this.reader.CopyString(this.scratch.AsSpan(this.scratchUsed));
+            ReadOnlySpan<byte> result = this.scratch.AsSpan(this.scratchUsed, written);
+            this.scratchUsed += written;
+            return result;
         }
     }
 }
