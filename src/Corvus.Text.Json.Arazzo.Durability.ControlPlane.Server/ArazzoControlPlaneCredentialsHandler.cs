@@ -98,39 +98,32 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     {
         Models.CredentialBindingWrite body = parameters.Body;
         SecurityTagSet managementTags;
-        SecurityTagSet usageTags;
+        UsageTagsState usageState;
+        bool hasUsageTags;
         try
         {
             // managementTags = the principal's deployment-internal tenant tag (always stamped, so the owner keeps
-            // management) PLUS any operator-supplied management labels (validated against the reserved internal prefix).
-            // The user-supplied management tags are validated against the reserved prefix string-free — a non-owning
-            // SecurityTagSet view over the request body's array (no ReadTags list). The binding's management set is then
-            // built directly: the deployment-internal tags (string-sourced from the policy) plus the user tags (UTF-8
-            // spans), written straight into the pooled buffer — no merged List, no per-tag managed string. The resulting
-            // SecurityTagSet is needed materialized for the Admits write-reach check below (and reused for the draft).
+            // management) PLUS any operator-supplied management labels. The user tags are validated against the reserved
+            // prefix string-free (a non-owning SecurityTagSet view over the request body's array — no ReadTags list), then
+            // the set is built directly from the internal tags (string-sourced from the policy) + the user tags' UTF-8
+            // spans — no merged List, no per-tag managed string. It is materialized because the Admits write-reach check
+            // needs it (and the draft reuses the same bytes). InternalTags() is resolved once and shared with usage below.
+            IReadOnlyList<SecurityTag> internalTags = this.access.InternalTags();
             SecurityTagSet userManagement = body.ManagementTags.IsNotUndefined()
                 ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(body.ManagementTags).Memory)
                 : SecurityTagSet.Empty;
             this.access.ValidateUserTags(userManagement);
-            var managementState = new ManagementTagsState(this.access.InternalTags(), userManagement);
+            var managementState = new ManagementTagsState(internalTags, userManagement);
             managementTags = SecurityTagSet.Build(in managementState, WriteManagementTags);
 
-            // usageTags are derived from the operator's usage GRANTS, which the deployment maps to UNFORGEABLE internal
-            // identity tags (e.g. sys:workflow=nightly-reconcile) — never free-form labels, so usage cannot be
-            // self-granted by a workflow author. The grants are resolved BYTES-TO-BYTES through the span seam (the same
-            // ResolveUsageGrantInto the administrators handler uses): each grant's {dimension, value} is read as UTF-8
-            // and the resolved tag written straight into the pooled buffer — no managed string or grant list. With no
-            // grants, usage defaults to the creating principal's own identity (the owner's runs). The two scopes are
-            // independent (§13/§14.2).
-            if (body.UsageGrants.IsNotUndefined() && body.UsageGrants.GetArrayLength() > 0)
-            {
-                var grantsState = new UsageGrantsState(this.access, body.UsageGrants);
-                usageTags = SecurityTagSet.Build(in grantsState, BuildUsageGrants);
-            }
-            else
-            {
-                usageTags = SecurityTagSet.FromTags(this.access.InternalTags());
-            }
+            // usageTags are written straight into the draft (no intermediate SecurityTagSet — the draft document is the
+            // leaf): the operator's usage GRANTS resolved BYTES-TO-BYTES to UNFORGEABLE internal tags (e.g.
+            // sys:workflow=nightly-reconcile; never free-form, so usage cannot be self-granted by a workflow author), or —
+            // with no grants — the creating principal's own identity (its internal tags). The two scopes are independent
+            // (§13/§14.2). Empty only when unscoped (no grants and no internal tags), in which case the property is omitted.
+            bool useGrants = body.UsageGrants.IsNotUndefined() && body.UsageGrants.GetArrayLength() > 0;
+            usageState = new UsageTagsState(this.access, body.UsageGrants, internalTags, useGrants);
+            hasUsageTags = useGrants || internalTags.Count > 0;
 
             // The required request fields are validated up front; their JSON values are then carried into the draft
             // bytes-to-bytes (no per-field strings, no list) — see the draft build below.
@@ -172,7 +165,9 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
                 expiresAt: (JsonElement)body.ExpiresAt,
                 rotatedAt: (JsonElement)body.RotatedAt,
                 managementTags: managementTags,
-                usageTags: usageTags);
+                usageState: usageState,
+                hasUsageTags: hasUsageTags,
+                writeUsageTags: WriteUsageTags);
 
             // The summary references the pooled binding document (per-field From() zero-copy wrap), so hand it to the
             // workspace — it disposes it after the response is written — rather than `using`-disposing at method exit
@@ -277,19 +272,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     // unescaped UTF-8 spans straight off the request body. No managed-string tag list, no merged List.
     private static void WriteManagementTags(ref IdentityBuilder builder, in ManagementTagsState state)
     {
-        Span<byte> keyBuffer = stackalloc byte[256];
-        foreach (SecurityTag tag in state.InternalTags)
-        {
-            if (Encoding.UTF8.GetMaxByteCount(tag.Key.Length) <= keyBuffer.Length)
-            {
-                int written = Encoding.UTF8.GetBytes(tag.Key, keyBuffer);
-                builder.Add(keyBuffer[..written], tag.Value);
-            }
-            else
-            {
-                builder.Add(Encoding.UTF8.GetBytes(tag.Key), tag.Value);
-            }
-        }
+        WriteInternalTags(ref builder, state.InternalTags);
 
         SecurityTagSet.Utf8Enumerator e = state.UserTags.EnumerateUtf8();
         try
@@ -312,24 +295,56 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         public SecurityTagSet UserTags { get; } = userTags;
     }
 
-    // Builds the binding's usage-identity tags from the operator's usage grants, reading each grant's {dimension, value}
-    // as UTF-8 and writing the deployment's resolved internal tag straight into the pooled buffer (the bytes-to-bytes
-    // counterpart of the string ResolveUsageGrants — a deployment that remaps grants overrides ResolveUsageGrantInto too).
-    private static void BuildUsageGrants(ref IdentityBuilder builder, in UsageGrantsState state)
+    // Writes the binding's usage-identity tags straight into the draft's usage array (no intermediate SecurityTagSet — the
+    // draft document is the leaf): the operator's usage grants resolved bytes-to-bytes to the deployment's UNFORGEABLE
+    // internal tags (ResolveUsageGrantInto, the span counterpart of ResolveUsageGrants — a deployment that remaps grants
+    // overrides it), or — with no grants — the creating principal's own internal tags.
+    private static void WriteUsageTags(ref IdentityBuilder builder, in UsageTagsState state)
     {
-        foreach (Models.CredentialUsageGrant grant in state.Grants.EnumerateArray())
+        if (state.UseGrants)
         {
-            using UnescapedUtf8JsonString dimension = grant.DimensionValue.GetUtf8String();
-            using UnescapedUtf8JsonString value = grant.Value.GetUtf8String();
-            state.Access.ResolveUsageGrantInto(dimension.Span, value.Span, ref builder);
+            foreach (Models.CredentialUsageGrant grant in state.Grants.EnumerateArray())
+            {
+                using UnescapedUtf8JsonString dimension = grant.DimensionValue.GetUtf8String();
+                using UnescapedUtf8JsonString value = grant.Value.GetUtf8String();
+                state.Access.ResolveUsageGrantInto(dimension.Span, value.Span, ref builder);
+            }
+        }
+        else
+        {
+            WriteInternalTags(ref builder, state.InternalTags);
         }
     }
 
-    private readonly ref struct UsageGrantsState(ControlPlaneAccess access, Models.CredentialBindingWrite.CredentialUsageGrantArray grants)
+    private readonly struct UsageTagsState(ControlPlaneAccess access, Models.CredentialBindingWrite.CredentialUsageGrantArray grants, IReadOnlyList<SecurityTag> internalTags, bool useGrants)
     {
         public ControlPlaneAccess Access { get; } = access;
 
         public Models.CredentialBindingWrite.CredentialUsageGrantArray Grants { get; } = grants;
+
+        public IReadOnlyList<SecurityTag> InternalTags { get; } = internalTags;
+
+        public bool UseGrants { get; } = useGrants;
+    }
+
+    // Writes deployment-internal tags (string-sourced from the policy) verbatim into the buffer: the short key is encoded
+    // to a stack buffer and the value written via the string overload — no per-tag managed string beyond the policy's own.
+    // Shared by the management write (internal + user tags) and the no-grants usage write (the principal's own identity).
+    private static void WriteInternalTags(ref IdentityBuilder builder, IReadOnlyList<SecurityTag> internalTags)
+    {
+        Span<byte> keyBuffer = stackalloc byte[256];
+        foreach (SecurityTag tag in internalTags)
+        {
+            if (Encoding.UTF8.GetMaxByteCount(tag.Key.Length) <= keyBuffer.Length)
+            {
+                int written = Encoding.UTF8.GetBytes(tag.Key, keyBuffer);
+                builder.Add(keyBuffer[..written], tag.Value);
+            }
+            else
+            {
+                builder.Add(Encoding.UTF8.GetBytes(tag.Key), tag.Value);
+            }
+        }
     }
 
     // ── credential-summary projection (closure-free Build<TContext>; RefTuple contexts; §13) ────────────────────────────
