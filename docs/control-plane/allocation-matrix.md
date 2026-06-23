@@ -940,6 +940,37 @@ field (title, hash, sources, created*, **securityTags**, …) is carried bytes-t
   changed + Postgres/SqlServer/MySql/Mongo/AzureStorage unchanged, via the live podman socket), each incl. the new
   securityTags-on-update test; slnx build **0 Warning(s), 0 Error(s)**. **Row done.**
 
+### ✅ Credentials `ToSummary` — closure → `Source<TContext>` context-threading (+ the `XxxOrNull`→`From()` convention)
+
+The FIX #1 deferred follow-up (it explicitly left "the `ToSummary` lambda **closure** (a `Source<TContext>` refactor)"
+so that row's before→after stayed the clean field-bridge delta). `ToSummary`/`ToList` built the result with **capturing
+lambdas** — an outer list builder plus four nested per-item array builders (`secretRefs`/`config`/`managementTags`/
+`usageGrants`), each closing over `binding`/`access`/the loop state, so a 10-binding list page heap-allocated the outer
+closure + ~4 closures per item. Replaced with the closure-free pattern ([[corvus-builder-context-threading]]):
+`RefTuple`-style ref-struct contexts (`SummaryContext`/`ListContext`, `allows ref struct`) carry the binding + access
+scope, and **static** build methods (`BuildSummary`/`BuildSecretRefs`/`BuildConfig`/`BuildManagementTags`/
+`BuildUsageGrants`) are handed to `Build(in ctx, action)` — no captured state, no per-item delegate allocation. Precedent:
+the `ArazzoControlPlaneIdentityHandler` grantee projection.
+
+- **Convention cleanup (the `XxxOrNull`→`From()` fix).** The optional scalars (`description`/`lastUpdatedBy`/`expiresAt`/
+  `lastUpdatedAt`/`rotatedAt`) were projected with `binding.XxxOrNull is {} x ? x : default` /
+  `binding.XxxValue is {} x ? x : default` ternaries. That is the wrong idiom under the "Undefined not null" convention:
+  the nullable accessors **discard** Undefined-ness (collapsing to `DateTimeOffset?`/`string?`), so the ternary's
+  `default` branch writes a real `default(DateTimeOffset)` (the **epoch**) instead of omitting the field — a latent bug
+  (caught by `A_binding_without_an_expiry_is_valid_and_omits_expiresAt`). Replaced every one with a bare
+  `Models.Json{String,DateTime}.From(binding.RawAccessor)`: `From()` **propagates Undefined**, so an absent field's
+  `Source` is Undefined and the builder omits it — correct *and* no ternary. (Recorded in
+  [[getmaxbytecount-for-scratch-buffers]]; the same `XxxOrNull`-ternary smell still sits in FIX #3's `ToBindingSource` —
+  a follow-up to convert there too.)
+- **Lifetime.** Unchanged from FIX #1 — the per-field `From()` Sources still reference the binding's pooled document, so
+  the single-doc sites keep `workspace.TakeOwnership(binding)` and the list keeps `page.Bindings.TransferOwnershipTo`.
+- **Measured** (`CredentialSummaryProjectionBenchmarks`, a 10-binding list page — the whole projection incl. the result
+  builder, not just the convertible fields): `PerItemClosure` (baseline) **30.13 KB** → `ContextThreaded`
+  **22.98 KB** (−7.15 KB, **−24%**). The residual is irreducible: the `From` element Sources, the `DescribeUsageScope`
+  usage-grant lists (the policy-seam leaf), and the serialised response document.
+- **Verified.** `ControlPlaneCredentialsApiTests` 10/10; Sqlite `SourceCredentialStore` conformance 13/13; slnx build
+  **0 Warning(s), 0 Error(s)**. **Row done.**
+
 ## Cross-references
 
 - Skills: `corvus-typed-model-construction`, `corvus-builder-context-threading`,
