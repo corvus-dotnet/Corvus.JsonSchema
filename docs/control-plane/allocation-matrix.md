@@ -1039,6 +1039,37 @@ helper, its closures, and (for the access request) the `requestedScopes` array r
   stale "cannot use `From` here" comment trusted instead of re-derived ([[verify-before-declaring-impossible]],
   [[dont-anchor-on-existing-bad-code]]).
 
+### ✅ Remaining server closure list-projections — Runners, Identity (`WhoAmI` + Capabilities), Administrators
+
+The up-front closure sweep (now dogfooding the codified process) cleared the last server-side closure-based list
+projections. Each was a capturing builder lambda (outer list + nested array + sometimes a per-item closure); all are now
+the closure-free `Build<TContext>` form. (The sweep also exposed — and fixed — a gap in the *codified grep*: the original
+`new Models\.…Source((ref` pattern missed the `=> new((ref` shorthand, so Runners/`BuildPage` weren't flagged; the grep
+is now the builder-lambda signature `((ref …Builder )`.)
+
+- **Runners `BuildPage`** — already a per-item whole-document `Models.Runner.From(runner)` (congruent re-wrap); just the
+  outer+array closures removed, threaded through the static `BuildRunners`, inlined in `HandleListRunnersAsync`. (No
+  ownership transfer — `RunnerRegistration` is GC-backed, not a pooled batch.)
+- **Identity `WhoAmI` + Capabilities** — synthesized lists (`CredentialUsageGrant` / `GranteeKind`); outer+array closures
+  removed (static `BuildWhoAmIIdentity` / `BuildGranteeKinds`, inlined). The shared `ToIdentity` was itself a per-grant
+  closure — converted to a context-threaded single-item helper (`Build(in grant, …)`, which *can* be returned, unlike a
+  list Build). That also fixes the **grantee-search** path (`HandleSearchGranteesAsync`), which appended `ToIdentity(grant)`
+  per grant: the handler now matches the benchmarked closure-free ideal (`GranteeProjectionBenchmarks.Target_OkContextThreaded`
+  **2.01 KB** — the handler previously paid an extra per-grant closure the Target arm never modelled).
+- **Administrators `ToList`** — synthesized (`SecurityTagSet` → `DescribeUsageScope` → `AdministratorIdentity`); the
+  `DescribeUsageScope` lists are the genuine inverse-map leaf, so only the closures are removable. Worst fix-shape of the
+  four: the list `Build<TContext>` is ref-scoped, so it's **inlined at all four call sites** (list/add/transfer/remove)
+  with an `AdministratorListContext` carrying the set + access; `ToIdentity` context-threaded as above.
+- **Measured.** These are the identical closure-removal mechanism already benchmarked — the directly comparable deltas are
+  the security-binding list (`SecurityBindingListProjectionBenchmarks` 17.24→16.21 KB, the outer+array+per-item closure
+  trio) and the grantee Target ideal (2.01 KB) the `ToIdentity` fix now brings the live handler to. Not separately
+  micro-benchmarked (same mechanism, smaller/cold lists; a per-row arm would re-prove the measured pattern). The removed
+  cost is the closure count per request: Runners/Capabilities 2; `WhoAmI`/Administrators 2 + N per-grant; grantee N per-grant.
+- **Verified.** `ControlPlaneIdentityApiTests` + `ControlPlaneAdministratorsApiTests` **20/20** (incl. the grantee-search
+  assertions), Runners list **2/2**; slnx build **0 Warning(s), 0 Error(s)**. **Rows done.** Server-side projection
+  closure sweep is now clean (remaining `((ref …Builder)` hits are single-object responses — `ProblemDetails`,
+  `PurgeResult`, `WorkflowRunAccepted`, the empty-list cached delegate — and cold CLI request-building).
+
 ## Cross-references
 
 - Skills: `corvus-typed-model-construction`, `corvus-builder-context-threading`,
