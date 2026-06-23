@@ -39,7 +39,7 @@ whole-`doc` rewrite. The single-statement form updates the column **and** the do
 | Postgres | `doc` is **BYTEA** (raw UTF-8) — bare `jsonb_set(doc,…)` does **not** apply; decode/re-encode in one statement: `doc = convert_to(jsonb_set(convert_from(doc,'UTF8')::jsonb,'{lastSeenAt}',to_jsonb(@iso))::text,'UTF8')`. Reorders keys (safe — sole reader parses by name). | ✅ done |
 | SqlServer | `doc` was **VARBINARY(UTF-8)** — in-place `JSON_MODIFY` is **unsafe** (CAST varbinary→varchar mis-decodes UTF-8 as CP1252, double-encoding non-ASCII). Column changed to **`VARCHAR(MAX) COLLATE …_UTF8`** + native `JSON_MODIFY(doc,'$.lastSeenAt',@iso)`; write via nvarchar param, read via `CAST(doc AS VARBINARY)` (bytes-native). | ✅ done |
 | Sqlite | **Embedded (in-process, no network round-trip)** — not a throughput candidate; the RMW was already alloc-optimized. `json_set` would save only client CPU + one in-process query. **Skipped** (documented non-candidate, like the lease/NATS exceptions). | ⏭️ skipped |
-| MySql | `doc` column type TBD — `JSON_SET(doc,'$.lastSeenAt',@iso)` if it's a JSON/text column; check the UTF-8 story as for SqlServer | ⬜ next |
+| MySql | `doc` is **LONGBLOB** (UTF-8) — but unlike SqlServer, MySQL's `CONVERT(doc USING utf8mb4)` decodes with an explicit charset, so an in-place patch is safe with **no column change**: `doc = CAST(JSON_SET(CONVERT(doc USING utf8mb4),'$.lastSeenAt',@iso) AS BINARY)`. Normalises (reorders keys + spacing) — safe (sole reader parses by name). Non-ASCII round-trip verified. | ✅ done |
 | Cosmos | `PatchItemAsync` (replace `/lastSeenAt`) — 1 call, no read | ⬜ |
 | Mongo | `UpdateOneAsync($set: { lastSeenAt })` | ⬜ |
 | AzureStorage | `MergeEntity` (partial table-entity update — already field-granular) | ⬜ |
@@ -162,6 +162,26 @@ dominated by LOB/JSON work + variance, so a saved round-trip (~13%) is swamped. 
 round-trips + 586→60 B payload, which is **network-bound** (materializes against a remote DB — the realistic
 production case). **Conformance:** 11/11 `SqlServerRunnerRegistryConformanceTests` green (mirror read-back,
 unknown-runner⇒false, prune, register/list/replace/hosted-version; the UTF-8 column round-trips correctly).
+
+### Row 1 — Runner heartbeat, **MySql** ✅ (Option A: LONGBLOB preserved, in-place `JSON_SET`)
+
+The `doc` column is `LONGBLOB` (UTF-8), but unlike SqlServer there is a **safe column-preserving** path: MySQL's
+`CONVERT(doc USING utf8mb4)` decodes the bytes with an explicit charset (correct, where SqlServer's code-page CAST
+was not), so the heartbeat is a single in-place statement —
+`UPDATE … SET last_seen_at=@at, doc=CAST(JSON_SET(CONVERT(doc USING utf8mb4),'$.lastSeenAt',@iso) AS BINARY) WHERE runner_id=@id`
+(rows-affected = 0 ⇒ unknown ⇒ `false`). Verified against a live container with a non-ASCII probe
+(`rünner-café/路径` survives, valid UTF-8). `JSON_SET` normalises the doc (reorders keys + inter-token spacing) —
+safe (sole reader parses by name). No column change, reads stay bytes-native.
+
+| metric | before (RMW) | after (native partial) | delta |
+|---|---|---|---|
+| round-trips | 2 (`SELECT doc` + `UPDATE doc`) | **1** (`UPDATE`) | −1 |
+| bytes sent client→server | 586 B (whole doc re-sent) | ~60 B (params only) | ≈ −90% |
+| latency p50 (local) | 2.85–3.06 ms | 2.6–3.8 ms | none (within noise) |
+
+Local latency neutral/noisy (same as SqlServer — round-trips are a small fraction of the ~3 ms local per-call
+cost); the win is the structural round-trip/payload reduction (network-bound). **Conformance:** 11/11
+`MySqlRunnerRegistryConformanceTests` green.
 
 ## Kickoff prompt (paste into a fresh session)
 

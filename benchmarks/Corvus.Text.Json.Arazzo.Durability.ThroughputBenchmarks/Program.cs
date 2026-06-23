@@ -6,10 +6,12 @@ using System.Buffers;
 using System.Diagnostics;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.MySql;
 using Corvus.Text.Json.Arazzo.Durability.Postgres;
 using Corvus.Text.Json.Arazzo.Durability.SqlServer;
 using Npgsql;
 using Testcontainers.MsSql;
+using Testcontainers.MySql;
 using Testcontainers.PostgreSql;
 
 // A container-backed *latency* harness for the control-plane throughput campaign (see
@@ -31,9 +33,12 @@ switch (scenario)
     case "sqlserver-heartbeat":
         await SqlServerHeartbeatAsync(warmup, measure);
         break;
+    case "mysql-heartbeat":
+        await MySqlHeartbeatAsync(warmup, measure);
+        break;
     default:
         await Console.Error.WriteLineAsync(
-            $"Unknown scenario '{scenario}'. Known: postgres-heartbeat, sqlserver-heartbeat.");
+            $"Unknown scenario '{scenario}'. Known: postgres-heartbeat, sqlserver-heartbeat, mysql-heartbeat.");
         Environment.ExitCode = 1;
         break;
 }
@@ -56,6 +61,16 @@ static async Task SqlServerHeartbeatAsync(int warmup, int measure)
     await SqlServerRunnerRegistry.PrepareAsync(connectionString);
     await using SqlServerRunnerRegistry registry = await SqlServerRunnerRegistry.ConnectAsync(connectionString);
     await MeasureHeartbeatAsync("SqlServer runner heartbeat", registry, warmup, measure);
+}
+
+static async Task MySqlHeartbeatAsync(int warmup, int measure)
+{
+    await using MySqlContainer container = new MySqlBuilder().WithImage("mysql:8.4").Build();
+    await container.StartAsync();
+    string connectionString = container.GetConnectionString();
+    await MySqlRunnerRegistry.PrepareAsync(connectionString);
+    await using MySqlRunnerRegistry registry = await MySqlRunnerRegistry.ConnectAsync(connectionString);
+    await MeasureHeartbeatAsync("MySql runner heartbeat", registry, warmup, measure);
 }
 
 // Registers one representative runner, then times `measure` heartbeats after `warmup` untimed ones, reporting
