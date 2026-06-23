@@ -26,6 +26,13 @@ captures its locals into a **closure** — a heap allocation per call — and **
 **ref-struct context** (`where TContext : allows ref struct`) that carries the spans. This is the form
 the JMESPath/Jsonata/OpenApi generators emit; use it whenever you project bytes into a model in a loop.
 
+> **First check you should field-build at all.** Context-threading is the right tool for projecting a *selected subset*
+> of a stored document (a summary that hides fields). If the response type is **congruent** with the stored type, don't
+> field-build *or* context-thread — wrap the whole document with `From()` (single response and list alike) and transfer
+> ownership; that is strictly less work than any per-field build. Decide with the projection decision order in
+> `corvus-ctj-handler-implementation` *before* reaching for this skill. (A field-copy list whose single-document sibling
+> already uses whole-doc `From()` is a missed collapse, not a context-threading candidate.)
+
 ## The context — `RefTuple`, the span-capable carrier
 
 Thread the per-item data through a **`RefTuple<…>`** — the span-capable companion to `ValueTuple` (`Corvus.Text.Json`,
