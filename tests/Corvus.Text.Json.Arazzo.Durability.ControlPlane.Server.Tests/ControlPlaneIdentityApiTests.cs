@@ -168,7 +168,7 @@ public sealed class ControlPlaneIdentityApiTests
         g.TryGetProperty("label", out _).ShouldBeFalse();
     }
 
-    private static async Task EstablishAsync(WorkflowCatalogClient catalog, string workflowId, string founder)
+    private static async Task EstablishAsync(SecuredWorkflowCatalog catalog, string workflowId, string founder)
     {
         SecurityTagSet founderIdentity = SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", founder)]);
         byte[] workflow = Encoding.UTF8.GetBytes($$"""
@@ -202,8 +202,8 @@ public sealed class ControlPlaneIdentityApiTests
     private static async Task<Scoped> StartAsync(IObservedIdentityStore? observed = null, bool scopedReach = false, IPrincipalDirectory? directory = null)
     {
         var store = new InMemoryWorkflowStateStore();
-        var management = new WorkflowManagementClient(store, "ops");
-        var catalog = new WorkflowCatalogClient(new InMemoryWorkflowCatalogStore(), store, "ops", credentials: null, administrators: new InMemoryWorkflowAdministratorStore());
+        var management = new SecuredWorkflowManagement(store, "ops");
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops", credentials: null, administrators: new InMemoryWorkflowAdministratorStore());
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -260,9 +260,9 @@ public sealed class ControlPlaneIdentityApiTests
         }
     }
 
-    private sealed class Scoped(WebApplication app, HttpClient client, WorkflowCatalogClient catalog) : IAsyncDisposable
+    private sealed class Scoped(WebApplication app, HttpClient client, SecuredWorkflowCatalog catalog) : IAsyncDisposable
     {
-        public WorkflowCatalogClient Catalog => catalog;
+        public SecuredWorkflowCatalog Catalog => catalog;
 
         public Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, string? scope, string? identity = null)
             => Send(new HttpRequestMessage(method, path), scope, identity);

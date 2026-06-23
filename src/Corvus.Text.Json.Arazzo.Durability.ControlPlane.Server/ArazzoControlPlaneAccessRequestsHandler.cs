@@ -28,7 +28,7 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
 
     private readonly IAccessRequestApprovalService approval;
     private readonly IAccessRequestStore requests;
-    private readonly IWorkflowCatalogClient catalog;
+    private readonly ISecuredWorkflowCatalog catalog;
     private readonly ControlPlaneAccess access;
     private readonly string subjectClaimType;
     private readonly Func<ClaimsPrincipal, AccessRequest, bool>? eligibility;
@@ -43,7 +43,7 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
     internal ArazzoControlPlaneAccessRequestsHandler(
         IAccessRequestApprovalService approval,
         IAccessRequestStore requests,
-        IWorkflowCatalogClient catalog,
+        ISecuredWorkflowCatalog catalog,
         ControlPlaneAccess access,
         string subjectClaimType = "sub",
         Func<ClaimsPrincipal, AccessRequest, bool>? eligibility = null)

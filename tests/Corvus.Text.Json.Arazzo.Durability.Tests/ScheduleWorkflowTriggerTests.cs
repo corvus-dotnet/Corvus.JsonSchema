@@ -17,7 +17,7 @@ public sealed class ScheduleWorkflowTriggerTests
     public async Task A_due_tick_fires_every_elapsed_slot_and_re_ticking_is_idempotent()
     {
         var store = new InMemoryWorkflowStateStore();
-        var management = new WorkflowManagementClient(store, owner: "ops");
+        var management = new SecuredWorkflowManagement(store, owner: "ops");
         var time = new TestTimeProvider(Start);
 
         WorkflowStartHandler start = (request, cancellationToken) =>
@@ -50,7 +50,7 @@ public sealed class ScheduleWorkflowTriggerTests
     public async Task A_retried_fire_for_the_same_slot_resolves_to_the_same_run()
     {
         var store = new InMemoryWorkflowStateStore();
-        var management = new WorkflowManagementClient(store, owner: "ops");
+        var management = new SecuredWorkflowManagement(store, owner: "ops");
 
         WorkflowStartHandler start = (request, cancellationToken) =>
             management.StartIdempotentAsync(

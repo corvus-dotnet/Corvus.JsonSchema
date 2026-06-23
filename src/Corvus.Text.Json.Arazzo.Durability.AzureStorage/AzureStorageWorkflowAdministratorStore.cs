@@ -22,7 +22,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 /// </summary>
 /// <remarks>
 /// The store takes no <see cref="AccessContext"/>: it is a CAS key/value persistence seam (like the security-policy and
-/// source-credential stores), with authorization the <see cref="WorkflowCatalogClient"/>'s concern. The
+/// source-credential stores), with authorization the <see cref="SecuredWorkflowCatalog"/>'s concern. The
 /// <see cref="PutAsync"/> create-or-replace reads the current document and compares its (in-document) etag before
 /// writing, mirroring every other backend; a mismatch — or a present-vs-expected-absent record (and vice versa) —
 /// surfaces as <see cref="WorkflowAdministrationConflictException"/>. Tag round-tripping is Corvus.Text.Json end to end

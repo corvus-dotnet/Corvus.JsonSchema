@@ -9,7 +9,7 @@ using Corvus.Text.Json.Arazzo.Durability.Security;
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
 /// <summary>
-/// Implements the generated <see cref="IApiAdministratorsHandler"/> over an <see cref="IWorkflowCatalogClient"/> — the
+/// Implements the generated <see cref="IApiAdministratorsHandler"/> over an <see cref="ISecuredWorkflowCatalog"/> — the
 /// control-plane surface that manages a base workflow id's administrator set (design §15). The endpoints are gated by
 /// the <c>administrators:read</c>/<c>administrators:write</c> capability scopes.
 /// </summary>
@@ -30,14 +30,14 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
 {
     private const string ProblemBase = "https://corvus-oss.org/arazzo/control-plane/problems/";
 
-    private readonly IWorkflowCatalogClient catalog;
+    private readonly ISecuredWorkflowCatalog catalog;
     private readonly ControlPlaneAccess access;
     private readonly IObservedIdentityStore? observed;
 
     /// <summary>Initializes a new, unscoped instance (the caller resolves to no identity — administration management
     /// requires a configured row-security policy).</summary>
     /// <param name="catalog">The catalog client that owns the administrator store and the administration operations.</param>
-    public ArazzoControlPlaneAdministratorsHandler(IWorkflowCatalogClient catalog)
+    public ArazzoControlPlaneAdministratorsHandler(ISecuredWorkflowCatalog catalog)
         : this(catalog, new ControlPlaneAccess())
     {
     }
@@ -48,7 +48,7 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
     /// from internal tags. Unscoped (no identity) when no row security is configured.</param>
     /// <param name="observed">An optional observed-identity store; a newly added administrator is recorded as a resolvable
     /// grantee for the §16.5.4 typeahead (best-effort).</param>
-    internal ArazzoControlPlaneAdministratorsHandler(IWorkflowCatalogClient catalog, ControlPlaneAccess access, IObservedIdentityStore? observed = null)
+    internal ArazzoControlPlaneAdministratorsHandler(ISecuredWorkflowCatalog catalog, ControlPlaneAccess access, IObservedIdentityStore? observed = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(access);

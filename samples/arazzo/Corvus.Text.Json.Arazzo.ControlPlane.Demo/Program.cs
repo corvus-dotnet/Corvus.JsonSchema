@@ -54,13 +54,13 @@ var metadata = new WorkflowSchemaMetadataProvider();
 SqliteWorkflowStateStore stateStore = await SqliteWorkflowStateStore.ConnectAsync(connectionString);
 SqliteWorkflowCatalogStore catalogStore = await SqliteWorkflowCatalogStore.ConnectAsync(connectionString, metadataProvider: metadata);
 
-var management = new WorkflowManagementClient(stateStore, "demo", DemoData.CompleteResumer);
+var management = new SecuredWorkflowManagement(stateStore, "demo", DemoData.CompleteResumer);
 
 // A workflow's §15 administrator set governs who may approve access requests for it (and publish further versions).
 // The submitter of version 1 establishes administration (DemoData seeds the workflows as administered by the
 // arazzo-admins group); the access-request approval flow routes a request to these administrators.
 var administrators = new InMemoryWorkflowAdministratorStore();
-var catalog = new WorkflowCatalogClient(catalogStore, stateStore, "demo", administrators: administrators);
+var catalog = new SecuredWorkflowCatalog(catalogStore, stateStore, "demo", administrators: administrators);
 
 // The runner registry is store-backed and shared, so a runner registering in its own process is visible to this
 // control plane's GET /runners (§5.4) — not an in-memory table only this process can see.

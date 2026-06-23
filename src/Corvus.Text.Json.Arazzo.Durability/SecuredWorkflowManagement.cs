@@ -1,4 +1,4 @@
-// <copyright file="WorkflowManagementClient.cs" company="Endjin Limited">
+// <copyright file="SecuredWorkflowManagement.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
@@ -11,14 +11,14 @@ using Corvus.Text.Json.Patch;
 namespace Corvus.Text.Json.Arazzo.Durability;
 
 /// <summary>
-/// The default <see cref="IWorkflowManagementClient"/> over an <see cref="IWorkflowStateStore"/> (plan §11).
+/// The default <see cref="ISecuredWorkflowManagement"/> over an <see cref="IWorkflowStateStore"/> (plan §11).
 /// Visibility queries use the store's <see cref="IWorkflowWaitIndex"/> (the same index Tier 2 uses for wakeups);
 /// control operations take a single-owner lease and write under optimistic concurrency. Resuming a faulted run
 /// re-executes it through a host-supplied <see cref="WorkflowResumer"/> — the same adapter a
 /// <see cref="WorkflowWorker"/> uses — so the run advances from its last checkpoint (the faulted step), and the
 /// generated executor clears the fault on its next checkpoint.
 /// </summary>
-public sealed class WorkflowManagementClient : IWorkflowManagementClient
+public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
 {
     private const int DefaultBufferSize = 512;
 
@@ -29,13 +29,13 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
     private readonly string owner;
     private readonly TimeSpan leaseTtl;
 
-    /// <summary>Initializes a new instance of the <see cref="WorkflowManagementClient"/> class.</summary>
+    /// <summary>Initializes a new instance of the <see cref="SecuredWorkflowManagement"/> class.</summary>
     /// <param name="store">The state store. Visibility queries (<see cref="ListAsync"/>/<see cref="PurgeAsync"/>) require it to also implement <see cref="IWorkflowWaitIndex"/>.</param>
     /// <param name="owner">This client's identity, used to take run leases.</param>
     /// <param name="resumer">The adapter that re-enters a run's generated executor; required for <see cref="ResumeAsync"/>.</param>
     /// <param name="timeProvider">The time source for index timestamps and lease TTLs; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="leaseTtl">How long a lease is held during a control operation; defaults to one minute.</param>
-    public WorkflowManagementClient(
+    public SecuredWorkflowManagement(
         IWorkflowStateStore store,
         string owner,
         WorkflowResumer? resumer = null,

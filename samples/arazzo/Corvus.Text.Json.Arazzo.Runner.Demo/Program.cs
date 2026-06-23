@@ -32,7 +32,7 @@ SqliteRunnerRegistry registry = await SqliteRunnerRegistry.ConnectAsync(connecti
 // The §13 source-credential store, shared with the control plane: the control plane registers the binding
 // (reference + metadata, never the secret), and the runner reads it to learn which Vault references to resolve.
 SqliteSourceCredentialStore credentials = await SqliteSourceCredentialStore.ConnectAsync(connectionString);
-var catalog = new WorkflowCatalogClient(catalogStore, stateStore, "runner");
+var catalog = new SecuredWorkflowCatalog(catalogStore, stateStore, "runner");
 
 var options = new RunnerOptions($"runner-{Environment.MachineName}-{Environment.ProcessId}");
 

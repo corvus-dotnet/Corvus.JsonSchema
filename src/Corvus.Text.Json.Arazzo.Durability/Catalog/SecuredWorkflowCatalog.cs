@@ -1,4 +1,4 @@
-// <copyright file="WorkflowCatalogClient.cs" company="Endjin Limited">
+// <copyright file="SecuredWorkflowCatalog.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
@@ -10,13 +10,13 @@ using Corvus.Text.Json.Arazzo.Durability.Security;
 namespace Corvus.Text.Json.Arazzo.Durability;
 
 /// <summary>
-/// The default <see cref="IWorkflowCatalogClient"/> over an <see cref="IWorkflowCatalogStore"/> and the run
+/// The default <see cref="ISecuredWorkflowCatalog"/> over an <see cref="IWorkflowCatalogStore"/> and the run
 /// store. It enforces the submission rules (no <c>-vN</c> suffix), enforces referential integrity on delete and
 /// purge by consulting the run store, and emits <c>catalog.*</c> audit spans tagged with the actor, base id,
 /// version and outcome — telemetry is the forensic trail; the durable record carries <c>createdBy</c>/
 /// <c>lastUpdatedBy</c> for governance visibility.
 /// </summary>
-public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
+public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
 {
     private const int AdministrationMutationRetries = 3;
 
@@ -26,7 +26,7 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
     private readonly ISourceCredentialStore? credentials;
     private readonly IWorkflowAdministratorStore? administrators;
 
-    /// <summary>Initializes a new instance of the <see cref="WorkflowCatalogClient"/> class.</summary>
+    /// <summary>Initializes a new instance of the <see cref="SecuredWorkflowCatalog"/> class.</summary>
     /// <param name="catalog">The catalog store.</param>
     /// <param name="runs">The run index, consulted (by exact versioned workflow id) for referential integrity on delete and purge.</param>
     /// <param name="actor">The authenticated identity recorded on writes (<c>createdBy</c>/<c>lastUpdatedBy</c>) and in audit spans.</param>
@@ -41,7 +41,7 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
     /// <see cref="RemoveAdministratorAsync"/> / <see cref="TransferAdministrationAsync"/>) are available. When
     /// <see langword="null"/> (the default) administration is the single, immutable version-1 identity and the
     /// management operations throw <see cref="NotSupportedException"/>.</param>
-    public WorkflowCatalogClient(IWorkflowCatalogStore catalog, IWorkflowWaitIndex runs, string actor, ISourceCredentialStore? credentials = null, IWorkflowAdministratorStore? administrators = null)
+    public SecuredWorkflowCatalog(IWorkflowCatalogStore catalog, IWorkflowWaitIndex runs, string actor, ISourceCredentialStore? credentials = null, IWorkflowAdministratorStore? administrators = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(runs);
@@ -178,7 +178,7 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<CatalogVersion>?> UpdateAsync(string baseWorkflowId, int versionNumber, CatalogOwner? owner, TagSet? tags, CatalogStatus? status, AccessContext context, CancellationToken cancellationToken)
+    public async ValueTask<CatalogUpdateResult> UpdateAsync(string baseWorkflowId, int versionNumber, CatalogOwner? owner, TagSet? tags, CatalogStatus? status, AccessContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
 
@@ -187,17 +187,32 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
         activity?.SetTag(ArazzoTelemetry.BaseWorkflowIdTag, baseWorkflowId);
         activity?.SetTag(ArazzoTelemetry.VersionNumberTag, versionNumber);
 
-        // A version outside the caller's write reach is not modifiable; reported as absent (§14.2).
-        if (!await this.IsWithinReachAsync(baseWorkflowId, versionNumber, context, AccessVerb.Write, cancellationToken).ConfigureAwait(false))
+        // Resolve read-then-write reach on a single fetch (§14.2): outside read reach → 404 (non-disclosing); readable
+        // but outside write reach → 403. The handler relies on this split, so it no longer pre-fetches the version itself.
+        WriteReach reach = await this.ResolveWriteReachAsync(baseWorkflowId, versionNumber, context, cancellationToken).ConfigureAwait(false);
+        if (reach == WriteReach.NotFound)
         {
             activity?.SetTag(ArazzoTelemetry.OutcomeTag, "missing");
-            return null;
+            return new CatalogUpdateResult(CatalogUpdateOutcome.NotFound, null);
+        }
+
+        if (reach == WriteReach.Forbidden)
+        {
+            activity?.SetTag(ArazzoTelemetry.OutcomeTag, "forbidden");
+            return new CatalogUpdateResult(CatalogUpdateOutcome.Forbidden, null);
         }
 
         ParsedJsonDocument<CatalogVersion>? updated = await this.catalog.UpdateMetadataAsync(
             baseWorkflowId, versionNumber, new CatalogMetadataPatch(this.actor, owner, tags, status), cancellationToken).ConfigureAwait(false);
-        activity?.SetTag(ArazzoTelemetry.OutcomeTag, updated is null ? "missing" : "updated");
-        return updated;
+        if (updated is null)
+        {
+            // Unrestricted write reach with no version present (or a concurrent delete) → not found.
+            activity?.SetTag(ArazzoTelemetry.OutcomeTag, "missing");
+            return new CatalogUpdateResult(CatalogUpdateOutcome.NotFound, null);
+        }
+
+        activity?.SetTag(ArazzoTelemetry.OutcomeTag, "updated");
+        return new CatalogUpdateResult(CatalogUpdateOutcome.Updated, updated);
     }
 
     /// <inheritdoc/>
@@ -212,11 +227,19 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
 
         using ParsedJsonDocument<CatalogVersion>? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
 
-        // Absent, or outside the caller's write reach → reported as not found (non-disclosing, §14.2).
-        if (version is not { } v || !context.Admits(AccessVerb.Write, v.RootElement.SecurityTagsValue))
+        // Read-then-write reach on the single fetch (§14.2): absent or outside read reach → 404 (non-disclosing); the
+        // handler relies on this split, so it no longer pre-fetches the version itself.
+        if (version is not { } v || !context.Admits(AccessVerb.Read, v.RootElement.SecurityTagsValue))
         {
             activity?.SetTag(ArazzoTelemetry.OutcomeTag, "missing");
             return CatalogDeleteOutcome.NotFound;
+        }
+
+        // Readable but outside write reach → forbidden (the caller can already GET it, so this discloses nothing new).
+        if (!context.Admits(AccessVerb.Write, v.RootElement.SecurityTagsValue))
+        {
+            activity?.SetTag(ArazzoTelemetry.OutcomeTag, "forbidden");
+            return CatalogDeleteOutcome.Forbidden;
         }
 
         if (await this.IsReferencedAsync((string)v.RootElement.WorkflowId, cancellationToken).ConfigureAwait(false))
@@ -436,6 +459,34 @@ public sealed class WorkflowCatalogClient : IWorkflowCatalogClient
 
     // Whether a version is within the caller's reach for a verb (§14.2): unrestricted reach short-circuits without
     // a fetch; otherwise the version must exist and its security tags must satisfy the verb's reach.
+    // The write-reach verdict ResolveWriteReachAsync returns: writable, absent/unreadable (→404), or readable-not-writable (→403).
+    private enum WriteReach
+    {
+        Writable,
+        NotFound,
+        Forbidden,
+    }
+
+    // Resolves the write-reach outcome on a single fetch, distinguishing 404 (absent or outside read reach) from 403
+    // (readable but outside write reach) so callers need not pre-fetch the version themselves. Read is checked BEFORE
+    // write: a caller who cannot read the version must not learn it exists via a 403 (§14.2 non-disclosure).
+    private async ValueTask<WriteReach> ResolveWriteReachAsync(string baseWorkflowId, int versionNumber, AccessContext context, CancellationToken cancellationToken)
+    {
+        // Unrestricted write reach (e.g. the trusted system path) needs no inspection; existence falls to the mutation.
+        if (context.Reach(AccessVerb.Write) is null)
+        {
+            return WriteReach.Writable;
+        }
+
+        using ParsedJsonDocument<CatalogVersion>? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+        if (version is not { } v || !context.Admits(AccessVerb.Read, v.RootElement.SecurityTagsValue))
+        {
+            return WriteReach.NotFound;
+        }
+
+        return context.Admits(AccessVerb.Write, v.RootElement.SecurityTagsValue) ? WriteReach.Writable : WriteReach.Forbidden;
+    }
+
     private async ValueTask<bool> IsWithinReachAsync(string baseWorkflowId, int versionNumber, AccessContext context, AccessVerb verb, CancellationToken cancellationToken)
     {
         if (context.Reach(verb) is null)

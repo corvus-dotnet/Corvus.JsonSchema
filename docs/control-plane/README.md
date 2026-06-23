@@ -1,7 +1,7 @@
 # Arazzo Control Plane — REST API
 
 [`arazzo-control-plane.openapi.json`](arazzo-control-plane.openapi.json) is an **OpenAPI 3.2** description of a
-REST surface over the Arazzo durability control plane (`IWorkflowManagementClient`, plan §11). It is the
+REST surface over the Arazzo durability control plane (`ISecuredWorkflowManagement`, plan §11). It is the
 contract a CLI (`arazzo-runs`) and other clients are generated against; a server implementation maps each
 operation onto the corresponding management-client / catalog-store method over a chosen durability store.
 
@@ -13,7 +13,7 @@ server handlers (`src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server/Gen
 
 ### Runs
 
-| HTTP | operationId | `IWorkflowManagementClient` | Notes |
+| HTTP | operationId | `ISecuredWorkflowManagement` | Notes |
 |------|-------------|-----------------------------|-------|
 | `GET /runs` | `listRuns` | `ListAsync` | Visibility query (`status`, `workflowId`, `limit`, `pageToken`) over the wait/visibility index. Keyset pagination: a non-empty `nextPageToken` (and a `next` link) is returned when more pages remain. |
 | `GET /runs/{runId}` | `getRun` | `GetAsync` | Status, cursor, wait/fault detail, etag. `404` if unknown. |
