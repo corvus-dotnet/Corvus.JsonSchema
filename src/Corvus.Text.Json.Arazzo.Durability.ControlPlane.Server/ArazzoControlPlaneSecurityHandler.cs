@@ -41,7 +41,17 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     public async ValueTask<ListSecurityRulesResult> HandleListSecurityRulesAsync(ListSecurityRulesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         using PooledDocumentList<SecurityRuleDocument> rules = await this.store.ListRulesAsync(cancellationToken).ConfigureAwait(false);
-        return ListSecurityRulesResult.Ok(ToRuleList(rules), workspace);
+
+        // Each summary is a whole-document SecurityRuleSummary.From wrap (the congruent projection the single-document
+        // sites use), so it references its pooled document; the body is validated/serialized after this handler returns,
+        // so hand the documents to the workspace (it disposes them at request end; `using rules` then only returns the
+        // batch's backing array). The list body is built closure-free and consumed in place.
+        rules.TransferOwnershipTo(workspace);
+        IReadOnlyList<SecurityRuleDocument> ruleList = rules;
+        Models.SecurityRuleList.Source<IReadOnlyList<SecurityRuleDocument>> body = Models.SecurityRuleList.Build(
+            in ruleList,
+            rules: Models.SecurityRuleList.SecurityRuleSummaryArray.Build(in ruleList, BuildRuleSummaries));
+        return ListSecurityRulesResult.Ok(body, workspace);
     }
 
     /// <inheritdoc/>
@@ -251,47 +261,18 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         return true;
     }
 
-    private static Models.SecurityRuleSummary.Source ToRuleSource(SecurityRuleDocument r)
-        => new((ref Models.SecurityRuleSummary.Builder b) =>
+    // SecurityRuleSummary is congruent with the stored SecurityRuleDocument (identical fields — the single-document
+    // create/get/update sites already respond with the whole-document Models.SecurityRuleSummary.From wrap), so the list
+    // wraps each rule the same way: no field-copy, no per-field From() ternary. The build is closure-free (the rule list
+    // is threaded as the context) and inlined in HandleListSecurityRulesAsync (the list Build is ref-scoped to its `in`
+    // argument, so it cannot be returned from a helper).
+    private static void BuildRuleSummaries(in IReadOnlyList<SecurityRuleDocument> rules, ref Models.SecurityRuleList.SecurityRuleSummaryArray.Builder array)
+    {
+        foreach (SecurityRuleDocument r in rules)
         {
-            Models.JsonString.Source description = default;
-            if (r.DescriptionOrNull is { } d)
-            {
-                description = d;
-            }
-
-            Models.JsonString.Source lastUpdatedBy = default;
-            if (r.UpdatedByOrNull is { } u)
-            {
-                lastUpdatedBy = u;
-            }
-
-            Models.JsonDateTime.Source lastUpdatedAt = default;
-            if (r.UpdatedAtValue is { } ua)
-            {
-                lastUpdatedAt = ua;
-            }
-
-            b.Create(
-                createdAt: r.CreatedAtValue,
-                createdBy: r.CreatedByValue,
-                etag: r.EtagValue.Value ?? string.Empty,
-                expression: r.ExpressionValue,
-                name: r.NameValue,
-                description: description,
-                lastUpdatedAt: lastUpdatedAt,
-                lastUpdatedBy: lastUpdatedBy);
-        });
-
-    private static Models.SecurityRuleList.Source ToRuleList(IReadOnlyList<SecurityRuleDocument> rules)
-        => new((ref Models.SecurityRuleList.Builder b) => b.Create(
-            rules: new Models.SecurityRuleList.SecurityRuleSummaryArray.Source((ref Models.SecurityRuleList.SecurityRuleSummaryArray.Builder ab) =>
-            {
-                foreach (SecurityRuleDocument r in rules)
-                {
-                    ab.AddItem(ToRuleSource(r));
-                }
-            })));
+            array.AddItem(Models.SecurityRuleSummary.From(r));
+        }
+    }
 
     // The binding summary is a closure-free Build<TContext> projection: the binding itself is threaded as the context
     // (it is a struct : IJsonElement, span-capable) through the static BuildBindingSummary, so neither the single-document

@@ -1007,6 +1007,38 @@ ref-scoped to its `in` argument, so — like the credentials list — it cannot 
   catalog envelope writers (a different shape — unix-millis dates, table columns) and the CLI `string?`→`Source` settings
   bridge (no CTJ Undefined).
 
+### ✅ Whole-document `From()` list collapse — `ToRuleSource` + `ToViewSource` (the scan's two true smells)
+
+The scan (above) surfaced two field-copy list projections whose **single-document siblings already respond with a
+whole-document `From()` wrap** — the tell that the summary is *congruent* with the stored document and the list can wrap
+the same way (the binding genuinely can't — its summary hides `scopes`/`expiresAt`/`eligibleOnly`, so it stays
+field-copy). Both list bodies collapsed to per-item whole-document `From()` + ownership transfer, deleting the field-copy
+helper, its closures, and (for the access request) the `requestedScopes` array rebuild outright.
+
+- **`ArazzoControlPlaneSecurityHandler.ToRuleSource` → `Models.SecurityRuleSummary.From(r)`.** The create/get/update sites
+  already used the whole-document `SecurityRuleSummary.From`; `ToRuleList` now does the same per item, built closure-free
+  (the rule list threaded as the context through the static `BuildRuleSummaries`) and inlined in
+  `HandleListSecurityRulesAsync` with `rules.TransferOwnershipTo(workspace)`.
+- **`ArazzoControlPlaneAccessRequestsHandler.ToViewSource` → `Models.AccessRequestView.From(request)`.** The single-document
+  `ToView` already wrapped the congruent view; the list field-copied only because of a **stale comment** asserting "a
+  whole-document `From()` wrap cannot be used here" — true under the *old* "batch disposed at handler return" assumption,
+  invalidated by the ownership-transfer pattern. Collapsed to the whole-document wrap, closure-free
+  (`BuildAccessRequestViews`) + inlined with `list.TransferOwnershipTo(workspace)`; the 8 optional `XxxOrNull`/`XxxValue`
+  ternaries (two epoch-risk dates) and the scopes rebuild are gone.
+- **Measured** (the existing per-item projection benchmarks, which isolate exactly the field-copy→`From()` delta each list
+  now applies per item): `AccessRequestViewProjectionBenchmarks` `Materialize_fieldByField` **664 B** → `ElementWrap_From`
+  **0 B** (−100%, ~3.6× faster); `SecurityRuleSummaryProjectionBenchmarks` **264 B** → **0 B** (−100%, ~2.9× faster). The
+  list saves that **per item** (× page size) **plus** the per-item/array/list closures the collapse removes — strictly
+  larger than the credentials/binding closure-only refactors, which couldn't collapse (non-congruent summaries).
+- **Verified.** `ControlPlaneAccessRequestsApiTests` + `AccessRequestApprovalServiceTests` + `ControlPlaneSecurityApiTests`
+  + `ControlPlaneRowSecurityTests` **34/34**; slnx build **0 Warning(s), 0 Error(s)**. **Rows done.**
+- **Process.** Why the scan, not the original Part B sweep, caught these — and the skill/process fixes — is recorded in
+  the retrospective (skills `corvus-ctj-handler-implementation` §"Response projection decision order" + the protocol's
+  up-front anti-pattern sweep). The root causes: the closures were *deferred* in FIX #1 to keep a "clean" before→after and
+  never reticketed; the `XxxOrNull`-ternary was never a named/grepped pattern; and the collapse was mis-ruled-out by a
+  stale "cannot use `From` here" comment trusted instead of re-derived ([[verify-before-declaring-impossible]],
+  [[dont-anchor-on-existing-bad-code]]).
+
 ## Cross-references
 
 - Skills: `corvus-typed-model-construction`, `corvus-builder-context-threading`,
