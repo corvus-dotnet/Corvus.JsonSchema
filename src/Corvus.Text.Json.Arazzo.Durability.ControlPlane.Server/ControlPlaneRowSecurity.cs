@@ -64,11 +64,13 @@ public abstract class ControlPlaneRowSecurityPolicy
 
     /// <summary>
     /// Validates user-supplied security tags before a row is created (e.g. rejecting the reserved internal prefix
-    /// via <see cref="SecurityShell.ValidateUserTags"/>). The default accepts everything.
+    /// via <see cref="SecurityShell.ValidateUserTags(SecurityTagSet)"/>). The default accepts everything.
     /// </summary>
-    /// <param name="userTags">The security tags supplied through the user-facing API.</param>
+    /// <param name="userTags">The security tags supplied through the user-facing API, as a (typically non-owning)
+    /// <see cref="SecurityTagSet"/> over the request body — string-free so the default (and the prefix-rejection
+    /// validator) need not materialize a tag list.</param>
     /// <exception cref="ArgumentException">A user tag is not permitted (e.g. it uses the reserved internal prefix).</exception>
-    public virtual void ValidateUserTags(IReadOnlyList<SecurityTag> userTags)
+    public virtual void ValidateUserTags(SecurityTagSet userTags)
     {
     }
 
@@ -287,7 +289,7 @@ internal sealed class ControlPlaneAccess
     /// <summary>Validates user-supplied security tags for the current principal (no-op when unscoped).</summary>
     /// <param name="userTags">The user-supplied security tags.</param>
     /// <exception cref="ArgumentException">A user tag is not permitted.</exception>
-    public void ValidateUserTags(IReadOnlyList<SecurityTag> userTags) => this.policy?.ValidateUserTags(userTags);
+    public void ValidateUserTags(SecurityTagSet userTags) => this.policy?.ValidateUserTags(userTags);
 
     /// <summary>Maps source credential usage grants to internal usage tags (empty when unscoped).</summary>
     /// <param name="grants">The operator-supplied usage grants.</param>

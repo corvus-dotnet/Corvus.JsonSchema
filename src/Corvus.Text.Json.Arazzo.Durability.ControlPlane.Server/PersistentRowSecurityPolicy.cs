@@ -205,7 +205,7 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
         => AmbientIdentityStamp.Apply(this.ambient, base.ResolveGranteeIdentity(kind, value));
 
     /// <inheritdoc/>
-    public override void ValidateUserTags(IReadOnlyList<SecurityTag> userTags) => this.shell.ValidateUserTags(userTags);
+    public override void ValidateUserTags(SecurityTagSet userTags) => this.shell.ValidateUserTags(userTags);
 
     private IReadOnlyDictionary<string, IReadOnlyList<string>> CollectClaims(ClaimsPrincipal? principal)
     {

@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Text;
 using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
@@ -102,11 +103,17 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         {
             // managementTags = the principal's deployment-internal tenant tag (always stamped, so the owner keeps
             // management) PLUS any operator-supplied management labels (validated against the reserved internal prefix).
-            IReadOnlyList<SecurityTag> userManagement = ReadTags(body.ManagementTags);
+            // The user-supplied management tags are validated against the reserved prefix string-free — a non-owning
+            // SecurityTagSet view over the request body's array (no ReadTags list). The binding's management set is then
+            // built directly: the deployment-internal tags (string-sourced from the policy) plus the user tags (UTF-8
+            // spans), written straight into the pooled buffer — no merged List, no per-tag managed string. The resulting
+            // SecurityTagSet is needed materialized for the Admits write-reach check below (and reused for the draft).
+            SecurityTagSet userManagement = body.ManagementTags.IsNotUndefined()
+                ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(body.ManagementTags).Memory)
+                : SecurityTagSet.Empty;
             this.access.ValidateUserTags(userManagement);
-            var management = new List<SecurityTag>(this.access.InternalTags());
-            management.AddRange(userManagement);
-            managementTags = SecurityTagSet.FromTags(management);
+            var managementState = new ManagementTagsState(this.access.InternalTags(), userManagement);
+            managementTags = SecurityTagSet.Build(in managementState, WriteManagementTags);
 
             // usageTags are derived from the operator's usage GRANTS, which the deployment maps to UNFORGEABLE internal
             // identity tags (e.g. sys:workflow=nightly-reconcile) — never free-form labels, so usage cannot be
@@ -264,18 +271,45 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
             ? SourceCredentialKindExtensions.Parse((string)authKind)
             : throw new ArgumentException("An 'authKind' is required.");
 
-    private static List<SecurityTag> ReadTags(Models.CredentialBindingWrite.CredentialSecurityTagArray tags)
+    // Writes the binding's management tags straight into the pooled buffer (the bytes-to-bytes write leaf, mirroring the
+    // usage-grant BuildUsageGrants below): the deployment-internal tags first (string-sourced from the policy — the short
+    // key is encoded to a stack buffer, the value written via the string overload), then the operator's user tags as
+    // unescaped UTF-8 spans straight off the request body. No managed-string tag list, no merged List.
+    private static void WriteManagementTags(ref IdentityBuilder builder, in ManagementTagsState state)
     {
-        var list = new List<SecurityTag>();
-        if (tags.IsNotUndefined())
+        Span<byte> keyBuffer = stackalloc byte[256];
+        foreach (SecurityTag tag in state.InternalTags)
         {
-            foreach (Models.CredentialSecurityTag tag in tags.EnumerateArray())
+            if (Encoding.UTF8.GetMaxByteCount(tag.Key.Length) <= keyBuffer.Length)
             {
-                list.Add(new SecurityTag((string)tag.Key, (string)tag.Value));
+                int written = Encoding.UTF8.GetBytes(tag.Key, keyBuffer);
+                builder.Add(keyBuffer[..written], tag.Value);
+            }
+            else
+            {
+                builder.Add(Encoding.UTF8.GetBytes(tag.Key), tag.Value);
             }
         }
 
-        return list;
+        SecurityTagSet.Utf8Enumerator e = state.UserTags.EnumerateUtf8();
+        try
+        {
+            while (e.MoveNext())
+            {
+                builder.Add(e.CurrentKey, e.CurrentValue);
+            }
+        }
+        finally
+        {
+            e.Dispose();
+        }
+    }
+
+    private readonly ref struct ManagementTagsState(IReadOnlyList<SecurityTag> internalTags, SecurityTagSet userTags)
+    {
+        public IReadOnlyList<SecurityTag> InternalTags { get; } = internalTags;
+
+        public SecurityTagSet UserTags { get; } = userTags;
     }
 
     // Builds the binding's usage-identity tags from the operator's usage grants, reading each grant's {dimension, value}
