@@ -157,9 +157,9 @@ that exists today (a starting point to be re-baselined, **not** evidence of comp
 | `PUT /security/rules/{n}` | UpdateRule → **UpdateRuleAsync** | W | draft | `SecurityRuleStoreBenchmarks` (has baseline arm) | re-baseline e2e | ✅ write-seam genuine (draft); response now `SecurityRuleSummary.From()` zero-copy wrap (FIX #2, Part D) |
 | `DELETE /security/rules/{n}` | DeleteRule → DeleteRuleAsync | W | direct | — | — | ➖ |
 | `GET /security/bindings` | ListBindings → ListBindingsAsync | R | `ToBindingSource` per binding | `RowSecurityResolveBenchmarks` (resolve) | confirm projection | ✅ per-field `JsonString.From` + `VerbGrant.From` bytes bridge + `TransferOwnershipTo`; scopes/expiresAt/eligibleOnly non-leak preserved (FIX #3, Part D) |
-| `POST /security/bindings` | CreateBinding → **AddBindingAsync** | W | `ReadBinding` → `List<string>` rule names; `Draft()` | `SecurityBindingStoreBenchmarks` (no baseline arm) | add baseline arm; measure | ⬜ **FIX #4** — `ReadBinding`→`List<string>` → `SecurityBindingDocument.From(Body)` (rule-name array bytes-to-bytes); store `BuildNew` defaults missing verbs to `None`; Part D audit |
+| `POST /security/bindings` | CreateBinding → **AddBindingAsync** | W | `ReadBinding` → `List<string>` rule names; `Draft()` | `SecurityBindingReadBenchmarks` | add baseline arm; measure | ✅ `ReadBinding` → `SecurityBindingDocument.From(body)` free zero-copy view (no list, no Rules rebuild, no pooled draft); store defaults omitted verbs→None/order→0 (FIX #4, Part D; 1184→0 B, ~86×) |
 | `GET /security/bindings/{id}` | GetBinding → GetBindingAsync | R | `ToBindingSource` | — | confirm | ✅ shares `ToBindingSource` bytes bridge + `TakeOwnership` (FIX #3, Part D) |
-| `PUT /security/bindings/{id}` | UpdateBinding → **UpdateBindingAsync** | W | draft | `SecurityBindingStoreBenchmarks` (no baseline arm) | add baseline arm; measure | ⬜ **FIX #4** — shares `ReadBinding`→`From(Body)`; Part D audit |
+| `PUT /security/bindings/{id}` | UpdateBinding → **UpdateBindingAsync** | W | draft | `SecurityBindingReadBenchmarks` | add baseline arm; measure | ✅ shares `ReadBinding`→`From(body)`; `ApplyUpdate` defaults omitted verbs→None/order→0 (FIX #4, Part D) |
 | `DELETE /security/bindings/{id}` | DeleteBinding → DeleteBindingAsync | W | direct | — | — | ➖ |
 
 ### Access requests — `ArazzoControlPlaneAccessRequestsHandler` → `IAccessRequestApprovalService` / `IAccessRequestStore`
@@ -720,7 +720,9 @@ seam** still to convert. Verdict: **29 genuine, 6 fixes, 2 sub-floor caveats.** 
 4. **Security `ReadBinding` → `List<string>`** (`POST /security/bindings`, `PUT /security/bindings/{id}`).
    The handler reads the request body's rule names into a `List<string>` before the store `Draft()`. Fix =
    `SecurityBindingDocument.From(parameters.Body)` carrying the rule-name array bytes-to-bytes; the store's
-   `BuildNew` must default the missing verb grants to `None`.
+   `BuildNew` must default the missing verb grants to `None`. **DONE — see ✅ FIX #4 (Part D)**: `From(body)` turned out
+   to be a *free zero-copy view* (not a pooled draft) and the store's selective field-reading drops any extra body props,
+   so no extra-prop leak; `BuildNew`+`ApplyUpdate` default omitted verbs→None/order→0; 1184→0 B (~86× faster).
 5. **Access-requests Submit `List<string>` scopes** (`POST /accessRequests`). The submit path materialises
    `requestedScopes` into a `List<string>` before `AccessRequest.Draft()`. Fix = an `AccessRequest.Draft()`
    overload carrying the `requestedScopes` CTJ array bytes-to-bytes. **DONE — see ✅ FIX #5 (Part D)** (also carries
@@ -844,6 +846,33 @@ via `(string)` before `AccessRequest.Draft` rebuilt them — a bytes→string→
   irreducible seam the draft carries); the eliminated 368 B = the `List<string>` + scope strings + `baseWorkflowId`/`reason`.
 - **Verified.** `ControlPlaneAccessRequestsApiTests` 5/5; Sqlite `AccessRequestStore` conformance green; slnx build
   **0 Warning(s), 0 Error(s)**. **Row done.**
+
+### ✅ FIX #4 — Security binding write seam: `ReadBinding` → `From(body)` (1184→0 B)
+
+The fifth Part B fix, and the largest per-op win. `ReadBinding` converted each verb grant `Models.VerbGrant →
+VerbGrantInfo` (a `List<string>` of rule names + `VerbGrantInfo.Rules` rebuild through a pooled workspace/builder/clone),
+realised the scalars via `(string)`, and built a fresh pooled draft via `SecurityBindingDocument.Draft`. Replaced the whole
+thing with `SecurityBindingDocument.From(body)` — a **free, zero-copy element view** over the already-parsed request body
+(no grant rebuild, no per-field strings, **no pooled draft document at all**); the store reads the view directly.
+
+- **Store defaulting (correctness).** The write body's `read`/`write`/`purge`/`order` are optional but the stored document
+  requires them, so `BuildNew`/`ApplyUpdate` now default an omitted verb grant to `None` and an omitted order to 0 — the
+  exact semantics the handler's grant conversion used to apply, moved into the store.
+- **No extra-property leak.** `BuildNew`/`ApplyUpdate` build the stored document field-by-field from the *known*
+  accessors (`CreateBuilder(claimType:…, read:…, …)` / `SetX(draft.X)`), not by copying the draft wholesale — so any
+  extra top-level property a (permissive `additionalProperties`) write body might carry is never read, never stored.
+  Grant-*internal* extras are carried verbatim (inherent to any bytes-to-bytes carry, including the existing credential/
+  access-request draft seams) and are harmless — grant enforcement uses only `unrestricted`/`ruleNames`.
+- **Lifetime:** `From(body)` views `parameters.Body` (alive for the request); the store reads it synchronously in
+  `BuildNew`/`ApplyUpdate` + serialize (inside `AddBindingAsync`/`UpdateBindingAsync`), so there is no pooled draft and
+  nothing to dispose — `ReadBinding`'s out type became `SecurityBindingDocument` and the handler's `using (draft)`
+  wrappers were removed. The dead `ToGrant`/`OptionalString` helpers and the `DurabilityVerbGrant` alias were deleted.
+- **Measured** (`SecurityBindingReadBenchmarks`, parsed body → draft, rule-named read grant). `ReadBinding_FromGrants`
+  (baseline) **1184 B / 3,781 ns** → `ReadBinding_FromBody` **0 B / 44 ns** (−1184 B, **−100%**, ~86× faster). The 1184 B
+  = the `List<string>` + rule-name strings + the `VerbGrantInfo.Rules` workspace/builder/clone + claimType/claimValue/
+  description strings + the pooled draft document — all gone (the body is already parsed; `From` is a pure view).
+- **Verified.** `ControlPlaneSecurityApiTests` 5/5 (binding create/update incl. omitted grants); Sqlite
+  `SecurityPolicyStore` conformance 7/7; slnx build **0 Warning(s), 0 Error(s)**. **Row done.**
 
 ## Cross-references
 
