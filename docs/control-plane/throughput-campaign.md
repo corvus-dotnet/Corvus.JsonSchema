@@ -17,13 +17,13 @@ tiny payload), preserving optimistic concurrency and the document-as-source-of-t
 
 | Op | Current shape | Frequency | Verdict |
 |---|---|---|---|
-| **Runner heartbeat** (`IRunnerRegistry.HeartbeatAsync`) | `SELECT doc` → `RunnerRegistration.WriteWithLastSeenAt` (rewrite the **whole** registration) → `UPDATE doc` — **2 round-trips + full-payload rewrite** per heartbeat (the `last_seen_at` column is already updated in the same `UPDATE`; the JSON `doc` mirrors `lastSeenAt`, which is why it is re-serialized) | every runner × heartbeat interval — **highest** | **PRIMARY candidate** |
-| **Checkpoint status/etag bump** (`IWorkflowStateStore.SaveAsync` for status-only transitions, e.g. cancel/resume via `WorkflowCheckpointSerializer.RewriteStatus`) | read → `RewriteStatus` (full rewritten doc) → write whole checkpoint (+ child-table security-tag delete/reinsert on column backends) | per state transition — **medium** | **secondary** (the checkpoint genuinely changes on a normal `SaveAsync`; only status-only bumps are RMW-avoidable, and the child-table rewrite is a separate cost) |
+| **Runner heartbeat** (`IRunnerRegistry.HeartbeatAsync`) | `SELECT doc` → `RunnerRegistration.WriteWithLastSeenAt` (rewrite the **whole** registration) → `UPDATE doc` — **2 round-trips + full-payload rewrite** per heartbeat (the `last_seen_at` column is already updated in the same `UPDATE`; the JSON `doc` mirrors `lastSeenAt`, which is why it is re-serialized) | every runner × heartbeat interval — **highest** | ✅ **DONE** — see closeout |
+| **Checkpoint status bump** (`SecuredWorkflowManagement.CancelAsync` → `RewriteStatus` → `SaveAsync`) | `AcquireLease` → `LoadAsync` → `RewriteStatus` (full rewritten doc) → `SaveAsync` (whole checkpoint + index columns + child-table security-tag rewrite) → `ReleaseLease` — a CAS with a terminal-status guard | operator-initiated cancel — **low** | ⏭️ **assessed, not pursued** (see below) |
 | **Lease acquire / renew / release** (`AcquireLeaseAsync` / `ReleaseLeaseAsync`) | **already** a single conditional `UPSERT` CAS (acquire/renew) / single `DELETE` (release) — 1 round-trip, no read | every dispatch/worker poll | **NOT a candidate — already native/optimal** |
 | Normal `SaveAsync` (checkpoint advances) | full checkpoint write (the run state genuinely changed) | per step | **genuine** — the document changed; not RMW-avoidable |
 
-So the campaign is **narrow**: the runner heartbeat is the clear win; the checkpoint status-bump is a smaller
-secondary; the lease is already optimal and the general checkpoint write is genuine.
+So the campaign was **narrow**: the runner heartbeat was the clear win (done); the lease is already optimal, the
+general checkpoint write is genuine, and the checkpoint status bump (cancel) was assessed and not pursued.
 
 ## Per-backend native partial-update mechanism (for the heartbeat row)
 
@@ -224,34 +224,41 @@ non-candidates (blob/whole-value storage or embedded/in-process). Net per-backen
 whole-doc→params payload** — network-bound, so it materializes against remote production stores (local-container
 latency only showed it cleanly for the lightest backend, Postgres).
 
-## Kickoff prompt (paste into a fresh session)
+## Checkpoint status bump (cancel) — assessed, not pursued
 
-> Resume the control-plane **throughput** campaign in the worktree
-> `/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/arazzo-workflow-engine-plan` (branch
-> `worktree-arazzo-workflow-engine-plan`; never `cd` to the repo root). **Read first:**
-> `docs/control-plane/throughput-campaign.md` (this scope + the per-row protocol) and the memory
-> `throughput-campaign-scoped`. Then read the skills `corvus-benchmarks` and `corvus-build-and-test`.
->
-> This is a **throughput / latency** axis (round-trips, payload bytes, p50/p99 latency) — **NOT** allocation.
-> Measure with a **container-backed latency benchmark** over a live container via the pre-tunneled podman
-> socket (`DOCKER_HOST=unix:///tmp/podman-arazzo.sock`, `TESTCONTAINERS_RYUK_DISABLED=true`; memory
-> `broker-integration-tests-wsl-podman`) — **do NOT use `MemoryDiagnoser`**. There is no latency-benchmark
-> harness yet; standing one up (a BenchmarkDotNet bench, or a round-trip-count + payload-size proxy in a
-> conformance-style test) is part of the first row.
->
-> **First row: runner heartbeat, Postgres.** Follow the per-row protocol literally:
-> 1. **Ground** — read `PostgresRunnerRegistry.HeartbeatAsync` (currently `SELECT doc` →
->    `RunnerRegistration.WriteWithLastSeenAt` whole-doc rewrite → `UPDATE doc`) and its conformance test.
-> 2. **Baseline** — measure + paste the current round-trips (2), payload, and latency.
-> 3. **Ledger** — state the invariants the change must preserve: the heartbeat's last-writer semantics, and the
->    JSON `doc`'s `lastSeenAt` staying **mirror-consistent** with the `last_seen_at` column after the update.
-> 4. **STOP for go-ahead** before changing any code.
-> 5. **Change** — the single native partial update
->    (`UPDATE runner_registrations SET last_seen_at=@at, doc=jsonb_set(doc,'{lastSeenAt}',to_jsonb(@at)) WHERE runner_id=@id`).
-> 6. **After** — re-measure before→after; **container-verify the Postgres runner conformance** (the persisted
->    state + read-back must be identical). Then fan out to the other relational + Cosmos/Mongo/Azure backends
->    (NATS KV is the genuine whole-value exception — leave it RMW). Commit only when asked; one op × backend at
->    a time; warning-free `dotnet build Corvus.Text.Json.slnx` before every commit.
+The grounded reality narrowed the secondary candidate: **only `SecuredWorkflowManagement.CancelAsync` is a
+status-only bump.** "Resume" is *not* — it re-enters the executor (`WorkflowRun.ResumeAsync`) or serializes a whole
+mutated `Faulted` checkpoint (working state changes), so it is a genuine full save. The other `SaveAsync` callers
+are normal execution saves.
+
+A native cancel would have to collapse `LoadAsync` + `SaveAsync` into a **new `IWorkflowStateStore` method** — a
+conditional `UPDATE` setting the `status` column + `updated_at`, patching the doc's `status` and dropping `wait`,
+`WHERE id=@id AND etag=@etag AND status NOT IN (terminal)`, skipping the unchanged child security-tags table, and
+discriminating not-found / conflict / already-terminal / success from the result — implemented across **9
+backends**, and (same feasibility limit as the heartbeat) only on the 4 queryable-JSON backends.
+
+**Decision: not pursued.** Ranked by fix-shape/blast-radius/risk (not frequency): a large, higher-risk new
+9-backend CAS seam for a *partial* win (saves 1 of ~4 round-trips — the lease round-trips remain) on a
+**low-frequency, latency-insensitive operator action**. Poor cost/benefit on the throughput axis. (If it is ever
+revisited, the lease around cancel could likely be dropped in favour of pure CAS — a separate locking-model change.)
+
+## Campaign status — WRAPPED
+
+The throughput campaign is **complete**. The one genuine high-frequency win — the runner heartbeat — was delivered
+across the four backends that can do a safe server-side partial update (Postgres, SqlServer, MySql, Cosmos: 2→1
+round-trips, whole-doc→params payload), with the rest documented as non-candidates. The remaining triaged ops are
+either already optimal (lease), genuine full writes (normal checkpoint save), or a poor-cost/benefit secondary
+(cancel, above). No further rows.
+
+## Per-row protocol (retained for reference)
+
+If a future throughput row is opened (e.g. revisiting the cancel locking model, or a new high-frequency RMW op),
+follow the protocol that worked here: **ground** the op + its conformance test → **baseline** the round-trips +
+payload (latency secondary; the local harness under-measures round-trip wins) → **ledger** the invariants
+(optimistic-concurrency CAS + doc/column mirror consistency) → **STOP for go-ahead** → **change** (single native
+partial update, only where the backend stores the doc as queryable JSON) → **verify** the backend's container
+conformance (and an explicit **non-ASCII probe** for any in-place JSON edit — the conformance suites are ASCII-only)
+→ **document + commit**. One op × one backend at a time.
 
 ## Cross-references
 
