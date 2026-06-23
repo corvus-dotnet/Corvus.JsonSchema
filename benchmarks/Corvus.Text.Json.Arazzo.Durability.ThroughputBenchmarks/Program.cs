@@ -7,7 +7,9 @@ using System.Diagnostics;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Postgres;
+using Corvus.Text.Json.Arazzo.Durability.SqlServer;
 using Npgsql;
+using Testcontainers.MsSql;
 using Testcontainers.PostgreSql;
 
 // A container-backed *latency* harness for the control-plane throughput campaign (see
@@ -26,21 +28,41 @@ switch (scenario)
     case "postgres-heartbeat":
         await PostgresHeartbeatAsync(warmup, measure);
         break;
+    case "sqlserver-heartbeat":
+        await SqlServerHeartbeatAsync(warmup, measure);
+        break;
     default:
-        await Console.Error.WriteLineAsync($"Unknown scenario '{scenario}'. Known: postgres-heartbeat.");
+        await Console.Error.WriteLineAsync(
+            $"Unknown scenario '{scenario}'. Known: postgres-heartbeat, sqlserver-heartbeat.");
         Environment.ExitCode = 1;
         break;
 }
 
 static async Task PostgresHeartbeatAsync(int warmup, int measure)
 {
-    Console.WriteLine("== Postgres runner heartbeat (RMW) ==");
     await using PostgreSqlContainer container = new PostgreSqlBuilder().WithImage("postgres:16-alpine").Build();
     await container.StartAsync();
     await using NpgsqlDataSource dataSource = NpgsqlDataSource.Create(container.GetConnectionString());
     await PostgresRunnerRegistry.PrepareAsync(dataSource);
     await using PostgresRunnerRegistry registry = await PostgresRunnerRegistry.ConnectAsync(dataSource);
+    await MeasureHeartbeatAsync("Postgres runner heartbeat", registry, warmup, measure);
+}
 
+static async Task SqlServerHeartbeatAsync(int warmup, int measure)
+{
+    await using MsSqlContainer container = new MsSqlBuilder().Build();
+    await container.StartAsync();
+    string connectionString = container.GetConnectionString();
+    await SqlServerRunnerRegistry.PrepareAsync(connectionString);
+    await using SqlServerRunnerRegistry registry = await SqlServerRunnerRegistry.ConnectAsync(connectionString);
+    await MeasureHeartbeatAsync("SqlServer runner heartbeat", registry, warmup, measure);
+}
+
+// Registers one representative runner, then times `measure` heartbeats after `warmup` untimed ones, reporting
+// the doc size and the latency distribution. The op under test is the backend's IRunnerRegistry.HeartbeatAsync.
+static async Task MeasureHeartbeatAsync(string title, IRunnerRegistry registry, int warmup, int measure)
+{
+    Console.WriteLine($"== {title} ==");
     RunnerRegistration reg = BuildRegistration("runner-1");
     await registry.RegisterAsync(reg, default);
 

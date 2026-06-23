@@ -2,6 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Globalization;
+using System.Text;
+
 using Corvus.Text.Json;
 
 using Microsoft.Data.SqlClient;
@@ -10,8 +13,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.SqlServer;
 
 /// <summary>
 /// A SQL Server-backed <see cref="IRunnerRegistry"/>. Each <see cref="RunnerRegistration"/> is stored as its
-/// JSON document in a <c>VARBINARY(MAX)</c> column keyed by runner id, alongside a queryable <c>last_seen_at</c>
-/// column used for pruning. It uses Microsoft.Data.SqlClient directly (no ORM, no migrations runtime), so the
+/// JSON document in a UTF-8 <c>VARCHAR(MAX)</c> column (a <c>_UTF8</c> collation) keyed by runner id, alongside a
+/// queryable <c>last_seen_at</c> column used for pruning. The UTF-8 collation lets the heartbeat patch the
+/// document's mirrored <c>lastSeenAt</c> field server-side with <c>JSON_MODIFY</c> (a single statement, no read),
+/// while reads stay bytes-native via <c>CAST(doc AS VARBINARY(MAX))</c>. It uses Microsoft.Data.SqlClient directly
+/// (no ORM, no migrations runtime), so the
 /// same code covers SQL Server, Azure SQL Database and Azure SQL Managed Instance.
 /// </summary>
 /// <remarks>
@@ -27,7 +33,7 @@ public sealed class SqlServerRunnerRegistry : IRunnerRegistry, IAsyncDisposable
             CREATE TABLE runner_registrations (
                 runner_id NVARCHAR(450) NOT NULL,
                 last_seen_at BIGINT NOT NULL,
-                doc VARBINARY(MAX) NOT NULL,
+                doc VARCHAR(MAX) COLLATE Latin1_General_100_CI_AS_SC_UTF8 NOT NULL,
                 CONSTRAINT PK_runner_registrations PRIMARY KEY (runner_id)
             );
             CREATE INDEX IX_runner_registrations_last_seen ON runner_registrations (last_seen_at);
@@ -92,7 +98,13 @@ public sealed class SqlServerRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     public async ValueTask RegisterAsync(RunnerRegistration registration, CancellationToken cancellationToken)
     {
         string runnerId = registration.RunnerIdValue;
-        byte[] doc = PersistedJson.ToArray(registration, static (Utf8JsonWriter writer, in RunnerRegistration r) => r.WriteTo(writer));
+
+        // The doc column is a UTF-8 VARCHAR; SqlClient transmits .NET strings as NVARCHAR, which the server converts
+        // losslessly into the UTF-8 column. (Sending the UTF-8 bytes as a VARBINARY/VARCHAR param instead would be
+        // mis-decoded through the connection code page, corrupting non-ASCII.) Serialize once, then decode to a
+        // string for the parameter — a register-time (cold-path) cost; reads stay bytes-native.
+        byte[] docUtf8 = PersistedJson.ToArray(registration, static (Utf8JsonWriter writer, in RunnerRegistration r) => r.WriteTo(writer));
+        string doc = Encoding.UTF8.GetString(docUtf8);
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using SqlTransaction transaction = (SqlTransaction)await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
 
@@ -111,7 +123,7 @@ public sealed class SqlServerRunnerRegistry : IRunnerRegistry, IAsyncDisposable
                 """;
             upsert.Parameters.AddWithValue("@runnerId", runnerId);
             upsert.Parameters.AddWithValue("@lastSeenAt", registration.LastSeenAtValue.ToUnixTimeMilliseconds());
-            upsert.Parameters.AddWithValue("@doc", doc);
+            upsert.Parameters.Add(new SqlParameter("@doc", System.Data.SqlDbType.NVarChar, -1) { Value = doc });
             await upsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
@@ -156,31 +168,24 @@ public sealed class SqlServerRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         ArgumentNullException.ThrowIfNull(runnerId);
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-        byte[]? existing;
-        await using (SqlCommand select = connection.CreateCommand())
-        {
-            select.CommandText = "SELECT doc FROM runner_registrations WHERE runner_id = @runnerId;";
-            select.Parameters.AddWithValue("@runnerId", runnerId);
-            existing = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) as byte[];
-        }
-
-        if (existing is null)
-        {
-            return false;
-        }
-
-        byte[] doc = PersistedJson.ToArray((existing, at), static (Utf8JsonWriter writer, in (byte[] Existing, DateTimeOffset At) ctx) =>
-        {
-            using ParsedJsonDocument<RunnerRegistration> parsed = ParsedJsonDocument<RunnerRegistration>.Parse(ctx.Existing);
-            parsed.RootElement.WriteWithLastSeenAt(writer, ctx.At);
-        });
+        // A heartbeat advances only last_seen_at and the document's mirrored lastSeenAt. Rather than read the whole
+        // registration back and rewrite it client-side (two round-trips plus a full-payload rewrite), patch both in
+        // one statement: JSON_MODIFY surgically replaces the one field server-side on the UTF-8 doc column (the rest
+        // of the document, including key order, is preserved). The ISO-8601 string is supplied by the caller (the
+        // round-trip "O" form the generated model emits and parses). The update is unconditional (last-writer-wins,
+        // the intended heartbeat semantics); a zero row count means the runner is unknown.
         await using SqlCommand update = connection.CreateCommand();
-        update.CommandText = "UPDATE runner_registrations SET last_seen_at = @lastSeenAt, doc = @doc WHERE runner_id = @runnerId;";
+        update.CommandText =
+            """
+            UPDATE runner_registrations
+            SET last_seen_at = @lastSeenAt, doc = JSON_MODIFY(doc, '$.lastSeenAt', @lastSeenIso)
+            WHERE runner_id = @runnerId;
+            """;
         update.Parameters.AddWithValue("@runnerId", runnerId);
         update.Parameters.AddWithValue("@lastSeenAt", at.ToUnixTimeMilliseconds());
-        update.Parameters.AddWithValue("@doc", doc);
-        await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        return true;
+        update.Parameters.AddWithValue("@lastSeenIso", at.ToString("O", CultureInfo.InvariantCulture));
+        int affected = await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        return affected > 0;
     }
 
     /// <inheritdoc/>
@@ -188,7 +193,10 @@ public sealed class SqlServerRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     {
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using SqlCommand command = connection.CreateCommand();
-        command.CommandText = "SELECT doc FROM runner_registrations;";
+
+        // Read the UTF-8 doc column back as raw bytes (CAST to VARBINARY) so the deserialize stays bytes-native —
+        // no nvarchar string materialization on the read path.
+        command.CommandText = "SELECT CAST(doc AS VARBINARY(MAX)) FROM runner_registrations;";
         var result = new List<RunnerRegistration>();
         await using SqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
