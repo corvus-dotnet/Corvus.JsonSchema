@@ -1154,6 +1154,37 @@ transient — the response document bytes are the only genuine leaf.
   allocation class is exhausted; the remaining open lever is the management-tag `List<SecurityTag>` *write/resolution*
   seam (the inbound side, distinct from this outbound projection).**
 
+### ✅ Credential write — management-tag resolution seam (validation + direct build; the `SecurityTagSet`-as-intermediate critique)
+
+The last open lever. The credential **create** path resolved management tags as: `ReadTags(body.ManagementTags)` (a
+`List<SecurityTag>` + 2 strings/tag) → `ValidateUserTags(userManagement)` → `new List<SecurityTag>(InternalTags())` +
+`AddRange` → `SecurityTagSet.FromTags(merged)`. Measured breakdown (`ManagementTagWriteBenchmarks`, 2 user tags + 1
+internal, per request): **648 B = ReadTags 304 + merged List 144 + FromTags byte[] 200.**
+
+The key insight (challenging "the byte[] is genuine because a `SecurityTagSet` carries it") is that the byte[] is only
+genuine if a *downstream consumer needs a materialized set* — so trace the consumers:
+- **`FromTags` byte[] (200 B)** — genuine, but *because `Admits(AccessVerb.Write, SecurityTagSet)` consumes the management
+  set* (the write-reach guard) **and** it's reused for the draft write — dual-use, not a pure `SecurityTagSet`-shape
+  artifact. Kept. (Reshaping `Admits` is out of scope: `AccessContext` core, whole-row-security blast radius.)
+- **`ReadTags` 304 B** — looked load-bearing (feeds `ValidateUserTags`), but the production validator
+  (`PersistentRowSecurityPolicy` → `SecurityShell.ValidateUserTags`) is **per-tag prefix rejection**, not cross-tag — so
+  it is cleanly span-able with no semantic loss. Reshaped the seam: `ValidateUserTags(IReadOnlyList<SecurityTag>)` →
+  **`ValidateUserTags(SecurityTagSet)`** (base + facade + `PersistentRowSecurityPolicy`), with a new
+  `SecurityShell.ValidateUserTags(SecurityTagSet)` + `IsInternal(ReadOnlySpan<byte>)` that span-enumerates (cached UTF-8
+  prefix; the offending key string realized only on the throw path). The handler validates a **non-owning** view
+  (`FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(body.ManagementTags).Memory)`) — no `ReadTags` list.
+- **merged List 144 B** — gone: the management set is built directly via `SecurityTagSet.Build` (a `WriteManagementTags`
+  write-action threading the policy's `InternalTags` — short keys encoded to a stack buffer — plus the user tags' UTF-8
+  spans), the same bytes-to-bytes shape the usage-grant write already used.
+- **usageTags byte[] (~200 B, a separate `SecurityTagSet.Build`)** — a **pure `Draft` intermediate** (no `Admits`
+  consumer); removable via a `Draft` usageTags **write-action**. **Deferred to Phase C** (it changes the core
+  `SourceCredentialBinding.Draft` factory API — a contained follow-up).
+- **Measured (A+B):** `Full_ReadMergeFromTags` **648 B → `After_ViewBuildDirect` 192 B (−456 B, −70%)** per create. The
+  residual 192 B is the genuine `Admits`-required management byte[].
+- **Verified.** `SecurityShellTests` **5/5** (incl. the new span-overload rejection + custom prefix + escaped value),
+  `ControlPlaneCredentialsApiTests` **10/10**, `ControlPlaneRowSecurityTests` **9/9**, enumerator **2/2**; slnx build
+  **0 Warning(s), 0 Error(s)**. The `SecurityShell` list overload is kept (its direct test + any list caller).
+
 ## Cross-references
 
 - Skills: `corvus-typed-model-construction`, `corvus-builder-context-threading`,
