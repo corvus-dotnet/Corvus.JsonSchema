@@ -154,8 +154,10 @@ The `if (x.IsNotUndefined()) { local = From(x); }` guard is the same smell — r
 ```bash
 # nullable-accessor-into-builder smell (then READ each hit to classify — see "not the smell" below)
 grep -rnE "OrNull is \{ ?\}|Value is \{ ?\}" src/ --include=*.cs | grep -v /Generated/
-# closure-based projection (prefer Build<TContext> context-threading)
-grep -rn "new Models\..*\.Source((ref" src/ --include=*.cs | grep -v /Generated/
+# closure-based projection (prefer Build<TContext> context-threading). Matches the builder-lambda
+# signature `((ref T.Builder x)` so it catches BOTH `new T.Source((ref …)` and the `=> new((ref …)`
+# shorthand (a `new Models\.…Source` pattern misses the shorthand); does not match static BuildX(in ctx, ref …).
+grep -rnE "\(\(ref [A-Za-z].*\.Builder " src/ --include=*.cs | grep -v /Generated/
 ```
 
 **Not the smell** (leave alone): nullable accessors used as query-filter predicates, expiry comparisons (`ExpiresAtValue is { } e && e <= now`), hand-written `Utf8JsonWriter` envelope projections to a *different* shape (unix-millis dates, table columns), and `string?`→`Source` CLI-settings bridges (a plain `string?`, no CTJ Undefined concept).
