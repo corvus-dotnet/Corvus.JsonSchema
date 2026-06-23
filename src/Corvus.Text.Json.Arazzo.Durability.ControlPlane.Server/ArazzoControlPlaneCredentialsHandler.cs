@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
@@ -308,25 +309,25 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     // the per-item closures the old shape allocated are all gone); the per-field From() value bridges (FIX #1) are
     // preserved unchanged — only the closures are removed. Proven by CredentialSummaryProjectionBenchmarks.
 
-    // The per-binding summary context: the stored binding, its derived status, and its described usage grants.
-    private readonly ref struct SummaryContext(SourceCredentialBinding binding, CredentialStatus status, IReadOnlyList<CredentialUsageGrant> describedGrants)
+    // The per-binding summary context: the stored binding, its derived status, and the row-security access (the usage
+    // scope is described lazily and allocation-free in BuildUsageGrants, straight off the binding's UsageTags).
+    private readonly ref struct SummaryContext(SourceCredentialBinding binding, CredentialStatus status, ControlPlaneAccess access)
     {
         public SourceCredentialBinding Binding { get; } = binding;
 
         public CredentialStatus Status { get; } = status;
 
-        public IReadOnlyList<CredentialUsageGrant> DescribedGrants { get; } = describedGrants;
+        public ControlPlaneAccess Access { get; } = access;
     }
 
-    // Computes the two non-congruent transforms (status from the clock, §13.2; usageGrants from the row-security policy,
-    // the inverse of the create mapping — internal tags are never exposed raw) and threads the binding + both through a
-    // SummaryContext to the closure-free BuildSummary. The returned Source<SummaryContext> holds a copy of the context
-    // (the builder ctor takes `scoped in`, so the value does not escape by ref).
+    // Computes the derived credentialStatus (from the clock, §13.2) and threads the binding + the row-security access
+    // through a SummaryContext to the closure-free BuildSummary. The usage scope (the inverse of the create mapping —
+    // internal tags are never exposed raw) is projected lazily and allocation-free inside BuildUsageGrants. The returned
+    // Source<SummaryContext> holds a copy of the context (the builder ctor takes `scoped in`, so it does not escape by ref).
     private Models.CredentialBindingSummary.Source<SummaryContext> ToSummary(SourceCredentialBinding binding)
     {
         CredentialStatus status = binding.DeriveStatus(this.timeProvider.GetUtcNow(), this.expiringWindow);
-        IReadOnlyList<CredentialUsageGrant> describedGrants = this.access.DescribeUsageScope(binding.UsageTagsValue);
-        var ctx = new SummaryContext(binding, status, describedGrants);
+        var ctx = new SummaryContext(binding, status, this.access);
         return Models.CredentialBindingSummary.Build(in ctx, BuildSummary);
     }
 
@@ -336,7 +337,11 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
 
         bool hasConfig = binding.Config.IsNotUndefined() && binding.Config.GetArrayLength() > 0;
         bool hasManagementTags = !binding.ManagementTagsValue.IsEmpty;
-        bool hasUsageGrants = ctx.DescribedGrants.Count > 0;
+
+        // Stored usage tags always carry the internal prefix (they are written via ResolveUsageGrants), so a non-empty
+        // usageTags array always describes back to at least one grant — the cheap length check matches the old
+        // DescribedGrants.Count > 0 without materializing the grants.
+        bool hasUsageGrants = binding.UsageTags.IsNotUndefined() && binding.UsageTags.GetArrayLength() > 0;
 
         // The optional scalars carry the binding's raw CTJ value straight through From() — which propagates Undefined, so an
         // absent field is omitted with no IsNotUndefined/XxxOrNull ternary (the "Undefined not null" convention).
@@ -400,18 +405,34 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         => b.Create(key: tag.Key, value: tag.Value);
 
     // The stored usage scope is described back as operator-facing identity grants (the inverse of the create mapping) —
-    // internal tags are not exposed raw. The described grants are precomputed in ToSummary (they need the policy) and
-    // threaded through the context.
+    // internal tags are not exposed raw. Projected allocation-free straight off the binding's UsageTags: a non-owning
+    // SecurityTagSet view over the array's raw UTF-8 (no CopyFrom byte[]), enumerated as unescaped spans, each prefixed
+    // tag's (dimension, value) written bytes-native via the policy's span-based TryDescribeUsageGrant — no List, no
+    // managed strings. The binding document outlives the synchronous build (handed to the workspace), so the view is safe.
     private static void BuildUsageGrants(in SummaryContext ctx, ref Models.CredentialBindingSummary.CredentialUsageGrantArray.Builder array)
     {
-        foreach (CredentialUsageGrant grant in ctx.DescribedGrants)
+        SecurityTagSet usageTags = SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(ctx.Binding.UsageTags).Memory);
+        ControlPlaneAccess access = ctx.Access;
+        SecurityTagSet.Utf8Enumerator e = usageTags.EnumerateUtf8();
+        try
         {
-            array.AddItem(Models.CredentialUsageGrant.Build(in grant, BuildUsageGrant));
+            while (e.MoveNext())
+            {
+                if (access.TryDescribeUsageGrant(e.CurrentKey, out ReadOnlySpan<byte> dimension))
+                {
+                    var spans = new UsageGrantSpans(dimension, e.CurrentValue);
+                    array.AddItem(Models.CredentialUsageGrant.Build(in spans, BuildUsageGrant));
+                }
+            }
+        }
+        finally
+        {
+            e.Dispose();
         }
     }
 
-    private static void BuildUsageGrant(in CredentialUsageGrant grant, ref Models.CredentialUsageGrant.Builder b)
-        => b.Create(dimension: grant.Dimension, value: grant.Value);
+    private static void BuildUsageGrant(in UsageGrantSpans spans, ref Models.CredentialUsageGrant.Builder b)
+        => b.Create(dimension: (Models.JsonString.Source)spans.Dimension, value: (Models.JsonString.Source)spans.Value);
 
     private static string ToStatusToken(CredentialStatus status) => status switch
     {
@@ -449,8 +470,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         foreach (SourceCredentialBinding binding in ctx.Bindings)
         {
             CredentialStatus status = binding.DeriveStatus(now, ctx.ExpiringWindow);
-            IReadOnlyList<CredentialUsageGrant> describedGrants = ctx.Access.DescribeUsageScope(binding.UsageTagsValue);
-            var summaryCtx = new SummaryContext(binding, status, describedGrants);
+            var summaryCtx = new SummaryContext(binding, status, ctx.Access);
             array.AddItem(Models.CredentialBindingSummary.Build(in summaryCtx, BuildSummary));
         }
     }

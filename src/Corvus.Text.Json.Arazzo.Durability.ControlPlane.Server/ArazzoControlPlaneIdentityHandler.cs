@@ -45,14 +45,14 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
     /// <inheritdoc/>
     public ValueTask<GetWhoamiResult> HandleGetWhoamiAsync(GetWhoamiParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<CredentialUsageGrant> identity = this.access.CallerIdentityGrants();
-
-        // Built closure-free (the identity grant list threaded as the context through the static BuildWhoAmIIdentity) and
-        // consumed in place (WhoAmI.Build is ref-scoped to its `in` argument). The grants are synthesized POCO values
-        // (DescribeUsageScope), copied into the response by the build — no pooled document to own.
-        Models.WhoAmI.Source<IReadOnlyList<CredentialUsageGrant>> body = Models.WhoAmI.Build(
-            in identity,
-            identity: Models.WhoAmI.AdministratorIdentityArray.Build(in identity, BuildWhoAmIIdentity));
+        // Built closure-free AND allocation-free for the usage-scope projection: the caller's internal identity tag set is
+        // enumerated as unescaped spans and each prefixed tag described back to a grant bytes-native (no List, no per-grant
+        // strings). The body is consumed in place (WhoAmI.Build is ref-scoped to its `in` argument).
+        SecurityTagSet identity = SecurityTagSet.FromTags(this.access.InternalTags());
+        var ctx = new WhoAmIContext(identity, this.access);
+        Models.WhoAmI.Source<WhoAmIContext> body = Models.WhoAmI.Build(
+            in ctx,
+            identity: Models.WhoAmI.AdministratorIdentityArray.Build(in ctx, BuildWhoAmIIdentity));
         return new ValueTask<GetWhoamiResult>(GetWhoamiResult.Ok(body, workspace));
     }
 
@@ -142,20 +142,36 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
         return SearchGranteesResult.Ok(observedBody, workspace);
     }
 
-    // Closure-free single-item identity wrap: the grant is threaded as the context, so a `Source<CredentialUsageGrant>`
-    // can be returned from this helper (unlike a list Build) and appended at both the WhoAmI and grantee call sites
-    // without a per-grant closure.
-    private static Models.AdministratorIdentity.Source<CredentialUsageGrant> ToIdentity(CredentialUsageGrant grant)
-        => Models.AdministratorIdentity.Build(in grant, BuildGrantIdentity);
+    // A described usage grant written bytes-native from its (dimension, value) spans — shared by the whoami and grantee
+    // identity sub-arrays (both hold AdministratorIdentity items). The spans are valid for the synchronous build.
+    private static void BuildIdentityGrant(in UsageGrantSpans spans, ref Models.AdministratorIdentity.Builder b)
+        => b.Create((Models.JsonString.Source)spans.Dimension, (Models.JsonString.Source)spans.Value);
 
-    private static void BuildGrantIdentity(in CredentialUsageGrant grant, ref Models.AdministratorIdentity.Builder b)
-        => b.Create(grant.Dimension, grant.Value);
-
-    private static void BuildWhoAmIIdentity(in IReadOnlyList<CredentialUsageGrant> identity, ref Models.WhoAmI.AdministratorIdentityArray.Builder array)
+    private readonly ref struct WhoAmIContext(SecurityTagSet identity, ControlPlaneAccess access)
     {
-        foreach (CredentialUsageGrant grant in identity)
+        public SecurityTagSet Identity { get; } = identity;
+
+        public ControlPlaneAccess Access { get; } = access;
+    }
+
+    private static void BuildWhoAmIIdentity(in WhoAmIContext ctx, ref Models.WhoAmI.AdministratorIdentityArray.Builder array)
+    {
+        ControlPlaneAccess access = ctx.Access;
+        SecurityTagSet.Utf8Enumerator e = ctx.Identity.EnumerateUtf8();
+        try
         {
-            array.AddItem(ToIdentity(grant));
+            while (e.MoveNext())
+            {
+                if (access.TryDescribeUsageGrant(e.CurrentKey, out ReadOnlySpan<byte> dimension))
+                {
+                    var spans = new UsageGrantSpans(dimension, e.CurrentValue);
+                    array.AddItem(Models.AdministratorIdentity.Build(in spans, BuildIdentityGrant));
+                }
+            }
+        }
+        finally
+        {
+            e.Dispose();
         }
     }
 
@@ -187,14 +203,14 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
                 continue;
             }
 
-            var item = new RefTuple<ResolvedPrincipal, IReadOnlyList<CredentialUsageGrant>>(principal, access.DescribeUsageScope(principal.Identity));
+            var item = new RefTuple<ResolvedPrincipal, SecurityTagSet, ControlPlaneAccess>(principal, principal.Identity, access);
             array.AddItem(Models.ResolvedGrantee.Build(in item, BuildDirectoryGrantee));
         }
     }
 
     // Builds one directory grantee: the value/label flow as the adapter-owned UTF-8 the principal holds (no managed string),
     // the kind/source as UTF-8 enum tokens. `complete` is true for a directory full-resolution (§17.2).
-    private static void BuildDirectoryGrantee(in RefTuple<ResolvedPrincipal, IReadOnlyList<CredentialUsageGrant>> item, ref Models.ResolvedGrantee.Builder grantee)
+    private static void BuildDirectoryGrantee(in RefTuple<ResolvedPrincipal, SecurityTagSet, ControlPlaneAccess> item, ref Models.ResolvedGrantee.Builder grantee)
     {
         ResolvedPrincipal principal = item.Item1;
         if (principal.HasLabel)
@@ -213,7 +229,7 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
         (ObservedIdentityPage page, ControlPlaneAccess access) = state;
         foreach (ObservedIdentity identity in page.Identities)
         {
-            var item = new RefTuple<ObservedIdentity, IReadOnlyList<CredentialUsageGrant>>(identity, access.DescribeUsageScope(identity.IdentityTagsValue));
+            var item = new RefTuple<ObservedIdentity, SecurityTagSet, ControlPlaneAccess>(identity, identity.IdentityTagsValue, access);
             array.AddItem(Models.ResolvedGrantee.Build(in item, BuildObservedGrantee));
         }
     }
@@ -221,7 +237,7 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
     // Builds one observed grantee: subjectValue/subjectKind/label flow as UTF-8 straight off the stored CTJ model (its
     // generated JsonString/enum exposes GetUtf8String() directly — a pooled lease, no managed string), bridged to the
     // response model as spans. `complete` is the stored honesty flag (§17.2). The leases live until Create copies the bytes.
-    private static void BuildObservedGrantee(in RefTuple<ObservedIdentity, IReadOnlyList<CredentialUsageGrant>> item, ref Models.ResolvedGrantee.Builder grantee)
+    private static void BuildObservedGrantee(in RefTuple<ObservedIdentity, SecurityTagSet, ControlPlaneAccess> item, ref Models.ResolvedGrantee.Builder grantee)
     {
         ObservedIdentity identity = item.Item1;
         using UnescapedUtf8JsonString kind = identity.SubjectKind.GetUtf8String();
@@ -237,16 +253,30 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
         }
     }
 
-    // The grantee's identity, described as the {dimension, value} grants its sys: tags map to (never raw tags) — the genuine
-    // string leaf; ToIdentity writes each grant through the WriteAction form. The item RefTuple's second element is the grant
-    // list; the first (TIdentity) is whatever the grantee branch threads (a ResolvedPrincipal or an ObservedIdentity) — the
-    // identity sub-array's context must match its grantee's context, so it is generic over that first element.
-    private static void BuildGranteeIdentity<TIdentity>(in RefTuple<TIdentity, IReadOnlyList<CredentialUsageGrant>> item, ref Models.ResolvedGrantee.AdministratorIdentityArray.Builder identities)
+    // The grantee's identity, described as the {dimension, value} grants its sys: tags map to (never raw tags), projected
+    // allocation-free: the item's second element is the identity's SecurityTagSet, enumerated as unescaped spans and each
+    // prefixed tag described back bytes-native via the third element (the access facade) — no List, no per-grant strings.
+    // The first element (TIdentity) is whatever the grantee branch threads (a ResolvedPrincipal or an ObservedIdentity);
+    // the identity sub-array's context matches its grantee's, so it is generic over that first element.
+    private static void BuildGranteeIdentity<TIdentity>(in RefTuple<TIdentity, SecurityTagSet, ControlPlaneAccess> item, ref Models.ResolvedGrantee.AdministratorIdentityArray.Builder identities)
         where TIdentity : allows ref struct
     {
-        foreach (CredentialUsageGrant grant in item.Item2)
+        ControlPlaneAccess access = item.Item3;
+        SecurityTagSet.Utf8Enumerator e = item.Item2.EnumerateUtf8();
+        try
         {
-            identities.AddItem(ToIdentity(grant));
+            while (e.MoveNext())
+            {
+                if (access.TryDescribeUsageGrant(e.CurrentKey, out ReadOnlySpan<byte> dimension))
+                {
+                    var spans = new UsageGrantSpans(dimension, e.CurrentValue);
+                    identities.AddItem(Models.AdministratorIdentity.Build(in spans, BuildIdentityGrant));
+                }
+            }
+        }
+        finally
+        {
+            e.Dispose();
         }
     }
 }
