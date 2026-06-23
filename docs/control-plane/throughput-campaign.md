@@ -84,6 +84,35 @@ is an acceptable cheaper proxy where a full latency bench is impractical.
 **Runner heartbeat — Postgres** (the clearest native-partial-update backend), then fan out to the other
 relational + Cosmos/Mongo/Azure backends, then the checkpoint status-bump as a secondary pass.
 
+## Kickoff prompt (paste into a fresh session)
+
+> Resume the control-plane **throughput** campaign in the worktree
+> `/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/arazzo-workflow-engine-plan` (branch
+> `worktree-arazzo-workflow-engine-plan`; never `cd` to the repo root). **Read first:**
+> `docs/control-plane/throughput-campaign.md` (this scope + the per-row protocol) and the memory
+> `throughput-campaign-scoped`. Then read the skills `corvus-benchmarks` and `corvus-build-and-test`.
+>
+> This is a **throughput / latency** axis (round-trips, payload bytes, p50/p99 latency) — **NOT** allocation.
+> Measure with a **container-backed latency benchmark** over a live container via the pre-tunneled podman
+> socket (`DOCKER_HOST=unix:///tmp/podman-arazzo.sock`, `TESTCONTAINERS_RYUK_DISABLED=true`; memory
+> `broker-integration-tests-wsl-podman`) — **do NOT use `MemoryDiagnoser`**. There is no latency-benchmark
+> harness yet; standing one up (a BenchmarkDotNet bench, or a round-trip-count + payload-size proxy in a
+> conformance-style test) is part of the first row.
+>
+> **First row: runner heartbeat, Postgres.** Follow the per-row protocol literally:
+> 1. **Ground** — read `PostgresRunnerRegistry.HeartbeatAsync` (currently `SELECT doc` →
+>    `RunnerRegistration.WriteWithLastSeenAt` whole-doc rewrite → `UPDATE doc`) and its conformance test.
+> 2. **Baseline** — measure + paste the current round-trips (2), payload, and latency.
+> 3. **Ledger** — state the invariants the change must preserve: the heartbeat's last-writer semantics, and the
+>    JSON `doc`'s `lastSeenAt` staying **mirror-consistent** with the `last_seen_at` column after the update.
+> 4. **STOP for go-ahead** before changing any code.
+> 5. **Change** — the single native partial update
+>    (`UPDATE runner_registrations SET last_seen_at=@at, doc=jsonb_set(doc,'{lastSeenAt}',to_jsonb(@at)) WHERE runner_id=@id`).
+> 6. **After** — re-measure before→after; **container-verify the Postgres runner conformance** (the persisted
+>    state + read-back must be identical). Then fan out to the other relational + Cosmos/Mongo/Azure backends
+>    (NATS KV is the genuine whole-value exception — leave it RMW). Commit only when asked; one op × backend at
+>    a time; warning-free `dotnet build Corvus.Text.Json.slnx` before every commit.
+
 ## Cross-references
 
 - Memory: [[durability-alloc-campaign-followups]] (the alloc campaign that defined this throughput follow-up
