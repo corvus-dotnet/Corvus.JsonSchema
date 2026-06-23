@@ -79,7 +79,16 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         // wrap), and the body is validated/serialized after this handler returns — so hand the documents to the
         // workspace (it disposes them at request end); `using page` then only returns the batch's backing array.
         page.Bindings.TransferOwnershipTo(workspace);
-        return ListCredentialsResult.Ok(this.ToList(page.Bindings, page.NextPageToken), workspace);
+
+        // The list body is built closure-free and consumed in place (CredentialBindingList.Build scopes its result to
+        // the `in credentials` argument, so it cannot be returned from a helper — see the BuildSummaries notes).
+        var listContext = new ListContext(page.Bindings, this.access, this.timeProvider, this.expiringWindow);
+        ReadOnlyMemory<byte> nextPageToken = page.NextPageToken;
+        Models.CredentialBindingList.Source<ListContext> body = Models.CredentialBindingList.Build(
+            in listContext,
+            credentials: Models.CredentialBindingList.CredentialBindingSummaryArray.Build(in listContext, BuildSummaries),
+            nextPageToken: nextPageToken.IsEmpty ? default : (Models.JsonString.Source)nextPageToken.Span);
+        return ListCredentialsResult.Ok(body, workspace);
     }
 
     /// <inheritdoc/>
@@ -288,107 +297,121 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         public Models.CredentialBindingWrite.CredentialUsageGrantArray Grants { get; } = grants;
     }
 
-    private static Models.CredentialSecurityTag.Source ToSecurityTag(SecurityTag tag)
-        => new((ref Models.CredentialSecurityTag.Builder b) => b.Create(tag.Key, tag.Value));
+    // ── credential-summary projection (closure-free Build<TContext>; RefTuple contexts; §13) ────────────────────────────
+    //
+    // The summary is NOT congruent with the stored binding — it requires a derived credentialStatus (computed from
+    // expiresAt vs now, §13.2; never persisted) and exposes operator-facing usageGrants in place of the internal
+    // usageTags (the raw tags are deliberately hidden), so From() cannot be used and the fields are projected. The two
+    // non-congruent transforms (status + describedGrants) need `this` (the clock / the row-security policy), so they are
+    // computed up front in the instance helpers below and threaded — together with the binding — through a RefTuple to
+    // the static build methods. No closure is captured (the outer summary closure + the four nested-array closures +
+    // the per-item closures the old shape allocated are all gone); the per-field From() value bridges (FIX #1) are
+    // preserved unchanged — only the closures are removed. Proven by CredentialSummaryProjectionBenchmarks.
 
-    private static Models.CredentialUsageGrant.Source ToUsageGrant(CredentialUsageGrant grant)
-        => new((ref Models.CredentialUsageGrant.Builder b) => b.Create(grant.Dimension, grant.Value));
+    // The per-binding summary context: the stored binding, its derived status, and its described usage grants.
+    private readonly ref struct SummaryContext(SourceCredentialBinding binding, CredentialStatus status, IReadOnlyList<CredentialUsageGrant> describedGrants)
+    {
+        public SourceCredentialBinding Binding { get; } = binding;
 
-    private Models.CredentialBindingSummary.Source ToSummary(SourceCredentialBinding binding)
-        => new((ref Models.CredentialBindingSummary.Builder b) =>
+        public CredentialStatus Status { get; } = status;
+
+        public IReadOnlyList<CredentialUsageGrant> DescribedGrants { get; } = describedGrants;
+    }
+
+    // Computes the two non-congruent transforms (status from the clock, §13.2; usageGrants from the row-security policy,
+    // the inverse of the create mapping — internal tags are never exposed raw) and threads the binding + both through a
+    // SummaryContext to the closure-free BuildSummary. The returned Source<SummaryContext> holds a copy of the context
+    // (the builder ctor takes `scoped in`, so the value does not escape by ref).
+    private Models.CredentialBindingSummary.Source<SummaryContext> ToSummary(SourceCredentialBinding binding)
+    {
+        CredentialStatus status = binding.DeriveStatus(this.timeProvider.GetUtcNow(), this.expiringWindow);
+        IReadOnlyList<CredentialUsageGrant> describedGrants = this.access.DescribeUsageScope(binding.UsageTagsValue);
+        var ctx = new SummaryContext(binding, status, describedGrants);
+        return Models.CredentialBindingSummary.Build(in ctx, BuildSummary);
+    }
+
+    private static void BuildSummary(in SummaryContext ctx, ref Models.CredentialBindingSummary.Builder b)
+    {
+        SourceCredentialBinding binding = ctx.Binding;
+
+        bool hasConfig = binding.Config.IsNotUndefined() && binding.Config.GetArrayLength() > 0;
+        bool hasManagementTags = !binding.ManagementTagsValue.IsEmpty;
+        bool hasUsageGrants = ctx.DescribedGrants.Count > 0;
+
+        // The optional scalars carry the binding's raw CTJ value straight through From() — which propagates Undefined, so an
+        // absent field is omitted with no IsNotUndefined/XxxOrNull ternary (the "Undefined not null" convention).
+        b.Create(
+            in ctx,
+            authKind: binding.AuthKindValue.ToJsonToken(),
+            createdAt: binding.CreatedAtValue,
+            createdBy: Models.JsonString.From(binding.CreatedBy),
+            credentialStatus: ToStatusToken(ctx.Status),
+            environment: Models.JsonString.From(binding.Environment),
+            etag: Models.JsonString.From(binding.Etag),
+            id: Models.JsonString.From(binding.Id),
+            secretRefs: Models.CredentialBindingSummary.SecretReferenceArray.Build(in ctx, BuildSecretRefs),
+            sourceName: Models.JsonString.From(binding.SourceName),
+            config: hasConfig ? Models.CredentialBindingSummary.CredentialConfigEntryArray.Build(in ctx, BuildConfig) : default,
+            description: Models.JsonString.From(binding.Description),
+            expiresAt: Models.JsonDateTime.From(binding.ExpiresAt),
+            lastUpdatedAt: Models.JsonDateTime.From(binding.LastUpdatedAt),
+            lastUpdatedBy: Models.JsonString.From(binding.LastUpdatedBy),
+            managementTags: hasManagementTags ? Models.CredentialBindingSummary.CredentialSecurityTagArray.Build(in ctx, BuildManagementTags) : default,
+            rotatedAt: Models.JsonDateTime.From(binding.RotatedAt),
+            usageGrants: hasUsageGrants ? Models.CredentialBindingSummary.CredentialUsageGrantArray.Build(in ctx, BuildUsageGrants) : default);
+    }
+
+    // Each leaf item is built through its own context-threaded Build (the leaf value IS the context — a readonly struct
+    // or record, no closure): the per-field From()/string value bridges thread straight into the item Builder.Create,
+    // which writes into the array's builder rather than returning a span-bound Source (the property-parameter
+    // Build(name:, refValue:) form would return a Source the compiler scopes to the From() temporaries — CS8347/CS8156 —
+    // so the item Build<TContext> form is used instead, the same shape the grantee identity sub-array uses).
+    private static void BuildSecretRefs(in SummaryContext ctx, ref Models.CredentialBindingSummary.SecretReferenceArray.Builder array)
+    {
+        foreach (SourceCredentialBinding.SecretReference reference in ctx.Binding.SecretRefs.EnumerateArray())
         {
-            Models.JsonString.Source description = default;
-            if (binding.Description.IsNotUndefined())
-            {
-                description = Models.JsonString.From(binding.Description);
-            }
+            array.AddItem(Models.SecretReference.Build(in reference, BuildSecretRef));
+        }
+    }
 
-            Models.JsonString.Source lastUpdatedBy = default;
-            if (binding.LastUpdatedBy.IsNotUndefined())
-            {
-                lastUpdatedBy = Models.JsonString.From(binding.LastUpdatedBy);
-            }
+    private static void BuildSecretRef(in SourceCredentialBinding.SecretReference reference, ref Models.SecretReference.Builder b)
+        => b.Create(name: Models.JsonString.From(reference.Name), refValue: Models.JsonString.From(reference.Ref));
 
-            Models.JsonDateTime.Source lastUpdatedAt = default;
-            if (binding.LastUpdatedAtValue is { } ua)
-            {
-                lastUpdatedAt = ua;
-            }
+    private static void BuildConfig(in SummaryContext ctx, ref Models.CredentialBindingSummary.CredentialConfigEntryArray.Builder array)
+    {
+        foreach (SourceCredentialBinding.CredentialConfigEntry entry in ctx.Binding.Config.EnumerateArray())
+        {
+            array.AddItem(Models.CredentialConfigEntry.Build(in entry, BuildConfigEntry));
+        }
+    }
 
-            Models.JsonDateTime.Source expiresAt = default;
-            if (binding.ExpiresAtOrNull is { } ea)
-            {
-                expiresAt = ea;
-            }
+    private static void BuildConfigEntry(in SourceCredentialBinding.CredentialConfigEntry entry, ref Models.CredentialConfigEntry.Builder b)
+        => b.Create(key: Models.JsonString.From(entry.Key), value: Models.JsonString.From(entry.Value));
 
-            Models.JsonDateTime.Source rotatedAt = default;
-            if (binding.RotatedAtOrNull is { } ra)
-            {
-                rotatedAt = ra;
-            }
+    private static void BuildManagementTags(in SummaryContext ctx, ref Models.CredentialBindingSummary.CredentialSecurityTagArray.Builder array)
+    {
+        foreach (SecurityTag tag in ctx.Binding.ManagementTagsValue)
+        {
+            array.AddItem(Models.CredentialSecurityTag.Build(in tag, BuildSecurityTag));
+        }
+    }
 
-            // credentialStatus is derived from expiresAt against the current time (§13.2) — never persisted, so it
-            // cannot go stale.
-            CredentialStatus status = binding.DeriveStatus(this.timeProvider.GetUtcNow(), this.expiringWindow);
+    private static void BuildSecurityTag(in SecurityTag tag, ref Models.CredentialSecurityTag.Builder b)
+        => b.Create(key: tag.Key, value: tag.Value);
 
-            Models.CredentialBindingSummary.CredentialConfigEntryArray.Source config = default;
-            if (binding.Config.IsNotUndefined() && binding.Config.GetArrayLength() > 0)
-            {
-                config = new Models.CredentialBindingSummary.CredentialConfigEntryArray.Source((ref Models.CredentialBindingSummary.CredentialConfigEntryArray.Builder ab) =>
-                {
-                    foreach (SourceCredentialBinding.CredentialConfigEntry entry in binding.Config.EnumerateArray())
-                    {
-                        ab.AddItem(ToConfigEntry(entry));
-                    }
-                });
-            }
+    // The stored usage scope is described back as operator-facing identity grants (the inverse of the create mapping) —
+    // internal tags are not exposed raw. The described grants are precomputed in ToSummary (they need the policy) and
+    // threaded through the context.
+    private static void BuildUsageGrants(in SummaryContext ctx, ref Models.CredentialBindingSummary.CredentialUsageGrantArray.Builder array)
+    {
+        foreach (CredentialUsageGrant grant in ctx.DescribedGrants)
+        {
+            array.AddItem(Models.CredentialUsageGrant.Build(in grant, BuildUsageGrant));
+        }
+    }
 
-            Models.CredentialBindingSummary.CredentialSecurityTagArray.Source managementTags = default;
-            if (!binding.ManagementTagsValue.IsEmpty)
-            {
-                managementTags = new Models.CredentialBindingSummary.CredentialSecurityTagArray.Source((ref Models.CredentialBindingSummary.CredentialSecurityTagArray.Builder ab) =>
-                {
-                    foreach (SecurityTag tag in binding.ManagementTagsValue)
-                    {
-                        ab.AddItem(ToSecurityTag(tag));
-                    }
-                });
-            }
-
-            // The stored usage scope is described back as operator-facing identity grants (the inverse of the create
-            // mapping) — internal tags are not exposed raw.
-            IReadOnlyList<CredentialUsageGrant> describedGrants = this.access.DescribeUsageScope(binding.UsageTagsValue);
-            Models.CredentialBindingSummary.CredentialUsageGrantArray.Source usageGrants = default;
-            if (describedGrants.Count > 0)
-            {
-                usageGrants = new Models.CredentialBindingSummary.CredentialUsageGrantArray.Source((ref Models.CredentialBindingSummary.CredentialUsageGrantArray.Builder ab) =>
-                {
-                    foreach (CredentialUsageGrant grant in describedGrants)
-                    {
-                        ab.AddItem(ToUsageGrant(grant));
-                    }
-                });
-            }
-
-            b.Create(
-                authKind: binding.AuthKindValue.ToJsonToken(),
-                createdAt: binding.CreatedAtValue,
-                createdBy: Models.JsonString.From(binding.CreatedBy),
-                credentialStatus: ToStatusToken(status),
-                environment: Models.JsonString.From(binding.Environment),
-                etag: Models.JsonString.From(binding.Etag),
-                id: Models.JsonString.From(binding.Id),
-                secretRefs: ToSecretRefs(binding),
-                sourceName: Models.JsonString.From(binding.SourceName),
-                config: config,
-                description: description,
-                expiresAt: expiresAt,
-                lastUpdatedAt: lastUpdatedAt,
-                lastUpdatedBy: lastUpdatedBy,
-                managementTags: managementTags,
-                rotatedAt: rotatedAt,
-                usageGrants: usageGrants);
-        });
+    private static void BuildUsageGrant(in CredentialUsageGrant grant, ref Models.CredentialUsageGrant.Builder b)
+        => b.Create(dimension: grant.Dimension, value: grant.Value);
 
     private static string ToStatusToken(CredentialStatus status) => status switch
     {
@@ -398,28 +421,39 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Unknown credential status."),
     };
 
-    private static Models.CredentialBindingSummary.SecretReferenceArray.Source ToSecretRefs(SourceCredentialBinding binding)
-        => new((ref Models.CredentialBindingSummary.SecretReferenceArray.Builder ab) =>
+    // ── credential-list projection (closure-free Build<TContext> over the page; §13) ────────────────────────────────
+    //
+    // The list body is built closure-free too: the page of bindings + the clock/policy needed for the per-binding
+    // non-congruent transforms (status + describedGrants) are threaded through a ListContext to the static array
+    // builder, which computes each binding's transforms inside the loop and projects it through BuildSummary. The whole
+    // body is a CredentialBindingList.Source<ListContext> handed straight to ListCredentialsResult.Ok<TContext> (one
+    // materialisation, no re-materialisation). The body is built inline in HandleListCredentialsAsync (not in a helper):
+    // CredentialBindingList.Build scopes its result to the `in credentials` argument, so the body cannot escape a helper
+    // (CS8347) and must be consumed in place — the same shape ArazzoControlPlaneIdentityHandler uses for GranteeList.
+    // The summaries reference their pooled binding documents, which the caller has handed to the workspace
+    // (TransferOwnershipTo) so the deferred body validation/serialization is safe.
+    private readonly ref struct ListContext(IReadOnlyList<SourceCredentialBinding> bindings, ControlPlaneAccess access, TimeProvider timeProvider, TimeSpan expiringWindow)
+    {
+        public IReadOnlyList<SourceCredentialBinding> Bindings { get; } = bindings;
+
+        public ControlPlaneAccess Access { get; } = access;
+
+        public TimeProvider TimeProvider { get; } = timeProvider;
+
+        public TimeSpan ExpiringWindow { get; } = expiringWindow;
+    }
+
+    private static void BuildSummaries(in ListContext ctx, ref Models.CredentialBindingList.CredentialBindingSummaryArray.Builder array)
+    {
+        DateTimeOffset now = ctx.TimeProvider.GetUtcNow();
+        foreach (SourceCredentialBinding binding in ctx.Bindings)
         {
-            foreach (SourceCredentialBinding.SecretReference reference in binding.SecretRefs.EnumerateArray())
-            {
-                ab.AddItem(new Models.SecretReference.Source((ref Models.SecretReference.Builder sb) => sb.Create(Models.JsonString.From(reference.Name), Models.JsonString.From(reference.Ref))));
-            }
-        });
-
-    private static Models.CredentialConfigEntry.Source ToConfigEntry(SourceCredentialBinding.CredentialConfigEntry entry)
-        => new((ref Models.CredentialConfigEntry.Builder b) => b.Create(Models.JsonString.From(entry.Key), Models.JsonString.From(entry.Value)));
-
-    private Models.CredentialBindingList.Source ToList(IReadOnlyList<SourceCredentialBinding> bindings, ReadOnlyMemory<byte> nextPageToken)
-        => new((ref Models.CredentialBindingList.Builder b) => b.Create(
-            credentials: new Models.CredentialBindingList.CredentialBindingSummaryArray.Source((ref Models.CredentialBindingList.CredentialBindingSummaryArray.Builder ab) =>
-            {
-                foreach (SourceCredentialBinding binding in bindings)
-                {
-                    ab.AddItem(this.ToSummary(binding));
-                }
-            }),
-            nextPageToken: nextPageToken.IsEmpty ? default : (Models.JsonString.Source)nextPageToken.Span));
+            CredentialStatus status = binding.DeriveStatus(now, ctx.ExpiringWindow);
+            IReadOnlyList<CredentialUsageGrant> describedGrants = ctx.Access.DescribeUsageScope(binding.UsageTagsValue);
+            var summaryCtx = new SummaryContext(binding, status, describedGrants);
+            array.AddItem(Models.CredentialBindingSummary.Build(in summaryCtx, BuildSummary));
+        }
+    }
 
     private static Models.ProblemDetails.Source NotFoundProblem(string sourceName, string environment)
         => Problem("credential-not-found", "Credential not found", 404, $"No source credential binding for '{sourceName}@{environment}' exists.");
