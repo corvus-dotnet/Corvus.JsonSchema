@@ -1163,9 +1163,14 @@ internal, per request): **648 B = ReadTags 304 + merged List 144 + FromTags byte
 
 The key insight (challenging "the byte[] is genuine because a `SecurityTagSet` carries it") is that the byte[] is only
 genuine if a *downstream consumer needs a materialized set* — so trace the consumers:
-- **`FromTags` byte[] (200 B)** — genuine, but *because `Admits(AccessVerb.Write, SecurityTagSet)` consumes the management
-  set* (the write-reach guard) **and** it's reused for the draft write — dual-use, not a pure `SecurityTagSet`-shape
-  artifact. Kept. (Reshaping `Admits` is out of scope: `AccessContext` core, whole-row-security blast radius.)
+- **`FromTags` byte[] (200 B)** — *seemed* genuine because `Admits(AccessVerb.Write, SecurityTagSet)` consumes the
+  management set. **But Admits doesn't require a *separately-built* set** — the management tags are written into the draft
+  anyway (the genuine leaf), so **✅ done:** management is now a `Draft` write-action too (`Draft<TManagement, TUsage>`),
+  and the create handler reads the management tags **back from the draft as a non-owning view**
+  (`FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(draft.RootElement.ManagementTags).Memory)`) for the `Admits` check —
+  which moves *after* the draft build (the draft is the only materialization; on rejection it is discarded, AddAsync never
+  runs). Canonicalization-safe: `IdentityBuilder` writes add-order (same bytes as `Build`) and `IsSatisfiedBy`/`SetEquals`
+  sort on-the-fly. So the management byte[] is **eliminated (192 → 0)** — no separate `SecurityTagSet` for either tag set.
 - **`ReadTags` 304 B** — looked load-bearing (feeds `ValidateUserTags`), but the production validator
   (`PersistentRowSecurityPolicy` → `SecurityShell.ValidateUserTags`) is **per-tag prefix rejection**, not cross-tag — so
   it is cleanly span-able with no semantic loss. Reshaped the seam: `ValidateUserTags(IReadOnlyList<SecurityTag>)` →
@@ -1181,12 +1186,16 @@ genuine if a *downstream consumer needs a materialized set* — so trace the con
   **write-action** (`SecurityTagBuildAction`), so the resolved grants (or, with no grants, the principal's own internal
   tags) write straight into the draft's usage array via `IdentityBuilder` — **no usageTags materialization at all** (true
   0; the draft document is the leaf). The usage property is omitted when there are no usage tags.
-- **Measured (A+B):** `Full_ReadMergeFromTags` **648 B → `After_ViewBuildDirect` 192 B (−456 B, −70%)** per create (the
-  management resolution; usageTags Phase C removes a further ~200 B `Build` byte[] to 0).
+- **Measured.** `Full_ReadMergeFromTags` **648 B → `After_ViewBuildDirect` 192 B (−456 B, −70%, A+B)**; usageTags Phase C
+  then removes its ~200 B `Build` byte[] to 0, and the management-over-draft change removes the last 192 B to **0** — so
+  the credential-create tag write is now **fully zero-materialization**: the draft document is the only leaf (its bytes are
+  the persisted binding). The genuine floor is the draft itself.
 - **Verified.** `SecurityShellTests` **5/5** (incl. the new span-overload rejection + custom prefix + escaped value),
-  `ControlPlaneCredentialsApiTests` **10/10**, `ControlPlaneRowSecurityTests` **9/9**, enumerator **2/2**, Sqlite +
-  InMemory `SourceCredentialStore` conformance **13/13 + 16/16** (the draft round-trips correctly through the store); slnx
-  build **0 Warning(s), 0 Error(s)**. The `SecurityShell` list overload is kept (its direct test + any list caller).
+  `ControlPlaneCredentialsApiTests` **11/11** (incl. a new `…out_of_the_callers_write_reach_is_rejected` test covering the
+  moved Admits guard's rejection path — 400 + nothing persisted), `ControlPlaneRowSecurityTests` + `PersistentRowSecurityPolicyTests`
+  **37/37**, enumerator **2/2**, Sqlite + InMemory `SourceCredentialStore` conformance **13/13 + 16/16** (the draft
+  round-trips correctly with both tag write-actions); slnx build **0 Warning(s), 0 Error(s)**. The `SecurityShell` list
+  overload is kept (its direct test + any list caller).
 
 ## Cross-references
 

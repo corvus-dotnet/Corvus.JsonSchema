@@ -144,6 +144,29 @@ public sealed class ControlPlaneCredentialsApiTests
     }
 
     [TestMethod]
+    public async Task Creating_a_binding_whose_management_tags_are_out_of_the_callers_write_reach_is_rejected()
+    {
+        // The caller's WRITE reach requires team=payments; a binding managed by team=ops is outside it, so the create
+        // handler's privilege-escalation guard (Admits over the draft's management tags) rejects it (400) and persists
+        // nothing. This exercises the guard's rejection path through the post-draft, non-owning-view Admits check.
+        await using Scoped host = await StartAsync(new RestrictedWritePolicy());
+
+        HttpResponseMessage rejected = await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/credentials",
+            """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://petstore-key"}],"managementTags":[{"key":"team","value":"ops"}]}""",
+            Write);
+
+        rejected.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        using Stj.JsonDocument problem = await ReadJsonAsync(rejected);
+        problem.RootElement.GetProperty("type").GetString()!.ShouldContain("management-out-of-reach");
+
+        // Nothing was persisted — the binding does not exist.
+        HttpResponseMessage get = await host.SendAsync(HttpMethod.Get, "/credentials/petstore/production", Read);
+        get.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [TestMethod]
     public async Task Lifecycle_metadata_round_trips_and_a_status_is_derived()
     {
         await using Scoped host = await StartAsync();
@@ -251,6 +274,17 @@ public sealed class ControlPlaneCredentialsApiTests
     private sealed class GrantMappingPolicy : ControlPlaneRowSecurityPolicy
     {
         public override AccessContext Resolve(System.Security.Claims.ClaimsPrincipal? principal) => AccessContext.System;
+    }
+
+    /// <summary>A scoped policy whose WRITE reach requires <c>team=payments</c> — so a binding managed by any other team
+    /// is outside the caller's write reach, exercising the create handler's privilege-escalation guard.</summary>
+    private sealed class RestrictedWritePolicy : ControlPlaneRowSecurityPolicy
+    {
+        private static readonly SecurityFilter WriteReach = new SecurityShell([]).BuildFilter(
+            [SecurityRule.Compile("team == 'payments'")],
+            new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal));
+
+        public override AccessContext Resolve(System.Security.Claims.ClaimsPrincipal? principal) => new(null, WriteReach, null);
     }
 
     private sealed class Scoped(WebApplication app, HttpClient client) : IAsyncDisposable
