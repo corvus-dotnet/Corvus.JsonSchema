@@ -336,7 +336,10 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         SourceCredentialBinding binding = ctx.Binding;
 
         bool hasConfig = binding.Config.IsNotUndefined() && binding.Config.GetArrayLength() > 0;
-        bool hasManagementTags = !binding.ManagementTagsValue.IsEmpty;
+
+        // A cheap array-length check — the old !binding.ManagementTagsValue.IsEmpty allocated a CopyFrom byte[] per row
+        // just to test emptiness.
+        bool hasManagementTags = binding.ManagementTags.IsNotUndefined() && binding.ManagementTags.GetArrayLength() > 0;
 
         // Stored usage tags always carry the internal prefix (they are written via ResolveUsageGrants), so a non-empty
         // usageTags array always describes back to at least one grant — the cheap length check matches the old
@@ -393,16 +396,30 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     private static void BuildConfigEntry(in SourceCredentialBinding.CredentialConfigEntry entry, ref Models.CredentialConfigEntry.Builder b)
         => b.Create(key: Models.JsonString.From(entry.Key), value: Models.JsonString.From(entry.Value));
 
+    // Management tags are projected verbatim ({key, value}, no prefix strip — unlike usageGrants): a non-owning
+    // SecurityTagSet view over the binding's ManagementTags array (no CopyFrom byte[]), enumerated as unescaped spans,
+    // each written bytes-native. The binding document outlives the synchronous build, so the view is safe.
     private static void BuildManagementTags(in SummaryContext ctx, ref Models.CredentialBindingSummary.CredentialSecurityTagArray.Builder array)
     {
-        foreach (SecurityTag tag in ctx.Binding.ManagementTagsValue)
+        SecurityTagSet managementTags = SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(ctx.Binding.ManagementTags).Memory);
+        SecurityTagSet.Utf8Enumerator e = managementTags.EnumerateUtf8();
+        try
         {
-            array.AddItem(Models.CredentialSecurityTag.Build(in tag, BuildSecurityTag));
+            while (e.MoveNext())
+            {
+                // UsageGrantSpans is the shared two-UTF-8-span carrier; here its first span is the verbatim tag key.
+                var spans = new UsageGrantSpans(e.CurrentKey, e.CurrentValue);
+                array.AddItem(Models.CredentialSecurityTag.Build(in spans, BuildSecurityTag));
+            }
+        }
+        finally
+        {
+            e.Dispose();
         }
     }
 
-    private static void BuildSecurityTag(in SecurityTag tag, ref Models.CredentialSecurityTag.Builder b)
-        => b.Create(key: tag.Key, value: tag.Value);
+    private static void BuildSecurityTag(in UsageGrantSpans spans, ref Models.CredentialSecurityTag.Builder b)
+        => b.Create(key: (Models.JsonString.Source)spans.Dimension, value: (Models.JsonString.Source)spans.Value);
 
     // The stored usage scope is described back as operator-facing identity grants (the inverse of the create mapping) —
     // internal tags are not exposed raw. Projected allocation-free straight off the binding's UsageTags: a non-owning

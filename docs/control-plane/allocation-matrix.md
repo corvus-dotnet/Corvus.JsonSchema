@@ -1143,8 +1143,16 @@ transient — the response document bytes are the only genuine leaf.
   enumerator including for escaped keys **and** values (both scratch regions).
 - **Verified.** `ControlPlaneCredentialsApiTests` + `ControlPlaneIdentityApiTests` (incl. grantee search) +
   `ControlPlaneAdministratorsApiTests` + `ControlPlaneRowSecurityTests` + `ControlPlaneSecurityApiTests` **42/42**;
-  enumerator **2/2**; slnx build **0 Warning(s), 0 Error(s)**. **Row done — the projection/leaf allocation class is now
-  exhausted; the remaining open lever is the management-tag `List<SecurityTag>` resolution seam.**
+  enumerator **2/2**; slnx build **0 Warning(s), 0 Error(s)**.
+- **Sweep follow-up — credentials `managementTags` (the same pattern).** A sweep with these learnings found the credential
+  summary's `managementTags` projection paid the identical smell, and worse — `CopyFrom` **twice**: once in
+  `hasManagementTags = !binding.ManagementTagsValue.IsEmpty` (a byte[] just to test emptiness) and again enumerating it as
+  managed-string `SecurityTag`s. Converted to a cheap `binding.ManagementTags` length check + the non-owning
+  `FromOwnedJsonArray` view + `EnumerateUtf8` + `(JsonString.Source)span` writes (verbatim `{key, value}` — no prefix
+  strip, so no policy). Same already-measured `CopyFrom`+`GetString`→span mechanism (728→0 B per row, even simpler — not
+  separately benchmarked); `ControlPlaneCredentialsApiTests` **10/10**, slnx **0/0**. **Row done — the projection/leaf
+  allocation class is exhausted; the remaining open lever is the management-tag `List<SecurityTag>` *write/resolution*
+  seam (the inbound side, distinct from this outbound projection).**
 
 ## Cross-references
 
