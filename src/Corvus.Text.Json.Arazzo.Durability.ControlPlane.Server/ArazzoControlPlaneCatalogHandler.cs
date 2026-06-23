@@ -12,7 +12,7 @@ using ValidatorSchema = Corvus.Text.Json.Validator.JsonSchema;
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
 /// <summary>
-/// Implements the generated <see cref="IApiCatalogHandler"/> over an <see cref="IWorkflowCatalogClient"/>,
+/// Implements the generated <see cref="IApiCatalogHandler"/> over an <see cref="ISecuredWorkflowCatalog"/>,
 /// mapping each catalog REST operation onto the corresponding catalog-client call and projecting the .NET
 /// metadata records into the generated response models. The package and its individual documents are returned
 /// as their stored JSON; the version-metadata responses carry the HATEOAS links the contract declares.
@@ -30,8 +30,8 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     // correctness) if a single process accumulates more than MaxCachedSchemas distinct target schemas.
     private static readonly ConcurrentDictionary<string, ValidatorSchema> SchemaCache = new(StringComparer.Ordinal);
 
-    private readonly IWorkflowCatalogClient catalog;
-    private readonly IWorkflowManagementClient management;
+    private readonly ISecuredWorkflowCatalog catalog;
+    private readonly ISecuredWorkflowManagement management;
     private readonly IRunnerRegistry runners;
     private readonly ControlPlaneAccess access;
 
@@ -39,7 +39,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     /// <param name="catalog">The catalog client the endpoints delegate to.</param>
     /// <param name="management">The management client used to create runs when a workflow version is triggered.</param>
     /// <param name="runners">The runner registry consulted to gate a trigger on a runner that hosts the version.</param>
-    public ArazzoControlPlaneCatalogHandler(IWorkflowCatalogClient catalog, IWorkflowManagementClient management, IRunnerRegistry runners)
+    public ArazzoControlPlaneCatalogHandler(ISecuredWorkflowCatalog catalog, ISecuredWorkflowManagement management, IRunnerRegistry runners)
         : this(catalog, management, runners, new ControlPlaneAccess())
     {
     }
@@ -49,7 +49,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     /// <param name="management">The management client used to create runs when a workflow version is triggered.</param>
     /// <param name="runners">The runner registry consulted to gate a trigger on a runner that hosts the version.</param>
     /// <param name="access">Resolves the caller's <see cref="AccessContext"/> per request (§14.2).</param>
-    internal ArazzoControlPlaneCatalogHandler(IWorkflowCatalogClient catalog, IWorkflowManagementClient management, IRunnerRegistry runners, ControlPlaneAccess access)
+    internal ArazzoControlPlaneCatalogHandler(ISecuredWorkflowCatalog catalog, ISecuredWorkflowManagement management, IRunnerRegistry runners, ControlPlaneAccess access)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(management);
@@ -175,29 +175,21 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         CatalogOwner? owner = patch.Owner.IsNotUndefined() ? ToOwner(patch.Owner) : null;
         TagSet? tags = ToTags(patch.Tags);
         CatalogStatus? status = patch.Status.IsNotUndefined() ? Enum.Parse<CatalogStatus>((string)patch.Status) : null;
-        AccessContext ctx = this.access.Current();
 
-        // Gate (§14.2): a version outside read reach → 404 (non-disclosing); readable but outside write reach → 403.
-        // The existing version is only inspected for the reach check, so it is disposed here (its tags are owned copies).
-        using (ParsedJsonDocument<CatalogVersion>? existing = await this.catalog.GetAsync(baseWorkflowId, versionNumber, ctx, cancellationToken).ConfigureAwait(false))
-        {
-            if (existing is not { } ev)
-            {
-                return UpdateCatalogVersionResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
-            }
-
-            if (!ctx.Admits(AccessVerb.Write, ev.RootElement.SecurityTagsValue))
-            {
-                return UpdateCatalogVersionResult.Forbidden(ForbiddenProblem(baseWorkflowId, versionNumber), workspace);
-            }
-        }
-
-        ParsedJsonDocument<CatalogVersion>? updated = await this.catalog.UpdateAsync(baseWorkflowId, versionNumber, owner, tags, status, ctx, cancellationToken).ConfigureAwait(false);
-        if (updated is not { } v)
+        // The client resolves read-then-write reach on a single fetch (§14.2): outside read reach → 404 (non-disclosing),
+        // readable but outside write reach → 403 — so the handler no longer pre-fetches the version for the reach check.
+        CatalogUpdateResult result = await this.catalog.UpdateAsync(baseWorkflowId, versionNumber, owner, tags, status, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (result.Outcome == CatalogUpdateOutcome.NotFound)
         {
             return UpdateCatalogVersionResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
         }
 
+        if (result.Outcome == CatalogUpdateOutcome.Forbidden)
+        {
+            return UpdateCatalogVersionResult.Forbidden(ForbiddenProblem(baseWorkflowId, versionNumber), workspace);
+        }
+
+        ParsedJsonDocument<CatalogVersion> v = result.Document!;
         workspace.TakeOwnership(v);
         return UpdateCatalogVersionResult.Ok(Models.CatalogVersionSummary.From(v.RootElement), workspace);
     }
@@ -207,25 +199,14 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     {
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
         int versionNumber = (int)parameters.VersionNumber;
-        AccessContext ctx = this.access.Current();
 
-        // Gate (§14.2): a version outside read reach → 404 (non-disclosing); readable but outside write reach → 403.
-        // Inspect-and-discard: the version is only read for the reach check, so the pooled document is disposed here.
-        using ParsedJsonDocument<CatalogVersion>? existing = await this.catalog.GetAsync(baseWorkflowId, versionNumber, ctx, cancellationToken).ConfigureAwait(false);
-        if (existing is not { } ev)
-        {
-            return DeleteCatalogVersionResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
-        }
-
-        if (!ctx.Admits(AccessVerb.Write, ev.RootElement.SecurityTagsValue))
-        {
-            return DeleteCatalogVersionResult.Forbidden(ForbiddenProblem(baseWorkflowId, versionNumber), workspace);
-        }
-
-        CatalogDeleteOutcome outcome = await this.catalog.DeleteAsync(baseWorkflowId, versionNumber, ctx, cancellationToken).ConfigureAwait(false);
+        // The client resolves read-then-write reach on its single fetch (§14.2) — 404 outside read reach (non-disclosing),
+        // 403 readable but outside write reach — so the handler no longer pre-fetches the version for the reach check.
+        CatalogDeleteOutcome outcome = await this.catalog.DeleteAsync(baseWorkflowId, versionNumber, this.access.Current(), cancellationToken).ConfigureAwait(false);
         return outcome switch
         {
             CatalogDeleteOutcome.Deleted => DeleteCatalogVersionResult.NoContent(),
+            CatalogDeleteOutcome.Forbidden => DeleteCatalogVersionResult.Forbidden(ForbiddenProblem(baseWorkflowId, versionNumber), workspace),
             CatalogDeleteOutcome.Referenced => DeleteCatalogVersionResult.Conflict(
                 Problem("version-referenced", "Version is referenced", 409, $"Version {versionNumber} of '{baseWorkflowId}' cannot be deleted while workflow runs reference it; mark it obsolete instead."), workspace),
             _ => DeleteCatalogVersionResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace),

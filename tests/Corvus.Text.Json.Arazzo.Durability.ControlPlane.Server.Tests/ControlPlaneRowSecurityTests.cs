@@ -204,8 +204,8 @@ public sealed class ControlPlaneRowSecurityTests
     {
         var clock = new FixedClock(T0);
         var store = new InMemoryWorkflowStateStore(clock);
-        var management = new WorkflowManagementClient(store, "ops", CompleteResumer, clock);
-        var catalog = new WorkflowCatalogClient(new InMemoryWorkflowCatalogStore(clock), store, "ops");
+        var management = new SecuredWorkflowManagement(store, "ops", CompleteResumer, clock);
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(clock), store, "ops");
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -226,11 +226,11 @@ public sealed class ControlPlaneRowSecurityTests
         return new Scoped(app, app.GetTestClient(), store, catalog, clock);
     }
 
-    private sealed class Scoped(WebApplication app, HttpClient client, InMemoryWorkflowStateStore store, IWorkflowCatalogClient catalog, TimeProvider clock) : IAsyncDisposable
+    private sealed class Scoped(WebApplication app, HttpClient client, InMemoryWorkflowStateStore store, ISecuredWorkflowCatalog catalog, TimeProvider clock) : IAsyncDisposable
     {
         public InMemoryWorkflowStateStore Store => store;
 
-        public IWorkflowCatalogClient Catalog => catalog;
+        public ISecuredWorkflowCatalog Catalog => catalog;
 
         public TimeProvider Clock => clock;
 

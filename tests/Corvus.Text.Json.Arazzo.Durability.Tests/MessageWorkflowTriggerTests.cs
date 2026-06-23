@@ -18,7 +18,7 @@ public sealed class MessageWorkflowTriggerTests
     public async Task Each_message_starts_a_pending_run_and_redelivery_is_idempotent()
     {
         var store = new InMemoryWorkflowStateStore();
-        var management = new WorkflowManagementClient(store, owner: "ops");
+        var management = new SecuredWorkflowManagement(store, owner: "ops");
         var transport = new InMemoryMessageTransport();
 
         var startedIds = new List<WorkflowRunId>();

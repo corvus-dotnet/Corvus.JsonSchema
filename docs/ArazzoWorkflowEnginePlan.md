@@ -898,7 +898,7 @@ A control-plane client over the store + the same worker-trigger channel used for
 Tier 2 resume:
 
 ```csharp
-public interface IWorkflowManagementClient
+public interface ISecuredWorkflowManagement
 {
     // Query / visibility
     ValueTask<WorkflowRunPage> ListAsync(WorkflowQuery query, CancellationToken ct);   // filter by status, workflowId, time range, error type, tags; paged
@@ -938,7 +938,7 @@ what patch/reason).
 - **Phase 3** (with Tier 1 durability + the state machine): introduce the run
   lifecycle, the `Faulted` state + fault record, and basic `ResumeAsync`
   (retry-faulted-step) and `CancelAsync`.
-- **Phase 6** (productionization): the full `IWorkflowManagementClient` with the
+- **Phase 6** (productionization): the full `ISecuredWorkflowManagement` with the
   visibility index, rich queries, rewind/skip/state-patch resume, purge, audit
   trail, and a CLI surface (e.g. `arazzo-runs list --status faulted`,
   `arazzo-runs resume <id>`). Conformance tests assert the fault → query →

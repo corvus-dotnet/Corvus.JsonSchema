@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Runner.Demo;
 /// </summary>
 public sealed class RunnerRegistrationService(
     IRunnerRegistry registry,
-    WorkflowCatalogClient catalog,
+    SecuredWorkflowCatalog catalog,
     RunnerOptions options,
     ILogger<RunnerRegistrationService> logger) : BackgroundService
 {

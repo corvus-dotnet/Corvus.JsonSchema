@@ -1,4 +1,4 @@
-// <copyright file="IWorkflowCatalogClient.cs" company="Endjin Limited">
+// <copyright file="ISecuredWorkflowCatalog.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
@@ -6,11 +6,11 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 
 /// <summary>
 /// The catalog control surface: add/search/inspect/govern workflow document packages, with referential
-/// integrity against workflow runs. It is the catalog analogue of <see cref="IWorkflowManagementClient"/> —
+/// integrity against workflow runs. It is the catalog analogue of <see cref="ISecuredWorkflowManagement"/> —
 /// it coordinates the catalog store (<see cref="IWorkflowCatalogStore"/>) with the run store for delete/purge
 /// safety and emits the audit telemetry, so the REST handler stays a thin translation layer.
 /// </summary>
-public interface IWorkflowCatalogClient
+public interface ISecuredWorkflowCatalog
 {
     /// <summary>
     /// Adds a new immutable version: validates the submitted workflow id has no <c>-vN</c> suffix, then has the
@@ -74,8 +74,10 @@ public interface IWorkflowCatalogClient
     /// <param name="status">A new status, if changing it.</param>
     /// <param name="context">The caller's access grant; the version must be within its write reach.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The updated version, or <see langword="null"/> if it does not exist or is not within write reach.</returns>
-    ValueTask<ParsedJsonDocument<CatalogVersion>?> UpdateAsync(string baseWorkflowId, int versionNumber, CatalogOwner? owner, TagSet? tags, CatalogStatus? status, AccessContext context, CancellationToken cancellationToken);
+    /// <returns>The outcome and, on <see cref="CatalogUpdateOutcome.Updated"/>, the updated version document (which the
+    /// caller owns): <see cref="CatalogUpdateOutcome.NotFound"/> if it is absent or outside read reach (non-disclosing),
+    /// <see cref="CatalogUpdateOutcome.Forbidden"/> if readable but outside write reach.</returns>
+    ValueTask<CatalogUpdateResult> UpdateAsync(string baseWorkflowId, int versionNumber, CatalogOwner? owner, TagSet? tags, CatalogStatus? status, AccessContext context, CancellationToken cancellationToken);
 
     /// <summary>Deletes a single version, refusing while any workflow run references its versioned workflow id, if the caller's write reach admits it (§14.2).</summary>
     /// <param name="baseWorkflowId">The base workflow id.</param>
@@ -157,9 +159,34 @@ public enum CatalogDeleteOutcome
     /// <summary>The version was deleted.</summary>
     Deleted,
 
-    /// <summary>No version with that base id and number exists.</summary>
+    /// <summary>No version with that base id and number exists, or it is outside the caller's read reach (non-disclosing).</summary>
     NotFound,
 
     /// <summary>The version was not deleted because one or more workflow runs still reference it.</summary>
     Referenced,
+
+    /// <summary>The version is within the caller's read reach but outside its write reach.</summary>
+    Forbidden,
 }
+
+/// <summary>The outcome of a version metadata update.</summary>
+public enum CatalogUpdateOutcome
+{
+    /// <summary>The version was updated; the result carries the updated document.</summary>
+    Updated,
+
+    /// <summary>No version with that base id and number exists, or it is outside the caller's read reach (non-disclosing).</summary>
+    NotFound,
+
+    /// <summary>The version is within the caller's read reach but outside its write reach.</summary>
+    Forbidden,
+}
+
+/// <summary>
+/// The result of a version metadata update: the outcome and, when <see cref="CatalogUpdateOutcome.Updated"/>, the updated
+/// document. The caller owns <see cref="Document"/> on the <c>Updated</c> outcome and must dispose it (or hand it to a
+/// workspace); it is <see langword="null"/> for the <c>NotFound</c>/<c>Forbidden</c> outcomes.
+/// </summary>
+/// <param name="Outcome">The update outcome.</param>
+/// <param name="Document">The updated version document (only on <see cref="CatalogUpdateOutcome.Updated"/>).</param>
+public readonly record struct CatalogUpdateResult(CatalogUpdateOutcome Outcome, ParsedJsonDocument<CatalogVersion>? Document);

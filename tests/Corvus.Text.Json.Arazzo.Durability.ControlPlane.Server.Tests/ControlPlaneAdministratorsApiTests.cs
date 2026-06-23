@@ -193,7 +193,7 @@ public sealed class ControlPlaneAdministratorsApiTests
 
     // Publishes version 1 of a base id stamped with the founder's deployment identity (sys:tenant=<founder>), so the
     // founder becomes its sole administrator — mirroring what a real submitter's stamped identity would carry.
-    private static async Task EstablishAsync(WorkflowCatalogClient catalog, string workflowId, string founder)
+    private static async Task EstablishAsync(SecuredWorkflowCatalog catalog, string workflowId, string founder)
     {
         SecurityTagSet founderIdentity = SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", founder)]);
         await catalog.AddAsync(Package(workflowId), new CatalogOwner("Team", "team@example.com", null, null), default, founderIdentity, default);
@@ -214,8 +214,8 @@ public sealed class ControlPlaneAdministratorsApiTests
     private static async Task<Scoped> StartAsync(bool withAdministratorStore = true, IObservedIdentityStore? observed = null, ControlPlaneRowSecurityPolicy? policy = null)
     {
         var store = new InMemoryWorkflowStateStore();
-        var management = new WorkflowManagementClient(store, "ops");
-        var catalog = new WorkflowCatalogClient(
+        var management = new SecuredWorkflowManagement(store, "ops");
+        var catalog = new SecuredWorkflowCatalog(
             new InMemoryWorkflowCatalogStore(),
             store,
             "ops",
@@ -276,9 +276,9 @@ public sealed class ControlPlaneAdministratorsApiTests
         }
     }
 
-    private sealed class Scoped(WebApplication app, HttpClient client, WorkflowCatalogClient catalog) : IAsyncDisposable
+    private sealed class Scoped(WebApplication app, HttpClient client, SecuredWorkflowCatalog catalog) : IAsyncDisposable
     {
-        public WorkflowCatalogClient Catalog => catalog;
+        public SecuredWorkflowCatalog Catalog => catalog;
 
         public Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, string? scope, string? identity = null)
             => this.SendCoreAsync(new HttpRequestMessage(method, path), scope, identity);

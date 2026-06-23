@@ -1,4 +1,4 @@
-// <copyright file="IWorkflowManagementClient.cs" company="Endjin Limited">
+// <copyright file="ISecuredWorkflowManagement.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
@@ -12,7 +12,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// of dead-letter queue inspection and redelivery; all mutations take a single-owner lease and use the store's
 /// optimistic concurrency so concurrent operators (or an operator and a worker) cannot conflict.
 /// </summary>
-public interface IWorkflowManagementClient
+public interface ISecuredWorkflowManagement
 {
     /// <summary>
     /// Starts a new run of a workflow: creates a fresh <see cref="WorkflowRunStatus.Pending"/> run with the
@@ -180,7 +180,7 @@ public readonly record struct ResumeOptions(
 }
 
 /// <summary>Selects terminal runs to reap. The purge reach comes from the <see cref="AccessContext"/> passed to
-/// <see cref="IWorkflowManagementClient.PurgeAsync"/> (§14.2), not from the query.</summary>
+/// <see cref="ISecuredWorkflowManagement.PurgeAsync"/> (§14.2), not from the query.</summary>
 /// <param name="OlderThan">Reap completed/cancelled runs last updated strictly before this instant.</param>
 /// <param name="Limit">The maximum number of runs to delete in one call.</param>
 public readonly record struct WorkflowPurgeQuery(DateTimeOffset OlderThan, int Limit = 1000);

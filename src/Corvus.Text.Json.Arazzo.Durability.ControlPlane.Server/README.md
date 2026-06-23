@@ -1,7 +1,7 @@
 # Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server
 
 An ASP.NET Core server for the [Arazzo control-plane REST API](../../docs/control-plane/README.md), generated
-from its OpenAPI 3.2 description and wired to `IWorkflowManagementClient`.
+from its OpenAPI 3.2 description and wired to `ISecuredWorkflowManagement`.
 
 The generated endpoints (under `Generated/`, produced by `corvusjson openapi-server`) handle routing, parameter
 and body deserialization, schema validation, and typed response serialization. A handler per resource group
@@ -14,8 +14,8 @@ using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
 WebApplication app = WebApplication.CreateBuilder(args).Build();
 
-// management: an IWorkflowManagementClient over your chosen durability store (with a resumer for ResumeAsync).
-// catalog:    an IWorkflowCatalogClient wrapping a catalog store + the run store (for referential integrity).
+// management: an ISecuredWorkflowManagement over your chosen durability store (with a resumer for ResumeAsync).
+// catalog:    an ISecuredWorkflowCatalog wrapping a catalog store + the run store (for referential integrity).
 // runners:    an IRunnerRegistry the runners endpoint reads and the trigger gate consults.
 // Optional args follow (authorization, row security, the security/credential/access-request stores, identity);
 // see MapArazzoControlPlane's parameter docs.
@@ -52,7 +52,7 @@ IWorkflowMetadataProvider metadata = new WorkflowSchemaMetadataProvider();
 var catalogStore = await PostgresWorkflowCatalogStore.ConnectAsync(
     connectionString, timeProvider: null, metadataProvider: metadata);
 
-var catalog = new WorkflowCatalogClient(catalogStore, runStore, "ops");
+var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
 app.MapArazzoControlPlane(management, catalog, runners);
 ```
 
