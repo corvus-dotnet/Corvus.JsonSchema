@@ -19,8 +19,9 @@ is [`allocation-matrix.md`](allocation-matrix.md) — read it before doing anyth
 
 1. **Ground.** Read the named skill(s) + design-doc § for the row. State the target pattern you
    derived from the conventions. **For any response-projection row, run the up-front anti-pattern
-   sweep first** (grep for `XxxOrNull`/`XxxValue`-into-a-builder and closure-based `new …Source((ref`
-   projections — the exact commands + the decision order are in `corvus-ctj-handler-implementation`
+   sweep first** (grep for `XxxOrNull`/`XxxValue`-into-a-builder and closure-based builder-lambda
+   `((ref …Builder)` projections — which match both `new …Source((ref` and the `=> new((ref` shorthand;
+   the exact commands + the decision order are in `corvus-ctj-handler-implementation`
    §"Response projection"). Find every instance of a pattern in one pass — don't discover them
    serially row-by-row, and don't trust a code comment that says a whole-doc `From()` "can't be used
    here" (re-derive against the current ownership-transfer rule). Check the single-document sibling: a
