@@ -1726,10 +1726,10 @@ skills:
       - {index: 9, language: powershell, lines: [274, 280]}
   - path: ".github/skills/corvus-builder-context-threading/SKILL.md"
     blocks:
-      - {index: 0, language: csharp, lines: [37, 51], category: compilable, verified: false}
-      - {index: 1, language: csharp, lines: [58, 69], category: compilable, verified: false}
-      - {index: 2, language: csharp, lines: [81, 92], category: compilable, verified: false}
-      - {index: 3, language: csharp, lines: [104, 110], category: compilable, verified: false}
+      - {index: 0, language: csharp, lines: [44, 58], category: compilable, verified: false}
+      - {index: 1, language: csharp, lines: [65, 76], category: compilable, verified: false}
+      - {index: 2, language: csharp, lines: [88, 99], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [111, 117], category: compilable, verified: false}
   - path: ".github/skills/corvus-bytes-to-bytes/SKILL.md"
     blocks:
       - {index: 0, language: csharp, lines: [93, 103], category: compilable, verified: false}
@@ -1750,13 +1750,15 @@ skills:
       - {index: 3, language: csharp, lines: [78, 85], category: compilable, verified: false}
       - {index: 4, language: csharp, lines: [89, 93], category: compilable, verified: false}
       - {index: 5, language: csharp, lines: [99, 105], category: compilable, verified: false}
-      - {index: 6, language: csharp, lines: [128, 134], category: compilable, verified: false}
-      - {index: 7, language: csharp, lines: [140, 146], category: compilable, verified: false}
-      - {index: 8, language: csharp, lines: [152, 161], category: compilable, verified: false}
-      - {index: 9, language: csharp, lines: [167, 183], category: compilable, verified: false}
-      - {index: 10, language: csharp, lines: [189, 200], category: compilable, verified: false}
-      - {index: 11, language: csharp, lines: [208, 216], category: compilable, verified: false}
-      - {index: 12, language: csharp, lines: [222, 230], category: compilable, verified: false}
+      - {index: 6, language: csharp, lines: [139, 148], category: compilable, verified: false}
+      - {index: 7, language: bash, lines: [154, 159]}
+      - {index: 8, language: csharp, lines: [171, 177], category: compilable, verified: false}
+      - {index: 9, language: csharp, lines: [183, 189], category: compilable, verified: false}
+      - {index: 10, language: csharp, lines: [195, 204], category: compilable, verified: false}
+      - {index: 11, language: csharp, lines: [210, 226], category: compilable, verified: false}
+      - {index: 12, language: csharp, lines: [232, 242], category: compilable, verified: false}
+      - {index: 13, language: csharp, lines: [250, 258], category: compilable, verified: false}
+      - {index: 14, language: csharp, lines: [264, 272], category: compilable, verified: false}
   - path: ".github/skills/corvus-docs-website/SKILL.md"
     blocks:
       - {index: 0, language: powershell, lines: [24, 27]}
