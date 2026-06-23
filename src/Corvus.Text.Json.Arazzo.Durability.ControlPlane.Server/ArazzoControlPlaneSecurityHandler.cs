@@ -137,7 +137,15 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         // wrap), and the body is validated/serialized after this handler returns — so hand the documents to the
         // workspace (it disposes them at request end); `using bindings` then only returns the batch's backing array.
         bindings.TransferOwnershipTo(workspace);
-        return ListSecurityBindingsResult.Ok(ToBindingList(bindings), workspace);
+
+        // The list body is built closure-free and consumed in place: SecurityBindingList.Build scopes its result to the
+        // `in bindings` argument (ref-safety), so it cannot be returned from a helper — the array is projected through the
+        // static BuildBindingSummaries, with the binding list threaded as the context.
+        IReadOnlyList<SecurityBindingDocument> bindingList = bindings;
+        Models.SecurityBindingList.Source<IReadOnlyList<SecurityBindingDocument>> body = Models.SecurityBindingList.Build(
+            in bindingList,
+            bindings: Models.SecurityBindingList.SecurityBindingSummaryArray.Build(in bindingList, BuildBindingSummaries));
+        return ListSecurityBindingsResult.Ok(body, workspace);
     }
 
     /// <inheritdoc/>
@@ -285,61 +293,42 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
                 }
             })));
 
-    private static Models.SecurityBindingSummary.Source ToBindingSource(SecurityBindingDocument binding)
-        => new((ref Models.SecurityBindingSummary.Builder b) =>
+    // The binding summary is a closure-free Build<TContext> projection: the binding itself is threaded as the context
+    // (it is a struct : IJsonElement, span-capable) through the static BuildBindingSummary, so neither the single-document
+    // sites nor the list allocate a capturing delegate.
+    private static Models.SecurityBindingSummary.Source<SecurityBindingDocument> ToBindingSource(SecurityBindingDocument binding)
+        => Models.SecurityBindingSummary.Build(in binding, BuildBindingSummary);
+
+    private static void BuildBindingSummary(in SecurityBindingDocument binding, ref Models.SecurityBindingSummary.Builder b)
+    {
+        // Scalars carried bytes-native (Models.JsonString.From — zero-copy element wrap); the three verb grants are
+        // congruent with the stored VerbGrantInfo, so they wrap verbatim (Models.VerbGrant.From). The summary
+        // deliberately omits the stored scopes/expiresAt/eligibleOnly — per-field selection keeps them out. The optional
+        // scalars carry the binding's raw CTJ value straight through From() — which propagates Undefined, so an absent
+        // field is omitted with no IsNotUndefined/XxxOrNull ternary (the "Undefined not null" convention).
+        b.Create(
+            claimType: Models.JsonString.From(binding.ClaimType),
+            createdAt: binding.CreatedAtValue,
+            createdBy: Models.JsonString.From(binding.CreatedBy),
+            etag: Models.JsonString.From(binding.Etag),
+            id: Models.JsonString.From(binding.Id),
+            order: binding.OrderValue,
+            purge: Models.VerbGrant.From(binding.Purge),
+            read: Models.VerbGrant.From(binding.Read),
+            write: Models.VerbGrant.From(binding.Write),
+            claimValue: Models.JsonString.From(binding.ClaimValue),
+            description: Models.JsonString.From(binding.Description),
+            lastUpdatedAt: Models.JsonDateTime.From(binding.LastUpdatedAt),
+            lastUpdatedBy: Models.JsonString.From(binding.LastUpdatedBy));
+    }
+
+    private static void BuildBindingSummaries(in IReadOnlyList<SecurityBindingDocument> bindings, ref Models.SecurityBindingList.SecurityBindingSummaryArray.Builder array)
+    {
+        foreach (SecurityBindingDocument binding in bindings)
         {
-            Models.JsonString.Source claimValue = default;
-            if (binding.ClaimValue.IsNotUndefined())
-            {
-                claimValue = Models.JsonString.From(binding.ClaimValue);
-            }
-
-            Models.JsonString.Source description = default;
-            if (binding.Description.IsNotUndefined())
-            {
-                description = Models.JsonString.From(binding.Description);
-            }
-
-            Models.JsonString.Source lastUpdatedBy = default;
-            if (binding.LastUpdatedBy.IsNotUndefined())
-            {
-                lastUpdatedBy = Models.JsonString.From(binding.LastUpdatedBy);
-            }
-
-            Models.JsonDateTime.Source lastUpdatedAt = default;
-            if (binding.UpdatedAtValue is { } ua)
-            {
-                lastUpdatedAt = ua;
-            }
-
-            // Scalars carried bytes-native (Models.JsonString.From — zero-copy element wrap); the three verb grants are
-            // congruent with the stored VerbGrantInfo, so they wrap verbatim (Models.VerbGrant.From). The summary
-            // deliberately omits the stored scopes/expiresAt/eligibleOnly — per-field selection keeps them out.
-            b.Create(
-                claimType: Models.JsonString.From(binding.ClaimType),
-                createdAt: binding.CreatedAtValue,
-                createdBy: Models.JsonString.From(binding.CreatedBy),
-                etag: Models.JsonString.From(binding.Etag),
-                id: Models.JsonString.From(binding.Id),
-                order: binding.OrderValue,
-                purge: Models.VerbGrant.From(binding.Purge),
-                read: Models.VerbGrant.From(binding.Read),
-                write: Models.VerbGrant.From(binding.Write),
-                claimValue: claimValue,
-                description: description,
-                lastUpdatedAt: lastUpdatedAt,
-                lastUpdatedBy: lastUpdatedBy);
-        });
-
-    private static Models.SecurityBindingList.Source ToBindingList(IReadOnlyList<SecurityBindingDocument> bindings)
-        => new((ref Models.SecurityBindingList.Builder b) => b.Create(
-            bindings: new Models.SecurityBindingList.SecurityBindingSummaryArray.Source((ref Models.SecurityBindingList.SecurityBindingSummaryArray.Builder ab) =>
-            {
-                foreach (SecurityBindingDocument binding in bindings)
-                {
-                    ab.AddItem(ToBindingSource(binding));
-                }
-            })));
+            array.AddItem(Models.SecurityBindingSummary.Build(in binding, BuildBindingSummary));
+        }
+    }
 
     private static Models.ProblemDetails.Source NotFoundProblem(string kind, string id)
         => Problem($"{kind}-not-found", $"{char.ToUpperInvariant(kind[0])}{kind[1..]} not found", 404, $"No security {kind} '{id}' exists.");
