@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Globalization;
+
 using MySqlConnector;
 
 namespace Corvus.Text.Json.Arazzo.Durability.MySql;
@@ -167,31 +169,27 @@ public sealed class MySqlRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         ArgumentNullException.ThrowIfNull(runnerId);
         await using MySqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
 
-        byte[]? existing;
-        await using (MySqlCommand select = connection.CreateCommand())
-        {
-            select.CommandText = "SELECT doc FROM runner_registrations WHERE runner_id = @runnerId;";
-            select.Parameters.AddWithValue("@runnerId", runnerId);
-            existing = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) as byte[];
-        }
-
-        if (existing is null)
-        {
-            return false;
-        }
-
-        byte[] doc = PersistedJson.ToArray((existing, at), static (Utf8JsonWriter writer, in (byte[] Existing, DateTimeOffset At) ctx) =>
-        {
-            using ParsedJsonDocument<RunnerRegistration> parsed = ParsedJsonDocument<RunnerRegistration>.Parse(ctx.Existing);
-            parsed.RootElement.WriteWithLastSeenAt(writer, ctx.At);
-        });
+        // A heartbeat advances only last_seen_at and the document's mirrored lastSeenAt. Rather than read the whole
+        // registration back and rewrite it client-side (two round-trips plus a full-payload rewrite), patch both in
+        // one statement. The doc is a UTF-8 LONGBLOB, so CONVERT(... USING utf8mb4) decodes it as JSON (the explicit
+        // charset is correct — unlike a code-page CAST), JSON_SET replaces the one field, and CAST(... AS BINARY)
+        // re-encodes — entirely server-side. The ISO-8601 string is the caller's round-trip "O" form (the
+        // representation the generated model emits and parses). The update is unconditional (last-writer-wins, the
+        // intended heartbeat semantics); a zero row count means the runner is unknown. (JSON_SET normalises the
+        // document — key order and inter-token spacing change — which is safe: the sole reader parses by name.)
         await using MySqlCommand update = connection.CreateCommand();
-        update.CommandText = "UPDATE runner_registrations SET last_seen_at = @lastSeenAt, doc = @doc WHERE runner_id = @runnerId;";
+        update.CommandText =
+            """
+            UPDATE runner_registrations
+            SET last_seen_at = @lastSeenAt,
+                doc = CAST(JSON_SET(CONVERT(doc USING utf8mb4), '$.lastSeenAt', @lastSeenIso) AS BINARY)
+            WHERE runner_id = @runnerId;
+            """;
         update.Parameters.AddWithValue("@runnerId", runnerId);
         update.Parameters.AddWithValue("@lastSeenAt", at.ToUnixTimeMilliseconds());
-        update.Parameters.AddWithValue("@doc", doc);
-        await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        return true;
+        update.Parameters.AddWithValue("@lastSeenIso", at.ToString("O", CultureInfo.InvariantCulture));
+        int affected = await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        return affected > 0;
     }
 
     /// <inheritdoc/>
