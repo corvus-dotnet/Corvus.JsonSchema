@@ -971,6 +971,42 @@ the `ArazzoControlPlaneIdentityHandler` grantee projection.
 - **Verified.** `ControlPlaneCredentialsApiTests` 10/10; Sqlite `SourceCredentialStore` conformance 13/13; slnx build
   **0 Warning(s), 0 Error(s)**. **Row done.**
 
+### ✅ Security `ToBindingSource` — closure → `Source<TContext>` context-threading (+ the `XxxOrNull`→`From()` convention)
+
+The credentials `ToSummary` follow-up applied to the security binding summary (the FIX #3 sibling — FIX #3 carried the
+scalars bytes-native; this removes the closures + the residual ternaries). `ToBindingSource`/`ToBindingList` built the
+response with capturing lambdas — an outer list closure, the nested array closure and a per-binding summary closure.
+Replaced with the closure-free pattern ([[corvus-builder-context-threading]]): the binding itself is threaded as the
+context (it is a `struct : IJsonElement`) through the static `BuildBindingSummary`, and the list is built **inline** in
+`HandleListSecurityBindingsAsync` through the static `BuildBindingSummaries` (the `SecurityBindingList.Build` result is
+ref-scoped to its `in` argument, so — like the credentials list — it cannot be returned from a helper).
+
+- **Convention cleanup (the `XxxOrNull`→`From()` fix).** The optional `lastUpdatedAt` was projected via
+  `binding.UpdatedAtValue is { } ua ? …` — the nullable accessor (`DateTimeOffset?`) that **discards** Undefined-ness, so
+  an absent value writes the **epoch** instead of omitting the field (the same latent bug the credentials row fixed). The
+  optional strings used the redundant `if (binding.X.IsNotUndefined()) { … = From(X); }` guard. Replaced every one with a
+  bare `Models.Json{String,DateTime}.From(binding.RawAccessor)`: `From()` propagates Undefined so the builder omits absent
+  fields — correct *and* no ternary/guard/local. ([[getmaxbytecount-for-scratch-buffers]].)
+- **Lifetime.** Unchanged — the per-field `From()` Sources reference the pooled binding documents, so
+  `HandleListSecurityBindingsAsync` keeps `bindings.TransferOwnershipTo(workspace)` and the single-document sites keep
+  their `workspace` ownership.
+- **Measured** (`SecurityBindingListProjectionBenchmarks`, a 10-binding list page — the whole projection incl. the result
+  builder): `PerItemClosure` (baseline) **17.24 KB** → `ContextThreaded` **16.21 KB** (−1.03 KB, **−6%**). A smaller delta
+  than the credentials summary (−24%) — the binding summary has no nested arrays, only the three `VerbGrant` whole-doc
+  wraps + scalars, so the only closures removed are the list/array/per-item trio (N+2 for an N-page). The residual is the
+  irreducible `From`/`VerbGrant.From` Sources + the serialised response document. (FIX #3's string-bridge delta is
+  measured separately in `SecurityBindingSummaryProjectionBenchmarks`.)
+- **Verified.** `ControlPlaneSecurityApiTests` + `ControlPlaneRowSecurityTests` 14/14; slnx build **0 Warning(s),
+  0 Error(s)**. **Row done.**
+- **Scan (`XxxOrNull`/`XxxValue`-into-CTJ-builder smell, Arazzo non-generated source).** Two further true instances, both
+  response projections: `ArazzoControlPlaneSecurityHandler.ToRuleSource` (the rule summary — identical shape) and
+  `ArazzoControlPlaneAccessRequestsHandler.ToViewSource` (the access-request list view — 8 optional ternaries incl. two
+  epoch-risk dates; **also a whole-document `From()` collapse candidate** since its single-document sibling `ToView`
+  already wraps the congruent `AccessRequestView.From`). All other hits are **not** the smell: the nine
+  `*AccessRequestStore` query-filter predicates, the `ExpiresAtValue …<= now` expiry comparisons, the Cosmos/AzureStorage
+  catalog envelope writers (a different shape — unix-millis dates, table columns) and the CLI `string?`→`Source` settings
+  bridge (no CTJ Undefined).
+
 ## Cross-references
 
 - Skills: `corvus-typed-model-construction`, `corvus-builder-context-threading`,
