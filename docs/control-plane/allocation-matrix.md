@@ -1177,13 +1177,16 @@ genuine if a *downstream consumer needs a materialized set* — so trace the con
   write-action threading the policy's `InternalTags` — short keys encoded to a stack buffer — plus the user tags' UTF-8
   spans), the same bytes-to-bytes shape the usage-grant write already used.
 - **usageTags byte[] (~200 B, a separate `SecurityTagSet.Build`)** — a **pure `Draft` intermediate** (no `Admits`
-  consumer); removable via a `Draft` usageTags **write-action**. **Deferred to Phase C** (it changes the core
-  `SourceCredentialBinding.Draft` factory API — a contained follow-up).
-- **Measured (A+B):** `Full_ReadMergeFromTags` **648 B → `After_ViewBuildDirect` 192 B (−456 B, −70%)** per create. The
-  residual 192 B is the genuine `Admits`-required management byte[].
+  consumer). **✅ Phase C done:** a generic `SourceCredentialBinding.Draft<TUsage>` overload takes the usage tags as a
+  **write-action** (`SecurityTagBuildAction`), so the resolved grants (or, with no grants, the principal's own internal
+  tags) write straight into the draft's usage array via `IdentityBuilder` — **no usageTags materialization at all** (true
+  0; the draft document is the leaf). The usage property is omitted when there are no usage tags.
+- **Measured (A+B):** `Full_ReadMergeFromTags` **648 B → `After_ViewBuildDirect` 192 B (−456 B, −70%)** per create (the
+  management resolution; usageTags Phase C removes a further ~200 B `Build` byte[] to 0).
 - **Verified.** `SecurityShellTests` **5/5** (incl. the new span-overload rejection + custom prefix + escaped value),
-  `ControlPlaneCredentialsApiTests` **10/10**, `ControlPlaneRowSecurityTests` **9/9**, enumerator **2/2**; slnx build
-  **0 Warning(s), 0 Error(s)**. The `SecurityShell` list overload is kept (its direct test + any list caller).
+  `ControlPlaneCredentialsApiTests` **10/10**, `ControlPlaneRowSecurityTests` **9/9**, enumerator **2/2**, Sqlite +
+  InMemory `SourceCredentialStore` conformance **13/13 + 16/16** (the draft round-trips correctly through the store); slnx
+  build **0 Warning(s), 0 Error(s)**. The `SecurityShell` list overload is kept (its direct test + any list caller).
 
 ## Cross-references
 

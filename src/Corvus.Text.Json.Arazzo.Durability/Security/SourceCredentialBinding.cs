@@ -329,6 +329,74 @@ public readonly partial struct SourceCredentialBinding
             });
     }
 
+    /// <summary>The bytes-to-bytes create overload: the usage tags are written straight into the draft array via
+    /// <paramref name="writeUsageTags"/> (an <see cref="IdentityBuilder"/> write-action — no intermediate
+    /// <see cref="SecurityTagSet"/> materialization, since the draft document is the genuine leaf), while the management
+    /// tags stay a materialized set (the create handler needs them for the <c>Admits</c> write-reach check, and reuses
+    /// the same bytes for the draft). The usage property is omitted entirely when <paramref name="hasUsageTags"/> is
+    /// <see langword="false"/>.</summary>
+    /// <typeparam name="TUsage">The state threaded to <paramref name="writeUsageTags"/> (a <see langword="static"/> action — no closure).</typeparam>
+    /// <param name="sourceName">The source name JSON value (or undefined to omit).</param>
+    /// <param name="environment">The environment JSON value (or undefined).</param>
+    /// <param name="authKind">The auth-kind JSON value (or undefined).</param>
+    /// <param name="secretRefs">The secret-references JSON value (or undefined).</param>
+    /// <param name="config">The config JSON value (or undefined).</param>
+    /// <param name="description">The description JSON value (or undefined).</param>
+    /// <param name="expiresAt">The expiry JSON value (or undefined).</param>
+    /// <param name="rotatedAt">The rotation JSON value (or undefined).</param>
+    /// <param name="managementTags">The resolved management tags (materialized for the caller's reach check).</param>
+    /// <param name="usageState">The state passed to <paramref name="writeUsageTags"/>.</param>
+    /// <param name="hasUsageTags">Whether to write the usage-tags property at all (omitted when no usage tags resolve).</param>
+    /// <param name="writeUsageTags">Adds the resolved usage tags to the draft's usage array via the <see cref="IdentityBuilder"/>.</param>
+    /// <returns>The pooled, disposable draft document.</returns>
+    public static ParsedJsonDocument<SourceCredentialBinding> Draft<TUsage>(
+        in JsonElement sourceName,
+        in JsonElement environment,
+        in JsonElement authKind,
+        in JsonElement secretRefs,
+        in JsonElement config,
+        in JsonElement description,
+        in JsonElement expiresAt,
+        in JsonElement rotatedAt,
+        in SecurityTagSet managementTags,
+        in TUsage usageState,
+        bool hasUsageTags,
+        SecurityTagBuildAction<TUsage> writeUsageTags)
+    {
+        DraftElements<TUsage> state = new(sourceName, environment, authKind, secretRefs, config, description, expiresAt, rotatedAt, managementTags, usageState, hasUsageTags, writeUsageTags);
+        return PersistedJson.ToPooledDocument<SourceCredentialBinding, DraftElements<TUsage>>(
+            state,
+            static (Utf8JsonWriter writer, in DraftElements<TUsage> s) =>
+            {
+                writer.WriteStartObject();
+                WriteValueIfPresent(writer, JsonPropertyNames.SourceNameUtf8, s.SourceName);
+                WriteValueIfPresent(writer, JsonPropertyNames.EnvironmentUtf8, s.Environment);
+                WriteValueIfPresent(writer, JsonPropertyNames.AuthKindUtf8, s.AuthKind);
+                WriteValueIfPresent(writer, JsonPropertyNames.SecretRefsUtf8, s.SecretRefs);
+                WriteValueIfPresent(writer, JsonPropertyNames.ConfigUtf8, s.Config);
+                WriteValueIfPresent(writer, JsonPropertyNames.DescriptionUtf8, s.Description);
+                WriteValueIfPresent(writer, JsonPropertyNames.ExpiresAtUtf8, s.ExpiresAt);
+                WriteValueIfPresent(writer, JsonPropertyNames.RotatedAtUtf8, s.RotatedAt);
+                if (!s.ManagementTags.IsEmpty)
+                {
+                    writer.WritePropertyName(JsonPropertyNames.ManagementTagsUtf8);
+                    s.ManagementTags.WriteTo(writer);
+                }
+
+                if (s.HasUsageTags)
+                {
+                    writer.WritePropertyName(JsonPropertyNames.UsageTagsUtf8);
+                    writer.WriteStartArray();
+                    var builder = new IdentityBuilder(writer);
+                    TUsage usageState = s.UsageState;
+                    s.WriteUsageTags(ref builder, in usageState);
+                    writer.WriteEndArray();
+                }
+
+                writer.WriteEndObject();
+            });
+    }
+
     /// <summary>Writes a brand-new binding's JSON into the caller's (pooled) writer in one pass — the draft's operator
     /// content is carried bytes-to-bytes and the server fields (id/createdBy/createdAt/etag) are stamped here. Secret
     /// material never appears; each secret reference is validated to be a well-formed <see cref="SecretRef"/> so a
@@ -403,6 +471,47 @@ public readonly partial struct SourceCredentialBinding
         public SecurityTagSet ManagementTags { get; } = managementTags;
 
         public SecurityTagSet UsageTags { get; } = usageTags;
+    }
+
+    // The create-overload draft elements: management stays a materialized set; the usage tags are a write-action +
+    // its state (no usage SecurityTagSet) so the resolved tags write straight into the draft array.
+    private readonly struct DraftElements<TUsage>(
+        JsonElement sourceName,
+        JsonElement environment,
+        JsonElement authKind,
+        JsonElement secretRefs,
+        JsonElement config,
+        JsonElement description,
+        JsonElement expiresAt,
+        JsonElement rotatedAt,
+        SecurityTagSet managementTags,
+        TUsage usageState,
+        bool hasUsageTags,
+        SecurityTagBuildAction<TUsage> writeUsageTags)
+    {
+        public JsonElement SourceName { get; } = sourceName;
+
+        public JsonElement Environment { get; } = environment;
+
+        public JsonElement AuthKind { get; } = authKind;
+
+        public JsonElement SecretRefs { get; } = secretRefs;
+
+        public JsonElement Config { get; } = config;
+
+        public JsonElement Description { get; } = description;
+
+        public JsonElement ExpiresAt { get; } = expiresAt;
+
+        public JsonElement RotatedAt { get; } = rotatedAt;
+
+        public SecurityTagSet ManagementTags { get; } = managementTags;
+
+        public TUsage UsageState { get; } = usageState;
+
+        public bool HasUsageTags { get; } = hasUsageTags;
+
+        public SecurityTagBuildAction<TUsage> WriteUsageTags { get; } = writeUsageTags;
     }
 
     /// <summary>Writes an updated copy of this binding: the immutable identity (id/sourceName/environment), the immutable
