@@ -923,6 +923,12 @@ field (title, hash, sources, created*, **securityTags**, …) is carried bytes-t
   §14.2 single-row read authorization — obsoleting/transferring a version would have widened or broken its reach). The
   mutable-builder carries them. It was untested; added `UpdateMetadata_preserves_the_versions_security_tags` to the
   catalog conformance base. (Cosmos already passed `securityTags` — no bug there, perf only.)
+- **Hardening (defence-in-depth).** `securityTags` are server-stamped at creation and **immutable** through PATCH — the
+  store/API patch types have no `securityTags` field. Closed the API `CatalogMetadataPatch` schema
+  (`additionalProperties: false`, regenerated the server) so an *injected* `securityTags` (or any unknown field) is
+  rejected with **400** at the schema boundary rather than silently ignored; added an API test
+  (`Patching_a_version_cannot_set_securityTags_rejected_at_the_boundary`) asserting the 400 and that the original tags
+  are unchanged.
 - **Scope.** Converted the doc-blob rebuild stores: **InMemory, Redis, NATS** (perf + the securityTags fix) and **Cosmos**
   (perf; it parses the patched bytes back into its envelope). **AzureStorage** is column-style (`WriteGovernance` sets
   specific table-entity properties on the read entity, Replace-mode — preserves securityTags) and the 5 relational/Mongo

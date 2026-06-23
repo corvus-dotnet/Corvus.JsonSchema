@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A partial update of a version&#39;s mutable governance metadata; omitted fields are left unchanged.
+/// A partial update of a version&#39;s mutable governance metadata; omitted fields are left unchanged. Closed (additionalProperties: false) so an unknown field — e.g. an attempt to set the server-stamped, immutable securityTags — is rejected with 400 rather than silently ignored.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -101,6 +101,8 @@ public readonly partial struct CatalogMetadataPatch
             return Matchers.TryGetNamedMatcher(span, out matcher);
         }
 
+        private static readonly JsonSchemaPathProvider AdditionalPropertiesSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/additionalProperties"u8, buffer, out written);
+
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
@@ -141,6 +143,7 @@ public readonly partial struct CatalogMetadataPatch
                 {
                     return;
                 }
+                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "additionalProperties"u8);
                 context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "properties"u8);
             }
             else
@@ -162,6 +165,32 @@ public readonly partial struct CatalogMetadataPatch
                             return;
                         }
                     }
+                    else
+                    {
+                        if (!context.HasLocalEvaluatedProperty(objectValidation_propertyCount))
+                        {
+                            JsonSchemaContext childContext = Corvus.Text.Json.JsonElementForBooleanFalseSchema.JsonSchema.PushChildContextUnescaped(
+                                parentDocument,
+                                objectValidation_currentIndex,
+                                ref context,
+                                objectValidation_unescapedPropertyName.Span,
+                                evaluationPath: AdditionalPropertiesSchemaEvaluationPath);
+
+                            Corvus.Text.Json.JsonElementForBooleanFalseSchema.JsonSchema.Evaluate(parentDocument, objectValidation_currentIndex, ref childContext);
+
+                            if (!childContext.IsMatch)
+                            {
+                                context.CommitChildContext(false, ref childContext);
+                                context.EvaluatedKeyword(false, messageProvider: JsonSchemaEvaluation.ExpectedPropertyMatchesFallbackSchema, "additionalProperties"u8);
+                            }
+                            else
+                            {
+                                context.CommitChildContext(true, ref childContext);
+                                context.AddLocalEvaluatedProperty(objectValidation_propertyCount);
+                                context.EvaluatedKeyword(true, messageProvider: JsonSchemaEvaluation.ExpectedPropertyMatchesFallbackSchema, "additionalProperties"u8);
+                            }
+                        }
+                    }
 
                     objectValidation_propertyCount++;
                 }
@@ -177,7 +206,7 @@ public readonly partial struct CatalogMetadataPatch
             parentDocument,
             parentIndex,
             usingEvaluatedItems: false,
-            usingEvaluatedProperties: false,
+            usingEvaluatedProperties: true,
             resultsCollector: resultsCollector);
 
             try
@@ -216,7 +245,7 @@ public readonly partial struct CatalogMetadataPatch
                     parentDocument,
                     parentDocumentIndex,
                     useEvaluatedItems: false,
-                    useEvaluatedProperties: false,
+                    useEvaluatedProperties: true,
                     evaluationPath: schemaEvaluationPath,
                     documentEvaluationPath: documentEvaluationPath,
                     providerContext: providerContext);
@@ -243,7 +272,7 @@ public readonly partial struct CatalogMetadataPatch
                     parentDocument,
                     parentDocumentIndex,
                     useEvaluatedItems: false,
-                    useEvaluatedProperties: false,
+                    useEvaluatedProperties: true,
                     evaluationPath: schemaEvaluationPath,
                     documentEvaluationPath: documentEvaluationPath);
         }
@@ -269,7 +298,7 @@ public readonly partial struct CatalogMetadataPatch
                     parentDocument,
                     parentDocumentIndex,
                     useEvaluatedItems: false,
-                    useEvaluatedProperties: false,
+                    useEvaluatedProperties: true,
                     propertyName,
                     evaluationPath: evaluationPath,
                     schemaEvaluationPath: SchemaLocationProvider);
@@ -296,7 +325,7 @@ public readonly partial struct CatalogMetadataPatch
                     parentDocument,
                     parentDocumentIndex,
                     useEvaluatedItems: false,
-                    useEvaluatedProperties: false,
+                    useEvaluatedProperties: true,
                     propertyName,
                     evaluationPath: evaluationPath,
                     schemaEvaluationPath: SchemaLocationProvider);
@@ -323,7 +352,7 @@ public readonly partial struct CatalogMetadataPatch
                     parentDocument,
                     parentDocumentIndex,
                     useEvaluatedItems: false,
-                    useEvaluatedProperties: false,
+                    useEvaluatedProperties: true,
                     itemIndex,
                     evaluationPath: evaluationPath,
                     schemaEvaluationPath: SchemaLocationProvider);

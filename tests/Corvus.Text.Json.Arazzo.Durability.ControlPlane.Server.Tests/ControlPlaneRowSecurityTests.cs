@@ -136,6 +136,32 @@ public sealed class ControlPlaneRowSecurityTests
     }
 
     [TestMethod]
+    public async Task Patching_a_version_cannot_set_securityTags_rejected_at_the_boundary()
+    {
+        // Row-security tags are server-stamped at creation (§14.2) and immutable thereafter — the PATCH body schema is
+        // closed (additionalProperties: false), so an attempt to inject securityTags (or any unknown field) is rejected
+        // with 400 at the schema boundary, never reaching the handler/store. (The caller has full write reach here, so a
+        // 403 is not in play — this isolates the schema rejection.)
+        await using Scoped host = await StartAsync();
+        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
+
+        using var injected = new HttpRequestMessage(HttpMethod.Patch, "/catalog/flow/versions/1")
+        {
+            Content = new StringContent("""{ "status": "Obsolete", "securityTags": [ { "key": "tenant", "value": "globex" } ] }""", Encoding.UTF8, "application/json"),
+        };
+        (await host.SendAsync(injected, tenant: null)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        // The rejection applied nothing: the version keeps its original server-stamped tenant tag, and the injected
+        // value never took effect. (The catalog also auto-stamps a sys:workflow tag at creation, hence Contains, not an
+        // exact-set, assertion.)
+        using var fetched = await host.Catalog.GetAsync("flow", 1, AccessContext.System, default);
+        fetched.ShouldNotBeNull();
+        var securityTags = fetched.RootElement.SecurityTagsValue.ToList();
+        securityTags.ShouldContain(new SecurityTag("tenant", "acme"));
+        securityTags.ShouldNotContain(new SecurityTag("tenant", "globex"));
+    }
+
+    [TestMethod]
     public async Task Searching_the_catalog_is_scoped_to_the_principals_tenant()
     {
         await using Scoped host = await StartAsync();
