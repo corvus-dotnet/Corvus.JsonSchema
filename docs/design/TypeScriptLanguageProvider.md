@@ -291,23 +291,33 @@ microbenchmarks lie in its favour at low load and against it is irrelevant at hi
 
 ### 4.1 Numeric precision — a compliance subtlety that touches the model
 
-JS `number` is IEEE‑754 double; it loses precision beyond 2^53 and for many decimals. V5 uses
-`BigNumber`/`BigInteger` for exact numeric validation (`multipleOf`, large‑integer `const`/`enum`,
-high‑precision bounds). Validating over `JSON.parse`'d doubles **fails some official test‑suite
-cases**. For *full compliance*, numeric keywords must validate against the **original number token
-text** (or a `bigint`/decimal parse), not the lossy double.
+JS `number` is IEEE-754 double — lossy beyond 2^53 and for most decimals. V5 validates numeric
+keywords against the number's **ASCII/text representation** (its `BigNumber`/`BigInteger`), never a
+binary double, which is why it gets `multipleOf`, large-integer `const`/`enum`, and high-precision
+bounds exactly. **The TS provider mirrors this: numeric validation operates on the number token's
+source text, not the parsed JS double.**
 
-The idiomatic, modern way to recover the source text is **`JSON.parse(text, reviver)` source
-access** (TC39 “JSON.parse source text access”, shipping in V8) which gives the reviver
-`context.source` — the exact literal. The TS provider should:
+* **Validation — exact, zero-dependency, on the token text.** Parse the decimal literal to a scaled
+  integer (sign, `BigInt` mantissa, base-10 exponent) and do exact arithmetic with native `BigInt`:
+  `multipleOf` = scale both to a common exponent and test `vInt % dInt === 0n`; bounds = cross-scaled
+  `BigInt` compare; numeric `const`/`enum` equality = compare the mathematical value (so `1.0` === `1`,
+  and integers beyond 2^53 compare correctly). This is the C# ASCII-number approach with **no
+  third-party dependency** — exactly what the suite's `multipleOf`/large-integer cases require.
+  (Proven runnable: `prototypes/number-exact.mjs`.)
+* **Where the text comes from.** The bytes models (A/C) retain the token bytes natively (§4.2). Model B
+  parses to a lossy double, so exact numeric validation there needs the **source literal** via
+  `JSON.parse(text, reviver)` source-text access (TC39 Stage-4, V8) — so full numeric compliance pushes
+  even Model B to keep a number's source text. A fast double path is used only where the schema's
+  numeric constraints are exactly representable in a double.
+* **Value accessor — `number` default + a pluggable exact fallback.** The generated accessor returns
+  `number` by default (fast, possibly lossy); for exact reads it offers a fallback returning an
+  arbitrary-precision value from a **third-party big-number library** via a small adapter seam
+  (`BigNumberAdapter`). JS has no native arbitrary-precision decimal, so the runtime does not hard-depend
+  on one — the default adapter targets a well-known lib (`bignumber.js`/`decimal.js`-style) and consumers
+  can swap it. Integer-only formats beyond the safe range return native `bigint`.
 
-* emit numeric validation that, when the schema needs exact semantics, consults the raw literal /
-  a `bigint` parse (a small runtime‑library helper), and
-* otherwise use the fast double path.
-
-This is also a genuine point in favour of *retaining access to source text*, which the bytes models
-(A and C) provide natively. It is the second place (alongside the `Undefined` sentinel, §5.1) where
-the naïve C#→TS port and full compliance pull in interesting directions.
+This is the second place (with the `Undefined` sentinel, §5.1) where faithful C# behaviour and full
+compliance pull the design toward retaining source text rather than the convenient JS value.
 
 ### 4.2 Model C — the structural‑sharing patch model for RMW (concrete shape)
 
@@ -546,6 +556,48 @@ story, and it is the same approach as `ajv/standalone` and typia.
   compiled `RegExp` (module‑scope `const`, built once). No ECMA→.NET translation needed.
 * **Annotation collection** (`SchemaEvaluationOnly`/`Both` + verbose): an `EvalContext` carrying a
   results collector, evaluated‑props/items, and path tracking — the TS analog of `JsonSchemaContext`.
+
+### 5.5 Format validation (must pass the suite)
+
+`format` is annotation-only by default in 2020-12; when assertion is enabled (the per-format
+assert/disable/warning mode is resolved at **codegen time**, §3), the emitted checks must be
+**RFC-accurate and pass the JSON-Schema-Test-Suite `optional/format/` cases** — the bar the C# library
+clears via Bowtie.
+
+* **Runtime format validators, zero-dependency, RFC-accurate.** Port the C# format semantics into
+  `@corvus/json-runtime`: `date`/`date-time`/`time`/`duration` (RFC 3339), `email`/`idn-email`
+  (RFC 5321/5322 + IDN), `hostname`/`idn-hostname` (RFC 1123 + IDNA/UTS-46), `ipv4`/`ipv6` (incl. zone),
+  `uri`/`uri-reference`/`iri`/`iri-reference` (RFC 3986/3987), `uri-template` (RFC 6570),
+  `json-pointer`/`relative-json-pointer` (RFC 6901), `uuid` (RFC 4122), `regex` (ECMA-262).
+* **Regex is native** — `regex` format and the `pattern` keyword compile straight to JS `RegExp`, no
+  ECMA->.NET translation (unlike C#); keep only the classifier (Noop/Prefix/Range short-circuits).
+* **The hard ones, flagged honestly.** `idn-hostname`/`idn-email`/`iri`/`iri-reference` need Unicode
+  normalisation + IDNA (UTS-46) and are where format compliance usually breaks; budget for careful
+  Unicode handling (the C# library carries IDN/Unicode polyfills for exactly this). `email` quoted local
+  parts and `ipv6` edge cases are similarly fiddly.
+* **Verification is the gate** — each validator is checked against `optional/format/<name>.json` through
+  the codegen-aware harness (§8). "Passes the suite", not "looks right", is the acceptance criterion,
+  with the same documented exclusions the C# engine uses.
+
+### 5.6 Schema location & evaluation path ($dynamicRef/$recursiveRef + spec output)
+
+The core engine already resolves `$ref`/`$dynamicRef`/`$dynamicAnchor`/`$recursiveRef`/`$recursiveAnchor`
+structurally (scope stack + dynamic-scope graph, §2) — the TS provider does **not** re-implement dynamic
+resolution. What it must do is **generate the same location metadata the C# library emits**, so output
+and dynamic scope are correct:
+
+* **Per-subschema location constants** — emit, per subschema, the **schema location** (absolute keyword
+  URI) and the **evaluation path** (JSON-Pointer keyword path) as module-scope constants: the TS analog
+  of the C# `{Name}SchemaPath`/`{Name}EvaluationPath` statics (`EmitPathProviderFields` in
+  `StandaloneEvaluatorGenerator`).
+* **Thread them through `EvalContext`** — as each `evaluate{Type}` descends it pushes the current keyword
+  location (the analog of `JsonSchemaContext`), so errors/annotations carry the spec output format's
+  **`instanceLocation` / `keywordLocation` / `absoluteKeywordLocation`** — what the suite's output tests
+  and Bowtie check.
+* **$dynamicRef/$recursiveRef** — the engine resolves the dynamic anchor against the dynamic scope into
+  the type graph; the generated code carries the location identifiers and threads the dynamic scope
+  through the context exactly as C# does (location-keyed dispatch, not a new scheme), keeping recursive/
+  dynamic schemas (e.g. a meta-schema's `$dynamicAnchor: meta`) resolving and reporting identically.
 
 ---
 
