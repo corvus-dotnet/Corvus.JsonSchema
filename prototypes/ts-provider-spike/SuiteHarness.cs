@@ -17,6 +17,23 @@ internal static class SuiteHarness
         "allOf", "anyOf", "oneOf", "items", "prefixItems", "propertyNames", "dependentRequired",
         "if-then-else", "ref", "defs", "unevaluatedProperties", "unevaluatedItems",
         "contains", "dependentSchemas", "minContains", "maxContains",
+        "dynamicRef", "recursiveRef",
+    ];
+
+    // The 2020-12 metaschema documents (canonical URI -> path relative to the metaschema dir), mirroring
+    // the C# AddMetaschema. Registering these lets schemas that $ref the metaschema build offline.
+    private static readonly (string Uri, string Rel)[] MetaschemaMap =
+    [
+        ("https://json-schema.org/draft/2020-12/schema", "schema.json"),
+        ("https://json-schema.org/draft/2020-12/meta/applicator", "meta/applicator.json"),
+        ("https://json-schema.org/draft/2020-12/meta/content", "meta/content.json"),
+        ("https://json-schema.org/draft/2020-12/meta/core", "meta/core.json"),
+        ("https://json-schema.org/draft/2020-12/meta/format-annotation", "meta/format-annotation.json"),
+        ("https://json-schema.org/draft/2020-12/meta/format-assertion", "meta/format-assertion.json"),
+        ("https://json-schema.org/draft/2020-12/meta/hyper-schema", "meta/hyper-schema.json"),
+        ("https://json-schema.org/draft/2020-12/meta/meta-data", "meta/meta-data.json"),
+        ("https://json-schema.org/draft/2020-12/meta/unevaluated", "meta/unevaluated.json"),
+        ("https://json-schema.org/draft/2020-12/meta/validation", "meta/validation.json"),
     ];
 
     public static async Task Run(string suiteDir, string outDir)
@@ -24,6 +41,11 @@ internal static class SuiteHarness
         string schemasDir = Path.Combine(outDir, "schemas");
         Directory.CreateDirectory(schemasDir);
         File.WriteAllText(Path.Combine(outDir, "package.json"), "{ \"type\": \"module\" }\n");
+
+        // remotes/ is a sibling of tests/ in the suite; the metaschema ships with Corvus.Json.Cli.Core.
+        string remotesDir = Path.GetFullPath(Path.Combine(suiteDir, "..", "..", "remotes"));
+        string metaschemaDir = Path.GetFullPath(Path.Combine(suiteDir, "..", "..", "..", "src", "Corvus.Json.Cli.Core", "metaschema", "draft2020-12"));
+        Console.WriteLine($"remotes={remotesDir} (exists={Directory.Exists(remotesDir)}); metaschema={metaschemaDir} (exists={File.Exists(Path.Combine(metaschemaDir, "schema.json"))})");
 
         var manifest = new List<object>();
         var keepAlive = new List<JsonDocument>();
@@ -73,7 +95,13 @@ internal static class SuiteHarness
                     string schemaPath = Path.GetFullPath(Path.Combine(schemasDir, moduleName + ".json"));
                     File.WriteAllText(schemaPath, schema.GetRawText());
 
-                    var resolver = new CompoundDocumentResolver(new FileSystemDocumentResolver());
+                    var resolver = new CompoundDocumentResolver(new FakeWebDocumentResolver(remotesDir), new FileSystemDocumentResolver());
+                    foreach ((string uri, string rel) in MetaschemaMap)
+                    {
+                        string mp = Path.Combine(metaschemaDir, rel);
+                        if (File.Exists(mp)) { resolver.AddDocument(uri, JsonDocument.Parse(File.ReadAllText(mp))); }
+                    }
+
                     var registry = new VocabularyRegistry();
                     Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(resolver, registry);
                     IVocabulary fallback = Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary;
