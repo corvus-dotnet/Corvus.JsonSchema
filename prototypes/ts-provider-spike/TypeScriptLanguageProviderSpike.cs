@@ -15,10 +15,21 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
 {
     private const string TsFinalKey = "Ts_FinalName";
 
-    // JSON deep-equality (object keys order-independent; arrays ordered) for const/enum/uniqueItems.
-    // (In production this lives in @corvus/json-runtime; numeric equality is exact per §4.1.)
+    // Instances are parsed with lossless-json so JSON numbers arrive as LosslessNumber, retaining their
+    // exact SOURCE TEXT (design §4.1) — String(value) is the source digits, so numeric validation is exact
+    // (incl. values beyond IEEE-754 range). Kind tests are centralised here because a LosslessNumber is a
+    // JS object and would otherwise collide with the object check.
+    private const string KindRuntime =
+        "import { isLosslessNumber } from \"lossless-json\";\n" +
+        "const __isNum = (v: unknown): boolean => isLosslessNumber(v) || typeof v === \"number\";\n" +
+        "const __isObj = (v: unknown): v is Record<string, unknown> => typeof v === \"object\" && v !== null && !Array.isArray(v) && !isLosslessNumber(v);\n" +
+        "const __isInt = (s: string): boolean => { const d = __dec(s); return d.exp >= 0 || d.mant % (10n ** BigInt(-d.exp)) === 0n; };\n\n";
+
+    // JSON deep-equality (object keys order-independent; arrays ordered; numbers compared on exact text)
+    // for const/enum/uniqueItems. (In production this lives in @corvus/json-runtime.)
     private const string DeepEqual =
         "function __eq(a: unknown, b: unknown): boolean {\n" +
+        "  if (__isNum(a) || __isNum(b)) { return __isNum(a) && __isNum(b) && __cmp(String(a), String(b)) === 0; }\n" +
         "  if (a === b) { return true; }\n" +
         "  if (typeof a !== typeof b || a === null || b === null) { return false; }\n" +
         "  if (Array.isArray(a)) { if (!Array.isArray(b) || a.length !== b.length) { return false; } for (let i = 0; i < a.length; i++) { if (!__eq(a[i], b[i])) { return false; } } return true; }\n" +
@@ -68,7 +79,140 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
         "  return (v.mant * 10n ** BigInt(v.exp - e)) % (d.mant * 10n ** BigInt(d.exp - e)) === 0n;\n" +
         "}\n\n";
 
+    // Format assertion runtime (design §5.5): one validator per standard format. `format` only constrains
+    // strings (non-strings are always valid). date/time/date-time/duration use RFC 3339 semantics; the rest
+    // are regex/parse. __fmt(name, s) returns true for unknown formats (unknown formats are not asserted).
+    private const string FormatRuntime = """
+        const __dim = (y: number, m: number): number => m === 2 ? (((y % 4 === 0 && y % 100 !== 0) || y % 400 === 0) ? 29 : 28) : [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1];
+        function __fmtDate(s: string): boolean {
+          const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+          if (m === null) { return false; }
+          const mo = Number(m[2]), d = Number(m[3]);
+          return mo >= 1 && mo <= 12 && d >= 1 && d <= __dim(Number(m[1]), mo);
+        }
+        function __fmtTime(s: string): boolean {
+          const m = /^(\d{2}):(\d{2}):(\d{2})(\.\d+)?([zZ]|[+-]\d{2}:\d{2})$/.exec(s);
+          if (m === null) { return false; }
+          const hh = Number(m[1]), mm = Number(m[2]), ss = Number(m[3]);
+          let offMin = 0; const off = m[5];
+          if (off !== "z" && off !== "Z") {
+            const om = /^([+-])(\d{2}):(\d{2})$/.exec(off);
+            if (om === null || Number(om[2]) > 23 || Number(om[3]) > 59) { return false; }
+            offMin = (om[1] === "-" ? -1 : 1) * (Number(om[2]) * 60 + Number(om[3]));
+          }
+          if (hh > 23 || mm > 59) { return false; }
+          if (ss > 59) {
+            if (ss !== 60) { return false; }
+            const utc = ((((hh * 60 + mm) - offMin) % 1440) + 1440) % 1440;
+            if (utc !== 23 * 60 + 59) { return false; }
+          }
+          return true;
+        }
+        function __fmtDateTime(s: string): boolean {
+          const m = /^(\d{4}-\d{2}-\d{2})[tT](\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[zZ]|[+-]\d{2}:\d{2}))$/.exec(s);
+          return m !== null && __fmtDate(m[1]) && __fmtTime(m[2]);
+        }
+        function __fmtDuration(s: string): boolean {
+          if (s === "P" || !s.startsWith("P")) { return false; }
+          if (/^P\d+W$/.test(s)) { return true; }
+          const m = /^P(\d+Y)?(\d+M)?(\d+D)?(T(\d+H)?(\d+M)?(\d+S)?)?$/.exec(s);
+          if (m === null) { return false; }
+          if (!m[1] && !m[2] && !m[3] && !m[4]) { return false; }
+          if (m[4] && !m[5] && !m[6] && !m[7]) { return false; }
+          return true;
+        }
+        const __ipv4Re = /^((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
+        function __fmtIpv6(s: string): boolean {
+          if (s.indexOf(":") < 0) { return false; }
+          const parts = s.split("::");
+          if (parts.length > 2) { return false; }
+          const head = parts[0] === "" ? [] : parts[0].split(":");
+          let tail = parts.length === 2 ? (parts[1] === "" ? [] : parts[1].split(":")) : [];
+          const all = parts.length === 2 ? head.concat(tail) : head;
+          let count = all.length; let v4 = false;
+          if (all.length > 0 && all[all.length - 1].indexOf(".") >= 0) {
+            if (!__ipv4Re.test(all[all.length - 1])) { return false; }
+            v4 = true; count += 1;
+          }
+          for (let i = 0; i < all.length; i++) {
+            if (v4 && i === all.length - 1) { continue; }
+            if (!/^[0-9a-fA-F]{1,4}$/.test(all[i])) { return false; }
+          }
+          return parts.length === 2 ? count <= 7 : count === 8;
+        }
+        const __uuidRe = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+        const __hostnameRe = /^(?=.{1,253}$)([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)(\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+        const __jsonPtrRe = /^(?:\/(?:[^~/]|~0|~1)*)*$/;
+        const __relJsonPtrRe = /^(?:0|[1-9][0-9]*)(?:#|(?:\/(?:[^~/]|~0|~1)*)*)$/;
+        // RFC 3986: scheme then only unreserved/reserved chars or %XX (rejects raw spaces/non-ASCII and bad %).
+        const __uriRe = /^[A-Za-z][A-Za-z0-9+.-]*:(?:%[0-9A-Fa-f]{2}|[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=])*$/;
+        const __uriRefRe = /^(?:[A-Za-z][A-Za-z0-9+.-]*:)?(?:%[0-9A-Fa-f]{2}|[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=])*$/;
+        // RFC 3987 IRI: like URI but additionally allows non-ASCII (ucschar).
+        const __iriRe = /^[A-Za-z][A-Za-z0-9+.-]*:(?:%[0-9A-Fa-f]{2}|[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;= -￿])*$/u;
+        const __iriRefRe = /^(?:[A-Za-z][A-Za-z0-9+.-]*:)?(?:%[0-9A-Fa-f]{2}|[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;= -￿])*$/u;
+        const __uriTemplateRe = /^(?:[^\s{}]|\{[^\s{}]*\})*$/;
+        const __emailLocalRe = /^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*$/;
+        function __fmtEmail(s: string): boolean {
+          const at = s.lastIndexOf("@");
+          if (at < 1 || at >= s.length - 1) { return false; }
+          const local = s.slice(0, at), domain = s.slice(at + 1);
+          if (local.startsWith('"') && local.endsWith('"')) { if (local.length < 2) { return false; } }
+          else if (!__emailLocalRe.test(local)) { return false; }
+          if (domain.startsWith("[") && domain.endsWith("]")) {
+            const ip = domain.slice(1, -1);
+            return ip.startsWith("IPv6:") ? __fmtIpv6(ip.slice(5)) : __ipv4Re.test(ip);
+          }
+          return __hostnameRe.test(domain);
+        }
+        function __fmtRegex(s: string): boolean { try { new RegExp(s, "u"); return true; } catch { return false; } }
+        function __fmt(name: string, s: string): boolean {
+          switch (name) {
+            case "date": return __fmtDate(s);
+            case "date-time": return __fmtDateTime(s);
+            case "time": return __fmtTime(s);
+            case "duration": return __fmtDuration(s);
+            case "email": case "idn-email": return __fmtEmail(s);
+            case "hostname": case "idn-hostname": return __hostnameRe.test(s);
+            case "ipv4": return __ipv4Re.test(s);
+            case "ipv6": return __fmtIpv6(s);
+            case "uuid": return __uuidRe.test(s);
+            case "uri": return __uriRe.test(s);
+            case "iri": return __iriRe.test(s);
+            case "uri-reference": return __uriRefRe.test(s);
+            case "iri-reference": return __iriRefRe.test(s);
+            case "uri-template": return __uriTemplateRe.test(s);
+            case "json-pointer": return __jsonPtrRe.test(s);
+            case "relative-json-pointer": return __relJsonPtrRe.test(s);
+            case "regex": return __fmtRegex(s);
+            default: return true;
+          }
+        }
+
+        """;
+
     private readonly KeywordValidationHandlerRegistry validationHandlers = new();
+
+    private bool assertFormat;
+
+    // The shared runtime module (@corvus/json-runtime in production): emitted ONCE, imported by every
+    // generated module. Assembled from the helper blocks with each top-level declaration exported, and
+    // the third-party imports (lossless-json for source-text numbers, Temporal + tr46 for formats) at top.
+    public static string RuntimeModuleSource()
+    {
+        string body = NumericRuntime + KindRuntime + DeepEqual + EvRuntime + FormatRuntime;
+        body = body.Replace("import { isLosslessNumber } from \"lossless-json\";\n", string.Empty);
+        body = body.Replace("\nfunction ", "\nexport function ")
+                   .Replace("\nconst ", "\nexport const ")
+                   .Replace("\nclass ", "\nexport class ");
+        if (body.StartsWith("function ", StringComparison.Ordinal))
+        {
+            body = "export " + body;
+        }
+
+        return "import { isLosslessNumber } from \"lossless-json\";\n" +
+               "import { Temporal } from \"@js-temporal/polyfill\";\n" +
+               "import tr46 from \"tr46\";\n\n" + body;
+    }
 
     public static TypeScriptLanguageProviderSpike CreateDefault()
     {
@@ -82,6 +226,16 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
             new TsPropertyNamesHandler(), new TsDependentRequiredHandler(), new TsIfThenElseHandler(),
             new TsDependentSchemasHandler(), new TsContainsHandler(), new TsNotHandler(),
             new TsUnevaluatedPropertiesHandler(), new TsUnevaluatedItemsHandler());
+        return p;
+    }
+
+    // Like CreateDefault, but asserts `format` (the optional/format suite). The default leaves format as
+    // an annotation (the 2020-12 default), which is why top-level format.json expects everything valid.
+    public static TypeScriptLanguageProviderSpike CreateWithFormatAssertion()
+    {
+        TypeScriptLanguageProviderSpike p = CreateDefault();
+        p.assertFormat = true;
+        p.RegisterValidationHandlers(new TsFormatHandler());
         return p;
     }
 
@@ -153,12 +307,11 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
             td.SetMetadata(TsFinalKey, name);
         }
 
-        // Pass 2: emit the type surface + validators.
+        // Pass 2: emit the type surface + validators. The runtime helpers live in ONE shared module
+        // (@corvus/json-runtime, §5.5) that every generated module imports — never inlined per module.
         var sb = new StringBuilder();
-        sb.Append("// AUTO-GENERATED: idiomatic TS types + registry-composed validators.\n\n");
-        sb.Append(DeepEqual);
-        sb.Append(EvRuntime);
-        sb.Append(NumericRuntime);
+        sb.Append("// AUTO-GENERATED: idiomatic TS types + registry-composed validators.\n");
+        sb.Append("import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, Ev, NOEV, fresh, __fmt } from \"./corvus-runtime.js\";\n\n");
         foreach (TypeDeclaration td in types)
         {
             if (IsObject(td))

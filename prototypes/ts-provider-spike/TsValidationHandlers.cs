@@ -30,11 +30,11 @@ internal static class TsEmit
 
     public static string KindExpr(CoreTypes t) => t switch
     {
-        CoreTypes.Object => "(typeof value === \"object\" && value !== null && !Array.isArray(value))",
+        CoreTypes.Object => "__isObj(value)",
         CoreTypes.Array => "Array.isArray(value)",
         CoreTypes.String => "typeof value === \"string\"",
-        CoreTypes.Number => "typeof value === \"number\"",
-        CoreTypes.Integer => "(typeof value === \"number\" && Number.isInteger(value))",
+        CoreTypes.Number => "__isNum(value)",
+        CoreTypes.Integer => "(__isNum(value) && __isInt(String(value)))",
         CoreTypes.Boolean => "typeof value === \"boolean\"",
         CoreTypes.Null => "value === null",
         _ => "true",
@@ -117,7 +117,7 @@ internal sealed class TsConstantBoundHandler : IKeywordValidationHandler, ITsKey
             string? ncond = TsEmit.NumericFailCondition(nop, TsEmit.Str(nconsts[0].GetRawText()));
             if (ncond is not null)
             {
-                sb.Append("  if (typeof value === \"number\" && ").Append(ncond).Append(") { return false; }\n");
+                sb.Append("  if (__isNum(value) && ").Append(ncond).Append(") { return false; }\n");
             }
 
             return;
@@ -134,7 +134,7 @@ internal sealed class TsConstantBoundHandler : IKeywordValidationHandler, ITsKey
         {
             IStringLengthConstantValidationKeyword => ("typeof value === \"string\"", "[...value].length"),
             IArrayLengthConstantValidationKeyword => ("Array.isArray(value)", "value.length"),
-            _ => ("typeof value === \"object\" && value !== null && !Array.isArray(value)", "Object.keys(value).length"),
+            _ => ("__isObj(value)", "Object.keys(value).length"),
         };
 
         string? cond = TsEmit.FailCondition(op, left, consts[0].GetRawText());
@@ -223,7 +223,7 @@ internal sealed class TsPropertiesHandler : IKeywordValidationHandler, ITsKeywor
         }
 
         if (locals.Count == 0) { return; }
-        sb.Append("  if (typeof value === \"object\" && value !== null && !Array.isArray(value)) {\n");
+        sb.Append("  if (__isObj(value)) {\n");
         sb.Append("    const o = value as Record<string, unknown>;\n");
 
         // Enumerate the instance once; mark each evaluated property's index into the tracker (a no-op on
@@ -261,7 +261,7 @@ internal sealed class TsRequiredHandler : IKeywordValidationHandler, ITsKeywordE
         }
 
         if (names.Count == 0) { return; }
-        sb.Append("  if (typeof value === \"object\" && value !== null && !Array.isArray(value)) {\n");
+        sb.Append("  if (__isObj(value)) {\n");
         foreach (string name in names)
         {
             sb.Append("    if (!Object.prototype.hasOwnProperty.call(value, ").Append(TsEmit.Str(name)).Append(")) { return false; }\n");
@@ -292,7 +292,7 @@ internal sealed class TsPatternPropertiesHandler : IKeywordValidationHandler, IT
         }
 
         if (entries.Count == 0) { return; }
-        sb.Append("  if (typeof value === \"object\" && value !== null && !Array.isArray(value)) {\n");
+        sb.Append("  if (__isObj(value)) {\n");
         sb.Append("    const o = value as Record<string, unknown>;\n");
         sb.Append("    const keys = Object.keys(o);\n    for (let i = 0; i < keys.length; i++) {\n      const k = keys[i];\n");
         foreach ((string pattern, string name) in entries)
@@ -333,7 +333,7 @@ internal sealed class TsAdditionalPropertiesHandler : IKeywordValidationHandler,
         }
 
         string subEv = fb is null ? "NOEV" : TsEmit.SubEv(fb.ReducedType);
-        sb.Append("  if (typeof value === \"object\" && value !== null && !Array.isArray(value)) {\n");
+        sb.Append("  if (__isObj(value)) {\n");
         sb.Append("    const o = value as Record<string, unknown>;\n");
         sb.Append("    const known = new Set<string>([").Append(string.Join(", ", known)).Append("]);\n");
         sb.Append("    const patterns: RegExp[] = [").Append(string.Join(", ", patterns)).Append("];\n");
@@ -484,7 +484,7 @@ internal sealed class TsPropertyNamesHandler : IKeywordValidationHandler, ITsKey
         SingleSubschemaKeywordTypeDeclaration? pn = td.PropertyNamesSubschemaType();
         string? e = pn is null ? null : TsEmit.EvalName(pn.ReducedType);
         if (e is null) { return; }
-        sb.Append("  if (typeof value === \"object\" && value !== null && !Array.isArray(value)) { for (const k of Object.keys(value)) { if (!").Append(e).Append("(k, NOEV)) { return false; } } }\n");
+        sb.Append("  if (__isObj(value)) { for (const k of Object.keys(value)) { if (!").Append(e).Append("(k, NOEV)) { return false; } } }\n");
     }
 }
 
@@ -498,7 +498,7 @@ internal sealed class TsDependentRequiredHandler : IKeywordValidationHandler, IT
     {
         IReadOnlyDictionary<IObjectDependentRequiredValidationKeyword, IReadOnlyCollection<DependentRequiredDeclaration>>? dr = td.DependentRequired();
         if (dr is null) { return; }
-        sb.Append("  if (typeof value === \"object\" && value !== null && !Array.isArray(value)) {\n");
+        sb.Append("  if (__isObj(value)) {\n");
         foreach (KeyValuePair<IObjectDependentRequiredValidationKeyword, IReadOnlyCollection<DependentRequiredDeclaration>> kv in dr)
         {
             foreach (DependentRequiredDeclaration d in kv.Value)
@@ -563,7 +563,7 @@ internal sealed class TsDependentSchemasHandler : IKeywordValidationHandler, ITs
             {
                 string? e = TsEmit.EvalName(d.ReducedDepdendentSchemaType);
                 if (e is null) { continue; }
-                sb.Append("  if (typeof value === \"object\" && value !== null && !Array.isArray(value) && Object.prototype.hasOwnProperty.call(value, ")
+                sb.Append("  if (__isObj(value) && Object.prototype.hasOwnProperty.call(value, ")
                   .Append(TsEmit.Str(d.JsonPropertyName)).Append(")) { const t = fresh(); if (!").Append(e).Append("(value, t)) { return false; } ev.mergeProps(t); ev.mergeItems(t); }\n");
             }
         }
@@ -641,7 +641,7 @@ internal sealed class TsUnevaluatedPropertiesHandler : IKeywordValidationHandler
         string? name = fb is null ? null : TsEmit.EvalName(fb.ReducedType);
         if (name is null) { return; }
         string subEv = TsEmit.SubEv(fb!.ReducedType);
-        sb.Append("  if (typeof value === \"object\" && value !== null && !Array.isArray(value)) {\n");
+        sb.Append("  if (__isObj(value)) {\n");
         sb.Append("    const o = value as Record<string, unknown>;\n");
         sb.Append("    const keys = Object.keys(o);\n");
         sb.Append("    for (let i = 0; i < keys.length; i++) {\n");
@@ -665,6 +665,24 @@ internal sealed class TsUnevaluatedItemsHandler : IKeywordValidationHandler, ITs
         if (name is null) { return; }
         string subEv = TsEmit.SubEv(items!.ReducedType);
         sb.Append("  if (Array.isArray(value)) { for (let i = 0; i < value.length; i++) { if (!ev.hasItem(i) && !").Append(name).Append("(value[i], ").Append(subEv).Append(")) { return false; } ev.markItem(i); } }\n");
+    }
+}
+
+// format assertion (design §5.5): every standard format validated on the string via the __fmt runtime.
+// Only registered by CreateWithFormatAssertion (the optional/format suite); the default leaves format an
+// annotation. Non-strings are always valid; unknown formats are not asserted (__fmt returns true).
+internal sealed class TsFormatHandler : IKeywordValidationHandler, ITsKeywordEmitter
+{
+    public uint ValidationHandlerPriority => 550;
+
+    public bool HandlesKeyword(IKeyword keyword) => keyword is IFormatProviderKeyword;
+
+    public void Emit(StringBuilder sb, TypeDeclaration td, IKeyword keyword)
+    {
+        if (((IFormatProviderKeyword)keyword).TryGetFormat(td, out string? format) && !string.IsNullOrEmpty(format))
+        {
+            sb.Append("  if (typeof value === \"string\" && !__fmt(").Append(TsEmit.Str(format!)).Append(", value)) { return false; }\n");
+        }
     }
 }
 
