@@ -1299,9 +1299,13 @@ validators. For a schema exercising `type` / `required` / nested `properties` / 
 Confirmed by this spike:
 * **The constraint model is drivable** — `type`, `required` (`RequiredOrOptional`), per-property value
   types (`ReducedPropertyType`), and leaf constraints are all readable to drive emission.
-* **The emission path is settled** — the simpler **walk-the-model** approach (à la
-  `StandaloneEvaluatorGenerator`) works directly and is what the provider should use, rather than wiring
-  the C# `IKeywordValidationHandler` composition framework.
+* **Emission path — corrected (per review).** Walk-the-model proved the mechanism *fast*, but the
+  **production validator wires the `IKeywordValidationHandler` composition framework** (§7.5), because
+  that registry — `RegisterValidationHandlers` + keyword->handler dispatch + `IChildValidationHandler`
+  composition — is the **extensibility seam**: user/third-party **custom keywords and vocabularies** plug
+  in there (exactly how the OpenApi/AsyncApi providers extend the C# engine). A monolithic walk-the-model
+  emitter cannot accept extensions. (The `SchemaEvaluationOnly` standalone-evaluator *mode* may still walk
+  the model, as C# does.)
 * **Native ECMA regex confirmed** — `pattern` emits `new RegExp(<json-string>, "u")` and runs; no
   ECMA→.NET translation (production hoists the `RegExp`).
 * **Code-point length** — `minLength`/`maxLength` use `[...value].length` (Unicode code points), not
@@ -1313,3 +1317,22 @@ uses exact numeric + deep structural §5.3), and no `allOf`/`anyOf`/`oneOf`/`une
 yet — all designed (§5.4/§5.6), not yet emitted. **Net: the validation engine is demonstrated, not
 assumed; the three pre-implementation spikes (integration §13.10, mutation API §5.7, validator §13.11)
 are all green.**
+
+### 13.12 Mutation API benchmark (measured)
+
+Benchmarked the `produce` mutation API itself (`prototypes/rmw-scanner/produce-bench.mjs`), not just the
+engine — with a **non-cloning** recorder (the §5.7 spike's `structuredClone` was a correctness shortcut
+that would defeat Model C; the production recorder must capture the change-set without materialising the
+document). `produce` vs raw Model C vs native (ops/s):
+
+| | ASCII 360 B | 4 KB | 64 KB | 256 KB | uni 64 KB |
+|---|---|---|---|---|---|
+| produce / native | 0.5x | 1.9x | 7.4x | 5.8x | 14.5x |
+| produce / raw Model C | 0.24x | 0.40x | 0.56x | 0.75x | 0.84x |
+
+Honest read: the API layer is **not free** — the `Proxy` recorder + per-op change-set allocation costs
+0.24-0.84x of the raw engine, worst at small docs (fixed overhead dominates), amortising as size grows.
+The full `produce` path still **beats native for medium/large docs and all non-ASCII** (the
+Model-C-favourable regime), losing only at the smallest ASCII doc. Clear optimisation headroom (pool the
+target/edit arrays, avoid per-op re-allocation, skip the `Proxy` for shallow recipes) to close the
+produce<->raw gap — a Phase-0 task, flagged not hand-waved.
