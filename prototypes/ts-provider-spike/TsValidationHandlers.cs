@@ -193,7 +193,16 @@ internal sealed class TsPropertiesHandler : IKeywordValidationHandler, ITsKeywor
 
     public void Emit(StringBuilder sb, TypeDeclaration td, IKeyword keyword)
     {
-        if (td.PropertyDeclarations.Count == 0) { return; }
+        // Only LOCAL properties (declared by this schema's own `properties`). Composed properties hoisted
+        // from dependentSchemas/allOf/etc. into PropertyDeclarations are validated AND marked by their own
+        // subschema validators -- marking them here would wrongly credit them at this level.
+        var locals = new List<PropertyDeclaration>();
+        foreach (PropertyDeclaration p in td.PropertyDeclarations)
+        {
+            if (p.LocalOrComposed == LocalOrComposed.Local) { locals.Add(p); }
+        }
+
+        if (locals.Count == 0) { return; }
         sb.Append("  if (typeof value === \"object\" && value !== null && !Array.isArray(value)) {\n");
         sb.Append("    const o = value as Record<string, unknown>;\n");
 
@@ -203,7 +212,7 @@ internal sealed class TsPropertiesHandler : IKeywordValidationHandler, ITsKeywor
         sb.Append("    const keys = Object.keys(o);\n");
         sb.Append("    for (let i = 0; i < keys.length; i++) {\n      const k = keys[i];\n");
         bool first = true;
-        foreach (PropertyDeclaration p in td.PropertyDeclarations)
+        foreach (PropertyDeclaration p in locals)
         {
             string? e = TsEmit.EvalName(p.ReducedPropertyType);
             if (e is null) { continue; }
@@ -288,7 +297,10 @@ internal sealed class TsAdditionalPropertiesHandler : IKeywordValidationHandler,
         if (name is null) { return; }
 
         var known = new List<string>();
-        foreach (PropertyDeclaration p in td.PropertyDeclarations) { known.Add(TsEmit.Str(p.JsonPropertyName)); }
+        foreach (PropertyDeclaration p in td.PropertyDeclarations)
+        {
+            if (p.LocalOrComposed == LocalOrComposed.Local) { known.Add(TsEmit.Str(p.JsonPropertyName)); }
+        }
 
         var patterns = new List<string>();
         IReadOnlyDictionary<IObjectPatternPropertyValidationKeyword, IReadOnlyCollection<PatternPropertyDeclaration>>? pp = td.PatternProperties();
@@ -321,11 +333,11 @@ internal sealed class TsAllOfHandler : IKeywordValidationHandler, ITsKeywordEmit
 
     public void Emit(StringBuilder sb, TypeDeclaration td, IKeyword keyword)
     {
-        // allOf members evaluate the SAME instance and must all match -> share the owner's tracker
-        // directly (it is NOEV when the owner does not track).
+        // Each allOf member gets its OWN tracker, merged into the parent after it matches. (Not a shared
+        // tracker: a member's own unevaluated* must see only its subtree, not a cousin member's.)
         foreach (string e in CompositionEvals.Members(td.AllOfCompositionTypes()))
         {
-            sb.Append("  if (!").Append(e).Append("(value, ev)) { return false; }\n");
+            sb.Append("  { const t = fresh(); if (!").Append(e).Append("(value, t)) { return false; } ev.mergeProps(t); ev.mergeItems(t); }\n");
         }
     }
 }
@@ -340,22 +352,17 @@ internal sealed class TsAnyOfHandler : IKeywordValidationHandler, ITsKeywordEmit
     {
         List<string> members = CompositionEvals.Members(td.AnyOfCompositionTypes());
         if (members.Count == 0) { return; }
-        if (TsEmit.Tracks(td))
-        {
-            // evaluate every branch (no short-circuit) and OR-merge the matched branches' evaluations.
-            sb.Append("  { let m = false;\n");
-            foreach (string e in members)
-            {
-                sb.Append("    { const t = fresh(); if (").Append(e).Append("(value, t)) { ev.mergeProps(t); ev.mergeItems(t); m = true; } }\n");
-            }
 
-            sb.Append("    if (!m) { return false; }\n  }\n");
-            return;
+        // Evaluate every branch and OR-merge each matched branch's evaluations into the tracker (a no-op
+        // on NOEV). Always merge -- the owner may not track, but an ancestor reached via in-place
+        // applicators might, and the shared tracker carries the evaluations up to it.
+        sb.Append("  { let m = false;\n");
+        foreach (string e in members)
+        {
+            sb.Append("    { const t = fresh(); if (").Append(e).Append("(value, t)) { ev.mergeProps(t); ev.mergeItems(t); m = true; } }\n");
         }
 
-        var terms = new List<string>();
-        foreach (string e in members) { terms.Add(e + "(value, NOEV)"); }
-        sb.Append("  if (!(").Append(string.Join(" || ", terms)).Append(")) { return false; }\n");
+        sb.Append("    if (!m) { return false; }\n  }\n");
     }
 }
 
@@ -369,21 +376,15 @@ internal sealed class TsOneOfHandler : IKeywordValidationHandler, ITsKeywordEmit
     {
         List<string> evals = CompositionEvals.Members(td.OneOfCompositionTypes());
         if (evals.Count == 0) { return; }
-        if (TsEmit.Tracks(td))
-        {
-            sb.Append("  { let c = 0; const acc = fresh();\n");
-            foreach (string e in evals)
-            {
-                sb.Append("    { const t = fresh(); if (").Append(e).Append("(value, t)) { c++; acc.mergeProps(t); acc.mergeItems(t); } }\n");
-            }
 
-            sb.Append("    if (c !== 1) { return false; }\n    ev.mergeProps(acc); ev.mergeItems(acc);\n  }\n");
-            return;
+        // exactly one branch matches; merge only that branch's evaluations into the tracker.
+        sb.Append("  { let c = 0; const acc = fresh();\n");
+        foreach (string e in evals)
+        {
+            sb.Append("    { const t = fresh(); if (").Append(e).Append("(value, t)) { c++; acc.mergeProps(t); acc.mergeItems(t); } }\n");
         }
 
-        sb.Append("  { let c = 0;\n");
-        foreach (string e in evals) { sb.Append("    if (").Append(e).Append("(value, NOEV)) { c++; }\n"); }
-        sb.Append("    if (c !== 1) { return false; }\n  }\n");
+        sb.Append("    if (c !== 1) { return false; }\n    ev.mergeProps(acc); ev.mergeItems(acc);\n  }\n");
     }
 }
 
@@ -512,23 +513,73 @@ internal sealed class TsIfThenElseHandler : IKeywordValidationHandler, ITsKeywor
         SingleSubschemaKeywordTypeDeclaration? elseT = td.ElseSubschemaType();
         string? elseE = elseT is null ? null : TsEmit.EvalName(elseT.ReducedType);
 
-        if (TsEmit.Tracks(td))
+        // `if` is evaluated to select the branch; its evaluations count only when it matches. then/else
+        // (the taken branch) is in-place and shares the tracker.
+        sb.Append("  { const t = fresh();\n");
+        sb.Append("    if (").Append(ifE).Append("(value, t)) {\n");
+        sb.Append("      ev.mergeProps(t); ev.mergeItems(t);\n");
+        if (thenE is not null) { sb.Append("      { const t2 = fresh(); if (!").Append(thenE).Append("(value, t2)) { return false; } ev.mergeProps(t2); ev.mergeItems(t2); }\n"); }
+        sb.Append("    } else {\n");
+        if (elseE is not null) { sb.Append("      { const t3 = fresh(); if (!").Append(elseE).Append("(value, t3)) { return false; } ev.mergeProps(t3); ev.mergeItems(t3); }\n"); }
+        sb.Append("    }\n  }\n");
+    }
+}
+
+// dependentSchemas: when a named property is present, the dependent subschema must validate the WHOLE
+// instance (an in-place applicator -> share the parent tracker so its evaluations are credited).
+internal sealed class TsDependentSchemasHandler : IKeywordValidationHandler, ITsKeywordEmitter
+{
+    public uint ValidationHandlerPriority => 610;
+
+    public bool HandlesKeyword(IKeyword keyword) => keyword is IObjectPropertyDependentSchemasValidationKeyword;
+
+    public void Emit(StringBuilder sb, TypeDeclaration td, IKeyword keyword)
+    {
+        IReadOnlyDictionary<IObjectPropertyDependentSchemasValidationKeyword, IReadOnlyCollection<DependentSchemaDeclaration>>? ds = td.DependentSchemasSubschemaTypes();
+        if (ds is null) { return; }
+        foreach (KeyValuePair<IObjectPropertyDependentSchemasValidationKeyword, IReadOnlyCollection<DependentSchemaDeclaration>> kv in ds)
         {
-            // `if` is evaluated to select the branch; its evaluations count only when it matches.
-            sb.Append("  { const t = fresh();\n");
-            sb.Append("    if (").Append(ifE).Append("(value, t)) {\n");
-            sb.Append("      ev.mergeProps(t); ev.mergeItems(t);\n");
-            if (thenE is not null) { sb.Append("      if (!").Append(thenE).Append("(value, ev)) { return false; }\n"); }
-            sb.Append("    } else {\n");
-            if (elseE is not null) { sb.Append("      if (!").Append(elseE).Append("(value, ev)) { return false; }\n"); }
-            sb.Append("    }\n  }\n");
-            return;
+            foreach (DependentSchemaDeclaration d in kv.Value)
+            {
+                string? e = TsEmit.EvalName(d.ReducedDepdendentSchemaType);
+                if (e is null) { continue; }
+                sb.Append("  if (typeof value === \"object\" && value !== null && !Array.isArray(value) && Object.prototype.hasOwnProperty.call(value, ")
+                  .Append(TsEmit.Str(d.JsonPropertyName)).Append(")) { const t = fresh(); if (!").Append(e).Append("(value, t)) { return false; } ev.mergeProps(t); ev.mergeItems(t); }\n");
+            }
+        }
+    }
+}
+
+// contains: at least minContains (default 1) and at most maxContains items match the contains subschema.
+// Matched items are marked evaluated (so unevaluatedItems credits them).
+internal sealed class TsContainsHandler : IKeywordValidationHandler, ITsKeywordEmitter
+{
+    public uint ValidationHandlerPriority => 520;
+
+    public bool HandlesKeyword(IKeyword keyword) => keyword is IArrayContainsValidationKeyword;
+
+    public void Emit(StringBuilder sb, TypeDeclaration td, IKeyword keyword)
+    {
+        if (!((IArrayContainsValidationKeyword)keyword).TryGetContainsItemType(td, out ArrayItemsTypeDeclaration? it) || it is null) { return; }
+        string? e = TsEmit.EvalName(it.ReducedType);
+        if (e is null) { return; }
+
+        string min = "1";
+        string? max = null;
+        foreach (IKeyword k in td.Keywords())
+        {
+            if (k is IArrayContainsCountConstantValidationKeyword cc && cc.TryGetOperator(td, out Operator op) && cc.TryGetValidationConstants(td, out JsonElement[]? cs) && cs.Length > 0)
+            {
+                if (op == Operator.GreaterThanOrEquals) { min = cs[0].GetRawText(); }
+                else if (op == Operator.LessThanOrEquals) { max = cs[0].GetRawText(); }
+            }
         }
 
-        sb.Append("  if (").Append(ifE).Append("(value, NOEV)) {\n");
-        if (thenE is not null) { sb.Append("    if (!").Append(thenE).Append("(value, NOEV)) { return false; }\n"); }
-        sb.Append("  } else {\n");
-        if (elseE is not null) { sb.Append("    if (!").Append(elseE).Append("(value, NOEV)) { return false; }\n"); }
+        sb.Append("  if (Array.isArray(value)) {\n");
+        sb.Append("    let n = 0;\n");
+        sb.Append("    for (let i = 0; i < value.length; i++) { if (").Append(e).Append("(value[i], NOEV)) { n++; ev.markItem(i); } }\n");
+        sb.Append("    if (n < ").Append(min).Append(") { return false; }\n");
+        if (max is not null) { sb.Append("    if (n > ").Append(max).Append(") { return false; }\n"); }
         sb.Append("  }\n");
     }
 }

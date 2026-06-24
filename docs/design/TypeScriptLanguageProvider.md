@@ -1513,3 +1513,30 @@ subschema comes from `LocalAndAppliedEvaluatedPropertyType()` / `ExplicitUnevalu
 simpler adjacent keywords that remain (`not` via the not-subschema type, `contains`/`minContains`/
 `maxContains` via the contains type + an int count, `dependentSchemas` via `DependentSchemasSubschemaTypes()`)
 need no tracker and slot in as ordinary interface-matched handlers.
+
+### 13.19 Evaluation tracking implemented -- 918/920 (99.8%) over 31 keyword files
+
+The §13.18 scheme is implemented in the spike and verified against the suite. Over 31 keyword files
+(adding unevaluatedProperties, unevaluatedItems, contains, dependentSchemas, minContains, maxContains):
+**918/920 cases pass (99.8%)**, all generated modules `tsc --strict` clean, person.json regressions
+(validate + extension) intact. Every keyword is 100% except unevaluatedProperties (128/129) and
+unevaluatedItems (70/71) -- both single misses are `$dynamicRef` (dynamic-scope resolution, not yet
+implemented). The two metaschema-resolving groups remain excluded (offline harness).
+
+Five subtleties the suite forced out, each a small, principled fix:
+
+* **Mark unconditionally.** Object/array keywords mark evaluated indices into the passed tracker even
+  when the owner type does not itself track -- otherwise an in-place applicator member (e.g. an anyOf
+  branch) fails to credit its evaluations to the parent. Mirrors the C# generator's unconditional
+  `AddLocalEvaluatedProperty` (the runtime no-op `NOEV` makes it free when nothing reads it).
+* **Merge unconditionally.** anyOf/oneOf/if-then-else always evaluate each branch against a child
+  tracker and OR-merge matched branches into the parent, because an ancestor reached through in-place
+  applicators may track even when the immediate owner does not.
+* **Per-branch tracker (cousin scope).** Each in-place branch (allOf/dependentSchemas/then/else) gets
+  its OWN child tracker merged up on match -- NOT a single shared tracker. A branch's own
+  `unevaluatedProperties` must see only its own subtree, never a cousin branch's evaluations.
+* **Local properties only.** The `properties`/`additionalProperties` handlers mark only
+  `LocalOrComposed.Local` properties; properties hoisted into `PropertyDeclarations` from
+  dependentSchemas/allOf are validated and credited by their own subschema, not at this level.
+* **contains marks matched items**, and minContains/maxContains read the count via the same
+  `Operator` interface as the other bounds.
