@@ -92,6 +92,40 @@ export function escapeHtml(value) {
     .replaceAll("'", '&#39;');
 }
 
+/**
+ * The shared visual for a resolved grantee — the universal "WHO" of the access model (§16.5.4). Used wherever a
+ * grantee is displayed (administrators, credential usage, the access overview, bindings) so naming someone reads
+ * the same everywhere: the kind as a badge, the human label foremost, and the resolved identity (its
+ * {dimension,value} grants) dimmed behind it. A partial identity (`complete === false`) is flagged.
+ *
+ * @param {{ kind?: string, label?: string, value?: string, identity?: Array<{dimension: string, value: string}>, complete?: boolean }} grantee
+ * @param {{ showIdentity?: boolean }} [opts]
+ * @returns {string} The chip's inner HTML (the host wraps it with any row chrome / actions).
+ */
+export function granteeChip(grantee, { showIdentity = true } = {}) {
+  const g = grantee || {};
+  const kind = g.kind ? escapeHtml(g.kind) : '';
+  const label = escapeHtml(g.label || g.value || '');
+  const ident = (g.identity || []).map((t) => `${escapeHtml(t.dimension)}=${escapeHtml(t.value)}`).join(' · ');
+  const partial = g.complete === false;
+  return `<span class="gchip" part="grantee">`
+    + (kind ? `<span class="gbadge${partial ? ' partial' : ''}">${kind}</span>` : '')
+    + (label ? `<span class="glabel" title="${label}">${label}</span>` : '')
+    + (showIdentity && ident ? `<span class="gident">${ident}</span>` : '')
+    + (partial ? `<span class="gpartial" title="A partial identity — a grant matches by exact identity, so it may match no one.">partial</span>` : '')
+    + `</span>`;
+}
+
+/** Styles for {@link granteeChip}; include in a component's shadow `<style>` (alongside {@link SHARED_CSS}). */
+export const GRANTEE_CHIP_CSS = `
+  .gchip { display: inline-flex; align-items: baseline; gap: 6px; min-width: 0; }
+  .gchip .gbadge { flex: none; font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; padding: 1px 6px; border-radius: 999px; background: var(--_surface); color: var(--_muted); border: 1px solid var(--_border); }
+  .gchip .gbadge.partial { color: #b45309; border-color: currentColor; }
+  .gchip .glabel { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gchip .gident { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); }
+  .gchip .gpartial { font-size: 11px; color: #b45309; }
+`;
+
 /** A compact relative-time string for a past timestamp, e.g. `3m ago`. */
 export function relativeTime(iso, now = Date.now()) {
   if (!iso) return '';
