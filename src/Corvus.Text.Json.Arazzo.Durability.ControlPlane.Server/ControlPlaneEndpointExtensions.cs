@@ -114,7 +114,7 @@ public static class ControlPlaneEndpointExtensions
         // The security-authoring API persists rules/bindings; if the deployment's policy is the persistent one,
         // refresh it after writes so authoring changes take effect for subsequent authorization decisions.
         ISecurityPolicyStore policyStore = securityPolicyStore ?? new InMemorySecurityPolicyStore();
-        var securityHandler = new ArazzoControlPlaneSecurityHandler(policyStore, effectivePolicy as PersistentRowSecurityPolicy);
+        var securityHandler = new ArazzoControlPlaneSecurityHandler(policyStore, effectivePolicy as PersistentRowSecurityPolicy, access);
 
         // The source-credential management API persists references + metadata only — it never touches secret material.
         ISourceCredentialStore credentialStore = sourceCredentialStore ?? new InMemorySourceCredentialStore();

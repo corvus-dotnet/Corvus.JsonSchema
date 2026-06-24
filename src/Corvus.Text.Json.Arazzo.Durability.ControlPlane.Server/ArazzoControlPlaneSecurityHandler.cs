@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Security.Claims;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
@@ -22,6 +23,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
 
     private readonly ISecurityPolicyStore store;
     private readonly PersistentRowSecurityPolicy? policy;
+    private readonly ControlPlaneAccess? access;
     private readonly string actor;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneSecurityHandler"/> class.</summary>
@@ -29,11 +31,23 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     /// <param name="policy">An optional policy to refresh after a mutation so changes take effect in-process.</param>
     /// <param name="actor">The audit actor recorded on writes (a deployment may resolve this from the principal).</param>
     public ArazzoControlPlaneSecurityHandler(ISecurityPolicyStore store, PersistentRowSecurityPolicy? policy = null, string actor = "control-plane")
+        : this(store, policy, null, actor)
+    {
+    }
+
+    /// <summary>Initializes a new instance bound to the current request's caller, so binding create/update can apply the
+    /// self-elevation guard (§16.5.3): a caller may not author a binding that grants <em>itself</em> write/purge reach.</summary>
+    /// <param name="store">The persistent rule/binding store.</param>
+    /// <param name="policy">An optional policy to refresh after a mutation.</param>
+    /// <param name="access">The request-scoped access binding the guard reads the caller's claims from (<see langword="null"/> disables the guard — the unscoped posture).</param>
+    /// <param name="actor">The audit actor recorded on writes.</param>
+    internal ArazzoControlPlaneSecurityHandler(ISecurityPolicyStore store, PersistentRowSecurityPolicy? policy, ControlPlaneAccess? access, string actor = "control-plane")
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(actor);
         this.store = store;
         this.policy = policy;
+        this.access = access;
         this.actor = actor;
     }
 
@@ -180,6 +194,11 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             return CreateSecurityBindingResult.BadRequest(problem, workspace);
         }
 
+        if (this.SelfElevates(draft, out problem))
+        {
+            return CreateSecurityBindingResult.Forbidden(problem, workspace);
+        }
+
         // The draft is a free, zero-copy element view over the request body (the store reads it synchronously) — no pooled
         // document to dispose. The summary references the returned pooled binding document (per-field From() wrap), so hand
         // that to the workspace; ownership transfers before RefreshAsync so a refresh failure cannot leak it.
@@ -212,6 +231,11 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         if (!ReadBinding(parameters.Body, out SecurityBindingDocument draft, out Models.ProblemDetails.Source problem))
         {
             return UpdateSecurityBindingResult.BadRequest(problem, workspace);
+        }
+
+        if (this.SelfElevates(draft, out problem))
+        {
+            return UpdateSecurityBindingResult.Forbidden(problem, workspace);
         }
 
         // The draft is a free, zero-copy element view over the request body (the store reads it synchronously) — no pooled
@@ -273,6 +297,59 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
 
         draft = SecurityBindingDocument.From(body);
         return true;
+    }
+
+    // The self-elevation guard (§16.5.3, defense in depth): a caller may not author a binding that grants ITSELF elevated
+    // (write/purge) reach — that escalation must go through the access-request → approve flow (separation of duties). A
+    // binding the caller matches that grants only read is allowed (direct group/role policy authoring). With no caller
+    // (the unscoped/Open posture, where there is no row reach to elevate) the guard is inert.
+    private bool SelfElevates(SecurityBindingDocument draft, out Models.ProblemDetails.Source problem)
+    {
+        problem = default;
+        ClaimsPrincipal? principal = this.access?.CurrentPrincipal;
+        if (principal is null)
+        {
+            return false;
+        }
+
+        if (!GrantsElevatedReach(draft.Write) && !GrantsElevatedReach(draft.Purge))
+        {
+            return false;
+        }
+
+        if (!CallerMatches(principal, draft.ClaimTypeValue, draft.ClaimValueOrNull))
+        {
+            return false;
+        }
+
+        problem = Problem(
+            "self-elevation",
+            "Self-elevation not permitted",
+            403,
+            "You may not create a binding that grants write or purge reach to a claim you hold. Request elevated access through the access-request flow instead.");
+        return true;
+    }
+
+    // Whether a verb grant confers reach (unrestricted or rule-bounded). Gated on ValueKind == Object so an absent verb
+    // grant — a default VerbGrantInfo with a null parent, which IsNotUndefined() does NOT catch — never NREs its nested
+    // RuleNames accessor (the absent-optional-complex-property trap).
+    private static bool GrantsElevatedReach(SecurityBindingDocument.VerbGrantInfo grant)
+        => grant.ValueKind == JsonValueKind.Object && !grant.IsEmptyValue;
+
+    // Whether the caller holds the binding's claim: the wildcard '*' matches every authenticated caller; a claim-type-only
+    // binding matches any value of that type; otherwise the exact type+value must be present.
+    private static bool CallerMatches(ClaimsPrincipal principal, string claimType, string? claimValue)
+    {
+        if (claimType == "*")
+        {
+            return true;
+        }
+
+        // A claim-type-only binding matches any value of that type; the exact overloads take strings (no capturing
+        // predicate closure). HasClaim(type, value) is ordinal; FindFirst(type) avoids a lambda for the type-only case.
+        return claimValue is null
+            ? principal.FindFirst(claimType) is not null
+            : principal.HasClaim(claimType, claimValue);
     }
 
     // SecurityRuleSummary is congruent with the stored SecurityRuleDocument (identical fields — the single-document

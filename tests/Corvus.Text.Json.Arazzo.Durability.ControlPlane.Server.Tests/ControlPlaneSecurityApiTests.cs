@@ -176,6 +176,69 @@ public sealed class ControlPlaneSecurityApiTests
     private static Stj.JsonDocument ReadResultBody(ListSecurityOrderingsResult result)
         => Stj.JsonDocument.Parse(JsonMarshal.GetRawUtf8Value(result.Body).Memory);
 
+    [TestMethod]
+    public async Task The_self_elevation_guard_rejects_a_caller_granting_itself_write_or_purge()
+    {
+        var policyStore = new InMemorySecurityPolicyStore();
+        await using Scoped host = await StartSecuredAsync(policyStore);
+
+        // The caller is in the payments team. Granting the payments team WRITE reach is self-elevation → 403.
+        const string caller = "team=payments";
+        (await host.SendJsonAsync(HttpMethod.Post, "/security/bindings", """{"claimType":"team","claimValue":"payments","read":{"unrestricted":false},"write":{"unrestricted":true}}""", Write, caller))
+            .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        // Rule-bounded write the caller matches is also self-elevation.
+        (await host.SendJsonAsync(HttpMethod.Post, "/security/bindings", """{"claimType":"team","claimValue":"payments","write":{"ruleNames":["reach-payments"]}}""", Write, caller))
+            .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        // Read-only reach for the caller's own team is allowed (direct group/role policy authoring).
+        HttpResponseMessage readOnly = await host.SendJsonAsync(HttpMethod.Post, "/security/bindings", """{"claimType":"team","claimValue":"payments","read":{"unrestricted":true}}""", Write, caller);
+        readOnly.StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        // Granting write to a team the caller is NOT in is not self-elevation (a policy decision, allowed).
+        (await host.SendJsonAsync(HttpMethod.Post, "/security/bindings", """{"claimType":"team","claimValue":"billing","write":{"unrestricted":true}}""", Write, caller))
+            .StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        // The guard runs on UPDATE too: editing the caller's own read-only binding up to write is self-elevation → 403.
+        string bindingId;
+        using (Stj.JsonDocument doc = await ReadJsonAsync(readOnly))
+        {
+            bindingId = doc.RootElement.GetProperty("id").GetString()!;
+        }
+
+        (await host.SendJsonAsync(HttpMethod.Put, $"/security/bindings/{bindingId}", """{"claimType":"team","claimValue":"payments","write":{"unrestricted":true}}""", Write, caller))
+            .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    private static async Task<Scoped> StartSecuredAsync(ISecurityPolicyStore policyStore)
+    {
+        var store = new InMemoryWorkflowStateStore();
+        var management = new SecuredWorkflowManagement(store, "ops");
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops");
+
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        builder.Services
+            .AddAuthentication(ScopeAuthHandler.SchemeName)
+            .AddScheme<AuthenticationSchemeOptions, ScopeAuthHandler>(ScopeAuthHandler.SchemeName, _ => { });
+        builder.Services.AddArazzoControlPlaneAuthorization();
+        builder.Services.AddHttpContextAccessor();
+
+        WebApplication app = builder.Build();
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        // RowSecurityOnly: the row-security policy is active (so the security handler sees the caller for the
+        // self-elevation guard) while capability-scope gating is off (the test exercises the guard, not scopes).
+        var policy = new PersistentRowSecurityPolicy(policyStore);
+        await policy.RefreshAsync();
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.RowSecurityOnly, rowSecurity: policy, securityPolicyStore: policyStore);
+        await app.StartAsync();
+
+        return new Scoped(app, app.GetTestClient());
+    }
+
     private static async Task<Scoped> StartAsync()
     {
         var store = new InMemoryWorkflowStateStore();
@@ -208,6 +271,13 @@ public sealed class ControlPlaneSecurityApiTests
         public Task<HttpResponseMessage> SendJsonAsync(HttpMethod method, string path, string body, string? scope)
             => this.SendCoreAsync(new HttpRequestMessage(method, path) { Content = new StringContent(body, Encoding.UTF8, "application/json") }, scope);
 
+        public Task<HttpResponseMessage> SendJsonAsync(HttpMethod method, string path, string body, string? scope, string callerClaims)
+        {
+            var request = new HttpRequestMessage(method, path) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
+            request.Headers.Add(ScopeAuthHandler.ClaimsHeader, callerClaims);
+            return this.SendCoreAsync(request, scope);
+        }
+
         public async ValueTask DisposeAsync()
         {
             client.Dispose();
@@ -234,6 +304,7 @@ public sealed class ControlPlaneSecurityApiTests
     {
         public const string SchemeName = "Scopes";
         public const string ScopeHeader = "X-Scopes";
+        public const string ClaimsHeader = "X-Claims";
 
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
@@ -244,6 +315,21 @@ public sealed class ControlPlaneSecurityApiTests
 
             var identity = new ClaimsIdentity(SchemeName);
             identity.AddClaim(new Claim("scope", values.ToString()));
+
+            // Optional caller identity claims (e.g. the self-elevation guard's `team=payments`), as a comma-separated
+            // list of `type=value` pairs in the X-Claims header.
+            if (this.Request.Headers.TryGetValue(ClaimsHeader, out Microsoft.Extensions.Primitives.StringValues claimValues))
+            {
+                foreach (string pair in claimValues.ToString().Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                {
+                    int eq = pair.IndexOf('=', StringComparison.Ordinal);
+                    if (eq > 0)
+                    {
+                        identity.AddClaim(new Claim(pair[..eq], pair[(eq + 1)..]));
+                    }
+                }
+            }
+
             return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(identity), SchemeName)));
         }
     }
