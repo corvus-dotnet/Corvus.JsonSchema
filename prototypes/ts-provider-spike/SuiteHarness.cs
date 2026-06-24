@@ -16,6 +16,7 @@ internal static class SuiteHarness
         "const", "exclusiveMinimum", "exclusiveMaximum", "minProperties", "maxProperties", "uniqueItems",
         "allOf", "anyOf", "oneOf", "items", "prefixItems", "propertyNames", "dependentRequired",
         "if-then-else", "ref", "defs", "unevaluatedProperties", "unevaluatedItems",
+        "contains", "dependentSchemas", "minContains", "maxContains",
     ];
 
     public static async Task Run(string suiteDir, string outDir)

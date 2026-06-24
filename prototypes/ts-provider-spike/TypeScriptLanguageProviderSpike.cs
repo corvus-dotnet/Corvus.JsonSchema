@@ -36,8 +36,8 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
         "  hasProp(i: number): boolean { return i < 32 ? (((this.pl | this.pa) & ((1 << i) >>> 0)) !== 0) : false; }\n" +
         "  markItem(i: number): void { if (!this.n && i < 32) { this.il |= (1 << i) >>> 0; } }\n" +
         "  hasItem(i: number): boolean { return i < 32 ? (((this.il | this.ia) & ((1 << i) >>> 0)) !== 0) : false; }\n" +
-        "  mergeProps(c: Ev): void { this.pa |= c.pl | c.pa; }\n" +
-        "  mergeItems(c: Ev): void { this.ia |= c.il | c.ia; }\n" +
+        "  mergeProps(c: Ev): void { if (!this.n) { this.pa |= c.pl | c.pa; } }\n" +
+        "  mergeItems(c: Ev): void { if (!this.n) { this.ia |= c.il | c.ia; } }\n" +
         "}\n" +
         "const NOEV = new Ev(); NOEV.n = true;\n" +
         "function fresh(): Ev { return new Ev(); }\n\n";
@@ -54,6 +54,7 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
             new TsAllOfHandler(), new TsAnyOfHandler(), new TsOneOfHandler(),
             new TsPrefixItemsHandler(), new TsItemsHandler(),
             new TsPropertyNamesHandler(), new TsDependentRequiredHandler(), new TsIfThenElseHandler(),
+            new TsDependentSchemasHandler(), new TsContainsHandler(),
             new TsUnevaluatedPropertiesHandler(), new TsUnevaluatedItemsHandler());
         return p;
     }
