@@ -1123,3 +1123,31 @@ workload ever needs them, both widening Model C's lead rather than changing the 
 * **Single‑edit `applyEdits` specialisation** — skip the sort/loop for the common k=1 case (micro).
 These are recorded as a deliberate future path; the current optimised Model C (across‑the‑board wire
 win + 100×–5900×/edit incremental + ~10–20× less GC) is the point at which this comparison wraps.
+
+### 13.10 Provider integration spike (validated with running code)
+
+The runtime model (§13.1–13.9) was proven by benchmark; the *provider‑side* premise of §7 — that a new
+C# `ILanguageProvider` plugs into the existing language‑neutral core and emits TypeScript end‑to‑end —
+was only asserted from code‑reading. It is now **validated with running code**:
+`prototypes/ts-provider-spike/` is a minimal real `TypeScriptLanguageProviderSpike : ILanguageProvider`
+that references *only* the core (`src-v4/Corvus.Json.CodeGeneration`) + the 2020‑12 dialect, bootstraps
+`JsonSchemaTypeBuilder` exactly as `GenerationDriverV5` does, and calls `GenerateCodeUsing(provider, …)`
+on a real schema. It compiles and runs, emitting an `export interface` per type. Confirmed against the
+design's claims:
+
+* **The seam compiles from a fresh external project** — `ILanguageProvider`, `TypeDeclaration`,
+  `GeneratedCodeFile`, `PropertyDeclaration`, `VocabularyRegistry`, the document resolvers, and
+  `JsonReference` are all consumable with two project references; no core change needed.
+* **The full pipeline runs** — parse → build graph → **reduce** → name → the provider's hooks
+  (`SetNamesBeforeSubschema`, `ShouldGenerate`, `GenerateCodeFor`) are invoked in order, as §2/§7
+  describe.
+* **The real type model is readable** — walking `PropertyDeclarations` yielded the actual property
+  names, and the nested object subschema was generated as its own type (the graph + reduction work).
+* **`AddMetaschema` is not required** for a self‑contained schema (the analyser matches `$schema` by
+  URI string) — one fewer dependency than the CLI path uses.
+
+Scope (deliberately minimal — this validates *integration*, not feature completeness): names default to
+`Entity/Entity2…` because the spike registers no name heuristics; scalar leaf types emit as empty
+interfaces because it implements no `IdentifyNonGeneratedType`/built‑in mapping; property types are
+`unknown` (no type‑reference resolution); no validation. Each of those is a known §5/§7 work item, not a
+surprise — the seam itself is proven. This is the concrete starting point for Phase 0 (§9).
