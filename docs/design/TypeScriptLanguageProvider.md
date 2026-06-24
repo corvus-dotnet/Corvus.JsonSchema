@@ -1686,3 +1686,21 @@ StandaloneEvaluator **7989/7989** (incl. the new case), type-based V5 codegen Dy
 RecursiveRef/Anchor/Ref/Defs **1102/1102**, the TS harness's draft-2020-12 now **100%** (suite 7848/7849),
 warning-free solution build. This is a **shared-core** fix (the C# typed codegen had the same latent bug; it
 just never exercised this optional case), not a TS-provider-only change.
+
+### 13.25 Provider emits typed arrays / tuples / tensors / maps (emission build-out begins)
+
+With the behaviour suite (§13.23) as the acceptance target, the provider starts emitting the §5.3 shapes
+it previously stubbed. The array/tuple/map **type surface** is first (the provider used to inline
+`readonly unknown[]` for any array and emit no map index/Record type): `TsTypeRef` now emits plain
+`readonly T[]`, pure tuple `readonly [A,B,C]` (`items:false` closes it with no tail), prefix+tail variadic
+`readonly [A, ...T[]]`, and **recurses for multi-dimensional tensors** `readonly (readonly number[])[]`
+— guarded against recursive array schemas (a revisited type degrades to `readonly unknown[]`, so cyclic
+`items:{$ref:'#'}` schemas still compile). A **pure map** (additionalProperties value type, no declared
+properties) becomes `export type X = Readonly<Record<string, T>>`.
+
+Verified on a `Container` schema covering all five shapes: `arrays-access.test.ts` (11/11) validates an
+instance with the emitted validator, then consumes `tags`/`triple`/`labelled`/`matrix`/`scores` through the
+emitted typed surface under `tsc --strict` — so these patterns are now behaviour-verified on the provider's
+REAL output, not just the reference shapes. The full suite is unchanged at **7848/7849** with all 1688
+modules `tsc --strict` clean (the type-surface change is validation-neutral). Still pending: union
+`match`/guards, `From`/brand conversions, and the `produce`/mutation surface.

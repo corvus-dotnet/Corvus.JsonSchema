@@ -1,6 +1,8 @@
 out/
 out-suite/
+out-arrays/
 prov-test/
+prov-test-arrays/
 bin/
 obj/
 node_modules/
