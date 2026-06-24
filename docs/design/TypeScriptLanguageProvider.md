@@ -1348,3 +1348,26 @@ allocation; closing it further means skipping the `Proxy` for shallow recipes, b
 value-encode. Verdict: pooling is a clear, cheap win (throughput + GC) and the mutation API reaches engine
 parity exactly where Model C matters (larger payloads / sustained load); small-doc mutation is the one
 spot where the recorder cost shows, and there native is already competitive anyway.
+
+### 13.13 Handler-framework validator + extensibility (validated)
+
+Per review (§13.11), the production validator drives emission through the **real core handler registry**,
+not a hard-coded walk-the-model — now proven (`prototypes/ts-provider-spike/`, evolved). The provider
+holds a `KeywordValidationHandlerRegistry`; `RegisterValidationHandlers` populates it; each
+`evaluate{Type}` body is composed purely from the handlers the registry **dispatches** for that type's
+keywords (`TryGetHandlersFor`, ordered by `ValidationHandlerPriority`). Handlers implement the core
+`IKeywordValidationHandler` (dispatch: `HandlesKeyword` + priority) plus a small `ITsKeywordEmitter`
+(emit TS). Base set: type / properties+required / minLength-maxLength / minimum-maximum / pattern / enum.
+
+* **Same correctness as the walk-the-model spike** — registry-composed validators type-check
+  (`tsc --strict`) and validate **12/12** instances.
+* **Extensibility proven end-to-end.** The base provider has no `multipleOf` handler. Registering a
+  custom `TsMultipleOfHandler` at runtime via `RegisterValidationHandlers` — *with no change to the
+  provider* — makes the core registry dispatch to it: the **only** diff between base and extended output
+  is the emitted `multipleOf` check, and at runtime the base validator accepts `price: 0.3` while the
+  extended one rejects it (`extension-test.mjs`, 4/4). This is exactly how OpenApi/AsyncApi (and a user's
+  custom keyword) extend the engine.
+
+The validator architecture is therefore the **extensible registry path**; §13.11's walk-the-model remains
+only as the initial fast feasibility proof. (A fully *non-standard* keyword additionally needs a custom
+vocabulary so the core surfaces the `IKeyword`; the handler-dispatch half — proven here — is identical.)
