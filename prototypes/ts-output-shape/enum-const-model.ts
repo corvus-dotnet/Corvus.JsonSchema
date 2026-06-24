@@ -1,43 +1,75 @@
 // What the generator emits for ENUM / CONST (design §5.3). Type-checked under --strict.
 //
-// enum / anyOf-of-consts -> a union of string-literal types (NEVER a TS `enum`, which emits
-// a runtime IIFE + reverse map, isn't tree-shakeable, and fights the JSON boundary).
-// A single `const` -> the literal type itself.
+// `enum` is an array of ARBITRARY JSON values and `const` is ANY JSON value — NOT just strings.
+// Emit a union of literal types of whatever JSON types the values are (never a TS `enum`).
 
 import { assertNever } from "./runtime"; // in real output: from "@corvus/json-runtime"
 
-// enum: { "enum": ["active","archived","deleted"] }
-export type Status = "active" | "archived" | "deleted";
+// --- enums of each JSON type ---
+export type Status = "active" | "archived" | "deleted"; // string enum
+export type Priority = 1 | 2 | 3; // numeric enum
+export type Tristate = true | false | null; // boolean + null  (=> boolean | null)
+export type Mode = "auto" | 0 | false | null; // MIXED-type enum: ["auto", 0, false, null]
 
-// Optional `as const` value object, emitted only when runtime values are needed.
-// (A type and a value may share the name — they live in different namespaces.)
-export const Status = { Active: "active", Archived: "archived", Deleted: "deleted" } as const;
+// --- const of each JSON type ---
+export type CreateKind = "create"; // const "create"
+export type SchemaVersion = 2; // const 2
+export type Enabled = true; // const true
+export type Nothing = null; // const null
+export type Origin = { readonly x: 0; readonly y: 0 }; // const {"x":0,"y":0} -> literal object type
+export type Unit = readonly [1]; // const [1] -> literal tuple type
 
-// const: { "const": 2 } / { "const": "create" } -> the literal type
-export type SchemaVersion = 2;
-export type CreateKind = "create";
-
-// Validation (generated): membership against a Set (Model B) / raw-byte compare (Model A/C).
-const STATUS_VALUES: ReadonlySet<string> = new Set<string>(["active", "archived", "deleted"]);
-export function isStatus(value: unknown): value is Status {
-  return typeof value === "string" && STATUS_VALUES.has(value);
+// Validation: JSON deep-equality against the allowed value(s) — NOT a string Set in general.
+//   strings / booleans / null : exact ===
+//   numbers                   : EXACT numeric compare (§4.1) so 1.0 matches 1, big ints stay distinct
+//   objects / arrays          : deep structural equality (object keys order-independent, arrays ordered)
+// All-string enums keep the Set<string> fast-path (Model B) / raw-byte compare (Model A/C); mixed or
+// scalar enums use a generated per-value check; object/array const/enum use a generated deep-equal.
+// The TYPE is best-effort; the VALIDATOR is authoritative for exactness (e.g. it rejects extra object
+// properties that TS structural typing would otherwise allow).
+const PRIORITIES: ReadonlySet<number> = new Set<number>([1, 2, 3]);
+export function isPriority(v: unknown): v is Priority {
+  return typeof v === "number" && PRIORITIES.has(v);
+}
+export function isMode(v: unknown): v is Mode {
+  return v === "auto" || v === 0 || v === false || v === null;
 }
 
-// consumer code: exhaustive switch over the literal union
-export function label(s: Status): string {
-  switch (s) {
-    case "active":
-      return "Active";
-    case "archived":
-      return "Archived";
-    case "deleted":
-      return "Deleted";
+// exhaustive consumer switch over a mixed-type union
+export function describe(m: Mode): string {
+  switch (m) {
+    case "auto":
+      return "auto";
+    case 0:
+      return "zero";
+    case false:
+      return "off";
+    case null:
+      return "none";
     default:
-      return assertNever(s); // adding an enum value breaks the build here
+      return assertNever(m);
   }
 }
 
-// @ts-expect-error -- "paused" is not a member of Status
-const badStatus: Status = "paused";
+// @ts-expect-error -- 4 is not a Priority
+const badPriority: Priority = 4;
+// @ts-expect-error -- "x" is not a Mode member
+const badMode: Mode = "x";
+// @ts-expect-error -- Origin requires x:0 (the literal), not an arbitrary number
+const badOrigin: Origin = { x: 5, y: 0 };
 
-export const demoEnum = [label("active"), isStatus("x"), Status.Active, badStatus, 2 as SchemaVersion, "create" as CreateKind];
+export const demoEnum: ReadonlyArray<unknown> = [
+  describe("auto"),
+  isPriority(2),
+  isMode(null),
+  badPriority,
+  badMode,
+  badOrigin,
+  "create" satisfies CreateKind,
+  2 satisfies SchemaVersion,
+  true satisfies Enabled,
+  null satisfies Nothing,
+  { x: 0, y: 0 } satisfies Origin,
+  [1] satisfies Unit,
+  (null as Tristate),
+];
