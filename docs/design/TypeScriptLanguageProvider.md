@@ -633,9 +633,16 @@ split is the same:
   re-`stringify` the whole document. This is *the* place Model C lives — it is the **engine of the
   mutable model**, not an optional bolt-on, and it is the proven-best path for mutation (wire RMW
   2.4-34x §13.9; incremental editing 100x-5900x/edit §13.8).
-* **API shape (to settle):** either an immer-style `produce(doc, d => { d.age = 31 })` returning a new
-  immutable document, or a generated fluent builder (`PersonBuilder().withAge(31)`) — both lower to the
-  same Model C patch; in an editor the same change-set also yields minimal LSP `TextEdit`s (§5.6).
+* **API shape (decided): idiomatic immer-style `produce`.** `produce(doc, d => { d.age = 31; d.address.city = "X" })`
+  returns a *new* immutable document — you write plain "mutations" on a typed `Draft<T>` (immer's `Draft`)
+  and get an immutable result, the established TS pattern. The recorded change-set is the **universal
+  currency**: it lowers to a Model C structural-sharing **byte patch** (set only changed fields, unchanged
+  bytes copied verbatim), and the *same* change-set is **RFC 6902 JSON Patch** and the basis for minimal
+  LSP `TextEdit`s (§5.6). **Zero-dependency:** we don't need immer (its value is object-level structural
+  sharing; ours is byte-level via Model C), so a tiny `Proxy` change-recorder suffices; a per-type
+  convenience method `doc.produce(recipe)` lowers to the same thing. Proven: typed surface + safety in
+  `prototypes/ts-output-shape/mutation-model.ts` (type-checked), and mechanism -> RFC 6902 -> byte patch in
+  `prototypes/rmw-scanner/produce.mjs` (runnable, 11/11).
 
 So **"native parse beats the byte path" does not apply to the mutable model**: pure reads are just plain
 reads (no Model C in play), and *mutation* is Model C, which wins. The only result where native led was
