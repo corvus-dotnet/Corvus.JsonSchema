@@ -42,8 +42,9 @@ public sealed partial class CliIntegrationTests
         addOut.ShouldContain("globex");
         addOut.ShouldContain("acme");
 
-        // globex, now an administrator, removes acme — the set never empties because globex remains.
-        (int removeExit, string removeOut, _) = await RunAsync(host, "administrators", "remove", "flow", "tenant", "acme", "--token", "globex");
+        // globex, now an administrator, removes acme by its identity digest — the set never empties because globex remains.
+        string acmeDigest = SecurityIdentityDigest.Compute(SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", "acme")]))!;
+        (int removeExit, string removeOut, _) = await RunAsync(host, "administrators", "remove", "flow", acmeDigest, "--token", "globex");
         removeExit.ShouldBe(0);
         removeOut.ShouldContain("globex");
         removeOut.ShouldNotContain("acme");

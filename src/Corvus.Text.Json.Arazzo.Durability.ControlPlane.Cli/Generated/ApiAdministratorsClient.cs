@@ -121,19 +121,17 @@ public sealed class ApiAdministratorsClient : IApiAdministratorsClient
     /// Remove an administrator
     /// </summary>
     /// <remarks>
-    /// Removes the named identity from the base workflow id's administrator set. The set may not be left empty — removing the last administrator conflicts (409). The caller must be a current administrator (403 otherwise).
+    /// Removes the administrator identified by its identity digest (from AdministratorGrant.digest in the list) from the base workflow id's administrator set. Removing a multi-tag grantee removes the whole identity in one call. The set may not be left empty — removing the last administrator conflicts (409). The caller must be a current administrator (403 otherwise). An unknown digest is a no-op (the resulting set is returned).
     /// </remarks>
     /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
-    /// <param name="dimension">The dimension parameter.</param>
-    /// <param name="value">The value parameter.</param>
+    /// <param name="digest">The digest parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<RemoveAdministratorResponse> RemoveAdministratorAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source dimension, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<RemoveAdministratorResponse> RemoveAdministratorAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source digest, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString BaseWorkflowIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, baseWorkflowId, 30).RootElement;
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString DimensionValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, dimension, 30).RootElement;
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString ValueValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, value, 30).RootElement;
-        RemoveAdministratorRequest request = new(BaseWorkflowIdValue, DimensionValue, ValueValue);
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString DigestValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, digest, 30).RootElement;
+        RemoveAdministratorRequest request = new(BaseWorkflowIdValue, DigestValue);
 
         request.Validate(validationMode);
 

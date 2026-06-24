@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client;
 /// <summary>
 /// Request type for the RemoveAdministrator operation.
 /// </summary>
-/// <remarks>Removes the named identity from the base workflow id's administrator set. The set may not be left empty — removing the last administrator conflicts (409). The caller must be a current administrator (403 otherwise).</remarks>
+/// <remarks>Removes the administrator identified by its identity digest (from AdministratorGrant.digest in the list) from the base workflow id's administrator set. Removing a multi-tag grantee removes the whole identity in one call. The set may not be left empty — removing the last administrator conflicts (409). The caller must be a current administrator (403 otherwise). An unknown digest is a no-op (the resulting set is returned).</remarks>
 public readonly struct RemoveAdministratorRequest : IApiRequest<RemoveAdministratorRequest>
 {
 
@@ -27,30 +27,23 @@ public readonly struct RemoveAdministratorRequest : IApiRequest<RemoveAdministra
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString BaseWorkflowId { get; init; }
 
     /// <summary>
-    /// Gets the dimension parameter.
+    /// Gets the digest parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Dimension { get; init; }
-
-    /// <summary>
-    /// Gets the value parameter.
-    /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Value { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Digest { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RemoveAdministratorRequest"/> struct.
     /// </summary>
     /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
-    /// <param name="dimension">The dimension parameter.</param>
-    /// <param name="value">The value parameter.</param>
-    public RemoveAdministratorRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString dimension, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value)
+    /// <param name="digest">The digest parameter.</param>
+    public RemoveAdministratorRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString digest)
     {
         this.BaseWorkflowId = baseWorkflowId;
-        this.Dimension = dimension;
-        this.Value = value;
+        this.Digest = digest;
     }
 
     /// <inheritdoc/>
-    public static ReadOnlySpan<byte> PathTemplateUtf8 => "/administrators/{baseWorkflowId}/members/{dimension}/{value}"u8;
+    public static ReadOnlySpan<byte> PathTemplateUtf8 => "/administrators/{baseWorkflowId}/members/{digest}"u8;
 
     /// <inheritdoc/>
     public static OperationMethod Method => OperationMethod.Delete;
@@ -78,18 +71,11 @@ public readonly struct RemoveAdministratorRequest : IApiRequest<RemoveAdministra
             writer.Write(escBaseWorkflowId[..ewBaseWorkflowId]);
         }
         writer.Write("/members/"u8);
-        using UnescapedUtf8JsonString utf8Dimension = ((JsonElement)this.Dimension).GetUtf8String();
-        Span<byte> escDimension = stackalloc byte[utf8Dimension.Span.Length * 3];
-        if (Utf8Uri.TryEscapeDataString(utf8Dimension.Span, escDimension, out int ewDimension))
+        using UnescapedUtf8JsonString utf8Digest = ((JsonElement)this.Digest).GetUtf8String();
+        Span<byte> escDigest = stackalloc byte[utf8Digest.Span.Length * 3];
+        if (Utf8Uri.TryEscapeDataString(utf8Digest.Span, escDigest, out int ewDigest))
         {
-            writer.Write(escDimension[..ewDimension]);
-        }
-        writer.Write("/"u8);
-        using UnescapedUtf8JsonString utf8Value = ((JsonElement)this.Value).GetUtf8String();
-        Span<byte> escValue = stackalloc byte[utf8Value.Span.Length * 3];
-        if (Utf8Uri.TryEscapeDataString(utf8Value.Span, escValue, out int ewValue))
-        {
-            writer.Write(escValue[..ewValue]);
+            writer.Write(escDigest[..ewDigest]);
         }
     }
 
@@ -129,16 +115,10 @@ public readonly struct RemoveAdministratorRequest : IApiRequest<RemoveAdministra
                 ThrowHelper.ThrowRequestParameterValidationFailed("baseWorkflowId", SchemaValidationDetail.FormatResults(collectorBaseWorkflowId));
             }
 
-            using JsonSchemaResultsCollector collectorDimension = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-            if (!this.Dimension.EvaluateSchema(collectorDimension))
+            using JsonSchemaResultsCollector collectorDigest = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!this.Digest.EvaluateSchema(collectorDigest))
             {
-                ThrowHelper.ThrowRequestParameterValidationFailed("dimension", SchemaValidationDetail.FormatResults(collectorDimension));
-            }
-
-            using JsonSchemaResultsCollector collectorValue = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-            if (!this.Value.EvaluateSchema(collectorValue))
-            {
-                ThrowHelper.ThrowRequestParameterValidationFailed("value", SchemaValidationDetail.FormatResults(collectorValue));
+                ThrowHelper.ThrowRequestParameterValidationFailed("digest", SchemaValidationDetail.FormatResults(collectorDigest));
             }
 
         }
@@ -149,14 +129,9 @@ public readonly struct RemoveAdministratorRequest : IApiRequest<RemoveAdministra
                 ThrowHelper.ThrowRequestParameterValidationFailed("baseWorkflowId");
             }
 
-            if (!this.Dimension.EvaluateSchema())
+            if (!this.Digest.EvaluateSchema())
             {
-                ThrowHelper.ThrowRequestParameterValidationFailed("dimension");
-            }
-
-            if (!this.Value.EvaluateSchema())
-            {
-                ThrowHelper.ThrowRequestParameterValidationFailed("value");
+                ThrowHelper.ThrowRequestParameterValidationFailed("digest");
             }
 
         }

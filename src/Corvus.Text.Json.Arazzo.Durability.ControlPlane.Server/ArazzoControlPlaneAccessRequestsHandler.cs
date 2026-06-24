@@ -376,16 +376,7 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
 
     private async ValueTask<bool> IsAdministratorAsync(string baseWorkflowId, CancellationToken cancellationToken)
     {
-        SecurityTagSet caller = this.CallerIdentity();
-        IReadOnlyList<SecurityTagSet> administrators = await this.catalog.GetAdministratorsAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
-        foreach (SecurityTagSet administrator in administrators)
-        {
-            if (WorkflowIdentity.SameAdministrator(administrator, caller))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        using ParsedJsonDocument<WorkflowAdministrators>? record = await this.catalog.GetAdministratorsAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
+        return record?.RootElement.IsAdministeredBy(this.CallerIdentity()) == true;
     }
 }

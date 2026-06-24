@@ -2,7 +2,7 @@
 import { ArazzoControlPlaneClient } from '../../src/arazzo-client.js';
 import { createMockControlPlane } from '../../demo/mock-api.js';
 import '../../src/components/administrators-panel.js';
-import { ok, equal, nextEvent, mount } from './helpers.js';
+import { ok, equal, nextEvent, waitFor, mount } from './helpers.js';
 
 function panelWithMock(attrs = {}) {
   const mock = createMockControlPlane({ latencyMs: 0 });
@@ -34,22 +34,24 @@ describe('<arazzo-administrators-panel>', () => {
     equal(rows(el).length, 0, 'no administrators');
   });
 
-  it('adds an administrator via the guided grant input and emits administrators-changed', async () => {
+  it('adds an administrator via the resolved-grantee picker and emits administrators-changed', async () => {
     el = panelWithMock({ 'base-workflow-id': 'nightly-reconcile', scopes: 'administrators:write' });
     mount(el);
     await nextEvent(el, 'loaded');
     equal(rows(el).length, 1, 'one seeded administrator');
-    // The grant input is a nested element: choose the tenant dimension, then fill its adaptive value field.
-    const grant = el.shadowRoot.querySelector('arazzo-admin-grant-input');
-    const dim = grant.shadowRoot.querySelector('.dim');
-    dim.value = 'tenant';
-    dim.dispatchEvent(new Event('change'));
-    grant.shadowRoot.querySelector('.val-text').value = 'growth';
+    // Drive the nested picker: type a query, pick the server-resolved grantee, then Add.
+    const picker = el.shadowRoot.querySelector('arazzo-grantee-picker');
+    const q = picker.shadowRoot.querySelector('.q');
+    q.value = 'payments';
+    q.dispatchEvent(new Event('input'));
+    const pickerResults = () => picker.shadowRoot.querySelectorAll('.results li[data-index]');
+    await waitFor(() => pickerResults().length === 1);
+    pickerResults()[0].click();
     const changed = nextEvent(el, 'administrators-changed');
     el.shadowRoot.querySelector('.addbtn').click();
     const e = await changed;
     equal(e.detail.administrators.length, 2, 'the set grew');
-    ok(e.detail.administrators.some((a) => a.dimension === 'tenant' && a.value === 'growth'), 'added the tenant grant');
+    ok(e.detail.administrators.some((a) => a.kind === 'team' && (a.identity || []).some((g) => g.dimension === 'team' && g.value === 'payments')), 'added the resolved team grantee');
   });
 
   it('surfaces the 409 when the last administrator would be removed', async () => {
@@ -61,7 +63,7 @@ describe('<arazzo-administrators-panel>', () => {
     el.addEventListener('error', (e) => e.stopPropagation());
     // removeMember() pops a confirm dialog; drive the same mutate path directly to assert the 409 banner.
     const errored = nextEvent(el, 'error');
-    await el.mutate(() => el.client.removeAdministrator('nightly-reconcile', 'tenant', 'platform'));
+    await el.mutate(() => el.client.removeAdministrator('nightly-reconcile', el._admins[0].digest));
     const e = await errored;
     equal(e.detail.problem.status, 409, 'last-administrator removal conflicts');
     ok(el.shadowRoot.querySelector('.error-banner'), 'shows an error banner');

@@ -350,7 +350,10 @@ public sealed class AccessRequestApprovalServiceTests
             var stateStore = new InMemoryWorkflowStateStore(clock);
             var adminStore = new InMemoryWorkflowAdministratorStore();
             var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(clock), stateStore, "ops", administrators: adminStore);
-            await adminStore.PutAsync(Workflow, [Boss], WorkflowEtag.None, "seed", default);
+            using (JsonWorkspace seedWorkspace = JsonWorkspace.CreateUnrented())
+            {
+                await adminStore.PutAsync(Workflow, [WorkflowAdministrators.BuildIdentity(seedWorkspace, Boss, default, hasKind: false, default, hasLabel: false)], WorkflowEtag.None, "seed", default);
+            }
 
             var requests = new InMemoryAccessRequestStore(clock);
             var policy = new InMemorySecurityPolicyStore(clock);

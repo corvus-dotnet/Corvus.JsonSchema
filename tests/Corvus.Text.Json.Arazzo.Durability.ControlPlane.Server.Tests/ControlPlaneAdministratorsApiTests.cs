@@ -55,8 +55,8 @@ public sealed class ControlPlaneAdministratorsApiTests
             Grants(added).Order().ShouldBe(["tenant=acme", "tenant=globex"]);
         }
 
-        // globex, now an administrator, removes acme — the set never empties because globex remains.
-        using (Stj.JsonDocument removed = await ReadJsonAsync(await host.SendAsync(HttpMethod.Delete, "/administrators/flow/members/tenant/acme", Write, Globex)))
+        // globex, now an administrator, removes acme by its identity digest — the set never empties because globex remains.
+        using (Stj.JsonDocument removed = await ReadJsonAsync(await host.SendAsync(HttpMethod.Delete, $"/administrators/flow/members/{Digest(Acme)}", Write, Globex)))
         {
             Grants(removed).ShouldBe(["tenant=globex"]);
         }
@@ -77,7 +77,7 @@ public sealed class ControlPlaneAdministratorsApiTests
         // globex is not an administrator: adding (or transferring, or removing) is refused, non-disclosingly.
         (await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"dimension":"tenant","value":"globex"}""", Write, Globex))
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-        (await host.SendAsync(HttpMethod.Delete, "/administrators/flow/members/tenant/acme", Write, Globex))
+        (await host.SendAsync(HttpMethod.Delete, $"/administrators/flow/members/{Digest(Acme)}", Write, Globex))
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
@@ -102,7 +102,7 @@ public sealed class ControlPlaneAdministratorsApiTests
         await EstablishAsync(host.Catalog, "flow", Acme);
 
         // acme is the sole administrator: removing itself would orphan the workflow — refused (409).
-        (await host.SendAsync(HttpMethod.Delete, "/administrators/flow/members/tenant/acme", Write, Acme))
+        (await host.SendAsync(HttpMethod.Delete, $"/administrators/flow/members/{Digest(Acme)}", Write, Acme))
             .StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
 
@@ -113,7 +113,7 @@ public sealed class ControlPlaneAdministratorsApiTests
         await EstablishAsync(host.Catalog, "flow", Acme);
 
         // acme is an administrator; globex is not. Removing globex changes nothing and returns the unchanged set (200).
-        using Stj.JsonDocument removed = await ReadJsonAsync(await host.SendAsync(HttpMethod.Delete, "/administrators/flow/members/tenant/globex", Write, Acme));
+        using Stj.JsonDocument removed = await ReadJsonAsync(await host.SendAsync(HttpMethod.Delete, $"/administrators/flow/members/{Digest(Globex)}", Write, Acme));
         Grants(removed).ShouldBe(["tenant=acme"]);
     }
 
@@ -184,9 +184,17 @@ public sealed class ControlPlaneAdministratorsApiTests
             .StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
+    // Each administrator is now a resolved-identity grant {digest, identity:[{dimension,value}], kind?, label?}; flatten its
+    // identity grants to dimension=value strings (each administrator in these tests is a single-grant identity).
     private static IEnumerable<string> Grants(Stj.JsonDocument document)
         => document.RootElement.GetProperty("administrators").EnumerateArray()
-            .Select(a => $"{a.GetProperty("dimension").GetString()}={a.GetProperty("value").GetString()}");
+            .SelectMany(a => a.GetProperty("identity").EnumerateArray()
+                .Select(g => $"{g.GetProperty("dimension").GetString()}={g.GetProperty("value").GetString()}"));
+
+    // The stable removal key: the digest of the administrator's internal resolved identity (the policy maps the grant
+    // {tenant, value} to sys:tenant=value), matching what the list/add responses hand back.
+    private static string Digest(string tenant)
+        => SecurityIdentityDigest.Compute(SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", tenant)]))!;
 
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)
         => Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());

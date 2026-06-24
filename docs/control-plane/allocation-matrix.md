@@ -142,10 +142,10 @@ that exists today (a starting point to be re-baselined, **not** evidence of comp
 
 | Op | Call tree | R/W | Current pattern / hotspots | Existing bench | Target | Status |
 |---|---|---|---|---|---|---|
-| `GET /administrators/{id}` | List → GetAdministratorsAsync | R | `DescribeUsageScope` per admin | — | confirm projection | ✅ genuine (sub-floor caveat: `DescribeUsageScope` is a policy-seam leaf, no JSON inverse); Part D audit |
-| `POST …/members` | AddAdministrator → FindIdentityConflict? → AddAdministratorAsync → SeenAsync | W | `SecurityTagSet.Build` (span-threaded); collision probe; label allocs | — | review list seam to `PutAsync` | ✅ genuine — span-threaded `SecurityTagSet` into the store seam; Part D audit |
-| `PUT /administrators/{id}` | TransferAdministration → FindIdentityConflict×loop → TransferAsync | W | `List<SecurityTagSet>`; collision probe loop | — | `PutAsync` list seam review | ✅ genuine — span-threaded `SecurityTagSet`s into the store seam; Part D audit |
-| `DELETE …/members/{d}/{v}` | RemoveAdministrator → RemoveAdministratorAsync | W | `SecurityTagSet` from {dim,val} | — | — | ✅ genuine — `SecurityTagSet` from request params; Part D audit |
+| `GET /administrators/{id}` | List → GetAdministratorsAsync → project `AdministratorGrant[]` | R | per-admin digest + `{dim,val}` identity + kind/label | `AdministratorIdentityBenchmarks` | digest-into-span; bytes-native projection | ✅ resolved-identity: digest via `FormatUtf8` (span), identity/kind/label bytes-native; Part D |
+| `POST …/members` | AddAdministrator → FindIdentityConflict? → AddAdministratorAsync(kind/label) → SeenAsync | W | `SecurityTagSet.Build` (span); catalog builds durable identity; collision probe | `AdministratorIdentityBenchmarks` | catalog builds `AdministratorIdentity` from span; digest-keyed | ✅ resolved-identity: kind/label carried bytes-native; returns `AdministratorGrant[]`; Part D |
+| `PUT /administrators/{id}` | TransferAdministration → FindIdentityConflict×loop → TransferAsync(`SecurityTagSet[]`) | W | `List<SecurityTagSet>`; catalog builds durable identities (unrented ws); collision probe loop | `AdministratorIdentityBenchmarks` | `PutAsync` durable-identity list seam | ✅ resolved-identity: catalog materializes identities; Part D |
+| `DELETE …/members/{digest}` | RemoveAdministrator → RemoveAdministratorAsync(digest) | W | digest string → `IndexOfDigest` (FormatUtf8 into stackalloc) | `AdministratorIdentityBenchmarks` | digest-keyed removal, no tag re-resolve | ✅ resolved-identity: removal keyed by identity digest; Part D |
 
 ### Security rules + bindings — `ArazzoControlPlaneSecurityHandler` → `ISecurityPolicyStore`
 
@@ -618,10 +618,12 @@ just-serialized bytes via `EtagOf(json)` for their indexed etag column.
   (`in WorkflowAdministrators`). **`EtagOf` removed entirely** — the update's concurrency check reads
   `current.RootElement.EtagValue` from the one non-copying parse, and the indexed column takes the etag the store already
   generated (no post-serialize reparse). byte[]-leaf backends (Mongo/NATS/Azure/Sqlite/InMemory) keep the `byte[]` write.
-- **Measured** (`WorkflowAdministratorStoreBenchmarks`, serializer in-process): `Serialize_New_ToArray` **360 B** (GC array)
-  → `Serialize_New_Doc` **184 B** (−49%); `Serialize_Updated_ToArray` **520 B** → `Serialize_Updated_Doc` **272 B** (−48%)
-  — the GC document array dropped on the memory/stream backends (residual = the owning pooled document the store returns).
-  The update's double-parse → single non-copying parse is a CPU/`ArrayPool` win (not GC-visible), as for the prior rows.
+- **Measured** (`WorkflowAdministratorStoreBenchmarks`, serializer in-process; re-measured after the resolved-identity
+  carrier change below — the list is now `IReadOnlyList<WorkflowAdministrators.AdministratorIdentity>`, the same persisted
+  `{tags:[…]}` shape, so the delta is preserved): `Serialize_New_ToArray` **376 B** (GC array) → `Serialize_New_Doc`
+  **200 B** (−47%); `Serialize_Updated_ToArray` **536 B** → `Serialize_Updated_Doc` **288 B** (−46%) — the GC document
+  array dropped on the memory/stream backends (residual = the owning pooled document the store returns). The update's
+  double-parse → single non-copying parse is a CPU/`ArrayPool` win (not GC-visible), as for the prior rows.
 - **Verified against real containers** (podman socket): all 10 `IWorkflowAdministratorStore` conformance suites green
   (Postgres/MySql/Redis/Mongo/NATS/AzureStorage/SqlServer/Cosmos) + InMemory + Sqlite in-process. **Row done.**
 
@@ -1223,6 +1225,51 @@ zero-materialization. The analogous **administrators + catalog** write paths sha
 persistence seam**, where `SecurityTagSet` is the natural multi-consumer carrier. Eliminating those is a **separate, larger
 campaign** (store interface + 9 backends accepting tag write-actions/sources) and needs its own ground→baseline→ledger→STOP
 row — deliberately *not* folded into the in-process write-seam work.
+
+### ✅ Administrator = resolved identity — digest-keyed model + `AdministratorGrant` projection (§15/§16.5.4)
+
+Reshaped administration from "an administrator is one operator grant `{dimension,value}`" to **an administrator is a
+resolved identity**: the durable `WorkflowAdministrators.AdministratorIdentity` now carries `tags` (the unforgeable `sys:`
+identity) **plus** optional resolved `kind`/`label`, and is addressed by a **stable identity digest** (lower-case hex
+SHA-256 of the canonical tag set). The list/add/transfer responses return `AdministratorGrant {digest, identity[], kind?,
+label?}`; removal is `DELETE …/members/{digest}` (was `…/{dimension}/{value}`). This is a **new API path** — there is no
+"before" on old code, so each new construct is proven allocation-clean by a shipped-vs-naive arm whose delta *is* the proof.
+
+**Ownership ledger (the new path):**
+- **Digest** (recomputed on every sighting — list, add, remove-probe): `SecurityIdentityDigest.FormatUtf8(tags, span)`
+  writes the 64-char hex straight into a caller stack/pooled span; the canonical-sort scratch is pooled/stack (the existing
+  `Compute` floor). Verdict: **0 managed alloc**. The string form (`Compute`) is retained only for non-projection callers.
+- **List projection** (`AdministratorGrant[]`): per admin — digest into a **pooled** `ArrayPool<byte>` buffer (ref-safe to
+  pass alongside the ref-struct build context, returned in `finally`); identity grants written bytes-to-bytes from the
+  identity's unescaped UTF-8 (`TryDescribeUsageGrant` span seam); `kind`/`label` carried as UTF-8 leases (the proven
+  grantee-projection pattern). Built closure-free via `Build<TContext>`, materialized **once** into the response workspace.
+  Verdict: only the single response-workspace materialization is owned; per-admin string traffic eliminated.
+- **Construction** (`WorkflowAdministrators.BuildIdentity`): the durable identity is built bytes-native from the resolved
+  `SecurityTagSet` (`Build<TContext>` threading the tag spans through a ref-struct context) — **no `ParseValue`**. Used by
+  the catalog's add/transfer/fallback paths; the workspace held across the etag-retry awaits is `CreateUnrented()` (the
+  thread-affinity-free workspace — `Create()` is thread-local-cache-bound and corrupts on cross-thread dispose).
+- **Removal** (`IndexOfDigest`): the target digest (ASCII → stackalloc) is compared against each admin's `FormatUtf8`
+  digest (stackalloc) via `SequenceEqual` — **0 alloc**, no tag re-resolution.
+
+**Measured** (`AdministratorIdentityBenchmarks`, short job, Default toolchain; new-path shipped-vs-naive):
+- `Digest_Compute_String` **152 B** → `Digest_FormatUtf8_Span` **0 B** (the digest-into-span primitive).
+- `Project_List_StringDigest` (10 admins) **8 584 B** → `Project_List_SpanDigest` **136 B** (**−98%**) — the per-admin
+  digest strings + identity-grant strings + closure apparatus gone; residual = the one response-workspace materialization.
+
+**Two latent bugs fixed en route** (both real, both surfaced by this path):
+- **Thread-affine workspace across `await`.** `JsonWorkspace.Create()` rents from a `[ThreadStatic]` cache and returns to
+  it on `Dispose`; holding one across an `await` and disposing on the resumed thread corrupts the cache (Debug assertion
+  `t_threadLocalState != null`). Fixed to `CreateUnrented()` at every cross-await site (catalog add/transfer/fallback +
+  the tests). The workspace analogue of the `RentWriter`→`CreateWriter` rule.
+- **CTJ escaper buffer overflow** (`JsonDocument.EscapeAndStoreRawStringValue`). The escape scratch buffer was sized to the
+  **raw** string length, not `GetMaxEscapedLength`, so a string that needs escaping and expands past a pool bucket
+  overflowed (`IndexOutOfRangeException` in `EscapeString`). A 409 `ProblemDetails.detail` containing `'…'` (escaped to
+  `'`) landed just past a bucket and tripped it. Fixed to size by max-escaped length, matching the writer's correct
+  sites — a memory-safety fix benefiting **all** string serialization.
+
+**Verified:** all 10 `IWorkflowAdministratorStore` admin-conformance suites green (InMemory + Sqlite in-process;
+Postgres/MySql/SqlServer/Mongo/Redis/AzureStorage/NatsJetStream/Cosmos against real podman containers) + catalog-level
+admin tests + server admin-API tests + approval-service tests (47 in-process). **Row done.**
 
 ## Cross-references
 

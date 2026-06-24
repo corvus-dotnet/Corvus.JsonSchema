@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The administrator identities for a base workflow id (&#167;15).
+/// The administrators of a base workflow id (&#167;15), each a resolved identity with a stable digest for removal.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -166,11 +166,11 @@ public readonly partial struct AdministratorList
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorIdentityArray Administrators
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray Administrators
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AdministratorsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorIdentityArray value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AdministratorsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray value))
             {
                 return value;
             }

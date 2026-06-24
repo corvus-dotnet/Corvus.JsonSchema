@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The administrator identities for a base workflow id (&#167;15).
+/// The administrators of a base workflow id (&#167;15), each a resolved identity with a stable digest for removal.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -273,11 +273,11 @@ public readonly partial struct AdministratorList
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorIdentityArray.Mutable Administrators
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorGrantArray.Mutable Administrators
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AdministratorsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorIdentityArray.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AdministratorsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorGrantArray.Mutable value))
                 {
                     return value;
                 }
@@ -329,7 +329,7 @@ public readonly partial struct AdministratorList
         /// Set the <c>administrators</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAdministrators(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorIdentityArray.Source value)
+        public void SetAdministrators(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorGrantArray.Source value)
         {
             CheckValidInstance();
 
@@ -360,7 +360,7 @@ public readonly partial struct AdministratorList
         /// Set the <c>administrators</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAdministrators<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorIdentityArray.Source<TContext> value)
+        public void SetAdministrators<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorGrantArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -720,7 +720,7 @@ public readonly partial struct AdministratorList
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorIdentityArray.Source _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorGrantArray.Source _createArg1;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -735,7 +735,7 @@ public readonly partial struct AdministratorList
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorIdentityArray.Source arg1)
+        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorGrantArray.Source arg1)
         {
             _createArg1 = arg1;
             _kind = Kind.Create;
@@ -886,7 +886,7 @@ public readonly partial struct AdministratorList
         TContext _context;
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorIdentityArray.Source<TContext> _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorGrantArray.Source<TContext> _createArg1;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -899,7 +899,7 @@ public readonly partial struct AdministratorList
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorIdentityArray.Source<TContext> arg1)
+        internal Source(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorGrantArray.Source<TContext> arg1)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1053,7 +1053,7 @@ public readonly partial struct AdministratorList
         /// <summary>
         /// Creates an instance of a <see cref="AdministratorList"/>.
         /// </summary>
-        internal static void Create(ref ComplexValueBuilder builder, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorIdentityArray.Source administrators)
+        internal static void Create(ref ComplexValueBuilder builder, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorGrantArray.Source administrators)
         {
             administrators.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Administrators, ref builder);
         }
@@ -1061,7 +1061,7 @@ public readonly partial struct AdministratorList
         /// <summary>
         /// Creates an instance of a <see cref="AdministratorList"/>.
         /// </summary>
-        public void Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorIdentityArray.Source administrators)
+        public void Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorGrantArray.Source administrators)
         {
             Create(ref _builder, administrators);
         }
@@ -1072,7 +1072,7 @@ public readonly partial struct AdministratorList
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorIdentityArray.Source<TContext> administrators)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorGrantArray.Source<TContext> administrators)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1083,7 +1083,7 @@ public readonly partial struct AdministratorList
         /// <summary>
         /// Creates an instance of a <see cref="AdministratorList"/>.
         /// </summary>
-        public void Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorIdentityArray.Source<TContext> administrators)
+        public void Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorGrantArray.Source<TContext> administrators)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1188,7 +1188,7 @@ public readonly partial struct AdministratorList
         /// </summary>
         /// <param name="arg1">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorIdentityArray.Source arg1, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorGrantArray.Source arg1, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1);
@@ -1202,7 +1202,7 @@ public readonly partial struct AdministratorList
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="arg1">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorIdentityArray.Source<TContext> arg1, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorGrantArray.Source<TContext> arg1, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1247,7 +1247,7 @@ public readonly partial struct AdministratorList
     /// </summary>
     /// <param name="administrators">The value of the <c>"administrators"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorIdentityArray.Source administrators)
+    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorGrantArray.Source administrators)
     {
         return new Source(administrators);
     }
@@ -1259,7 +1259,7 @@ public readonly partial struct AdministratorList
     /// <param name="context">The context to pass to the builder.</param>
     /// <param name="administrators">The value of the <c>"administrators"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorIdentityArray.Source<TContext> administrators)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorGrantArray.Source<TContext> administrators)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1276,6 +1276,29 @@ public readonly partial struct AdministratorList
     /// <returns>An instance of a mutable document initialized with the given value.</returns>
     public static JsonDocumentBuilder<Mutable> CreateBuilder(
         JsonWorkspace workspace, scoped in Source value, int initialCapacity = 30)
+    {
+        // Create the document builder without a MetadataDb
+        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+        value.AddAsItem(ref cvb);
+        Debug.Assert(cvb.MemberCount == 1);
+        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+        return documentBuilder;
+    }
+
+    /// <summary>
+    /// Creates and initializes a mutable document from a context-threaded value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context carried by the value.</typeparam>
+    /// <param name="workspace">The JSON workspace.</param>
+    /// <param name="value">The context-threaded value with which to initialize the builder.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>An instance of a mutable document initialized with the given value.</returns>
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
+        JsonWorkspace workspace, scoped in Source<TContext> value, int initialCapacity = 30)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
     {
         // Create the document builder without a MetadataDb
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
@@ -1340,7 +1363,7 @@ public readonly partial struct AdministratorList
     /// <param name="administrators">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorIdentityArray.Source administrators, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorGrantArray.Source administrators, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1362,7 +1385,7 @@ public readonly partial struct AdministratorList
     /// <param name="administrators">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorIdentityArray.Source<TContext> administrators, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorList.AdministratorGrantArray.Source<TContext> administrators, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

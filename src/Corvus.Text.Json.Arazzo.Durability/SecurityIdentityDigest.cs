@@ -31,14 +31,45 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// </remarks>
 public static class SecurityIdentityDigest
 {
+    /// <summary>The length, in UTF-8 bytes, of a formatted digest (the 32-byte SHA-256 as lower-case hex).</summary>
+    public const int DigestUtf8Length = 64;
+
     /// <summary>Computes the collision-probe digest of an identity, or <see langword="null"/> for the empty identity.</summary>
     /// <param name="identity">The <c>sys:</c> identity to digest.</param>
     /// <returns>The 64-character lower-case hex SHA-256 of the canonical identity, or <see langword="null"/> when empty.</returns>
+    /// <remarks>Allocates the hex result string; for the response-projection path that writes the digest straight into the
+    /// JSON value, use <see cref="FormatUtf8"/> (no string).</remarks>
     public static string? Compute(SecurityTagSet identity)
+    {
+        Span<byte> hash = stackalloc byte[32];
+        return TryComputeHash(identity, hash) ? Convert.ToHexStringLower(hash) : null;
+    }
+
+    /// <summary>Writes the collision-probe digest of an identity as lower-case hex UTF-8 into <paramref name="destination"/>
+    /// (no string allocation), returning the bytes written (<see cref="DigestUtf8Length"/>), or 0 for the empty identity.</summary>
+    /// <param name="identity">The <c>sys:</c> identity to digest.</param>
+    /// <param name="destination">The destination span; must be at least <see cref="DigestUtf8Length"/> bytes.</param>
+    /// <returns>The number of UTF-8 bytes written (<see cref="DigestUtf8Length"/>), or 0 for the empty identity.</returns>
+    public static int FormatUtf8(SecurityTagSet identity, Span<byte> destination)
+    {
+        Span<byte> hash = stackalloc byte[32];
+        if (!TryComputeHash(identity, hash))
+        {
+            return 0;
+        }
+
+        WriteHexUtf8(hash, destination);
+        return DigestUtf8Length;
+    }
+
+    // Parses + ordinal-sorts the tags (pooled scratch + stack/pooled slice table, no per-tag string), assembles the
+    // canonical length-prefixed bytes, and hashes into hash32. Returns false (no hash) for the empty identity, which is
+    // not a real principal and never collides. Every working buffer is pooled or on the stack — nothing escapes.
+    private static bool TryComputeHash(SecurityTagSet identity, Span<byte> hash32)
     {
         if (identity.IsEmpty)
         {
-            return null;
+            return false;
         }
 
         ReadOnlySpan<byte> json = identity.RawJson;
@@ -62,7 +93,8 @@ public static class SecurityIdentityDigest
             Span<SecurityTagSpanSort.TagSlice> slices = table[..tagCount];
             int written = SecurityTagSpanSort.Parse(json, scratch, slices);
             SecurityTagSpanSort.Sort(slices, scratch);
-            return HashCanonical(slices, scratch, written);
+            HashCanonical(slices, scratch, written, hash32);
+            return true;
         }
         finally
         {
@@ -75,9 +107,8 @@ public static class SecurityIdentityDigest
     }
 
     // Assembles the sorted tags as length-prefixed [keyLen][key][valLen][value] runs in one pooled buffer — the length
-    // prefixes make two distinct sets unambiguous without a delimiter — and hashes them into a stack span; only the hex
-    // string escapes to the heap.
-    private static string HashCanonical(ReadOnlySpan<SecurityTagSpanSort.TagSlice> slices, ReadOnlySpan<byte> scratch, int written)
+    // prefixes make two distinct sets unambiguous without a delimiter — and hashes them into the caller's stack span.
+    private static void HashCanonical(ReadOnlySpan<SecurityTagSpanSort.TagSlice> slices, ReadOnlySpan<byte> scratch, int written, Span<byte> hash32)
     {
         int length = written + (slices.Length * (2 * sizeof(int)));
         byte[] canonical = ArrayPool<byte>.Shared.Rent(length);
@@ -96,13 +127,22 @@ public static class SecurityIdentityDigest
                 position += slice.ValueLength;
             }
 
-            Span<byte> hash = stackalloc byte[32];
-            SHA256.HashData(canonical.AsSpan(0, position), hash);
-            return Convert.ToHexStringLower(hash);
+            SHA256.HashData(canonical.AsSpan(0, position), hash32);
         }
         finally
         {
             ArrayPool<byte>.Shared.Return(canonical);
+        }
+    }
+
+    // Lower-case hex (UTF-8) of each byte, written straight into the destination — no intermediate string.
+    private static void WriteHexUtf8(ReadOnlySpan<byte> hash, Span<byte> destination)
+    {
+        ReadOnlySpan<byte> hex = "0123456789abcdef"u8;
+        for (int i = 0; i < hash.Length; i++)
+        {
+            destination[i * 2] = hex[hash[i] >> 4];
+            destination[(i * 2) + 1] = hex[hash[i] & 0xF];
         }
     }
 }

@@ -488,12 +488,13 @@ export class ArazzoControlPlaneClient {
   // ---- administrators:read ----------------------------------------------------------------------
 
   /**
-   * `listAdministrators` — the administrator identities of a base workflow id, each described as the
-   * deployment-mapped grant `{ dimension, value }` it resolves from (never raw internal tags). An unknown base
-   * id (or one with no established administration) is an empty set, not an error.
+   * `listAdministrators` — the administrator set of a base workflow id (§15). Each administrator is a resolved
+   * identity: a stable `digest` (the removal key), the `identity` as the deployment-mapped `{ dimension, value }`
+   * grants it resolves from (a multi-tag grantee yields several), and the optional resolved `kind`/`label` for
+   * display. An unknown base id (or one with no established administration) is an empty set, not an error.
    * @param {string} baseWorkflowId
    * @param {{ signal?: AbortSignal }} [opts]
-   * @returns {Promise<{ administrators: Array<{ dimension: string, value: string }> }>} An {@link AdministratorList}.
+   * @returns {Promise<{ administrators: Array<{ digest: string, identity: Array<{ dimension: string, value: string }>, kind?: string, label?: string }> }>} An {@link AdministratorList}.
    */
   async listAdministrators(baseWorkflowId, opts = {}) {
     const result = await this._request('GET', this._administratorsPath(baseWorkflowId), { signal: opts.signal });
@@ -503,31 +504,34 @@ export class ArazzoControlPlaneClient {
   // ---- administrators:write ---------------------------------------------------------------------
 
   /**
-   * `addAdministrator` — add an identity to the base id's administrator set (idempotent). The caller must be a
-   * current administrator (`403` otherwise).
+   * `addAdministrator` — add a resolved identity to the base id's administrator set (idempotent). The caller must
+   * be a current administrator (`403` otherwise). Provide EITHER a resolved grantee from the picker (its `kind`,
+   * searchable `value`, and full `identity` — the `{ dimension, value }` grants of {@link searchGrantees} — which
+   * names a multi-tag grantee exactly) OR, for the simple case, a single deployment-mapped `{ dimension, value }`
+   * grant (the kind is inferred from the dimension). `value` is required in both forms.
+   * @param {{ value: string, dimension?: string, kind?: string, identity?: Array<{ dimension: string, value: string }>, label?: string, complete?: boolean }} member
    * @param {string} baseWorkflowId
-   * @param {{ dimension: string, value: string }} identity
    * @param {{ signal?: AbortSignal }} [opts]
    * @returns {Promise<object>} The resulting {@link AdministratorList}. Throws {@link ProblemError} `400`/`403`/`409`.
    */
-  addAdministrator(baseWorkflowId, identity, opts = {}) {
-    if (!identity || !identity.dimension || !identity.value) {
-      throw new TypeError('addAdministrator requires an identity of { dimension, value }.');
+  addAdministrator(baseWorkflowId, member, opts = {}) {
+    if (!member || !member.value || (!member.dimension && !(Array.isArray(member.identity) && member.identity.length > 0))) {
+      throw new TypeError('addAdministrator requires a resolved grantee ({ kind, value, identity }) or a single { dimension, value } grant.');
     }
-    return this._request('POST', `${this._administratorsPath(baseWorkflowId)}/members`, { body: identity, signal: opts.signal });
+    return this._request('POST', `${this._administratorsPath(baseWorkflowId)}/members`, { body: member, signal: opts.signal });
   }
 
   /**
-   * `removeAdministrator` — remove the named identity. The set may not be left empty — removing the last
-   * administrator is refused (`409`). The caller must be a current administrator (`403` otherwise).
+   * `removeAdministrator` — remove the administrator whose identity `digest` matches (the key from
+   * {@link listAdministrators}). The set may not be left empty — removing the last administrator is refused
+   * (`409`). The caller must be a current administrator (`403` otherwise).
    * @param {string} baseWorkflowId
-   * @param {string} dimension
-   * @param {string} value
+   * @param {string} digest
    * @param {{ signal?: AbortSignal }} [opts]
    * @returns {Promise<object>} The resulting {@link AdministratorList}.
    */
-  removeAdministrator(baseWorkflowId, dimension, value, opts = {}) {
-    return this._request('DELETE', `${this._administratorsPath(baseWorkflowId)}/members/${encodeURIComponent(dimension)}/${encodeURIComponent(value)}`, { signal: opts.signal });
+  removeAdministrator(baseWorkflowId, digest, opts = {}) {
+    return this._request('DELETE', `${this._administratorsPath(baseWorkflowId)}/members/${encodeURIComponent(digest)}`, { signal: opts.signal });
   }
 
   /**

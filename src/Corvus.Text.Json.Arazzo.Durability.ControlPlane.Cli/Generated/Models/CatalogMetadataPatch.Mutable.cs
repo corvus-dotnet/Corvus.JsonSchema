@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A partial update of a version&#39;s mutable governance metadata; omitted fields are left unchanged.
+/// A partial update of a version&#39;s mutable governance metadata; omitted fields are left unchanged. Closed (additionalProperties: false) so an unknown field — e.g. an attempt to set the server-stamped, immutable securityTags — is rejected with 400 rather than silently ignored.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -167,105 +167,6 @@ public readonly partial struct CatalogMetadataPatch
         }
 
         /// <summary>
-        /// Gets the value of the property with the given name.
-        /// </summary>
-        /// <param name="propertyName">The name of the property.</param>
-        /// <returns>The value of the property with the given name.</returns>
-        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public JsonElement.Mutable this[ReadOnlySpan<byte> propertyName]
-        {
-            get
-            {
-                CheckValidInstance();
-                if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement.Mutable value))
-                {
-                    return default;
-                }
-
-                return value;
-            }
-        }
-
-        /// <summary>
-        /// Gets the value of the property with the given name.
-        /// </summary>
-        /// <param name="propertyName">The name of the property.</param>
-        /// <returns>The value of the property with the given name.</returns>
-        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public JsonElement.Mutable this[ReadOnlySpan<char> propertyName]
-        {
-            get
-            {
-                CheckValidInstance();
-                if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement.Mutable value))
-                {
-                    return default;
-                }
-
-                return value;
-            }
-        }
-
-        /// <summary>
-        /// Gets the value of the property with the given name.
-        /// </summary>
-        /// <param name="propertyName">The name of the property.</param>
-        /// <returns>The value of the property with the given name.</returns>
-        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public JsonElement.Mutable this[string propertyName]
-        {
-            get
-            {
-                CheckValidInstance();
-                if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement.Mutable value))
-                {
-                    return default;
-                }
-
-                return value;
-            }
-        }
-
-        /// <summary>
-        /// Tries to get the value of the property with the given name.
-        /// </summary>
-        /// <param name="propertyName">The name of the property.</param>
-        /// <param name="value">The value of the property, if present.</param>
-        /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
-        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out JsonElement.Mutable value)
-        {
-            CheckValidInstance();
-            return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
-        }
-
-        /// <summary>
-        /// Tries to get the value of the property with the given name.
-        /// </summary>
-        /// <param name="propertyName">The name of the property.</param>
-        /// <param name="value">The value of the property, if present.</param>
-        /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
-        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public bool TryGetProperty(ReadOnlySpan<char> propertyName, out JsonElement.Mutable value)
-        {
-            CheckValidInstance();
-            return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
-        }
-
-        /// <summary>
-        /// Tries to get the value of the property with the given name.
-        /// </summary>
-        /// <param name="propertyName">The name of the property.</param>
-        /// <param name="value">The value of the property, if present.</param>
-        /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
-        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public bool TryGetProperty(string propertyName, out JsonElement.Mutable value)
-        {
-            CheckValidInstance();
-            return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
-        }
-
-        /// <summary>
         /// Gets the (optional) <c>owner</c> property.
         /// </summary>
         /// <remarks>
@@ -331,16 +232,6 @@ public readonly partial struct CatalogMetadataPatch
         {
             CheckValidInstance();
             return _parent.GetPropertyCount(_idx);
-        }
-
-        /// <summary>
-        /// Enumerates the object.
-        /// </summary>
-        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public ObjectEnumerator<JsonElement.Mutable> EnumerateObject()
-        {
-            CheckValidInstance();
-            return EnumeratorCreator.CreateObjectEnumerator<JsonElement.Mutable>(_parent, _idx);
         }
 
         /// <inheritdoc/>
@@ -654,182 +545,6 @@ public readonly partial struct CatalogMetadataPatch
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebuggerDisplay => $"CatalogMetadataPatch.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
-
-        /// <summary>
-        ///   Sets a property on this JSON object element.
-        /// </summary>
-        /// <param name="propertyName">The name of the property to set.</param>
-        /// <param name="value">The value of the property to set.</param>
-        /// <exception cref="InvalidOperationException">
-        ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Object"/>,
-        ///   or the element reference is stale due to document mutations.
-        /// </exception>
-        /// <exception cref="ObjectDisposedException">
-        ///   The parent <see cref="JsonDocument"/> has been disposed.
-        /// </exception>
-        /// <remarks>
-        ///   <para>
-        ///     If the property already exists, its value will be replaced.
-        ///     If the property doesn't exist, it will be added to the object.
-        ///   </para>
-        /// </remarks>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
-        {
-            SetProperty(propertyName.AsSpan(), value);
-        }
-
-        /// <summary>
-        ///   Sets a property on this JSON object element.
-        /// </summary>
-        /// <param name="propertyName">The name of the property to set.</param>
-        /// <param name="value">The value of the property to set.</param>
-        /// <exception cref="InvalidOperationException">
-        ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Object"/>,
-        ///   or the element reference is stale due to document mutations.
-        /// </exception>
-        /// <exception cref="ObjectDisposedException">
-        ///   The parent <see cref="JsonDocument"/> has been disposed.
-        /// </exception>
-        /// <remarks>
-        ///   <para>
-        ///     If the property already exists, its value will be replaced.
-        ///     If the property doesn't exist, it will be added to the object.
-        ///   </para>
-        /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, propertyName);
-                _documentVersion = _parent.Version;
-                return;
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, propertyName, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsProperty(propertyName, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        ///   Sets a property on this JSON object element.
-        /// </summary>
-        /// <param name="propertyName">The UTF-8 encoded name of the property to set.</param>
-        /// <param name="value">The value of the property to set.</param>
-        /// <exception cref="InvalidOperationException">
-        ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Object"/>,
-        ///   or the element reference is stale due to document mutations.
-        /// </exception>
-        /// <exception cref="ObjectDisposedException">
-        ///   The parent <see cref="JsonDocument"/> has been disposed.
-        /// </exception>
-        /// <remarks>
-        ///   <para>
-        ///     If the property already exists, its value will be replaced.
-        ///     If the property doesn't exist, it will be added to the object.
-        ///   </para>
-        /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, propertyName);
-                _documentVersion = _parent.Version;
-                return;
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, propertyName, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsProperty(propertyName, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        ///   Removes the property with the given name, if present.
-        /// </summary>
-        /// <param name="propertyName">The property name to remove.</param>
-        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-        /// <exception cref="InvalidOperationException">
-        ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Object"/>,
-        ///   or the element reference is stale due to document mutations.
-        /// </exception>
-        /// <exception cref="ObjectDisposedException">
-        ///   The parent <see cref="JsonDocument"/> has been disposed.
-        /// </exception>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool RemoveProperty(string propertyName)
-        {
-            return RemoveProperty(propertyName.AsSpan());
-        }
-
-        /// <summary>
-        ///   Removes the property with the given name, if present.
-        /// </summary>
-        /// <param name="propertyName">The property name to remove.</param>
-        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-        /// <exception cref="InvalidOperationException">
-        ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Object"/>,
-        ///   or the element reference is stale due to document mutations.
-        /// </exception>
-        /// <exception cref="ObjectDisposedException">
-        ///   The parent <see cref="JsonDocument"/> has been disposed.
-        /// </exception>
-        public bool RemoveProperty(ReadOnlySpan<char> propertyName)
-        {
-            CheckValidInstance();
-            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, propertyName);
-            _documentVersion = _parent.Version;
-            return result;
-        }
-
-        /// <summary>
-        ///   Removes the property with the given name, if present.
-        /// </summary>
-        /// <param name="propertyName">The UTF-8 encoded property name to remove.</param>
-        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-        /// <exception cref="InvalidOperationException">
-        ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Object"/>,
-        ///   or the element reference is stale due to document mutations.
-        /// </exception>
-        /// <exception cref="ObjectDisposedException">
-        ///   The parent <see cref="JsonDocument"/> has been disposed.
-        /// </exception>
-        public bool RemoveProperty(ReadOnlySpan<byte> propertyName)
-        {
-            CheckValidInstance();
-            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, propertyName);
-            _documentVersion = _parent.Version;
-            return result;
-        }
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -1295,75 +1010,6 @@ public readonly partial struct CatalogMetadataPatch
             Create(context, ref _builder, owner, status, tags);
         }
 
-        /// <summary>
-        /// Add a property to the object.
-        /// </summary>
-        /// <param name="propertyName">The name of the property to add.</param>
-        /// <param name="value">The value of the property to add.</param>
-        public void AddProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
-        {
-            value.AddAsProperty(propertyName, ref _builder);
-        }
-
-        /// <summary>
-        /// Add a property to the object.
-        /// </summary>
-        /// <param name="propertyName">The name of the property to add.</param>
-        /// <param name="value">The value of the property to add.</param>
-        public void AddProperty<TContext>(ReadOnlySpan<byte> propertyName, in JsonElement.Source<TContext> value)
-#if NET9_0_OR_GREATER
-            where TContext : allows ref struct
-#endif
-        {
-            value.AddAsProperty(propertyName, ref _builder);
-        }
-
-        /// <summary>
-        /// Add a property to the object.
-        /// </summary>
-        /// <param name="propertyName">The name of the property to add.</param>
-        /// <param name="value">The value of the property to add.</param>
-        public void AddProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
-        {
-            value.AddAsProperty(propertyName, ref _builder);
-        }
-
-        /// <summary>
-        /// Add a property to the object.
-        /// </summary>
-        /// <param name="propertyName">The name of the property to add.</param>
-        /// <param name="value">The value of the property to add.</param>
-        public void AddProperty<TContext>(ReadOnlySpan<char> propertyName, in JsonElement.Source<TContext> value)
-#if NET9_0_OR_GREATER
-            where TContext : allows ref struct
-#endif
-        {
-            value.AddAsProperty(propertyName, ref _builder);
-        }
-
-        /// <summary>
-        /// Add a property to the object.
-        /// </summary>
-        /// <param name="propertyName">The name of the property to add.</param>
-        /// <param name="value">The value of the property to add.</param>
-        public void AddProperty(string propertyName, in JsonElement.Source value)
-        {
-            value.AddAsProperty(propertyName, ref _builder);
-        }
-
-        /// <summary>
-        /// Add a property to the object.
-        /// </summary>
-        /// <param name="propertyName">The name of the property to add.</param>
-        /// <param name="value">The value of the property to add.</param>
-        public void AddProperty<TContext>(string propertyName, in JsonElement.Source<TContext> value)
-#if NET9_0_OR_GREATER
-            where TContext : allows ref struct
-#endif
-        {
-            value.AddAsProperty(propertyName, ref _builder);
-        }
-
         internal static void BuildValue(Build value, ref ComplexValueBuilder o)
         {
             o.StartObject();
@@ -1488,6 +1134,29 @@ public readonly partial struct CatalogMetadataPatch
     /// <returns>An instance of a mutable document initialized with the given value.</returns>
     public static JsonDocumentBuilder<Mutable> CreateBuilder(
         JsonWorkspace workspace, scoped in Source value, int initialCapacity = 30)
+    {
+        // Create the document builder without a MetadataDb
+        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+        value.AddAsItem(ref cvb);
+        Debug.Assert(cvb.MemberCount == 1);
+        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+        return documentBuilder;
+    }
+
+    /// <summary>
+    /// Creates and initializes a mutable document from a context-threaded value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context carried by the value.</typeparam>
+    /// <param name="workspace">The JSON workspace.</param>
+    /// <param name="value">The context-threaded value with which to initialize the builder.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>An instance of a mutable document initialized with the given value.</returns>
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
+        JsonWorkspace workspace, scoped in Source<TContext> value, int initialCapacity = 30)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
     {
         // Create the document builder without a MetadataDb
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
