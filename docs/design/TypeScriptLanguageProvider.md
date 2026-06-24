@@ -176,7 +176,7 @@ The code‑generation stack is two assemblies joined by one project reference
 
 **Verified reusable, unchanged, by a TS provider:** schema loading; `$ref`/`$dynamicRef`/
 `$recursiveRef`/anchor/scope resolution; the `TypeDeclaration` graph; **structural reduction/dedup**
-(N schemas with the same effective shape collapse to one type); the keyword + vocabulary model (94
+(N schemas with the same effective shape collapse to one type); the keyword + vocabulary model (~90
 keyword interfaces, all *data/analysis*, with **zero** code‑emission coupling — grep‑verified); the
 `JsonSchemaTypeBuilder` orchestration; the seam interfaces (`ILanguageProvider`,
 `IHierarchicalLanguageProvider`, the `IKeywordValidationHandler`/`IChildValidationHandler` family,
@@ -863,7 +863,7 @@ Match V5's two independent gates, both driven by the official `JSON-Schema-Test-
 |---|---|---|
 | Schema load, `$id`/`$anchor`/`$ref`/`$dynamicRef`/scope | `src-v4` core | **reuse unchanged** |
 | `TypeDeclaration` graph + reduction/dedup | `src-v4` core | **reuse unchanged** |
-| Keyword + vocabulary model (94 ifaces, all dialects) | `src-v4` core + dialect assemblies | **reuse unchanged** |
+| Keyword + vocabulary model (~90 ifaces, all dialects) | `src-v4` core + dialect assemblies | **reuse unchanged** |
 | `JsonSchemaTypeBuilder` orchestration | `src-v4` core | **reuse unchanged** |
 | `CodeGenerator` text buffer | `src-v4` core | **reuse** (indent=2 spaces, TS line endings) |
 | Seam interfaces + registries | `src-v4` core | **reuse unchanged** |
@@ -1604,7 +1604,8 @@ possible evidence for the design: one C# provider over the existing core, emitti
 ### 13.22 Entire suite incl. optional + format -- 7844/7849 (99.9%); every format 100%
 
 The harness now runs the WHOLE JSON-Schema-Test-Suite for all five dialects: top-level + `optional/*`
-+ `optional/format/*` (1688 modules). Result: **7844/7849 (99.9%)**, all modules `tsc --strict` clean;
++ `optional/format/*` (1688 modules). Result at this milestone: **7844/7849 (99.9%)** (now **7848/7849**
+after the §13.24 fix below), all modules `tsc --strict` clean;
 draft6 / draft7 / 2019-09 are 100%. **Every one of the 21 format files passes 100%** across all dialects
 (uri, uri-reference, iri, iri-reference, uri-template, email, idn-email, hostname, idn-hostname, ipv4,
 ipv6, uuid, date, time, date-time, duration, json-pointer, relative-json-pointer, regex, ecmascript-regex).
@@ -1613,19 +1614,18 @@ Format validation is parse-based (not regex), packaged via `@js-temporal/polyfil
 `tr46` (UTS-46), and `lossless-json` (source-text numbers), per §5.5/§4.1. `content` (contentEncoding
 base64 + contentMediaType application/json) is asserted in the optional/content suite.
 
-The 3 remaining (7846/7849) are genuine static-resolution / draft-semantics limitations:
+Five cases remained at this milestone; two were `format-assertion` vocabulary cases and two were the
+`$dynamicRef` cross-resource case, both resolved next (see below + §13.24), leaving a **single residual**
+at **7848/7849**:
 * draft-4 `1.0` is-not-an-integer -- draft-4-specific integer semantics (draft-6+ treats `1.0` as an
   integer; the core surfaces `CoreTypes.Integer` either way, so the capability interface does not expose
   the distinction).
-* `$dynamicRef` skipping an intermediate resource via a pointer reference across a resource boundary (2)
-  -- the same `item` schema resolves `#content` differently depending on the runtime path, which needs
-  RUNTIME dynamic-scope threading (the C# `JsonSchemaContext` carries the dynamic-anchor stack); the
-  spike resolves `$dynamicRef` statically, which is correct for the 44 `dynamicRef.json` cases but not
-  this cross-resource one.
 
 (The `format-assertion` vocabulary cases were initially miscounted as edges: both the `true` and `false`
 cases expect format ASSERTED -- `false` means the vocabulary is optional, not "annotate" -- so they pass
-once `optional/format-assertion.json` is routed through the assertion provider, like `optional/format`.)
+once `optional/format-assertion.json` is routed through the assertion provider, like `optional/format`.
+The `$dynamicRef` cross-resource case was also NOT a runtime-threading gap as first framed here -- it is
+a static shared-core scope-resolution bug, fixed in §13.24.)
 
 This validates the full design end-to-end: one C# provider over the existing core, capability-interface
 matched, emitting idiomatic `tsc --strict`-clean TypeScript that imports a shared `@corvus/json-runtime`,
@@ -1658,3 +1658,31 @@ reference-shape half of the test plan; the provider's *real emitted* objects/enu
 by the validator suite (§13.15-§13.22) plus a typed-access test, and the provider's emission of the
 remaining patterns (match/conversions/mutation/array/tuple/map/brand) is then gated by these behaviour
 tests as it is built out.
+
+### 13.24 $dynamicRef across a resource boundary — shared-core fix (suite 7848/7849; C# 7989/7989)
+
+The lone `$dynamicRef` failure (`optional/dynamicRef.json`: a `$ref "bar#/$defs/item"` pointer reference
+*into* the embedded `item` resource) was NOT a runtime-threading gap as §13.22 first framed it. Researching
+how the *generated C# code* actually resolves `$dynamicRef` showed it is resolved **statically at
+type-build time** in the shared core (`DollarDynamicRefKeyword.BuildSubschemaTypes` →
+`References.ResolveDynamicReference` → `Anchors.TryGetScopeForFirstDynamicAnchor` walking the builder's
+scope stack) — there is no runtime dynamic-anchor stack. The bug: a merely *passed-through* container
+resource (`bar`) was left in the dynamic scope, so `#content` resolved to bar's `content` `$dynamicAnchor`
+(string) instead of `item`'s own `defaultContent` (integer).
+
+Spec basis (2020-12 Core — derived, there is no single "skip intermediate resources" clause): §8.2.3.2
+resolves to the **outermost schema RESOURCE in the dynamic scope**; §8.2.1/§4.3.5 make an `$id` a distinct
+embedded resource; §7.1 makes the dynamic scope the *validation path of schemas actually evaluated* (bar is
+only the URI base, never evaluated). **Fix:** `TryGetScopeForFirstDynamicAnchor` skips a pointer-navigation
+scope when the next-inner scope is a *different* resource's own root (the embedded resource entered through
+it); a pointer reference into a non-`$id` subschema keeps its containing resource in scope (the "avoids the
+root of each schema, but scopes are still registered" main-suite case proves the lookahead is required, not
+a blunt "skip all non-root scopes").
+
+The previously-excluded `optional/dynamicRef.json` (a bare, reason-less exclusion = excluded because it
+failed) was **un-excluded** in the generator's `appsettings.json` and the suite regenerated — it now exists
+in both the standalone-evaluator and type-based suites. Validation, zero regression: C# full
+StandaloneEvaluator **7989/7989** (incl. the new case), type-based V5 codegen DynamicRef **50/50** +
+RecursiveRef/Anchor/Ref/Defs **1102/1102**, the TS harness's draft-2020-12 now **100%** (suite 7848/7849),
+warning-free solution build. This is a **shared-core** fix (the C# typed codegen had the same latent bug; it
+just never exercised this optional case), not a TS-provider-only change.
