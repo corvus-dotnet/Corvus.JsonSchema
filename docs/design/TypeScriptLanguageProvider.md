@@ -97,8 +97,7 @@ performance, and it is shared by both models below.
 **These are not three rival runtimes you pick between by speed — they are complementary layers for
 different jobs.** The idiomatic types + AOT validators (the §5 surface) are the *baseline every consumer
 uses* to **read / validate / consume** parsed JSON — that is what "Model B" names, and it is not a slower
-competitor to C for the same task. **Model C** is the byte-patch runtime layered on top for
-**read-modify-write / live editing**, where it is the proven best (§13.7-13.9). **Model A** is a niche
+competitor to C for the same task. Our type model is **mutable** (the V5 `JsonDocumentBuilder` analog): reads use the readonly view, and **mutations go through Model C** — the structural-sharing byte-patch engine (§5.7), proven best for read-modify-write / live editing (§13.7-13.9). **Model A** is a niche
 lazy-read fast path. So: everyone gets the typed surface + validators; consumers that mutate/edit also
 use Model C; almost nobody needs A. The benchmark "Model C wins" is specifically the *RMW round-trip* —
 for pure consumption there is nothing to beat, you just read a validated plain object.
@@ -619,6 +618,29 @@ and dynamic scope are correct:
   the type graph; the generated code carries the location identifiers and threads the dynamic scope
   through the context exactly as C# does (location-keyed dispatch, not a new scheme), keeping recursive/
   dynamic schemas (e.g. a meta-schema's `$dynamicAnchor: meta`) resolving and reporting identically.
+
+### 5.7 The mutable type model — mutation via Model C (the V5 `JsonDocumentBuilder` analog)
+
+The type model is **mutable**, mirroring V5 (a readonly element + a `Mutable` partial +
+`JsonDocumentBuilder`; "patch a builder, `Set` only changed fields, never read-all + rebuild"). The TS
+split is the same:
+
+* **Read view** — the `readonly` interface (§5.1). Pure-consumption consumers parse + validate + read
+  plain objects and never instantiate any mutation machinery (zero overhead — this is the only thing
+  "Model B" ever was).
+* **Mutation** — a generated mutation API whose edits are applied as a **Model C structural-sharing
+  byte patch**: set only the changed fields, copy unchanged bytes through verbatim, never rebuild or
+  re-`stringify` the whole document. This is *the* place Model C lives — it is the **engine of the
+  mutable model**, not an optional bolt-on, and it is the proven-best path for mutation (wire RMW
+  2.4-34x §13.9; incremental editing 100x-5900x/edit §13.8).
+* **API shape (to settle):** either an immer-style `produce(doc, d => { d.age = 31 })` returning a new
+  immutable document, or a generated fluent builder (`PersonBuilder().withAge(31)`) — both lower to the
+  same Model C patch; in an editor the same change-set also yields minimal LSP `TextEdit`s (§5.6).
+
+So **"native parse beats the byte path" does not apply to the mutable model**: pure reads are just plain
+reads (no Model C in play), and *mutation* is Model C, which wins. The only result where native led was
+the **un-optimised, full-round-trip-per-edit** RMW — eliminated by the early-stop optimisation (§13.9)
+and irrelevant to the realistic incremental-edit pattern (§13.8), both of which put Model C ahead.
 
 ---
 
