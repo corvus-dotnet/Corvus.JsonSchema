@@ -4,8 +4,8 @@ using TsProviderSpike;
 
 if (args.Length > 0 && args[0] == "--suite")
 {
-    string suiteDir = args.Length > 1 ? args[1] : "../../JSON-Schema-Test-Suite/tests/draft2020-12";
-    await SuiteHarness.Run(suiteDir, "out-suite");
+    string testsBaseDir = args.Length > 1 ? args[1] : "../../JSON-Schema-Test-Suite/tests";
+    await SuiteHarness.Run(testsBaseDir, "out-suite");
     return;
 }
 

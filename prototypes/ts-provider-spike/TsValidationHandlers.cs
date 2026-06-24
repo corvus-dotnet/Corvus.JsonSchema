@@ -40,14 +40,25 @@ internal static class TsEmit
         _ => "true",
     };
 
-    // The TS fail-condition for an operator applied to a left expression and a constant.
+    // The TS fail-condition for a length/count operator (small safe-integer comparison; plain JS).
     public static string? FailCondition(Operator op, string left, string constText) => op switch
     {
         Operator.GreaterThan => $"{left} <= {constText}",
         Operator.GreaterThanOrEquals => $"{left} < {constText}",
         Operator.LessThan => $"{left} >= {constText}",
         Operator.LessThanOrEquals => $"{left} > {constText}",
-        Operator.MultipleOf => $"({left} % {constText}) !== 0",
+        _ => null,
+    };
+
+    // The fail-condition for a NUMERIC value operator, evaluated exactly on the number's text (§4.1):
+    // bounds via __cmp(String(value), <literal>) <op> 0; multipleOf via !__multipleOf(...).
+    public static string? NumericFailCondition(Operator op, string constText) => op switch
+    {
+        Operator.GreaterThan => $"__cmp(String(value), {constText}) <= 0",
+        Operator.GreaterThanOrEquals => $"__cmp(String(value), {constText}) < 0",
+        Operator.LessThan => $"__cmp(String(value), {constText}) >= 0",
+        Operator.LessThanOrEquals => $"__cmp(String(value), {constText}) > 0",
+        Operator.MultipleOf => $"!__multipleOf(String(value), {constText})",
         _ => null,
     };
 }
@@ -94,29 +105,38 @@ internal sealed class TsConstantBoundHandler : IKeywordValidationHandler, ITsKey
 
     public void Emit(StringBuilder sb, TypeDeclaration td, IKeyword keyword)
     {
-        Operator op;
-        JsonElement[]? consts;
-        string guard, left;
-
+        // Numeric bounds/multipleOf: evaluated EXACTLY on the number's text via BigInt (§4.1), passing the
+        // schema operand's source literal and comparing against String(value) -- no lossy double math.
         if (keyword is INumberConstantValidationKeyword num)
         {
-            if (!num.TryGetOperator(td, out op) || !num.TryGetValidationConstants(td, out consts)) { return; }
-            guard = "typeof value === \"number\"";
-            left = "value";
-        }
-        else
-        {
-            var integer = (IIntegerConstantValidationKeyword)keyword;
-            if (!integer.TryGetOperator(td, out op) || !integer.TryGetValidationConstants(td, out consts)) { return; }
-            (guard, left) = keyword switch
+            if (!num.TryGetOperator(td, out Operator nop) || !num.TryGetValidationConstants(td, out JsonElement[]? nconsts) || nconsts.Length == 0)
             {
-                IStringLengthConstantValidationKeyword => ("typeof value === \"string\"", "[...value].length"),
-                IArrayLengthConstantValidationKeyword => ("Array.isArray(value)", "value.length"),
-                _ => ("typeof value === \"object\" && value !== null && !Array.isArray(value)", "Object.keys(value).length"),
-            };
+                return;
+            }
+
+            string? ncond = TsEmit.NumericFailCondition(nop, TsEmit.Str(nconsts[0].GetRawText()));
+            if (ncond is not null)
+            {
+                sb.Append("  if (typeof value === \"number\" && ").Append(ncond).Append(") { return false; }\n");
+            }
+
+            return;
         }
 
-        if (consts is null || consts.Length == 0) { return; }
+        // Length/count bounds compare small safe integers -> plain JS is exact and faster.
+        var integer = (IIntegerConstantValidationKeyword)keyword;
+        if (!integer.TryGetOperator(td, out Operator op) || !integer.TryGetValidationConstants(td, out JsonElement[]? consts) || consts.Length == 0)
+        {
+            return;
+        }
+
+        (string guard, string left) = keyword switch
+        {
+            IStringLengthConstantValidationKeyword => ("typeof value === \"string\"", "[...value].length"),
+            IArrayLengthConstantValidationKeyword => ("Array.isArray(value)", "value.length"),
+            _ => ("typeof value === \"object\" && value !== null && !Array.isArray(value)", "Object.keys(value).length"),
+        };
+
         string? cond = TsEmit.FailCondition(op, left, consts[0].GetRawText());
         if (cond is not null)
         {
@@ -581,6 +601,28 @@ internal sealed class TsContainsHandler : IKeywordValidationHandler, ITsKeywordE
         sb.Append("    if (n < ").Append(min).Append(") { return false; }\n");
         if (max is not null) { sb.Append("    if (n > ").Append(max).Append(") { return false; }\n"); }
         sb.Append("  }\n");
+    }
+}
+
+// not: the instance must NOT validate against the subschema.
+internal sealed class TsNotHandler : IKeywordValidationHandler, ITsKeywordEmitter
+{
+    public uint ValidationHandlerPriority => 620;
+
+    public bool HandlesKeyword(IKeyword keyword) => keyword is INotValidationKeyword;
+
+    public void Emit(StringBuilder sb, TypeDeclaration td, IKeyword keyword)
+    {
+        if (((INotValidationKeyword)keyword).TryGetNotType(td, out ReducedTypeDeclaration? notType) && notType is not null)
+        {
+            string? e = TsEmit.EvalName(notType.Value.ReducedType);
+            if (e is not null)
+            {
+                // Give the not-subschema its OWN tracker (so its internal unevaluated* works), but never
+                // merge it into the parent -- `not` discards its annotations.
+                sb.Append("  if (").Append(e).Append("(value, ").Append(TsEmit.SubEv(notType.Value.ReducedType)).Append(")) { return false; }\n");
+            }
+        }
     }
 }
 
