@@ -1365,6 +1365,29 @@ offer the ordered/classification templates with the exact labels the policy enfo
   Web: client `listSecurityOrderings`; the reach panel's classification template (dimension/comparator/value dropdowns,
   hidden when no orderings) — 70 node + 119 component + 4 smoke. Demo host wires a `classification` ordering. slnx **0/0**.
   **Row done.**
+- **Residual, measured not assumed.** `SecurityLabelOrderings.Dimensions` returns `IEnumerable<string>`, so the
+  projection's `foreach` boxes one dictionary-key enumerator (~40 B) per request. A first attempt "fixed" this by
+  materialising the keys to a permanent `string[]`/`ReadOnlySpan` — but that was reverted: it was **never benchmarked**,
+  and it trades a transient cold-path enumerator for permanent redundant state. Measured, the enumerator is a single
+  allocation on a **cold admin endpoint**, already inside the `EndToEnd_Handler` 9.85 KB (which the materialisation floor
+  dominates), so it is **below the hot-path bar** and left as the simple form. The lesson: measure a suspected deficiency
+  before "fixing" it — a sub-noise cold-path transient is not worth permanent state.
+
+### ✅ Binding self-elevation guard — `403` on caller-matched write/purge (security-UI slice 5a)
+
+A security/correctness change (§16.5.3 defense in depth), not an allocation row — recorded for completeness and the
+process audit. `ArazzoControlPlaneSecurityHandler` (via a new internal ctor) holds the request's `ControlPlaneAccess`;
+create/update binding reject **403** when the caller holds the binding's claim **and** it grants write/purge reach
+(rule-bounded or unrestricted) — read-only the caller matches is allowed (direct group/role policy), granting another
+group write is allowed (policy, not self-elevation), and the guard is inert when unscoped. `403` added to the two binding
+ops (OpenAPI + regen; the `Forbidden` factory).
+
+- **Allocation:** none on the success path — the guard is a claim check before the existing `AddBindingAsync`. The verb
+  check is `ValueKind == Object` (NRE-safe vs the absent-optional-complex trap, which `IsNotUndefined()` misses) and the
+  claim match is **closure-free** (`HasClaim(type, value)` / `FindFirst(type)` — no capturing predicate lambda, even on
+  this cold authoring path), so there is no benchmark to run (no allocation surface to move; not deferred on frequency).
+- **Verified.** 7 `ControlPlaneSecurityApiTests` incl. the guard (self-team write/rule-bounded-write → 403; read-only and
+  other-team write → 201), via a `RowSecurityOnly` host so the policy makes the caller visible. slnx **0/0**. **Row done.**
 
 ## Cross-references
 
