@@ -89,7 +89,7 @@ public static class GenerationDriverTypeScript
         // Append a stable `evaluateRoot` entry point (aliases the root type's validator) to the types module.
         if (rootType is { } root)
         {
-            string export = TypeScriptLanguageProvider.RootEvaluatorExport(root);
+            string export = provider.RootEvaluatorExport(root);
             generatedCode = generatedCode
                 .Select(f => f.FileName == "generated.ts"
                     ? new GeneratedCodeFile(f.FileName, f.FileContent + export, f.TypeDeclaration)

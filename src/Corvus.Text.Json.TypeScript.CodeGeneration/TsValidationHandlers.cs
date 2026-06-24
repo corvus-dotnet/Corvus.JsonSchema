@@ -201,7 +201,7 @@ internal sealed class TsRegexHandler : IKeywordValidationHandler, ITsKeywordEmit
         {
             foreach (string r in regexes)
             {
-                sb.Append("  if (typeof value === \"string\" && !new RegExp(").Append(TsEmit.Str(r)).Append(", \"u\").test(value)) { return false; }\n");
+                sb.Append("  if (typeof value === \"string\" && !__re(").Append(TsEmit.Str(r)).Append(").test(value)) { return false; }\n");
             }
         }
     }
@@ -299,7 +299,7 @@ internal sealed class TsPatternPropertiesHandler : IKeywordValidationHandler, IT
         sb.Append("    const keys = Object.keys(o);\n    for (let i = 0; i < keys.length; i++) {\n      const k = keys[i];\n");
         foreach ((string pattern, string name) in entries)
         {
-            sb.Append("      if (new RegExp(").Append(TsEmit.Str(pattern)).Append(", \"u\").test(k)) { if (!").Append(name).Append("(o[k], NOEV)) { return false; } ev.markProp(i); }\n");
+            sb.Append("      if (__re(").Append(TsEmit.Str(pattern)).Append(").test(k)) { if (!").Append(name).Append("(o[k], NOEV)) { return false; } ev.markProp(i); }\n");
         }
 
         sb.Append("    }\n  }\n");
@@ -330,7 +330,7 @@ internal sealed class TsAdditionalPropertiesHandler : IKeywordValidationHandler,
         {
             foreach (KeyValuePair<IObjectPatternPropertyValidationKeyword, IReadOnlyCollection<PatternPropertyDeclaration>> kv in pp)
             {
-                foreach (PatternPropertyDeclaration d in kv.Value) { patterns.Add("new RegExp(" + TsEmit.Str(d.Pattern) + ", \"u\")"); }
+                foreach (PatternPropertyDeclaration d in kv.Value) { patterns.Add("__re(" + TsEmit.Str(d.Pattern) + ")"); }
             }
         }
 

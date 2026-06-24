@@ -1,0 +1,50 @@
+
+# Validation throughput — ns per instance (warm, compile excluded). Lower is better.
+
+schema                dialect     inst    corvus-ts        ajv  hyperjump schemasafe   corvus vs ajv
+----------------------------------------------------------------------------------------------------
+ansible-meta          07           333     19.43 us    5.88 us  141.38 us    4.31 us      0.30x
+aws-cdk               07           483       747 ns     333 ns   20.42 us     289 ns      0.45x
+babelrc               07           794       447 ns    1.05 us    6.09 us     645 ns      2.34x
+clang-format          07           133     20.29 us   19.89 us   13.18 us   18.99 us      0.98x
+cmake-presets         07           967     18.15 us   19.82 us 1020.58 us       -         1.09x
+code-climate          07          2484       212 ns     355 ns    8.53 us     293 ns      1.68x
+cql2                  2020-12      109     10.52 us   16.17 us 8575.46 us    6.99 us      1.54x
+cspell                07           981      5.25 us    8.39 us   34.65 us    6.23 us      1.60x
+cypress               07           981       263 ns    5.34 us   13.85 us    5.67 us     20.29x
+deno                  07           987      1.24 us    2.42 us   22.63 us    3.29 us      1.96x
+dependabot            07           967      2.04 us     860 ns   25.20 us       -         0.42x
+draft-04              07           563     35.34 us   40.26 us       -      34.56 us      1.14x
+fabric-mod            07           911      2.44 us    2.99 us   22.84 us    3.07 us      1.23x
+geojson               07           500     59.77 us  227.20 us 6538.83 us  261.72 us      3.80x
+gitpod-configuration  07           986      1.36 us     780 ns   11.13 us    2.21 us      0.57x
+helm-chart-lock       07          3888       740 ns     213 ns    8.94 us     945 ns      0.29x
+importmap             07           964       514 ns     254 ns    6.94 us     413 ns      0.50x
+jasmine               07           980       231 ns     164 ns    6.86 us     267 ns      0.71x
+jsconfig              07           981      1.85 us    9.58 us   13.14 us   10.21 us      5.19x
+jshintrc              07           966      2.17 us    7.71 us   13.71 us    7.91 us      3.56x
+krakend               07            47     39.74 us       -          -          -              
+lazygit               07           280      4.60 us    8.73 us   16.04 us   11.28 us      1.90x
+lerna                 07           985       280 ns     748 ns    4.63 us     938 ns      2.67x
+nest-cli              07          1025      1.22 us     849 ns    9.88 us     867 ns      0.70x
+omnisharp             07           987       745 ns    3.91 us   10.94 us    5.07 us      5.25x
+openapi               2020-12      107     20.38 us   51.31 us15816.93 us       -         2.52x
+pre-commit-hooks      07           985      8.87 us    5.53 us   17.34 us    3.86 us      0.62x
+pulumi                07          3807       849 ns     674 ns    7.26 us     831 ns      0.79x
+semantic-release      07           794       304 ns     306 ns   11.76 us     477 ns      1.01x
+stale                 07           961       572 ns     258 ns    8.24 us     416 ns      0.45x
+stylecop              07           983      1.76 us    1.41 us   11.45 us       -         0.80x
+tmuxinator            07           382      1.15 us    1.01 us   11.79 us    1.20 us      0.87x
+ui5                   07           942      3.94 us    4.21 us   42.20 us       -         1.07x
+ui5-manifest          07           611     19.30 us       -     171.80 us       -              
+unreal-engine-uproject07           859      7.48 us    9.44 us   30.21 us   13.53 us      1.26x
+vercel                07           710      4.42 us    5.45 us   18.03 us       -         1.23x
+yamllint              07           984        85 ns      30 ns    5.62 us      40 ns      0.35x
+
+# Geometric mean ns/instance (over schemas each impl validated):
+  corvus-ts    2300.9 ns   (ran 37/37)
+  ajv          2393.2 ns   (ran 35/37; compile-failed: krakend, ui5-manifest)
+  hyperjump    29505.5 ns   (ran 35/37; compile-failed: draft-04, krakend)
+  schemasafe   2311.7 ns   (ran 29/37; compile-failed: cmake-presets, dependabot, krakend, openapi, stylecop, ui5, ui5-manifest, vercel)
+
+# Cross-check: 33/37 schemas — all validators agree on valid-counts. Disagreements: code-climate, draft-04, helm-chart-lock, openapi

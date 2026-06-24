@@ -790,6 +790,31 @@ source generator.
 
 ---
 
+### 7.8 Benchmark — fastest *and* most complete (Sourcemeta dataset)
+
+The production CLI's output was benchmarked against the fastest JS/TS validators over the
+[Sourcemeta `jsonschema-benchmark`](https://github.com/sourcemeta-research/jsonschema-benchmark) dataset
+(37 real-world schemas, 35,407 instances; warm validation time, compile excluded; identical `JSON.parse`'d
+input; `prototypes/ts-bench`). Geometric mean ns/instance (lower is better):
+
+| Validator | ns/instance | Schemas handled |
+|---|---:|:---:|
+| **corvus-ts** | **2,301** | **37 / 37** |
+| @exodus/schemasafe | 2,312 | 29 / 37 |
+| ajv | 2,393 | 35 / 37 |
+| @hyperjump/json-schema | 29,506 | 35 / 37 |
+
+**corvus-ts has the best geomean throughput AND is the only validator that compiles all 37 schemas**
+(schemasafe fails 8; ajv/hyperjump fail 2; hyperjump is ~13x slower). On correctness, corvus-ts agrees
+with the majority on every cross-check disagreement (the lone hard case is the OpenAPI 3.1 `$dynamicRef`
+metaschema, where ajv/hyperjump themselves disagree 0-vs-107). The benchmark also surfaced + fixed a real
+generator bug — the `pattern`-keyword `u`-flag regex crash on identity escapes (`[^\&\%]`, krakend),
+which every other validator in the set also hits; corvus now compiles patterns through a cached `__re`
+helper with a `u`->non-`u` fallback while keeping `format: regex` strict. See
+`prototypes/ts-bench/README.md`.
+
+---
+
 ## 8. Compliance & testing strategy
 
 Match V5's two independent gates, both driven by the official `JSON-Schema-Test-Suite` submodule.

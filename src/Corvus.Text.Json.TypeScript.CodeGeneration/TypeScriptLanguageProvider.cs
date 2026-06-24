@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Corvus.Json.CodeGeneration;
 
 namespace Corvus.Text.Json.TypeScript.CodeGeneration;
@@ -253,7 +254,15 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
           if (domain.startsWith("[") && domain.endsWith("]")) { const ip = domain.slice(1, -1); return ip.startsWith("IPv6:") ? __fmtIpv6(ip.slice(5)) : __ipv4Re.test(ip); }
           return __fmtHostname(domain, idn);
         }
+        // `format: regex` asserts STRICT ECMA-262 validity (Unicode mode): e.g. `\a` is an invalid escape
+        // and so not a valid regex. Keep this `u`-only (do NOT fall back to non-`u`).
         function __fmtRegex(s: string): boolean { try { new RegExp(s, "u"); return true; } catch { return false; } }
+        // Compile a JSON Schema `pattern`/`patternProperties` regex ONCE (cached). Unlike `format: regex`,
+        // the pattern KEYWORD is applied leniently: real-world patterns use identity escapes like \& \%
+        // that are valid ECMA-262 without `u` but a SyntaxError with it (e.g. krakend). Try `u` first
+        // (correct Unicode semantics, matches the test suite's pattern cases), fall back to non-`u`.
+        const __reCache = new Map<string, RegExp>();
+        function __re(p: string): RegExp { let r = __reCache.get(p); if (r === undefined) { try { r = new RegExp(p, "u"); } catch { r = new RegExp(p); } __reCache.set(p, r); } return r; }
         // contentEncoding (base64) + contentMediaType (application/json) assertion -- annotation-only by
         // default, asserted by the optional/content suite.
         function __fmtContent(s: string, encoding: string | null, mediaType: string | null): boolean {
@@ -340,6 +349,10 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
 
     private readonly KeywordValidationHandlerRegistry validationHandlers = new();
 
+    // Every top-level identifier emitted into the current module, so the root entry-point name can be
+    // reserved against them and renamed around any collision (like type and union-guard names).
+    private readonly HashSet<string> moduleTopLevelNames = new(StringComparer.Ordinal);
+
     // The shared runtime module (@corvus/json-runtime in production): emitted ONCE, imported by every
     // generated module. Assembled from the helper blocks with each top-level declaration exported, and
     // the third-party imports (lossless-json for source-text numbers, Temporal + tr46 for formats) at top.
@@ -360,13 +373,23 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
                "import tr46 from \"tr46\";\n\n" + body;
     }
 
-    // A stable `evaluateRoot` entry point for the generated module: aliases the root type's validator.
-    // Append to the generated module after generation (the name is assigned during GenerateCodeFor).
-    public static string RootEvaluatorExport(TypeDeclaration rootType)
+    // A stable 1-arg entry point for the generated module, aliasing the root type's validator. Call AFTER
+    // GenerateCodeFor (names are assigned, and the module's identifiers recorded). The entry name is
+    // RESERVED against every emitted identifier and renamed around any collision (validate, validate2, ...);
+    // it is also emitted as the module `default` so consumers can import it without depending on the name.
+    public string RootEvaluatorExport(TypeDeclaration rootType)
     {
         TypeDeclaration reduced = rootType.ReducedTypeDeclaration().ReducedType;
-        string name = reduced.TryGetMetadata<string>(TsFinalKey, out string? rn) && !string.IsNullOrEmpty(rn) ? rn! : "Entity";
-        return $"\nexport const evaluateRoot = (v: unknown): boolean => evaluate{name}(v, fresh());\n";
+        string rootName = reduced.TryGetMetadata<string>(TsFinalKey, out string? rn) && !string.IsNullOrEmpty(rn) ? rn! : "Entity";
+
+        string entry = "validate";
+        for (int i = 2; this.moduleTopLevelNames.Contains(entry); i++)
+        {
+            entry = "validate" + i;
+        }
+
+        this.moduleTopLevelNames.Add(entry);
+        return $"\nexport const {entry} = (v: unknown): boolean => evaluate{rootName}(v, fresh());\nexport default {entry};\n";
     }
 
     public static TypeScriptLanguageProvider CreateDefault()
@@ -473,7 +496,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         // (@corvus/json-runtime, §5.5) that every generated module imports — never inlined per module.
         var sb = new StringBuilder();
         sb.Append("// AUTO-GENERATED: idiomatic TS types + registry-composed validators.\n");
-        sb.Append("import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, type Brand } from \"./corvus-runtime.js\";\n\n");
+        sb.Append("import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, type Brand } from \"./corvus-runtime.js\";\n\n");
         var moduleGuards = new HashSet<string>(StringComparer.Ordinal); // union guard names, unique per module
         foreach (TypeDeclaration td in types)
         {
@@ -507,11 +530,21 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
             EmitValidator(sb, td);
         }
 
+        string content = sb.ToString();
+
+        // Record every emitted top-level identifier so the root entry-point name (RootEvaluatorExport) can
+        // be reserved against them and renamed around any collision.
+        this.moduleTopLevelNames.Clear();
+        foreach (Match m in Regex.Matches(content, "(?m)^export (?:interface|type|class|function|const) ([A-Za-z_$][A-Za-z0-9_$]*)"))
+        {
+            this.moduleTopLevelNames.Add(m.Groups[1].Value);
+        }
+
         // The generated types/validators module + the shared runtime, emitted once alongside it. (The
         // test harness consumes files.First() and emits its own single shared runtime for the whole suite.)
         return new[]
         {
-            new GeneratedCodeFile("generated.ts", sb.ToString()),
+            new GeneratedCodeFile("generated.ts", content),
             new GeneratedCodeFile("corvus-runtime.ts", RuntimeModuleSource()),
         };
     }
