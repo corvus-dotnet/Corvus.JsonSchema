@@ -1613,13 +1613,19 @@ Format validation is parse-based (not regex), packaged via `@js-temporal/polyfil
 `tr46` (UTS-46), and `lossless-json` (source-text numbers), per §5.5/§4.1. `content` (contentEncoding
 base64 + contentMediaType application/json) is asserted in the optional/content suite.
 
-The 5 remaining are genuine spec/vocab/draft edges, the same class the C# engine documents as exclusions:
+The 3 remaining (7846/7849) are genuine static-resolution / draft-semantics limitations:
 * draft-4 `1.0` is-not-an-integer -- draft-4-specific integer semantics (draft-6+ treats `1.0` as an
-  integer; the core surfaces `CoreTypes.Integer` either way).
-* `$dynamicRef` skipping intermediate resources via a pointer reference across a resource boundary (2)
-  -- an advanced dynamic-scope resolution corner.
-* the `format-assertion` **vocabulary** (2) -- `$vocabulary`-driven assert/annotate mode (the spike sets
-  the assertion mode at the provider, not per-type from the schema's declared vocabulary).
+  integer; the core surfaces `CoreTypes.Integer` either way, so the capability interface does not expose
+  the distinction).
+* `$dynamicRef` skipping an intermediate resource via a pointer reference across a resource boundary (2)
+  -- the same `item` schema resolves `#content` differently depending on the runtime path, which needs
+  RUNTIME dynamic-scope threading (the C# `JsonSchemaContext` carries the dynamic-anchor stack); the
+  spike resolves `$dynamicRef` statically, which is correct for the 44 `dynamicRef.json` cases but not
+  this cross-resource one.
+
+(The `format-assertion` vocabulary cases were initially miscounted as edges: both the `true` and `false`
+cases expect format ASSERTED -- `false` means the vocabulary is optional, not "annotate" -- so they pass
+once `optional/format-assertion.json` is routed through the assertion provider, like `optional/format`.)
 
 This validates the full design end-to-end: one C# provider over the existing core, capability-interface
 matched, emitting idiomatic `tsc --strict`-clean TypeScript that imports a shared `@corvus/json-runtime`,
