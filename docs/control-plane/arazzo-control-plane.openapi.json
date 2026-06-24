@@ -666,6 +666,43 @@
         }
       }
     },
+    "/security/orderings": {
+      "get": {
+        "operationId": "listSecurityOrderings",
+        "security": [
+          {
+            "oauth2": [
+              "security:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "security:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "security"
+        ],
+        "summary": "List the configured ordered tag dimensions",
+        "description": "Returns the deployment's ordered tag dimensions (e.g. classification) and their labels in ascending order, so an authoring UI can offer ordered (<, <=, >, >=) rule templates with the exact labels the policy enforces.",
+        "responses": {
+          "200": {
+            "description": "The orderings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityOrderingList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/security/rules": {
       "get": {
         "operationId": "listSecurityRules",
@@ -2519,6 +2556,42 @@
         },
         "required": [
           "rules"
+        ]
+      },
+      "SecurityOrdering": {
+        "type": "object",
+        "description": "An ordered tag dimension: one dimension's labels in ascending order, the ranking an ordered rule comparison (<, <=, >, >=) uses.",
+        "properties": {
+          "dimension": {
+            "type": "string",
+            "description": "The security-tag key (dimension), e.g. 'classification'."
+          },
+          "labels": {
+            "type": "array",
+            "description": "The dimension's labels from lowest to highest rank.",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "dimension",
+          "labels"
+        ]
+      },
+      "SecurityOrderingList": {
+        "type": "object",
+        "description": "The deployment's configured ordered tag dimensions (design §14.2).",
+        "properties": {
+          "orderings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SecurityOrdering"
+            }
+          }
+        },
+        "required": [
+          "orderings"
         ]
       },
       "SecurityBindingWrite": {

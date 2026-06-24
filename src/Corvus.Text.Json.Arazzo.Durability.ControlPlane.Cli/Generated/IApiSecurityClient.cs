@@ -98,6 +98,16 @@ public interface IApiSecurityClient : IAsyncDisposable
     public static class SecurityRequirements
     {
         /// <summary>
+        /// Gets the scopes required by <c>ListSecurityOrderings</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] ListSecurityOrderingsOauth2Scopes = ["security:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ListSecurityOrderings</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] ListSecurityOrderingsOpenIdConnectScopes = ["security:read"];
+
+        /// <summary>
         /// Gets the scopes required by <c>ListSecurityRules</c> for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] ListSecurityRulesOauth2Scopes = ["security:read"];
@@ -207,6 +217,15 @@ public interface IApiSecurityClient : IAsyncDisposable
         /// </summary>
         public static readonly string[] AllOpenIdConnectScopes = ["security:read", "security:write"];
     }
+
+    /// <summary>
+    /// List the configured ordered tag dimensions
+    /// </summary>
+    /// <remarks>
+    /// Returns the deployment's ordered tag dimensions (e.g. classification) and their labels in ascending order, so an authoring UI can offer ordered (&lt;, &lt;=, &gt;, &gt;=) rule templates with the exact labels the policy enforces.
+    /// </remarks>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<ListSecurityOrderingsResponse> ListSecurityOrderingsAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// List security rules

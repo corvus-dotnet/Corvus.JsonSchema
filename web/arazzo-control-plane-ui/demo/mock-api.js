@@ -655,6 +655,14 @@ function seedSecurityRules() {
   ];
 }
 
+function seedSecurityOrderings() {
+  // The deployment's ordered tag dimensions (§14.2): each dimension's labels from lowest to highest rank, the ranking
+  // the ordered rule templates (classification <= 'confidential', …) use.
+  return [
+    { dimension: 'classification', labels: ['public', 'internal', 'confidential', 'restricted'] },
+  ];
+}
+
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 }
@@ -678,6 +686,7 @@ export function createMockControlPlane(options = {}) {
   const grantees = options.granteesSeed ? structuredClone(options.granteesSeed) : seedGrantees();
   const accessRequests = options.accessRequestsSeed ? structuredClone(options.accessRequestsSeed) : seedAccessRequests();
   const securityRules = options.securityRulesSeed ? structuredClone(options.securityRulesSeed) : seedSecurityRules();
+  const securityOrderings = options.securityOrderingsSeed ? structuredClone(options.securityOrderingsSeed) : seedSecurityOrderings();
   const latency = options.latencyMs ?? 250;
   const find = (id) => runs.find((r) => r.id === id);
   const findVersion = (base, n) => catalog.find((v) => v.baseWorkflowId === base && v.versionNumber === Number(n));
@@ -704,6 +713,9 @@ export function createMockControlPlane(options = {}) {
 
     const accessRequestsResponse = handleAccessRequests(path, method, u.searchParams, body);
     if (accessRequestsResponse) return accessRequestsResponse;
+
+    const securityOrderingsResponse = handleSecurityOrderings(path, method);
+    if (securityOrderingsResponse) return securityOrderingsResponse;
 
     const securityRulesResponse = handleSecurityRules(path, method, body);
     if (securityRulesResponse) return securityRulesResponse;
@@ -1164,6 +1176,12 @@ export function createMockControlPlane(options = {}) {
   // ---- security rules (§14.2) — the reusable reach vocabulary -----------------------------------
   // CRUD over the named rule set. The server compiles the expression against the rule grammar; the mock can't run
   // the compiler, so it approximates validation with a balance/non-empty check — enough to exercise the 400 path.
+
+  function handleSecurityOrderings(fullPath, method) {
+    if (fullPath.indexOf('/security/orderings') < 0) return null;
+    if (method !== 'GET') return problem(405, 'Method not allowed');
+    return json({ orderings: securityOrderings.map((o) => structuredClone(o)) });
+  }
 
   function handleSecurityRules(fullPath, method, body) {
     const idx = fullPath.indexOf('/security/rules');

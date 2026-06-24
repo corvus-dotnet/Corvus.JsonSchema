@@ -89,10 +89,18 @@ using (ParsedJsonDocument<SecurityBindingDocument> readAllBinding = SecurityBind
 // it is passed to MapArazzoControlPlane as the row-reach policy. A grant the approval service writes is refreshed
 // into this same instance in-process, taking effect immediately. The principal's Keycloak groups become its sys:
 // identity — the §15-administrator identity and the label stamped on rows it creates.
+// The deployment's ordered tag dimensions (§14.2): a classification taxonomy the ordered rule templates (classification
+// <= 'confidential', …) rank against. Baked into every compiled rule and surfaced read-only via GET /security/orderings
+// so the authoring UI offers those templates with exactly these labels.
+var labelOrderings = new SecurityLabelOrderings(new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal)
+{
+    ["classification"] = ["public", "internal", "confidential", "restricted"],
+});
 var entitlements = new PersistentRowSecurityPolicy(
     securityPolicy,
     internalTagResolver: static principal => principal?.FindAll("groups")
-        .Select(c => new SecurityTag(SecurityShell.DefaultInternalPrefix + "group", c.Value)).ToArray() ?? []);
+        .Select(c => new SecurityTag(SecurityShell.DefaultInternalPrefix + "group", c.Value)).ToArray() ?? [],
+    orderings: labelOrderings);
 await entitlements.RefreshAsync();
 
 // The access-request store (§16.5). In-memory like the security policy; the demo reseeds on every start.

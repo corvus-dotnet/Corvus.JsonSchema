@@ -44,10 +44,23 @@ const TEMPLATES = [
     suggest: () => 'abac-superset',
   },
   {
+    id: 'ordered', label: 'Rows at a classification level',
+    build: (f) => `${(f.dim || '').trim()} ${f.comparator || '<='} ${lit(f.value)}`,
+    suggest: (f) => `reach-${slug(f.value) || 'level'}`,
+  },
+  {
     id: 'advanced', label: 'Advanced — write an expression',
     build: (f) => (f.expression || '').trim(),
     suggest: (f) => f.name || 'reach-rule',
   },
+];
+
+// The ordered-comparison operators a classification template offers, with plain-language labels.
+const COMPARATORS = [
+  { op: '<=', label: 'at or below' },
+  { op: '<', label: 'below' },
+  { op: '>=', label: 'at or above' },
+  { op: '>', label: 'above' },
 ];
 
 const templateById = (id) => TEMPLATES.find((t) => t.id === id) || TEMPLATES[0];
@@ -64,6 +77,7 @@ class ArazzoReachRulesPanel extends ArazzoElement {
   constructor() {
     super();
     /** @private */ this._rules = [];
+    /** @private */ this._orderings = [];
     /** @private */ this._loading = false;
     /** @private */ this._error = null;
     /** @private */ this._reqSeq = 0;
@@ -107,9 +121,14 @@ class ArazzoReachRulesPanel extends ArazzoElement {
     this._error = null;
     this.renderBody();
     try {
-      const { rules } = await client.listSecurityRules();
+      // Rules are required; the orderings are best-effort (a deployment may configure none — then no classification template).
+      const [{ rules }, orderingsResult] = await Promise.all([
+        client.listSecurityRules(),
+        client.listSecurityOrderings().catch(() => ({ orderings: [] })),
+      ]);
       if (seq !== this._reqSeq) return;
       this._rules = rules;
+      this._orderings = orderingsResult.orderings ?? [];
       this._loading = false;
       this.renderBody();
       this.emit('loaded', { count: this._rules.length });
@@ -289,6 +308,17 @@ class ArazzoReachRulesPanel extends ArazzoElement {
     this.$$('.del').forEach((b) => b.addEventListener('click', () => this.deleteRule(b.dataset.name)));
   }
 
+  // The goal templates offered for the current deployment: the ordered/classification template only when the deployment
+  // configures at least one ordered dimension (otherwise an ordered comparison would deny — so it is not offered).
+  availableTemplates() {
+    return this._orderings.length > 0 ? TEMPLATES : TEMPLATES.filter((t) => t.id !== 'ordered');
+  }
+
+  // The ascending labels of an ordered dimension (empty for an unconfigured dimension).
+  labelsFor(dimension) {
+    return this._orderings.find((o) => o.dimension === dimension)?.labels ?? [];
+  }
+
   fieldsHtml(form) {
     const v = (x) => escapeHtml(form.fields[x] || '');
     switch (form.template) {
@@ -296,6 +326,22 @@ class ArazzoReachRulesPanel extends ArazzoElement {
         return `
           <div class="field"><label>Dimension</label><input class="f-dim" placeholder="domain" value="${v('dim')}"></div>
           <div class="field"><label>Value</label><input class="f-value" placeholder="payments" value="${v('value')}"></div>`;
+      case 'ordered': {
+        // Dropdowns driven by the configured orderings; seed the form's fields with the effective selections so the
+        // preview/name reflect them even before the user touches a control.
+        const dims = this._orderings.map((o) => o.dimension);
+        const dim = dims.includes(form.fields.dim) ? form.fields.dim : (dims[0] || '');
+        form.fields.dim = dim;
+        const labels = this.labelsFor(dim);
+        const value = labels.includes(form.fields.value) ? form.fields.value : (labels[0] || '');
+        form.fields.value = value;
+        const comparator = COMPARATORS.some((c) => c.op === form.fields.comparator) ? form.fields.comparator : '<=';
+        form.fields.comparator = comparator;
+        return `
+          <div class="field"><label>Dimension</label><select class="f-dim">${dims.map((d) => `<option ${d === dim ? 'selected' : ''}>${escapeHtml(d)}</option>`).join('')}</select></div>
+          <div class="field"><label>Level is</label><select class="f-comparator">${COMPARATORS.map((c) => `<option value="${c.op}" ${c.op === comparator ? 'selected' : ''}>${escapeHtml(c.label)}</option>`).join('')}</select></div>
+          <div class="field"><label>Value</label><select class="f-value">${labels.map((l) => `<option ${l === value ? 'selected' : ''}>${escapeHtml(l)}</option>`).join('')}</select></div>`;
+      }
       case 'in':
         return `
           <div class="field"><label>Dimension</label><input class="f-dim" placeholder="tenant" value="${v('dim')}"></div>
@@ -326,7 +372,7 @@ class ArazzoReachRulesPanel extends ArazzoElement {
       <div class="form-head">${isEdit ? `Edit rule '${escapeHtml(f.editName)}'` : 'New reach'}</div>
       ${isEdit ? '' : `
         <div class="goal">
-          ${TEMPLATES.map((t) => `
+          ${this.availableTemplates().map((t) => `
             <label><input type="radio" name="tmpl" value="${t.id}" ${t.id === f.template ? 'checked' : ''}> ${escapeHtml(t.label)}</label>`).join('')}
         </div>`}
       <div class="fields">${this.fieldsHtml(f)}</div>
@@ -347,12 +393,20 @@ class ArazzoReachRulesPanel extends ArazzoElement {
       this.renderForm();
     }));
 
-    // Field inputs update state + the live preview/name in place (no re-render, so focus is kept).
-    this.$$('.fields input, .fields textarea').forEach((input) => {
+    // Field inputs update state + the live preview/name in place (no re-render, so focus is kept) — except the ordered
+    // template's dimension select, which re-renders to refresh the value options for the newly chosen dimension.
+    this.$$('.fields input, .fields textarea, .fields select').forEach((input) => {
       const key = [...input.classList].find((c) => c.startsWith('f-'))?.slice(2);
       if (!key) return;
       input.addEventListener('input', () => {
         f.fields[key] = input.value;
+        if (f.template === 'ordered' && key === 'dim') {
+          f.fields.value = ''; // reset so fieldsHtml re-seeds it to the new dimension's first label
+          if (!f.nameEdited) f.name = templateById(f.template).suggest(f.fields);
+          this.renderForm();
+          return;
+        }
+
         const expr = this.$('.preview-expr');
         if (expr) expr.textContent = this.previewExpression() || '—';
         const nameInput = this.$('.f-name');

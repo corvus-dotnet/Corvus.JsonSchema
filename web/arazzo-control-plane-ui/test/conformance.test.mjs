@@ -164,9 +164,16 @@ test('the contract declares the credential and administration operations', () =>
 });
 
 test('the contract declares the security-rule operations', () => {
-  for (const id of ['listSecurityRules', 'getSecurityRule', 'createSecurityRule', 'updateSecurityRule', 'deleteSecurityRule']) {
+  for (const id of ['listSecurityRules', 'getSecurityRule', 'createSecurityRule', 'updateSecurityRule', 'deleteSecurityRule', 'listSecurityOrderings']) {
     assert.ok(OPS[id], `operation ${id} present in the OpenAPI document`);
   }
+});
+
+test('listSecurityOrderings emits the contract method + path', async () => {
+  const { client, calls } = capturing();
+  await client.listSecurityOrderings();
+  assert.equal(calls[0].method, OPS.listSecurityOrderings.method);
+  assert.equal(calls[0].path, OPS.listSecurityOrderings.path);
 });
 
 test('security rules: each client method emits the contract method + templated path + body', async () => {

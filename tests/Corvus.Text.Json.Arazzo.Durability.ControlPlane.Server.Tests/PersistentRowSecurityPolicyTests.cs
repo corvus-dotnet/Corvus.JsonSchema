@@ -327,6 +327,34 @@ public sealed class PersistentRowSecurityPolicyTests
         ctx.Admits(AccessVerb.Read, Globex).ShouldBeTrue();
     }
 
+    [TestMethod]
+    public async Task An_ordered_classification_rule_resolves_reach_only_when_orderings_are_configured()
+    {
+        var store = new InMemorySecurityPolicyStore();
+        await SeedRuleAsync(store, "cleared", "classification <= 'confidential'", "admin");
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "reader", VerbGrant.Rules("cleared"), VerbGrant.None, VerbGrant.None), "admin", default);
+
+        var orderings = new SecurityLabelOrderings(new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal)
+        {
+            ["classification"] = ["public", "internal", "confidential", "restricted"],
+        });
+
+        // With the ordering configured the rule ranks: at/below confidential is admitted, above it is denied.
+        var policy = new PersistentRowSecurityPolicy(store, orderings: orderings);
+        await policy.RefreshAsync();
+        AccessContext ctx = policy.Resolve(Principal(("role", "reader")));
+        ctx.Admits(AccessVerb.Read, SecurityTagSet.FromTags([new("classification", "public")])).ShouldBeTrue();
+        ctx.Admits(AccessVerb.Read, SecurityTagSet.FromTags([new("classification", "confidential")])).ShouldBeTrue();
+        ctx.Admits(AccessVerb.Read, SecurityTagSet.FromTags([new("classification", "restricted")])).ShouldBeFalse();
+
+        // Without orderings (the default), the ordered comparison denies everything (fail-closed) — proving the threading
+        // through PersistentRowSecurityPolicy is exactly what makes the rule rank.
+        var unconfigured = new PersistentRowSecurityPolicy(store);
+        await unconfigured.RefreshAsync();
+        unconfigured.Resolve(Principal(("role", "reader")))
+            .Admits(AccessVerb.Read, SecurityTagSet.FromTags([new("classification", "public")])).ShouldBeFalse();
+    }
+
     private static readonly DateTimeOffset ClockNow = new(2026, 6, 15, 12, 0, 0, TimeSpan.Zero);
 
     // A clock fixed at a known instant so a binding's expiry is deterministic relative to "now".
