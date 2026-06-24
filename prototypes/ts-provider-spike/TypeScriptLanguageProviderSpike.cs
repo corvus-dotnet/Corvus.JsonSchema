@@ -112,22 +112,18 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
           const m = /^(\d{4}-\d{2}-\d{2})[tT](\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[zZ]|[+-]\d{2}:\d{2}))$/.exec(s);
           return m !== null && __fmtDate(m[1]) && __fmtTime(m[2]);
         }
-        function __fmtDuration(s: string): boolean {
-          if (s === "P" || !s.startsWith("P")) { return false; }
-          if (/^P\d+W$/.test(s)) { return true; }
-          const m = /^P(\d+Y)?(\d+M)?(\d+D)?(T(\d+H)?(\d+M)?(\d+S)?)?$/.exec(s);
-          if (m === null) { return false; }
-          if (!m[1] && !m[2] && !m[3] && !m[4]) { return false; }
-          if (m[4] && !m[5] && !m[6] && !m[7]) { return false; }
-          return true;
-        }
+        // duration: RFC 3339 ABNF — a REGULAR grammar, STRICTER than ISO 8601 / Temporal (units must be
+        // contiguous & descending: P1Y2D and PT1H2S are invalid; no fractions). Temporal.Duration is the
+        // accessor TYPE for a duration, but it is too lenient (ISO 8601) to VALIDATE this format.
+        const __durRe = /^P(?:\d+W|(?:\d+Y(?:\d+M(?:\d+D)?)?|\d+M(?:\d+D)?|\d+D)?(?:T(?:\d+H(?:\d+M(?:\d+S)?)?|\d+M(?:\d+S)?|\d+S))?)$/;
+        function __fmtDuration(s: string): boolean { return s !== "P" && __durRe.test(s); }
         const __ipv4Re = /^((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
         function __fmtIpv6(s: string): boolean {
           if (s.indexOf(":") < 0) { return false; }
           const parts = s.split("::");
           if (parts.length > 2) { return false; }
           const head = parts[0] === "" ? [] : parts[0].split(":");
-          let tail = parts.length === 2 ? (parts[1] === "" ? [] : parts[1].split(":")) : [];
+          const tail = parts.length === 2 ? (parts[1] === "" ? [] : parts[1].split(":")) : [];
           const all = parts.length === 2 ? head.concat(tail) : head;
           let count = all.length; let v4 = false;
           if (all.length > 0 && all[all.length - 1].indexOf(".") >= 0) {
@@ -141,28 +137,121 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
           return parts.length === 2 ? count <= 7 : count === 8;
         }
         const __uuidRe = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-        const __hostnameRe = /^(?=.{1,253}$)([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)(\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
         const __jsonPtrRe = /^(?:\/(?:[^~/]|~0|~1)*)*$/;
         const __relJsonPtrRe = /^(?:0|[1-9][0-9]*)(?:#|(?:\/(?:[^~/]|~0|~1)*)*)$/;
-        // RFC 3986: scheme then only unreserved/reserved chars or %XX (rejects raw spaces/non-ASCII and bad %).
-        const __uriRe = /^[A-Za-z][A-Za-z0-9+.-]*:(?:%[0-9A-Fa-f]{2}|[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=])*$/;
-        const __uriRefRe = /^(?:[A-Za-z][A-Za-z0-9+.-]*:)?(?:%[0-9A-Fa-f]{2}|[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=])*$/;
-        // RFC 3987 IRI: like URI but additionally allows non-ASCII (ucschar).
-        const __iriRe = /^[A-Za-z][A-Za-z0-9+.-]*:(?:%[0-9A-Fa-f]{2}|[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;= -￿])*$/u;
-        const __iriRefRe = /^(?:[A-Za-z][A-Za-z0-9+.-]*:)?(?:%[0-9A-Fa-f]{2}|[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;= -￿])*$/u;
         const __uriTemplateRe = /^(?:[^\s{}]|\{[^\s{}]*\})*$/;
-        const __emailLocalRe = /^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*$/;
-        function __fmtEmail(s: string): boolean {
+        // hostname / idn-hostname via UTS-46 (tr46) for LDH/punycode/length, PLUS the IDNA2008 (RFC 5892)
+        // validity rules tr46's UTS-46 processing does not enforce: a small DISALLOWED set and the
+        // CONTEXTO rules (MIDDLE DOT between 'l', Greek KERAIA before Greek, Hebrew GERESH/GERSHAYIM after
+        // Hebrew), checked on the decoded U-labels.
+        const __isGreek = (c: number | undefined): boolean => c !== undefined && ((c >= 0x370 && c <= 0x3FF) || (c >= 0x1F00 && c <= 0x1FFF));
+        const __isHebrew = (c: number | undefined): boolean => c !== undefined && ((c >= 0x590 && c <= 0x5FF) || (c >= 0xFB1D && c <= 0xFB4F));
+        function __idnaLabel(label: string): boolean {
+          const cp = Array.from(label, (c) => c.codePointAt(0)!);
+          for (let i = 0; i < cp.length; i++) {
+            const c = cp[i];
+            if (c === 0x0640 || c === 0x07FA || c === 0x302E || c === 0x302F || (c >= 0x3031 && c <= 0x3035) || c === 0x303B) { return false; }
+            if (c === 0x00B7 && !(cp[i - 1] === 0x6C && cp[i + 1] === 0x6C)) { return false; }
+            if (c === 0x0375 && !__isGreek(cp[i + 1])) { return false; }
+            if ((c === 0x05F3 || c === 0x05F4) && !__isHebrew(cp[i - 1])) { return false; }
+          }
+          // Katakana Middle Dot (U+30FB, script Common): the label must contain a Hiragana/Katakana/Han char.
+          if (cp.indexOf(0x30FB) >= 0 && !cp.some((x) => x !== 0x30FB && ((x >= 0x3040 && x <= 0x309F) || (x >= 0x30A0 && x <= 0x30FF) || (x >= 0x3400 && x <= 0x4DBF) || (x >= 0x4E00 && x <= 0x9FFF)))) { return false; }
+          return true;
+        }
+        const __idnaOpt = { checkHyphens: true, checkBidi: true, checkJoiners: true, useSTD3ASCIIRules: true, verifyDNSLength: true };
+        function __fmtHostname(s: string, idn: boolean): boolean {
+          if (s.length === 0 || s.length > 253 || s.startsWith(".") || s.endsWith(".") || s.includes("..")) { return false; }
+          if (!idn) {
+            // RFC 1123 LDH: ASCII letters/digits/hyphen, 1-63 per label, no leading/trailing hyphen
+            // (interior "--" is allowed, unlike IDNA). An xn-- label must still decode to a valid A-label.
+            for (const label of s.split(".")) {
+              if (label.length === 0 || label.length > 63 || label.startsWith("-") || label.endsWith("-")) { return false; }
+              for (let i = 0; i < label.length; i++) { const c = label[i]; if (!((c >= "a" && c <= "z") || (c >= "A" && c <= "Z") || (c >= "0" && c <= "9") || c === "-")) { return false; } }
+              if (label.length >= 4 && (label[0] === "x" || label[0] === "X") && (label[1] === "n" || label[1] === "N") && label[2] === "-" && label[3] === "-") {
+                const u = tr46.toUnicode(label, __idnaOpt);
+                if (!u || u.error || !__idnaLabel(u.domain)) { return false; }
+              }
+            }
+
+            return true;
+          }
+
+          const ascii = tr46.toASCII(s, __idnaOpt);
+          if (typeof ascii !== "string" || ascii.length === 0) { return false; }
+          const uni = tr46.toUnicode(s, __idnaOpt);
+          if (!uni || uni.error) { return false; }
+          for (const label of uni.domain.split(".")) { if (!__idnaLabel(label)) { return false; } }
+          return true;
+        }
+        // RFC 3986/3987 URI/IRI as a PARSER (not a regex): optional scheme then allowed chars / %XX (+ ucschar).
+        const __isHex = (c: string): boolean => (c >= "0" && c <= "9") || (c >= "a" && c <= "f") || (c >= "A" && c <= "F");
+        function __validUriPart(s: string, allowUnicode: boolean): boolean {
+          for (let i = 0; i < s.length; i++) {
+            const c = s[i];
+            if (c === "%") { if (!__isHex(s[i + 1]) || !__isHex(s[i + 2])) { return false; } i += 2; continue; }
+            if ((c >= "A" && c <= "Z") || (c >= "a" && c <= "z") || (c >= "0" && c <= "9") || "-._~:/?#[]@!$&'()*+,;=".indexOf(c) >= 0) { continue; }
+            if (allowUnicode && s.charCodeAt(i) > 127) { continue; }
+            return false;
+          }
+          return true;
+        }
+        function __hasScheme(s: string): boolean {
+          if (s.length === 0 || !((s[0] >= "A" && s[0] <= "Z") || (s[0] >= "a" && s[0] <= "z"))) { return false; }
+          let i = 1;
+          while (i < s.length && ((s[i] >= "A" && s[i] <= "Z") || (s[i] >= "a" && s[i] <= "z") || (s[i] >= "0" && s[i] <= "9") || s[i] === "+" || s[i] === "." || s[i] === "-")) { i++; }
+          return s[i] === ":";
+        }
+        // Validate the authority component (after "//", up to the next /?#): [userinfo@]host[:port],
+        // host = [IP-literal] | IPv4 | reg-name, port = DIGIT*. Catches bad ports and malformed IP-literals.
+        function __validAuthority(auth: string, allowUnicode: boolean): boolean {
+          const at = auth.lastIndexOf("@");
+          const userinfo = at >= 0 ? auth.slice(0, at) : "";
+          const host = at >= 0 ? auth.slice(at + 1) : auth;
+          if (userinfo.indexOf("[") >= 0 || userinfo.indexOf("]") >= 0) { return false; }
+          if (host.startsWith("[")) {
+            const close = host.indexOf("]");
+            if (close < 0) { return false; }
+            const inner = host.slice(1, close);
+            if (!__fmtIpv6(inner) && !(inner[0] === "v")) { return false; }
+            const rest = host.slice(close + 1);
+            return rest === "" || (rest[0] === ":" && __allDigits(rest.slice(1)));
+          }
+          // reg-name with optional :port -- any further colon means an unbracketed IPv6, which is invalid.
+          const colon = host.indexOf(":");
+          if (colon >= 0) {
+            if (host.indexOf(":", colon + 1) >= 0 || !__allDigits(host.slice(colon + 1))) { return false; }
+          }
+          return true;
+        }
+        const __allDigits = (s: string): boolean => { for (let i = 0; i < s.length; i++) { if (s[i] < "0" || s[i] > "9") { return false; } } return true; };
+        function __fmtUri(s: string, requireScheme: boolean, allowUnicode: boolean): boolean {
+          if (requireScheme && !__hasScheme(s)) { return false; }
+          if (!__validUriPart(s, allowUnicode)) { return false; }
+          // If an authority is present ("//"), validate its structure.
+          const ds = s.indexOf("//");
+          if (ds >= 0 && (ds === 0 || s[ds - 1] === ":")) {
+            let end = s.length;
+            for (let i = ds + 2; i < s.length; i++) { const c = s[i]; if (c === "/" || c === "?" || c === "#") { end = i; break; } }
+            if (!__validAuthority(s.slice(ds + 2, end), allowUnicode)) { return false; }
+          }
+          return true;
+        }
+        function __fmtEmail(s: string, idn: boolean): boolean {
           const at = s.lastIndexOf("@");
           if (at < 1 || at >= s.length - 1) { return false; }
           const local = s.slice(0, at), domain = s.slice(at + 1);
           if (local.startsWith('"') && local.endsWith('"')) { if (local.length < 2) { return false; } }
-          else if (!__emailLocalRe.test(local)) { return false; }
-          if (domain.startsWith("[") && domain.endsWith("]")) {
-            const ip = domain.slice(1, -1);
-            return ip.startsWith("IPv6:") ? __fmtIpv6(ip.slice(5)) : __ipv4Re.test(ip);
+          else {
+            if (local.startsWith(".") || local.endsWith(".") || local.includes("..")) { return false; }
+            for (let i = 0; i < local.length; i++) {
+              const c = local[i];
+              if ((c >= "A" && c <= "Z") || (c >= "a" && c <= "z") || (c >= "0" && c <= "9") || "!#$%&'*+/=?^_`{|}~.-".indexOf(c) >= 0 || (idn && local.charCodeAt(i) > 127)) { continue; }
+              return false;
+            }
           }
-          return __hostnameRe.test(domain);
+          if (domain.startsWith("[") && domain.endsWith("]")) { const ip = domain.slice(1, -1); return ip.startsWith("IPv6:") ? __fmtIpv6(ip.slice(5)) : __ipv4Re.test(ip); }
+          return __fmtHostname(domain, idn);
         }
         function __fmtRegex(s: string): boolean { try { new RegExp(s, "u"); return true; } catch { return false; } }
         function __fmt(name: string, s: string): boolean {
@@ -171,15 +260,17 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
             case "date-time": return __fmtDateTime(s);
             case "time": return __fmtTime(s);
             case "duration": return __fmtDuration(s);
-            case "email": case "idn-email": return __fmtEmail(s);
-            case "hostname": case "idn-hostname": return __hostnameRe.test(s);
+            case "email": return __fmtEmail(s, false);
+            case "idn-email": return __fmtEmail(s, true);
+            case "hostname": return __fmtHostname(s, false);
+            case "idn-hostname": return __fmtHostname(s, true);
             case "ipv4": return __ipv4Re.test(s);
             case "ipv6": return __fmtIpv6(s);
             case "uuid": return __uuidRe.test(s);
-            case "uri": return __uriRe.test(s);
-            case "iri": return __iriRe.test(s);
-            case "uri-reference": return __uriRefRe.test(s);
-            case "iri-reference": return __iriRefRe.test(s);
+            case "uri": return __fmtUri(s, true, false);
+            case "iri": return __fmtUri(s, true, true);
+            case "uri-reference": return __fmtUri(s, false, false);
+            case "iri-reference": return __fmtUri(s, false, true);
             case "uri-template": return __uriTemplateRe.test(s);
             case "json-pointer": return __jsonPtrRe.test(s);
             case "relative-json-pointer": return __relJsonPtrRe.test(s);
