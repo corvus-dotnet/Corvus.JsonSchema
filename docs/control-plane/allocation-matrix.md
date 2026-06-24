@@ -99,8 +99,8 @@ that exists today (a starting point to be re-baselined, **not** evidence of comp
 
 | Op | Call tree | R/W | Current pattern / hotspots | Existing bench | Target pattern + grounding | Status |
 |---|---|---|---|---|---|---|
-| `GET /credentials` | ListCredentials → ListAsync | R | `ToSummary` per binding | `CredentialStoreReadBenchmarks` (ResolveForUsage) | confirm summary projection | ✅ per-field `Models.JsonString.From()` bytes bridge + `TransferOwnershipTo` (FIX #1, Part D); `credentialStatus`/`usageGrants` genuine floors |
-| `POST /credentials` | CreateCredential → **AddAsync** | W | `List<SecretReferenceDefinition>`, `List<SecurityTag>`, record `SourceCredentialDefinition`, `with { }` tag stamp | `SourceCredentialStoreBenchmarks` (record vs draft) | `SourceCredentialBinding.Draft(...)` + store stamps; `SecretRef.IsWellFormed(ReadOnlySpan<byte>)` 0-B validation; `corvus-typed-model-construction`, `corvus-builder-context-threading`, `corvus-bytes-to-bytes`; §13.4.1 | ✅ **2.35→1.64 KB (Part D)** |
+| `GET /credentials` | ListCredentials → ListAsync | R | `ToSummary` per binding | `CredentialSummaryProjectionBenchmarks` | confirm summary projection | ✅ per-field `Models.JsonString.From()` bytes bridge + `TransferOwnershipTo` (FIX #1, Part D); usage now a resolved `usageGrantee` (identity described + kind/label via UTF-8 leases, mirrors `AdministratorGrant`) — security-UI slice 2, Part D |
+| `POST /credentials` | CreateCredential → **AddAsync** | W | `List<SecretReferenceDefinition>`, `List<SecurityTag>`, record `SourceCredentialDefinition`, `with { }` tag stamp | `SourceCredentialStoreBenchmarks` (record vs draft) | `SourceCredentialBinding.Draft(...)` + store stamps; `SecretRef.IsWellFormed(ReadOnlySpan<byte>)` 0-B validation; `corvus-typed-model-construction`, `corvus-builder-context-threading`, `corvus-bytes-to-bytes`; §13.4.1 | ✅ **2.35→1.64 KB (Part D)**; usage now a resolved `usageGrantee` (kind/label persisted on the binding) — security-UI slice 2 |
 | `GET /credentials/{s}/{e}` | GetCredential → GetAsync | R | `ToSummary` | — | confirm projection | ✅ shares `ToSummary` bytes bridge + `TakeOwnership` (FIX #1, Part D) |
 | `PUT /credentials/{s}/{e}` | UpdateCredential → **UpdateAsync** | W | as create (record seam) | shares the create seam (not separately benched) | as create (draft seam) | ✅ converted with POST (Part D) |
 | `DELETE /credentials/{s}/{e}` | DeleteCredential → DeleteAsync | W | minimal | — | — | ➖ |
@@ -1270,6 +1270,33 @@ label?}`; removal is `DELETE …/members/{digest}` (was `…/{dimension}/{value}
 **Verified:** all 10 `IWorkflowAdministratorStore` admin-conformance suites green (InMemory + Sqlite in-process;
 Postgres/MySql/SqlServer/Mongo/Redis/AzureStorage/NatsJetStream/Cosmos against real podman containers) + catalog-level
 admin tests + server admin-API tests + approval-service tests (47 in-process). **Row done.**
+
+### ✅ Credential usage = resolved grantee — `usageGrantee` mirroring `AdministratorGrant` (security-UI slice 2)
+
+Applied the resolved-identity model to credential **usage** (§13/§16.5.4): the credential binding's usage is now one
+resolved grantee, not a flat `{dimension,value}` grant list. `CredentialBindingWrite`/`CredentialBindingSummary` carry a
+single **`usageGrantee`** = `CredentialUsageGrantee {identity:[{dimension,value}], kind?, label?}` (mirrors
+`AdministratorGrant`; **no digest** — credential usage has no per-grantee removal key, the binding is keyed by
+source+environment). The persisted `SourceCredentialBinding` keeps its resolved `usageTags` (the `IsUsableBy`
+label-superset identity) and gains `usageKind`/`usageLabel`, threaded through `Draft`/`WriteNew`/`WriteUpdated`
+(carry-forward on update — never dropped, per the catalog-drop lesson). Usage stays AND-matched, so a multi-tag grantee
+(e.g. a person) scopes precisely; multiple grantees = multiple bindings (the existing OR-across-bindings model).
+
+- **Handler.** Create reads `body.UsageGrantee` (its identity → `ResolveUsageGrantInto` → `usageTags`; kind/label →
+  persisted). Summary projects `usageGrantee` bytes-native: the identity described back via `TryDescribeUsageGrant`, kind/
+  label carried as UTF-8 leases (the admin `AdministratorGrant` pattern). **NRE-guard lesson:** an absent optional
+  *complex* property is a `default` value whose nested-array accessor (`get_Identity`) derefs a null `_parent` and NREs
+  (unlike scalar accessors, and unlike `IsNotUndefined()`, which returns true for the default since `TokenType.None`'s
+  `ValueKind` is not `Undefined`); gate on `usageGrantee.ValueKind == JsonValueKind.Object` (null-safe via `TokenType`)
+  before touching `.Identity`/`.Kind`/`.Label`. `JsonValueKind` here is CTJ's, not `System.Text.Json`'s.
+- **Measured** (`CredentialSummaryProjectionBenchmarks`, 10 bindings, InProcessEmit arm — the Default toolchain `NA`'d on
+  a BenchmarkDotNet parallel-boilerplate-build flake in this sandbox; `MemoryDiagnoser` allocations are authoritative on
+  the InProcess arm): `PerItemClosure` **30.52 KB** → `ContextThreaded` (shipped, incl. the new `usageGrantee` + kind/
+  label leases) **23.48 KB** (**−23%**) — mechanism-clean (no per-item closures); residual = the genuine response-document
+  bytes (secretRefs/config/managementTags/usageGrantee per binding).
+- **Verified:** server credential-API tests (create→summary round-trips `usageGrantee` incl. kind/label) + CLI credential
+  test + in-process conformance (InMemory + Sqlite 13/13) + the 8 container credential-store conformance suites; web 63
+  node + 108 component + 4 smoke (dialog → grantee picker, table → shared grantee chip). slnx 0/0. **Row done.**
 
 ## Cross-references
 
