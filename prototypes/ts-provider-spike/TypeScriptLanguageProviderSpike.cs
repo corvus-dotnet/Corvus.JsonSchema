@@ -1,36 +1,28 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using System.Text.Json;
 using Corvus.Json.CodeGeneration;
 
 namespace TsProviderSpike;
 
-// Feasibility spike #3: emit validators through the CORE handler-composition framework, so that
-// user/third-party extensions plug in via RegisterValidationHandlers (the extensibility seam the C#
-// provider, OpenApi and AsyncApi all use) — not a hard-coded walk-the-model emitter.
+// Phase 0 provider: idiomatic type surface (real names + built-in scalar mapping + property
+// type-references + named enum unions) on top of registry-driven, extensible validators (§13.13).
 //
-// Dispatch is the REAL core registry: KeywordValidationHandlerRegistry.RegisterValidationHandlers /
-// TryGetHandlersFor, keyed on IKeywordValidationHandler.HandlesKeyword + ValidationHandlerPriority.
-// Each handler additionally implements ITsKeywordEmitter to emit TS. For each type, the validator
-// body is composed purely from the handlers the registry dispatches for that type's keywords.
+// Emission per type: objects -> `interface`; enums -> `type X = a | b`; scalars/arrays -> no type
+// declaration (referenced inline as the primitive / element type). EVERY type still gets an
+// `evaluate{Name}` validator composed from the core handler registry, so recursion always resolves.
 public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvider
 {
-    private const string TsNameKey = "Ts_TypeName";
     private const string TsFinalKey = "Ts_FinalName";
 
     private readonly KeywordValidationHandlerRegistry validationHandlers = new();
 
-    // The default provider registers the BASE handler set. Note multipleOf is intentionally NOT here
-    // — it is registered later as an extension (see Program), to prove the registry-driven seam.
     public static TypeScriptLanguageProviderSpike CreateDefault()
     {
         var p = new TypeScriptLanguageProviderSpike();
         p.RegisterValidationHandlers(
-            new TsTypeHandler(),
-            new TsPropertiesHandler(),
-            new TsStringLengthHandler(),
-            new TsNumberRangeHandler(),
-            new TsPatternHandler(),
-            new TsEnumHandler());
+            new TsTypeHandler(), new TsPropertiesHandler(), new TsStringLengthHandler(),
+            new TsNumberRangeHandler(), new TsPatternHandler(), new TsEnumHandler());
         return p;
     }
 
@@ -63,29 +55,35 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
 
     public void SetNamesBeforeSubschema(TypeDeclaration typeDeclaration, string fallbackName, CancellationToken cancellationToken)
     {
-        if (!typeDeclaration.TryGetMetadata<string>(TsNameKey, out string? existing) || string.IsNullOrEmpty(existing))
-        {
-            typeDeclaration.SetMetadata(TsNameKey, Sanitize(fallbackName));
-        }
     }
 
     public void SetNamesAfterSubschema(TypeDeclaration typeDeclaration, IEnumerable<TypeDeclaration> existingTypeDeclarations, CancellationToken cancellationToken)
     {
-        if (!typeDeclaration.TryGetMetadata<string>(TsNameKey, out string? existing) || string.IsNullOrEmpty(existing))
-        {
-            typeDeclaration.SetMetadata(TsNameKey, "GeneratedType");
-        }
     }
 
     public IReadOnlyCollection<GeneratedCodeFile> GenerateCodeFor(IEnumerable<TypeDeclaration> typeDeclarations, CancellationToken cancellationToken)
     {
         List<TypeDeclaration> types = typeDeclarations.ToList();
 
-        // Pass 1: assign final, unique TS names so cross-references resolve.
+        // Pass 0: a minimal name heuristic — a type is named after its `title`, else the property it
+        // is the value of, else a generic fallback.
+        var propertyName = new Dictionary<TypeDeclaration, string>();
+        foreach (TypeDeclaration td in types)
+        {
+            foreach (PropertyDeclaration p in td.PropertyDeclarations)
+            {
+                if (!propertyName.ContainsKey(p.ReducedPropertyType))
+                {
+                    propertyName[p.ReducedPropertyType] = p.JsonPropertyName;
+                }
+            }
+        }
+
+        // Pass 1: assign final, unique TS names.
         var used = new HashSet<string>(StringComparer.Ordinal);
         foreach (TypeDeclaration td in types)
         {
-            string baseName = td.TryGetMetadata<string>(TsNameKey, out string? n) && !string.IsNullOrEmpty(n) ? n! : "GeneratedType";
+            string baseName = Title(td) ?? (propertyName.TryGetValue(td, out string? pn) ? Pascal(pn) : "Entity");
             string name = baseName;
             int suffix = 2;
             while (!used.Add(name))
@@ -96,20 +94,29 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
             td.SetMetadata(TsFinalKey, name);
         }
 
-        // Pass 2: emit interface + registry-composed validator per type.
+        // Pass 2: emit the type surface + validators.
         var sb = new StringBuilder();
-        sb.Append("// AUTO-GENERATED: interfaces + validators composed from registered handlers.\n\n");
+        sb.Append("// AUTO-GENERATED: idiomatic TS types + registry-composed validators.\n\n");
         foreach (TypeDeclaration td in types)
         {
-            EmitInterface(sb, td);
+            if (IsObject(td))
+            {
+                EmitInterface(sb, td);
+            }
+            else if (IsEnum(td))
+            {
+                EmitEnumAlias(sb, td);
+            }
+
             EmitValidator(sb, td);
         }
 
         return new[] { new GeneratedCodeFile("generated.ts", sb.ToString()) };
     }
 
+    // ---- type surface ----
     private static string FinalName(TypeDeclaration td)
-        => td.TryGetMetadata<string>(TsFinalKey, out string? n) && !string.IsNullOrEmpty(n) ? n! : "GeneratedType";
+        => td.TryGetMetadata<string>(TsFinalKey, out string? n) && !string.IsNullOrEmpty(n) ? n! : "Entity";
 
     private static void EmitInterface(StringBuilder sb, TypeDeclaration td)
     {
@@ -117,19 +124,167 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
         foreach (PropertyDeclaration p in td.PropertyDeclarations)
         {
             string opt = p.RequiredOrOptional == RequiredOrOptional.Optional ? "?" : string.Empty;
-            sb.Append("  readonly ").Append(TsEmit.Str(p.JsonPropertyName)).Append(opt).Append(": unknown;\n");
+            sb.Append("  readonly ").Append(Ident(p.JsonPropertyName)).Append(opt).Append(": ").Append(TsTypeRef(p.ReducedPropertyType)).Append(";\n");
         }
 
         sb.Append("}\n\n");
     }
 
-    // The validator body is composed entirely from handlers the core registry dispatches for this
-    // type's keywords, ordered by ValidationHandlerPriority. Registering an extra handler (e.g. the
-    // multipleOf extension) adds a step here without any change to this method.
+    private static void EmitEnumAlias(StringBuilder sb, TypeDeclaration td)
+    {
+        if (td.LocatedSchema.Schema.TryGetProperty("enum", out JsonElement en) && en.ValueKind == JsonValueKind.Array)
+        {
+            var members = new List<string>();
+            foreach (JsonElement m in en.EnumerateArray())
+            {
+                members.Add(m.GetRawText());
+            }
+
+            sb.Append("export type ").Append(FinalName(td)).Append(" = ").Append(string.Join(" | ", members)).Append(";\n\n");
+        }
+    }
+
+    // The TS type reference for a (property) type: enum/object -> its name; const -> literal; array ->
+    // readonly T[] (element typing is Phase 1); scalar -> primitive; else unknown.
+    private static string TsTypeRef(TypeDeclaration td)
+    {
+        if (IsEnum(td))
+        {
+            return FinalName(td);
+        }
+
+        if (TryConstLiteral(td, out string? lit))
+        {
+            return lit!;
+        }
+
+        if (IsObject(td))
+        {
+            return FinalName(td);
+        }
+
+        List<string> kinds = SchemaTypes(td);
+        if (kinds.Contains("array"))
+        {
+            return "readonly unknown[]";
+        }
+
+        var prims = new List<string>();
+        foreach (string k in kinds)
+        {
+            string? p = Prim(k);
+            if (p is not null && !prims.Contains(p))
+            {
+                prims.Add(p);
+            }
+        }
+
+        return prims.Count > 0 ? string.Join(" | ", prims) : "unknown";
+    }
+
+    // Emit a property name unquoted when it is a valid TS identifier, quoted otherwise.
+    private static string Ident(string name)
+    {
+        if (name.Length == 0)
+        {
+            return TsEmit.Str(name);
+        }
+
+        char c0 = name[0];
+        if (!(char.IsLetter(c0) || c0 == '_' || c0 == '$'))
+        {
+            return TsEmit.Str(name);
+        }
+
+        foreach (char c in name)
+        {
+            if (!(char.IsLetterOrDigit(c) || c == '_' || c == '$'))
+            {
+                return TsEmit.Str(name);
+            }
+        }
+
+        return name;
+    }
+
+    private static string? Prim(string t) => t switch
+    {
+        "string" => "string",
+        "number" or "integer" => "number",
+        "boolean" => "boolean",
+        "null" => "null",
+        _ => null,
+    };
+
+    private static bool IsObject(TypeDeclaration td)
+    {
+        JsonElement s = td.LocatedSchema.Schema;
+        if (s.ValueKind == JsonValueKind.Object && s.TryGetProperty("properties", out _))
+        {
+            return true;
+        }
+
+        return SchemaTypes(td).Contains("object");
+    }
+
+    private static bool IsEnum(TypeDeclaration td)
+        => td.LocatedSchema.Schema.ValueKind == JsonValueKind.Object && td.LocatedSchema.Schema.TryGetProperty("enum", out _);
+
+    private static bool TryConstLiteral(TypeDeclaration td, out string? literal)
+    {
+        literal = null;
+        JsonElement s = td.LocatedSchema.Schema;
+        if (s.ValueKind == JsonValueKind.Object && s.TryGetProperty("const", out JsonElement c) &&
+            c.ValueKind is JsonValueKind.String or JsonValueKind.Number or JsonValueKind.True or JsonValueKind.False or JsonValueKind.Null)
+        {
+            literal = c.GetRawText();
+            return true;
+        }
+
+        return false;
+    }
+
+    private static List<string> SchemaTypes(TypeDeclaration td)
+    {
+        var r = new List<string>();
+        JsonElement s = td.LocatedSchema.Schema;
+        if (s.ValueKind == JsonValueKind.Object && s.TryGetProperty("type", out JsonElement t))
+        {
+            if (t.ValueKind == JsonValueKind.String)
+            {
+                r.Add(t.GetString()!);
+            }
+            else if (t.ValueKind == JsonValueKind.Array)
+            {
+                foreach (JsonElement i in t.EnumerateArray())
+                {
+                    if (i.ValueKind == JsonValueKind.String)
+                    {
+                        r.Add(i.GetString()!);
+                    }
+                }
+            }
+        }
+
+        return r;
+    }
+
+    private static string? Title(TypeDeclaration td)
+    {
+        JsonElement s = td.LocatedSchema.Schema;
+        if (s.ValueKind == JsonValueKind.Object && s.TryGetProperty("title", out JsonElement t) && t.ValueKind == JsonValueKind.String)
+        {
+            string p = Pascal(t.GetString()!);
+            return p.Length > 0 ? p : null;
+        }
+
+        return null;
+    }
+
+    // ---- validators: composed from the core handler registry (§13.13) ----
     private void EmitValidator(StringBuilder sb, TypeDeclaration td)
     {
         sb.Append("export function evaluate").Append(FinalName(td)).Append("(value: unknown): boolean {\n");
-
         var steps = new List<(uint Priority, ITsKeywordEmitter Emitter, IKeyword Keyword)>();
         foreach (IKeyword keyword in td.Keywords())
         {
@@ -153,11 +308,11 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
         sb.Append("  return true;\n}\n\n");
     }
 
-    private static string Sanitize(string value)
+    private static string Pascal(string value)
     {
         if (string.IsNullOrEmpty(value))
         {
-            return "GeneratedType";
+            return string.Empty;
         }
 
         var sb = new StringBuilder();
@@ -175,12 +330,7 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
             }
         }
 
-        if (sb.Length == 0)
-        {
-            return "GeneratedType";
-        }
-
-        if (char.IsDigit(sb[0]))
+        if (sb.Length > 0 && char.IsDigit(sb[0]))
         {
             sb.Insert(0, '_');
         }
