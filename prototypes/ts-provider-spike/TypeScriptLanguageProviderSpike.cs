@@ -21,7 +21,7 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
     {
         var p = new TypeScriptLanguageProviderSpike();
         p.RegisterValidationHandlers(
-            new TsTypeHandler(), new TsPropertiesHandler(), new TsStringLengthHandler(),
+            new TsTypeHandler(), new TsPropertiesHandler(), new TsRequiredHandler(), new TsStringLengthHandler(),
             new TsNumberRangeHandler(), new TsPatternHandler(), new TsEnumHandler());
         return p;
     }
@@ -137,10 +137,19 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
             var members = new List<string>();
             foreach (JsonElement m in en.EnumerateArray())
             {
-                members.Add(m.GetRawText());
+                // scalar enum values are literal types; object/array values can't be a literal TS type,
+                // so widen to `unknown` (the validator still enforces exact deep-equal membership).
+                string member = m.ValueKind is JsonValueKind.String or JsonValueKind.Number or JsonValueKind.True or JsonValueKind.False or JsonValueKind.Null
+                    ? m.GetRawText()
+                    : "unknown";
+                if (!members.Contains(member))
+                {
+                    members.Add(member);
+                }
             }
 
-            sb.Append("export type ").Append(FinalName(td)).Append(" = ").Append(string.Join(" | ", members)).Append(";\n\n");
+            // an empty enum matches nothing -> `never` (an empty union is a syntax error)
+            sb.Append("export type ").Append(FinalName(td)).Append(" = ").Append(members.Count > 0 ? string.Join(" | ", members) : "never").Append(";\n\n");
         }
     }
 

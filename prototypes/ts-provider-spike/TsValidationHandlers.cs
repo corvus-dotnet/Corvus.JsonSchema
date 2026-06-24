@@ -14,7 +14,9 @@ internal interface ITsKeywordEmitter
 
 internal static class TsEmit
 {
-    public static string Str(string name) => "\"" + name.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
+    // A correctly-escaped JS/TS string literal (handles control chars, quotes, backslashes, non-ASCII)
+    // — a JSON string literal is a valid JS string literal.
+    public static string Str(string name) => JsonSerializer.Serialize(name);
 
     public static List<string> ReadTypes(JsonElement typeValue)
     {
@@ -69,9 +71,9 @@ internal sealed class TsStringLengthHandler : IKeywordValidationHandler, ITsKeyw
 
     public void Emit(StringBuilder sb, TypeDeclaration td, IKeyword keyword)
     {
-        if (!td.TryGetKeyword(keyword, out JsonElement val) || !val.TryGetInt32(out int n)) { return; }
+        if (!td.TryGetKeyword(keyword, out JsonElement val) || val.ValueKind != JsonValueKind.Number) { return; }
         string op = keyword.Keyword == "minLength" ? "<" : ">";
-        sb.Append("  if (typeof value === \"string\" && [...value].length ").Append(op).Append(' ').Append(n).Append(") { return false; }\n");
+        sb.Append("  if (typeof value === \"string\" && [...value].length ").Append(op).Append(' ').Append(val.GetRawText()).Append(") { return false; }\n");
     }
 }
 
@@ -114,7 +116,7 @@ internal sealed class TsEnumHandler : IKeywordValidationHandler, ITsKeywordEmitt
     {
         if (td.TryGetKeyword(keyword, out JsonElement val) && val.ValueKind == JsonValueKind.Array)
         {
-            sb.Append("  { const allowed = ").Append(val.GetRawText()).Append("; if (!allowed.some((a) => JSON.stringify(a) === JSON.stringify(value))) { return false; } }\n");
+            sb.Append("  { const allowed: readonly unknown[] = ").Append(val.GetRawText()).Append("; if (!allowed.some((a) => JSON.stringify(a) === JSON.stringify(value))) { return false; } }\n");
         }
     }
 }
@@ -133,16 +135,49 @@ internal sealed class TsPropertiesHandler : IKeywordValidationHandler, ITsKeywor
         foreach (PropertyDeclaration p in td.PropertyDeclarations)
         {
             string key = TsEmit.Str(p.JsonPropertyName);
-            bool required = p.RequiredOrOptional is RequiredOrOptional.Required or RequiredOrOptional.ComposedRequired;
-            if (required)
-            {
-                sb.Append("    if (!(").Append(key).Append(" in o)) { return false; }\n");
-            }
-
             if (p.ReducedPropertyType.TryGetMetadata<string>("Ts_FinalName", out string? pn) && !string.IsNullOrEmpty(pn))
             {
-                sb.Append("    if (").Append(key).Append(" in o && !evaluate").Append(pn).Append("(o[").Append(key).Append("])) { return false; }\n");
+                sb.Append("    if (Object.prototype.hasOwnProperty.call(o, ").Append(key).Append(") && !evaluate").Append(pn).Append("(o[").Append(key).Append("])) { return false; }\n");
             }
+        }
+
+        sb.Append("  }\n");
+    }
+}
+
+// `required` as its own handler (independent of `properties`) — reads the required array directly,
+// so a schema with `required` but no `properties` still enforces presence.
+internal sealed class TsRequiredHandler : IKeywordValidationHandler, ITsKeywordEmitter
+{
+    public uint ValidationHandlerPriority => 700;
+
+    public bool HandlesKeyword(IKeyword keyword) => keyword.Keyword == "required";
+
+    public void Emit(StringBuilder sb, TypeDeclaration td, IKeyword keyword)
+    {
+        if (!td.TryGetKeyword(keyword, out JsonElement val) || val.ValueKind != JsonValueKind.Array)
+        {
+            return;
+        }
+
+        var names = new List<string>();
+        foreach (JsonElement n in val.EnumerateArray())
+        {
+            if (n.ValueKind == JsonValueKind.String)
+            {
+                names.Add(n.GetString()!);
+            }
+        }
+
+        if (names.Count == 0)
+        {
+            return;
+        }
+
+        sb.Append("  if (typeof value === \"object\" && value !== null && !Array.isArray(value)) {\n");
+        foreach (string name in names)
+        {
+            sb.Append("    if (!Object.prototype.hasOwnProperty.call(value, ").Append(TsEmit.Str(name)).Append(")) { return false; }\n");
         }
 
         sb.Append("  }\n");
