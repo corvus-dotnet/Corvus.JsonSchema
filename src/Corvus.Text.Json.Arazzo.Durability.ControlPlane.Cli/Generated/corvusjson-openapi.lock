@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-06-24T10:51:49.5003527\u002B00:00",
+  "generatedAt": "2026-06-24T16:36:46.3507410\u002B00:00",
   "generatedFiles": [
     "ListRunsRequest.cs",
     "ListRunsResponse.cs",
@@ -46,6 +46,8 @@
     "StartCatalogWorkflowRunResponse.cs",
     "GetCatalogSourceRequest.cs",
     "GetCatalogSourceResponse.cs",
+    "ListSecurityOrderingsRequest.cs",
+    "ListSecurityOrderingsResponse.cs",
     "ListSecurityRulesRequest.cs",
     "ListSecurityRulesResponse.cs",
     "CreateSecurityRuleRequest.cs",
@@ -392,6 +394,18 @@
     "Models/SecurityBindingWrite.ResolutionOrderAscending.cs",
     "Models/SecurityBindingWrite.ResolutionOrderAscending.Mutable.cs",
     "Models/SecurityBindingWrite.ResolutionOrderAscending.JsonSchema.cs",
+    "Models/SecurityOrdering.cs",
+    "Models/SecurityOrdering.Mutable.cs",
+    "Models/SecurityOrdering.JsonSchema.cs",
+    "Models/SecurityOrdering.JsonStringArray.cs",
+    "Models/SecurityOrdering.JsonStringArray.Mutable.cs",
+    "Models/SecurityOrdering.JsonStringArray.JsonSchema.cs",
+    "Models/SecurityOrderingList.cs",
+    "Models/SecurityOrderingList.Mutable.cs",
+    "Models/SecurityOrderingList.JsonSchema.cs",
+    "Models/SecurityOrderingList.SecurityOrderingArray.cs",
+    "Models/SecurityOrderingList.SecurityOrderingArray.Mutable.cs",
+    "Models/SecurityOrderingList.SecurityOrderingArray.JsonSchema.cs",
     "Models/SecurityRuleCreate.cs",
     "Models/SecurityRuleCreate.Mutable.cs",
     "Models/SecurityRuleCreate.JsonSchema.cs",
@@ -511,9 +525,9 @@
     "Models/GetIdentityGranteesSource.JsonSchema.cs",
     "Models/Corvus__GlobalDeclarations.cs"
   ],
-  "generatorVersion": "1.0.0\u002B40285ae6770d45a678399353e20e7aee109e1434",
+  "generatorVersion": "1.0.0\u002Bc055ef55d67e5304428eeae1ffc1e04a6af5e716",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
-  "specFileHash": "d1dcfd9d18538419e94696fe326a6f3bc656982e67ac7ffe08b4f7528eb54f08",
+  "specFileHash": "f775f3508e0abdc40e299a3c33871c0e22ceda6d1beef5e389cb33651c1cbdbe",
   "specVersion": "3.2"
 }

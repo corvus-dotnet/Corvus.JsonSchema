@@ -6,6 +6,8 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using Corvus.Runtime.InteropServices;
+using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.AspNetCore.Authentication;
@@ -138,6 +140,41 @@ public sealed class ControlPlaneSecurityApiTests
 
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)
         => Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+
+    [TestMethod]
+    public async Task The_orderings_endpoint_projects_the_configured_orderings_and_is_empty_without_a_policy()
+    {
+        var store = new InMemorySecurityPolicyStore();
+        var orderings = new SecurityLabelOrderings(new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal)
+        {
+            ["classification"] = ["public", "internal", "confidential", "restricted"],
+        });
+        var handler = new ArazzoControlPlaneSecurityHandler(store, new PersistentRowSecurityPolicy(store, orderings: orderings));
+
+        using (JsonWorkspace workspace = JsonWorkspace.Create())
+        {
+            ListSecurityOrderingsResult result = await handler.HandleListSecurityOrderingsAsync(default, workspace);
+            result.StatusCode.ShouldBe(200);
+            using Stj.JsonDocument doc = ReadResultBody(result);
+            Stj.JsonElement classification = doc.RootElement.GetProperty("orderings").EnumerateArray()
+                .Single(o => o.GetProperty("dimension").GetString() == "classification");
+            classification.GetProperty("labels").EnumerateArray().Select(l => l.GetString())
+                .ShouldBe(["public", "internal", "confidential", "restricted"]);
+        }
+
+        // With no policy (the ScopesOnly/Open posture) there are no orderings — an empty list, never a null.
+        var unconfigured = new ArazzoControlPlaneSecurityHandler(store);
+        using (JsonWorkspace workspace = JsonWorkspace.Create())
+        {
+            ListSecurityOrderingsResult result = await unconfigured.HandleListSecurityOrderingsAsync(default, workspace);
+            using Stj.JsonDocument doc = ReadResultBody(result);
+            doc.RootElement.GetProperty("orderings").GetArrayLength().ShouldBe(0);
+        }
+    }
+
+    // Reads a result's CTJ body as UTF-8 and re-parses it with System.Text.Json so the test asserts over the wire shape.
+    private static Stj.JsonDocument ReadResultBody(ListSecurityOrderingsResult result)
+        => Stj.JsonDocument.Parse(JsonMarshal.GetRawUtf8Value(result.Body).Memory);
 
     private static async Task<Scoped> StartAsync()
     {
