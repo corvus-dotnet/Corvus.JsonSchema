@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Doc",
+  "type": "object",
+  "properties": {
+    "name": { "type": "string" },
+    "age": { "type": "integer" },
+    "address": { "type": "object", "properties": { "city": { "type": "string" } }, "required": ["city"] },
+    "tags": { "type": "array", "items": { "type": "string" } }
+  },
+  "required": ["name", "address", "tags"]
+}
