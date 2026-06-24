@@ -68,6 +68,11 @@ public sealed class SqlSecurityRuleEmitter : ISecurityRuleSqlEmitter
         => $"EXISTS (SELECT 1 FROM {this.tagTable} st WHERE {this.CorrelateOuter("st")} AND st.{this.keyColumn} = {keyPlaceholder} AND st.{this.valueColumn} IN ({string.Join(", ", valuePlaceholders)}))";
 
     /// <inheritdoc/>
+    public string ExistsTagAllValuesIn(string keyPlaceholder, IReadOnlyList<string> valuePlaceholders)
+        => $"(EXISTS (SELECT 1 FROM {this.tagTable} st WHERE {this.CorrelateOuter("st")} AND st.{this.keyColumn} = {keyPlaceholder}) " +
+           $"AND NOT EXISTS (SELECT 1 FROM {this.tagTable} st WHERE {this.CorrelateOuter("st")} AND st.{this.keyColumn} = {keyPlaceholder} AND st.{this.valueColumn} NOT IN ({string.Join(", ", valuePlaceholders)})))";
+
+    /// <inheritdoc/>
     public string ExistsAllTagsCovered(IReadOnlyList<(string KeyPlaceholder, IReadOnlyList<string> ValuePlaceholders)> claimEntries)
     {
         // No claims → no tag can be covered, so "no uncovered tag" reduces to "the row has no tag at all".

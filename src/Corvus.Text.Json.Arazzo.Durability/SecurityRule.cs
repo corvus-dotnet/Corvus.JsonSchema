@@ -30,11 +30,25 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// Comparison is ordinal (case-sensitive).
 /// </para>
 /// <para>
+/// Two further templates cover the common tag-based constructs (design §14.2):
+/// </para>
+/// <list type="bullet">
+/// <item><b>Set membership</b> — <c>tenant in ('acme', 'globex')</c> is "the row carries a <c>tenant</c> label whose
+/// value is one of the listed literals" (the multi-valued sugar for an <c>||</c> of equalities; negate with <c>!</c>).</item>
+/// <item><b>Ordered comparison</b> — <c>classification &lt;= 'confidential'</c> (and <c>&lt;</c>/<c>&gt;</c>/<c>&gt;=</c>)
+/// ranks the row's <c>classification</c> labels against a configured ascending ordering (a
+/// <see cref="SecurityLabelOrderings"/> captured at <see cref="Compile(string, SecurityLabelOrderings)"/>). The left
+/// side is the ordered <b>dimension</b>; the right side is a literal or <c>$claim</c> bound. Multi-value is
+/// <em>conservative</em>: every row value for the dimension must satisfy the bound, where a multi-valued bound takes
+/// its most permissive rank for the principal (the highest for an upper bound, the lowest for a lower bound). An
+/// <b>unranked</b> row value, an <b>unordered</b> dimension, or a bound with no ranked value <b>denies</b> (fail-closed).</item>
+/// </list>
+/// <para>
 /// <b>Evaluation is bytes-to-bytes (design §14.2 / §16.5.4).</b> A row's tags arrive as a deferred
 /// <see cref="SecurityTagSet"/> holder (unescaped UTF-8); the row tags are parsed <b>once</b> into a pooled scratch
 /// buffer + slice table (the <see cref="SecurityTagSpanSort"/> core) and every operand/claims comparison runs on the
 /// unescaped UTF-8 spans. The rule's literal/tag-key operand values are encoded to UTF-8 once at
-/// <see cref="Compile"/>, and the principal's claims once per request (<see cref="Utf8ClaimSet"/>), so a list/search
+/// <see cref="Compile(string, SecurityLabelOrderings)"/>, and the principal's claims once per request (<see cref="Utf8ClaimSet"/>), so a list/search
 /// scan evaluates each candidate row without materialising a single managed <see cref="SecurityTag"/> string or
 /// <see cref="List{T}"/>. Ordinal UTF-8 byte equality is exactly the ordinal string equality of the same code points.
 /// </para>
@@ -49,6 +63,32 @@ public sealed class SecurityRule
     {
         Equal,
         NotEqual,
+    }
+
+    private enum ComparisonToken
+    {
+        None,
+        Equal,
+        NotEqual,
+        LessThan,
+        LessThanOrEqual,
+        GreaterThan,
+        GreaterThanOrEqual,
+    }
+
+    private enum RankComparison
+    {
+        /// <summary><c>&lt;</c> — every row value's rank is strictly below the bound.</summary>
+        LessThan,
+
+        /// <summary><c>&lt;=</c> — every row value's rank is at or below the bound.</summary>
+        LessThanOrEqual,
+
+        /// <summary><c>&gt;</c> — every row value's rank is strictly above the bound.</summary>
+        GreaterThan,
+
+        /// <summary><c>&gt;=</c> — every row value's rank is at or above the bound.</summary>
+        GreaterThanOrEqual,
     }
 
     private enum OperandKind
@@ -75,14 +115,24 @@ public sealed class SecurityRule
         Intersects,
     }
 
-    /// <summary>Compiles a rule expression. Parse once; evaluate many times.</summary>
+    /// <summary>Compiles a rule expression with no configured label orderings (every ordered comparison denies). Parse once; evaluate many times.</summary>
     /// <param name="rule">The rule expression.</param>
     /// <returns>The compiled rule.</returns>
     /// <exception cref="FormatException">The expression is malformed.</exception>
-    public static SecurityRule Compile(string rule)
+    public static SecurityRule Compile(string rule) => Compile(rule, SecurityLabelOrderings.Empty);
+
+    /// <summary>Compiles a rule expression, baking in the deployment's <paramref name="orderings"/> so each ordered
+    /// comparison (<c>&lt;</c>/<c>&lt;=</c>/<c>&gt;</c>/<c>&gt;=</c>) resolves a label to its rank without threading the
+    /// orderings through evaluation or SQL translation. Parse once; evaluate many times.</summary>
+    /// <param name="rule">The rule expression.</param>
+    /// <param name="orderings">The ascending label ordering per ordered dimension (an unordered dimension makes an ordered comparison deny).</param>
+    /// <returns>The compiled rule.</returns>
+    /// <exception cref="FormatException">The expression is malformed.</exception>
+    public static SecurityRule Compile(string rule, SecurityLabelOrderings orderings)
     {
         ArgumentNullException.ThrowIfNull(rule);
-        var parser = new Parser(rule);
+        ArgumentNullException.ThrowIfNull(orderings);
+        var parser = new Parser(rule, orderings);
         Node node = parser.ParseExpression();
         parser.ExpectEnd();
         return new SecurityRule(node);
@@ -303,6 +353,20 @@ public sealed class SecurityRule
         return operand.IsLiteral || (claims.TryGetValues(operand.ValueUtf8, out byte[][] values) && values.Length > 0);
     }
 
+    // Whether a fixed UTF-8 value set (a literal list / a dimension's admissible labels) contains `value`.
+    private static bool ContainsUtf8(byte[][] set, ReadOnlySpan<byte> value)
+    {
+        foreach (byte[] candidate in set)
+        {
+            if (value.SequenceEqual(candidate))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private abstract class Node
     {
         public abstract bool Evaluate(RowTags rows, in Utf8ClaimSet claims);
@@ -394,6 +458,301 @@ public sealed class SecurityRule
             => operand.IsTagKey
                 ? emitter.ExistsTagKey(emitter.Parameter(operand.Value))
                 : (operand.ResolveKnown(claims).Count > 0 ? emitter.TrueLiteral : emitter.FalseLiteral);
+    }
+
+    // Set membership: `left in ('v1', 'v2', …)` — does left's value set intersect the fixed literal set? For a tag-key
+    // left it is the multi-valued sugar for an `||` of equalities (one EXISTS … IN (…) in SQL); for a query-time-known
+    // left (literal/claim) it is a constant membership test.
+    private sealed class InNode : Node
+    {
+        private readonly Operand left;
+        private readonly IReadOnlyList<string> values;
+        private readonly byte[][] valuesUtf8;
+
+        public InNode(Operand left, IReadOnlyList<string> values)
+        {
+            this.left = left;
+            this.values = values;
+            var encoded = new byte[values.Count][];
+            for (int i = 0; i < values.Count; i++)
+            {
+                encoded[i] = Encoding.UTF8.GetBytes(values[i]);
+            }
+
+            this.valuesUtf8 = encoded;
+        }
+
+        public override bool Evaluate(RowTags rows, in Utf8ClaimSet claims)
+        {
+            if (this.left.IsTagKey)
+            {
+                ReadOnlySpan<byte> key = this.left.ValueUtf8;
+                for (int i = 0; i < rows.Count; i++)
+                {
+                    if (rows.Key(i).SequenceEqual(key) && ContainsUtf8(this.valuesUtf8, rows.Value(i)))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            if (this.left.IsLiteral)
+            {
+                return ContainsUtf8(this.valuesUtf8, this.left.ValueUtf8);
+            }
+
+            // A claim left: any of the principal's values for the claim present in the literal set.
+            if (claims.TryGetValues(this.left.ValueUtf8, out byte[][] claimValues))
+            {
+                foreach (byte[] claimValue in claimValues)
+                {
+                    if (ContainsUtf8(this.valuesUtf8, claimValue))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        public override string ToSql(ISecurityRuleSqlEmitter emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
+        {
+            if (this.left.IsTagKey)
+            {
+                string keyPlaceholder = emitter.Parameter(this.left.Value);
+                var valuePlaceholders = new List<string>(this.values.Count);
+                foreach (string value in this.values)
+                {
+                    valuePlaceholders.Add(emitter.Parameter(value));
+                }
+
+                return emitter.ExistsTagValueIn(keyPlaceholder, valuePlaceholders);
+            }
+
+            // A query-time-known left: a constant membership test.
+            foreach (string resolved in this.left.ResolveKnown(claims))
+            {
+                foreach (string value in this.values)
+                {
+                    if (string.Equals(resolved, value, StringComparison.Ordinal))
+                    {
+                        return emitter.TrueLiteral;
+                    }
+                }
+            }
+
+            return emitter.FalseLiteral;
+        }
+    }
+
+    // Ordered comparison: `dimension <= bound` (and `<`/`>`/`>=`) over a configured ascending label ordering. The
+    // dimension's labels are ranked by their position in the ordering (captured at compile); the row is admitted only
+    // when the dimension is present and EVERY row value for it satisfies the bound (conservative multi-value), with an
+    // unranked row value / unordered dimension / unranked bound denying (fail-closed). In SQL this is exactly "the
+    // dimension is present AND every value lies in the admissible label set" (the labels whose rank meets the bound).
+    private sealed class OrderedComparisonNode : Node
+    {
+        private readonly string dimension;
+        private readonly byte[] dimensionUtf8;
+        private readonly RankComparison comparison;
+        private readonly Operand bound;
+        private readonly IReadOnlyList<string> ascending;
+        private readonly byte[][] ascendingUtf8;
+
+        public OrderedComparisonNode(string dimension, RankComparison comparison, Operand bound, IReadOnlyList<string> ascending)
+        {
+            this.dimension = dimension;
+            this.dimensionUtf8 = Encoding.UTF8.GetBytes(dimension);
+            this.comparison = comparison;
+            this.bound = bound;
+            this.ascending = ascending;
+            var encoded = new byte[ascending.Count][];
+            for (int i = 0; i < ascending.Count; i++)
+            {
+                encoded[i] = Encoding.UTF8.GetBytes(ascending[i]);
+            }
+
+            this.ascendingUtf8 = encoded;
+        }
+
+        private bool IsUpperBound => this.comparison is RankComparison.LessThan or RankComparison.LessThanOrEqual;
+
+        public override bool Evaluate(RowTags rows, in Utf8ClaimSet claims)
+        {
+            // An unordered dimension, or a bound that resolves to no ranked value, denies.
+            if (this.ascendingUtf8.Length == 0 || !this.TryResolveBound(in claims, out int boundRank))
+            {
+                return false;
+            }
+
+            int rowMin = int.MaxValue;
+            int rowMax = int.MinValue;
+            bool present = false;
+            ReadOnlySpan<byte> key = this.dimensionUtf8;
+            for (int i = 0; i < rows.Count; i++)
+            {
+                if (!rows.Key(i).SequenceEqual(key))
+                {
+                    continue;
+                }
+
+                int rank = this.RankOf(rows.Value(i));
+                if (rank < 0)
+                {
+                    // An unranked value the principal cannot reason about → deny (fail-closed).
+                    return false;
+                }
+
+                present = true;
+                if (rank < rowMin)
+                {
+                    rowMin = rank;
+                }
+
+                if (rank > rowMax)
+                {
+                    rowMax = rank;
+                }
+            }
+
+            if (!present)
+            {
+                // The dimension is absent: nothing to compare → deny (an unclassified row is never admitted by reach).
+                return false;
+            }
+
+            return this.comparison switch
+            {
+                RankComparison.LessThanOrEqual => rowMax <= boundRank,
+                RankComparison.LessThan => rowMax < boundRank,
+                RankComparison.GreaterThanOrEqual => rowMin >= boundRank,
+                RankComparison.GreaterThan => rowMin > boundRank,
+                _ => false,
+            };
+        }
+
+        public override string ToSql(ISecurityRuleSqlEmitter emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
+        {
+            if (this.ascendingUtf8.Length == 0 || !this.TryResolveBound(claims, out int boundRank))
+            {
+                return emitter.FalseLiteral;
+            }
+
+            // The admissible label set is the contiguous slice of the ordering whose rank meets the bound.
+            int lo;
+            int hi;
+            switch (this.comparison)
+            {
+                case RankComparison.LessThanOrEqual: lo = 0; hi = boundRank; break;
+                case RankComparison.LessThan: lo = 0; hi = boundRank - 1; break;
+                case RankComparison.GreaterThanOrEqual: lo = boundRank; hi = this.ascending.Count - 1; break;
+                case RankComparison.GreaterThan: lo = boundRank + 1; hi = this.ascending.Count - 1; break;
+                default: return emitter.FalseLiteral;
+            }
+
+            lo = Math.Max(lo, 0);
+            hi = Math.Min(hi, this.ascending.Count - 1);
+            if (lo > hi)
+            {
+                // The admissible set is empty → no row value can satisfy the bound.
+                return emitter.FalseLiteral;
+            }
+
+            string keyPlaceholder = emitter.Parameter(this.dimension);
+            var valuePlaceholders = new List<string>(hi - lo + 1);
+            for (int i = lo; i <= hi; i++)
+            {
+                valuePlaceholders.Add(emitter.Parameter(this.ascending[i]));
+            }
+
+            return emitter.ExistsTagAllValuesIn(keyPlaceholder, valuePlaceholders);
+        }
+
+        private int RankOf(ReadOnlySpan<byte> value)
+        {
+            for (int i = 0; i < this.ascendingUtf8.Length; i++)
+            {
+                if (value.SequenceEqual(this.ascendingUtf8[i]))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private int RankOf(string value)
+        {
+            for (int i = 0; i < this.ascending.Count; i++)
+            {
+                if (string.Equals(value, this.ascending[i], StringComparison.Ordinal))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        // The bound's rank: the principal's most permissive value (the highest rank for an upper bound, the lowest for a
+        // lower bound). The bytes-to-bytes path (literal compared once, claims resolved per request).
+        private bool TryResolveBound(in Utf8ClaimSet claims, out int boundRank)
+        {
+            bool upper = this.IsUpperBound;
+            int acc = upper ? int.MinValue : int.MaxValue;
+            bool any = false;
+            if (this.bound.IsLiteral)
+            {
+                int rank = this.RankOf(this.bound.ValueUtf8);
+                if (rank >= 0)
+                {
+                    any = true;
+                    acc = rank;
+                }
+            }
+            else if (claims.TryGetValues(this.bound.ValueUtf8, out byte[][] boundValues))
+            {
+                foreach (byte[] boundValue in boundValues)
+                {
+                    int rank = this.RankOf(boundValue);
+                    if (rank < 0)
+                    {
+                        continue;
+                    }
+
+                    any = true;
+                    acc = upper ? Math.Max(acc, rank) : Math.Min(acc, rank);
+                }
+            }
+
+            boundRank = acc;
+            return any;
+        }
+
+        // The SQL path's bound resolution (the principal's claims as the query-time string dictionary).
+        private bool TryResolveBound(IReadOnlyDictionary<string, IReadOnlyList<string>> claims, out int boundRank)
+        {
+            bool upper = this.IsUpperBound;
+            int acc = upper ? int.MinValue : int.MaxValue;
+            bool any = false;
+            foreach (string boundValue in this.bound.ResolveKnown(claims))
+            {
+                int rank = this.RankOf(boundValue);
+                if (rank < 0)
+                {
+                    continue;
+                }
+
+                any = true;
+                acc = upper ? Math.Max(acc, rank) : Math.Min(acc, rank);
+            }
+
+            boundRank = acc;
+            return any;
+        }
     }
 
     // A key-agnostic predicate over the whole claim set vs. the row's tags (design §14.2 bootstrap archetypes).
@@ -533,10 +892,11 @@ public sealed class SecurityRule
             };
     }
 
-    private ref struct Parser(string text)
+    private ref struct Parser(string text, SecurityLabelOrderings orderings)
     {
         private const string ClaimPrefix = "$claim.";
         private readonly ReadOnlySpan<char> span = text;
+        private readonly SecurityLabelOrderings orderings = orderings;
         private int position = 0;
 
         public Node ParseExpression() => this.ParseOr();
@@ -608,12 +968,78 @@ public sealed class SecurityRule
                 return new ClaimsCoverageNode(left.ClaimsQuantifier);
             }
 
-            if (this.TryParseOperator(out Op op))
+            // Set membership: `left in ('v1', 'v2', …)`.
+            if (this.TryConsumeKeyword("in"))
             {
-                return new ComparisonNode(left, op, this.ParseOperand());
+                return this.ParseInList(left);
             }
 
-            return new TruthyNode(left);
+            return this.TryParseComparisonOperator() switch
+            {
+                ComparisonToken.Equal => new ComparisonNode(left, Op.Equal, this.ParseOperand()),
+                ComparisonToken.NotEqual => new ComparisonNode(left, Op.NotEqual, this.ParseOperand()),
+                ComparisonToken.LessThan => this.BuildOrdered(left, RankComparison.LessThan),
+                ComparisonToken.LessThanOrEqual => this.BuildOrdered(left, RankComparison.LessThanOrEqual),
+                ComparisonToken.GreaterThan => this.BuildOrdered(left, RankComparison.GreaterThan),
+                ComparisonToken.GreaterThanOrEqual => this.BuildOrdered(left, RankComparison.GreaterThanOrEqual),
+                _ => new TruthyNode(left),
+            };
+        }
+
+        // Builds an ordered comparison, validating operand shape and baking in the dimension's configured ordering (an
+        // unordered dimension yields an always-deny node — fail-closed — rather than a parse error, so a rule stays
+        // valid grammar until the deployment configures the ordering).
+        private Node BuildOrdered(Operand left, RankComparison comparison)
+        {
+            if (!left.IsTagKey)
+            {
+                throw new FormatException("The left side of an ordered comparison (<, <=, >, >=) must be a security-tag dimension.");
+            }
+
+            Operand right = this.ParseOperand();
+            if (right.IsTagKey || right.IsClaimsPredicate)
+            {
+                throw new FormatException("The right side of an ordered comparison (<, <=, >, >=) must be a literal or $claim value.");
+            }
+
+            IReadOnlyList<string> ascending = this.orderings.TryGetOrdering(left.Value, out IReadOnlyList<string> labels) ? labels : [];
+            return new OrderedComparisonNode(left.Value, comparison, right, ascending);
+        }
+
+        private Node ParseInList(Operand left)
+        {
+            this.SkipWhitespace();
+            if (!this.TryConsume("("))
+            {
+                throw new FormatException("Expected '(' after 'in' in security rule.");
+            }
+
+            var values = new List<string>();
+            while (true)
+            {
+                this.SkipWhitespace();
+                ReadOnlySpan<char> token = this.ReadOperandToken();
+                if (token.IsEmpty || (token[0] != '\'' && token[0] != '"'))
+                {
+                    throw new FormatException($"An 'in' list takes quoted literal values in security rule at position {this.position}.");
+                }
+
+                values.Add(Unquote(token));
+                this.SkipWhitespace();
+                if (this.TryConsume(","))
+                {
+                    continue;
+                }
+
+                if (this.TryConsume(")"))
+                {
+                    break;
+                }
+
+                throw new FormatException($"Expected ',' or ')' in 'in' list in security rule at position {this.position}.");
+            }
+
+            return new InNode(left, values);
         }
 
         private Operand ParseOperand()
@@ -690,17 +1116,41 @@ public sealed class SecurityRule
             return this.span[start..this.position];
         }
 
-        private bool TryParseOperator(out Op op)
+        private ComparisonToken TryParseComparisonOperator()
         {
             this.SkipWhitespace();
-            if (this.TryConsume("==")) { op = Op.Equal; return true; }
-            if (this.TryConsume("!=")) { op = Op.NotEqual; return true; }
-            op = default;
+
+            // Two-character operators are tried before their single-character prefixes (<= before <, >= before >).
+            if (this.TryConsume("==")) { return ComparisonToken.Equal; }
+            if (this.TryConsume("!=")) { return ComparisonToken.NotEqual; }
+            if (this.TryConsume("<=")) { return ComparisonToken.LessThanOrEqual; }
+            if (this.TryConsume(">=")) { return ComparisonToken.GreaterThanOrEqual; }
+            if (this.TryConsume("<")) { return ComparisonToken.LessThan; }
+            if (this.TryConsume(">")) { return ComparisonToken.GreaterThan; }
+            return ComparisonToken.None;
+        }
+
+        // Consumes a bare keyword (e.g. `in`) only when it stands alone — followed by whitespace, '(', or end — so a
+        // tag key that merely starts with the keyword (e.g. `internal`) is not mistaken for it.
+        private bool TryConsumeKeyword(string keyword)
+        {
+            this.SkipWhitespace();
+            ReadOnlySpan<char> rest = this.span[this.position..];
+            if (rest.StartsWith(keyword, StringComparison.Ordinal))
+            {
+                int after = this.position + keyword.Length;
+                if (after >= this.span.Length || char.IsWhiteSpace(this.span[after]) || this.span[after] == '(')
+                {
+                    this.position = after;
+                    return true;
+                }
+            }
+
             return false;
         }
 
         private static bool IsDelimiter(char c)
-            => char.IsWhiteSpace(c) || c is '(' or ')' or '=' or '!' or '&' or '|';
+            => char.IsWhiteSpace(c) || c is '(' or ')' or '=' or '!' or '&' or '|' or '<' or '>';
 
         private void SkipWhitespace()
         {

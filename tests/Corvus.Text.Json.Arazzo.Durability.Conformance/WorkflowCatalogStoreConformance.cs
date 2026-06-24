@@ -361,7 +361,7 @@ public abstract class WorkflowCatalogStoreConformance
             return;
         }
 
-        // Each base id gets a version carrying a distinct security-tag shape (single, multi, none).
+        // Each base id gets a version carrying a distinct security-tag shape (single, multi, none, ordered, unranked).
         (string Base, SecurityTag[] Tags)[] rows =
         [
             ("flow-a", [new("tenant", "acme"), new("team", "payments")]),
@@ -369,6 +369,11 @@ public abstract class WorkflowCatalogStoreConformance
             ("flow-c", [new("tenant", "globex"), new("team", "payments")]),
             ("flow-d", []),
             ("flow-e", [new("tenant", "acme"), new("tenant", "beta")]),
+            ("flow-f", [new("classification", "public")]),
+            ("flow-g", [new("classification", "confidential")]),
+            ("flow-h", [new("classification", "restricted")]),
+            ("flow-i", [new("classification", "public"), new("classification", "restricted")]),
+            ("flow-j", [new("classification", "weird")]),
         ];
         foreach ((string baseId, SecurityTag[] tags) in rows)
         {
@@ -380,8 +385,11 @@ public abstract class WorkflowCatalogStoreConformance
             ["tenant"] = ["acme"],
             ["both"] = ["acme", "globex"],
             ["team"] = ["payments", "hr"],
+            ["clearance"] = ["confidential"],
         };
 
+        // Rules whose ordered comparisons resolve against no configured ordering (so they deny) — set membership and the
+        // existing set-intersection grammar.
         string[] ruleShapes =
         [
             "tenant == $claim.tenant",
@@ -401,17 +409,54 @@ public abstract class WorkflowCatalogStoreConformance
             "$claims.intersects && tenant == $claim.tenant",
             "$claims.superset || team == 'payments'",
             "!($claims.intersects)",
+            "tenant in ('acme', 'globex')",
+            "classification in ('public', 'restricted')",
+            "!(classification in ('restricted'))",
+            "team in ('payments') && tenant in ('acme')",
+        ];
+
+        // Ordered comparisons resolved against a configured ascending classification ordering.
+        var orderings = new SecurityLabelOrderings(new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal)
+        {
+            ["classification"] = ["public", "internal", "confidential", "restricted"],
+        });
+        string[] orderedShapes =
+        [
+            "classification <= 'confidential'",
+            "classification < 'confidential'",
+            "classification >= 'confidential'",
+            "classification > 'public'",
+            "classification <= 'bogus'",          // unranked bound → deny
+            "classification <= $claim.clearance",
+            "classification >= $claim.clearance",
+            "tenant <= 'acme'",                   // unordered dimension → deny
+            "classification <= 'restricted' && tenant in ('acme')",
         ];
 
         foreach (string ruleText in ruleShapes)
         {
-            var filter = new SecurityFilter([SecurityRule.Compile(ruleText)], claims);
-            using CatalogPage page = await store.QueryAsync(new CatalogQuery(Limit: 1000, Security: filter), default);
-
-            List<string> actual = page.Versions.Select(v => v.Ref.BaseWorkflowId).OrderBy(x => x, StringComparer.Ordinal).ToList();
-            List<string> expected = rows.Where(r => filter.IsSatisfiedBy(r.Tags)).Select(r => r.Base).OrderBy(x => x, StringComparer.Ordinal).ToList();
-            actual.ShouldBe(expected, $"rule: {ruleText}");
+            await AssertPushdownMatchesEvaluator(store, rows, new SecurityFilter([SecurityRule.Compile(ruleText)], claims), ruleText);
         }
+
+        foreach (string ruleText in orderedShapes)
+        {
+            await AssertPushdownMatchesEvaluator(store, rows, new SecurityFilter([SecurityRule.Compile(ruleText, orderings)], claims), ruleText);
+        }
+    }
+
+    // The reach-filter pushdown oracle: the rows the store's translated SQL predicate returns must be exactly the rows
+    // the in-memory evaluator admits, for the same filter.
+    private static async Task AssertPushdownMatchesEvaluator(
+        IWorkflowCatalogStore store,
+        (string Base, SecurityTag[] Tags)[] rows,
+        SecurityFilter filter,
+        string ruleText)
+    {
+        using CatalogPage page = await store.QueryAsync(new CatalogQuery(Limit: 1000, Security: filter), default);
+
+        List<string> actual = page.Versions.Select(v => v.Ref.BaseWorkflowId).OrderBy(x => x, StringComparer.Ordinal).ToList();
+        List<string> expected = rows.Where(r => filter.IsSatisfiedBy(r.Tags)).Select(r => r.Base).OrderBy(x => x, StringComparer.Ordinal).ToList();
+        actual.ShouldBe(expected, $"rule: {ruleText}");
     }
 
     private static CatalogMetadata Meta(IReadOnlyList<string>? tags = null)

@@ -47,13 +47,6 @@ public sealed class SecurityLabelOrderings
         this.orderings = copy;
     }
 
-    /// <summary>Gets the configured dimensions (tag keys) that carry an ordering. Walking it with
-    /// <see cref="TryGetOrdering"/> projects the whole configuration (e.g. for the cold read endpoint that lets an
-    /// authoring UI offer the ordered templates). The per-call key enumerator is a single cold-path allocation —
-    /// measured to be within the read endpoint's response-materialisation floor, so it is left as the simple form
-    /// rather than holding a redundant materialised array for the deployment's lifetime.</summary>
-    public IEnumerable<string> Dimensions => this.orderings.Keys;
-
     /// <summary>Gets the ascending label ordering configured for <paramref name="dimension"/>.</summary>
     /// <param name="dimension">The security-tag key (dimension).</param>
     /// <param name="ascending">The labels in ascending order on success; an empty list otherwise.</param>

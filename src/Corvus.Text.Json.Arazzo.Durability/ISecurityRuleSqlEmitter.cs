@@ -46,6 +46,19 @@ public interface ISecurityRuleSqlEmitter
     /// <returns>A boolean SQL fragment.</returns>
     string ExistsTagValueIn(string keyPlaceholder, IReadOnlyList<string> valuePlaceholders);
 
+    /// <summary>
+    /// Builds "the current row has at least one security tag with key <paramref name="keyPlaceholder"/> <b>and every</b>
+    /// such tag's value is one of <paramref name="valuePlaceholders"/>" — the ordered-comparison admissible-set guard
+    /// (<c>&lt;</c>/<c>&lt;=</c>/<c>&gt;</c>/<c>&gt;=</c>, design §14.2): the value set is the dimension's labels whose
+    /// rank satisfies the bound, so the row is admitted only when the dimension is present and <em>none</em> of its
+    /// values falls outside the bound (an out-of-range or unranked value denies). Distinct from
+    /// <see cref="ExistsTagValueIn"/> (which is "<em>some</em> value in the set", i.e. <c>==</c>/<c>in</c>).
+    /// </summary>
+    /// <param name="keyPlaceholder">A placeholder bound to the tag key (the ordered dimension).</param>
+    /// <param name="valuePlaceholders">Placeholders bound to the admissible values (never empty — the caller emits <see cref="FalseLiteral"/> for an empty admissible set).</param>
+    /// <returns>A boolean SQL fragment.</returns>
+    string ExistsTagAllValuesIn(string keyPlaceholder, IReadOnlyList<string> valuePlaceholders);
+
     /// <summary>Builds "the current row has a tag with key <paramref name="keyPlaceholder1"/> and a tag with key <paramref name="keyPlaceholder2"/> sharing a value".</summary>
     /// <param name="keyPlaceholder1">A placeholder bound to the first tag key.</param>
     /// <param name="keyPlaceholder2">A placeholder bound to the second tag key.</param>
