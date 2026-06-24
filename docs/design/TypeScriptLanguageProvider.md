@@ -94,6 +94,15 @@ performance, and it is shared by both models below.
 
 ### 1.2 Recommended runtime model (the headline decision)
 
+**These are not three rival runtimes you pick between by speed — they are complementary layers for
+different jobs.** The idiomatic types + AOT validators (the §5 surface) are the *baseline every consumer
+uses* to **read / validate / consume** parsed JSON — that is what "Model B" names, and it is not a slower
+competitor to C for the same task. **Model C** is the byte-patch runtime layered on top for
+**read-modify-write / live editing**, where it is the proven best (§13.7-13.9). **Model A** is a niche
+lazy-read fast path. So: everyone gets the typed surface + validators; consumers that mutate/edit also
+use Model C; almost nobody needs A. The benchmark "Model C wins" is specifically the *RMW round-trip* —
+for pure consumption there is nothing to beat, you just read a validated plain object.
+
 All models share one AOT validator skeleton; they differ only in the *value‑access / write* layer
 (`emitModel: B | C | A | combinations`). Given the stated target workload is **read‑modify‑write**,
 the engineering priority is B (default) and **C** (the RMW path), with A reserved for a separate
@@ -477,7 +486,7 @@ branch after narrowing); discriminator fast-path -> `switch` on the discriminant
 
 ### 5.3 The full recognised‑pattern catalogue → idiomatic TS
 
-*(enum/const and format shapes type-checked: `prototypes/ts-output-shape/enum-const-model.ts`, `format-brand-model.ts`.)*
+*(every shape in this catalogue is type-checked under `tsc --strict`: `prototypes/ts-output-shape/{object,union,enum-const,format-brand,array-tuple,map-object,conditional}-model.ts`.)*
 
 The core already *classifies* each schema into a recognised shape (the language‑neutral side is the
 same one V5 consumes). The TS provider's job is to give each of those shapes its **idiomatic TS
@@ -494,8 +503,8 @@ every shape it lists to the TS we emit, with the core symbol that triggers it. T
 | **Fixed‑size / numeric array (tensor)** (`IsFixedSizeArray()`/`ArrayDimension()`/`IsNumericArray()`) | `readonly [number, number, number]` for a known length; nested tuples for multi‑dimension; optionally a `Float64Array`/typed‑array view in Model A/C for numeric hot paths | Fixed length → fixed‑length tuple; numeric leaf → consider a typed array for byte‑level work. |
 | **Map / dictionary object** (`FallbackObjectPropertyType` / `additionalProperties` / `patternProperties` / `unevaluatedProperties`) | `interface` with declared `properties` **plus** an index signature `readonly [key: string]: T` (when a single fallback type), or a `Readonly<Record<string, T>>` for a pure map | `patternProperties` → keep the index signature broad in the *type* and enforce the regex‑keyed value schema in the *validator*; expose a typed `entries()`/`get(key)` runtime helper rather than C#'s `TryGetProperty`. |
 | **Single core‑type wrapper** (`ImpliedCoreTypes().CountTypes() == 1` + constraints/format) | a **branded alias** of the base primitive — `type AccountId = Brand<string, "AccountId">` / `type Port = Brand<number, "Port">` | The JS analog of V5's single‑value struct‑with‑conversions. No wrapper object; the brand carries the constraint identity, the validator/factory enforces it. |
-| **Const** (`SingleConstantValue()`; `const`) | the **literal type** itself — `type Kind = "create"` / `42` / `true` | Validator compares the exact value (numeric‑precision rule, §4.1). |
-| **Enum / `anyOf` of consts** (enum‑like; §"anyOf constant values") | **union of literal types** — `type Status = "active" \| "archived" \| "deleted"` | **Never** a TS `enum` (runtime IIFE + reverse map, not tree‑shakeable, fights the JSON boundary). `as const` value object only if runtime values are needed. Validate via a generated `Set` (Model B) or raw‑byte compare (Model A/C). |
+| **Const** (`SingleConstantValue()`; `const`) | the **literal type** of the value — any JSON type: `"create"`, `42`, `true`, `null`; an object/array const → a literal object/tuple type (`{readonly x:0}`, `readonly [1]`) | Validator **deep-equals** the exact value: exact numeric compare (§4.1) for numbers, deep structural equality for object/array. The TYPE is best-effort; the VALIDATOR is authoritative (rejects extra props structural typing would allow). |
+| **Enum / `anyOf` of consts** (any JSON values — *not just strings*) | **union of literal types of whatever JSON types the values hold** — `"a" \| "b"`, `1 \| 2 \| 3`, `"auto" \| 0 \| false \| null` (mixed); object/array values → literal object/tuple types | **Never** a TS `enum`. Validation = JSON **deep-equality** vs the allowed values (exact numeric §4.1 for numbers, deep structural for object/array); all-string enums keep a `Set`/byte-membership fast path. Type-checked: `enum-const-model.ts`. |
 | **String formats** (`WellKnownStringFormatHandler`) | **branded string** + optional richer parse helper | `uuid`/`email`/`hostname`/`ipv4`/`ipv6`/`json-pointer`/`regex`/`uri*`/`iri*` → `Brand<string, "Uuid">` etc., minted only in validating factories; `date`/`date-time`/`time`/`duration` additionally offer `toDate(s): Date` (the JS analog of V5's NodaTime conversions). |
 | **Numeric formats** (`WellKnownNumericFormatHandler`) | `number`, **branded** where range matters, and **`bigint`** for 64‑bit+ | `int16/int32`, `uint16/…`, `half/single/double/decimal`, `byte` → `number` (with a range‑checking validator and an optional brand); **`int64/uint64/int128/uint128`** → `bigint` (exceeds JS safe‑integer range — see §4.1). |
 | **Type reduction** (`ReducedTypeDeclaration`; annotation‑only schema) | **no type emitted** — it aliases the reduced target | Annotation‑only schemas (`description` with no constraints) and structurally‑identical schemas collapse to one type *in the core* — the TS provider inherits this for free (the dedup that makes the output small). Emit a `type Alias = Target` only when a distinct name is wanted. |
@@ -575,6 +584,18 @@ clears via Bowtie.
   normalisation + IDNA (UTS-46) and are where format compliance usually breaks; budget for careful
   Unicode handling (the C# library carries IDN/Unicode polyfills for exactly this). `email` quoted local
   parts and `ipv6` edge cases are similarly fiddly.
+* **Date/time/duration — the highest-risk format family, and it needs a NodaTime-grade value model.**
+  Two concerns: (a) **validation** must be RFC 3339-exact and pass the suite's `date`/`date-time`/`time`/
+  `duration` cases (date validity, leap-second `:60`, offsets, fractional seconds, `T`/`Z` casing) —
+  zero-dependency validators verified against the suite; (b) the **rich value accessor / parse + emission**
+  wants offset/zone-preserving, sub-millisecond, `Period`/`Duration`-aware types — `Date` is too lossy (a
+  UTC instant only; drops the original offset; no `LocalDate`/`Period`). The NodaTime analog in JS is
+  **`Temporal`** (`PlainDate`≈`LocalDate`, `PlainTime`, `ZonedDateTime`/`Instant`+offset≈`OffsetDateTime`,
+  `Duration`≈`Period`), with `Intl` for localisation and the runtime IANA tz database for time zones. The
+  accessor returns `Temporal` types via a **pluggable adapter** (same seam as the big-number adapter,
+  §4.1): native `Temporal` where present, the official `@js-temporal/polyfill` otherwise, `Date` as a
+  last-resort fallback. Model C bonus: an *unchanged* date-time is copied through verbatim as bytes,
+  sidestepping any re-emission / round-trip canonicalisation.
 * **Verification is the gate** — each validator is checked against `optional/format/<name>.json` through
   the codegen-aware harness (§8). "Passes the suite", not "looks right", is the acceptance criterion,
   with the same documented exclusions the C# engine uses.
