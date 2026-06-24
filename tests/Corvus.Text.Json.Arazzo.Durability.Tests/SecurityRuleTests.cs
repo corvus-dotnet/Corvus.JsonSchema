@@ -25,6 +25,13 @@ public sealed class SecurityRuleTests
         return map;
     }
 
+    // The standard ascending classification ordering used by the ordered-comparison tests.
+    private static SecurityLabelOrderings Classification()
+        => new(new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal)
+        {
+            ["classification"] = ["public", "internal", "confidential", "restricted"],
+        });
+
     [TestMethod]
     public void Tenant_scoped_rule_matches_the_row_tenant_against_the_principal_claim()
     {
@@ -144,5 +151,135 @@ public sealed class SecurityRuleTests
     {
         Should.Throw<FormatException>(() => SecurityRule.Compile("$claims.bogus"));
         Should.Throw<FormatException>(() => SecurityRule.Compile("$claims"));
+    }
+
+    [TestMethod]
+    public void Set_membership_admits_a_row_whose_label_is_one_of_the_listed_literals()
+    {
+        SecurityRule rule = SecurityRule.Compile("tenant in ('acme', 'globex')");
+
+        rule.IsSatisfiedBy([new("tenant", "acme")], Claims()).ShouldBeTrue();
+        rule.IsSatisfiedBy([new("tenant", "globex")], Claims()).ShouldBeTrue();
+        rule.IsSatisfiedBy([new("tenant", "initech")], Claims()).ShouldBeFalse();
+        rule.IsSatisfiedBy([new("team", "payments")], Claims()).ShouldBeFalse(); // dimension absent
+    }
+
+    [TestMethod]
+    public void Set_membership_is_set_intersection_over_a_multi_valued_label()
+    {
+        SecurityRule rule = SecurityRule.Compile("team in ('billing')");
+
+        rule.IsSatisfiedBy([new("team", "payments"), new("team", "billing")], Claims()).ShouldBeTrue();
+        rule.IsSatisfiedBy([new("team", "payments"), new("team", "hr")], Claims()).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public void Set_membership_negates_with_the_not_operator()
+    {
+        SecurityRule rule = SecurityRule.Compile("!(tenant in ('acme'))");
+
+        rule.IsSatisfiedBy([new("tenant", "globex")], Claims()).ShouldBeTrue();
+        rule.IsSatisfiedBy([new("tenant", "acme")], Claims()).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public void Set_membership_over_a_claim_tests_the_principal_values()
+    {
+        SecurityRule rule = SecurityRule.Compile("$claim.role in ('admin', 'superuser')");
+
+        rule.IsSatisfiedBy([new("tenant", "acme")], Claims(("role", "admin"))).ShouldBeTrue();
+        rule.IsSatisfiedBy([new("tenant", "acme")], Claims(("role", "viewer"))).ShouldBeFalse();
+        rule.IsSatisfiedBy([new("tenant", "acme")], Claims()).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public void A_malformed_in_list_is_rejected_at_compile()
+    {
+        Should.Throw<FormatException>(() => SecurityRule.Compile("tenant in ()"));        // empty list
+        Should.Throw<FormatException>(() => SecurityRule.Compile("tenant in ('a'"));      // unterminated
+        Should.Throw<FormatException>(() => SecurityRule.Compile("tenant in ('a' 'b')")); // missing comma
+        Should.Throw<FormatException>(() => SecurityRule.Compile("tenant in (acme)"));    // unquoted value
+        Should.Throw<FormatException>(() => SecurityRule.Compile("tenant in ($claim.x)")); // claim not allowed
+    }
+
+    [TestMethod]
+    public void Ordered_comparison_ranks_a_classification_against_a_literal_bound()
+    {
+        SecurityRule atOrBelow = SecurityRule.Compile("classification <= 'confidential'", Classification());
+        atOrBelow.IsSatisfiedBy([new("classification", "public")], Claims()).ShouldBeTrue();
+        atOrBelow.IsSatisfiedBy([new("classification", "confidential")], Claims()).ShouldBeTrue();
+        atOrBelow.IsSatisfiedBy([new("classification", "restricted")], Claims()).ShouldBeFalse();
+        atOrBelow.IsSatisfiedBy([], Claims()).ShouldBeFalse(); // dimension absent → deny
+
+        SecurityRule below = SecurityRule.Compile("classification < 'internal'", Classification());
+        below.IsSatisfiedBy([new("classification", "public")], Claims()).ShouldBeTrue();
+        below.IsSatisfiedBy([new("classification", "internal")], Claims()).ShouldBeFalse();
+
+        SecurityRule atOrAbove = SecurityRule.Compile("classification >= 'confidential'", Classification());
+        atOrAbove.IsSatisfiedBy([new("classification", "restricted")], Claims()).ShouldBeTrue();
+        atOrAbove.IsSatisfiedBy([new("classification", "confidential")], Claims()).ShouldBeTrue();
+        atOrAbove.IsSatisfiedBy([new("classification", "internal")], Claims()).ShouldBeFalse();
+
+        SecurityRule above = SecurityRule.Compile("classification > 'internal'", Classification());
+        above.IsSatisfiedBy([new("classification", "confidential")], Claims()).ShouldBeTrue();
+        above.IsSatisfiedBy([new("classification", "internal")], Claims()).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public void Ordered_comparison_is_conservative_over_a_multi_valued_classification()
+    {
+        SecurityRule atOrBelow = SecurityRule.Compile("classification <= 'confidential'", Classification());
+
+        // Every row value must satisfy the bound: max rank wins for an upper bound.
+        atOrBelow.IsSatisfiedBy([new("classification", "public"), new("classification", "internal")], Claims()).ShouldBeTrue();
+        atOrBelow.IsSatisfiedBy([new("classification", "public"), new("classification", "restricted")], Claims()).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public void Ordered_comparison_resolves_a_claim_bound_to_the_most_permissive_rank()
+    {
+        SecurityRule atOrBelow = SecurityRule.Compile("classification <= $claim.clearance", Classification());
+
+        // A single clearance.
+        atOrBelow.IsSatisfiedBy([new("classification", "confidential")], Claims(("clearance", "confidential"))).ShouldBeTrue();
+        atOrBelow.IsSatisfiedBy([new("classification", "restricted")], Claims(("clearance", "confidential"))).ShouldBeFalse();
+
+        // Multiple clearances: an upper bound takes the highest the principal holds.
+        atOrBelow.IsSatisfiedBy([new("classification", "restricted")], Claims(("clearance", "public"), ("clearance", "restricted"))).ShouldBeTrue();
+
+        // A lower bound takes the lowest the principal holds.
+        SecurityRule atOrAbove = SecurityRule.Compile("classification >= $claim.clearance", Classification());
+        atOrAbove.IsSatisfiedBy([new("classification", "internal")], Claims(("clearance", "public"), ("clearance", "confidential"))).ShouldBeTrue();
+    }
+
+    [TestMethod]
+    public void Ordered_comparison_fails_closed_on_unranked_values_and_unordered_dimensions()
+    {
+        SecurityLabelOrderings orderings = Classification();
+
+        // An unranked row value denies even when another value would satisfy.
+        SecurityRule atOrBelow = SecurityRule.Compile("classification <= 'confidential'", orderings);
+        atOrBelow.IsSatisfiedBy([new("classification", "weird")], Claims()).ShouldBeFalse();
+        atOrBelow.IsSatisfiedBy([new("classification", "public"), new("classification", "weird")], Claims()).ShouldBeFalse();
+
+        // A bound with no ranked value denies.
+        atOrBelow = SecurityRule.Compile("classification <= 'bogus'", orderings);
+        atOrBelow.IsSatisfiedBy([new("classification", "public")], Claims()).ShouldBeFalse();
+
+        // An unordered dimension denies (no ordering configured for 'region').
+        SecurityRule region = SecurityRule.Compile("region <= 'eu'", orderings);
+        region.IsSatisfiedBy([new("region", "eu")], Claims()).ShouldBeFalse();
+
+        // No orderings at all (the parameterless Compile) → every ordered comparison denies.
+        SecurityRule noOrderings = SecurityRule.Compile("classification <= 'confidential'");
+        noOrderings.IsSatisfiedBy([new("classification", "public")], Claims()).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public void A_malformed_ordered_comparison_is_rejected_at_compile()
+    {
+        Should.Throw<FormatException>(() => SecurityRule.Compile("'x' <= 'y'", Classification()));            // LHS must be a dimension
+        Should.Throw<FormatException>(() => SecurityRule.Compile("classification <= other", Classification())); // RHS must be literal/claim
+        Should.Throw<FormatException>(() => SecurityRule.Compile("classification <=", Classification()));       // missing RHS
     }
 }

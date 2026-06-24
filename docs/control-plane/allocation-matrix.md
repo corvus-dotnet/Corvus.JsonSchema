@@ -1298,6 +1298,44 @@ label-superset identity) and gains `usageKind`/`usageLabel`, threaded through `D
   test + in-process conformance (InMemory + Sqlite 13/13) + the 8 container credential-store conformance suites; web 63
   node + 108 component + 4 smoke (dialog → grantee picker, table → shared grantee chip). slnx 0/0. **Row done.**
 
+### ✅ Rule grammar extension — `in (…)` set membership + ordered classification comparison (security-UI slice 3)
+
+Extended the **row-security rule grammar** (`SecurityRule`, design §14.2) — the set-based reach grammar (`==`/`!=`,
+`&&`/`||`/`!`, grouping, `$claims.*`), **not** the Arazzo step-criterion grammar (`SimpleConditionEvaluator`/
+`SimpleCriterionInliner`) — with the two most common tag-based access constructs, both bytes-to-bytes and both pushed
+down to SQL:
+
+- **Set membership** — `tenant in ('acme', 'globex')`: the multi-valued sugar for an `||` of equalities. A tag-key left
+  evaluates as a span-vs-set intersection over the row's parsed UTF-8 (`InNode`, values UTF-8-encoded once at compile)
+  and pushes down via the **existing** `ExistsTagValueIn` primitive (`… value IN (…)`); a `$claim`/literal left is a
+  constant membership test. Negate with `!`. List values are quoted literals.
+- **Ordered comparison** — `classification <= 'confidential'` (and `<`/`>`/`>=`): ranks the row's labels against a
+  configured **ascending** ordering, a new `SecurityLabelOrderings` (dimension → labels) captured into the rule once at
+  `SecurityRule.Compile(rule, orderings)` (the parameterless `Compile` ⇒ `Empty` ⇒ every ordered comparison denies).
+  `OrderedComparisonNode` keeps the ordering as pre-encoded UTF-8; `rank(v)` is a `SequenceEqual` scan over that small
+  fixed set. **Conservative multi-value:** every row value for the dimension must satisfy the bound (max rank for `<`/`<=`,
+  min for `>`/`>=`), and a multi-valued `$claim` bound takes its most permissive rank for the principal (highest for an
+  upper bound, lowest for a lower bound). **Fail-closed:** an unranked row value, an unordered dimension, an absent
+  dimension, or a bound with no ranked value **denies**.
+- **SQL pushdown — no `CASE`.** Rather than emit a per-dialect `rank()` `CASE` (which Cosmos SQL lacks), the ordered
+  comparison reduces at emit time to "the dimension is present **and every** value lies in the admissible label slice"
+  (the contiguous run of the ordering whose rank meets the bound) — one new primitive `ExistsTagAllValuesIn(key, set)` =
+  `EXISTS(key) AND NOT EXISTS(key AND value NOT IN (set))`, added to `SqlSecurityRuleEmitter` (Postgres/MySQL/SQL Server/
+  SQLite) and `CosmosSecurityRuleEmitter`. An unranked / out-of-range value is automatically outside the admissible set,
+  so the same fail-closed semantics hold in SQL; an empty admissible set emits `FalseLiteral`. The security-critical AST
+  walk stays single-sourced — a backend still only spells `EXISTS`/`IN`/`NOT IN` fragments.
+- **Allocation** (`SecurityFilterScanBenchmarks`, 50-row page, InProcessEmit arm — `MemoryDiagnoser` authoritative):
+  `Materialized_ToList` **33.2 KB** → `Deferred_Holder` (existing operators) **1.56 KB** → `Deferred_Holder_OrderedAndIn`
+  (the new `in` + `<=` operators) **1.56 KB** — the new grammar nodes hold the **identical per-row floor** (0 B/row; the
+  1.56 KB is the fixed per-scan cost). No `ParseValue`, no per-row managed tag, no per-row string: rank/membership tests
+  run over the compile-time UTF-8 sets and the parsed row spans.
+- **Verified.** 21 `SecurityRuleTests` (membership, ranks, multi-value conservatism, claim bounds, fail-closed,
+  parse-error guards) + the reach-pushdown **oracle** (the store's translated SQL must return exactly the rows the
+  in-memory evaluator admits, for every shape) extended with `in`/ordered shapes on **catalog + state** conformance:
+  InMemory + Sqlite in-process, and Postgres / MySQL / SQL Server / Cosmos container suites. slnx **0/0**. **Row done.**
+  (UI/deployment config for `SecurityLabelOrderings` is slice 4; the production compile sites stay on the default-empty
+  overload until then — the bootstrap seeds no ordered rules, so this is safe.)
+
 ## Cross-references
 
 - Skills: `corvus-typed-model-construction`, `corvus-builder-context-threading`,

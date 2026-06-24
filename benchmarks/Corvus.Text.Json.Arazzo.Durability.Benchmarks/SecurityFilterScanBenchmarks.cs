@@ -21,6 +21,7 @@ public class SecurityFilterScanBenchmarks
     private const int PageSize = 50;
 
     private SecurityFilter filter = null!;
+    private SecurityFilter orderedFilter = null!;
     private SecurityTagSet[] rows = null!;
 
     [GlobalSetup]
@@ -36,8 +37,22 @@ public class SecurityFilterScanBenchmarks
         var claims = new Dictionary<string, IReadOnlyList<string>>
         {
             ["tenant"] = ["acme"],
+            ["clearance"] = ["confidential"],
         };
         this.filter = new SecurityFilter(rules, claims);
+
+        // The same shape exercising the set-membership and ordered-comparison operators (in / <=): a tenant wrapper plus
+        // a clearance-bounded membership rule, so the per-row scan walks the InNode and OrderedComparisonNode paths.
+        var orderings = new SecurityLabelOrderings(new Dictionary<string, IReadOnlyList<string>>
+        {
+            ["classification"] = ["public", "internal", "confidential", "restricted"],
+        });
+        var orderedRules = new[]
+        {
+            SecurityRule.Compile("tenant in ('acme', 'globex')", orderings),
+            SecurityRule.Compile("classification <= $claim.clearance && team in ('payments', 'billing')", orderings),
+        };
+        this.orderedFilter = new SecurityFilter(orderedRules, claims);
 
         // A page of candidate rows, each carrying a handful of tags (the warm scan sees one of these per result row).
         this.rows = new SecurityTagSet[PageSize];
@@ -48,6 +63,7 @@ public class SecurityFilterScanBenchmarks
                 new SecurityTag("tenant", "acme"),
                 new SecurityTag("team", "payments"),
                 new SecurityTag("env", "prod"),
+                new SecurityTag("classification", "confidential"),
             ]);
         }
     }
@@ -78,6 +94,25 @@ public class SecurityFilterScanBenchmarks
         foreach (SecurityTagSet row in this.rows)
         {
             if (this.filter.IsSatisfiedBy(row))
+            {
+                admitted++;
+            }
+        }
+
+        return admitted;
+    }
+
+    /// <summary>The bytes-to-bytes path over the set-membership and ordered-comparison operators (in / &lt;=): the new
+    /// grammar nodes must hold the same per-row allocation floor as <see cref="Deferred_Holder"/> (rank/membership tests
+    /// run over the pre-encoded UTF-8 label/value sets and the parsed row spans — no managed tag per row).</summary>
+    /// <returns>The admitted-row count.</returns>
+    [Benchmark]
+    public int Deferred_Holder_OrderedAndIn()
+    {
+        int admitted = 0;
+        foreach (SecurityTagSet row in this.rows)
+        {
+            if (this.orderedFilter.IsSatisfiedBy(row))
             {
                 admitted++;
             }
