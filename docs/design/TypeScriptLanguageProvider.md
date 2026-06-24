@@ -1281,3 +1281,35 @@ Scope (deliberately minimal — this validates *integration*, not feature comple
 interfaces because it implements no `IdentifyNonGeneratedType`/built‑in mapping; property types are
 `unknown` (no type‑reference resolution); no validation. Each of those is a known §5/§7 work item, not a
 surprise — the seam itself is proven. This is the concrete starting point for Phase 0 (§9).
+
+### 13.11 Validator emission spike (validated end-to-end)
+
+The biggest pre-implementation unknown — *can a TS provider emit a working validator from the core,
+and does it compile + run correctly?* — is now **proven end-to-end** (`prototypes/ts-provider-spike/`,
+extended; `TypeScriptLanguageProviderSpike` + `validate-test.mjs`). The provider walks the core type
+graph `StandaloneEvaluator`-style (one `evaluate{Type}` per subschema, recursing via
+`PropertyDeclaration.ReducedPropertyType`), reads the constraint model, and emits real AOT TypeScript
+validators. For a schema exercising `type` / `required` / nested `properties` / `minLength` / `pattern`
+/ `minimum` / `integer` / `enum`, the emitted code:
+
+* **compiles under `tsc --strict`** (`--noEmit` exit 0) and to ESM JS;
+* **runs and validates correctly** — `12/12` valid/invalid instances (missing-required, wrong-type,
+  too-short, negative, non-integer, bad-enum, pattern-fail all rejected; valid + minimal-valid accepted).
+
+Confirmed by this spike:
+* **The constraint model is drivable** — `type`, `required` (`RequiredOrOptional`), per-property value
+  types (`ReducedPropertyType`), and leaf constraints are all readable to drive emission.
+* **The emission path is settled** — the simpler **walk-the-model** approach (à la
+  `StandaloneEvaluatorGenerator`) works directly and is what the provider should use, rather than wiring
+  the C# `IKeywordValidationHandler` composition framework.
+* **Native ECMA regex confirmed** — `pattern` emits `new RegExp(<json-string>, "u")` and runs; no
+  ECMA→.NET translation (production hoists the `RegExp`).
+* **Code-point length** — `minLength`/`maxLength` use `[...value].length` (Unicode code points), not
+  UTF-16 `.length`.
+
+Scope/known gaps (the spike proves the *mechanism*, full compliance is the implementation): the spike
+uses JS numeric compare (production uses exact §4.1), `JSON.stringify` enum/const equality (production
+uses exact numeric + deep structural §5.3), and no `allOf`/`anyOf`/`oneOf`/`unevaluated*`/`$dynamicRef`
+yet — all designed (§5.4/§5.6), not yet emitted. **Net: the validation engine is demonstrated, not
+assumed; the three pre-implementation spikes (integration §13.10, mutation API §5.7, validator §13.11)
+are all green.**

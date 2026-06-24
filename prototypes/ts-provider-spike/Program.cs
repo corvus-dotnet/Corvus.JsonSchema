@@ -24,12 +24,20 @@ TypeDeclaration root = await builder.AddTypeDeclarationsAsync(reference, fallbac
 var provider = new TypeScriptLanguageProviderSpike();
 IReadOnlyCollection<GeneratedCodeFile> files = builder.GenerateCodeUsing(provider, CancellationToken.None, root);
 
+string rootName = root.TryGetMetadata<string>("Ts_FinalName", out string? rn) && !string.IsNullOrEmpty(rn) ? rn! : "GeneratedType";
+
 Directory.CreateDirectory(outDir);
 foreach (GeneratedCodeFile file in files)
 {
-    File.WriteAllText(Path.Combine(outDir, file.FileName), file.FileContent);
+    string content = file.FileContent;
+    if (file.FileName == "generated.ts")
+    {
+        content += $"\nexport const evaluateRoot = evaluate{rootName};\n";
+    }
+
+    File.WriteAllText(Path.Combine(outDir, file.FileName), content);
     Console.WriteLine($"--- {file.FileName} ---");
-    Console.Write(file.FileContent);
+    Console.Write(content);
 }
 
-Console.WriteLine($"\nGenerated {files.Count} TypeScript file(s) into '{outDir}'.");
+Console.WriteLine($"\nRoot validator: evaluate{rootName} (aliased evaluateRoot). {files.Count} file(s) into '{outDir}'.");
