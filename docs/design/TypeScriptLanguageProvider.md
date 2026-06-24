@@ -1540,3 +1540,28 @@ Five subtleties the suite forced out, each a small, principled fix:
   dependentSchemas/allOf are validated and credited by their own subschema, not at this level.
 * **contains marks matched items**, and minContains/maxContains read the count via the same
   `Operator` interface as the other bounds.
+
+### 13.20 $dynamicRef + harness parity with the C# runner -- 968/968 (100%) over 33 keyword files
+
+`$ref`/`$dynamicRef`/`$recursiveRef` are resolved by the engine during type building (the hard work is
+already done): `IReferenceKeyword : IAllOfSubschemaValidationKeyword` and
+`IDynamicReferenceKeyword : IReferenceKeyword`, so references flow through the allOf handler / structural
+reduction with the engine's (including dynamic-scope) resolution baked in -- no bespoke reference handler
+is needed in the provider. Two things were required to realise it:
+
+1. **Set the harness up exactly like the C# test runner** (`TestJsonSchemaCodeGenerator`):
+   `CompoundDocumentResolver(FakeWebDocumentResolver(remotes), FileSystemDocumentResolver())` + the
+   draft 2020-12 metaschema; register each test schema on the builder under a normalised path INSIDE the
+   remotes namespace (`builder.AddDocument(path, doc)` where `path = Path.Combine(remotes, name)` via
+   `SchemaReferenceNormalization`), then `AddTypeDeclarationsAsync(new JsonReference(path), vocab,
+   rebaseAsRoot: true)`. `FakeWebDocumentResolver` serves `http://localhost:1234/...` from the suite's
+   `remotes/`. This eliminated all 7 build errors (remote `$ref`s + metaschema).
+2. **Use the REDUCED root for the entry point**: `root.ReducedTypeDeclaration().ReducedType`, exactly as
+   the C# runner does. The unreduced root (e.g. a bare `{$ref:"list"}`) is not in the emitted type set, so
+   naming it fell through to a fallback that pointed `evaluateRoot` at the wrong type -- which masked the
+   (correct) dynamic resolution.
+
+Result: **968/968 (100%)** across all 33 keyword files, 0 errored, all generated modules `tsc --strict`
+clean, regressions intact. `$dynamicRef` 44/44 (incl. dynamic-scope, bookending, intermediate scopes,
+remote/extended cases), `ref` 79/79, `defs` 2/2, `unevaluatedProperties` 129/129, `unevaluatedItems`
+71/71, every other keyword 100%.

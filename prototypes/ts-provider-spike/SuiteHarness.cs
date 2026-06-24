@@ -92,9 +92,12 @@ internal static class SuiteHarness
 
                 try
                 {
-                    string schemaPath = Path.GetFullPath(Path.Combine(schemasDir, moduleName + ".json"));
-                    File.WriteAllText(schemaPath, schema.GetRawText());
+                    File.WriteAllText(Path.GetFullPath(Path.Combine(schemasDir, moduleName + ".json")), schema.GetRawText());
 
+                    // Set up the generator EXACTLY as the C# test runner (TestJsonSchemaCodeGenerator):
+                    // CompoundDocumentResolver(FakeWeb(remotes), FileSystem) + the metaschema; register the
+                    // schema on the builder under a normalized path INSIDE the remotes namespace (so its
+                    // relative $refs resolve as siblings of the remote schemas); build with rebaseAsRoot:true.
                     var resolver = new CompoundDocumentResolver(new FakeWebDocumentResolver(remotesDir), new FileSystemDocumentResolver());
                     foreach ((string uri, string rel) in MetaschemaMap)
                     {
@@ -106,10 +109,15 @@ internal static class SuiteHarness
                     Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(resolver, registry);
                     IVocabulary fallback = Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary;
                     var builder = new JsonSchemaTypeBuilder(resolver, registry);
-                    TypeDeclaration root = await builder.AddTypeDeclarationsAsync(new JsonReference(schemaPath), fallback, false);
+
+                    string schemaRef = Path.Combine(remotesDir, moduleName + ".json");
+                    if (Corvus.Json.CodeGeneration.DocumentResolvers.SchemaReferenceNormalization.TryNormalizeSchemaReference(schemaRef, out string? normalized)) { schemaRef = normalized; }
+                    builder.AddDocument(schemaRef, JsonDocument.Parse(schema.GetRawText()));
+                    TypeDeclaration root = await builder.AddTypeDeclarationsAsync(new JsonReference(schemaRef), fallback, rebaseAsRoot: true);
                     TypeScriptLanguageProviderSpike provider = TypeScriptLanguageProviderSpike.CreateDefault();
                     IReadOnlyCollection<GeneratedCodeFile> files = builder.GenerateCodeUsing(provider, CancellationToken.None, root);
-                    string rootName = root.TryGetMetadata<string>("Ts_FinalName", out string? rn) && !string.IsNullOrEmpty(rn) ? rn! : "Entity";
+                    TypeDeclaration reducedRoot = root.ReducedTypeDeclaration().ReducedType;
+                    string rootName = reducedRoot.TryGetMetadata<string>("Ts_FinalName", out string? rn) && !string.IsNullOrEmpty(rn) ? rn! : "Entity";
                     File.WriteAllText(Path.Combine(outDir, moduleName + ".ts"), files.First().FileContent + $"\nexport const evaluateRoot = (v: unknown): boolean => evaluate{rootName}(v, fresh());\n");
                     manifest.Add(new { module = moduleName, file, group = groupDesc, error = (string?)null, tests });
                     built++;
