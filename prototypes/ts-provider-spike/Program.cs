@@ -5,39 +5,35 @@ using TsProviderSpike;
 string schemaPath = args.Length > 0 ? args[0] : "person.json";
 string outDir = args.Length > 1 ? args[1] : "out";
 
-// --- bootstrap the existing language-neutral core (mirrors GenerationDriverV5) ---
 var resolver = new CompoundDocumentResolver(new FileSystemDocumentResolver());
-
-// (No AddMetaschema(): it's an internal per-consumer helper. The 2020-12 analyser matches
-// $schema by URI string without fetching the metaschema, so a self-contained schema works.)
 var registry = new VocabularyRegistry();
 Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(resolver, registry);
 IVocabulary fallback = Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary;
-
 var builder = new JsonSchemaTypeBuilder(resolver, registry);
-
-// --- build the (language-neutral) type graph from the schema ---
 var reference = new JsonReference(Path.GetFullPath(schemaPath));
 TypeDeclaration root = await builder.AddTypeDeclarationsAsync(reference, fallback, false);
 
-// --- generate TypeScript via our provider ---
-var provider = new TypeScriptLanguageProviderSpike();
-IReadOnlyCollection<GeneratedCodeFile> files = builder.GenerateCodeUsing(provider, CancellationToken.None, root);
-
-string rootName = root.TryGetMetadata<string>("Ts_FinalName", out string? rn) && !string.IsNullOrEmpty(rn) ? rn! : "GeneratedType";
-
 Directory.CreateDirectory(outDir);
-foreach (GeneratedCodeFile file in files)
+
+void Emit(TypeScriptLanguageProviderSpike provider, string fileName)
 {
-    string content = file.FileContent;
-    if (file.FileName == "generated.ts")
+    IReadOnlyCollection<GeneratedCodeFile> files = builder.GenerateCodeUsing(provider, CancellationToken.None, root);
+    string rootName = root.TryGetMetadata<string>("Ts_FinalName", out string? rn) && !string.IsNullOrEmpty(rn) ? rn! : "GeneratedType";
+    foreach (GeneratedCodeFile file in files)
     {
-        content += $"\nexport const evaluateRoot = evaluate{rootName};\n";
+        File.WriteAllText(Path.Combine(outDir, fileName), file.FileContent + $"\nexport const evaluateRoot = evaluate{rootName};\n");
     }
 
-    File.WriteAllText(Path.Combine(outDir, file.FileName), content);
-    Console.WriteLine($"--- {file.FileName} ---");
-    Console.Write(content);
+    Console.WriteLine($"wrote {fileName} (root = evaluate{rootName})");
 }
 
-Console.WriteLine($"\nRoot validator: evaluate{rootName} (aliased evaluateRoot). {files.Count} file(s) into '{outDir}'.");
+// Base provider: the default handler set (no multipleOf).
+Emit(TypeScriptLanguageProviderSpike.CreateDefault(), "generated.ts");
+
+// Extension: register a custom handler at runtime. The core registry dispatches to it for the
+// `multipleOf` keyword — no change to the provider. This is the user/third-party extension seam.
+TypeScriptLanguageProviderSpike ext = TypeScriptLanguageProviderSpike.CreateDefault();
+ext.RegisterValidationHandlers(new TsMultipleOfHandler());
+Emit(ext, "generated-ext.ts");
+
+Console.WriteLine("generated.ts = base handlers; generated-ext.ts = base + registered multipleOf extension.");
