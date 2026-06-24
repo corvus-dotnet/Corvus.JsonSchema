@@ -163,6 +163,38 @@ test('the contract declares the credential and administration operations', () =>
   }
 });
 
+test('the contract declares the security-rule operations', () => {
+  for (const id of ['listSecurityRules', 'getSecurityRule', 'createSecurityRule', 'updateSecurityRule', 'deleteSecurityRule']) {
+    assert.ok(OPS[id], `operation ${id} present in the OpenAPI document`);
+  }
+});
+
+test('security rules: each client method emits the contract method + templated path + body', async () => {
+  const { client, calls } = capturing();
+  await client.listSecurityRules();
+  assert.equal(calls[0].method, OPS.listSecurityRules.method);
+  assert.equal(calls[0].path, OPS.listSecurityRules.path);
+
+  await client.getSecurityRule('tenant-scoped');
+  assert.equal(calls[1].method, OPS.getSecurityRule.method);
+  assert.equal(calls[1].path, OPS.getSecurityRule.path.replace('{ruleName}', 'tenant-scoped'));
+
+  await client.createSecurityRule({ name: 'r', expression: "tenant == 'acme'" });
+  assert.equal(calls[2].method, OPS.createSecurityRule.method);
+  assert.equal(calls[2].path, OPS.createSecurityRule.path);
+  assert.equal(calls[2].body.name, 'r');
+  assert.equal(calls[2].body.expression, "tenant == 'acme'");
+
+  await client.updateSecurityRule('r', { expression: "tenant == 'beta'" });
+  assert.equal(calls[3].method, OPS.updateSecurityRule.method);
+  assert.equal(calls[3].path, OPS.updateSecurityRule.path.replace('{ruleName}', 'r'));
+  assert.equal(calls[3].body.expression, "tenant == 'beta'");
+
+  await client.deleteSecurityRule('r');
+  assert.equal(calls[4].method, OPS.deleteSecurityRule.method);
+  assert.equal(calls[4].path, OPS.deleteSecurityRule.path.replace('{ruleName}', 'r'));
+});
+
 test('credentials: each client method emits the contract method + templated path + body', async () => {
   const { client, calls } = capturing();
   await client.listCredentials({ limit: 25, pageToken: 'tok' });

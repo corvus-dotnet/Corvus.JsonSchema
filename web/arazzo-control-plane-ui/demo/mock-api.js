@@ -641,6 +641,20 @@ function seedAccessRequests() {
   ];
 }
 
+function seedSecurityRules() {
+  const hr = 60 * 60 * 1000;
+  const day = 24 * hr;
+  // The reusable reach vocabulary (§14.2): named expressions a binding scopes read/write/purge with. The bootstrap
+  // archetypes (tenant isolation, ABAC superset/intersect) plus a couple authored via the template-first builder.
+  return [
+    { name: 'tenant-scoped', expression: 'tenant == $claim.tenant', description: "Tenant isolation: the row's tenant label must match the principal's tenant claim.", createdBy: 'system', createdAt: iso(-40 * day), etag: nextEtag() },
+    { name: 'abac-superset', expression: '$claims.superset', description: 'ABAC clearance: the principal must hold every label the row carries.', createdBy: 'system', createdAt: iso(-40 * day), etag: nextEtag() },
+    { name: 'shares-a-label', expression: '$claims.intersects', description: 'The principal shares at least one label with the row.', createdBy: 'system', createdAt: iso(-40 * day), etag: nextEtag() },
+    { name: 'reach-payments', expression: "domain == 'payments'", description: 'Rows in the payments domain.', createdBy: 'alice@example.com', createdAt: iso(-9 * day), lastUpdatedBy: 'alice@example.com', lastUpdatedAt: iso(-2 * day), etag: nextEtag() },
+    { name: 'reach-core-tenants', expression: "tenant in ('acme', 'globex')", description: 'Rows owned by a core tenant.', createdBy: 'alice@example.com', createdAt: iso(-3 * day), etag: nextEtag() },
+  ];
+}
+
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 }
@@ -663,6 +677,7 @@ export function createMockControlPlane(options = {}) {
   const administrators = options.administratorsSeed ? structuredClone(options.administratorsSeed) : seedAdministrators();
   const grantees = options.granteesSeed ? structuredClone(options.granteesSeed) : seedGrantees();
   const accessRequests = options.accessRequestsSeed ? structuredClone(options.accessRequestsSeed) : seedAccessRequests();
+  const securityRules = options.securityRulesSeed ? structuredClone(options.securityRulesSeed) : seedSecurityRules();
   const latency = options.latencyMs ?? 250;
   const find = (id) => runs.find((r) => r.id === id);
   const findVersion = (base, n) => catalog.find((v) => v.baseWorkflowId === base && v.versionNumber === Number(n));
@@ -689,6 +704,9 @@ export function createMockControlPlane(options = {}) {
 
     const accessRequestsResponse = handleAccessRequests(path, method, u.searchParams, body);
     if (accessRequestsResponse) return accessRequestsResponse;
+
+    const securityRulesResponse = handleSecurityRules(path, method, body);
+    if (securityRulesResponse) return securityRulesResponse;
 
     // /runs collection
     if (/\/runs\/?$/.test(path)) {
@@ -1141,6 +1159,84 @@ export function createMockControlPlane(options = {}) {
     }
     administrators[base] = deduped;
     return json({ administrators: deduped });
+  }
+
+  // ---- security rules (§14.2) — the reusable reach vocabulary -----------------------------------
+  // CRUD over the named rule set. The server compiles the expression against the rule grammar; the mock can't run
+  // the compiler, so it approximates validation with a balance/non-empty check — enough to exercise the 400 path.
+
+  function handleSecurityRules(fullPath, method, body) {
+    const idx = fullPath.indexOf('/security/rules');
+    if (idx < 0) return null;
+    const path = fullPath.slice(idx);
+
+    if (path === '/security/rules') {
+      if (method === 'GET') return json({ rules: securityRules.map((r) => structuredClone(r)) });
+      if (method === 'POST') return createSecurityRule(body);
+      return problem(405, 'Method not allowed');
+    }
+    const nameMatch = path.match(/^\/security\/rules\/([^/]+)$/);
+    if (nameMatch) {
+      const name = decodeURIComponent(nameMatch[1]);
+      if (method === 'GET') {
+        const rule = securityRules.find((r) => r.name === name);
+        return rule ? json(structuredClone(rule)) : problem(404, 'Rule not found', `No security rule named '${name}'.`);
+      }
+      if (method === 'PUT') return updateSecurityRule(name, body);
+      if (method === 'DELETE') return deleteSecurityRule(name);
+      return problem(405, 'Method not allowed');
+    }
+    return null;
+  }
+
+  // A best-effort stand-in for the server's grammar compile: non-empty and balanced parentheses.
+  function expressionProblem(expression) {
+    const expr = (expression || '').trim();
+    if (!expr) return problem(400, 'Invalid rule expression', 'The expression must not be empty.');
+    let depth = 0;
+    for (const ch of expr) {
+      if (ch === '(') depth++;
+      else if (ch === ')' && --depth < 0) return problem(400, 'Invalid rule expression', 'Unbalanced parentheses in the expression.');
+    }
+    if (depth !== 0) return problem(400, 'Invalid rule expression', 'Unbalanced parentheses in the expression.');
+    return null;
+  }
+
+  function createSecurityRule(body) {
+    if (!body?.name) return problem(400, 'Invalid rule', 'A rule name is required.');
+    const bad = expressionProblem(body.expression);
+    if (bad) return bad;
+    if (securityRules.some((r) => r.name === body.name)) {
+      return problem(409, 'Rule already exists', `A security rule named '${body.name}' already exists.`);
+    }
+    const rule = {
+      name: body.name, expression: body.expression.trim(),
+      ...(body.description ? { description: body.description } : {}),
+      createdBy: 'demo-admin', createdAt: iso(0), etag: nextEtag(),
+    };
+    securityRules.push(rule);
+    return json(structuredClone(rule), 201);
+  }
+
+  function updateSecurityRule(name, body) {
+    const rule = securityRules.find((r) => r.name === name);
+    if (!rule) return problem(404, 'Rule not found', `No security rule named '${name}'.`);
+    const bad = expressionProblem(body?.expression);
+    if (bad) return bad;
+    rule.expression = body.expression.trim();
+    if (body.description != null) rule.description = body.description;
+    else delete rule.description;
+    rule.lastUpdatedBy = 'demo-admin';
+    rule.lastUpdatedAt = iso(0);
+    rule.etag = nextEtag();
+    return json(structuredClone(rule));
+  }
+
+  function deleteSecurityRule(name) {
+    const i = securityRules.findIndex((r) => r.name === name);
+    if (i < 0) return problem(404, 'Rule not found', `No security rule named '${name}'.`);
+    securityRules.splice(i, 1);
+    return new Response(null, { status: 204 });
   }
 
   // ---- identity / grantee resolution (§16.5.4) --------------------------------------------------
