@@ -364,6 +364,8 @@ cannot carry an object/array subtree as one raw blob.
 Side‑by‑side with V5 C#. **TS surface is type‑only where possible (erased at runtime), with
 co‑located AOT validators that are tree‑shakeable.**
 
+> **Validated.** The output shapes in §5.1-§5.3 are hand-written to match the proposed generated code and **type-checked under `tsc --strict --exactOptionalPropertyTypes`** (`prototypes/ts-output-shape/*.ts` compiles clean; `@ts-expect-error` markers prove the compiler rejects wrong-branch access, explicit `undefined` on optional props, missing required props, bad enum values, and spoofed format brands).
+
 ### 5.1 Objects
 
 **V5 C#:** `readonly partial struct Person : IJsonElement<Person>` with `_parent/_idx`, UTF‑8 keyed
@@ -406,40 +408,66 @@ Key choices, justified:
 * **Construction:** no `Source`/`Build`/`TContext` ref‑struct machinery (a .NET zero‑alloc concern).
   Idiomatic TS construction is an object literal typed as the interface; for *writing* large payloads
   efficiently, offer a builder that streams directly into a `Utf8` output buffer (the spiritual
-  analog of `Build<TContext>`), as a runtime‑library helper — not per‑type generated noise.
+  analog of `Build<TContext>`), as a runtime‑library helper — not per‑type generated noise. Type-checked: `prototypes/ts-output-shape/object-model.ts`.
 
 ### 5.2 Unions (`oneOf` / `anyOf`)
 
 **V5 C#:** `Match(...)` overloads + `TryGetAs{Branch}` + `Branch.From(this)`; discriminator
 fast‑path.
 
-**TS — two cases:**
+**TS — two cases (type-checked: `prototypes/ts-output-shape/union-model.ts`):**
 
-*Discriminated* (shared const/`enum` discriminant, incl. OpenAPI `discriminator`): emit a genuine
-**discriminated union** + a validator that switches on the discriminant (the fast path). Consumers
-use idiomatic `switch` with an `assertNever` default for exhaustiveness. *(This closes the well‑known
-`json-schema-to-typescript` gap, which collapses `oneOf`→`anyOf` and loses XOR semantics.)*
+*Discriminated* (shared literal `const` discriminant, incl. OpenAPI `discriminator`): emit a genuine
+**discriminated union** — the type system narrows for free. The `Match()` analog dispatches on the
+discriminant (the discriminator fast-path), one typed handler per branch, exhaustive via `assertNever`;
+consumers can equally just `switch (s.kind)`. *(Closes the `json-schema-to-typescript` gap, which
+collapses `oneOf`->`anyOf` and loses discriminated-union semantics.)*
 
 ```ts
-export type Shape = Circle | Rectangle;             // discriminant: kind
-export function matchShape<R>(s: Shape, m: { circle(c: Circle): R; rectangle(r: Rectangle): R }): R {
-  switch (s.kind) { case "circle": return m.circle(s); case "rectangle": return m.rectangle(s);
-    default: return assertNever(s); }
+export interface Circle    { readonly kind: "circle";    readonly radius: number; }
+export interface Rectangle { readonly kind: "rectangle"; readonly width: number; readonly height: number; }
+export type Shape = Circle | Rectangle;
+
+export function matchShape<R>(value: Shape, cases: {
+  circle: (v: Circle) => R;
+  rectangle: (v: Rectangle) => R;
+}): R {
+  switch (value.kind) {
+    case "circle":    return cases.circle(value);
+    case "rectangle": return cases.rectangle(value);
+    default:          return assertNever(value);   // add a variant -> build breaks here
+  }
 }
 ```
 
-*Non‑discriminated* `oneOf`/`anyOf`: TS types can't express XOR, so the **type** is a plain union
-`A | B` and the **validator** enforces oneOf (exactly‑one) / anyOf (≥one). Provide the V5 `Match`
-analog as a helper that runs branch validators in order and per‑branch guards:
+*Non-discriminated* `oneOf`/`anyOf`: TS can't express XOR in a type, so the **type** is a plain union
+`A | B` and runtime **guards** (the generated branch validators) narrow it — the literal analog of V5's
+`Match()`. `oneOf` (exactly-one) / `anyOf` (>=one) cardinality is enforced by the **validator**, not the
+type (a deliberate, documented limitation).
 
 ```ts
-export function matchX<R>(v: X, m: { onA(a: A): R; onB(b: B): R; fallback(v: X): R }): R {
-  if (isA(v)) return m.onA(v); if (isB(v)) return m.onB(v); return m.fallback(v);
+export type FullName = string | PersonName;
+
+export function isStringName(v: FullName): v is string { return typeof v === "string"; }       // = V5 TryGetAs{Branch}
+export function isStructuredName(v: FullName): v is PersonName { return typeof v === "object" && v !== null; }
+
+export function matchFullName<R>(value: FullName, cases: {
+  string: (v: string) => R; name: (v: PersonName) => R; fallback?: (v: FullName) => R;
+}): R {
+  if (isStringName(value))     return cases.string(value);
+  if (isStructuredName(value)) return cases.name(value);
+  if (cases.fallback)          return cases.fallback(value);
+  throw new Error("no oneOf branch matched");
 }
-export function isA(v: unknown): v is A { return validateA(v) === undefined; }
 ```
+
+**V5 -> TS mapping:** `Match(...matchers, defaultMatch)` -> `matchX(value, { branch..., fallback? })`;
+`TryGetAs{Branch}(out T)` -> `isX(v): v is X`; `Branch.From(this)` -> free (the value already *is* the
+branch after narrowing); discriminator fast-path -> `switch` on the discriminant.
 
 ### 5.3 The full recognised‑pattern catalogue → idiomatic TS
+
+*(enum/const and format shapes type-checked: `prototypes/ts-output-shape/enum-const-model.ts`, `format-brand-model.ts`.)*
 
 The core already *classifies* each schema into a recognised shape (the language‑neutral side is the
 same one V5 consumes). The TS provider's job is to give each of those shapes its **idiomatic TS
