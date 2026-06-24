@@ -4,8 +4,8 @@ import { createMockControlPlane } from '../../demo/mock-api.js';
 import '../../src/components/reach-rules-panel.js';
 import { ok, equal, nextEvent, mount } from './helpers.js';
 
-function panelWithMock(attrs = {}) {
-  const mock = createMockControlPlane({ latencyMs: 0 });
+function panelWithMock(attrs = {}, mockOptions = {}) {
+  const mock = createMockControlPlane({ latencyMs: 0, ...mockOptions });
   const el = document.createElement('arazzo-reach-rules-panel');
   for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
   el.client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
@@ -63,6 +63,34 @@ describe('<arazzo-reach-rules-panel>', () => {
     $(el, '.new').click();
     setField(el, '.f-value', "o'brien");
     equal(preview(el), "domain == 'o''brien'", "single quote doubled");
+  });
+
+  it('builds a classification ordered expression from the configured orderings', async () => {
+    el = panelWithMock({ scopes: 'security:read security:write' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    $(el, '.new').click();
+    $(el, 'input[name="tmpl"][value="ordered"]').click(); // the classification template (orderings are seeded)
+    // Defaults seeded from the ordering: classification, 'at or below' (<=), the first label (public).
+    equal(preview(el), "classification <= 'public'", 'seeded ordered expression');
+    setField(el, '.f-value', 'confidential');
+    equal(preview(el), "classification <= 'confidential'", 'value dropdown drives the bound');
+    setField(el, '.f-comparator', '>');
+    equal(preview(el), "classification > 'confidential'", 'comparator dropdown drives the operator');
+
+    const changed = nextEvent(el, 'rules-changed');
+    $(el, '.create').click();
+    const e = await changed;
+    ok(e.detail.rules.some((r) => r.expression === "classification > 'confidential'"), 'ordered rule created');
+  });
+
+  it('hides the classification template when the deployment configures no orderings', async () => {
+    el = panelWithMock({ scopes: 'security:read security:write' }, { securityOrderingsSeed: [] });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    $(el, '.new').click();
+    ok(!$(el, 'input[name="tmpl"][value="ordered"]'), 'no classification template radio without orderings');
+    ok($(el, 'input[name="tmpl"][value="label-eq"]'), 'the other templates are still offered');
   });
 
   it('surfaces the server 400 for a malformed advanced expression', async () => {

@@ -483,6 +483,13 @@ test('security-rule client methods validate their arguments before calling the s
   await assert.rejects(async () => c.deleteSecurityRule(''), TypeError);
 });
 
+test('listSecurityOrderings returns the configured ordered dimensions with their ascending labels', async () => {
+  const { orderings } = await makeClient().listSecurityOrderings();
+  const classification = orderings.find((o) => o.dimension === 'classification');
+  assert.ok(classification, 'classification ordering present');
+  assert.deepEqual(classification.labels, ['public', 'internal', 'confidential', 'restricted']);
+});
+
 // ---- identity / grantee resolution (§16.5.4) ----------------------------------------------------
 
 test('searchGrantees returns the resolved grantees with their exact identity and complete flag', async () => {
