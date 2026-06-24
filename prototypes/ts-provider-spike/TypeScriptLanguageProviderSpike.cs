@@ -419,7 +419,17 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
         {
             if (IsObject(td))
             {
-                EmitInterface(sb, td);
+                // A pure map (additionalProperties value type, no declared properties) -> a `Record` alias;
+                // anything with declared properties stays an interface.
+                FallbackObjectPropertyType? mapFb = td.LocalEvaluatedPropertyType();
+                if (!td.HasPropertyDeclarations && mapFb is not null && mapFb.ReducedType.LocatedSchema.Schema.ValueKind != JsonValueKind.False)
+                {
+                    EmitMapAlias(sb, td, mapFb);
+                }
+                else
+                {
+                    EmitInterface(sb, td);
+                }
             }
             else if (IsEnum(td))
             {
@@ -448,6 +458,13 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
         sb.Append("}\n\n");
     }
 
+    // A pure map / dictionary object (additionalProperties value type, no declared properties): the
+    // idiomatic TS surface is `Readonly<Record<string, T>>` (design §5.3).
+    private static void EmitMapAlias(StringBuilder sb, TypeDeclaration td, FallbackObjectPropertyType fb)
+    {
+        sb.Append("export type ").Append(FinalName(td)).Append(" = Readonly<Record<string, ").Append(TsTypeRef(fb.ReducedType)).Append(">>;\n\n");
+    }
+
     private static void EmitEnumAlias(StringBuilder sb, TypeDeclaration td)
     {
         if (td.LocatedSchema.Schema.TryGetProperty("enum", out JsonElement en) && en.ValueKind == JsonValueKind.Array)
@@ -471,8 +488,12 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
         }
     }
 
-    // The TS type reference for a (property) type: enum/object -> its name; const -> literal; array ->
-    // readonly T[] (element typing is Phase 1); scalar -> primitive; else unknown.
+    // Re-entrancy guard for TsArrayTypeRef (recursive array schemas). Generation is single-threaded.
+    [ThreadStatic]
+    private static HashSet<TypeDeclaration>? visiting;
+
+    // The TS type reference for a (property) type: enum/object/map -> its name; const -> literal;
+    // array -> typed `readonly T[]` / tuple / variadic tuple (recursive for tensors); scalar -> primitive.
     private static string TsTypeRef(TypeDeclaration td)
     {
         if (IsEnum(td))
@@ -491,9 +512,24 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
         }
 
         List<string> kinds = SchemaTypes(td);
-        if (kinds.Contains("array"))
+        if (kinds.Contains("array") || td.ExplicitTupleType() is not null || (td.ExplicitNonTupleItemsType() ?? td.ArrayItemsType()) is not null)
         {
-            return "readonly unknown[]";
+            // Guard against recursive array schemas (e.g. items: {$ref: '#'}): a revisited type degrades
+            // to the safe `readonly unknown[]` rather than recursing forever.
+            visiting ??= new HashSet<TypeDeclaration>();
+            if (!visiting.Add(td))
+            {
+                return "readonly unknown[]";
+            }
+
+            try
+            {
+                return TsArrayTypeRef(td);
+            }
+            finally
+            {
+                visiting.Remove(td);
+            }
         }
 
         var prims = new List<string>();
@@ -508,6 +544,41 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
 
         return prims.Count > 0 ? string.Join(" | ", prims) : "unknown";
     }
+
+    // Array/tuple element typing (design §5.3): plain `readonly T[]`, pure tuple `readonly [A,B,C]`,
+    // prefix+tail variadic tuple `readonly [A, ...T[]]`, recursive for multi-dimension (matrices/tensors).
+    private static string TsArrayTypeRef(TypeDeclaration td)
+    {
+        TupleTypeDeclaration? tuple = td.ExplicitTupleType();
+        ArrayItemsTypeDeclaration? items = td.ExplicitNonTupleItemsType() ?? td.ArrayItemsType();
+        if (tuple is not null)
+        {
+            var parts = new List<string>();
+            foreach (var it in tuple.ItemsTypes)
+            {
+                parts.Add(TsTypeRef(it.ReducedType));
+            }
+
+            // prefixItems + a tail `items` schema -> variadic tuple; `items:false` (the never-type)
+            // closes the tuple with no tail.
+            if (items is not null && items.ReducedType.LocatedSchema.Schema.ValueKind != JsonValueKind.False)
+            {
+                parts.Add("..." + ElemWrap(TsTypeRef(items.ReducedType)) + "[]");
+            }
+
+            return "readonly [" + string.Join(", ", parts) + "]";
+        }
+
+        if (items is not null)
+        {
+            return "readonly " + ElemWrap(TsTypeRef(items.ReducedType)) + "[]";
+        }
+
+        return "readonly unknown[]";
+    }
+
+    // Parenthesise an array element type when bare `T[]` would mis-parse (unions, nested readonly arrays).
+    private static string ElemWrap(string t) => t.Contains(" | ") || t.StartsWith("readonly", StringComparison.Ordinal) ? "(" + t + ")" : t;
 
     // Emit a property name unquoted when it is a valid TS identifier, quoted otherwise.
     private static string Ident(string name)
