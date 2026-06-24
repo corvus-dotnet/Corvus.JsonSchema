@@ -1600,3 +1600,28 @@ The generator setup is identical to the C# test runner (FakeWebDocumentResolver 
 analysers + `rebaseAsRoot` + reduced root); only the emitted language differs. This is the strongest
 possible evidence for the design: one C# provider over the existing core, emitting idiomatic
 `tsc --strict`-clean TypeScript, is fully JSON-Schema-compliant across every supported dialect.
+
+### 13.22 Entire suite incl. optional + format -- 7844/7849 (99.9%); every format 100%
+
+The harness now runs the WHOLE JSON-Schema-Test-Suite for all five dialects: top-level + `optional/*`
++ `optional/format/*` (1688 modules). Result: **7844/7849 (99.9%)**, all modules `tsc --strict` clean;
+draft6 / draft7 / 2019-09 are 100%. **Every one of the 21 format files passes 100%** across all dialects
+(uri, uri-reference, iri, iri-reference, uri-template, email, idn-email, hostname, idn-hostname, ipv4,
+ipv6, uuid, date, time, date-time, duration, json-pointer, relative-json-pointer, regex, ecmascript-regex).
+
+Format validation is parse-based (not regex), packaged via `@js-temporal/polyfill` (the duration *type*),
+`tr46` (UTS-46), and `lossless-json` (source-text numbers), per §5.5/§4.1. `content` (contentEncoding
+base64 + contentMediaType application/json) is asserted in the optional/content suite.
+
+The 5 remaining are genuine spec/vocab/draft edges, the same class the C# engine documents as exclusions:
+* draft-4 `1.0` is-not-an-integer -- draft-4-specific integer semantics (draft-6+ treats `1.0` as an
+  integer; the core surfaces `CoreTypes.Integer` either way).
+* `$dynamicRef` skipping intermediate resources via a pointer reference across a resource boundary (2)
+  -- an advanced dynamic-scope resolution corner.
+* the `format-assertion` **vocabulary** (2) -- `$vocabulary`-driven assert/annotate mode (the spike sets
+  the assertion mode at the provider, not per-type from the schema's declared vocabulary).
+
+This validates the full design end-to-end: one C# provider over the existing core, capability-interface
+matched, emitting idiomatic `tsc --strict`-clean TypeScript that imports a shared `@corvus/json-runtime`,
+validating Model-C source-text instances (exact numerics) -- is essentially fully JSON-Schema-compliant
+(every keyword + every format) across draft 4/6/7/2019-09/2020-12.
