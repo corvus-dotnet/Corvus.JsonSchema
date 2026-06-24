@@ -555,6 +555,78 @@ export class ArazzoControlPlaneClient {
     return `/administrators/${encodeURIComponent(baseWorkflowId)}`;
   }
 
+  // ---- security rules (§14.2) — the reusable reach vocabulary -----------------------------------
+
+  /**
+   * `listSecurityRules` — the deployment's row-security rules (`GET /security/rules`): the reusable WHERE
+   * vocabulary a binding scopes read/write/purge reach with. Requires `security:read`.
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<{ rules: object[] }>} A {@link SecurityRuleList} — each rule is
+   *   `{ name, expression, description?, createdBy, createdAt, lastUpdatedBy?, lastUpdatedAt?, etag }`.
+   */
+  async listSecurityRules(opts = {}) {
+    const result = await this._request('GET', '/security/rules', { signal: opts.signal });
+    return { rules: result.rules ?? [] };
+  }
+
+  /**
+   * `getSecurityRule` — fetch a single rule by name (`GET /security/rules/{ruleName}`). Requires `security:read`.
+   * @param {string} name
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The {@link SecurityRuleSummary}. Throws {@link ProblemError} `404`.
+   */
+  getSecurityRule(name, opts = {}) {
+    if (!name) throw new TypeError('getSecurityRule requires a rule name.');
+    return this._request('GET', `/security/rules/${encodeURIComponent(name)}`, { signal: opts.signal });
+  }
+
+  // ---- security:write ---------------------------------------------------------------------------
+
+  /**
+   * `createSecurityRule` — create a named rule (`POST /security/rules`); the server validates `expression`
+   * against the security-rule grammar (`400` on a malformed expression, `409` on a duplicate name). Requires
+   * `security:write`.
+   * @param {{ name: string, expression: string, description?: string }} body
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The created {@link SecurityRuleSummary}.
+   */
+  createSecurityRule(body, opts = {}) {
+    if (!body || !body.name || !body.expression) {
+      throw new TypeError('createSecurityRule requires a name and an expression.');
+    }
+    const payload = { name: body.name, expression: body.expression };
+    if (body.description) payload.description = body.description;
+    return this._request('POST', '/security/rules', { body: payload, signal: opts.signal });
+  }
+
+  /**
+   * `updateSecurityRule` — replace a rule's content (`PUT /security/rules/{ruleName}`); the server validates the
+   * `expression` (`400` on malformed, `404` if absent). Requires `security:write`.
+   * @param {string} name
+   * @param {{ expression: string, description?: string }} body
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The updated {@link SecurityRuleSummary}.
+   */
+  updateSecurityRule(name, body, opts = {}) {
+    if (!name) throw new TypeError('updateSecurityRule requires a rule name.');
+    if (!body || !body.expression) throw new TypeError('updateSecurityRule requires an expression.');
+    const payload = { expression: body.expression };
+    if (body.description) payload.description = body.description;
+    return this._request('PUT', `/security/rules/${encodeURIComponent(name)}`, { body: payload, signal: opts.signal });
+  }
+
+  /**
+   * `deleteSecurityRule` — delete a rule by name (`DELETE /security/rules/{ruleName}`, `404` if absent). Requires
+   * `security:write`.
+   * @param {string} name
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<void>}
+   */
+  async deleteSecurityRule(name, opts = {}) {
+    if (!name) throw new TypeError('deleteSecurityRule requires a rule name.');
+    await this._request('DELETE', `/security/rules/${encodeURIComponent(name)}`, { signal: opts.signal });
+  }
+
   // ---- identity / grantee resolution (§16.5.4) --------------------------------------------------
 
   /**
