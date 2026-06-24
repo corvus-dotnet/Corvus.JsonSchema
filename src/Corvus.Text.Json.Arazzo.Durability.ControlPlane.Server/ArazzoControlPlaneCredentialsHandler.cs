@@ -101,6 +101,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         bool hasManagementTags;
         UsageTagsState usageState;
         bool hasUsageTags;
+        bool hasUsageGrantee;
         try
         {
             // managementTags = the principal's deployment-internal tenant tag (always stamped, so the owner keeps
@@ -123,8 +124,13 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
             // sys:workflow=nightly-reconcile; never free-form, so usage cannot be self-granted by a workflow author), or —
             // with no grants — the creating principal's own identity (its internal tags). The two scopes are independent
             // (§13/§14.2). Empty only when unscoped (no grants and no internal tags), in which case the property is omitted.
-            bool useGrants = body.UsageGrants.IsNotUndefined() && body.UsageGrants.GetArrayLength() > 0;
-            usageState = new UsageTagsState(this.access, body.UsageGrants, internalTags, useGrants);
+            // An absent usageGrantee is a `default` value whose nested-array accessor would NRE, so gate on its ValueKind
+            // (null-safe) before touching Identity; its grants become the AND-matched usage tags.
+            Models.CredentialUsageGrantee usageGrantee = body.UsageGrantee;
+            hasUsageGrantee = usageGrantee.ValueKind == JsonValueKind.Object;
+            Models.CredentialUsageGrantee.CredentialUsageGrantArray identity = hasUsageGrantee ? usageGrantee.Identity : default;
+            bool useGrants = identity.IsNotUndefined() && identity.GetArrayLength() > 0;
+            usageState = new UsageTagsState(this.access, identity, internalTags, useGrants);
             hasUsageTags = useGrants || internalTags.Count > 0;
 
             // The required request fields are validated up front; their JSON values are then carried into the draft
@@ -165,7 +171,9 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
                 writeManagementTags: WriteManagementTags,
                 usageState: usageState,
                 hasUsageTags: hasUsageTags,
-                writeUsageTags: WriteUsageTags);
+                writeUsageTags: WriteUsageTags,
+                usageKind: hasUsageGrantee ? (JsonElement)body.UsageGrantee.Kind : default,
+                usageLabel: hasUsageGrantee ? (JsonElement)body.UsageGrantee.Label : default);
 
             // Guard against privilege escalation: a principal may not create a binding it could not itself manage. The
             // binding's management tags are read back from the draft as a non-owning view (the draft is the only
@@ -326,11 +334,11 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         }
     }
 
-    private readonly struct UsageTagsState(ControlPlaneAccess access, Models.CredentialBindingWrite.CredentialUsageGrantArray grants, IReadOnlyList<SecurityTag> internalTags, bool useGrants)
+    private readonly struct UsageTagsState(ControlPlaneAccess access, Models.CredentialUsageGrantee.CredentialUsageGrantArray grants, IReadOnlyList<SecurityTag> internalTags, bool useGrants)
     {
         public ControlPlaneAccess Access { get; } = access;
 
-        public Models.CredentialBindingWrite.CredentialUsageGrantArray Grants { get; } = grants;
+        public Models.CredentialUsageGrantee.CredentialUsageGrantArray Grants { get; } = grants;
 
         public IReadOnlyList<SecurityTag> InternalTags { get; } = internalTags;
 
@@ -425,7 +433,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
             lastUpdatedBy: Models.JsonString.From(binding.LastUpdatedBy),
             managementTags: hasManagementTags ? Models.CredentialBindingSummary.CredentialSecurityTagArray.Build(in ctx, BuildManagementTags) : default,
             rotatedAt: Models.JsonDateTime.From(binding.RotatedAt),
-            usageGrants: hasUsageGrants ? Models.CredentialBindingSummary.CredentialUsageGrantArray.Build(in ctx, BuildUsageGrants) : default);
+            usageGrantee: hasUsageGrants ? Models.CredentialUsageGrantee.Build(in ctx, BuildUsageGrantee) : default);
     }
 
     // Each leaf item is built through its own context-threaded Build (the leaf value IS the context — a readonly struct
@@ -485,7 +493,36 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     // SecurityTagSet view over the array's raw UTF-8 (no CopyFrom byte[]), enumerated as unescaped spans, each prefixed
     // tag's (dimension, value) written bytes-native via the policy's span-based TryDescribeUsageGrant — no List, no
     // managed strings. The binding document outlives the synchronous build (handed to the workspace), so the view is safe.
-    private static void BuildUsageGrants(in SummaryContext ctx, ref Models.CredentialBindingSummary.CredentialUsageGrantArray.Builder array)
+    // The usage grantee (mirroring the administrator grant): its identity described back as {dimension,value} grants plus
+    // the resolved kind/label carried from the binding as UTF-8 leases (no managed string), held until Create copies.
+    private static void BuildUsageGrantee(in SummaryContext ctx, ref Models.CredentialUsageGrantee.Builder grantee)
+    {
+        SourceCredentialBinding binding = ctx.Binding;
+        bool hasKind = binding.UsageKind.IsNotUndefined();
+        bool hasLabel = binding.UsageLabel.IsNotUndefined();
+        if (hasKind && hasLabel)
+        {
+            using UnescapedUtf8JsonString kind = binding.UsageKind.GetUtf8String();
+            using UnescapedUtf8JsonString label = binding.UsageLabel.GetUtf8String();
+            grantee.Create(in ctx, identity: Models.CredentialUsageGrantee.CredentialUsageGrantArray.Build(in ctx, BuildUsageGrants), kind: kind.Span, label: (Models.JsonString.Source)label.Span);
+        }
+        else if (hasKind)
+        {
+            using UnescapedUtf8JsonString kind = binding.UsageKind.GetUtf8String();
+            grantee.Create(in ctx, identity: Models.CredentialUsageGrantee.CredentialUsageGrantArray.Build(in ctx, BuildUsageGrants), kind: kind.Span);
+        }
+        else if (hasLabel)
+        {
+            using UnescapedUtf8JsonString label = binding.UsageLabel.GetUtf8String();
+            grantee.Create(in ctx, identity: Models.CredentialUsageGrantee.CredentialUsageGrantArray.Build(in ctx, BuildUsageGrants), label: (Models.JsonString.Source)label.Span);
+        }
+        else
+        {
+            grantee.Create(in ctx, identity: Models.CredentialUsageGrantee.CredentialUsageGrantArray.Build(in ctx, BuildUsageGrants));
+        }
+    }
+
+    private static void BuildUsageGrants(in SummaryContext ctx, ref Models.CredentialUsageGrantee.CredentialUsageGrantArray.Builder array)
     {
         SecurityTagSet usageTags = SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(ctx.Binding.UsageTags).Memory);
         ControlPlaneAccess access = ctx.Access;

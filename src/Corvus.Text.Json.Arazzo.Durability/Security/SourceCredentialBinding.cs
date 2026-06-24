@@ -366,9 +366,11 @@ public readonly partial struct SourceCredentialBinding
         SecurityTagBuildAction<TManagement> writeManagementTags,
         in TUsage usageState,
         bool hasUsageTags,
-        SecurityTagBuildAction<TUsage> writeUsageTags)
+        SecurityTagBuildAction<TUsage> writeUsageTags,
+        in JsonElement usageKind,
+        in JsonElement usageLabel)
     {
-        DraftElements<TManagement, TUsage> state = new(sourceName, environment, authKind, secretRefs, config, description, expiresAt, rotatedAt, managementState, hasManagementTags, writeManagementTags, usageState, hasUsageTags, writeUsageTags);
+        DraftElements<TManagement, TUsage> state = new(sourceName, environment, authKind, secretRefs, config, description, expiresAt, rotatedAt, managementState, hasManagementTags, writeManagementTags, usageState, hasUsageTags, writeUsageTags, usageKind, usageLabel);
         return PersistedJson.ToPooledDocument<SourceCredentialBinding, DraftElements<TManagement, TUsage>>(
             state,
             static (Utf8JsonWriter writer, in DraftElements<TManagement, TUsage> s) =>
@@ -402,6 +404,11 @@ public readonly partial struct SourceCredentialBinding
                     writer.WriteEndArray();
                 }
 
+                // The resolved usage grantee's display (kind/label) carried bytes-to-bytes from the request body — omitted
+                // when absent (the interim/owner-default usage path) or when the grantee carried no kind/label.
+                WriteValueIfPresent(writer, JsonPropertyNames.UsageKindUtf8, s.UsageKind);
+                WriteValueIfPresent(writer, JsonPropertyNames.UsageLabelUtf8, s.UsageLabel);
+
                 writer.WriteEndObject();
             });
     }
@@ -432,6 +439,8 @@ public readonly partial struct SourceCredentialBinding
         WriteValueIfPresent(writer, JsonPropertyNames.RotatedAtUtf8, (JsonElement)draft.RotatedAt);
         WriteValueIfPresent(writer, JsonPropertyNames.ManagementTagsUtf8, (JsonElement)draft.ManagementTags);
         WriteValueIfPresent(writer, JsonPropertyNames.UsageTagsUtf8, (JsonElement)draft.UsageTags);
+        WriteValueIfPresent(writer, JsonPropertyNames.UsageKindUtf8, (JsonElement)draft.UsageKind);
+        WriteValueIfPresent(writer, JsonPropertyNames.UsageLabelUtf8, (JsonElement)draft.UsageLabel);
         writer.WriteString(JsonPropertyNames.CreatedByUtf8, actor);
         writer.WriteString(JsonPropertyNames.CreatedAtUtf8, createdAt);
         writer.WriteString(JsonPropertyNames.EtagUtf8, etag.Value ?? string.Empty);
@@ -498,7 +507,9 @@ public readonly partial struct SourceCredentialBinding
         SecurityTagBuildAction<TManagement> writeManagementTags,
         TUsage usageState,
         bool hasUsageTags,
-        SecurityTagBuildAction<TUsage> writeUsageTags)
+        SecurityTagBuildAction<TUsage> writeUsageTags,
+        JsonElement usageKind,
+        JsonElement usageLabel)
     {
         public JsonElement SourceName { get; } = sourceName;
 
@@ -527,6 +538,10 @@ public readonly partial struct SourceCredentialBinding
         public bool HasUsageTags { get; } = hasUsageTags;
 
         public SecurityTagBuildAction<TUsage> WriteUsageTags { get; } = writeUsageTags;
+
+        public JsonElement UsageKind { get; } = usageKind;
+
+        public JsonElement UsageLabel { get; } = usageLabel;
     }
 
     /// <summary>Writes an updated copy of this binding: the immutable identity (id/sourceName/environment), the immutable
@@ -556,9 +571,12 @@ public readonly partial struct SourceCredentialBinding
         WriteValueIfPresent(writer, JsonPropertyNames.RotatedAtUtf8, (JsonElement)draft.RotatedAt);
 
         // Management and usage tags are immutable identity (the binding's row-authorization scope) — carried forward
-        // from the existing binding, never taken from the draft.
+        // from the existing binding, never taken from the draft. The usage grantee's display (kind/label) is part of that
+        // immutable usage identity, so it is carried forward too (never dropped on update — the catalog-drop lesson).
         WriteValueIfPresent(writer, JsonPropertyNames.ManagementTagsUtf8, (JsonElement)this.ManagementTags);
         WriteValueIfPresent(writer, JsonPropertyNames.UsageTagsUtf8, (JsonElement)this.UsageTags);
+        WriteValueIfPresent(writer, JsonPropertyNames.UsageKindUtf8, (JsonElement)this.UsageKind);
+        WriteValueIfPresent(writer, JsonPropertyNames.UsageLabelUtf8, (JsonElement)this.UsageLabel);
 
         writer.WriteString(JsonPropertyNames.CreatedByUtf8, this.CreatedByValue);
         writer.WriteString(JsonPropertyNames.CreatedAtUtf8, this.CreatedAtValue);
