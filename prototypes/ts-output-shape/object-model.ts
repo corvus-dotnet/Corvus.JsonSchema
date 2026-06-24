@@ -19,8 +19,19 @@ export interface Person {
   readonly address: Address; // required; reference to another generated type
 }
 
-// AOT validator surface (signature shape; the body is generated — design §5.4).
-export declare function validatePerson(value: unknown): Failure | undefined;
+// AOT validator surface (the generator emits this body — design §5.4; here a hand-written reference
+// equivalent so the model is runnable as well as type-checked).
+export function validatePerson(value: unknown): Failure | undefined {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return { path: "", keyword: "type", detail: "object" };
+  }
+  const o = value as Record<string, unknown>;
+  if (!("name" in o)) { return { path: "/name", keyword: "required" }; }
+  if (typeof o.name !== "string") { return { path: "/name", keyword: "type", detail: "string" }; }
+  if (!("address" in o)) { return { path: "/address", keyword: "required" }; }
+  if ("age" in o && typeof o.age !== "number") { return { path: "/age", keyword: "type", detail: "number" }; }
+  return undefined;
+}
 export function isPerson(value: unknown): value is Person {
   return validatePerson(value) === undefined;
 }

@@ -1,0 +1,13 @@
+{
+  "comment": "Emit config for RUNNING the behaviour tests (the sibling tsconfig.json is the noEmit type-check gate). CommonJS so node resolves the extensionless reference-model imports.",
+  "compilerOptions": {
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "target": "es2022",
+    "module": "commonjs",
+    "outDir": "dist",
+    "skipLibCheck": true,
+    "noUnusedLocals": false,
+    "esModuleInterop": true
+  }
+}

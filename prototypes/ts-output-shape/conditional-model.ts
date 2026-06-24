@@ -12,8 +12,14 @@ export interface Payment {
   readonly iban?: string; // `else`: required when method !== "card"
 }
 
-// the generated validator is what actually enforces the if/then/else:
-export declare function validatePayment(value: unknown): boolean;
+// the generated validator is what actually enforces the if/then/else (here a runnable reference: the
+// `then` branch (method === "card") requires cardNumber; the `else` branch requires iban):
+export function validatePayment(value: unknown): boolean {
+  if (typeof value !== "object" || value === null) { return false; }
+  const o = value as Record<string, unknown>;
+  if (o.method !== "card" && o.method !== "bank") { return false; }
+  return o.method === "card" ? typeof o.cardNumber === "string" : typeof o.iban === "string";
+}
 
 // This type-checks at compile time but the VALIDATOR rejects it (card with no cardNumber):
 const typeOkButInvalid: Payment = { method: "card" };
