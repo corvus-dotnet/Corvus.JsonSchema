@@ -335,18 +335,25 @@ internal static class CredentialCommandHelpers
 
     public static string GrantSummary(Models.CredentialBindingSummary summary)
     {
-        if (!summary.UsageGrants.IsNotUndefined())
+        Models.CredentialUsageGrantee grantee = summary.UsageGrantee;
+        if (!grantee.IsNotUndefined() || !grantee.Identity.IsNotUndefined())
         {
             return "—";
         }
 
         var grants = new List<string>();
-        foreach (Models.CredentialUsageGrant grant in summary.UsageGrants.EnumerateArray())
+        foreach (Models.CredentialUsageGrant grant in grantee.Identity.EnumerateArray())
         {
             grants.Add($"{(string)grant.DimensionValue}={(string)grant.Value}");
         }
 
-        return grants.Count > 0 ? string.Join(", ", grants) : "—";
+        if (grants.Count == 0)
+        {
+            return "—";
+        }
+
+        string body = string.Join(", ", grants);
+        return grantee.Label.IsNotUndefined() ? $"{(string)grantee.Label} ({body})" : body;
     }
 
     public static Models.CredentialBindingWrite.Source BuildWrite(CredentialCreateSettings s)
@@ -364,7 +371,7 @@ internal static class CredentialCommandHelpers
                 expiresAt: expiresAt,
                 managementTags: WriteManagementTags(s.ManagementTags),
                 rotatedAt: default,
-                usageGrants: WriteUsageGrants(s.Grants));
+                usageGrantee: WriteUsageGrantee(s.Grants));
         });
 
     public static Snapshot Capture(Models.CredentialBindingSummary summary)
@@ -532,22 +539,25 @@ internal static class CredentialCommandHelpers
         });
     }
 
-    private static Models.CredentialBindingWrite.CredentialUsageGrantArray.Source WriteUsageGrants(ILookup<string, string>? grants)
+    // The interim CLI form: the --grant {dimension=value}s become the usage grantee's identity (AND-matched), with no
+    // resolved kind/label (the CLI has no interactive grantee picker). Omitted entirely when no grants are given.
+    private static Models.CredentialUsageGrantee.Source WriteUsageGrantee(ILookup<string, string>? grants)
     {
-        if (grants is null)
+        if (grants?.Any() != true)
         {
             return default;
         }
 
-        return new Models.CredentialBindingWrite.CredentialUsageGrantArray.Source((ref Models.CredentialBindingWrite.CredentialUsageGrantArray.Builder ab) =>
-        {
-            foreach (IGrouping<string, string> group in grants)
+        return new Models.CredentialUsageGrantee.Source((ref Models.CredentialUsageGrantee.Builder b) => b.Create(
+            identity: new Models.CredentialUsageGrantee.CredentialUsageGrantArray.Source((ref Models.CredentialUsageGrantee.CredentialUsageGrantArray.Builder ab) =>
             {
-                foreach (string value in group)
+                foreach (IGrouping<string, string> group in grants)
                 {
-                    ab.AddItem(new Models.CredentialUsageGrant.Source((ref Models.CredentialUsageGrant.Builder gb) => gb.Create(group.Key, value)));
+                    foreach (string value in group)
+                    {
+                        ab.AddItem(new Models.CredentialUsageGrant.Source((ref Models.CredentialUsageGrant.Builder gb) => gb.Create(group.Key, value)));
+                    }
                 }
-            }
-        });
+            })));
     }
 }

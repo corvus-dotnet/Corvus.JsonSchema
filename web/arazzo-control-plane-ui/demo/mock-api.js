@@ -519,7 +519,7 @@ function seedCredentials() {
     sourceName, environment, authKind, secretRefs,
     config: extra.config ?? [],
     managementTags: extra.managementTags ?? [],
-    usageGrants: extra.usageGrants ?? [],
+    usageGrantee: extra.usageGrantee,
     description: extra.description,
     expiresAt: extra.expiresAt,
     rotatedAt: extra.rotatedAt,
@@ -527,7 +527,7 @@ function seedCredentials() {
   });
   return [
     b('petstore', 'production', 'apiKey', [{ name: 'value', ref: 'keyvault://petstore-key#3' }], { config: [{ key: 'parameterName', value: 'X-Api-Key' }], expiresAt: iso(20 * day), description: 'Petstore API key.' }),
-    b('billing', 'production', 'oauth2ClientCredentials', [{ name: 'clientSecret', ref: 'vault://kv/billing#secret' }], { config: [{ key: 'tokenUrl', value: 'https://idp.example.com/oauth/token' }, { key: 'clientId', value: 'billing-client' }], usageGrants: [{ dimension: 'workflow', value: 'nightly-reconcile' }], expiresAt: iso(3 * day) }),
+    b('billing', 'production', 'oauth2ClientCredentials', [{ name: 'clientSecret', ref: 'vault://kv/billing#secret' }], { config: [{ key: 'tokenUrl', value: 'https://idp.example.com/oauth/token' }, { key: 'clientId', value: 'billing-client' }], usageGrantee: { identity: [{ dimension: 'workflow', value: 'nightly-reconcile' }], kind: 'workflow', label: 'nightly-reconcile' }, expiresAt: iso(3 * day) }),
     b('legacy', 'production', 'basic', [{ name: 'password', ref: 'env://LEGACY_PW' }], { config: [{ key: 'username', value: 'svc-legacy' }], expiresAt: iso(-2 * day) }),
     b('events', 'staging', 'bearer', [{ name: 'value', ref: 'awssm://events-token' }], {}),
   ];
@@ -542,7 +542,7 @@ function toCredentialSummary(b) {
     secretRefs: b.secretRefs,
     config: b.config ?? [],
     managementTags: b.managementTags ?? [],
-    usageGrants: b.usageGrants ?? [],
+    usageGrantee: b.usageGrantee ?? undefined,
     description: b.description ?? undefined,
     expiresAt: b.expiresAt ?? undefined,
     rotatedAt: b.rotatedAt ?? undefined,
@@ -1036,7 +1036,7 @@ export function createMockControlPlane(options = {}) {
       id: `cred-${body.sourceName}-${body.environment}`,
       sourceName: body.sourceName, environment: body.environment, authKind: body.authKind,
       secretRefs: body.secretRefs, config: body.config ?? [], managementTags: body.managementTags ?? [],
-      usageGrants: body.usageGrants ?? [], description: body.description,
+      usageGrantee: body.usageGrantee, description: body.description,
       expiresAt: body.expiresAt, rotatedAt: body.rotatedAt,
       createdBy: 'demo', createdAt: iso(0), etag: nextEtag(),
     };

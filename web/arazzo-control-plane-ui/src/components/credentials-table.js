@@ -11,7 +11,7 @@
 // `secretRef` and a derived `credentialStatus`, never a secret. The operator's question is "what's about to
 // break?", so status is the headline column (colour-coded) with an "N expiring / M expired" footer.
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, absoluteTime, countdown, define } from './base.js';
+import { ArazzoElement, SHARED_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, absoluteTime, countdown, define } from './base.js';
 
 // One keyset page fetched at a time; the store pages server-side and "Load more" appends the next page.
 const PAGE_SIZE = 50;
@@ -141,6 +141,7 @@ class ArazzoCredentialsTable extends ArazzoElement {
     this.shadowRoot.innerHTML = `
       <style>
         ${SHARED_CSS}
+        ${GRANTEE_CHIP_CSS}
         .wrap { border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
         .toolbar { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
         .toolbar .grow { flex: 1; }
@@ -253,8 +254,8 @@ class ArazzoCredentialsTable extends ArazzoElement {
     const key = `${b.sourceName}@${b.environment}`;
     const status = STATUS[b.credentialStatus] || { label: b.credentialStatus, color: 'var(--_muted)' };
     const ref = b.secretRefs?.[0]?.ref;
-    const grants = Array.isArray(b.usageGrants) && b.usageGrants.length > 0
-      ? `<div class="grants">${b.usageGrants.map((g) => `<span class="grant">${escapeHtml(g.dimension)}=${escapeHtml(g.value)}</span>`).join('')}</div>`
+    const grants = b.usageGrantee && Array.isArray(b.usageGrantee.identity) && b.usageGrantee.identity.length > 0
+      ? `<div class="grants">${granteeChip(b.usageGrantee)}</div>`
       : '<span class="muted">—</span>';
     const expires = b.expiresAt
       ? `<span title="${escapeHtml(absoluteTime(b.expiresAt))}">${escapeHtml(shortDate(b.expiresAt))} <span class="muted">(${escapeHtml(countdown(b.expiresAt))})</span></span>`
