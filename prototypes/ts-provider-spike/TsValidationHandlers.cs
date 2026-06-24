@@ -77,6 +77,20 @@ internal sealed class TsStringLengthHandler : IKeywordValidationHandler, ITsKeyw
     }
 }
 
+internal sealed class TsArrayItemCountHandler : IKeywordValidationHandler, ITsKeywordEmitter
+{
+    public uint ValidationHandlerPriority => 500;
+
+    public bool HandlesKeyword(IKeyword keyword) => keyword.Keyword is "minItems" or "maxItems";
+
+    public void Emit(StringBuilder sb, TypeDeclaration td, IKeyword keyword)
+    {
+        if (!td.TryGetKeyword(keyword, out JsonElement val) || val.ValueKind != JsonValueKind.Number) { return; }
+        string op = keyword.Keyword == "minItems" ? "<" : ">";
+        sb.Append("  if (Array.isArray(value) && value.length ").Append(op).Append(' ').Append(val.GetRawText()).Append(") { return false; }\n");
+    }
+}
+
 internal sealed class TsNumberRangeHandler : IKeywordValidationHandler, ITsKeywordEmitter
 {
     public uint ValidationHandlerPriority => 500;
@@ -181,6 +195,99 @@ internal sealed class TsRequiredHandler : IKeywordValidationHandler, ITsKeywordE
         }
 
         sb.Append("  }\n");
+    }
+}
+
+// patternProperties: every OWN key matching a pattern must validate against that pattern's subschema.
+// (A key may also be in `properties` and/or feed `additionalProperties` — those are separate handlers.)
+internal sealed class TsPatternPropertiesHandler : IKeywordValidationHandler, ITsKeywordEmitter
+{
+    public uint ValidationHandlerPriority => 810;
+
+    public bool HandlesKeyword(IKeyword keyword) => keyword.Keyword == "patternProperties";
+
+    public void Emit(StringBuilder sb, TypeDeclaration td, IKeyword keyword)
+    {
+        IReadOnlyDictionary<IObjectPatternPropertyValidationKeyword, IReadOnlyCollection<PatternPropertyDeclaration>>? pp = td.PatternProperties();
+        if (pp is null)
+        {
+            return;
+        }
+
+        var entries = new List<(string Pattern, string Name)>();
+        foreach (KeyValuePair<IObjectPatternPropertyValidationKeyword, IReadOnlyCollection<PatternPropertyDeclaration>> kv in pp)
+        {
+            foreach (PatternPropertyDeclaration d in kv.Value)
+            {
+                if (d.ReducedPatternPropertyType.TryGetMetadata<string>("Ts_FinalName", out string? n) && !string.IsNullOrEmpty(n))
+                {
+                    entries.Add((d.Pattern, n!));
+                }
+            }
+        }
+
+        if (entries.Count == 0)
+        {
+            return;
+        }
+
+        sb.Append("  if (typeof value === \"object\" && value !== null && !Array.isArray(value)) {\n");
+        sb.Append("    const o = value as Record<string, unknown>;\n");
+        sb.Append("    for (const k of Object.keys(o)) {\n");
+        foreach ((string pattern, string name) in entries)
+        {
+            sb.Append("      if (new RegExp(").Append(TsEmit.Str(pattern)).Append(", \"u\").test(k) && !evaluate").Append(name).Append("(o[k])) { return false; }\n");
+        }
+
+        sb.Append("    }\n  }\n");
+    }
+}
+
+// additionalProperties: every OWN key not in `properties` and not matching any `patternProperties`
+// pattern must validate against the additionalProperties subschema (which is the `false` validator
+// when additionalProperties is false, rejecting any such key).
+internal sealed class TsAdditionalPropertiesHandler : IKeywordValidationHandler, ITsKeywordEmitter
+{
+    public uint ValidationHandlerPriority => 820;
+
+    public bool HandlesKeyword(IKeyword keyword) => keyword.Keyword == "additionalProperties";
+
+    public void Emit(StringBuilder sb, TypeDeclaration td, IKeyword keyword)
+    {
+        FallbackObjectPropertyType? fb = td.LocalEvaluatedPropertyType();
+        if (fb is null || !fb.ReducedType.TryGetMetadata<string>("Ts_FinalName", out string? name) || string.IsNullOrEmpty(name))
+        {
+            return;
+        }
+
+        var known = new List<string>();
+        foreach (PropertyDeclaration p in td.PropertyDeclarations)
+        {
+            known.Add(TsEmit.Str(p.JsonPropertyName));
+        }
+
+        var patterns = new List<string>();
+        IReadOnlyDictionary<IObjectPatternPropertyValidationKeyword, IReadOnlyCollection<PatternPropertyDeclaration>>? pp = td.PatternProperties();
+        if (pp is not null)
+        {
+            foreach (KeyValuePair<IObjectPatternPropertyValidationKeyword, IReadOnlyCollection<PatternPropertyDeclaration>> kv in pp)
+            {
+                foreach (PatternPropertyDeclaration d in kv.Value)
+                {
+                    patterns.Add("new RegExp(" + TsEmit.Str(d.Pattern) + ", \"u\")");
+                }
+            }
+        }
+
+        sb.Append("  if (typeof value === \"object\" && value !== null && !Array.isArray(value)) {\n");
+        sb.Append("    const o = value as Record<string, unknown>;\n");
+        sb.Append("    const known = new Set<string>([").Append(string.Join(", ", known)).Append("]);\n");
+        sb.Append("    const patterns = [").Append(string.Join(", ", patterns)).Append("];\n");
+        sb.Append("    for (const k of Object.keys(o)) {\n");
+        sb.Append("      if (known.has(k)) { continue; }\n");
+        sb.Append("      if (patterns.some((p) => p.test(k))) { continue; }\n");
+        sb.Append("      if (!evaluate").Append(name).Append("(o[k])) { return false; }\n");
+        sb.Append("    }\n  }\n");
     }
 }
 
