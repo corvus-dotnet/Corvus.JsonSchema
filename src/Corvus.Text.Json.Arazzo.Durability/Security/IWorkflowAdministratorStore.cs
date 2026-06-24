@@ -36,12 +36,13 @@ public interface IWorkflowAdministratorStore
     /// <summary>Creates or replaces the administration record for <paramref name="baseWorkflowId"/> under optimistic
     /// concurrency, setting its administrator identities to <paramref name="administrators"/>.</summary>
     /// <param name="baseWorkflowId">The base workflow id (no <c>-vN</c> suffix).</param>
-    /// <param name="administrators">The new administrator identities (at least one — the caller guarantees non-empty).</param>
+    /// <param name="administrators">The new administrator identities (at least one — the caller guarantees non-empty); each
+    /// carries its own <c>tags</c> plus the optional resolved <c>kind</c>/<c>label</c>, persisted verbatim.</param>
     /// <param name="expectedEtag">The expected current etag: <see cref="WorkflowEtag.None"/> to create (no record may
     /// exist), or the record's current etag to replace it.</param>
     /// <param name="actor">The authenticated identity changing the administrator set (for audit).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The persisted record (with its new etag) as a pooled document the caller must dispose.</returns>
     /// <exception cref="WorkflowAdministrationConflictException">The expected etag no longer matches the stored state.</exception>
-    ValueTask<ParsedJsonDocument<WorkflowAdministrators>> PutAsync(string baseWorkflowId, IReadOnlyList<SecurityTagSet> administrators, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken);
+    ValueTask<ParsedJsonDocument<WorkflowAdministrators>> PutAsync(string baseWorkflowId, IReadOnlyList<WorkflowAdministrators.AdministratorIdentity> administrators, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken);
 }

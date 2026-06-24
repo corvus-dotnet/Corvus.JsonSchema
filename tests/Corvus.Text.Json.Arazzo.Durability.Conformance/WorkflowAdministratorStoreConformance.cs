@@ -20,6 +20,10 @@ public abstract class WorkflowAdministratorStoreConformance
 {
     private readonly List<IAsyncDisposable> disposables = [];
 
+    // Backs the durable AdministratorIdentity values passed to PutAsync; held for the whole test (across awaits) and
+    // disposed in CleanupAsync, which may run on a different thread — so it must be the unrented, thread-affinity-free form.
+    private readonly JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
     /// <summary>Creates a fresh, empty store backed by the implementation under test.</summary>
     /// <param name="timeProvider">The time source the store must use for audit timestamps.</param>
     /// <returns>The store.</returns>
@@ -36,6 +40,7 @@ public abstract class WorkflowAdministratorStoreConformance
         }
 
         this.disposables.Clear();
+        this.workspace.Dispose();
     }
 
     [TestMethod]
@@ -52,7 +57,7 @@ public abstract class WorkflowAdministratorStoreConformance
         IWorkflowAdministratorStore store = await this.NewStoreAsync();
         SecurityTagSet acme = Administrator("acme");
 
-        using (ParsedJsonDocument<WorkflowAdministrators> put = await store.PutAsync("nightly-reconcile", [acme], WorkflowEtag.None, "alice", default))
+        using (ParsedJsonDocument<WorkflowAdministrators> put = await store.PutAsync("nightly-reconcile", [this.Identity(acme)], WorkflowEtag.None, "alice", default))
         {
             put.RootElement.BaseWorkflowIdValue.ShouldBe("nightly-reconcile");
             put.RootElement.CreatedByValue.ShouldBe("alice");
@@ -71,11 +76,11 @@ public abstract class WorkflowAdministratorStoreConformance
     public async Task Materializing_over_an_existing_record_conflicts()
     {
         IWorkflowAdministratorStore store = await this.NewStoreAsync();
-        await store.PutAsync("nightly-reconcile", [Administrator("acme")], WorkflowEtag.None, "alice", default);
+        await store.PutAsync("nightly-reconcile", [this.Identity(Administrator("acme"))], WorkflowEtag.None, "alice", default);
 
         // A second None-etag put (the caller believing no record exists) must be rejected — the record now exists.
         await Should.ThrowAsync<WorkflowAdministrationConflictException>(
-            async () => await store.PutAsync("nightly-reconcile", [Administrator("globex")], WorkflowEtag.None, "mallory", default));
+            async () => await store.PutAsync("nightly-reconcile", [this.Identity(Administrator("globex"))], WorkflowEtag.None, "mallory", default));
     }
 
     [TestMethod]
@@ -88,13 +93,13 @@ public abstract class WorkflowAdministratorStoreConformance
         SecurityTagSet globex = Administrator("globex");
 
         WorkflowEtag firstEtag;
-        using (ParsedJsonDocument<WorkflowAdministrators> created = await store.PutAsync("nightly-reconcile", [acme], WorkflowEtag.None, "alice", default))
+        using (ParsedJsonDocument<WorkflowAdministrators> created = await store.PutAsync("nightly-reconcile", [this.Identity(acme)], WorkflowEtag.None, "alice", default))
         {
             firstEtag = created.RootElement.EtagValue;
             created.RootElement.LastUpdatedByOrNull.ShouldBeNull();
         }
 
-        using ParsedJsonDocument<WorkflowAdministrators> replaced = await store.PutAsync("nightly-reconcile", [acme, globex], firstEtag, "bob", default);
+        using ParsedJsonDocument<WorkflowAdministrators> replaced = await store.PutAsync("nightly-reconcile", [this.Identity(acme), this.Identity(globex)], firstEtag, "bob", default);
 
         replaced.RootElement.AdministratorCount.ShouldBe(2);
         replaced.RootElement.IsAdministeredBy(acme).ShouldBeTrue();
@@ -108,10 +113,10 @@ public abstract class WorkflowAdministratorStoreConformance
     public async Task A_replace_under_a_stale_etag_conflicts()
     {
         IWorkflowAdministratorStore store = await this.NewStoreAsync();
-        await store.PutAsync("nightly-reconcile", [Administrator("acme")], WorkflowEtag.None, "alice", default);
+        await store.PutAsync("nightly-reconcile", [this.Identity(Administrator("acme"))], WorkflowEtag.None, "alice", default);
 
         await Should.ThrowAsync<WorkflowAdministrationConflictException>(
-            async () => await store.PutAsync("nightly-reconcile", [Administrator("globex")], new WorkflowEtag("stale"), "bob", default));
+            async () => await store.PutAsync("nightly-reconcile", [this.Identity(Administrator("globex"))], new WorkflowEtag("stale"), "bob", default));
     }
 
     [TestMethod]
@@ -121,7 +126,7 @@ public abstract class WorkflowAdministratorStoreConformance
 
         // No record exists, yet the caller presents an etag (it believed one did) — a conflict, not a silent create.
         await Should.ThrowAsync<WorkflowAdministrationConflictException>(
-            async () => await store.PutAsync("nightly-reconcile", [Administrator("acme")], new WorkflowEtag("ghost"), "alice", default));
+            async () => await store.PutAsync("nightly-reconcile", [this.Identity(Administrator("acme"))], new WorkflowEtag("ghost"), "alice", default));
     }
 
     [TestMethod]
@@ -131,7 +136,7 @@ public abstract class WorkflowAdministratorStoreConformance
         SecurityTagSet acme = AdministratorWith(("sys:tenant", "acme"), ("team", "payments"));
         SecurityTagSet globex = Administrator("globex");
 
-        await store.PutAsync("nightly-reconcile", [acme, globex], WorkflowEtag.None, "alice", default);
+        await store.PutAsync("nightly-reconcile", [this.Identity(acme), this.Identity(globex)], WorkflowEtag.None, "alice", default);
 
         using ParsedJsonDocument<WorkflowAdministrators>? fetched = await store.GetAsync("nightly-reconcile", default);
         fetched.ShouldNotBeNull();
@@ -146,8 +151,8 @@ public abstract class WorkflowAdministratorStoreConformance
     public async Task Records_for_distinct_base_ids_are_isolated()
     {
         IWorkflowAdministratorStore store = await this.NewStoreAsync();
-        await store.PutAsync("nightly-reconcile", [Administrator("acme")], WorkflowEtag.None, "alice", default);
-        await store.PutAsync("daily-export", [Administrator("globex")], WorkflowEtag.None, "bob", default);
+        await store.PutAsync("nightly-reconcile", [this.Identity(Administrator("acme"))], WorkflowEtag.None, "alice", default);
+        await store.PutAsync("daily-export", [this.Identity(Administrator("globex"))], WorkflowEtag.None, "bob", default);
 
         using ParsedJsonDocument<WorkflowAdministrators>? a = await store.GetAsync("nightly-reconcile", default);
         using ParsedJsonDocument<WorkflowAdministrators>? b = await store.GetAsync("daily-export", default);
@@ -169,6 +174,11 @@ public abstract class WorkflowAdministratorStoreConformance
 
     private static SecurityTagSet AdministratorWith(params (string Key, string Value)[] tags)
         => SecurityTagSet.FromTags([.. tags.Select(t => new SecurityTag(t.Key, t.Value))]);
+
+    // Materializes a resolved identity (tags only — the persisted administrator form) for PutAsync; backed by the
+    // test-lived workspace so it survives the store's synchronous serialization.
+    private WorkflowAdministrators.AdministratorIdentity Identity(SecurityTagSet tags)
+        => WorkflowAdministrators.BuildIdentity(this.workspace, tags, default, hasKind: false, default, hasLabel: false);
 
     private async ValueTask<IWorkflowAdministratorStore> NewStoreAsync(TimeProvider? timeProvider = null)
     {

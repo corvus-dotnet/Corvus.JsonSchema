@@ -24,14 +24,19 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The administrator identities for a base workflow id (&#167;15).
+/// A recorded administrator of a base workflow id (&#167;15), as a resolved identity (&#167;16.5.4): a stable `digest` of its identity (the key for removal), the `identity` as {dimension,value} grants, and the optional resolved `kind`/`label` for display. Membership is exact set-equality on the identity; a single multi-tag grantee (e.g. a person) is one grant, not several.
 /// </para>
 /// </remarks>
-public readonly partial struct AdministratorList
+public readonly partial struct AdministratorGrant
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The administrator&#39;s resolved identity as {dimension,value} grants (a multi-tag grantee yields several entries within this one grant).
+    /// </para>
+    /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public readonly partial struct AdministratorIdentityArray
 #if NET8_0_OR_GREATER

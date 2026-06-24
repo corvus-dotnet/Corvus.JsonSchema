@@ -107,7 +107,7 @@ public static class CliApp
                 administrators.SetDescription("Manage a workflow's administrator set — the identities entitled to publish versions and govern administration (administrators:read / administrators:write).");
                 administrators.AddCommand<AdministratorListCommand>("list").WithDescription("List a base id's administrators (named as deployment-mapped grants).");
                 administrators.AddCommand<AdministratorAddCommand>("add").WithDescription("Add an administrator identity (dimension value).");
-                administrators.AddCommand<AdministratorRemoveCommand>("remove").WithDescription("Remove an administrator identity (the set may not be left empty).");
+                administrators.AddCommand<AdministratorRemoveCommand>("remove").WithDescription("Remove an administrator by its identity digest from `list` (the set may not be left empty).");
                 administrators.AddCommand<AdministratorTransferCommand>("transfer").WithDescription("Replace the whole administrator set (--admin dimension=value, repeatable).");
             });
 

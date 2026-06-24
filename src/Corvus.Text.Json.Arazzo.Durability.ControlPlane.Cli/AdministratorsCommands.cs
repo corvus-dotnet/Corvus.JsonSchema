@@ -41,6 +41,15 @@ internal sealed class AdministratorMemberSettings : BaseWorkflowIdSettings
     public string Value { get; init; } = string.Empty;
 }
 
+/// <summary>Settings for removing an administrator by its stable identity <c>digest</c> (the removal key shown by
+/// <c>administrators list</c>) — administration is removed by identity, not by re-presenting raw tags.</summary>
+internal sealed class AdministratorRemoveSettings : BaseWorkflowIdSettings
+{
+    [CommandArgument(1, "<digest>")]
+    [Description("The identity digest of the administrator to remove (copy it from `administrators list`).")]
+    public string Digest { get; init; } = string.Empty;
+}
+
 /// <summary>Settings for replacing the whole administrator set. Each <c>--admin dimension=value</c> names one new
 /// administrator; a dimension may repeat to name several administrators in the same dimension.</summary>
 internal sealed class AdministratorTransferSettings : BaseWorkflowIdSettings
@@ -91,15 +100,15 @@ internal sealed class AdministratorAddCommand : AsyncCommand<AdministratorMember
     }
 }
 
-internal sealed class AdministratorRemoveCommand : AsyncCommand<AdministratorMemberSettings>
+internal sealed class AdministratorRemoveCommand : AsyncCommand<AdministratorRemoveSettings>
 {
-    protected override async Task<int> ExecuteAsync(CommandContext context, AdministratorMemberSettings settings, CancellationToken cancellationToken)
+    protected override async Task<int> ExecuteAsync(CommandContext context, AdministratorRemoveSettings settings, CancellationToken cancellationToken)
     {
         (HttpClient http, HttpClientTransport transport, ApiAdministratorsClient client) = await settings.CreateAdministratorsClientAsync(cancellationToken);
         using (http)
         await using (transport)
         {
-            await using RemoveAdministratorResponse response = await client.RemoveAdministratorAsync(settings.BaseWorkflowId, settings.Dimension, settings.Value, cancellationToken);
+            await using RemoveAdministratorResponse response = await client.RemoveAdministratorAsync(settings.BaseWorkflowId, settings.Digest, cancellationToken);
             return response.MatchResult(list => Output.Print(list.ToString()), Output.Problem, Output.Problem, Output.Unexpected);
         }
     }
@@ -145,13 +154,25 @@ internal static class AdministratorCommandHelpers
 
         var table = new Table().Border(TableBorder.Rounded);
         table.Title = new TableTitle(Markup.Escape($"administrators of {baseWorkflowId}"));
-        table.AddColumn("Dimension");
-        table.AddColumn("Value");
+        table.AddColumn("Digest");
+        table.AddColumn("Identity");
+        table.AddColumn("Kind");
+        table.AddColumn("Label");
 
         int count = 0;
-        foreach (Models.AdministratorIdentity identity in list.Administrators.EnumerateArray())
+        foreach (Models.AdministratorGrant grant in list.Administrators.EnumerateArray())
         {
-            table.AddRow(Markup.Escape((string)identity.DimensionValue), Markup.Escape((string)identity.Value));
+            // The identity is the resolved {dimension, value} grants it maps from (a multi-tag grantee shows several);
+            // the digest is the stable removal key for `administrators remove <baseWorkflowId> <digest>`.
+            IEnumerable<string> grants = grant.Identity.EnumerateArray()
+                .Select(i => $"{(string)i.DimensionValue}={(string)i.Value}");
+            string kind = grant.Kind.IsNotUndefined() ? (string)grant.Kind : string.Empty;
+            string label = grant.Label.IsNotUndefined() ? (string)grant.Label : string.Empty;
+            table.AddRow(
+                Markup.Escape((string)grant.Digest),
+                Markup.Escape(string.Join(", ", grants)),
+                Markup.Escape(kind),
+                Markup.Escape(label));
             count++;
         }
 

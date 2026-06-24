@@ -437,16 +437,11 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
 
     private async ValueTask EnsureAdministratorAsync(string baseWorkflowId, SecurityTagSet approverIdentity, CancellationToken cancellationToken)
     {
-        IReadOnlyList<SecurityTagSet> administrators = await this.catalog.GetAdministratorsAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
-        foreach (SecurityTagSet administrator in administrators)
+        using ParsedJsonDocument<WorkflowAdministrators>? record = await this.catalog.GetAdministratorsAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
+        if (record?.RootElement.IsAdministeredBy(approverIdentity) != true)
         {
-            if (WorkflowIdentity.SameAdministrator(administrator, approverIdentity))
-            {
-                return;
-            }
+            throw new WorkflowAdministrationException(baseWorkflowId);
         }
-
-        throw new WorkflowAdministrationException(baseWorkflowId);
     }
 
     // The platform cap on scopes: at most the requested scopes that the deployment allows (run access only).

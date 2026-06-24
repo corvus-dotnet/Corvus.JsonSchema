@@ -43,13 +43,22 @@
     "AdministratorIdentity": {
       "title": "AdministratorIdentity",
       "type": "object",
-      "description": "A single administrator identity: the set of unforgeable, deployment-stamped security tags (§14.2) that identifies one owning principal. A submitter whose stamped administrator tags equal this set (as a set) is an administrator. An empty tag set denotes the unscoped (system) administrator.",
+      "description": "A single administrator identity: the set of unforgeable, deployment-stamped security tags (§14.2) that identifies one owning principal, optionally annotated with the resolved grantee's kind and display label (§16.5.4). A submitter whose stamped administrator tags equal this set (as a set) is an administrator. An empty tag set denotes the unscoped (system) administrator.",
       "required": ["tags"],
       "properties": {
         "tags": {
           "type": "array",
-          "description": "The identity's security tags (KVP labels). Order-independent; compared as a set.",
+          "description": "The identity's security tags (KVP labels). Order-independent; compared as a set. This is the authoritative identity; the digest and membership derive from it.",
           "items": { "$ref": "#/$defs/SecurityTagInfo" }
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["person", "team", "role", "workflow"],
+          "description": "The resolved grantee kind this identity was named as (§16.5.4), for display. Optional — absent for identities recorded via the interim single-grant path or before resolved-grantee capture."
+        },
+        "label": {
+          "type": "string",
+          "description": "An optional human-friendly display label for the resolved grantee (e.g. a person's name). Display-only; never part of identity matching."
         }
       },
       "additionalProperties": false

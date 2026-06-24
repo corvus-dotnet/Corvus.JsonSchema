@@ -6,6 +6,7 @@ using System.Text;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
+using AdminKind = Corvus.Text.Json.Arazzo.Durability.Security.WorkflowAdministrators.AdministratorIdentity.KindEntity;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Tests;
 
@@ -13,7 +14,8 @@ namespace Corvus.Text.Json.Arazzo.Durability.Tests;
 /// Tests the workflow administration management operations on the catalog client (design §15): a base id's
 /// administrator set is established by version 1, governed thereafter by an explicit administrator record, and is
 /// reassignable / shareable — always authorized by current-administrator membership, never orphanable, and only when an
-/// administrator store is configured.
+/// administrator store is configured. Each operation hands back the administration record (a pooled document); removal
+/// is keyed by the administrator's stable identity digest.
 /// </summary>
 [TestClass]
 public sealed class WorkflowAdministrationTests
@@ -33,8 +35,11 @@ public sealed class WorkflowAdministrationTests
             await catalog.AddAsync(Package("flow"), Owner, default, Globex, default));
 
         // acme adds globex as a co-administrator; globex may now publish.
-        IReadOnlyList<SecurityTagSet> admins = await catalog.AddAdministratorAsync("flow", Globex, callerIdentity: Acme, default);
-        admins.Count.ShouldBe(2);
+        using (ParsedJsonDocument<WorkflowAdministrators> admins = await AddAdministratorAsync(catalog, "flow", Globex, caller: Acme))
+        {
+            admins.RootElement.AdministratorCount.ShouldBe(2);
+        }
+
         await catalog.AddAsync(Package("flow"), Owner, default, Globex, default);
     }
 
@@ -46,7 +51,7 @@ public sealed class WorkflowAdministrationTests
 
         // globex is not an administrator, so it cannot add itself (no self-grant).
         await Should.ThrowAsync<WorkflowAdministrationException>(async () =>
-            await catalog.AddAdministratorAsync("flow", Globex, callerIdentity: Globex, default));
+            await AddAdministratorAsync(catalog, "flow", Globex, caller: Globex));
     }
 
     [TestMethod]
@@ -56,7 +61,7 @@ public sealed class WorkflowAdministrationTests
         await catalog.AddAsync(Package("flow"), Owner, default, Acme, default);
 
         await Should.ThrowAsync<ArgumentException>(async () =>
-            await catalog.RemoveAdministratorAsync("flow", Acme, callerIdentity: Acme, default));
+            await catalog.RemoveAdministratorAsync("flow", SecurityIdentityDigest.Compute(Acme)!, callerIdentity: Acme, default));
     }
 
     [TestMethod]
@@ -66,8 +71,10 @@ public sealed class WorkflowAdministrationTests
         await catalog.AddAsync(Package("flow"), Owner, default, Acme, default);
 
         // acme hands the workflow off to globex entirely.
-        IReadOnlyList<SecurityTagSet> admins = await catalog.TransferAdministrationAsync("flow", [Globex], callerIdentity: Acme, default);
-        admins.Count.ShouldBe(1);
+        using (ParsedJsonDocument<WorkflowAdministrators> admins = await catalog.TransferAdministrationAsync("flow", [Globex], callerIdentity: Acme, default))
+        {
+            admins.RootElement.AdministratorCount.ShouldBe(1);
+        }
 
         // globex may now publish; acme may not.
         await catalog.AddAsync(Package("flow"), Owner, default, Globex, default);
@@ -80,10 +87,10 @@ public sealed class WorkflowAdministrationTests
     {
         SecuredWorkflowCatalog catalog = NewCatalog(out _);
         await catalog.AddAsync(Package("flow"), Owner, default, Acme, default);
-        await catalog.AddAdministratorAsync("flow", Globex, callerIdentity: Acme, default);
+        (await AddAdministratorAsync(catalog, "flow", Globex, caller: Acme)).Dispose();
 
-        // acme removes globex again; globex can no longer publish.
-        await catalog.RemoveAdministratorAsync("flow", Globex, callerIdentity: Acme, default);
+        // acme removes globex again (by its identity digest); globex can no longer publish.
+        (await catalog.RemoveAdministratorAsync("flow", SecurityIdentityDigest.Compute(Globex)!, callerIdentity: Acme, default)).Dispose();
         await Should.ThrowAsync<WorkflowAdministrationException>(async () =>
             await catalog.AddAsync(Package("flow"), Owner, default, Globex, default));
     }
@@ -95,9 +102,10 @@ public sealed class WorkflowAdministrationTests
         await catalog.AddAsync(Package("flow"), Owner, default, Acme, default);
 
         // No explicit record has been materialized — administration defaults to version 1's stamped identity.
-        IReadOnlyList<SecurityTagSet> admins = await catalog.GetAdministratorsAsync("flow", default);
-        admins.Count.ShouldBe(1);
-        WorkflowIdentity.SameAdministrator(admins[0], Acme).ShouldBeTrue();
+        using ParsedJsonDocument<WorkflowAdministrators>? admins = await catalog.GetAdministratorsAsync("flow", default);
+        admins.ShouldNotBeNull();
+        admins!.RootElement.AdministratorCount.ShouldBe(1);
+        admins.RootElement.IsAdministeredBy(Acme).ShouldBeTrue();
     }
 
     [TestMethod]
@@ -106,8 +114,8 @@ public sealed class WorkflowAdministrationTests
         SecuredWorkflowCatalog catalog = NewCatalog(out _);
         await catalog.AddAsync(Package("flow"), Owner, default, Acme, default);
 
-        IReadOnlyList<SecurityTagSet> admins = await catalog.AddAdministratorAsync("flow", Acme, callerIdentity: Acme, default);
-        admins.Count.ShouldBe(1);
+        using ParsedJsonDocument<WorkflowAdministrators> admins = await AddAdministratorAsync(catalog, "flow", Acme, caller: Acme);
+        admins.RootElement.AdministratorCount.ShouldBe(1);
     }
 
     [TestMethod]
@@ -117,8 +125,12 @@ public sealed class WorkflowAdministrationTests
         await catalog.AddAsync(Package("flow"), Owner, default, Acme, default);
 
         await Should.ThrowAsync<NotSupportedException>(async () =>
-            await catalog.AddAdministratorAsync("flow", Globex, callerIdentity: Acme, default));
+            await AddAdministratorAsync(catalog, "flow", Globex, caller: Acme));
     }
+
+    // Adds a resolved identity with no kind/label (the bare identity form) and returns the resulting record.
+    private static ValueTask<ParsedJsonDocument<WorkflowAdministrators>> AddAdministratorAsync(SecuredWorkflowCatalog catalog, string baseWorkflowId, SecurityTagSet identity, SecurityTagSet caller)
+        => catalog.AddAdministratorAsync(baseWorkflowId, identity, default(AdminKind), hasKind: false, default, hasLabel: false, caller, default);
 
     private static SecuredWorkflowCatalog NewCatalog(out InMemoryWorkflowAdministratorStore administrators)
     {

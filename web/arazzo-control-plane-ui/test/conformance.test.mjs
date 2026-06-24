@@ -201,9 +201,9 @@ test('administrators: each client method emits the contract method + templated p
   assert.equal(calls[1].path, OPS.addAdministrator.path.replace('{baseWorkflowId}', 'flow'));
   assert.equal(calls[1].body.dimension, 'tenant');
 
-  await client.removeAdministrator('flow', 'tenant', 'acme');
+  await client.removeAdministrator('flow', 'deadbeef');
   assert.equal(calls[2].method, OPS.removeAdministrator.method);
-  assert.equal(calls[2].path, OPS.removeAdministrator.path.replace('{baseWorkflowId}', 'flow').replace('{dimension}', 'tenant').replace('{value}', 'acme'));
+  assert.equal(calls[2].path, OPS.removeAdministrator.path.replace('{baseWorkflowId}', 'flow').replace('{digest}', 'deadbeef'));
 
   await client.transferAdministration('flow', { administrators: [{ dimension: 'tenant', value: 'acme' }] });
   assert.equal(calls[3].method, OPS.transferAdministration.method);
