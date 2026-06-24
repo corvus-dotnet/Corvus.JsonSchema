@@ -2,7 +2,7 @@
 // oneOf/anyOf guards, enum membership guards, and a conditional refined discriminated union.
 import { suite } from "./harness";
 import { matchShape, area, matchFullName, isStringName, isStructuredName, render, type FullName } from "./union-model";
-import { isPriority, isMode, describe } from "./enum-const-model";
+import { isPriority, isMode, describe, isOrigin, isUnit } from "./enum-const-model";
 import { describePayment } from "./conditional-model";
 
 const t = suite("matching");
@@ -35,6 +35,14 @@ t.eq("describe('auto')", describe("auto"), "auto");
 t.eq("describe(0)", describe(0), "zero");
 t.eq("describe(false)", describe(false), "off");
 t.eq("describe(null)", describe(null), "none");
+
+// --- object/array const: deep structural equality (rejects extras the literal type would allow) ---
+t.ok("isOrigin matches exact const", isOrigin({ x: 0, y: 0 }));
+t.ok("isOrigin rejects wrong value", !isOrigin({ x: 1, y: 0 }));
+t.ok("isOrigin rejects extra property", !isOrigin({ x: 0, y: 0, z: 0 }));
+t.ok("isUnit matches [1]", isUnit([1]));
+t.ok("isUnit rejects [2]", !isUnit([2]));
+t.ok("isUnit rejects wrong arity", !isUnit([1, 1]));
 
 // --- conditional refined discriminated union (if/then/else overlay, §5.2/§5.3) ---
 t.eq("describePayment card", describePayment({ method: "card", cardNumber: "4111111111111111" }), "card ending 1111");

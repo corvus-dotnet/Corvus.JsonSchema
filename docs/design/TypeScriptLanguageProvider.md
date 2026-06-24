@@ -1641,16 +1641,18 @@ now also **runtime behaviour-verified**: the three `declare` stubs were given ru
 consumer performs — assert behaviour across every type pattern (`harness.ts` + `*.test.ts`, run via
 `tsconfig.run.json` → CommonJS → node):
 
-* **access** (20) — object required/optional/nested props, homogeneous array + tuple + labelled + Vec3
-  element access, map `get`/index-signature.
-* **conversions** (7) — brand/format factories (`asUuid` mint + reject, `asDateTime`, `toDate` → instant),
-  64-bit → `bigint` precision, free union widening.
-* **matching** (24) — discriminated `matchShape`/`area`, non-discriminated `matchFullName` + `isX` guards,
-  enum membership guards + exhaustive mixed-type `switch`, conditional refined discriminated union.
+* **access** (31) — object required/optional/nested props; homogeneous array, pure tuple, labelled, 1-D
+  fixed (Vec3), **multi-dimensional nested-tuple matrices (Mat3 / rectangular Mat2x3) and a Float64Array
+  numeric-leaf tensor view**; map `get`/index-signature; **`allOf` intersection read as both members**.
+* **conversions** (10) — brand/format factories (`asUuid` mint + reject, `asDateTime`, `toDate` → instant),
+  a **range-checked numeric brand (`asPort`)**, 64-bit → `bigint` precision, free union widening.
+* **matching** (30) — discriminated `matchShape`/`area`, non-discriminated `matchFullName` + `isX` guards,
+  enum membership guards + exhaustive mixed-type `switch`, **object/array `const` deep-equality guards**,
+  conditional refined discriminated union.
 * **mutations** (11) — immer-style `produce`: edits apply, the original is untouched (immutability), and
   the recorded change-set is RFC 6902 JSON Patch (the §5.7 universal currency).
 
-**62/62 pass**, and the `tsc --strict --exactOptionalPropertyTypes` type-check gate (`tsconfig.json`) still
+**82/82 pass**, and the `tsc --strict --exactOptionalPropertyTypes` type-check gate (`tsconfig.json`) still
 passes with the new files (the `@ts-expect-error` negative cases remain the type-safety proof). This is the
 reference-shape half of the test plan; the provider's *real emitted* objects/enums/validators are covered
 by the validator suite (§13.15-§13.22) plus a typed-access test, and the provider's emission of the
