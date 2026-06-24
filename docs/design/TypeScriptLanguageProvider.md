@@ -1423,3 +1423,22 @@ cases; (2) `minLength`/`maxLength` may be decimal-valued integers (`2.0`), read 
 -- 2 cases; (3) empty/object-valued `enum` type aliases (`never` / `unknown`, with an annotated
 `allowed` array). The harness is reusable infrastructure that grows as handlers are added; the pass rate
 is the gate that turns "looks right" into "passes the suite", exactly how the C# engine is gated.
+
+### 13.16 `properties` failures closed -> 100% on the keyword subset
+
+The 6 `properties` failures from §13.15 are closed by three new handlers plus a boolean-schema rule,
+bringing the subset to **222/222 (100%)**, all 48 modules `tsc --strict` clean, regressions intact:
+
+* **boolean property schemas** -- a `false` schema's `evaluate` returns `false` (rejects any value),
+  `true` accepts; fixes "properties with boolean schema".
+* **`patternProperties`** -- every own key matching a pattern validates against that pattern's subschema
+  (`td.PatternProperties()` -> `PatternPropertyDeclaration {Pattern, ReducedPatternPropertyType}`; native
+  `RegExp`, hoisted in production).
+* **`additionalProperties`** -- every own key not in `properties` and not matching any pattern validates
+  against the additionalProperties subschema (`td.LocalEvaluatedPropertyType()`); when it is `false` that
+  subschema's validator rejects (re-using the boolean rule).
+* **`minItems`/`maxItems`** -- the interaction schema's array subschemas needed item-count checks.
+
+Per keyword: type 80/80, required 18/18, **properties 28/28**, minLength/maxLength/minimum/maximum 100%,
+enum 51/51, pattern 12/12. Every handler plugs into the same registry, so each is independently testable
+and user-overridable (§13.13).

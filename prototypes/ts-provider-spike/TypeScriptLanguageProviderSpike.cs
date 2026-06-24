@@ -21,8 +21,10 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
     {
         var p = new TypeScriptLanguageProviderSpike();
         p.RegisterValidationHandlers(
-            new TsTypeHandler(), new TsPropertiesHandler(), new TsRequiredHandler(), new TsStringLengthHandler(),
-            new TsNumberRangeHandler(), new TsPatternHandler(), new TsEnumHandler());
+            new TsTypeHandler(), new TsPropertiesHandler(), new TsRequiredHandler(),
+            new TsPatternPropertiesHandler(), new TsAdditionalPropertiesHandler(),
+            new TsStringLengthHandler(), new TsNumberRangeHandler(), new TsArrayItemCountHandler(),
+            new TsPatternHandler(), new TsEnumHandler());
         return p;
     }
 
@@ -294,6 +296,14 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
     private void EmitValidator(StringBuilder sb, TypeDeclaration td)
     {
         sb.Append("export function evaluate").Append(FinalName(td)).Append("(value: unknown): boolean {\n");
+
+        // boolean schemas: `false` matches nothing, `true` matches everything.
+        if (td.LocatedSchema.Schema.ValueKind == JsonValueKind.False)
+        {
+            sb.Append("  return false;\n}\n\n");
+            return;
+        }
+
         var steps = new List<(uint Priority, ITsKeywordEmitter Emitter, IKeyword Keyword)>();
         foreach (IKeyword keyword in td.Keywords())
         {
