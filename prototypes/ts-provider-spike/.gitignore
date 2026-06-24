@@ -1,5 +1,6 @@
 out/
 out-suite/
+prov-test/
 bin/
 obj/
 node_modules/
