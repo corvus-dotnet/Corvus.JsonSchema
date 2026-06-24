@@ -1442,3 +1442,39 @@ bringing the subset to **222/222 (100%)**, all 48 modules `tsc --strict` clean, 
 Per keyword: type 80/80, required 18/18, **properties 28/28**, minLength/maxLength/minimum/maximum 100%,
 enum 51/51, pattern 12/12. Every handler plugs into the same registry, so each is independently testable
 and user-overridable (§13.13).
+
+### 13.17 Capability-interface matching + broadened coverage (636/637, 99.8%)
+
+The handlers were reworked to select on the keyword's CAPABILITY INTERFACES, never the keyword text --
+the same discipline the C# provider uses (`keyword is ICoreTypeValidationKeyword` / `INumberConstantValidationKeyword`
+/ `IStringRegexValidationProviderKeyword` / ...), reading the constraint THROUGH the interface
+(`AllowedCoreTypes`, `TryGetOperator` + `TryGetValidationConstants`, `RequiresUniqueItems`,
+`TryGetConstantValue`, ...) rather than re-reading raw schema JSON by keyword name. This makes the
+provider vocabulary-independent: one numeric handler covers `minimum`/`maximum`/`exclusiveMinimum`/
+`exclusiveMaximum`/`multipleOf` across every draft -- including draft-4's boolean `exclusiveMinimum` --
+because they all surface the same `Operator` (GreaterThan / LessThanOrEquals / MultipleOf / ...). Likewise
+`enum`+`const` share one membership handler (both expose constants via `IValidationConstantProviderKeyword`);
+the numeric/length bounds are excluded from it because they are `INumber`/`IIntegerConstantValidationKeyword`.
+(Tuple/items use `ExplicitTupleType` and `ExplicitNonTupleItemsType` -- `TupleType`/`ArrayItemsType` are
+null once the array allows items beyond the tuple, e.g. `items:false`.)
+
+The keyword surface was broadened from 9 to 25 test files. Over them the suite passes **636/637 (99.8%)**,
+all generated modules `tsc --strict` clean. Every keyword is at 100% except `ref` (76/77):
+
+| keywords | pass |
+|---|---|
+| type, required, properties, minLength, maxLength, minimum, maximum, exclusiveMinimum, exclusiveMaximum, enum, const, pattern, minProperties, maxProperties, uniqueItems, allOf, anyOf, oneOf, items, prefixItems, propertyNames, dependentRequired, if-then-else | 100% |
+| ref | 76/77 |
+
+* The 1 failure is annotation visibility across a `$ref` boundary (a `$ref` adjacent to `properties` whose
+  referenced subschema must not see the parent's annotations) -- advanced `unevaluated*`-style annotation
+  scoping, deferred.
+* 2 groups (4 cases) are excluded because they resolve the remote 2020-12 metaschema, which the offline
+  prototype harness does not register (a harness/resolver limitation, not a provider gap; the C# suite
+  registers it).
+
+Base handlers (all interface-matched): type; numeric bounds (min/max/exclusive/multipleOf); string-length;
+array-length; property-count; uniqueItems; enum/const membership; pattern; properties; required;
+patternProperties; additionalProperties; allOf; anyOf; oneOf; prefixItems; items (incl. `items:false`);
+propertyNames; dependentRequired; if/then/else. `format` remains the registered EXTENSION example (a
+capability the base omits), matched by `IFormatProviderKeyword`.

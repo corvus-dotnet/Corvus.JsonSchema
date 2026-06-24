@@ -40,7 +40,7 @@ Emit(TypeScriptLanguageProviderSpike.CreateDefault(), "generated.ts");
 // Extension: register a custom handler at runtime. The core registry dispatches to it for the
 // `multipleOf` keyword — no change to the provider. This is the user/third-party extension seam.
 TypeScriptLanguageProviderSpike ext = TypeScriptLanguageProviderSpike.CreateDefault();
-ext.RegisterValidationHandlers(new TsMultipleOfHandler());
+ext.RegisterValidationHandlers(new TsFormatExtensionHandler());
 Emit(ext, "generated-ext.ts");
 
-Console.WriteLine("generated.ts = base handlers; generated-ext.ts = base + registered multipleOf extension.");
+Console.WriteLine("generated.ts = base handlers; generated-ext.ts = base + registered format extension.");

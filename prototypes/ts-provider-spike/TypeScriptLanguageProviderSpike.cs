@@ -15,16 +15,28 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
 {
     private const string TsFinalKey = "Ts_FinalName";
 
+    // JSON deep-equality (object keys order-independent; arrays ordered) for const/enum/uniqueItems.
+    // (In production this lives in @corvus/json-runtime; numeric equality is exact per §4.1.)
+    private const string DeepEqual =
+        "function __eq(a: unknown, b: unknown): boolean {\n" +
+        "  if (a === b) { return true; }\n" +
+        "  if (typeof a !== typeof b || a === null || b === null) { return false; }\n" +
+        "  if (Array.isArray(a)) { if (!Array.isArray(b) || a.length !== b.length) { return false; } for (let i = 0; i < a.length; i++) { if (!__eq(a[i], b[i])) { return false; } } return true; }\n" +
+        "  if (typeof a === \"object\") { if (Array.isArray(b) || typeof b !== \"object\") { return false; } const ak = Object.keys(a as object), bk = Object.keys(b as object); if (ak.length !== bk.length) { return false; } for (const k of ak) { if (!Object.prototype.hasOwnProperty.call(b, k) || !__eq((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k])) { return false; } } return true; }\n" +
+        "  return false;\n}\n\n";
+
     private readonly KeywordValidationHandlerRegistry validationHandlers = new();
 
     public static TypeScriptLanguageProviderSpike CreateDefault()
     {
         var p = new TypeScriptLanguageProviderSpike();
         p.RegisterValidationHandlers(
-            new TsTypeHandler(), new TsPropertiesHandler(), new TsRequiredHandler(),
+            new TsTypeHandler(), new TsConstantBoundHandler(), new TsMembershipHandler(), new TsUniqueItemsHandler(),
+            new TsRegexHandler(), new TsPropertiesHandler(), new TsRequiredHandler(),
             new TsPatternPropertiesHandler(), new TsAdditionalPropertiesHandler(),
-            new TsStringLengthHandler(), new TsNumberRangeHandler(), new TsArrayItemCountHandler(),
-            new TsPatternHandler(), new TsEnumHandler());
+            new TsAllOfHandler(), new TsAnyOfHandler(), new TsOneOfHandler(),
+            new TsPrefixItemsHandler(), new TsItemsHandler(),
+            new TsPropertyNamesHandler(), new TsDependentRequiredHandler(), new TsIfThenElseHandler());
         return p;
     }
 
@@ -99,6 +111,7 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
         // Pass 2: emit the type surface + validators.
         var sb = new StringBuilder();
         sb.Append("// AUTO-GENERATED: idiomatic TS types + registry-composed validators.\n\n");
+        sb.Append(DeepEqual);
         foreach (TypeDeclaration td in types)
         {
             if (IsObject(td))
