@@ -1478,3 +1478,38 @@ array-length; property-count; uniqueItems; enum/const membership; pattern; prope
 patternProperties; additionalProperties; allOf; anyOf; oneOf; prefixItems; items (incl. `items:false`);
 propertyNames; dependentRequired; if/then/else. `format` remains the registered EXTENSION example (a
 capability the base omits), matched by `IFormatProviderKeyword`.
+
+### 13.18 Unevaluated properties/items -- low-allocation evaluation tracking (from the C# generator)
+
+`unevaluatedProperties`/`unevaluatedItems` must know which properties/items an instance was already
+evaluated against by *adjacent* keywords (`properties`, `patternProperties`, `additionalProperties`,
+`items`, `prefixItems`, `contains`) AND by *in-place applicators* (`allOf`/`anyOf`/`oneOf`/
+`if`-`then`-`else`/`$ref`/`$dynamicRef`) -- but only for applicator branches that MATCHED. The naive
+implementation allocates a `Set<string>` of evaluated property names per validation; the C# generator
+(`JsonSchemaContext`) avoids that entirely, and we mirror its scheme:
+
+* **Evaluated state is an index bitmask, not a name set.** The instance is enumerated once; property/
+  item *position* `i` is marked by setting bit `i`. C# stores this in a `Span<int>` -- 8 ints = 256 bits
+  inline (no heap), `ArrayPool`-rented up to 65,536 bits beyond, bit `i` at `int[i >> 5] & (1 << (i & 31))`.
+  The TS equivalent is a `number` for the first 32 positions (zero extra allocation) widening to a
+  `Uint32Array` beyond -- one typed-array allocation per tracked instance, never per property.
+* **Local vs applied.** Two masks: `local` (this schema's own keyword evaluations) and `applied`
+  (merged from matched in-place applicators); `unevaluated*` checks `HasLocalOrAppliedEvaluated(i)`.
+* **Conditional merge.** An in-place applicator validates its branch against a child tracker and
+  OR-merges the child's bits into the parent ONLY if the branch matched (`CommitChildContext(isMatch)`).
+  In TS that is `parent |= child` (or an element-wise OR over the `Uint32Array`); C# vectorises the same
+  OR with `Vector<int>`.
+* **Gated -- most validators pay nothing.** Tracking is threaded only when
+  `RequiresPropertyEvaluationTracking(td)` / `RequiresItemsEvaluationTracking(td)` is true (it propagates
+  up through in-place applicators to the member types that must report their evaluations). Every other
+  validator keeps the plain `(value) => boolean` shape with no tracker and no marking code. This is the
+  key to "no large allocations": the cost exists only on the schemas that actually use `unevaluated*`.
+
+Threading model: a tracking type's validator creates one tracker, threads the SAME tracker into its
+in-place applicator members (so their matched evaluations accumulate), passes a no-op sentinel to
+sub-instance children (a property value / array item is a different instance with its own scope), and
+reads the tracker in the `unevaluated*` step, which runs last (highest handler priority). The fallback
+subschema comes from `LocalAndAppliedEvaluatedPropertyType()` / `ExplicitUnevaluatedItemsType()`. The
+simpler adjacent keywords that remain (`not` via the not-subschema type, `contains`/`minContains`/
+`maxContains` via the contains type + an int count, `dependentSchemas` via `DependentSchemasSubschemaTypes()`)
+need no tracker and slot in as ordinary interface-matched handlers.
