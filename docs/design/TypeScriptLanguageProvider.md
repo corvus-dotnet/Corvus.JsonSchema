@@ -1696,7 +1696,7 @@ it previously stubbed. The array/tuple/map **type surface** is first (the provid
 `readonly [A, ...T[]]`, and **recurses for multi-dimensional tensors** `readonly (readonly number[])[]`
 — guarded against recursive array schemas (a revisited type degrades to `readonly unknown[]`, so cyclic
 `items:{$ref:'#'}` schemas still compile). A **pure map** (additionalProperties value type, no declared
-properties) becomes `export type X = Readonly<Record<string, T>>`.
+properties) becomes an `interface` with a string index signature (`readonly [key: string]: T`).
 
 Verified on a `Container` schema covering all five shapes: `arrays-access.test.ts` (11/11) validates an
 instance with the emitted validator, then consumes `tags`/`triple`/`labelled`/`matrix`/`scores` through the
@@ -1704,3 +1704,23 @@ emitted typed surface under `tsc --strict` — so these patterns are now behavio
 REAL output, not just the reference shapes. The full suite is unchanged at **7848/7849** with all 1688
 modules `tsc --strict` clean (the type-surface change is validation-neutral). Still pending: union
 `match`/guards, `From`/brand conversions, and the `produce`/mutation surface.
+
+### 13.26 Provider emits unions (oneOf/anyOf): type + guards + match (§5.2)
+
+The provider now emits the union surface for `oneOf`/`anyOf`: a `type X = A | B` alias, per-member type
+guards `isM(v: unknown): v is M` (the V5 `TryGetAs{Branch}` analog, backed by the member validator), and a
+guard-based `matchX(value, cases)` (the V5 `Match()` analog; guard order suffices — the discriminator
+fast-path is an optimization, not required for correctness). Verified on a discriminated
+`Shape = Circle | Rectangle`: `union-access.test.ts` (8/8) validates with the emitted `oneOf` validator,
+then exercises the guards + `matchShape` + narrowed branch access under `tsc --strict`.
+
+Two correctness guards were required for the recursive `$recursiveRef` schemas in the suite:
+* **module-scoped guard names** — a module with several unions can share a member name, which would emit
+  duplicate top-level `is{Member}` functions (TS2323/TS2393);
+* **no circular type aliases** — a member whose ref is the union's OWN name is dropped (`type X = ... | X`
+  is circular, TS2456), and pure maps emit an `interface` (index signature) rather than
+  `type X = Readonly<Record<...>>`, because a `Record`-mapped-type alias cannot anchor a recursive cycle
+  but an interface (object type) can. The validator still enforces the recursive branch in both cases.
+
+Full suite **7848/7849**, all 1688 modules `tsc --strict` clean, 0 errored groups (validation-neutral).
+Still pending: `From`/brand conversions and the `produce`/mutation surface.

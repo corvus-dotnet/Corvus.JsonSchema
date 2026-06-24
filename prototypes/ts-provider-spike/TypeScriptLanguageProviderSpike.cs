@@ -415,6 +415,7 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
         var sb = new StringBuilder();
         sb.Append("// AUTO-GENERATED: idiomatic TS types + registry-composed validators.\n");
         sb.Append("import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, Ev, NOEV, fresh, __fmt, __fmtContent } from \"./corvus-runtime.js\";\n\n");
+        var moduleGuards = new HashSet<string>(StringComparer.Ordinal); // union guard names, unique per module
         foreach (TypeDeclaration td in types)
         {
             if (IsObject(td))
@@ -434,6 +435,10 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
             else if (IsEnum(td))
             {
                 EmitEnumAlias(sb, td);
+            }
+            else if (IsUnion(td))
+            {
+                EmitUnionAlias(sb, td, moduleGuards);
             }
 
             EmitValidator(sb, td);
@@ -462,7 +467,111 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
     // idiomatic TS surface is `Readonly<Record<string, T>>` (design §5.3).
     private static void EmitMapAlias(StringBuilder sb, TypeDeclaration td, FallbackObjectPropertyType fb)
     {
-        sb.Append("export type ").Append(FinalName(td)).Append(" = Readonly<Record<string, ").Append(TsTypeRef(fb.ReducedType)).Append(">>;\n\n");
+        // An interface with an index signature, NOT `type X = Readonly<Record<...>>`: a Record-mapped-type
+        // alias cannot anchor a recursive cycle (TS2456), but an interface (an object type) can.
+        sb.Append("export interface ").Append(FinalName(td)).Append(" {\n  readonly [key: string]: ").Append(TsTypeRef(fb.ReducedType)).Append(";\n}\n\n");
+    }
+
+    // A oneOf/anyOf union (design §5.2): `type X = A | B`, per-member type guards (the V5
+    // TryGetAs{Branch} analog, backed by the member validator), and a guard-based `matchX` (the V5
+    // Match() analog; the discriminator fast-path is an optimization, not required for correctness).
+    private static bool IsUnion(TypeDeclaration td)
+        => (td.OneOfCompositionTypes()?.Count ?? 0) > 0 || (td.AnyOfCompositionTypes()?.Count ?? 0) > 0;
+
+    private static void CollectMembers<TKeyword>(IReadOnlyDictionary<TKeyword, IReadOnlyCollection<TypeDeclaration>>? comp, List<TypeDeclaration> into)
+        where TKeyword : notnull
+    {
+        if (comp is null)
+        {
+            return;
+        }
+
+        foreach (KeyValuePair<TKeyword, IReadOnlyCollection<TypeDeclaration>> kv in comp)
+        {
+            foreach (TypeDeclaration m in kv.Value)
+            {
+                TypeDeclaration r = m.ReducedTypeDeclaration().ReducedType;
+                if (!into.Contains(r))
+                {
+                    into.Add(r);
+                }
+            }
+        }
+    }
+
+    private static void EmitUnionAlias(StringBuilder sb, TypeDeclaration td, HashSet<string> moduleGuards)
+    {
+        var members = new List<TypeDeclaration>();
+        CollectMembers(td.OneOfCompositionTypes(), members);
+        CollectMembers(td.AnyOfCompositionTypes(), members);
+        if (members.Count == 0)
+        {
+            return;
+        }
+
+        string name = FinalName(td);
+
+        // Drop a member whose ref is the union's OWN name: `type X = ... | X` is a circular alias (TS2456).
+        // TS can't express a recursive union via an alias; the validator still enforces the recursive branch.
+        var refs = new List<string>();
+        foreach (TypeDeclaration m in members)
+        {
+            string r = TsTypeRef(m);
+            if (r != name && !refs.Contains(r))
+            {
+                refs.Add(r);
+            }
+        }
+
+        if (refs.Count == 0)
+        {
+            refs.Add("unknown");
+        }
+
+        sb.Append("export type ").Append(name).Append(" = ").Append(string.Join(" | ", refs)).Append(";\n");
+
+        // Per-member guards + collect the match() case entries (unique camelCase keys). Guard names are
+        // module-scoped (a module with several unions can share a member name, so a per-union set would
+        // emit duplicate top-level `is{Member}` functions -> tsc redeclare error).
+        var cases = new List<(string Key, string Ref, string Guard)>();
+        var usedKeys = new HashSet<string>(StringComparer.Ordinal);
+        foreach (TypeDeclaration m in members)
+        {
+            string? ev = TsEmit.EvalName(m);
+            if (ev is null || TsTypeRef(m) == name)
+            {
+                continue;
+            }
+
+            string mName = FinalName(m);
+            string guard = "is" + mName;
+            int gs = 2;
+            while (!moduleGuards.Add(guard))
+            {
+                guard = "is" + mName + gs++;
+            }
+
+            sb.Append("export function ").Append(guard).Append("(value: unknown): value is ").Append(TsTypeRef(m)).Append(" { return ").Append(ev).Append("(value, fresh()); }\n");
+
+            string key = Camel(mName);
+            int ks = 2;
+            while (!usedKeys.Add(key))
+            {
+                key = Camel(mName) + ks++;
+            }
+
+            cases.Add((key, TsTypeRef(m), guard));
+        }
+
+        sb.Append("export function match").Append(name).Append("<R>(value: ").Append(name).Append(", cases: { ")
+          .Append(string.Join("; ", cases.Select(c => c.Key + ": (v: " + c.Ref + ") => R")))
+          .Append(" }): R {\n");
+        foreach ((string key, _, string guard) in cases)
+        {
+            sb.Append("  if (").Append(guard).Append("(value)) { return cases.").Append(key).Append("(value); }\n");
+        }
+
+        sb.Append("  throw new Error(\"no ").Append(name).Append(" branch matched\");\n}\n\n");
     }
 
     private static void EmitEnumAlias(StringBuilder sb, TypeDeclaration td)
@@ -507,6 +616,11 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
         }
 
         if (IsObject(td))
+        {
+            return FinalName(td);
+        }
+
+        if (IsUnion(td))
         {
             return FinalName(td);
         }
@@ -742,5 +856,12 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
         }
 
         return sb.ToString();
+    }
+
+    // camelCase (for match() case keys): Pascal with a lowercased first letter.
+    private static string Camel(string value)
+    {
+        string p = Pascal(value);
+        return p.Length == 0 ? p : char.ToLowerInvariant(p[0]) + p[1..];
     }
 }

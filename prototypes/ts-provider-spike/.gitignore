@@ -1,8 +1,10 @@
 out/
 out-suite/
 out-arrays/
+out-union/
 prov-test/
 prov-test-arrays/
+prov-test-union/
 bin/
 obj/
 node_modules/
