@@ -2,3 +2,4 @@ out/
 out-suite/
 bin/
 obj/
+node_modules/

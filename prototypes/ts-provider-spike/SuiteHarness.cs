@@ -12,16 +12,6 @@ namespace TsProviderSpike;
 // analysers + rebaseAsRoot).
 internal static class SuiteHarness
 {
-    private static readonly string[] Targets =
-    [
-        "type", "required", "properties", "minLength", "maxLength", "minimum", "maximum", "enum", "pattern",
-        "const", "exclusiveMinimum", "exclusiveMaximum", "minProperties", "maxProperties", "minItems", "maxItems",
-        "uniqueItems", "multipleOf", "allOf", "anyOf", "oneOf", "not", "items", "additionalItems", "prefixItems",
-        "additionalProperties", "patternProperties", "propertyNames", "dependencies", "dependentRequired",
-        "dependentSchemas", "if-then-else", "ref", "defs", "definitions", "unevaluatedProperties",
-        "unevaluatedItems", "contains", "minContains", "maxContains", "dynamicRef", "recursiveRef",
-    ];
-
     private static readonly (string Name, Func<IVocabulary> Fallback)[] Dialects =
     [
         ("draft4", static () => Corvus.Json.CodeGeneration.Draft4.VocabularyAnalyser.DefaultVocabulary),
@@ -64,6 +54,7 @@ internal static class SuiteHarness
         string schemasDir = Path.Combine(outDir, "schemas");
         Directory.CreateDirectory(schemasDir);
         File.WriteAllText(Path.Combine(outDir, "package.json"), "{ \"type\": \"module\" }\n");
+        File.WriteAllText(Path.Combine(outDir, "corvus-runtime.ts"), TypeScriptLanguageProviderSpike.RuntimeModuleSource());
 
         string remotesDir = Path.GetFullPath(Path.Combine(testsBaseDir, "..", "remotes"));
         string metaschemaBase = Path.GetFullPath(Path.Combine(testsBaseDir, "..", "..", "src", "Corvus.Json.Cli.Core", "metaschema"));
@@ -90,78 +81,27 @@ internal static class SuiteHarness
 
             IVocabulary fallback = fallbackFactory();
 
-            foreach (string file in Targets)
+            // Entire suite: all top-level keyword files + optional/*.json (default = format-as-annotation)
+            // + optional/format/*.json (format asserted).
+            foreach (string f in Directory.GetFiles(suiteDir, "*.json"))
             {
-                string path = Path.Combine(suiteDir, file + ".json");
-                if (!File.Exists(path))
+                await ProcessFile(f, dialect, fallback, Path.GetFileNameWithoutExtension(f), assertFormat: false);
+            }
+
+            string optDir = Path.Combine(suiteDir, "optional");
+            if (Directory.Exists(optDir))
+            {
+                foreach (string f in Directory.GetFiles(optDir, "*.json"))
                 {
-                    continue;
+                    await ProcessFile(f, dialect, fallback, "optional_" + Path.GetFileNameWithoutExtension(f), assertFormat: false);
                 }
 
-                JsonDocument doc = JsonDocument.Parse(File.ReadAllText(path));
-                keepAlive.Add(doc);
-
-                int i = 0;
-                foreach (JsonElement group in doc.RootElement.EnumerateArray())
+                string fmtDir = Path.Combine(optDir, "format");
+                if (Directory.Exists(fmtDir))
                 {
-                    JsonElement schema = group.GetProperty("schema");
-                    string groupDesc = group.TryGetProperty("description", out JsonElement gd) ? gd.GetString() ?? string.Empty : string.Empty;
-                    string moduleName = $"g_{dialect}_{file}_{i}";
-                    i++;
-
-                    var tests = new List<object>();
-                    foreach (JsonElement test in group.GetProperty("tests").EnumerateArray())
+                    foreach (string f in Directory.GetFiles(fmtDir, "*.json"))
                     {
-                        tests.Add(new
-                        {
-                            data = test.GetProperty("data"),
-                            valid = test.GetProperty("valid").GetBoolean(),
-                            desc = test.TryGetProperty("description", out JsonElement td) ? td.GetString() : string.Empty,
-                        });
-                        totalTests++;
-                    }
-
-                    if (schema.ValueKind is JsonValueKind.True or JsonValueKind.False)
-                    {
-                        manifest.Add(new { module = (string?)null, dialect, file, group = groupDesc, error = "boolean schema (not in spike scope)", tests });
-                        errored++;
-                        continue;
-                    }
-
-                    try
-                    {
-                        File.WriteAllText(Path.GetFullPath(Path.Combine(schemasDir, moduleName + ".json")), schema.GetRawText());
-
-                        var resolver = new CompoundDocumentResolver(new FakeWebDocumentResolver(remotesDir), new FileSystemDocumentResolver());
-                        foreach (KeyValuePair<string, string> ms in MetaschemaText)
-                        {
-                            resolver.AddDocument(ms.Key, JsonDocument.Parse(ms.Value));
-                        }
-
-                        var registry = new VocabularyRegistry();
-                        Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(resolver, registry);
-                        Corvus.Json.CodeGeneration.Draft201909.VocabularyAnalyser.RegisterAnalyser(resolver, registry);
-                        Corvus.Json.CodeGeneration.Draft7.VocabularyAnalyser.RegisterAnalyser(registry);
-                        Corvus.Json.CodeGeneration.Draft6.VocabularyAnalyser.RegisterAnalyser(registry);
-                        Corvus.Json.CodeGeneration.Draft4.VocabularyAnalyser.RegisterAnalyser(registry);
-                        var builder = new JsonSchemaTypeBuilder(resolver, registry);
-
-                        string schemaRef = Path.Combine(remotesDir, moduleName + ".json");
-                        if (Corvus.Json.CodeGeneration.DocumentResolvers.SchemaReferenceNormalization.TryNormalizeSchemaReference(schemaRef, out string? normalized)) { schemaRef = normalized; }
-                        builder.AddDocument(schemaRef, JsonDocument.Parse(schema.GetRawText()));
-                        TypeDeclaration root = await builder.AddTypeDeclarationsAsync(new JsonReference(schemaRef), fallback, rebaseAsRoot: true);
-                        TypeScriptLanguageProviderSpike provider = TypeScriptLanguageProviderSpike.CreateDefault();
-                        IReadOnlyCollection<GeneratedCodeFile> files = builder.GenerateCodeUsing(provider, CancellationToken.None, root);
-                        TypeDeclaration reducedRoot = root.ReducedTypeDeclaration().ReducedType;
-                        string rootName = reducedRoot.TryGetMetadata<string>("Ts_FinalName", out string? rn) && !string.IsNullOrEmpty(rn) ? rn! : "Entity";
-                        File.WriteAllText(Path.Combine(outDir, moduleName + ".ts"), files.First().FileContent + $"\nexport const evaluateRoot = (v: unknown): boolean => evaluate{rootName}(v, fresh());\n");
-                        manifest.Add(new { module = moduleName, dialect, file, group = groupDesc, error = (string?)null, tests });
-                        built++;
-                    }
-                    catch (Exception ex)
-                    {
-                        manifest.Add(new { module = (string?)null, dialect, file, group = groupDesc, error = ex.Message, tests });
-                        errored++;
+                        await ProcessFile(f, dialect, fallback, "format_" + Path.GetFileNameWithoutExtension(f), assertFormat: true);
                     }
                 }
             }
@@ -174,5 +114,80 @@ internal static class SuiteHarness
         }
 
         Console.WriteLine($"Built {built} modules, {errored} errored, {totalTests} cases across {Dialects.Length} dialects -> {outDir}/manifest.json");
+        return;
+
+        async Task ProcessFile(string filePath, string dialect, IVocabulary fallback, string label, bool assertFormat)
+        {
+            JsonDocument doc = JsonDocument.Parse(File.ReadAllText(filePath));
+            keepAlive.Add(doc);
+
+            int i = 0;
+            foreach (JsonElement group in doc.RootElement.EnumerateArray())
+            {
+                JsonElement schema = group.GetProperty("schema");
+                string groupDesc = group.TryGetProperty("description", out JsonElement gd) ? gd.GetString() ?? string.Empty : string.Empty;
+                string moduleName = $"g_{dialect}_{label}_{i}";
+                i++;
+
+                var tests = new List<object>();
+                foreach (JsonElement test in group.GetProperty("tests").EnumerateArray())
+                {
+                    tests.Add(new
+                    {
+                        // Store the instance's exact SOURCE TEXT (the raw JSON token), so the runner parses
+                        // each instance ONCE with a source-preserving parser — no lossy double-parse.
+                        data = test.GetProperty("data").GetRawText(),
+                        valid = test.GetProperty("valid").GetBoolean(),
+                        desc = test.TryGetProperty("description", out JsonElement td) ? td.GetString() : string.Empty,
+                    });
+                    totalTests++;
+                }
+
+                // A boolean root schema is a trivial validator (true accepts all, false rejects all).
+                if (schema.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                {
+                    File.WriteAllText(Path.Combine(outDir, moduleName + ".ts"), $"export const evaluateRoot = (v: unknown): boolean => {(schema.ValueKind == JsonValueKind.True ? "true" : "false")};\n");
+                    manifest.Add(new { module = moduleName, dialect, file = label, group = groupDesc, error = (string?)null, tests });
+                    built++;
+                    continue;
+                }
+
+                try
+                {
+                    File.WriteAllText(Path.GetFullPath(Path.Combine(schemasDir, moduleName + ".json")), schema.GetRawText());
+
+                    var resolver = new CompoundDocumentResolver(new FakeWebDocumentResolver(remotesDir), new FileSystemDocumentResolver());
+                    foreach (KeyValuePair<string, string> ms in MetaschemaText)
+                    {
+                        resolver.AddDocument(ms.Key, JsonDocument.Parse(ms.Value));
+                    }
+
+                    var registry = new VocabularyRegistry();
+                    Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(resolver, registry);
+                    Corvus.Json.CodeGeneration.Draft201909.VocabularyAnalyser.RegisterAnalyser(resolver, registry);
+                    Corvus.Json.CodeGeneration.Draft7.VocabularyAnalyser.RegisterAnalyser(registry);
+                    Corvus.Json.CodeGeneration.Draft6.VocabularyAnalyser.RegisterAnalyser(registry);
+                    Corvus.Json.CodeGeneration.Draft4.VocabularyAnalyser.RegisterAnalyser(registry);
+                    var builder = new JsonSchemaTypeBuilder(resolver, registry);
+
+                    string schemaRef = Path.Combine(remotesDir, moduleName + ".json");
+                    if (Corvus.Json.CodeGeneration.DocumentResolvers.SchemaReferenceNormalization.TryNormalizeSchemaReference(schemaRef, out string? normalized)) { schemaRef = normalized; }
+                    builder.AddDocument(schemaRef, JsonDocument.Parse(schema.GetRawText()));
+                    TypeDeclaration root = await builder.AddTypeDeclarationsAsync(new JsonReference(schemaRef), fallback, rebaseAsRoot: true);
+                    TypeScriptLanguageProviderSpike provider = assertFormat ? TypeScriptLanguageProviderSpike.CreateWithFormatAssertion() : TypeScriptLanguageProviderSpike.CreateDefault();
+                    IReadOnlyCollection<GeneratedCodeFile> files = builder.GenerateCodeUsing(provider, CancellationToken.None, root);
+                    TypeDeclaration reducedRoot = root.ReducedTypeDeclaration().ReducedType;
+                    string rootName = reducedRoot.TryGetMetadata<string>("Ts_FinalName", out string? rn) && !string.IsNullOrEmpty(rn) ? rn! : "Entity";
+                    File.WriteAllText(Path.Combine(outDir, moduleName + ".ts"), files.First().FileContent + $"\nexport const evaluateRoot = (v: unknown): boolean => evaluate{rootName}(v, fresh());\n");
+                    manifest.Add(new { module = moduleName, dialect, file = label, group = groupDesc, error = (string?)null, tests });
+                    built++;
+                }
+                catch (Exception ex)
+                {
+                    manifest.Add(new { module = (string?)null, dialect, file = label, group = groupDesc, error = ex.Message, tests });
+                    errored++;
+                }
+            }
+        }
     }
 }

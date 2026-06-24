@@ -21,6 +21,7 @@ var reference = new JsonReference(Path.GetFullPath(schemaPath));
 TypeDeclaration root = await builder.AddTypeDeclarationsAsync(reference, fallback, false);
 
 Directory.CreateDirectory(outDir);
+File.WriteAllText(Path.Combine(outDir, "corvus-runtime.ts"), TypeScriptLanguageProviderSpike.RuntimeModuleSource());
 
 void Emit(TypeScriptLanguageProviderSpike provider, string fileName)
 {
