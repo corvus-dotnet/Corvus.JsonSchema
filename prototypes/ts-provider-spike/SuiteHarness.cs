@@ -11,7 +11,12 @@ namespace TsProviderSpike;
 internal static class SuiteHarness
 {
     private static readonly string[] Targets =
-        ["type", "required", "properties", "minLength", "maxLength", "minimum", "maximum", "enum", "pattern"];
+    [
+        "type", "required", "properties", "minLength", "maxLength", "minimum", "maximum", "enum", "pattern",
+        "const", "exclusiveMinimum", "exclusiveMaximum", "minProperties", "maxProperties", "uniqueItems",
+        "allOf", "anyOf", "oneOf", "items", "prefixItems", "propertyNames", "dependentRequired",
+        "if-then-else", "ref", "defs",
+    ];
 
     public static async Task Run(string suiteDir, string outDir)
     {
