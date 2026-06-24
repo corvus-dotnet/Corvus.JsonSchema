@@ -29,6 +29,7 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
 {
     private readonly ISecurityPolicyStore store;
     private readonly SecurityShell shell;
+    private readonly SecurityLabelOrderings orderings;
     private readonly Func<ClaimsPrincipal?, IReadOnlyList<SecurityTag>>? internalTagResolver;
     private readonly IAmbientIdentityDimensions? ambient;
     private readonly TimeProvider timeProvider;
@@ -56,16 +57,28 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
     /// projector is what makes a grantee resolved in a tenant context and the caller in that context stamp identically, so
     /// the two can never drift (the whole point of §16.5.5). <see langword="null"/> (the default) leaves behaviour unchanged.
     /// </param>
-    public PersistentRowSecurityPolicy(ISecurityPolicyStore store, SecurityShell? shell = null, Func<ClaimsPrincipal?, IReadOnlyList<SecurityTag>>? internalTagResolver = null, TimeProvider? timeProvider = null, bool allowWildcardUnrestrictedReach = false, IAmbientIdentityDimensions? ambient = null)
+    /// <param name="orderings">
+    /// The deployment's configured ordered tag dimensions (§14.2) a rule's ordered comparison (<c>&lt;</c>/<c>&lt;=</c>/
+    /// <c>&gt;</c>/<c>&gt;=</c>) ranks labels against. Baked into each compiled rule. <see langword="null"/> (the default)
+    /// is <see cref="SecurityLabelOrderings.Empty"/> — every ordered comparison then denies (fail-closed), so a deployment
+    /// that uses an ordered/classification rule must supply the matching ordering here (and to the shell's wrapper rules).
+    /// </param>
+    public PersistentRowSecurityPolicy(ISecurityPolicyStore store, SecurityShell? shell = null, Func<ClaimsPrincipal?, IReadOnlyList<SecurityTag>>? internalTagResolver = null, TimeProvider? timeProvider = null, bool allowWildcardUnrestrictedReach = false, IAmbientIdentityDimensions? ambient = null, SecurityLabelOrderings? orderings = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         this.store = store;
         this.shell = shell ?? new SecurityShell([]);
+        this.orderings = orderings ?? SecurityLabelOrderings.Empty;
         this.internalTagResolver = internalTagResolver;
         this.timeProvider = timeProvider ?? TimeProvider.System;
         this.allowWildcardUnrestrictedReach = allowWildcardUnrestrictedReach;
         this.ambient = ambient;
     }
+
+    /// <summary>Gets the deployment's configured ordered tag dimensions (§14.2) this policy ranks a rule's ordered
+    /// comparison against — the single source the <c>GET /security/orderings</c> endpoint reflects so the authoring UI can
+    /// offer the classification templates with the exact labels the policy enforces.</summary>
+    public SecurityLabelOrderings Orderings => this.orderings;
 
     /// <summary>Reloads and recompiles the rule/binding snapshot if the store's generation has advanced.</summary>
     /// <param name="cancellationToken">A cancellation token.</param>
@@ -337,7 +350,10 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
 
         // Compiling the grammar is the expensive step; memoize per combined expression for this generation so repeat
         // principals/claim-sets reuse the parsed rule. (The filter itself is per-call — it binds the principal's claims.)
-        SecurityRule[] rules = current.CompiledCombos.GetOrAdd(combined, static c => [SecurityRule.Compile(c)]);
+        // The deployment's label orderings are baked into the rule here so an ordered comparison ranks correctly. The
+        // factory stays a static (cached) delegate with the orderings passed as the state argument — a captured `this`
+        // lambda would allocate a closure on every Resolve (the hot authorization path).
+        SecurityRule[] rules = current.CompiledCombos.GetOrAdd(combined, static (c, ord) => [SecurityRule.Compile(c, ord)], this.orderings);
         return this.shell.BuildFilter(rules, claims);
     }
 

@@ -1336,6 +1336,36 @@ down to SQL:
   (UI/deployment config for `SecurityLabelOrderings` is slice 4; the production compile sites stay on the default-empty
   overload until then — the bootstrap seeds no ordered rules, so this is safe.)
 
+### ✅ Classification orderings — config threading + `GET /security/orderings` (security-UI slice 4b)
+
+Wired the deployment's `SecurityLabelOrderings` into the live policy and exposed them read-only so the authoring UI can
+offer the ordered/classification templates with the exact labels the policy enforces. Two allocation surfaces:
+
+- **Policy compile path (hot — `Resolve` per request).** `PersistentRowSecurityPolicy` gained an `orderings` ctor param,
+  baked into each compiled rule. **Regression caught by the protocol:** threading it naïvely turned the memoizing
+  `CompiledCombos.GetOrAdd(combined, static c => […])` into a **captured-`this` lambda** — a closure allocated on *every*
+  `Resolve` (the warm authorization path). Fixed with the `GetOrAdd` **state-argument** overload
+  (`GetOrAdd(combined, static (c, ord) => [SecurityRule.Compile(c, ord)], this.orderings)`) — the factory stays a cached
+  static delegate, **zero per-call closure**. (The orderings are a single source: the handler reads them off the policy
+  via a new `Orderings` getter, so the read endpoint reflects exactly what authorization enforces — no second config.)
+- **`GET /security/orderings` projection (new wire op).** Projects the configured orderings (a small fixed config of
+  C# strings) into `SecurityOrderingList` bytes-native via `Build<TContext>` — each dimension's name + labels threaded as
+  a ref-struct `OrderingContext`, the config strings encoded to UTF-8 once via the implicit `string → JsonString.Source`
+  applied **inside** `Create`/`AddItem` (a span-bearing temp passed to a `Source`-returning `Build` trips CS8347 escape
+  analysis — the lesson is to mutate inside the callback, never pass the temp out). No store read, no `ParseValue`, sync
+  handler (`ValueTask.FromResult`).
+- **Measured** (`SecurityOrderingProjectionBenchmarks`, 4 dimensions, InProcessEmit; allocations authoritative — ShortRun
+  timing is noise-dominated, RatioSD ≈ 2): `PerItemClosure` **10.16 KB** → `ContextThreaded` (shipped mechanism) **9.34 KB**
+  (**−8%** — the per-item closures eliminated) → `EndToEnd_Handler` (the real handler path) **9.85 KB** (the realised
+  per-request cost; the residual is the genuine response document plus the fixed workspace-materialisation floor every
+  handler pays — for this small config the floor dominates, so the absolute win is modest by design).
+- **Verified.** End-to-end policy test (an ordered-rule binding resolves reach only with orderings threaded — `public`/
+  `confidential` admitted, `restricted` denied; the default-empty policy denies all, proving the threading is load-bearing)
+  + read-endpoint handler test (projects the configured labels; empty list with no policy) — 25 server security tests.
+  Web: client `listSecurityOrderings`; the reach panel's classification template (dimension/comparator/value dropdowns,
+  hidden when no orderings) — 70 node + 119 component + 4 smoke. Demo host wires a `classification` ordering. slnx **0/0**.
+  **Row done.**
+
 ## Cross-references
 
 - Skills: `corvus-typed-model-construction`, `corvus-builder-context-threading`,

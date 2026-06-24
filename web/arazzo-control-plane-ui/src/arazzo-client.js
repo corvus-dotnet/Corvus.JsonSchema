@@ -570,6 +570,19 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `listSecurityOrderings` — the deployment's configured ordered tag dimensions (`GET /security/orderings`): each is
+   * `{ dimension, labels }` with the labels in ascending order, the ranking the ordered rule comparisons
+   * (`<`/`<=`/`>`/`>=`) use. An authoring UI reads these to offer the ordered/classification templates with the exact
+   * labels the policy enforces. Requires `security:read`.
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<{ orderings: Array<{ dimension: string, labels: string[] }> }>} A {@link SecurityOrderingList}.
+   */
+  async listSecurityOrderings(opts = {}) {
+    const result = await this._request('GET', '/security/orderings', { signal: opts.signal });
+    return { orderings: result.orderings ?? [] };
+  }
+
+  /**
    * `getSecurityRule` — fetch a single rule by name (`GET /security/rules/{ruleName}`). Requires `security:read`.
    * @param {string} name
    * @param {{ signal?: AbortSignal }} [opts]

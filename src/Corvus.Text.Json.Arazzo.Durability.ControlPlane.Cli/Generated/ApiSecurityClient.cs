@@ -31,6 +31,23 @@ public sealed class ApiSecurityClient : IApiSecurityClient
     }
 
     /// <summary>
+    /// List the configured ordered tag dimensions
+    /// </summary>
+    /// <remarks>
+    /// Returns the deployment's ordered tag dimensions (e.g. classification) and their labels in ascending order, so an authoring UI can offer ordered (&lt;, &lt;=, &gt;, &gt;=) rule templates with the exact labels the policy enforces.
+    /// </remarks>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<ListSecurityOrderingsResponse> ListSecurityOrderingsAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        ListSecurityOrderingsRequest request = new();
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<ListSecurityOrderingsRequest, ListSecurityOrderingsResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// List security rules
     /// </summary>
     /// <param name="cancellationToken">A cancellation token.</param>

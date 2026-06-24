@@ -55,6 +55,20 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     }
 
     /// <inheritdoc/>
+    public ValueTask<ListSecurityOrderingsResult> HandleListSecurityOrderingsAsync(ListSecurityOrderingsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        // The orderings are deployment configuration the policy already holds (the single source the authoring UI offers
+        // ordered templates from); there is no store read, so the projection is synchronous. Build it closure-free with
+        // the orderings threaded as the context, materialised once into the request workspace — the only allocation is the
+        // genuine response document (the config's label strings encoded to UTF-8 once).
+        SecurityLabelOrderings cfg = this.policy?.Orderings ?? SecurityLabelOrderings.Empty;
+        Models.SecurityOrderingList.Source<SecurityLabelOrderings> body = Models.SecurityOrderingList.Build(
+            in cfg,
+            orderings: Models.SecurityOrderingList.SecurityOrderingArray.Build(in cfg, BuildOrderings));
+        return ValueTask.FromResult(ListSecurityOrderingsResult.Ok(body, workspace));
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<CreateSecurityRuleResult> HandleCreateSecurityRuleAsync(CreateSecurityRuleParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         Models.SecurityRuleCreate body = parameters.Body;
@@ -272,6 +286,42 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         {
             array.AddItem(Models.SecurityRuleSummary.From(r));
         }
+    }
+
+    // The orderings projection is closure-free (each dimension's name + label list is threaded as a ref-struct context).
+    // The labels are genuine C# config strings (not a CTJ element), so they encode to UTF-8 once via the implicit
+    // string -> JsonString.Source conversion, applied INSIDE the builder's Create/AddItem (a void mutate) rather than
+    // passed to a Source-returning Build — the span-bearing temp would otherwise fail ref-safety escape analysis.
+    private static void BuildOrderings(in SecurityLabelOrderings cfg, ref Models.SecurityOrderingList.SecurityOrderingArray.Builder array)
+    {
+        foreach (string dimension in cfg.Dimensions)
+        {
+            cfg.TryGetOrdering(dimension, out IReadOnlyList<string> labels);
+            var ctx = new OrderingContext(dimension, labels);
+            array.AddItem(Models.SecurityOrdering.Build(in ctx, BuildOrdering));
+        }
+    }
+
+    private static void BuildOrdering(in OrderingContext ctx, ref Models.SecurityOrdering.Builder b)
+        => b.Create(
+            in ctx,
+            dimension: ctx.Dimension,
+            labels: Models.SecurityOrdering.JsonStringArray.Build(in ctx, BuildLabels));
+
+    private static void BuildLabels(in OrderingContext ctx, ref Models.SecurityOrdering.JsonStringArray.Builder array)
+    {
+        foreach (string label in ctx.Labels)
+        {
+            array.AddItem(label);
+        }
+    }
+
+    // One ordered dimension's name + ascending labels, threaded so the SecurityOrdering build stays closure-free.
+    private readonly ref struct OrderingContext(string dimension, IReadOnlyList<string> labels)
+    {
+        public string Dimension { get; } = dimension;
+
+        public IReadOnlyList<string> Labels { get; } = labels;
     }
 
     // The binding summary is a closure-free Build<TContext> projection: the binding itself is threaded as the context
