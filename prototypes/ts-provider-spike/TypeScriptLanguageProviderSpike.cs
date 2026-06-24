@@ -293,6 +293,15 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
 
         """;
 
+    // Brand/format conversion runtime (design §5.3.1): a nominal `Brand<T,B>` (un-spoofable via a phantom
+    // unique-symbol key, zero runtime cost) + `FormatError` thrown by the generated validating factories.
+    private const string BrandRuntime = """
+
+        declare const __brand: unique symbol;
+        export type Brand<T, B extends string> = T & { readonly [__brand]: B };
+        class FormatError extends Error {}
+        """;
+
     private readonly KeywordValidationHandlerRegistry validationHandlers = new();
 
     private bool assertFormat;
@@ -302,7 +311,7 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
     // the third-party imports (lossless-json for source-text numbers, Temporal + tr46 for formats) at top.
     public static string RuntimeModuleSource()
     {
-        string body = NumericRuntime + KindRuntime + DeepEqual + EvRuntime + FormatRuntime;
+        string body = NumericRuntime + KindRuntime + DeepEqual + EvRuntime + FormatRuntime + BrandRuntime;
         body = body.Replace("import { isLosslessNumber } from \"lossless-json\";\n", string.Empty);
         body = body.Replace("\nfunction ", "\nexport function ")
                    .Replace("\nconst ", "\nexport const ")
@@ -414,7 +423,7 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
         // (@corvus/json-runtime, §5.5) that every generated module imports — never inlined per module.
         var sb = new StringBuilder();
         sb.Append("// AUTO-GENERATED: idiomatic TS types + registry-composed validators.\n");
-        sb.Append("import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, Ev, NOEV, fresh, __fmt, __fmtContent } from \"./corvus-runtime.js\";\n\n");
+        sb.Append("import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, type Brand } from \"./corvus-runtime.js\";\n\n");
         var moduleGuards = new HashSet<string>(StringComparer.Ordinal); // union guard names, unique per module
         foreach (TypeDeclaration td in types)
         {
@@ -440,6 +449,10 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
             {
                 EmitUnionAlias(sb, td, moduleGuards);
             }
+            else if (IsBrandedStringFormat(td))
+            {
+                EmitBrandAlias(sb, td);
+            }
 
             EmitValidator(sb, td);
         }
@@ -461,6 +474,23 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
         }
 
         sb.Append("}\n\n");
+    }
+
+    // A well-known string format (design §5.3.1): a branded alias `Brand<string, "format">` + a validating
+    // factory that mints the brand only after the format check (the JS analog of V5's conversion operators).
+    private static void EmitBrandAlias(StringBuilder sb, TypeDeclaration td)
+    {
+        string? format = td.Format();
+        if (format is null)
+        {
+            return;
+        }
+
+        string name = FinalName(td);
+        string fmt = TsEmit.Str(format);
+        sb.Append("export type ").Append(name).Append(" = Brand<string, ").Append(fmt).Append(">;\n");
+        sb.Append("export function as").Append(name).Append("(value: string): ").Append(name)
+          .Append(" { if (!__fmt(").Append(fmt).Append(", value)) { throw new FormatError(").Append(fmt).Append("); } return value as ").Append(name).Append("; }\n\n");
     }
 
     // A pure map / dictionary object (additionalProperties value type, no declared properties): the
@@ -625,6 +655,17 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
             return FinalName(td);
         }
 
+        // A well-known string format -> a branded alias; a 64-bit+ integer format -> bigint (§5.3.1/§4.1).
+        if (IsBrandedStringFormat(td))
+        {
+            return FinalName(td);
+        }
+
+        if (IsBigIntFormat(td))
+        {
+            return "bigint";
+        }
+
         List<string> kinds = SchemaTypes(td);
         if (kinds.Contains("array") || td.ExplicitTupleType() is not null || (td.ExplicitNonTupleItemsType() ?? td.ArrayItemsType()) is not null)
         {
@@ -741,6 +782,21 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
 
     private static bool IsEnum(TypeDeclaration td)
         => td.LocatedSchema.Schema.ValueKind == JsonValueKind.Object && td.LocatedSchema.Schema.TryGetProperty("enum", out _);
+
+    // Well-known string formats that map to a branded string + validating factory (design §5.3.1).
+    private static readonly HashSet<string> KnownStringFormats = new(StringComparer.Ordinal)
+    {
+        "uuid", "email", "idn-email", "hostname", "idn-hostname", "ipv4", "ipv6",
+        "uri", "uri-reference", "uri-template", "iri", "iri-reference",
+        "date", "date-time", "time", "duration", "json-pointer", "relative-json-pointer", "regex",
+    };
+
+    private static bool IsBrandedStringFormat(TypeDeclaration td)
+        => SchemaTypes(td).Contains("string") && td.Format() is string f && KnownStringFormats.Contains(f);
+
+    // 64-bit+ integer formats exceed JS safe-integer range -> bigint (§4.1).
+    private static bool IsBigIntFormat(TypeDeclaration td)
+        => td.Format() is "int64" or "uint64" or "int128" or "uint128";
 
     private static bool TryConstLiteral(TypeDeclaration td, out string? literal)
     {
