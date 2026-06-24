@@ -8,13 +8,15 @@
 // Events     : administrators-changed {administrators}, error {problem}
 // Parts      : panel, list, row, add
 //
-// An administrator is named by the deployment-mapped grant {dimension, value} (never a raw internal tag). The
-// set is governed by current-administrator membership: a caller who is not an administrator is refused (403),
-// shown here as a plain banner, never a disclosure of who is. The set is never empty — removing the last
-// administrator is refused (409).
+// An administrator is a resolved identity (§16.5.4): the deployment-mapped {dimension, value} grants it resolves
+// from (never a raw internal tag), an optional resolved kind/label for display, and a stable digest that is the
+// removal key. Adding names a real person/team/role/workflow grantee via the picker (which resolves it to its exact
+// sys: identity), not a hand-typed tuple. The set is governed by current-administrator membership: a caller who is
+// not an administrator is refused (403), shown here as a plain banner, never a disclosure of who is. The set is
+// never empty — removing the last administrator is refused (409).
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, confirmDialog, define } from './base.js';
-import './admin-grant-input.js';
+import './grantee-picker.js';
 
 class ArazzoAdministratorsPanel extends ArazzoElement {
   static get observedAttributes() {
@@ -96,19 +98,21 @@ class ArazzoAdministratorsPanel extends ArazzoElement {
   // ---- mutations --------------------------------------------------------------------------------
 
   async add() {
-    const grant = this.$('.grant-in').grant;
-    if (!grant) { this.showError({ title: 'A dimension and a value are required.' }); return; }
-    await this.mutate(() => this.client.addAdministrator(this.baseWorkflowId, grant), () => this.$('.grant-in').reset());
+    const grantee = this.$('.grant-in').grant;
+    if (!grantee) { this.showError({ title: 'Select a grantee to add as an administrator.' }); return; }
+    // The picker resolved the grantee to its exact identity; carry kind/value/identity/label/complete straight through.
+    const member = { kind: grantee.kind, value: grantee.value, identity: grantee.identity, label: grantee.label, complete: grantee.complete };
+    await this.mutate(() => this.client.addAdministrator(this.baseWorkflowId, member), () => this.$('.grant-in').reset());
   }
 
-  async removeMember(dimension, value) {
+  async removeMember(digest, describe) {
     const confirmed = await confirmDialog(this, {
       title: 'Remove administrator',
-      message: `Remove ${dimension}=${value} from the administrators of '${this.baseWorkflowId}'?`,
+      message: `Remove ${describe} from the administrators of '${this.baseWorkflowId}'?`,
       confirmLabel: 'Remove', danger: true,
     });
     if (!confirmed) return;
-    await this.mutate(() => this.client.removeAdministrator(this.baseWorkflowId, dimension, value));
+    await this.mutate(() => this.client.removeAdministrator(this.baseWorkflowId, digest));
   }
 
   async mutate(action, onOk) {
@@ -143,6 +147,8 @@ class ArazzoAdministratorsPanel extends ArazzoElement {
         .list { display: grid; }
         .arow { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-bottom: 1px solid var(--_border); }
         .arow:last-child { border-bottom: none; }
+        .who { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+        .who .meta { font-size: 12px; color: var(--_muted); }
         .grant { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
         .grant .dim { color: var(--_muted); }
         .grow { flex: 1; }
@@ -157,13 +163,12 @@ class ArazzoAdministratorsPanel extends ArazzoElement {
         <div class="err"></div>
         <div class="list" part="list"></div>
         <div class="add" part="add" hidden>
-          <arazzo-admin-grant-input class="grant-in"></arazzo-admin-grant-input>
+          <arazzo-grantee-picker class="grant-in"></arazzo-grantee-picker>
           <button class="addbtn primary" type="button">Add</button>
         </div>
       </div>
     `;
     this.$('.addbtn').addEventListener('click', () => this.add());
-    this.$('.grant-in').addEventListener('keydown', (e) => { if (e.key === 'Enter') this.add(); });
   }
 
   renderBody() {
@@ -189,13 +194,18 @@ class ArazzoAdministratorsPanel extends ArazzoElement {
       return;
     }
 
-    list.innerHTML = this._admins.map((a) => `
+    list.innerHTML = this._admins.map((a) => {
+      const grants = (a.identity || []).map((g) => `<span class="dim">${escapeHtml(g.dimension)}=</span>${escapeHtml(g.value)}`).join(' · ');
+      const meta = [a.kind ? escapeHtml(a.kind) : '', a.label ? escapeHtml(a.label) : ''].filter(Boolean).join(' · ');
+      const describe = a.label || (a.identity || []).map((g) => `${g.dimension}=${g.value}`).join(', ') || 'this administrator';
+      return `
       <div class="arow" part="row">
-        <span class="grant"><span class="dim">${escapeHtml(a.dimension)}=</span>${escapeHtml(a.value)}</span>
+        <span class="who">${meta ? `<span class="meta">${meta}</span>` : ''}<span class="grant">${grants}</span></span>
         <span class="grow"></span>
-        ${this.canWrite ? `<button class="rm ghost" type="button" data-dim="${escapeHtml(a.dimension)}" data-val="${escapeHtml(a.value)}">Remove</button>` : ''}
-      </div>`).join('');
-    this.$$('.rm').forEach((btn) => btn.addEventListener('click', () => this.removeMember(btn.dataset.dim, btn.dataset.val)));
+        ${this.canWrite ? `<button class="rm ghost" type="button" data-digest="${escapeHtml(a.digest)}" data-describe="${escapeHtml(describe)}">Remove</button>` : ''}
+      </div>`;
+    }).join('');
+    this.$$('.rm').forEach((btn) => btn.addEventListener('click', () => this.removeMember(btn.dataset.digest, btn.dataset.describe)));
   }
 }
 

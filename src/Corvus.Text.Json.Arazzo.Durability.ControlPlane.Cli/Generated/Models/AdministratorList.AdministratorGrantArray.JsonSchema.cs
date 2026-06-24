@@ -17,14 +17,14 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
 /// <remarks>
 /// <para>
-/// The administrator identities for a base workflow id (&#167;15).
+/// The administrators of a base workflow id (&#167;15), each a resolved identity with a stable digest for removal.
 /// </para>
 /// </remarks>
 public readonly partial struct AdministratorList
@@ -33,8 +33,8 @@ public readonly partial struct AdministratorList
     /// Generated from JSON Schema.
     /// </summary>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct AdministratorIdentityArray
-        : IJsonElement<AdministratorIdentityArray>
+    public readonly partial struct AdministratorGrantArray
+        : IJsonElement<AdministratorGrantArray>
     {
         public static partial class JsonSchema
         {
@@ -91,14 +91,14 @@ public readonly partial struct AdministratorList
                     {
                         int arrayValidation_currentIndex = arrayValidation_enumerator.CurrentIndex;
 
-                        JsonSchemaContext childContext = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity.JsonSchema.PushChildContext(
+                        JsonSchemaContext childContext = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorGrant.JsonSchema.PushChildContext(
                             parentDocument,
                             arrayValidation_currentIndex,
                             ref context,
                             itemIndex: arrayValidation_itemCount,
                             evaluationPath: ItemsSchemaEvaluationPath);
 
-                        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext);
+                        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorGrant.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext);
                         if (!childContext.IsMatch)
                         {
                             context.CommitChildContext(false, ref childContext);
