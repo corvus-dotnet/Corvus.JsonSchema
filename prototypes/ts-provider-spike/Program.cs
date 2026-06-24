@@ -28,7 +28,7 @@ void Emit(TypeScriptLanguageProviderSpike provider, string fileName)
     string rootName = root.TryGetMetadata<string>("Ts_FinalName", out string? rn) && !string.IsNullOrEmpty(rn) ? rn! : "GeneratedType";
     foreach (GeneratedCodeFile file in files)
     {
-        File.WriteAllText(Path.Combine(outDir, fileName), file.FileContent + $"\nexport const evaluateRoot = evaluate{rootName};\n");
+        File.WriteAllText(Path.Combine(outDir, fileName), file.FileContent + $"\nexport const evaluateRoot = (v: unknown): boolean => evaluate{rootName}(v, fresh());\n");
     }
 
     Console.WriteLine($"wrote {fileName} (root = evaluate{rootName})");

@@ -25,6 +25,23 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
         "  if (typeof a === \"object\") { if (Array.isArray(b) || typeof b !== \"object\") { return false; } const ak = Object.keys(a as object), bk = Object.keys(b as object); if (ak.length !== bk.length) { return false; } for (const k of ak) { if (!Object.prototype.hasOwnProperty.call(b, k) || !__eq((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k])) { return false; } } return true; }\n" +
         "  return false;\n}\n\n";
 
+    // Evaluation tracker for unevaluatedProperties/Items: an index bitmask over property/item positions
+    // (first 32 positions inline as a number — zero extra allocation; production widens to Uint32Array per
+    // §13.18). `local` (this schema's own evaluations) + `applied` (OR-merged from matched in-place
+    // applicators). NOEV is the shared no-op tracker passed to sub-instances that do not require tracking.
+    private const string EvRuntime =
+        "class Ev {\n" +
+        "  n = false; pl = 0; pa = 0; il = 0; ia = 0;\n" +
+        "  markProp(i: number): void { if (!this.n && i < 32) { this.pl |= (1 << i) >>> 0; } }\n" +
+        "  hasProp(i: number): boolean { return i < 32 ? (((this.pl | this.pa) & ((1 << i) >>> 0)) !== 0) : false; }\n" +
+        "  markItem(i: number): void { if (!this.n && i < 32) { this.il |= (1 << i) >>> 0; } }\n" +
+        "  hasItem(i: number): boolean { return i < 32 ? (((this.il | this.ia) & ((1 << i) >>> 0)) !== 0) : false; }\n" +
+        "  mergeProps(c: Ev): void { this.pa |= c.pl | c.pa; }\n" +
+        "  mergeItems(c: Ev): void { this.ia |= c.il | c.ia; }\n" +
+        "}\n" +
+        "const NOEV = new Ev(); NOEV.n = true;\n" +
+        "function fresh(): Ev { return new Ev(); }\n\n";
+
     private readonly KeywordValidationHandlerRegistry validationHandlers = new();
 
     public static TypeScriptLanguageProviderSpike CreateDefault()
@@ -36,7 +53,8 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
             new TsPatternPropertiesHandler(), new TsAdditionalPropertiesHandler(),
             new TsAllOfHandler(), new TsAnyOfHandler(), new TsOneOfHandler(),
             new TsPrefixItemsHandler(), new TsItemsHandler(),
-            new TsPropertyNamesHandler(), new TsDependentRequiredHandler(), new TsIfThenElseHandler());
+            new TsPropertyNamesHandler(), new TsDependentRequiredHandler(), new TsIfThenElseHandler(),
+            new TsUnevaluatedPropertiesHandler(), new TsUnevaluatedItemsHandler());
         return p;
     }
 
@@ -112,6 +130,7 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
         var sb = new StringBuilder();
         sb.Append("// AUTO-GENERATED: idiomatic TS types + registry-composed validators.\n\n");
         sb.Append(DeepEqual);
+        sb.Append(EvRuntime);
         foreach (TypeDeclaration td in types)
         {
             if (IsObject(td))
@@ -308,7 +327,7 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
     // ---- validators: composed from the core handler registry (§13.13) ----
     private void EmitValidator(StringBuilder sb, TypeDeclaration td)
     {
-        sb.Append("export function evaluate").Append(FinalName(td)).Append("(value: unknown): boolean {\n");
+        sb.Append("export function evaluate").Append(FinalName(td)).Append("(value: unknown, ev: Ev): boolean {\n");
 
         // boolean schemas: `false` matches nothing, `true` matches everything.
         if (td.LocatedSchema.Schema.ValueKind == JsonValueKind.False)
