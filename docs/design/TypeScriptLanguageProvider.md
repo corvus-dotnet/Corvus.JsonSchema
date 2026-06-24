@@ -1336,3 +1336,15 @@ The full `produce` path still **beats native for medium/large docs and all non-A
 Model-C-favourable regime), losing only at the smallest ASCII doc. Clear optimisation headroom (pool the
 target/edit arrays, avoid per-op re-allocation, skip the `Proxy` for shallow recipes) to close the
 produce<->raw gap — a Phase-0 task, flagged not hand-waved.
+
+**Optimisation measured — pool the target/edit arrays (+ draft, patches, name-bytes cache)**
+(`prototypes/rmw-scanner/produce-pool-bench.mjs`). Reusing those across calls gives **+3-52% throughput
+and ~halves GC events**, and brings pooled `produce` to **parity with the raw Model C engine for
+medium/large docs** (pooled/raw 0.85-1.13x at >=64 KB), while it still beats native everywhere except the
+tiniest ASCII doc (pooled/native 1.7-31x from 4 KB up; 0.67x at 360 B). The residual gap at **small** docs
+(pooled/raw ~0.3-0.46x) is **inherent per-op cost** -- recording the recipe + encoding the changed
+*values* (rawC pre-encodes fixed values, so it is a floor, not a fair small-doc target) -- not array
+allocation; closing it further means skipping the `Proxy` for shallow recipes, bounded by the unavoidable
+value-encode. Verdict: pooling is a clear, cheap win (throughput + GC) and the mutation API reaches engine
+parity exactly where Model C matters (larger payloads / sustained load); small-doc mutation is the one
+spot where the recorder cost shows, and there native is already competitive anyway.
