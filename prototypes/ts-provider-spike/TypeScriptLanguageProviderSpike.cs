@@ -42,6 +42,32 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
         "const NOEV = new Ev(); NOEV.n = true;\n" +
         "function fresh(): Ev { return new Ev(); }\n\n";
 
+    // Exact numeric validation on the number's TEXT, not the lossy JS double (design §4.1, mirroring the
+    // C# BigNumber/ASCII-number approach; ported from prototypes/number-exact.mjs). Parse a decimal literal
+    // to sign * mantissa * 10^exp (BigInt) and do exact arithmetic: bounds via cross-scaled BigInt compare,
+    // multipleOf via scaled BigInt modulo. The schema operand uses its exact source literal; the instance
+    // value uses String(value) (which round-trips JSON numbers; production retains the true source token).
+    private const string NumericRuntime =
+        "function __dec(s: string): { sign: bigint; mant: bigint; exp: number } {\n" +
+        "  let i = 0; let sign = 1n;\n" +
+        "  if (s[i] === \"+\") { i++; } else if (s[i] === \"-\") { sign = -1n; i++; }\n" +
+        "  let ip = \"\", fp = \"\", ep = \"\";\n" +
+        "  while (i < s.length && s[i] >= \"0\" && s[i] <= \"9\") { ip += s[i++]; }\n" +
+        "  if (s[i] === \".\") { i++; while (i < s.length && s[i] >= \"0\" && s[i] <= \"9\") { fp += s[i++]; } }\n" +
+        "  if (s[i] === \"e\" || s[i] === \"E\") { i++; let es = \"\"; if (s[i] === \"+\" || s[i] === \"-\") { es = s[i++]; } while (i < s.length && s[i] >= \"0\" && s[i] <= \"9\") { es += s[i++]; } ep = es; }\n" +
+        "  return { sign, mant: BigInt((ip + fp) || \"0\"), exp: (ep ? parseInt(ep, 10) : 0) - fp.length };\n" +
+        "}\n" +
+        "function __cmp(aStr: string, bStr: string): number {\n" +
+        "  const a = __dec(aStr), b = __dec(bStr); const e = Math.min(a.exp, b.exp);\n" +
+        "  const ai = a.sign * a.mant * 10n ** BigInt(a.exp - e); const bi = b.sign * b.mant * 10n ** BigInt(b.exp - e);\n" +
+        "  return ai < bi ? -1 : ai > bi ? 1 : 0;\n" +
+        "}\n" +
+        "function __multipleOf(vStr: string, dStr: string): boolean {\n" +
+        "  const v = __dec(vStr), d = __dec(dStr); if (d.mant === 0n) { return false; }\n" +
+        "  const e = Math.min(v.exp, d.exp);\n" +
+        "  return (v.mant * 10n ** BigInt(v.exp - e)) % (d.mant * 10n ** BigInt(d.exp - e)) === 0n;\n" +
+        "}\n\n";
+
     private readonly KeywordValidationHandlerRegistry validationHandlers = new();
 
     public static TypeScriptLanguageProviderSpike CreateDefault()
@@ -54,7 +80,7 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
             new TsAllOfHandler(), new TsAnyOfHandler(), new TsOneOfHandler(),
             new TsPrefixItemsHandler(), new TsItemsHandler(),
             new TsPropertyNamesHandler(), new TsDependentRequiredHandler(), new TsIfThenElseHandler(),
-            new TsDependentSchemasHandler(), new TsContainsHandler(),
+            new TsDependentSchemasHandler(), new TsContainsHandler(), new TsNotHandler(),
             new TsUnevaluatedPropertiesHandler(), new TsUnevaluatedItemsHandler());
         return p;
     }
@@ -132,6 +158,7 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
         sb.Append("// AUTO-GENERATED: idiomatic TS types + registry-composed validators.\n\n");
         sb.Append(DeepEqual);
         sb.Append(EvRuntime);
+        sb.Append(NumericRuntime);
         foreach (TypeDeclaration td in types)
         {
             if (IsObject(td))

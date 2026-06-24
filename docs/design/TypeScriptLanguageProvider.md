@@ -1565,3 +1565,38 @@ Result: **968/968 (100%)** across all 33 keyword files, 0 errored, all generated
 clean, regressions intact. `$dynamicRef` 44/44 (incl. dynamic-scope, bookending, intermediate scopes,
 remote/extended cases), `ref` 79/79, `defs` 2/2, `unevaluatedProperties` 129/129, `unevaluatedItems`
 71/71, every other keyword 100%.
+
+### 13.21 All five dialects -- 4199/4199 (100%) just by adding their test suites
+
+Because handlers match on capability INTERFACES, not keyword text (§13.17), the same handler set is
+vocabulary-independent. Expanding the harness to draft 4 / 6 / 7 / 2019-09 / 2020-12 -- registering all
+five `VocabularyAnalyser`s, a per-dialect fallback vocabulary, and the full metaschema set -- needed NO
+dialect-specific handler code. Two general additions and one principled correction closed the long tail:
+
+* **`not`** -- one interface-matched handler (`INotValidationKeyword.TryGetNotType`). The not-subschema
+  gets its OWN tracker via `SubEv` (its internal `unevaluated*` works) and is never merged into the parent
+  (`not` discards its annotations).
+* **Exact numeric validation on the number's TEXT, not the JS double (§4.1).** Reverted an ad-hoc
+  float/scale hack in favour of the designed approach (ported from `prototypes/number-exact.mjs`):
+  `__dec` parses a decimal literal to `sign * mantissa * 10^exp` (BigInt); bounds are a cross-scaled
+  `BigInt` compare (`__cmp(String(value), <literal>)`), `multipleOf` a scaled `BigInt` modulo. The schema
+  operand uses its exact source literal; the instance uses `String(value)` (round-trips JSON numbers;
+  production retains the true source token via the §4.1 reviver/bytes). No epsilon, no special-casing --
+  `multipleOf` of `0.0075 / 0.0001` and "any integer is a multiple of 1e-8" pass exactly. (Length/count
+  bounds keep plain JS: they compare small safe integers.)
+
+Result over **1226 generated modules across 5 dialects**: **4199/4199 (100%)**, 0 errored, all modules
+`tsc --strict` clean, person.json regressions intact:
+
+| dialect | pass |
+|---|---|
+| draft4 | 556/556 |
+| draft6 | 735/735 |
+| draft7 | 775/775 |
+| draft2019-09 | 1056/1056 |
+| draft2020-12 | 1077/1077 |
+
+The generator setup is identical to the C# test runner (FakeWebDocumentResolver + metaschema + all
+analysers + `rebaseAsRoot` + reduced root); only the emitted language differs. This is the strongest
+possible evidence for the design: one C# provider over the existing core, emitting idiomatic
+`tsc --strict`-clean TypeScript, is fully JSON-Schema-compliant across every supported dialect.
