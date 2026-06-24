@@ -5,6 +5,8 @@ out-union/
 prov-test/
 prov-test-arrays/
 prov-test-union/
+out-formats/
+prov-test-formats/
 bin/
 obj/
 node_modules/

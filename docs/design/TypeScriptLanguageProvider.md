@@ -1724,3 +1724,20 @@ Two correctness guards were required for the recursive `$recursiveRef` schemas i
 
 Full suite **7848/7849**, all 1688 modules `tsc --strict` clean, 0 errored groups (validation-neutral).
 Still pending: `From`/brand conversions and the `produce`/mutation surface.
+
+### 13.27 Provider emits brand/format conversions (§5.3.1)
+
+The provider now emits the brand/format surface. A well-known **string format** (uuid, email, idn-email,
+hostname, idn-hostname, ipv4/ipv6, uri/uri-reference/uri-template, iri/iri-reference, date, date-time,
+time, duration, json-pointer, relative-json-pointer, regex) becomes a branded alias
+`type X = Brand<string, "format">` plus a validating factory `asX(value: string): X` that mints the brand
+only after `__fmt` passes (else throws `FormatError`) — the JS analog of V5's conversion operators. A
+64-bit+ **integer format** (int64/uint64/int128/uint128) maps to `bigint` (§4.1). `Brand<T,B>`
+(un-spoofable via a phantom unique-symbol, zero runtime cost) and `FormatError` live in the shared
+runtime; the brand factory always validates, independent of the annotate/assert format mode.
+
+Verified on an `Account` schema (`formats-access.test.ts`, 6/6): `asId`/`asOwner` mint valid input and
+reject invalid, a branded field reads as its base string, `balance` is `bigint`. The earlier
+provider-output tests still pass (`person.json`'s `contact` is now `Contact` (email-branded)). Full suite
+**7848/7849**, all 1688 modules `tsc --strict` clean, 0 errored. Still pending: the `produce`/mutation
+surface.
