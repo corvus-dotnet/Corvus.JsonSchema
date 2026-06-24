@@ -15,7 +15,7 @@
 // not an administrator is refused (403), shown here as a plain banner, never a disclosure of who is. The set is
 // never empty — removing the last administrator is refused (409).
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, confirmDialog, define } from './base.js';
+import { ArazzoElement, SHARED_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, confirmDialog, define } from './base.js';
 import './grantee-picker.js';
 
 class ArazzoAdministratorsPanel extends ArazzoElement {
@@ -140,6 +140,7 @@ class ArazzoAdministratorsPanel extends ArazzoElement {
     this.shadowRoot.innerHTML = `
       <style>
         ${SHARED_CSS}
+        ${GRANTEE_CHIP_CSS}
         .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
         .head { padding: 10px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); display: flex; align-items: baseline; gap: 8px; }
         .head .title { font-weight: 700; }
@@ -147,10 +148,6 @@ class ArazzoAdministratorsPanel extends ArazzoElement {
         .list { display: grid; }
         .arow { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-bottom: 1px solid var(--_border); }
         .arow:last-child { border-bottom: none; }
-        .who { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-        .who .meta { font-size: 12px; color: var(--_muted); }
-        .grant { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
-        .grant .dim { color: var(--_muted); }
         .grow { flex: 1; }
         .add { display: flex; gap: 8px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--_border); background: var(--_surface); }
         .add .grant-in { flex: 1; }
@@ -195,12 +192,10 @@ class ArazzoAdministratorsPanel extends ArazzoElement {
     }
 
     list.innerHTML = this._admins.map((a) => {
-      const grants = (a.identity || []).map((g) => `<span class="dim">${escapeHtml(g.dimension)}=</span>${escapeHtml(g.value)}`).join(' · ');
-      const meta = [a.kind ? escapeHtml(a.kind) : '', a.label ? escapeHtml(a.label) : ''].filter(Boolean).join(' · ');
       const describe = a.label || (a.identity || []).map((g) => `${g.dimension}=${g.value}`).join(', ') || 'this administrator';
       return `
       <div class="arow" part="row">
-        <span class="who">${meta ? `<span class="meta">${meta}</span>` : ''}<span class="grant">${grants}</span></span>
+        ${granteeChip(a)}
         <span class="grow"></span>
         ${this.canWrite ? `<button class="rm ghost" type="button" data-digest="${escapeHtml(a.digest)}" data-describe="${escapeHtml(describe)}">Remove</button>` : ''}
       </div>`;
