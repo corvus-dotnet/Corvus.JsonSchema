@@ -76,6 +76,26 @@ public readonly struct CreateSecurityBindingResult
         => new(400, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
 
     /// <summary>
+    /// Creates a 403 Forbidden result.
+    /// </summary>
+    /// <param name="body">The response body.</param>
+    /// <param name="workspace">The workspace for building the response value.</param>
+    /// <returns>A <see cref="CreateSecurityBindingResult"/> with status 403.</returns>
+    public static CreateSecurityBindingResult Forbidden(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(403, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    /// <summary>
+    /// Creates a 403 Forbidden result from a context-threaded body, materialised in a single pass.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context carried by the body.</typeparam>
+    /// <param name="body">The context-threaded response body.</param>
+    /// <param name="workspace">The workspace for building the response value.</param>
+    /// <returns>A <see cref="CreateSecurityBindingResult"/> with status 403.</returns>
+    public static CreateSecurityBindingResult Forbidden<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source<TContext> body, JsonWorkspace workspace)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+        => new(403, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
+
+    /// <summary>
     /// Validates the response body against the schema for the current status code.
     /// </summary>
     /// <returns><see langword="true"/> if the body is valid or undefined; otherwise <see langword="false"/>.</returns>
@@ -86,6 +106,7 @@ public readonly struct CreateSecurityBindingResult
         {
             201 => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingSummary.From(this.Body).EvaluateSchema(),
             400 => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.From(this.Body).EvaluateSchema(),
+            403 => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.From(this.Body).EvaluateSchema(),
             _ => true,
         };
     }

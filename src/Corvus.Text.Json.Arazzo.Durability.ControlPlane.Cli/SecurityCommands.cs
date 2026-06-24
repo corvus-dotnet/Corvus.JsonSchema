@@ -214,7 +214,7 @@ internal sealed class SecurityBindingCreateCommand : AsyncCommand<SecurityBindin
         await using (transport)
         {
             await using CreateSecurityBindingResponse response = await client.CreateSecurityBindingAsync(SecurityCommandHelpers.BuildBinding(settings), cancellationToken);
-            return response.MatchResult(binding => Output.Print(binding.ToString()), Output.Problem, Output.Unexpected);
+            return response.MatchResult(binding => Output.Print(binding.ToString()), Output.Problem, Output.Problem, Output.Unexpected);
         }
     }
 }
@@ -228,7 +228,7 @@ internal sealed class SecurityBindingUpdateCommand : AsyncCommand<SecurityBindin
         await using (transport)
         {
             await using UpdateSecurityBindingResponse response = await client.UpdateSecurityBindingAsync(settings.BindingId, SecurityCommandHelpers.BuildBinding(settings), cancellationToken);
-            return response.MatchResult(binding => Output.Print(binding.ToString()), Output.Problem, Output.Problem, Output.Unexpected);
+            return response.MatchResult(binding => Output.Print(binding.ToString()), Output.Problem, Output.Problem, Output.Problem, Output.Unexpected);
         }
     }
 }
