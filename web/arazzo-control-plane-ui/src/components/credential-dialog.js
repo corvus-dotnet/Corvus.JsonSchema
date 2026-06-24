@@ -22,7 +22,8 @@
 // locator shape differs per store) that compose the canonical `secretRef` and preview exactly what is stored,
 // with a "Raw reference…" escape hatch for a value that does not fit the guided shape.
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, SHARED_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, define } from './base.js';
+import './grantee-picker.js';
 
 const SECRET_REF = /^(keyvault|awssm|vault|env|file):\/\/.+/;
 
@@ -148,6 +149,12 @@ class ArazzoCredentialDialog extends ArazzoElement {
     this.$('form').reset();
     this.$('.error-banner').hidden = true;
     this.fill(binding);
+    // The usage picker resolves real grantees via the client (§16.5.4); share the dialog's client and clear any prior pick.
+    const picker = this.$('.usage-grantee');
+    if (picker) {
+      if (this.client) picker.client = this.client;
+      picker.reset?.();
+    }
     this.$('.title').textContent = binding
       ? `Edit ${binding.sourceName}@${binding.environment}`
       : (this._prefillSource ? `New credential for ${this._prefillSource}` : 'New credential binding');
@@ -183,11 +190,12 @@ class ArazzoCredentialDialog extends ArazzoElement {
     this.$('fieldset.create-only').hidden = ro;
     this.$('.scopes-readonly').hidden = !ro;
     if (ro) {
-      const grants = (b.usageGrants || []).map((g) => `${g.dimension}=${g.value}`).join(', ') || '—';
+      const usage = b.usageGrantee && Array.isArray(b.usageGrantee.identity) && b.usageGrantee.identity.length
+        ? granteeChip(b.usageGrantee)
+        : '—';
       const mgmt = (b.managementTags || []).map((t) => `${t.key}=${t.value}`).join(', ') || '—';
-      this.$('.scopes-readonly').innerHTML = `<div><span class="ro-label">Usage grants</span> ${escapeHtml(grants)}</div><div><span class="ro-label">Management tags</span> ${escapeHtml(mgmt)}</div>`;
+      this.$('.scopes-readonly').innerHTML = `<div><span class="ro-label">Usage</span> ${usage}</div><div><span class="ro-label">Management tags</span> ${escapeHtml(mgmt)}</div>`;
     } else {
-      this.$('.grants').innerHTML = '';
       this.$('.mgmt').innerHTML = '';
     }
   }
@@ -421,9 +429,14 @@ class ArazzoCredentialDialog extends ArazzoElement {
       if (nowRefs !== this._originalRefs) body.rotatedAt = new Date().toISOString();
       else if (this._editing.rotatedAt) body.rotatedAt = this._editing.rotatedAt;
     } else {
-      const grants = this.collect('.grants').map(([dimension, value]) => ({ dimension, value }));
+      // Usage is a single resolved grantee from the picker — its identity (AND-matched) scopes which runs may use the
+      // binding; kind/label are carried for display. Management tags stay the {key,value} rows.
+      const grantee = this.$('.usage-grantee')?.grant;
+      if (grantee) {
+        body.usageGrantee = { identity: grantee.identity, kind: grantee.kind, label: grantee.label };
+      }
+
       const mgmt = this.collect('.mgmt').map(([key, value]) => ({ key, value }));
-      if (grants.length) body.usageGrants = grants;
       if (mgmt.length) body.managementTags = mgmt;
     }
     return body;
@@ -464,6 +477,7 @@ class ArazzoCredentialDialog extends ArazzoElement {
     this.shadowRoot.innerHTML = `
       <style>
         ${SHARED_CSS}
+        ${GRANTEE_CHIP_CSS}
         dialog { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); padding: 0; width: min(620px, 94vw); }
         dialog::backdrop { background: rgba(0,0,0,0.4); }
         .head { padding: 14px 16px; border-bottom: 1px solid var(--_border); }
@@ -535,7 +549,7 @@ class ArazzoCredentialDialog extends ArazzoElement {
 
             <fieldset class="create-only">
               <legend>Scopes (set at create, immutable after)</legend>
-              <div><label>Usage grants — which workflow identity may use the binding</label><div class="grants"></div><button class="add ghost addgrant" type="button">+ Add grant</button></div>
+              <div><label>Usage — which grantee's runs may use the binding (resolve a real person/team/role/workflow)</label><arazzo-grantee-picker class="usage-grantee"></arazzo-grantee-picker></div>
               <div><label>Management tags — who may administer the binding</label><div class="mgmt"></div><button class="add ghost addmgmt" type="button">+ Add tag</button></div>
             </fieldset>
 
@@ -556,7 +570,6 @@ class ArazzoCredentialDialog extends ArazzoElement {
       this.renderConfig(this.snapshotConfig());
     });
     this.$('.addcfg').addEventListener('click', () => this.addRow('.config-extra', 'cfg'));
-    this.$('.addgrant').addEventListener('click', () => this.addRow('.grants', 'grant'));
     this.$('.addmgmt').addEventListener('click', () => this.addRow('.mgmt', 'mgmt'));
     this.$('form').addEventListener('submit', (e) => {
       if (e.submitter?.value === 'confirm') { e.preventDefault(); this.submit(); }

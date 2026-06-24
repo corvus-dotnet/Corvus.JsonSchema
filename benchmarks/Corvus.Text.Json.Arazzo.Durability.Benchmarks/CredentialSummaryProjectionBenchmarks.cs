@@ -178,16 +178,19 @@ public class CredentialSummaryProjectionBenchmarks
                 });
             }
 
-            Models.CredentialBindingSummary.CredentialUsageGrantArray.Source usageGrants = default;
+            Models.CredentialUsageGrantee.Source usageGrantee = default;
             if (DescribedGrants.Count > 0)
             {
-                usageGrants = Models.CredentialBindingSummary.CredentialUsageGrantArray.Build((ref Models.CredentialBindingSummary.CredentialUsageGrantArray.Builder ab) =>
-                {
-                    foreach (CredentialUsageGrant grant in DescribedGrants)
+                usageGrantee = Models.CredentialUsageGrantee.Build((ref Models.CredentialUsageGrantee.Builder gb) => gb.Create(
+                    identity: Models.CredentialUsageGrantee.CredentialUsageGrantArray.Build((ref Models.CredentialUsageGrantee.CredentialUsageGrantArray.Builder ab) =>
                     {
-                        ab.AddItem(ClosureUsageGrant(grant));
-                    }
-                });
+                        foreach (CredentialUsageGrant grant in DescribedGrants)
+                        {
+                            ab.AddItem(ClosureUsageGrant(grant));
+                        }
+                    }),
+                    kind: "workflow",
+                    label: "Nightly reconcile"));
             }
 
             b.Create(
@@ -207,7 +210,7 @@ public class CredentialSummaryProjectionBenchmarks
                 lastUpdatedBy: lastUpdatedBy,
                 managementTags: managementTags,
                 rotatedAt: rotatedAt,
-                usageGrants: usageGrants);
+                usageGrantee: usageGrantee);
         });
 
     private static Models.CredentialBindingSummary.SecretReferenceArray.Source ClosureSecretRefs(SourceCredentialBinding binding)
@@ -265,7 +268,7 @@ public class CredentialSummaryProjectionBenchmarks
             lastUpdatedBy: Models.JsonString.From(binding.LastUpdatedBy),
             managementTags: hasManagementTags ? Models.CredentialBindingSummary.CredentialSecurityTagArray.Build(in ctx, BuildManagementTags) : default,
             rotatedAt: Models.JsonDateTime.From(binding.RotatedAt),
-            usageGrants: hasUsageGrants ? Models.CredentialBindingSummary.CredentialUsageGrantArray.Build(in ctx, BuildUsageGrants) : default);
+            usageGrantee: hasUsageGrants ? Models.CredentialUsageGrantee.Build(in ctx, BuildUsageGrantee) : default);
     }
 
     private static void BuildSecretRefs(in SummaryContext ctx, ref Models.CredentialBindingSummary.SecretReferenceArray.Builder array)
@@ -301,7 +304,14 @@ public class CredentialSummaryProjectionBenchmarks
     private static void BuildSecurityTag(in SecurityTag tag, ref Models.CredentialSecurityTag.Builder b)
         => b.Create(key: tag.Key, value: tag.Value);
 
-    private static void BuildUsageGrants(in SummaryContext ctx, ref Models.CredentialBindingSummary.CredentialUsageGrantArray.Builder array)
+    private static void BuildUsageGrantee(in SummaryContext ctx, ref Models.CredentialUsageGrantee.Builder grantee)
+        => grantee.Create(
+            in ctx,
+            identity: Models.CredentialUsageGrantee.CredentialUsageGrantArray.Build(in ctx, BuildUsageGrants),
+            kind: "workflow"u8,
+            label: (Models.JsonString.Source)"Nightly reconcile"u8);
+
+    private static void BuildUsageGrants(in SummaryContext ctx, ref Models.CredentialUsageGrantee.CredentialUsageGrantArray.Builder array)
     {
         foreach (CredentialUsageGrant grant in DescribedGrants)
         {

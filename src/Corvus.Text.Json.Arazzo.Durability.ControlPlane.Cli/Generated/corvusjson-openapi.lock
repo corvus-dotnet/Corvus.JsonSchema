@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-06-23T22:40:53.8989603\u002B00:00",
+  "generatedAt": "2026-06-24T10:51:49.5003527\u002B00:00",
   "generatedFiles": [
     "ListRunsRequest.cs",
     "ListRunsResponse.cs",
@@ -269,9 +269,6 @@
     "Models/CredentialBindingSummary.SecretReferenceArray.cs",
     "Models/CredentialBindingSummary.SecretReferenceArray.Mutable.cs",
     "Models/CredentialBindingSummary.SecretReferenceArray.JsonSchema.cs",
-    "Models/CredentialBindingSummary.CredentialUsageGrantArray.cs",
-    "Models/CredentialBindingSummary.CredentialUsageGrantArray.Mutable.cs",
-    "Models/CredentialBindingSummary.CredentialUsageGrantArray.JsonSchema.cs",
     "Models/CredentialBindingUpdate.cs",
     "Models/CredentialBindingUpdate.Mutable.cs",
     "Models/CredentialBindingUpdate.JsonSchema.cs",
@@ -293,9 +290,6 @@
     "Models/CredentialBindingWrite.SecretReferenceArray.cs",
     "Models/CredentialBindingWrite.SecretReferenceArray.Mutable.cs",
     "Models/CredentialBindingWrite.SecretReferenceArray.JsonSchema.cs",
-    "Models/CredentialBindingWrite.CredentialUsageGrantArray.cs",
-    "Models/CredentialBindingWrite.CredentialUsageGrantArray.Mutable.cs",
-    "Models/CredentialBindingWrite.CredentialUsageGrantArray.JsonSchema.cs",
     "Models/CredentialConfigEntry.cs",
     "Models/CredentialConfigEntry.Mutable.cs",
     "Models/CredentialConfigEntry.JsonSchema.cs",
@@ -308,6 +302,12 @@
     "Models/CredentialUsageGrant.cs",
     "Models/CredentialUsageGrant.Mutable.cs",
     "Models/CredentialUsageGrant.JsonSchema.cs",
+    "Models/CredentialUsageGrantee.cs",
+    "Models/CredentialUsageGrantee.Mutable.cs",
+    "Models/CredentialUsageGrantee.JsonSchema.cs",
+    "Models/CredentialUsageGrantee.CredentialUsageGrantArray.cs",
+    "Models/CredentialUsageGrantee.CredentialUsageGrantArray.Mutable.cs",
+    "Models/CredentialUsageGrantee.CredentialUsageGrantArray.JsonSchema.cs",
     "Models/GranteeKind.cs",
     "Models/GranteeKind.Mutable.cs",
     "Models/GranteeKind.JsonSchema.cs",
@@ -511,9 +511,9 @@
     "Models/GetIdentityGranteesSource.JsonSchema.cs",
     "Models/Corvus__GlobalDeclarations.cs"
   ],
-  "generatorVersion": "1.0.0\u002B73029829794345701aab243bb644f2e8aca291cc",
+  "generatorVersion": "1.0.0\u002B40285ae6770d45a678399353e20e7aee109e1434",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
-  "specFileHash": "a51e103b8e74aec33d66b9efde81b9a00af4214a0700e5e90c18f27b5a4706b0",
+  "specFileHash": "d1dcfd9d18538419e94696fe326a6f3bc656982e67ac7ffe08b4f7528eb54f08",
   "specVersion": "3.2"
 }

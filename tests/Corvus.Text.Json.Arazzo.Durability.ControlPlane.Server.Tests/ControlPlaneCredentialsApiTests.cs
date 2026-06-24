@@ -135,12 +135,15 @@ public sealed class ControlPlaneCredentialsApiTests
         HttpResponseMessage created = await host.SendJsonAsync(
             HttpMethod.Post,
             "/credentials",
-            """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://petstore-key"}],"managementTags":[{"key":"team","value":"ops"}],"usageGrants":[{"dimension":"workflow","value":"nightly-reconcile"}]}""",
+            """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://petstore-key"}],"managementTags":[{"key":"team","value":"ops"}],"usageGrantee":{"identity":[{"dimension":"workflow","value":"nightly-reconcile"}],"kind":"workflow","label":"Nightly reconcile"}}""",
             Write);
         created.StatusCode.ShouldBe(HttpStatusCode.Created);
         using Stj.JsonDocument doc = await ReadJsonAsync(created);
         doc.RootElement.GetProperty("managementTags").EnumerateArray().Select(t => $"{t.GetProperty("key").GetString()}={t.GetProperty("value").GetString()}").ShouldBe(["team=ops"]);
-        doc.RootElement.GetProperty("usageGrants").EnumerateArray().Select(g => $"{g.GetProperty("dimension").GetString()}={g.GetProperty("value").GetString()}").ShouldBe(["workflow=nightly-reconcile"]);
+        Stj.JsonElement grantee = doc.RootElement.GetProperty("usageGrantee");
+        grantee.GetProperty("identity").EnumerateArray().Select(g => $"{g.GetProperty("dimension").GetString()}={g.GetProperty("value").GetString()}").ShouldBe(["workflow=nightly-reconcile"]);
+        grantee.GetProperty("kind").GetString().ShouldBe("workflow");
+        grantee.GetProperty("label").GetString().ShouldBe("Nightly reconcile");
     }
 
     [TestMethod]

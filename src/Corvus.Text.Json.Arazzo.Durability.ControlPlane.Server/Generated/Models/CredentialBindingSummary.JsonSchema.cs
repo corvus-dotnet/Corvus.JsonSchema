@@ -106,7 +106,7 @@ public readonly partial struct CredentialBindingSummary
         private static readonly JsonSchemaPathProvider RotatedAtSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/rotatedAt"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider SecretRefsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/secretRefs"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider SourceNameSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/sourceName"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider UsageGrantsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/usageGrants"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider UsageGranteeSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/usageGrantee/$ref"u8, buffer, out written);
 
         private static void MatchAuthKind(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
         {
@@ -411,18 +411,18 @@ public readonly partial struct CredentialBindingSummary
             requiredBitBuffer[RequiredOffsetForSourceName] |= RequiredBitForSourceName;
         }
 
-        private static void MatchUsageGrants(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchUsageGrantee(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext16 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingSummary.CredentialUsageGrantArray.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialUsageGrantee.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
-                    JsonPropertyNames.UsageGrantsUtf8,
-                    evaluationPath: UsageGrantsSchemaEvaluationPath);
+                    JsonPropertyNames.UsageGranteeUtf8,
+                    evaluationPath: UsageGranteeSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingSummary.CredentialUsageGrantArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext16);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialUsageGrantee.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext16);
             context.CommitChildContext(childContext16.IsMatch, ref childContext16);
         }
 
@@ -445,7 +445,7 @@ public readonly partial struct CredentialBindingSummary
                 (static () => JsonPropertyNames.RotatedAtUtf8, MatchRotatedAt),
                 (static () => JsonPropertyNames.SecretRefsUtf8, MatchSecretRefs),
                 (static () => JsonPropertyNames.SourceNameUtf8, MatchSourceName),
-                (static () => JsonPropertyNames.UsageGrantsUtf8, MatchUsageGrants),
+                (static () => JsonPropertyNames.UsageGranteeUtf8, MatchUsageGrantee),
             ]);
         }
 
