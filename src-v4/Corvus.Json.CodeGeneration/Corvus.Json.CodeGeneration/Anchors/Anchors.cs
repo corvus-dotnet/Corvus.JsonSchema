@@ -187,8 +187,28 @@ public static class Anchors
     {
         JsonSchemaScope? foundScope = null;
 
-        foreach (JsonSchemaScope scope in typeBuilderContext.ReversedStack)
+        // Outermost-first; the innermost (current) scope is last.
+        IReadOnlyList<JsonSchemaScope> scopes = typeBuilderContext.ReversedStack.ToList();
+        for (int i = 0; i < scopes.Count; i++)
         {
+            JsonSchemaScope scope = scopes[i];
+
+            // Skip a "passed-through" intermediate resource: a pointer-navigation scope (a reference whose
+            // base is one resource but whose pointer lands inside an EMBEDDED resource) is immediately
+            // followed by that embedded resource's own root scope (pointer "#", a different location).
+            // The embedded resource supersedes the container in the dynamic scope, so the container must
+            // not contribute its $dynamicAnchors (per "$dynamicRef skips over intermediate resources").
+            // A pointer reference into a NON-resource subschema (no embedded $id, so no following root
+            // scope) keeps its resource in scope, which is why the lookahead is required.
+            if (scope.Pointer.ToString() != "#" && i + 1 < scopes.Count)
+            {
+                JsonSchemaScope next = scopes[i + 1];
+                if (next.Pointer.ToString() == "#" && next.Location != scope.Location)
+                {
+                    continue;
+                }
+            }
+
             // Ignore consecutive identical scopes
             if (foundScope is JsonSchemaScope fs && fs.Location == scope.Location)
             {
