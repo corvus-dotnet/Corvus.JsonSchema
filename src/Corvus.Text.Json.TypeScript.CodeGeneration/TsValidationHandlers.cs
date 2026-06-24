@@ -2,14 +2,16 @@ using System.Text;
 using System.Text.Json;
 using Corvus.Json.CodeGeneration;
 
-namespace TsProviderSpike;
+namespace Corvus.Text.Json.TypeScript.CodeGeneration;
 
 // Handlers match on the keyword's CAPABILITY INTERFACES (ICoreTypeValidationKeyword,
 // INumberConstantValidationKeyword, ...), never on the keyword text, and read constraints through
 // those interfaces (AllowedCoreTypes, TryGetOperator, TryGetValidationConstants, ...). This is
 // vocabulary-independent: one handler serves draft 4/6/7/2019-09/2020-12 even where the keyword name
 // or shape differs (e.g. draft-4 boolean exclusiveMinimum maps to the same Operator).
-internal interface ITsKeywordEmitter
+// Public so external (consumer-supplied) validation handlers can participate in the emit dispatch —
+// the extensibility seam: register an IKeywordValidationHandler that also implements ITsKeywordEmitter.
+public interface ITsKeywordEmitter
 {
     void Emit(StringBuilder sb, TypeDeclaration td, IKeyword keyword);
 }
@@ -708,18 +710,3 @@ internal sealed class TsContentHandler : IKeywordValidationHandler, ITsKeywordEm
     }
 }
 
-// ---- EXTENSION DEMO: a handler for a capability the base set omits (format is annotation-only).
-internal sealed class TsFormatExtensionHandler : IKeywordValidationHandler, ITsKeywordEmitter
-{
-    public uint ValidationHandlerPriority => 500;
-
-    public bool HandlesKeyword(IKeyword keyword) => keyword is IFormatProviderKeyword;
-
-    public void Emit(StringBuilder sb, TypeDeclaration td, IKeyword keyword)
-    {
-        if (((IFormatProviderKeyword)keyword).TryGetFormat(td, out string? format) && format == "email")
-        {
-            sb.Append("  if (typeof value === \"string\" && !value.includes(\"@\")) { return false; } // EXTENSION: format=email\n");
-        }
-    }
-}

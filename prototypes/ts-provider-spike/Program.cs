@@ -1,5 +1,6 @@
 using Corvus.Json;
 using Corvus.Json.CodeGeneration;
+using Corvus.Text.Json.TypeScript.CodeGeneration;
 using TsProviderSpike;
 
 if (args.Length > 0 && args[0] == "--suite")
@@ -28,27 +29,28 @@ var reference = new JsonReference(Path.GetFullPath(schemaPath));
 TypeDeclaration root = await builder.AddTypeDeclarationsAsync(reference, fallback, false);
 
 Directory.CreateDirectory(outDir);
-File.WriteAllText(Path.Combine(outDir, "corvus-runtime.ts"), TypeScriptLanguageProviderSpike.RuntimeModuleSource());
+File.WriteAllText(Path.Combine(outDir, "corvus-runtime.ts"), TypeScriptLanguageProvider.RuntimeModuleSource());
 
-void Emit(TypeScriptLanguageProviderSpike provider, string fileName)
+void Emit(TypeScriptLanguageProvider provider, string fileName)
 {
     IReadOnlyCollection<GeneratedCodeFile> files = builder.GenerateCodeUsing(provider, CancellationToken.None, root);
     TypeDeclaration reducedRoot = root.ReducedTypeDeclaration().ReducedType;
     string rootName = reducedRoot.TryGetMetadata<string>("Ts_FinalName", out string? rn) && !string.IsNullOrEmpty(rn) ? rn! : "GeneratedType";
-    foreach (GeneratedCodeFile file in files)
-    {
-        File.WriteAllText(Path.Combine(outDir, fileName), file.FileContent + $"\nexport const evaluateRoot = (v: unknown): boolean => evaluate{rootName}(v, fresh());\n");
-    }
+
+    // The provider returns [types module, shared runtime]; write the types module (first) to the
+    // requested name (corvus-runtime.ts is written once by the caller).
+    GeneratedCodeFile typesFile = files.First();
+    File.WriteAllText(Path.Combine(outDir, fileName), typesFile.FileContent + $"\nexport const evaluateRoot = (v: unknown): boolean => evaluate{rootName}(v, fresh());\n");
 
     Console.WriteLine($"wrote {fileName} (root = evaluate{rootName})");
 }
 
 // Base provider: the default handler set (no multipleOf).
-Emit(TypeScriptLanguageProviderSpike.CreateDefault(), "generated.ts");
+Emit(TypeScriptLanguageProvider.CreateDefault(), "generated.ts");
 
 // Extension: register a custom handler at runtime. The core registry dispatches to it for the
 // `multipleOf` keyword — no change to the provider. This is the user/third-party extension seam.
-TypeScriptLanguageProviderSpike ext = TypeScriptLanguageProviderSpike.CreateDefault();
+TypeScriptLanguageProvider ext = TypeScriptLanguageProvider.CreateDefault();
 ext.RegisterValidationHandlers(new TsFormatExtensionHandler());
 Emit(ext, "generated-ext.ts");
 

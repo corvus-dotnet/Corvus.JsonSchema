@@ -30,6 +30,7 @@ public static class GenerationDriver
         {
             Engine.V4 => await GenerationDriverV4.GenerateTypes(generatorConfig, cancellationToken).ConfigureAwait(false),
             Engine.V5 => await GenerationDriverV5.GenerateTypes(generatorConfig, codeGenerationMode, cancellationToken).ConfigureAwait(false),
+            Engine.TypeScript => await GenerationDriverTypeScript.GenerateTypes(generatorConfig, codeGenerationMode, cancellationToken).ConfigureAwait(false),
             _ => throw new NotSupportedException($"Unsupported generation engine: {generationEngine}")
         };
     }

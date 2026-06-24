@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Pragmatic migration of the TS code-generation spike into the production layout (design §7).
+       Targets net9/net10 (Cli.Core), NOT the netstandard2.0 Roslyn source generator (§7.6). Builds
+       warning-clean; full StyleCop/XML-doc polish is a tracked follow-up. -->
+  <PropertyGroup>
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>preview</LangVersion>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration.csproj" />
+  </ItemGroup>
+</Project>

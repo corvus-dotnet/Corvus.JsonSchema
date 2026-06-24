@@ -134,9 +134,15 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
     protected override Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNullOrEmpty(settings.SchemaFile); // We will never see this exception if the framework is doing its job; it should have blown up inside the CLI command handling
-        ArgumentNullException.ThrowIfNullOrEmpty(settings.RootNamespace); // We will never see this exception if the framework is doing its job; it should have blown up inside the CLI command handling
 
         Engine engine = settings.GenerationEngine ?? CliDefaults.DefaultEngine;
+
+        // The TypeScript engine ignores the .NET namespace; default it so --rootNamespace is optional there.
+        string rootNamespace = settings.RootNamespace ?? (engine == Engine.TypeScript ? "Generated" : string.Empty);
+        if (engine != Engine.TypeScript)
+        {
+            ArgumentNullException.ThrowIfNullOrEmpty(rootNamespace); // C# requires a root namespace.
+        }
 
         GeneratorConfig.GenerationSpecification generationSpecification =
             GeneratorConfig.GenerationSpecification.Create(
@@ -151,7 +157,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         }
 
         var config = GeneratorConfig.Create(
-            settings.RootNamespace,
+            rootNamespace,
             [generationSpecification],
             additionalFiles: null,
             assertFormat: settings.AssertFormat,

@@ -73,7 +73,7 @@ public static class GenerationDriverV5
         return 0;
     }
 
-    private static async Task RegisterAdditionalFiles(GeneratorConfig generatorConfig, CompoundDocumentResolver documentResolver)
+    internal static async Task RegisterAdditionalFiles(GeneratorConfig generatorConfig, CompoundDocumentResolver documentResolver)
     {
         if (generatorConfig.AdditionalFiles is GeneratorConfig.FileList fileList)
         {
@@ -120,7 +120,7 @@ public static class GenerationDriverV5
         }
     }
 
-    private static VocabularyRegistry RegisterVocabularies(IDocumentResolver documentResolver)
+    internal static VocabularyRegistry RegisterVocabularies(IDocumentResolver documentResolver)
     {
         VocabularyRegistry vocabularyRegistry = new();
 
@@ -137,7 +137,7 @@ public static class GenerationDriverV5
         return vocabularyRegistry;
     }
 
-    private static int WriteValidationErrors(GeneratorConfig generatorConfig)
+    internal static int WriteValidationErrors(GeneratorConfig generatorConfig)
     {
         ValidationContext result = generatorConfig.Validate(ValidationContext.ValidContext, ValidationLevel.Detailed);
         AnsiConsole.MarkupLine("[red]Error: Invalid configuration[/]");
@@ -361,7 +361,7 @@ public static class GenerationDriverV5
         }
     }
 
-    private static async Task<ProgressTask> WriteFiles(GeneratorConfig generatorConfig, ProgressContext context, IReadOnlyCollection<GeneratedCodeFile> generatedCode, string outputPath)
+    internal static async Task<ProgressTask> WriteFiles(GeneratorConfig generatorConfig, ProgressContext context, IReadOnlyCollection<GeneratedCodeFile> generatedCode, string outputPath)
     {
         ProgressTask currentTask = context.AddTask("Writing files", true, generatedCode.Count);
 
@@ -441,7 +441,7 @@ public static class GenerationDriverV5
         }
     }
 
-    private static IVocabulary GetFallbackVocabulary(GeneratorConfig.UseSchema schemaVariant)
+    internal static IVocabulary GetFallbackVocabulary(GeneratorConfig.UseSchema schemaVariant)
     {
         return schemaVariant.Match(
             matchDraft4: static () => Corvus.Json.CodeGeneration.Draft4.VocabularyAnalyser.DefaultVocabulary,

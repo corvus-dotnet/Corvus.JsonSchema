@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.CodeGeneration;
+using Corvus.Text.Json.TypeScript.CodeGeneration;
 
 namespace TsProviderSpike;
 
@@ -49,6 +50,79 @@ internal static class SuiteHarness
 
     private static readonly Dictionary<string, string> MetaschemaText = [];
 
+    // Benchmark generation: emit one validator module per Sourcemeta-dataset schema (schemas/<name>/
+    // schema.json), dialect-detected from $schema, plus the shared runtime once. Used to benchmark our
+    // generated validators against Ajv/Hyperjump/schemasafe over the real-world Sourcemeta dataset.
+    public static async Task GenerateForBench(string schemasDir, string outDir, string metaschemaBase)
+    {
+        Directory.CreateDirectory(outDir);
+        File.WriteAllText(Path.Combine(outDir, "corvus-runtime.ts"), TypeScriptLanguageProvider.RuntimeModuleSource());
+        string remotesDir = metaschemaBase; // bench schemas are self-contained; FakeWeb just needs a dir
+
+        var dialectFallback = new (string Uri, Func<IVocabulary> F)[]
+        {
+            ("http://json-schema.org/draft-04/schema", static () => Corvus.Json.CodeGeneration.Draft4.VocabularyAnalyser.DefaultVocabulary),
+            ("http://json-schema.org/draft-06/schema", static () => Corvus.Json.CodeGeneration.Draft6.VocabularyAnalyser.DefaultVocabulary),
+            ("http://json-schema.org/draft-07/schema", static () => Corvus.Json.CodeGeneration.Draft7.VocabularyAnalyser.DefaultVocabulary),
+            ("https://json-schema.org/draft/2019-09/schema", static () => Corvus.Json.CodeGeneration.Draft201909.VocabularyAnalyser.DefaultVocabulary),
+            ("https://json-schema.org/draft/2020-12/schema", static () => Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary),
+        };
+
+        int ok = 0, failed = 0;
+        var names = new List<string>();
+        foreach (string dir in Directory.GetDirectories(schemasDir).OrderBy(d => d, StringComparer.Ordinal))
+        {
+            string schemaPath = Path.Combine(dir, "schema.json");
+            if (!File.Exists(schemaPath)) { continue; }
+            string name = Path.GetFileName(dir);
+
+            try
+            {
+                string schemaText = File.ReadAllText(schemaPath);
+                using JsonDocument sd = JsonDocument.Parse(schemaText);
+                string dialect = sd.RootElement.TryGetProperty("$schema", out JsonElement ds) && ds.ValueKind == JsonValueKind.String
+                    ? (ds.GetString() ?? string.Empty).TrimEnd('#')
+                    : "https://json-schema.org/draft/2020-12/schema";
+                IVocabulary fallback = (dialectFallback.FirstOrDefault(d => d.Uri == dialect).F
+                    ?? (static () => Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary))();
+
+                var resolver = new CompoundDocumentResolver(new FakeWebDocumentResolver(remotesDir), new FileSystemDocumentResolver());
+                foreach ((string uri, string rel) in MetaschemaMap)
+                {
+                    string mp = Path.Combine(metaschemaBase, rel);
+                    if (File.Exists(mp)) { resolver.AddDocument(uri, JsonDocument.Parse(File.ReadAllText(mp))); }
+                }
+
+                var registry = new VocabularyRegistry();
+                Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(resolver, registry);
+                Corvus.Json.CodeGeneration.Draft201909.VocabularyAnalyser.RegisterAnalyser(resolver, registry);
+                Corvus.Json.CodeGeneration.Draft7.VocabularyAnalyser.RegisterAnalyser(registry);
+                Corvus.Json.CodeGeneration.Draft6.VocabularyAnalyser.RegisterAnalyser(registry);
+                Corvus.Json.CodeGeneration.Draft4.VocabularyAnalyser.RegisterAnalyser(registry);
+                var builder = new JsonSchemaTypeBuilder(resolver, registry);
+
+                string schemaRef = Path.Combine(remotesDir, name + "__bench.json");
+                if (Corvus.Json.CodeGeneration.DocumentResolvers.SchemaReferenceNormalization.TryNormalizeSchemaReference(schemaRef, out string? norm)) { schemaRef = norm; }
+                builder.AddDocument(schemaRef, JsonDocument.Parse(schemaText));
+                TypeDeclaration root = await builder.AddTypeDeclarationsAsync(new JsonReference(schemaRef), fallback, rebaseAsRoot: true);
+                IReadOnlyCollection<GeneratedCodeFile> files = builder.GenerateCodeUsing(TypeScriptLanguageProvider.CreateDefault(), CancellationToken.None, root);
+                TypeDeclaration reducedRoot = root.ReducedTypeDeclaration().ReducedType;
+                string rootName = reducedRoot.TryGetMetadata<string>("Ts_FinalName", out string? rn) && !string.IsNullOrEmpty(rn) ? rn! : "Entity";
+                File.WriteAllText(Path.Combine(outDir, name + ".ts"), files.First().FileContent + $"\nexport const evaluateRoot = (v: unknown): boolean => evaluate{rootName}(v, fresh());\n");
+                names.Add(name);
+                ok++;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"  FAILED {name}: {ex.GetType().Name}: {ex.Message.Split('\n')[0]}");
+                failed++;
+            }
+        }
+
+        File.WriteAllText(Path.Combine(outDir, "manifest.json"), JsonSerializer.Serialize(names));
+        Console.WriteLine($"bench-gen: {ok} generated, {failed} failed -> {outDir}");
+    }
+
     // Diagnostic: build ONE schema exactly as the C# runner does and walk the resolved type graph,
     // printing each type's location + raw schema. Used to see how $dynamicRef resolves (string vs integer).
     public static async Task DynDebug(string schemaText, string testsBaseDir)
@@ -94,7 +168,7 @@ internal static class SuiteHarness
         string schemasDir = Path.Combine(outDir, "schemas");
         Directory.CreateDirectory(schemasDir);
         File.WriteAllText(Path.Combine(outDir, "package.json"), "{ \"type\": \"module\" }\n");
-        File.WriteAllText(Path.Combine(outDir, "corvus-runtime.ts"), TypeScriptLanguageProviderSpike.RuntimeModuleSource());
+        File.WriteAllText(Path.Combine(outDir, "corvus-runtime.ts"), TypeScriptLanguageProvider.RuntimeModuleSource());
 
         string remotesDir = Path.GetFullPath(Path.Combine(testsBaseDir, "..", "remotes"));
         string metaschemaBase = Path.GetFullPath(Path.Combine(testsBaseDir, "..", "..", "src", "Corvus.Json.Cli.Core", "metaschema"));
@@ -218,7 +292,7 @@ internal static class SuiteHarness
                     if (Corvus.Json.CodeGeneration.DocumentResolvers.SchemaReferenceNormalization.TryNormalizeSchemaReference(schemaRef, out string? normalized)) { schemaRef = normalized; }
                     builder.AddDocument(schemaRef, JsonDocument.Parse(schema.GetRawText()));
                     TypeDeclaration root = await builder.AddTypeDeclarationsAsync(new JsonReference(schemaRef), fallback, rebaseAsRoot: true);
-                    TypeScriptLanguageProviderSpike provider = assertFormat ? TypeScriptLanguageProviderSpike.CreateWithFormatAssertion() : TypeScriptLanguageProviderSpike.CreateDefault();
+                    TypeScriptLanguageProvider provider = assertFormat ? TypeScriptLanguageProvider.CreateWithFormatAssertion() : TypeScriptLanguageProvider.CreateDefault();
                     IReadOnlyCollection<GeneratedCodeFile> files = builder.GenerateCodeUsing(provider, CancellationToken.None, root);
                     TypeDeclaration reducedRoot = root.ReducedTypeDeclaration().ReducedType;
                     string rootName = reducedRoot.TryGetMetadata<string>("Ts_FinalName", out string? rn) && !string.IsNullOrEmpty(rn) ? rn! : "Entity";
