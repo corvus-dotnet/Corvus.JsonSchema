@@ -558,15 +558,46 @@ function toCredentialSummary(b) {
 // ---- workflow administration (§15) — deployment-mapped {dimension,value} identities ------------
 
 function seedAdministrators() {
-  // Keyed by baseWorkflowId; each administrator is a {dimension, value} grant.
+  // Keyed by baseWorkflowId; each administrator is a resolved identity grant
+  // { digest, identity: [{dimension,value}], kind?, label? } — the digest is the stable removal key.
   return {
-    'nightly-reconcile': [{ dimension: 'tenant', value: 'platform' }],
-    'onboard-customer': [{ dimension: 'tenant', value: 'platform' }, { dimension: 'tenant', value: 'growth' }],
+    'nightly-reconcile': [adminGrant([{ dimension: 'tenant', value: 'platform' }], 'team', 'Platform')],
+    'onboard-customer': [
+      adminGrant([{ dimension: 'tenant', value: 'platform' }], 'team', 'Platform'),
+      adminGrant([{ dimension: 'tenant', value: 'growth' }], 'team', 'Growth'),
+    ],
   };
 }
 
-function sameIdentity(a, b) {
-  return a.dimension === b.dimension && a.value === b.value;
+// The well-known grantee kind a single-grant dimension is inferred as (mirrors the server's TryGranteeKindForDimension);
+// a custom dimension names no well-known kind.
+function kindForDimension(dimension) {
+  return { sub: 'person', tenant: 'team', role: 'role', workflow: 'workflow' }[dimension];
+}
+
+// A stable, order-independent opaque digest of an identity's {dimension,value} grants. NOT the server's SHA-256 — the
+// mock is a standalone backend, and a caller only ever feeds back the digest the list/add response handed it — but it is
+// stable, set-independent and 64 hex chars, so the picker/remove round-trip behaves like the real one.
+function digestOf(identity) {
+  const canonical = identity.map((g) => `${g.dimension}=${g.value}`).sort().join(' ');
+  let out = '';
+  for (let seed = 0; seed < 8; seed++) {
+    let h = (0x811c9dc5 ^ Math.imul(seed, 0x9e3779b1)) >>> 0;
+    for (let i = 0; i < canonical.length; i++) {
+      h = Math.imul(h ^ canonical.charCodeAt(i), 0x01000193) >>> 0;
+    }
+    out += h.toString(16).padStart(8, '0');
+  }
+  return out;
+}
+
+// Builds an administrator grant from its resolved identity, stamping the stable digest and the optional kind/label.
+function adminGrant(identity, kind, label) {
+  const normalized = identity.map((g) => ({ dimension: g.dimension, value: g.value }));
+  const grant = { digest: digestOf(normalized), identity: normalized };
+  if (kind) grant.kind = kind;
+  if (label) grant.label = label;
+  return grant;
 }
 
 function seedGrantees() {
@@ -1047,9 +1078,9 @@ export function createMockControlPlane(options = {}) {
     if (idx < 0) return null;
     const path = fullPath.slice(idx);
 
-    const memberMatch = path.match(/^\/administrators\/([^/]+)\/members\/([^/]+)\/([^/]+)$/);
+    const memberMatch = path.match(/^\/administrators\/([^/]+)\/members\/([^/]+)$/);
     if (memberMatch && method === 'DELETE') {
-      return removeAdministrator(decodeURIComponent(memberMatch[1]), decodeURIComponent(memberMatch[2]), decodeURIComponent(memberMatch[3]));
+      return removeAdministrator(decodeURIComponent(memberMatch[1]), decodeURIComponent(memberMatch[2]));
     }
     const membersMatch = path.match(/^\/administrators\/([^/]+)\/members$/);
     if (membersMatch && method === 'POST') {
@@ -1065,16 +1096,31 @@ export function createMockControlPlane(options = {}) {
     return null;
   }
 
-  function addAdministrator(base, identity) {
-    if (!identity?.dimension || !identity?.value) return problem(400, 'Invalid administrator identity', 'An identity of { dimension, value } is required.');
+  function addAdministrator(base, member) {
+    // Resolved-grantee form (a full identity[] from the picker) or the interim single {dimension,value} grant.
+    let identity;
+    let kind;
+    let label;
+    if (Array.isArray(member?.identity) && member.identity.length > 0) {
+      identity = member.identity;
+      kind = member.kind;
+      label = member.label;
+    } else if (member?.dimension && member?.value) {
+      identity = [{ dimension: member.dimension, value: member.value }];
+      kind = kindForDimension(member.dimension);
+    } else {
+      return problem(400, 'Invalid administrator identity', 'Provide a resolved grantee identity or a single { dimension, value } grant.');
+    }
+
+    const grant = adminGrant(identity, kind, label);
     const set = administrators[base] ?? (administrators[base] = []);
-    if (!set.some((a) => sameIdentity(a, identity))) set.push({ dimension: identity.dimension, value: identity.value });
+    if (!set.some((a) => a.digest === grant.digest)) set.push(grant);
     return json({ administrators: set });
   }
 
-  function removeAdministrator(base, dimension, value) {
+  function removeAdministrator(base, digest) {
     const set = administrators[base] ?? [];
-    const i = set.findIndex((a) => sameIdentity(a, { dimension, value }));
+    const i = set.findIndex((a) => a.digest === digest);
     if (i >= 0) {
       if (set.length === 1) return problem(409, 'Cannot remove the last administrator', 'A workflow must always have at least one administrator.');
       set.splice(i, 1);
@@ -1088,7 +1134,10 @@ export function createMockControlPlane(options = {}) {
     }
     const deduped = [];
     for (const a of body.administrators) {
-      if (a?.dimension && a?.value && !deduped.some((d) => sameIdentity(d, a))) deduped.push({ dimension: a.dimension, value: a.value });
+      if (a?.dimension && a?.value) {
+        const grant = adminGrant([{ dimension: a.dimension, value: a.value }], kindForDimension(a.dimension));
+        if (!deduped.some((d) => d.digest === grant.digest)) deduped.push(grant);
+      }
     }
     administrators[base] = deduped;
     return json({ administrators: deduped });

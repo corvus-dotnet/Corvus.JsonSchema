@@ -3987,7 +3987,7 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "administrators:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "administrators:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __AddAdministratorEndpoint);
 
-        IEndpointConventionBuilder __RemoveAdministratorEndpoint = app.MapDelete("/administrators/{baseWorkflowId}/members/{dimension}/{value}", async (HttpContext context) =>
+        IEndpointConventionBuilder __RemoveAdministratorEndpoint = app.MapDelete("/administrators/{baseWorkflowId}/members/{digest}", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -3997,15 +3997,10 @@ public static class ApiEndpointRegistration
                 {
                     BaseWorkflowIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(BaseWorkflowIdRaw, workspace);
                 }
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString DimensionValue = default;
-                if (context.Request.RouteValues.TryGetValue("dimension", out object? DimensionRouteVal) && DimensionRouteVal is string DimensionRaw)
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString DigestValue = default;
+                if (context.Request.RouteValues.TryGetValue("digest", out object? DigestRouteVal) && DigestRouteVal is string DigestRaw)
                 {
-                    DimensionValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(DimensionRaw, workspace);
-                }
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString ValueValue = default;
-                if (context.Request.RouteValues.TryGetValue("value", out object? ValueRouteVal) && ValueRouteVal is string ValueRaw)
-                {
-                    ValueValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(ValueRaw, workspace);
+                    DigestValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(DigestRaw, workspace);
                 }
 
                 if (BaseWorkflowIdValue.IsUndefined())
@@ -4016,19 +4011,11 @@ public static class ApiEndpointRegistration
                     return;
                 }
 
-                if (DimensionValue.IsUndefined())
+                if (DigestValue.IsUndefined())
                 {
                     context.Response.StatusCode = 400;
                     context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'dimension' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                if (ValueValue.IsUndefined())
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'value' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'digest' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
                     return;
                 }
 
@@ -4040,19 +4027,11 @@ public static class ApiEndpointRegistration
                     return;
                 }
 
-                if (!DimensionValue.IsUndefined() && !DimensionValue.EvaluateSchema())
+                if (!DigestValue.IsUndefined() && !DigestValue.EvaluateSchema())
                 {
                     context.Response.StatusCode = 400;
                     context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'dimension' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                if (!ValueValue.IsUndefined() && !ValueValue.EvaluateSchema())
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'value' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'digest' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
                     return;
                 }
 
@@ -4060,8 +4039,7 @@ public static class ApiEndpointRegistration
                 RemoveAdministratorParams parameters = new()
                 {
                     BaseWorkflowId = BaseWorkflowIdValue,
-                    Dimension = DimensionValue,
-                    Value = ValueValue,
+                    Digest = DigestValue,
                 }
                 ;
 
@@ -4104,7 +4082,7 @@ public static class ApiEndpointRegistration
                 operationId: "removeAdministrator",
                 methodName: "RemoveAdministrator",
                 httpMethod: "DELETE",
-                routeTemplate: "/administrators/{baseWorkflowId}/members/{dimension}/{value}",
+                routeTemplate: "/administrators/{baseWorkflowId}/members/{digest}",
                 tags: new[] { "administrators" },
                 isCallback: false,
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "administrators:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "administrators:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),

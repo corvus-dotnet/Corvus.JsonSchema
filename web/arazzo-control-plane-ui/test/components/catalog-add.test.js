@@ -125,10 +125,12 @@ describe('<arazzo-catalog-add-dialog>', () => {
     el.$('.confirm').click();
     await added;
 
-    // The staged set was applied to the landed base id via the administrators API.
+    // The staged set was applied to the landed base id via the administrators API; each administrator is a resolved
+    // identity whose `identity` carries the {dimension,value} grant(s) it resolves from.
     const { administrators } = await el.client.listAdministrators('nightly-reconcile');
-    ok(administrators.some((a) => a.dimension === 'tenant' && a.value === 'growth'), 'applied the tenant administrator');
-    ok(administrators.some((a) => a.dimension === 'workflow' && a.value === 'nightly-reconcile'), 'applied the workflow administrator');
+    const hasGrant = (dimension, value) => administrators.some((a) => (a.identity || []).some((g) => g.dimension === dimension && g.value === value));
+    ok(hasGrant('tenant', 'growth'), 'applied the tenant administrator');
+    ok(hasGrant('workflow', 'nightly-reconcile'), 'applied the workflow administrator');
   });
 
   it('opens a guided credential dialog locked to each source ticked for credential setup', async () => {

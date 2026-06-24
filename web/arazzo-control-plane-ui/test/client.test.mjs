@@ -393,11 +393,15 @@ test('deleteCredential removes the binding (then 404)', async () => {
   await assert.rejects(() => c.getCredential('events', 'staging'), (e) => e.status === 404);
 });
 
-// ---- administrators (§15) — identities named by the {dimension,value} grant ---------------------
+// ---- administrators (§15) — resolved identities {digest, identity:[{dimension,value}], kind?, label?} ----------
 
-test('listAdministrators returns the set, and an empty set for an unknown base id', async () => {
+test('listAdministrators returns resolved-identity grants, and an empty set for an unknown base id', async () => {
   const c = makeClient();
-  assert.deepEqual((await c.listAdministrators('nightly-reconcile')).administrators, [{ dimension: 'tenant', value: 'platform' }]);
+  const { administrators } = await c.listAdministrators('nightly-reconcile');
+  assert.equal(administrators.length, 1);
+  assert.deepEqual(administrators[0].identity, [{ dimension: 'tenant', value: 'platform' }]);
+  assert.equal(administrators[0].kind, 'team');
+  assert.match(administrators[0].digest, /^[0-9a-f]{64}$/);
   assert.deepEqual((await c.listAdministrators('ghost')).administrators, []);
 });
 
@@ -408,15 +412,31 @@ test('addAdministrator is idempotent and transferAdministration replaces the who
   const again = await c.addAdministrator('nightly-reconcile', { dimension: 'tenant', value: 'growth' });
   assert.equal(again.administrators.length, 2, 'idempotent');
   const transferred = await c.transferAdministration('nightly-reconcile', { administrators: [{ dimension: 'tenant', value: 'acme' }] });
-  assert.deepEqual(transferred.administrators, [{ dimension: 'tenant', value: 'acme' }]);
+  assert.equal(transferred.administrators.length, 1);
+  assert.deepEqual(transferred.administrators[0].identity, [{ dimension: 'tenant', value: 'acme' }]);
 });
 
-test('removeAdministrator refuses to remove the last administrator (409)', async () => {
+test('addAdministrator accepts a resolved grantee (kind + value + identity)', async () => {
   const c = makeClient();
+  const added = await c.addAdministrator('nightly-reconcile', {
+    kind: 'person', value: 'u-1042', label: 'Ada Lovelace',
+    identity: [{ dimension: 'sys:iss', value: 'https://idp.example.com' }, { dimension: 'sys:sub', value: 'u-1042' }],
+    complete: true,
+  });
+  const ada = added.administrators.find((a) => a.label === 'Ada Lovelace');
+  assert.ok(ada, 'the resolved grantee was added');
+  assert.equal(ada.kind, 'person');
+  assert.equal(ada.identity.length, 2);
+});
+
+test('removeAdministrator (by identity digest) refuses to remove the last administrator (409)', async () => {
+  const c = makeClient();
+  const [sole] = (await c.listAdministrators('nightly-reconcile')).administrators;
   await assert.rejects(
-    () => c.removeAdministrator('nightly-reconcile', 'tenant', 'platform'),
+    () => c.removeAdministrator('nightly-reconcile', sole.digest),
     (e) => e instanceof ProblemError && e.status === 409);
-  const after = await c.removeAdministrator('onboard-customer', 'tenant', 'growth');
+  const { administrators: pair } = await c.listAdministrators('onboard-customer');
+  const after = await c.removeAdministrator('onboard-customer', pair[1].digest);
   assert.equal(after.administrators.length, 1);
 });
 

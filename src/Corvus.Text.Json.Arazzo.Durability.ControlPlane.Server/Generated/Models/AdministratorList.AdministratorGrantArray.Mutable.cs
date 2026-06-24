@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The administrator identities for a base workflow id (&#167;15).
+/// The administrators of a base workflow id (&#167;15), each a resolved identity with a stable digest for removal.
 /// </para>
 /// </remarks>
 public readonly partial struct AdministratorList
@@ -33,7 +33,7 @@ public readonly partial struct AdministratorList
     /// Generated from JSON Schema.
     /// </summary>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct AdministratorIdentityArray
+    public readonly partial struct AdministratorGrantArray
     {
         public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -138,7 +138,7 @@ public readonly partial struct AdministratorList
             /// <param name="value">The instance of this type.</param>
             /// <returns>A mutable instance.</returns>
             /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-            public static explicit operator Mutable(AdministratorIdentityArray instance)
+            public static explicit operator Mutable(AdministratorGrantArray instance)
             {
                 if (instance._parent is not IMutableJsonDocument doc)
                 {
@@ -153,9 +153,9 @@ public readonly partial struct AdministratorList
             /// Converts to an immutable instance of the <see cref="Mutable"/> type.
             /// </summary>
             /// <param name="value">The <see cref="Mutable"/> instance.</param>
-            /// <returns>An immutable instance of a <see cref="AdministratorIdentityArray"/>, initialized from the <see cref="Mutable"/> value.</returns>
+            /// <returns>An immutable instance of a <see cref="AdministratorGrantArray"/>, initialized from the <see cref="Mutable"/> value.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static implicit operator AdministratorIdentityArray(Mutable instance)
+            public static implicit operator AdministratorGrantArray(Mutable instance)
             {
                 return new(instance._parent, instance._idx);
             }
@@ -179,12 +179,12 @@ public readonly partial struct AdministratorList
             /// <returns>The item at the given index.</returns>
             /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
             /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-            public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity.Mutable this[int index]
+            public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant.Mutable this[int index]
             {
                 get
                 {
                     CheckValidInstance();
-                    return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity.Mutable>(_idx, index);
+                    return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant.Mutable>(_idx, index);
                 }
             }
 
@@ -202,17 +202,17 @@ public readonly partial struct AdministratorList
             /// Enumerates the array.
             /// </summary>
             /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-            public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity.Mutable> EnumerateArray()
+            public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant.Mutable> EnumerateArray()
             {
                 CheckValidInstance();
-                return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity.Mutable>(_parent, _idx);
+                return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant.Mutable>(_parent, _idx);
             }
 
             /// <inheritdoc/>
             public override bool Equals(object? obj)
             {
                 return
-                    (obj is IJsonElement value && Equals(new AdministratorIdentityArray(value.ParentDocument, value.ParentDocumentIndex))) ||
+                    (obj is IJsonElement value && Equals(new AdministratorGrantArray(value.ParentDocument, value.ParentDocumentIndex))) ||
                     (obj is null && this.IsNull());
             }
 
@@ -311,7 +311,7 @@ public readonly partial struct AdministratorList
 #endif
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-            private string DebuggerDisplay => $"AdministratorIdentityArray.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+            private string DebuggerDisplay => $"AdministratorGrantArray.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
             /// <summary>
             ///   Sets the value of an array element at the specified index.
             /// </summary>
@@ -334,7 +334,7 @@ public readonly partial struct AdministratorList
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity.Source value)
+            public void SetItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant.Source value)
             {
                 CheckValidInstance();
 
@@ -381,7 +381,7 @@ public readonly partial struct AdministratorList
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity.Source value)
+            public void InsertItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant.Source value)
             {
                 CheckValidInstance();
 
@@ -407,7 +407,7 @@ public readonly partial struct AdministratorList
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity.Source value)
+            public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }
@@ -577,10 +577,10 @@ public readonly partial struct AdministratorList
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
-            public bool Remove(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity item)
+            public bool Remove(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant item)
             {
                 CheckValidInstance();
-                if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity>(this, in item))
+                if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant>(this, in item))
                 {
                     return false;
                 }
@@ -614,10 +614,10 @@ public readonly partial struct AdministratorList
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void RemoveWhere(JsonPredicate<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity> predicate)
+            public void RemoveWhere(JsonPredicate<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant> predicate)
             {
                 CheckValidInstance();
-                JsonElementHelpers.RemoveWhereUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity>(this, predicate);
+                JsonElementHelpers.RemoveWhereUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant>(this, predicate);
                 _documentVersion = _parent.Version;
             }
 
@@ -634,7 +634,7 @@ public readonly partial struct AdministratorList
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
-            public bool Replace(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity oldItem, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity.Source newItem)
+            public bool Replace(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant oldItem, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant.Source newItem)
             {
                 CheckValidInstance();
 
@@ -643,11 +643,11 @@ public readonly partial struct AdministratorList
                     return Remove(in oldItem);
                 }
 
-                var enumerator = EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity>(_parent, _idx);
+                var enumerator = EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant>(_parent, _idx);
 
                 while (enumerator.MoveNext())
                 {
-                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity current = enumerator.Current;
+                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant current = enumerator.Current;
                     if (JsonElementHelpers.DeepEquals(in current, in oldItem))
                     {
                         ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 30);
@@ -678,11 +678,11 @@ public readonly partial struct AdministratorList
             JsonValueKind IJsonElement.ValueKind => ValueKind;
 
             /// <summary>
-            /// Gets a <see cref="AdministratorIdentityArray"/> which can be safely stored beyond the lifetime of the
+            /// Gets a <see cref="AdministratorGrantArray"/> which can be safely stored beyond the lifetime of the
             /// original document.
             /// </summary>
             /// <returns>
-            /// A <see cref="AdministratorIdentityArray"/> which can be safely stored beyond the lifetime of the
+            /// A <see cref="AdministratorGrantArray"/> which can be safely stored beyond the lifetime of the
             /// original document.
             /// </returns>
             /// <remarks>
@@ -691,10 +691,10 @@ public readonly partial struct AdministratorList
             /// document. The result is independent of the workspace.
             /// </para>
             /// </remarks>
-            public readonly AdministratorIdentityArray Clone()
+            public readonly AdministratorGrantArray Clone()
             {
                 CheckValidInstance();
-                return _parent.CloneElement<AdministratorIdentityArray>(_idx);
+                return _parent.CloneElement<AdministratorGrantArray>(_idx);
             }
 
             /// <summary>
@@ -702,7 +702,7 @@ public readonly partial struct AdministratorList
             /// document builder registered in the same workspace.
             /// </summary>
             /// <returns>
-            /// An immutable <see cref="AdministratorIdentityArray"/> that lives for the lifetime of its
+            /// An immutable <see cref="AdministratorGrantArray"/> that lives for the lifetime of its
             /// workspace and its associated documents.
             /// </returns>
             /// <remarks>
@@ -713,10 +713,10 @@ public readonly partial struct AdministratorList
             /// immutable but is only valid for the lifetime of the workspace.
             /// </para>
             /// </remarks>
-            public readonly AdministratorIdentityArray Freeze()
+            public readonly AdministratorGrantArray Freeze()
             {
                 CheckValidInstance();
-                return _parent.FreezeElement<AdministratorIdentityArray>(_idx);
+                return _parent.FreezeElement<AdministratorGrantArray>(_idx);
             }
         }
 
@@ -744,9 +744,9 @@ public readonly partial struct AdministratorList
                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
             }
 
-            internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorIdentityArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
-            public static implicit operator Source(AdministratorIdentityArray instance) => new(JsonElement.From(instance));
+            public static implicit operator Source(AdministratorGrantArray instance) => new(JsonElement.From(instance));
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -865,7 +865,7 @@ public readonly partial struct AdministratorList
 
             public static implicit operator Source<TContext>(Source source) => new (source);
 
-            internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorIdentityArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -979,7 +979,7 @@ public readonly partial struct AdministratorList
             /// <summary>
             /// Add an item to the array.
             /// </summary>
-            public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity.Source value)
+            public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant.Source value)
             {
                 value.AddAsItem(ref _builder);
             }
@@ -987,7 +987,7 @@ public readonly partial struct AdministratorList
             /// <summary>
             /// Add an item to the array.
             /// </summary>
-            public void AddItem<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity.Source<TContext> value)
+            public void AddItem<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1162,7 +1162,7 @@ public readonly partial struct AdministratorList
         /// <returns>An instance of a mutable document initialized with this instance.</returns>
         public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
         {
-            return workspace.CreateBuilder<AdministratorIdentityArray, Mutable>(this);
+            return workspace.CreateBuilder<AdministratorGrantArray, Mutable>(this);
         }
     }
 }

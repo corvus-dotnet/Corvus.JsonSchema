@@ -2,9 +2,12 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
+using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
+using AdminKind = Corvus.Text.Json.Arazzo.Durability.Security.WorkflowAdministrators.AdministratorIdentity.KindEntity;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
@@ -60,10 +63,13 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
     /// <inheritdoc/>
     public async ValueTask<ListAdministratorsResult> HandleListAdministratorsAsync(ListAdministratorsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<SecurityTagSet> administrators = await this.catalog.GetAdministratorsAsync((string)parameters.BaseWorkflowId, cancellationToken).ConfigureAwait(false);
-        var listContext = new AdministratorListContext(administrators, this.access);
+        // The catalog hands back the administration record (explicit or the version-1-derived synthetic), or null for an
+        // unknown base id. We project it bytes-to-bytes; an unknown base id yields an empty set (200). The record is a
+        // pooled document — read it into the response model while it is alive, then dispose it.
+        using ParsedJsonDocument<WorkflowAdministrators>? record = await this.catalog.GetAdministratorsAsync((string)parameters.BaseWorkflowId, cancellationToken).ConfigureAwait(false);
+        var listContext = new AdministratorListContext(record?.RootElement.Administrators ?? default, this.access);
         return ListAdministratorsResult.Ok(
-            Models.AdministratorList.Build(in listContext, administrators: Models.AdministratorList.AdministratorIdentityArray.Build(in listContext, BuildAdministrators)),
+            Models.AdministratorList.Build(in listContext, administrators: Models.AdministratorList.AdministratorGrantArray.Build(in listContext, BuildGrants)),
             workspace);
     }
 
@@ -140,7 +146,12 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
         // JSON values (From() rewraps, no reify, no managed string) and are written bytes-to-bytes at the store's leaf.
         // The request document outlives this call, so no owned copy is needed.
         JsonString value = JsonString.From(body.Value);
-        JsonString label = body.Label.IsNotUndefined() ? JsonString.From(body.Label) : default;
+        bool hasLabel = body.Label.IsNotUndefined();
+        JsonString label = hasLabel ? JsonString.From(body.Label) : default;
+
+        // The administration record persists the resolved kind as its own (string-enum) JSON value: From() rewraps the
+        // observed-store kind (same person/team/role/workflow tokens) into the durable record's kind with no reify.
+        AdminKind adminKind = hasKind ? AdminKind.From(kind) : default;
 
         // Collision guard (§16.5.4): if the resolved identity already belongs to a DIFFERENT recorded grantee, the
         // deployment's identity mapping is not minting unique identities — refuse the ambiguous grant (409) rather than
@@ -158,7 +169,7 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
 
         try
         {
-            IReadOnlyList<SecurityTagSet> administrators = await this.catalog.AddAdministratorAsync(baseWorkflowId, newAdministrator, this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
+            using ParsedJsonDocument<WorkflowAdministrators> record = await this.catalog.AddAdministratorAsync(baseWorkflowId, newAdministrator, adminKind, hasKind, label, hasLabel, this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
 
             // Record the newly named administrator as a resolvable grantee for the §16.5.4 typeahead. Best-effort: the
             // sighting is an idempotent projection and never fails the add. `complete` is honest (§17.2): the picker's
@@ -168,9 +179,9 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
                 await this.observed.SeenAsync(kind, value, label, newAdministrator, complete, "administrator", cancellationToken).ConfigureAwait(false);
             }
 
-            var listContext = new AdministratorListContext(administrators, this.access);
+            var listContext = new AdministratorListContext(record.RootElement.Administrators, this.access);
             return AddAdministratorResult.Ok(
-                Models.AdministratorList.Build(in listContext, administrators: Models.AdministratorList.AdministratorIdentityArray.Build(in listContext, BuildAdministrators)),
+                Models.AdministratorList.Build(in listContext, administrators: Models.AdministratorList.AdministratorGrantArray.Build(in listContext, BuildGrants)),
                 workspace);
         }
         catch (WorkflowAdministrationException)
@@ -282,7 +293,8 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
         {
             // Build each administrator's identity BYTES-TO-BYTES: read its {dimension, value} grant as UTF-8 from the body
             // and write the resolved internal tag straight into a pooled buffer (the same span seam the add/picker path
-            // uses), so a transfer set is resolved without a managed string per dimension/value.
+            // uses), so a transfer set is resolved without a managed string per dimension/value. The catalog materializes
+            // the durable identities (no per-administrator kind/label in the bulk hand-off form).
             newAdministrators = [];
             foreach (Models.AdministratorIdentity identity in parameters.Body.Administrators.EnumerateArray())
             {
@@ -333,10 +345,10 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
 
         try
         {
-            IReadOnlyList<SecurityTagSet> administrators = await this.catalog.TransferAdministrationAsync(baseWorkflowId, newAdministrators, this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
-            var listContext = new AdministratorListContext(administrators, this.access);
+            using ParsedJsonDocument<WorkflowAdministrators> record = await this.catalog.TransferAdministrationAsync(baseWorkflowId, newAdministrators, this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
+            var listContext = new AdministratorListContext(record.RootElement.Administrators, this.access);
             return TransferAdministrationResult.Ok(
-                Models.AdministratorList.Build(in listContext, administrators: Models.AdministratorList.AdministratorIdentityArray.Build(in listContext, BuildAdministrators)),
+                Models.AdministratorList.Build(in listContext, administrators: Models.AdministratorList.AdministratorGrantArray.Build(in listContext, BuildGrants)),
                 workspace);
         }
         catch (ArgumentException ex)
@@ -362,19 +374,17 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
     {
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
 
-        // A grant that does not map to a deployment identity (or the unscoped default) resolves to the empty set, which
-        // is never a member — so removal becomes an idempotent no-op. We still route through the catalog so the
-        // current-administrator gate (403) runs first and membership stays non-disclosing. The {dimension, value} path
-        // parameters are read as UTF-8 and resolved BYTES-TO-BYTES through the span seam — no managed string is formed.
-        var state = new SingleGrantState(this.access, parameters.Dimension, parameters.Value);
-        SecurityTagSet administrator = SecurityTagSet.Build(in state, BuildSingleGrantIdentity);
+        // Removal is keyed by the administrator's stable identity digest (§16.5.4) — the opaque key the list/add responses
+        // hand back, so the operator never re-presents raw tags. An unmatched digest is an idempotent no-op; we still route
+        // through the catalog so the current-administrator gate (403) runs first and membership stays non-disclosing.
+        string digest = (string)parameters.Digest;
 
         try
         {
-            IReadOnlyList<SecurityTagSet> administrators = await this.catalog.RemoveAdministratorAsync(baseWorkflowId, administrator, this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
-            var listContext = new AdministratorListContext(administrators, this.access);
+            using ParsedJsonDocument<WorkflowAdministrators> record = await this.catalog.RemoveAdministratorAsync(baseWorkflowId, digest, this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
+            var listContext = new AdministratorListContext(record.RootElement.Administrators, this.access);
             return RemoveAdministratorResult.Ok(
-                Models.AdministratorList.Build(in listContext, administrators: Models.AdministratorList.AdministratorIdentityArray.Build(in listContext, BuildAdministrators)),
+                Models.AdministratorList.Build(in listContext, administrators: Models.AdministratorList.AdministratorGrantArray.Build(in listContext, BuildGrants)),
                 workspace);
         }
         catch (ArgumentException ex)
@@ -426,42 +436,118 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
             title: title,
             type: ProblemBase + type));
 
-    // Describes each administrator (a set of internal identity tags) back as the operator-facing grants it maps from —
-    // the inverse of the grant resolution. Internal tags are never exposed raw; unscoped deployments describe nothing.
-    // Built closure-free AND allocation-free: each administrator is already a SecurityTagSet, enumerated as unescaped
-    // spans, each prefixed tag's (dimension, value) written bytes-native via the policy's span-based TryDescribeUsageGrant
-    // — no List, no managed strings. The list Build is ref-scoped to its `in` argument, so each of the four call sites
-    // (list/add/transfer/remove) builds it inline.
-    private static void BuildAdministrators(in AdministratorListContext ctx, ref Models.AdministratorList.AdministratorIdentityArray.Builder array)
+    // Projects each stored administrator identity as the operator-facing AdministratorGrant: a stable identity digest (the
+    // removal key), the identity described back as the {dimension, value} grants it maps from (never raw tags), and the
+    // optional resolved kind/label carried verbatim. Built closure-free AND allocation-free off the durable record while it
+    // is alive: each administrator's tags are a non-owning view of its persisted {key,value} array, the digest is formatted
+    // into a stack span, and each grant is written bytes-native. The list Build is ref-scoped to its `in` argument, so each
+    // of the four call sites (list/add/transfer/remove) builds it inline.
+    private static void BuildGrants(in AdministratorListContext ctx, ref Models.AdministratorList.AdministratorGrantArray.Builder array)
     {
-        ControlPlaneAccess access = ctx.Access;
-        foreach (SecurityTagSet administrator in ctx.Administrators)
+        if (ctx.Administrators.IsUndefined())
         {
-            SecurityTagSet.Utf8Enumerator e = administrator.EnumerateUtf8();
-            try
+            return;
+        }
+
+        ControlPlaneAccess access = ctx.Access;
+        foreach (WorkflowAdministrators.AdministratorIdentity administrator in ctx.Administrators.EnumerateArray())
+        {
+            var state = new GrantState(administrator, TagsOf(administrator), access);
+            array.AddItem(Models.AdministratorGrant.Build(in state, BuildGrant));
+        }
+    }
+
+    // Builds one administrator grant. The digest is the stable hex SHA-256 of the identity's tags, formatted into a stack
+    // span and copied into the value by the JsonString.Source conversion; kind/label flow from the durable record as UTF-8
+    // leases (no managed string), held until Create copies the bytes. The identity sub-array shares this build's context.
+    private static void BuildGrant(in GrantState state, ref Models.AdministratorGrant.Builder grant)
+    {
+        WorkflowAdministrators.AdministratorIdentity administrator = state.Administrator;
+        bool hasKind = administrator.Kind.IsNotUndefined();
+        bool hasLabel = administrator.Label.IsNotUndefined();
+
+        // The digest is formatted into a pooled (heap-backed) buffer rather than a stackalloc, so its span is safe to pass
+        // alongside the ref-struct build context; the JsonString.Source conversion copies the bytes into the value before
+        // this returns, so the buffer is returned immediately after. No managed string (Convert.ToHexStringLower) is formed.
+        byte[] digestBuffer = ArrayPool<byte>.Shared.Rent(SecurityIdentityDigest.DigestUtf8Length);
+        try
+        {
+            int digestLength = SecurityIdentityDigest.FormatUtf8(state.Tags, digestBuffer);
+            ReadOnlySpan<byte> digest = digestBuffer.AsSpan(0, digestLength);
+            if (hasKind && hasLabel)
             {
-                while (e.MoveNext())
+                using UnescapedUtf8JsonString kind = administrator.Kind.GetUtf8String();
+                using UnescapedUtf8JsonString label = administrator.Label.GetUtf8String();
+                grant.Create(in state, digest: (Models.JsonString.Source)digest, identity: Models.AdministratorGrant.AdministratorIdentityArray.Build(in state, BuildGrantIdentity), kind: kind.Span, label: (Models.JsonString.Source)label.Span);
+            }
+            else if (hasKind)
+            {
+                using UnescapedUtf8JsonString kind = administrator.Kind.GetUtf8String();
+                grant.Create(in state, digest: (Models.JsonString.Source)digest, identity: Models.AdministratorGrant.AdministratorIdentityArray.Build(in state, BuildGrantIdentity), kind: kind.Span);
+            }
+            else if (hasLabel)
+            {
+                using UnescapedUtf8JsonString label = administrator.Label.GetUtf8String();
+                grant.Create(in state, digest: (Models.JsonString.Source)digest, identity: Models.AdministratorGrant.AdministratorIdentityArray.Build(in state, BuildGrantIdentity), label: (Models.JsonString.Source)label.Span);
+            }
+            else
+            {
+                grant.Create(in state, digest: (Models.JsonString.Source)digest, identity: Models.AdministratorGrant.AdministratorIdentityArray.Build(in state, BuildGrantIdentity));
+            }
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(digestBuffer);
+        }
+    }
+
+    // Describes the administrator's internal tags back as the {dimension, value} grants they map from — the inverse of the
+    // grant resolution, allocation-free: the identity's SecurityTagSet is enumerated as unescaped spans and each prefixed
+    // tag described bytes-native via the policy's span-based TryDescribeUsageGrant. Internal tags are never exposed raw;
+    // unscoped deployments describe nothing.
+    private static void BuildGrantIdentity(in GrantState state, ref Models.AdministratorGrant.AdministratorIdentityArray.Builder identities)
+    {
+        ControlPlaneAccess access = state.Access;
+        SecurityTagSet.Utf8Enumerator e = state.Tags.EnumerateUtf8();
+        try
+        {
+            while (e.MoveNext())
+            {
+                if (access.TryDescribeUsageGrant(e.CurrentKey, out ReadOnlySpan<byte> dimension))
                 {
-                    if (access.TryDescribeUsageGrant(e.CurrentKey, out ReadOnlySpan<byte> dimension))
-                    {
-                        var spans = new UsageGrantSpans(dimension, e.CurrentValue);
-                        array.AddItem(Models.AdministratorIdentity.Build(in spans, BuildIdentity));
-                    }
+                    var spans = new UsageGrantSpans(dimension, e.CurrentValue);
+                    identities.AddItem(Models.AdministratorIdentity.Build(in spans, BuildIdentity));
                 }
             }
-            finally
-            {
-                e.Dispose();
-            }
+        }
+        finally
+        {
+            e.Dispose();
         }
     }
 
     private static void BuildIdentity(in UsageGrantSpans spans, ref Models.AdministratorIdentity.Builder b)
         => b.Create((Models.JsonString.Source)spans.Dimension, (Models.JsonString.Source)spans.Value);
 
-    private readonly ref struct AdministratorListContext(IReadOnlyList<SecurityTagSet> administrators, ControlPlaneAccess access)
+    // A non-owning view of a stored administrator identity's tags (its persisted {key,value} array UTF-8), valid while the
+    // backing record is alive — no per-identity copy. Drives both the digest and the {dimension,value} projection.
+    private static SecurityTagSet TagsOf(in WorkflowAdministrators.AdministratorIdentity administrator)
+        => SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(administrator.Tags).Memory);
+
+    private readonly ref struct AdministratorListContext(WorkflowAdministrators.AdministratorIdentityArray administrators, ControlPlaneAccess access)
     {
-        public IReadOnlyList<SecurityTagSet> Administrators { get; } = administrators;
+        public WorkflowAdministrators.AdministratorIdentityArray Administrators { get; } = administrators;
+
+        public ControlPlaneAccess Access { get; } = access;
+    }
+
+    // Carries one stored administrator (for its kind/label) plus its tags (a non-owning view, for the digest and identity
+    // projection) and the access facade through the closure-free AdministratorGrant build.
+    private readonly ref struct GrantState(WorkflowAdministrators.AdministratorIdentity administrator, SecurityTagSet tags, ControlPlaneAccess access)
+    {
+        public WorkflowAdministrators.AdministratorIdentity Administrator { get; } = administrator;
+
+        public SecurityTagSet Tags { get; } = tags;
 
         public ControlPlaneAccess Access { get; } = access;
     }
