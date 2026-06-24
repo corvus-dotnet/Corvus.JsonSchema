@@ -393,6 +393,11 @@ public abstract class WorkflowStateStoreConformance
             ("run-c", [new("tenant", "globex"), new("team", "payments")]),
             ("run-d", []),
             ("run-e", [new("tenant", "acme"), new("tenant", "beta")]),
+            ("run-f", [new("classification", "public")]),
+            ("run-g", [new("classification", "confidential")]),
+            ("run-h", [new("classification", "restricted")]),
+            ("run-i", [new("classification", "public"), new("classification", "restricted")]),
+            ("run-j", [new("classification", "weird")]),
         ];
         foreach ((string id, SecurityTag[] tags) in rows)
         {
@@ -405,6 +410,7 @@ public abstract class WorkflowStateStoreConformance
             ["tenant"] = ["acme"],
             ["both"] = ["acme", "globex"],
             ["team"] = ["payments", "hr"],
+            ["clearance"] = ["confidential"],
         };
 
         // Every operator/operand shape the translator handles; each cross-checked against the in-memory evaluator.
@@ -427,17 +433,54 @@ public abstract class WorkflowStateStoreConformance
             "$claims.intersects && tenant == $claim.tenant",
             "$claims.superset || team == 'payments'",
             "!($claims.intersects)",
+            "tenant in ('acme', 'globex')",
+            "classification in ('public', 'restricted')",
+            "!(classification in ('restricted'))",
+            "team in ('payments') && tenant in ('acme')",
+        ];
+
+        // Ordered comparisons resolved against a configured ascending classification ordering.
+        var orderings = new SecurityLabelOrderings(new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal)
+        {
+            ["classification"] = ["public", "internal", "confidential", "restricted"],
+        });
+        string[] orderedShapes =
+        [
+            "classification <= 'confidential'",
+            "classification < 'confidential'",
+            "classification >= 'confidential'",
+            "classification > 'public'",
+            "classification <= 'bogus'",          // unranked bound → deny
+            "classification <= $claim.clearance",
+            "classification >= $claim.clearance",
+            "tenant <= 'acme'",                   // unordered dimension → deny
+            "classification <= 'restricted' && tenant in ('acme')",
         ];
 
         foreach (string ruleText in ruleShapes)
         {
-            var filter = new SecurityFilter([SecurityRule.Compile(ruleText)], claims);
-            WorkflowRunPage page = await index.QueryAsync(new WorkflowQuery(Limit: 1000, Security: filter), default);
-
-            List<string> actual = page.Runs.Select(r => r.Id.Value).OrderBy(x => x, StringComparer.Ordinal).ToList();
-            List<string> expected = rows.Where(r => filter.IsSatisfiedBy(r.Tags)).Select(r => r.Id).OrderBy(x => x, StringComparer.Ordinal).ToList();
-            actual.ShouldBe(expected, $"rule: {ruleText}");
+            await AssertReachPushdownMatchesEvaluator(index, rows, new SecurityFilter([SecurityRule.Compile(ruleText)], claims), ruleText);
         }
+
+        foreach (string ruleText in orderedShapes)
+        {
+            await AssertReachPushdownMatchesEvaluator(index, rows, new SecurityFilter([SecurityRule.Compile(ruleText, orderings)], claims), ruleText);
+        }
+    }
+
+    // The reach-filter pushdown oracle: the runs the store's translated SQL predicate returns must be exactly the runs
+    // the in-memory evaluator admits, for the same filter.
+    private static async Task AssertReachPushdownMatchesEvaluator(
+        IWorkflowWaitIndex index,
+        (string Id, SecurityTag[] Tags)[] rows,
+        SecurityFilter filter,
+        string ruleText)
+    {
+        WorkflowRunPage page = await index.QueryAsync(new WorkflowQuery(Limit: 1000, Security: filter), default);
+
+        List<string> actual = page.Runs.Select(r => r.Id.Value).OrderBy(x => x, StringComparer.Ordinal).ToList();
+        List<string> expected = rows.Where(r => filter.IsSatisfiedBy(r.Tags)).Select(r => r.Id).OrderBy(x => x, StringComparer.Ordinal).ToList();
+        actual.ShouldBe(expected, $"rule: {ruleText}");
     }
 
     [TestMethod]
