@@ -767,23 +767,26 @@ unchanged — only the emitted text differs.
 
 ### 7.6 Driver wiring (where it attaches)
 
-Add a `--language csharp|typescript` option to `GenerateCommand` (preferred over a new `Engine`
-member, since “engine” currently means V4‑vs‑V5 *runtime/core*, not language). Branch at
-`GenerationDriverV5.cs:203‑211`:
+**Decision (revised during the build-out): TypeScript is a third generation *engine*, not a language
+flag.** There are three peer engines — V4 (C#), V5 (C#), and TypeScript — so `Engine` gains a `TypeScript`
+member and the existing `--engine TypeScript` option selects it (no new flag, no `--language`).
+`GenerationDriver.GenerateTypes` dispatches it to a peer **`GenerationDriverTypeScript`**, alongside
+`GenerationDriverV4`/`GenerationDriverV5`:
 
 ```csharp
-ILanguageProvider provider = generatorConfig.Language switch
-{
-    Language.TypeScript => TypeScriptLanguageProvider.DefaultWithOptions(MapToTsOptions(generatorConfig, namedTypes, mode)),
-    _                   => CSharpLanguageProvider.DefaultWithOptions(MapGeneratorConfigToOptions(generatorConfig, namedTypes, mode)),
-};
-var generatedCode = typeBuilder.GenerateCodeUsing(provider, typesToGenerate, CancellationToken.None);
+Engine.V4         => GenerationDriverV4.GenerateTypes(config, ct),
+Engine.V5         => GenerationDriverV5.GenerateTypes(config, mode, ct),
+Engine.TypeScript => GenerationDriverTypeScript.GenerateTypes(config, mode, ct),
 ```
 
-Everything **before** line 203 (resolver, `VocabularyRegistry`, `JsonSchemaTypeBuilder`,
-`AddTypeDeclarationsAsync`) and **after** it (`WriteFiles` + `PathTruncator` + collision counter +
-#825 determinism + `--outputMapFile`) is reused verbatim — `GeneratedCodeFile` is just name +
-content. **Not** wired into the Roslyn source generator.
+`GenerationDriverTypeScript` reuses the V5 engine's **language-neutral** machinery (made `internal`):
+`RegisterAdditionalFiles`, `RegisterVocabularies`, `GetFallbackVocabulary`, and `WriteFiles`. Its
+`ExecuteTask` is a *simpler* sibling of V5's — schema-load + `AddTypeDeclarationsAsync` +
+`GenerateCodeUsing(TypeScriptLanguageProvider…)` + `WriteFiles` — and skips the .NET
+named-types/namespace/accessibility machinery that V5 needs. It appends a stable `evaluateRoot` export
+(aliasing the root type's validator). `GeneratedCodeFile` is just name + content, so `WriteFiles` is
+provider-agnostic; `--rootNamespace` is made optional for the TS engine. **Not** wired into the Roslyn
+source generator.
 
 ---
 
@@ -1761,3 +1764,18 @@ section). The provider-real-output tests total **44** across the patterns (`prov
 code; the validator suite remains **7848/7849** across five dialects. The remaining open items are the
 documented residual (draft-4 `1.0`-integer) and solution integration (a real `Corvus.Text.Json.TypeScript.
 CodeGeneration` project + `--language ts` in `GenerationDriverV5`).
+
+### 7.7 Production migration — `--engine TypeScript` (implemented)
+
+The spike graduated into the production layout. New project
+**`src/Corvus.Text.Json.TypeScript.CodeGeneration`** (net9/net10, refs the core only — not the
+netstandard2.0 source generator) holds `TypeScriptLanguageProvider` (already an
+`IHierarchicalLanguageProvider`) + the handler set; the emit dispatch interface `ITsKeywordEmitter` is
+public so consumer-supplied handlers work across assemblies (proven by the spike's extension test). The
+TypeScript engine is wired per §7.6. End-to-end: `corvus jsonschema <schema> --engine TypeScript
+--outputPath <dir>` emits `generated.ts` (types + AOT validators + brands + `evaluateRoot`) +
+`corvus-runtime.ts`; the output is `tsc --strict`-clean and validates correctly. The whole solution builds
+**warning-free** (the gate), and the full JSON-Schema-Test-Suite still passes **7848/7849** through the
+migrated provider. Pragmatic scope: the project builds clean without the full StyleCop/XML-doc polish
+(a tracked follow-up); the §7.2 `Options` surface is minimal (`AlwaysAssertFormat`). Next: the Sourcemeta
+benchmark uses this CLI.

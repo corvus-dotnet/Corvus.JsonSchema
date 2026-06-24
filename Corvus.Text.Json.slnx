@@ -42,6 +42,7 @@
     <Project Path="src-v4/Corvus.Json.CodeGeneration.OpenApi30/Corvus.Json.CodeGeneration.OpenApi30.csproj" />
     <Project Path="src-v4/Corvus.Json.CodeGeneration.OpenApi31/Corvus.Json.CodeGeneration.OpenApi31.csproj" />
   </Folder>
+  <Folder Name="/src-v4/" />
   <Folder Name="/src/">
     <Project Path="src/Corvus.Text.Json.AsyncApi.Amqp/Corvus.Text.Json.AsyncApi.Amqp.csproj" />
     <Project Path="src/Corvus.Text.Json.AsyncApi.AzureServiceBus/Corvus.Text.Json.AsyncApi.AzureServiceBus.csproj" />
@@ -57,6 +58,7 @@
     <Project Path="src/Corvus.Text.Json.AsyncApi26/Corvus.Text.Json.AsyncApi26.csproj" />
     <Project Path="src/Corvus.Text.Json.AsyncApi30/Corvus.Text.Json.AsyncApi30.csproj" />
     <Project Path="src/Corvus.Text.Json.OpenApi32/Corvus.Text.Json.OpenApi32.csproj" />
+    <Project Path="src/Corvus.Text.Json.TypeScript.CodeGeneration/Corvus.Text.Json.TypeScript.CodeGeneration.csproj" />
   </Folder>
   <Folder Name="/tests-v4/">
     <Project Path="tests-v4/Corvus.Json.Specs.Tests/Corvus.Json.Specs.Tests.csproj" />

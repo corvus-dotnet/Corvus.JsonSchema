@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Corvus.Json.CodeGeneration;
 
-namespace TsProviderSpike;
+namespace Corvus.Text.Json.TypeScript.CodeGeneration;
 
 // Phase 0 provider: idiomatic type surface (real names + built-in scalar mapping + property
 // type-references + named enum unions) on top of registry-driven, extensible validators (§13.13).
@@ -11,7 +11,7 @@ namespace TsProviderSpike;
 // Emission per type: objects -> `interface`; enums -> `type X = a | b`; scalars/arrays -> no type
 // declaration (referenced inline as the primitive / element type). EVERY type still gets an
 // `evaluate{Name}` validator composed from the core handler registry, so recursion always resolves.
-public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvider
+public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
 {
     private const string TsFinalKey = "Ts_FinalName";
 
@@ -340,8 +340,6 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
 
     private readonly KeywordValidationHandlerRegistry validationHandlers = new();
 
-    private bool assertFormat;
-
     // The shared runtime module (@corvus/json-runtime in production): emitted ONCE, imported by every
     // generated module. Assembled from the helper blocks with each top-level declaration exported, and
     // the third-party imports (lossless-json for source-text numbers, Temporal + tr46 for formats) at top.
@@ -362,9 +360,18 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
                "import tr46 from \"tr46\";\n\n" + body;
     }
 
-    public static TypeScriptLanguageProviderSpike CreateDefault()
+    // A stable `evaluateRoot` entry point for the generated module: aliases the root type's validator.
+    // Append to the generated module after generation (the name is assigned during GenerateCodeFor).
+    public static string RootEvaluatorExport(TypeDeclaration rootType)
     {
-        var p = new TypeScriptLanguageProviderSpike();
+        TypeDeclaration reduced = rootType.ReducedTypeDeclaration().ReducedType;
+        string name = reduced.TryGetMetadata<string>(TsFinalKey, out string? rn) && !string.IsNullOrEmpty(rn) ? rn! : "Entity";
+        return $"\nexport const evaluateRoot = (v: unknown): boolean => evaluate{name}(v, fresh());\n";
+    }
+
+    public static TypeScriptLanguageProvider CreateDefault()
+    {
+        var p = new TypeScriptLanguageProvider();
         p.RegisterValidationHandlers(
             new TsTypeHandler(), new TsConstantBoundHandler(), new TsMembershipHandler(), new TsUniqueItemsHandler(),
             new TsRegexHandler(), new TsPropertiesHandler(), new TsRequiredHandler(),
@@ -379,13 +386,20 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
 
     // Like CreateDefault, but asserts `format` (the optional/format suite). The default leaves format as
     // an annotation (the 2020-12 default), which is why top-level format.json expects everything valid.
-    public static TypeScriptLanguageProviderSpike CreateWithFormatAssertion()
+    public static TypeScriptLanguageProvider CreateWithFormatAssertion()
     {
-        TypeScriptLanguageProviderSpike p = CreateDefault();
-        p.assertFormat = true;
+        TypeScriptLanguageProvider p = CreateDefault();
         p.RegisterValidationHandlers(new TsFormatHandler(), new TsContentHandler());
         return p;
     }
+
+    // Options for the TypeScript provider (driver entry point; design §7.2). Pragmatic minimal set —
+    // the full Options surface (runtime module specifier, emitModel, indentWidth, ...) is a follow-up.
+    public sealed record Options(bool AlwaysAssertFormat = false);
+
+    // The driver-facing entry point, mirroring CSharpLanguageProvider.DefaultWithOptions.
+    public static TypeScriptLanguageProvider DefaultWithOptions(Options options)
+        => options.AlwaysAssertFormat ? CreateWithFormatAssertion() : CreateDefault();
 
     public ILanguageProvider RegisterValidationHandlers(params IKeywordValidationHandler[] handlers)
     {
@@ -493,7 +507,13 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
             EmitValidator(sb, td);
         }
 
-        return new[] { new GeneratedCodeFile("generated.ts", sb.ToString()) };
+        // The generated types/validators module + the shared runtime, emitted once alongside it. (The
+        // test harness consumes files.First() and emits its own single shared runtime for the whole suite.)
+        return new[]
+        {
+            new GeneratedCodeFile("generated.ts", sb.ToString()),
+            new GeneratedCodeFile("corvus-runtime.ts", RuntimeModuleSource()),
+        };
     }
 
     // ---- type surface ----
