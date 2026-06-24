@@ -1,34 +1,25 @@
 // The mutation API (design §5.7): idiomatic immer-style `produce`, type-checked under --strict.
-// `Draft<T>` is the deeply-mutable view of an immutable T (matches immer's `Draft`). The recipe
+// `Draft<T>`/`JsonDocument<T>`/`produce` are runtime-library helpers (NOT per-type generated noise),
+// so they come from @corvus/json-runtime; this file shows a per-type document USING them. The recipe
 // assigns to the draft; the recorded change-set lowers to a Model C byte patch (proven runnable in
 // `prototypes/rmw-scanner/produce.mjs`) and doubles as RFC 6902 JSON Patch / LSP TextEdits.
 
-export type Draft<T> =
-  T extends ReadonlyArray<infer E> ? Draft<E>[] :
-  T extends object ? { -readonly [K in keyof T]: Draft<T[K]> } :
-  T;
+import { type JsonDocument, produce } from "./runtime"; // real output: "@corvus/json-runtime"
 
-// A document handle. In Model C this wraps the bytes + index; here just the read view.
-export interface JsonDocument<T> {
-  readonly value: T;
-}
-
-// Free-function form (what immer users know). A per-type convenience method `doc.produce(recipe)`
-// would lower to the same change-set.
-export declare function produce<T>(doc: JsonDocument<T>, recipe: (draft: Draft<T>) => void): JsonDocument<T>;
-
-interface Address {
+export interface Address {
   readonly street: string;
   readonly city: string;
 }
-interface Person {
+export interface Person {
   readonly name: string;
   readonly age?: number;
   readonly address: Address;
   readonly tags: readonly string[];
 }
 
-declare const doc: JsonDocument<Person>;
+export const doc: JsonDocument<Person> = {
+  value: { name: "Ada", age: 30, address: { street: "1 St", city: "Anytown" }, tags: ["math"] },
+};
 
 // idiomatic: "mutate" the draft, get a new immutable document
 const next: JsonDocument<Person> = produce(doc, (d) => {
