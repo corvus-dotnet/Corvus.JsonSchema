@@ -49,6 +49,46 @@ internal static class SuiteHarness
 
     private static readonly Dictionary<string, string> MetaschemaText = [];
 
+    // Diagnostic: build ONE schema exactly as the C# runner does and walk the resolved type graph,
+    // printing each type's location + raw schema. Used to see how $dynamicRef resolves (string vs integer).
+    public static async Task DynDebug(string schemaText, string testsBaseDir)
+    {
+        string remotesDir = Path.GetFullPath(Path.Combine(testsBaseDir, "..", "remotes"));
+        string metaschemaBase = Path.GetFullPath(Path.Combine(testsBaseDir, "..", "..", "src", "Corvus.Json.Cli.Core", "metaschema"));
+        var resolver = new CompoundDocumentResolver(new FakeWebDocumentResolver(remotesDir), new FileSystemDocumentResolver());
+        foreach ((string uri, string rel) in MetaschemaMap)
+        {
+            string mp = Path.Combine(metaschemaBase, rel);
+            if (File.Exists(mp)) { resolver.AddDocument(uri, JsonDocument.Parse(File.ReadAllText(mp))); }
+        }
+
+        var registry = new VocabularyRegistry();
+        Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(resolver, registry);
+        var builder = new JsonSchemaTypeBuilder(resolver, registry);
+        string schemaRef = Path.Combine(remotesDir, "dyndbg.json");
+        if (Corvus.Json.CodeGeneration.DocumentResolvers.SchemaReferenceNormalization.TryNormalizeSchemaReference(schemaRef, out string? n)) { schemaRef = n; }
+        builder.AddDocument(schemaRef, JsonDocument.Parse(schemaText));
+        TypeDeclaration root = await builder.AddTypeDeclarationsAsync(new JsonReference(schemaRef), Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary, rebaseAsRoot: true);
+
+        var seen = new HashSet<TypeDeclaration>();
+        void Walk(TypeDeclaration t, string path, int depth)
+        {
+            TypeDeclaration r = t.ReducedTypeDeclaration().ReducedType;
+            string raw = r.LocatedSchema.Schema.ValueKind == JsonValueKind.Object || r.LocatedSchema.Schema.ValueKind == JsonValueKind.Array ? r.LocatedSchema.Schema.GetRawText() : r.LocatedSchema.Schema.ToString();
+            if (raw.Length > 90) { raw = raw[..90]; }
+            bool dyn = r.TryGetDynamicSource(out TypeDeclaration? ds);
+            Console.WriteLine($"{new string(' ', depth * 2)}{path}: loc={r.LocatedSchema.Location} dynSrc={(dyn ? ds!.LocatedSchema.Location.ToString() : "-")}");
+            Console.WriteLine($"{new string(' ', depth * 2)}  schema={raw}");
+            if (!seen.Add(r) || depth > 6) { return; }
+            foreach (PropertyDeclaration p in r.PropertyDeclarations)
+            {
+                Walk(p.ReducedPropertyType, $".{p.JsonPropertyName}", depth + 1);
+            }
+        }
+
+        Walk(root, "root", 0);
+    }
+
     public static async Task Run(string testsBaseDir, string outDir)
     {
         string schemasDir = Path.Combine(outDir, "schemas");

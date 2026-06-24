@@ -9,6 +9,13 @@ if (args.Length > 0 && args[0] == "--suite")
     return;
 }
 
+if (args.Length > 0 && args[0] == "--dyndbg")
+{
+    string schemaText = File.ReadAllText(args[1]);
+    await SuiteHarness.DynDebug(schemaText, args.Length > 2 ? args[2] : "../../JSON-Schema-Test-Suite/tests");
+    return;
+}
+
 string schemaPath = args.Length > 0 ? args[0] : "person.json";
 string outDir = args.Length > 1 ? args[1] : "out";
 
