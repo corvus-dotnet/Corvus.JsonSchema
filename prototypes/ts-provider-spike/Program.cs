@@ -2,6 +2,13 @@ using Corvus.Json;
 using Corvus.Json.CodeGeneration;
 using TsProviderSpike;
 
+if (args.Length > 0 && args[0] == "--suite")
+{
+    string suiteDir = args.Length > 1 ? args[1] : "../../JSON-Schema-Test-Suite/tests/draft2020-12";
+    await SuiteHarness.Run(suiteDir, "out-suite");
+    return;
+}
+
 string schemaPath = args.Length > 0 ? args[0] : "person.json";
 string outDir = args.Length > 1 ? args[1] : "out";
 

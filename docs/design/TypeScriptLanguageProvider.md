@@ -1402,3 +1402,24 @@ format brands + date/time Temporal accessors (§5.5), `$ref` across files + barr
 and the codegen-aware compliance harness (§8) over the JSON-Schema-Test-Suite. **Solution integration:**
 graduate the prototype to a real `Corvus.Text.Json.TypeScript.CodeGeneration` project and wire
 `--language ts` into `GenerationDriverV5`.
+
+### 13.15 Compliance harness (built; 97% on the supported keyword subset)
+
+The codegen-aware compliance harness (§8) is built (`prototypes/ts-provider-spike/` `--suite` mode +
+`SuiteHarness.cs` + `suite-runner.mjs`): for each JSON-Schema-Test-Suite (draft 2020-12) schema-group in
+the targeted keyword files it runs the provider -> emits a TS module per group -> compiles all under
+`tsc --strict` -> runs every case in Node and asserts the boolean expectation, tallying per keyword.
+
+Over the implemented keyword set (type / required / properties / minLength / maxLength / minimum /
+maximum / enum / pattern): **216/222 cases pass (97.3%)**, and all 48 generated modules type-check
+`tsc --strict` clean. type, required, minLength, maxLength, minimum, maximum, enum, pattern are each
+**100%**; properties is 22/28.
+
+The 6 remaining failures are all **genuine unsupported-keyword gaps** (the `properties` +
+`patternProperties` + `additionalProperties` interaction, and boolean property schemas) -- Phase-1 work,
+not bugs. The harness itself caught and drove three real fixes: (1) presence checks must use
+`Object.prototype.hasOwnProperty.call`, not `in` (prototype chain: `"toString" in {}` is `true`) -- 5
+cases; (2) `minLength`/`maxLength` may be decimal-valued integers (`2.0`), read as a number not `Int32`
+-- 2 cases; (3) empty/object-valued `enum` type aliases (`never` / `unknown`, with an annotated
+`allowed` array). The harness is reusable infrastructure that grows as handlers are added; the pass rate
+is the gate that turns "looks right" into "passes the suite", exactly how the C# engine is gated.
