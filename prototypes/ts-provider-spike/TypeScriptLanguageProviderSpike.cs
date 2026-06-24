@@ -254,6 +254,18 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
           return __fmtHostname(domain, idn);
         }
         function __fmtRegex(s: string): boolean { try { new RegExp(s, "u"); return true; } catch { return false; } }
+        // contentEncoding (base64) + contentMediaType (application/json) assertion -- annotation-only by
+        // default, asserted by the optional/content suite.
+        function __fmtContent(s: string, encoding: string | null, mediaType: string | null): boolean {
+          let content = s;
+          if (encoding === "base64") {
+            if (s.length % 4 !== 0) { return false; }
+            for (let i = 0; i < s.length; i++) { const c = s[i]; if (!((c >= "A" && c <= "Z") || (c >= "a" && c <= "z") || (c >= "0" && c <= "9") || c === "+" || c === "/" || c === "=")) { return false; } }
+            try { content = atob(s); } catch { return false; }
+          }
+          if (mediaType === "application/json") { try { JSON.parse(content); } catch { return false; } }
+          return true;
+        }
         function __fmt(name: string, s: string): boolean {
           switch (name) {
             case "date": return __fmtDate(s);
@@ -326,7 +338,7 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
     {
         TypeScriptLanguageProviderSpike p = CreateDefault();
         p.assertFormat = true;
-        p.RegisterValidationHandlers(new TsFormatHandler());
+        p.RegisterValidationHandlers(new TsFormatHandler(), new TsContentHandler());
         return p;
     }
 
@@ -402,7 +414,7 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
         // (@corvus/json-runtime, §5.5) that every generated module imports — never inlined per module.
         var sb = new StringBuilder();
         sb.Append("// AUTO-GENERATED: idiomatic TS types + registry-composed validators.\n");
-        sb.Append("import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, Ev, NOEV, fresh, __fmt } from \"./corvus-runtime.js\";\n\n");
+        sb.Append("import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, Ev, NOEV, fresh, __fmt, __fmtContent } from \"./corvus-runtime.js\";\n\n");
         foreach (TypeDeclaration td in types)
         {
             if (IsObject(td))

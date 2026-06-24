@@ -93,7 +93,9 @@ internal static class SuiteHarness
             {
                 foreach (string f in Directory.GetFiles(optDir, "*.json"))
                 {
-                    await ProcessFile(f, dialect, fallback, "optional_" + Path.GetFileNameWithoutExtension(f), assertFormat: false);
+                    string name = Path.GetFileNameWithoutExtension(f);
+                    // optional/content asserts contentEncoding/contentMediaType (the assertion provider).
+                    await ProcessFile(f, dialect, fallback, "optional_" + name, assertFormat: name == "content");
                 }
 
                 string fmtDir = Path.Combine(optDir, "format");
