@@ -21,6 +21,13 @@ internal static class TsEmit
     public static string? EvalName(TypeDeclaration t)
         => t.TryGetMetadata<string>("Ts_FinalName", out string? n) && !string.IsNullOrEmpty(n) ? "evaluate" + n : null;
 
+    // Does this type need an evaluation tracker threaded (it or an in-place applicator uses unevaluated*)?
+    public static bool Tracks(TypeDeclaration t) => t.RequiresPropertyEvaluationTracking() || t.RequiresItemsEvaluationTracking();
+
+    // The tracker argument for a SUB-INSTANCE recursion (a property value / array item is its own scope):
+    // a fresh tracker when the child needs one, else the shared no-op tracker.
+    public static string SubEv(TypeDeclaration child) => Tracks(child) ? "fresh()" : "NOEV";
+
     public static string KindExpr(CoreTypes t) => t switch
     {
         CoreTypes.Object => "(typeof value === \"object\" && value !== null && !Array.isArray(value))",
@@ -189,17 +196,23 @@ internal sealed class TsPropertiesHandler : IKeywordValidationHandler, ITsKeywor
         if (td.PropertyDeclarations.Count == 0) { return; }
         sb.Append("  if (typeof value === \"object\" && value !== null && !Array.isArray(value)) {\n");
         sb.Append("    const o = value as Record<string, unknown>;\n");
+
+        // Enumerate the instance once; mark each evaluated property's index into the tracker (a no-op on
+        // NOEV). Marking is unconditional so that an in-place applicator member credits its evaluations
+        // into the parent's tracker (mirrors the C# generator's unconditional AddLocalEvaluatedProperty).
+        sb.Append("    const keys = Object.keys(o);\n");
+        sb.Append("    for (let i = 0; i < keys.length; i++) {\n      const k = keys[i];\n");
+        bool first = true;
         foreach (PropertyDeclaration p in td.PropertyDeclarations)
         {
-            string key = TsEmit.Str(p.JsonPropertyName);
             string? e = TsEmit.EvalName(p.ReducedPropertyType);
-            if (e is not null)
-            {
-                sb.Append("    if (Object.prototype.hasOwnProperty.call(o, ").Append(key).Append(") && !").Append(e).Append("(o[").Append(key).Append("])) { return false; }\n");
-            }
+            if (e is null) { continue; }
+            sb.Append("      ").Append(first ? "if" : "else if").Append(" (k === ").Append(TsEmit.Str(p.JsonPropertyName))
+              .Append(") { if (!").Append(e).Append("(o[k], ").Append(TsEmit.SubEv(p.ReducedPropertyType)).Append(")) { return false; } ev.markProp(i); }\n");
+            first = false;
         }
 
-        sb.Append("  }\n");
+        sb.Append("    }\n  }\n");
     }
 }
 
@@ -252,10 +265,10 @@ internal sealed class TsPatternPropertiesHandler : IKeywordValidationHandler, IT
         if (entries.Count == 0) { return; }
         sb.Append("  if (typeof value === \"object\" && value !== null && !Array.isArray(value)) {\n");
         sb.Append("    const o = value as Record<string, unknown>;\n");
-        sb.Append("    for (const k of Object.keys(o)) {\n");
+        sb.Append("    const keys = Object.keys(o);\n    for (let i = 0; i < keys.length; i++) {\n      const k = keys[i];\n");
         foreach ((string pattern, string name) in entries)
         {
-            sb.Append("      if (new RegExp(").Append(TsEmit.Str(pattern)).Append(", \"u\").test(k) && !").Append(name).Append("(o[k])) { return false; }\n");
+            sb.Append("      if (new RegExp(").Append(TsEmit.Str(pattern)).Append(", \"u\").test(k)) { if (!").Append(name).Append("(o[k], NOEV)) { return false; } ev.markProp(i); }\n");
         }
 
         sb.Append("    }\n  }\n");
@@ -287,14 +300,15 @@ internal sealed class TsAdditionalPropertiesHandler : IKeywordValidationHandler,
             }
         }
 
+        string subEv = fb is null ? "NOEV" : TsEmit.SubEv(fb.ReducedType);
         sb.Append("  if (typeof value === \"object\" && value !== null && !Array.isArray(value)) {\n");
         sb.Append("    const o = value as Record<string, unknown>;\n");
         sb.Append("    const known = new Set<string>([").Append(string.Join(", ", known)).Append("]);\n");
         sb.Append("    const patterns: RegExp[] = [").Append(string.Join(", ", patterns)).Append("];\n");
-        sb.Append("    for (const k of Object.keys(o)) {\n");
+        sb.Append("    const keys = Object.keys(o);\n    for (let i = 0; i < keys.length; i++) {\n      const k = keys[i];\n");
         sb.Append("      if (known.has(k)) { continue; }\n");
         sb.Append("      if (patterns.some((p) => p.test(k))) { continue; }\n");
-        sb.Append("      if (!").Append(name).Append("(o[k])) { return false; }\n");
+        sb.Append("      if (!").Append(name).Append("(o[k], ").Append(subEv).Append(")) { return false; } ev.markProp(i);\n");
         sb.Append("    }\n  }\n");
     }
 }
@@ -307,9 +321,11 @@ internal sealed class TsAllOfHandler : IKeywordValidationHandler, ITsKeywordEmit
 
     public void Emit(StringBuilder sb, TypeDeclaration td, IKeyword keyword)
     {
+        // allOf members evaluate the SAME instance and must all match -> share the owner's tracker
+        // directly (it is NOEV when the owner does not track).
         foreach (string e in CompositionEvals.Members(td.AllOfCompositionTypes()))
         {
-            sb.Append("  if (!").Append(e).Append("(value)) { return false; }\n");
+            sb.Append("  if (!").Append(e).Append("(value, ev)) { return false; }\n");
         }
     }
 }
@@ -322,12 +338,24 @@ internal sealed class TsAnyOfHandler : IKeywordValidationHandler, ITsKeywordEmit
 
     public void Emit(StringBuilder sb, TypeDeclaration td, IKeyword keyword)
     {
-        var terms = new List<string>();
-        foreach (string e in CompositionEvals.Members(td.AnyOfCompositionTypes())) { terms.Add(e + "(value)"); }
-        if (terms.Count > 0)
+        List<string> members = CompositionEvals.Members(td.AnyOfCompositionTypes());
+        if (members.Count == 0) { return; }
+        if (TsEmit.Tracks(td))
         {
-            sb.Append("  if (!(").Append(string.Join(" || ", terms)).Append(")) { return false; }\n");
+            // evaluate every branch (no short-circuit) and OR-merge the matched branches' evaluations.
+            sb.Append("  { let m = false;\n");
+            foreach (string e in members)
+            {
+                sb.Append("    { const t = fresh(); if (").Append(e).Append("(value, t)) { ev.mergeProps(t); ev.mergeItems(t); m = true; } }\n");
+            }
+
+            sb.Append("    if (!m) { return false; }\n  }\n");
+            return;
         }
+
+        var terms = new List<string>();
+        foreach (string e in members) { terms.Add(e + "(value, NOEV)"); }
+        sb.Append("  if (!(").Append(string.Join(" || ", terms)).Append(")) { return false; }\n");
     }
 }
 
@@ -339,13 +367,23 @@ internal sealed class TsOneOfHandler : IKeywordValidationHandler, ITsKeywordEmit
 
     public void Emit(StringBuilder sb, TypeDeclaration td, IKeyword keyword)
     {
-        var evals = CompositionEvals.Members(td.OneOfCompositionTypes());
-        if (evals.Count > 0)
+        List<string> evals = CompositionEvals.Members(td.OneOfCompositionTypes());
+        if (evals.Count == 0) { return; }
+        if (TsEmit.Tracks(td))
         {
-            sb.Append("  { let c = 0;\n");
-            foreach (string e in evals) { sb.Append("    if (").Append(e).Append("(value)) { c++; }\n"); }
-            sb.Append("    if (c !== 1) { return false; }\n  }\n");
+            sb.Append("  { let c = 0; const acc = fresh();\n");
+            foreach (string e in evals)
+            {
+                sb.Append("    { const t = fresh(); if (").Append(e).Append("(value, t)) { c++; acc.mergeProps(t); acc.mergeItems(t); } }\n");
+            }
+
+            sb.Append("    if (c !== 1) { return false; }\n    ev.mergeProps(acc); ev.mergeItems(acc);\n  }\n");
+            return;
         }
+
+        sb.Append("  { let c = 0;\n");
+        foreach (string e in evals) { sb.Append("    if (").Append(e).Append("(value, NOEV)) { c++; }\n"); }
+        sb.Append("    if (c !== 1) { return false; }\n  }\n");
     }
 }
 
@@ -385,10 +423,9 @@ internal sealed class TsPrefixItemsHandler : IKeywordValidationHandler, ITsKeywo
         for (int i = 0; i < tuple.ItemsTypes.Length; i++)
         {
             string? e = TsEmit.EvalName(tuple.ItemsTypes[i].ReducedType);
-            if (e is not null)
-            {
-                sb.Append("    if (value.length > ").Append(i).Append(" && !").Append(e).Append("(value[").Append(i).Append("])) { return false; }\n");
-            }
+            if (e is null) { continue; }
+            string subEv = TsEmit.SubEv(tuple.ItemsTypes[i].ReducedType);
+            sb.Append("    if (value.length > ").Append(i).Append(") { if (!").Append(e).Append("(value[").Append(i).Append("], ").Append(subEv).Append(")) { return false; } ev.markItem(").Append(i).Append("); }\n");
         }
 
         sb.Append("  }\n");
@@ -399,7 +436,8 @@ internal sealed class TsItemsHandler : IKeywordValidationHandler, ITsKeywordEmit
 {
     public uint ValidationHandlerPriority => 850;
 
-    public bool HandlesKeyword(IKeyword keyword) => keyword is IArrayItemsTypeProviderKeyword;
+    // items, but NOT unevaluatedItems (which also implements IArrayItemsTypeProviderKeyword).
+    public bool HandlesKeyword(IKeyword keyword) => keyword is IArrayItemsTypeProviderKeyword and not IUnevaluatedArrayItemsTypeProviderKeyword;
 
     public void Emit(StringBuilder sb, TypeDeclaration td, IKeyword keyword)
     {
@@ -409,7 +447,8 @@ internal sealed class TsItemsHandler : IKeywordValidationHandler, ITsKeywordEmit
         string? e = items is null ? null : TsEmit.EvalName(items.ReducedType);
         if (e is null) { return; }
         int start = td.ExplicitTupleType()?.ItemsTypes.Length ?? 0;
-        sb.Append("  if (Array.isArray(value)) { for (let i = ").Append(start).Append("; i < value.length; i++) { if (!").Append(e).Append("(value[i])) { return false; } } }\n");
+        string subEv = TsEmit.SubEv(items!.ReducedType);
+        sb.Append("  if (Array.isArray(value)) { for (let i = ").Append(start).Append("; i < value.length; i++) { if (!").Append(e).Append("(value[i], ").Append(subEv).Append(")) { return false; } ev.markItem(i); } }\n");
     }
 }
 
@@ -424,7 +463,7 @@ internal sealed class TsPropertyNamesHandler : IKeywordValidationHandler, ITsKey
         SingleSubschemaKeywordTypeDeclaration? pn = td.PropertyNamesSubschemaType();
         string? e = pn is null ? null : TsEmit.EvalName(pn.ReducedType);
         if (e is null) { return; }
-        sb.Append("  if (typeof value === \"object\" && value !== null && !Array.isArray(value)) { for (const k of Object.keys(value)) { if (!").Append(e).Append("(k)) { return false; } } }\n");
+        sb.Append("  if (typeof value === \"object\" && value !== null && !Array.isArray(value)) { for (const k of Object.keys(value)) { if (!").Append(e).Append("(k, NOEV)) { return false; } } }\n");
     }
 }
 
@@ -473,11 +512,66 @@ internal sealed class TsIfThenElseHandler : IKeywordValidationHandler, ITsKeywor
         SingleSubschemaKeywordTypeDeclaration? elseT = td.ElseSubschemaType();
         string? elseE = elseT is null ? null : TsEmit.EvalName(elseT.ReducedType);
 
-        sb.Append("  if (").Append(ifE).Append("(value)) {\n");
-        if (thenE is not null) { sb.Append("    if (!").Append(thenE).Append("(value)) { return false; }\n"); }
+        if (TsEmit.Tracks(td))
+        {
+            // `if` is evaluated to select the branch; its evaluations count only when it matches.
+            sb.Append("  { const t = fresh();\n");
+            sb.Append("    if (").Append(ifE).Append("(value, t)) {\n");
+            sb.Append("      ev.mergeProps(t); ev.mergeItems(t);\n");
+            if (thenE is not null) { sb.Append("      if (!").Append(thenE).Append("(value, ev)) { return false; }\n"); }
+            sb.Append("    } else {\n");
+            if (elseE is not null) { sb.Append("      if (!").Append(elseE).Append("(value, ev)) { return false; }\n"); }
+            sb.Append("    }\n  }\n");
+            return;
+        }
+
+        sb.Append("  if (").Append(ifE).Append("(value, NOEV)) {\n");
+        if (thenE is not null) { sb.Append("    if (!").Append(thenE).Append("(value, NOEV)) { return false; }\n"); }
         sb.Append("  } else {\n");
-        if (elseE is not null) { sb.Append("    if (!").Append(elseE).Append("(value)) { return false; }\n"); }
+        if (elseE is not null) { sb.Append("    if (!").Append(elseE).Append("(value, NOEV)) { return false; }\n"); }
         sb.Append("  }\n");
+    }
+}
+
+// unevaluatedProperties: every own property NOT already evaluated (locally or by a matched in-place
+// applicator) must validate against the fallback. Reads the evaluation tracker (ev), populated by the
+// adjacent/applicator handlers that ran earlier (this handler has the highest priority, so it runs last).
+internal sealed class TsUnevaluatedPropertiesHandler : IKeywordValidationHandler, ITsKeywordEmitter
+{
+    public uint ValidationHandlerPriority => 900;
+
+    public bool HandlesKeyword(IKeyword keyword) => keyword is ILocalAndAppliedEvaluatedPropertyValidationKeyword;
+
+    public void Emit(StringBuilder sb, TypeDeclaration td, IKeyword keyword)
+    {
+        FallbackObjectPropertyType? fb = td.LocalAndAppliedEvaluatedPropertyType();
+        string? name = fb is null ? null : TsEmit.EvalName(fb.ReducedType);
+        if (name is null) { return; }
+        string subEv = TsEmit.SubEv(fb!.ReducedType);
+        sb.Append("  if (typeof value === \"object\" && value !== null && !Array.isArray(value)) {\n");
+        sb.Append("    const o = value as Record<string, unknown>;\n");
+        sb.Append("    const keys = Object.keys(o);\n");
+        sb.Append("    for (let i = 0; i < keys.length; i++) {\n");
+        sb.Append("      if (!ev.hasProp(i) && !").Append(name).Append("(o[keys[i]], ").Append(subEv).Append(")) { return false; }\n");
+        sb.Append("      ev.markProp(i);\n");
+        sb.Append("    }\n  }\n");
+    }
+}
+
+// unevaluatedItems: every item NOT already evaluated must validate against the fallback.
+internal sealed class TsUnevaluatedItemsHandler : IKeywordValidationHandler, ITsKeywordEmitter
+{
+    public uint ValidationHandlerPriority => 900;
+
+    public bool HandlesKeyword(IKeyword keyword) => keyword is IUnevaluatedArrayItemsTypeProviderKeyword;
+
+    public void Emit(StringBuilder sb, TypeDeclaration td, IKeyword keyword)
+    {
+        ArrayItemsTypeDeclaration? items = td.ExplicitUnevaluatedItemsType();
+        string? name = items is null ? null : TsEmit.EvalName(items.ReducedType);
+        if (name is null) { return; }
+        string subEv = TsEmit.SubEv(items!.ReducedType);
+        sb.Append("  if (Array.isArray(value)) { for (let i = 0; i < value.length; i++) { if (!ev.hasItem(i) && !").Append(name).Append("(value[i], ").Append(subEv).Append(")) { return false; } ev.markItem(i); } }\n");
     }
 }
 

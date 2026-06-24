@@ -15,7 +15,7 @@ internal static class SuiteHarness
         "type", "required", "properties", "minLength", "maxLength", "minimum", "maximum", "enum", "pattern",
         "const", "exclusiveMinimum", "exclusiveMaximum", "minProperties", "maxProperties", "uniqueItems",
         "allOf", "anyOf", "oneOf", "items", "prefixItems", "propertyNames", "dependentRequired",
-        "if-then-else", "ref", "defs",
+        "if-then-else", "ref", "defs", "unevaluatedProperties", "unevaluatedItems",
     ];
 
     public static async Task Run(string suiteDir, string outDir)
@@ -81,7 +81,7 @@ internal static class SuiteHarness
                     TypeScriptLanguageProviderSpike provider = TypeScriptLanguageProviderSpike.CreateDefault();
                     IReadOnlyCollection<GeneratedCodeFile> files = builder.GenerateCodeUsing(provider, CancellationToken.None, root);
                     string rootName = root.TryGetMetadata<string>("Ts_FinalName", out string? rn) && !string.IsNullOrEmpty(rn) ? rn! : "Entity";
-                    File.WriteAllText(Path.Combine(outDir, moduleName + ".ts"), files.First().FileContent + $"\nexport const evaluateRoot = evaluate{rootName};\n");
+                    File.WriteAllText(Path.Combine(outDir, moduleName + ".ts"), files.First().FileContent + $"\nexport const evaluateRoot = (v: unknown): boolean => evaluate{rootName}(v, fresh());\n");
                     manifest.Add(new { module = moduleName, file, group = groupDesc, error = (string?)null, tests });
                     built++;
                 }
