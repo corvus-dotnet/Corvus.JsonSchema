@@ -445,6 +445,44 @@ test('addAdministrator / transferAdministration validate before calling the serv
   await assert.rejects(async () => makeClient().transferAdministration('x', { administrators: [] }), TypeError);
 });
 
+// ---- security rules (§14.2) ---------------------------------------------------------------------
+
+test('security rules: list, create, update and delete round-trip through the store', async () => {
+  const c = makeClient();
+  const { rules } = await c.listSecurityRules();
+  assert.ok(rules.some((r) => r.name === 'tenant-scoped' && r.expression === 'tenant == $claim.tenant'));
+  assert.ok(rules.some((r) => r.name === 'reach-core-tenants' && r.expression === "tenant in ('acme', 'globex')"));
+
+  const created = await c.createSecurityRule({ name: 'reach-eu', expression: "region == 'eu'", description: 'EU rows.' });
+  assert.equal(created.name, 'reach-eu');
+  assert.equal(created.expression, "region == 'eu'");
+  assert.ok((await c.listSecurityRules()).rules.some((r) => r.name === 'reach-eu'));
+
+  const updated = await c.updateSecurityRule('reach-eu', { expression: "region in ('eu', 'uk')" });
+  assert.equal(updated.expression, "region in ('eu', 'uk')");
+
+  await c.deleteSecurityRule('reach-eu');
+  assert.ok(!(await c.listSecurityRules()).rules.some((r) => r.name === 'reach-eu'));
+});
+
+test('createSecurityRule rejects a malformed expression (400) and a duplicate name (409)', async () => {
+  const c = makeClient();
+  await assert.rejects(
+    () => c.createSecurityRule({ name: 'bad', expression: '(tenant == ' }),
+    (e) => e instanceof ProblemError && e.status === 400);
+  await assert.rejects(
+    () => c.createSecurityRule({ name: 'tenant-scoped', expression: "tenant == 'x'" }),
+    (e) => e instanceof ProblemError && e.status === 409);
+});
+
+test('security-rule client methods validate their arguments before calling the server', async () => {
+  const c = makeClient();
+  await assert.rejects(async () => c.createSecurityRule({ name: 'x' }), TypeError);
+  await assert.rejects(async () => c.createSecurityRule({ expression: 'x' }), TypeError);
+  await assert.rejects(async () => c.updateSecurityRule('x', {}), TypeError);
+  await assert.rejects(async () => c.deleteSecurityRule(''), TypeError);
+});
+
 // ---- identity / grantee resolution (§16.5.4) ----------------------------------------------------
 
 test('searchGrantees returns the resolved grantees with their exact identity and complete flag', async () => {
