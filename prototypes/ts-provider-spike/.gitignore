@@ -10,3 +10,6 @@ prov-test-formats/
 bin/
 obj/
 node_modules/
+
+out-mutation/
+prov-test-mutation/

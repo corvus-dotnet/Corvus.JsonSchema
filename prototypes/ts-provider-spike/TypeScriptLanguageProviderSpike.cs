@@ -302,6 +302,42 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
         class FormatError extends Error {}
         """;
 
+    // Mutation runtime (design §5.7): idiomatic immer-style `produce` over a typed `Draft<T>`. A tiny
+    // Proxy change-recorder over a structural clone; the change-set is RFC 6902 JSON Patch (and lowers to
+    // a Model C byte patch). These are GENERIC runtime helpers — generated modules don't emit per-type
+    // mutation code; a consumer pairs `produce` with the emitted readonly interface.
+    private const string MutationRuntime = """
+
+        export type Draft<T> =
+          T extends ReadonlyArray<infer E> ? Draft<E>[] :
+          T extends object ? { -readonly [K in keyof T]: Draft<T[K]> } :
+          T;
+        export interface JsonDocument<T> { readonly value: T; }
+        export interface JsonPatchOp { readonly op: "replace"; readonly path: string; readonly value: unknown; }
+        const __escPtr = (k: string | symbol): string => String(k).replace(/~/g, "~0").replace(/\//g, "~1");
+        function recordChanges<T>(value: T, recipe: (draft: Draft<T>) => void): { next: T; patches: JsonPatchOp[] } {
+          const next = structuredClone(value);
+          const patches: JsonPatchOp[] = [];
+          const wrap = (obj: object, ptr: string): object =>
+            new Proxy(obj, {
+              get(o: Record<string | symbol, unknown>, k) {
+                const v = o[k];
+                return v !== null && typeof v === "object" ? wrap(v as object, ptr + "/" + __escPtr(k)) : v;
+              },
+              set(o: Record<string | symbol, unknown>, k, val) {
+                o[k] = val;
+                patches.push({ op: "replace", path: ptr + "/" + __escPtr(k), value: val });
+                return true;
+              },
+            });
+          recipe(wrap(next as object, "") as Draft<T>);
+          return { next, patches };
+        }
+        function produce<T>(doc: JsonDocument<T>, recipe: (draft: Draft<T>) => void): JsonDocument<T> {
+          return { value: recordChanges(doc.value, recipe).next };
+        }
+        """;
+
     private readonly KeywordValidationHandlerRegistry validationHandlers = new();
 
     private bool assertFormat;
@@ -311,7 +347,7 @@ public sealed class TypeScriptLanguageProviderSpike : IHierarchicalLanguageProvi
     // the third-party imports (lossless-json for source-text numbers, Temporal + tr46 for formats) at top.
     public static string RuntimeModuleSource()
     {
-        string body = NumericRuntime + KindRuntime + DeepEqual + EvRuntime + FormatRuntime + BrandRuntime;
+        string body = NumericRuntime + KindRuntime + DeepEqual + EvRuntime + FormatRuntime + BrandRuntime + MutationRuntime;
         body = body.Replace("import { isLosslessNumber } from \"lossless-json\";\n", string.Empty);
         body = body.Replace("\nfunction ", "\nexport function ")
                    .Replace("\nconst ", "\nexport const ")

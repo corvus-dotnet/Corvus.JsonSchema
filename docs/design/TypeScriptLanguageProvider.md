@@ -1741,3 +1741,23 @@ reject invalid, a branded field reads as its base string, `balance` is `bigint`.
 provider-output tests still pass (`person.json`'s `contact` is now `Contact` (email-branded)). Full suite
 **7848/7849**, all 1688 modules `tsc --strict` clean, 0 errored. Still pending: the `produce`/mutation
 surface.
+
+### 13.28 Provider emits the mutation surface (produce/Draft/JsonDocument) — §5.7
+
+The last §5.x output pattern: the mutation runtime. `produce`/`recordChanges`/`Draft<T>`/`JsonDocument<T>`/
+`JsonPatchOp` are GENERIC helpers, so they live in the shared runtime (`corvus-runtime`), NOT per-type
+generated code — a consumer pairs `produce` with the emitted readonly interface. `produce` runs the recipe
+over a Proxy change-recorder on a structural clone; the change-set is RFC 6902 JSON Patch (and lowers to a
+Model C byte patch). Verified on a `Doc` schema (`mutation-access.test.ts`, 10/10): scalar/nested/array edits
+apply, the original document is untouched (immutability), patches are RFC 6902. Full suite **7848/7849**, all
+1688 modules `tsc --strict` clean, 0 errored.
+
+**Emission build-out complete.** Every recognised §5.2/§5.3/§5.7 output pattern the provider was stubbing is
+now emitted and behaviour-verified on the provider's REAL output, in addition to the §13.23 reference-shape
+suite: objects/enums (§13.14), arrays/tuples/multi-dim tensors/maps (§13.25), `oneOf`/`anyOf` unions with
+guards + `match` (§13.26), brand/format conversions + `bigint` (§13.27), and `produce`/mutation (this
+section). The provider-real-output tests total **44** across the patterns (`provider-access` 9, `arrays-access`
+11, `union-access` 8, `formats-access` 6, `mutation-access` 10), all `tsc --strict`-clean against generated
+code; the validator suite remains **7848/7849** across five dialects. The remaining open items are the
+documented residual (draft-4 `1.0`-integer) and solution integration (a real `Corvus.Text.Json.TypeScript.
+CodeGeneration` project + `--language ts` in `GenerationDriverV5`).
