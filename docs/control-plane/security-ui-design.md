@@ -1,7 +1,6 @@
 # Security UI design — a coherent, goal-oriented surface for the access model
 
-**Status:** substantially built — this began design-first, but most slices have since shipped. See
-**§0 Current state** for the live, code-verified per-slice status; keep that section current as work lands.
+**Status:** draft for review (design-first; no code until the model + slices are agreed).
 **Scope:** the operator-facing UI for the whole §13–§16.5 access model — administrators, credential
 usage, row-security rules + claim→rule bindings, access requests, and a "who-can-do-what" overview —
 unified around one mental model and one identity primitive. Builds on the §16.5.4 resolved-grantee
@@ -9,79 +8,7 @@ picker and the §15 admin = resolved-identity work already shipped.
 
 ---
 
-## 0. Current state (living — last verified 2026-07-04 against branch `worktree-arazzo-workflow-engine-plan`)
-
-This section is the ground truth; keep it current as slices land (memory: *keep-control-plane-living-docs-current*).
-The rest of this doc is the original design narrative and lags the code in places — this section reconciles it.
-
-**§7 build slices**
-
-- **Slice 1 — Shared grantee chip + kind/label parity — DONE.**
-- **Slice 2 — Credential usage → picker + parity (kind/label stored on the binding) — DONE.**
-- **Slice 3 — Rule grammar (`in (…)` set-membership, ordered `classification <=`) — DONE functionally, via a
-  different architecture than §7.3/§8.5 propose.** Implemented as a **standalone `SecurityRule` engine** in the
-  durability layer (its own parser/AST + bytes-to-bytes evaluator + per-backend SQL emitter + a `/security/orderings`
-  config resource), **not** by extending the shared `SimpleConditionEvaluator` / `SimpleCriterionInliner`
-  step-criterion grammar — those (and the codegen inliner) were deliberately left untouched, so security rules are
-  runtime-compiled, never codegen-inlined. Ordering is real and threaded (configured `SecurityLabelOrderings` →
-  store predicate; fail-closed on unranked labels). Per-backend pushdown: SQL + Cosmos native; InMemory/Mongo/
-  Redis/Nats evaluate in memory (pre-existing pattern). Unit + container-conformance pushdown-oracle + end-to-end tests.
-- **Slice 4 — Reach/Rules UI (`arazzo-rules-panel`) — DONE.** Template-first builder including the set-membership and
-  classification-ordering templates (the latter gated on `/security/orderings`), CRUD, reach-scoped, 13 tests.
-- **Slice 5 — Bindings UI (`grants-panel`) — DONE**, including the server-side **self-elevation guard** (create +
-  update) with a dedicated test; person elevation routed to the request flow.
-- **Slice 6 — Access overview (`GET /access/grants?grantee=…` server aggregation + Overview screen) — DONE (server + UI).**
-  Server: the OpenAPI path + schemas (`AccessGrantsOverview` = grantee echo + matching bindings + administered workflows +
-  usable credentials), regen (server + CLI), and the bytes-native `HandleGetAccessGrantsAsync` (opaque base64url grantee
-  token → owned `ResolvedGrantee` doc echoed whole; bindings claim-matched **string-free** via
-  `ValueEquals`/`GetUtf8String().Span`; `ListAdministeredWorkflowsAsync` reverse lookup; credentials `IsUsableBy`;
-  closure-free context-threaded `From()` projection, transfer-matched-pages ownership) + 2 server tests. §803 proof: the
-  fair projection benchmark shows the bytes-native projection at **256 B vs the naive 1376 B (0.19×)**; the full
-  end-to-end handler is 4601 B. **Identity form decided (and the handler revised to match):** the grantee token carries
-  the resolved **`sys:` identity** the wire returns (§16.5.4) — administers/credentials use it directly; the binding
-  match derives the operator-facing claim (strip `sys:`, e.g. `sys:sub` → `sub`, design §6.5 lossy). Client/UI: the
-  `getAccessGrants(grantee)` client method (base64url of the grantee JSON), a mock `/access/grants` aggregation,
-  `<arazzo-access-overview>` (grantee picker + reach grants with inline Revoke + administers + credential usage) wired
-  into the demo Access tab, all tested. Credential usage was tidied to list only the credentials **scoped to the
-  grantee's identity** (a new `SourceCredentialBinding.IsUsageScoped` gates the handler filter; shared deployment-wide
-  bindings are omitted, §6.1) — server + mock + tests done.
-  **Remaining — the paged-overview rework (queued as a focused pass; DESIGN CAPTURED):** the three overview sections
-  return **unbounded** lists today, but a grantee can administer/use hundreds — they must be **standard keyset-paged
-  Prev/Next lists** (campaign rule: page every list + its store from the start). Design: replace the single
-  `GET /access/grants` (returns all three) with **three paged sub-resource endpoints** — `GET /access/grants/reach`,
-  `/administered`, `/credentials` — each `grantee` + `limit` + `pageToken` → `{ items, nextPageToken }`. **administered**
-  pages cleanly through the already-keyset `IWorkflowAdministratorStore.ListAdministeredAsync(digest, limit, pageToken)`,
-  reached via a **new paged `ISecuredWorkflowCatalog.ListAdministeredWorkflowsAsync(identity, limit, pageToken)`**
-  (the store isn't at the wiring site — it's wrapped in `SecuredWorkflowCatalog`). **reach** and **credentials** are
-  handler-side **filter-and-page**: read one underlying store page, apply the claim / usage-scope filter, project
-  bytes-native, and carry the store's page token through as the overview continuation (the binding/credential stores
-  don't index by claim/usage-match, so no store-side filter without a 10-backend change). Web: 3 paged client methods,
-  the mock's 3 paged handlers, and the component reworked to three sections each driving `<arazzo-pager>` (Prev/Next).
-  Also fold in the OpenAPI credential-usage description update (the identity-scoped narrowing) with that rework's regen.
-  Then container-conformance, and the slice-7 slotting.
-- **Slice 7 — Access-area reorg — IN PROGRESS** (decision taken). Today an **Access** tab holds Requests and a
-  **Permissions** tab holds Bindings + Reach (split codified in `smoke.spec.js`). Remaining: fold
-  Overview | Bindings | Reach | Requests under a single Access sub-nav, move Bindings+Reach out of Permissions,
-  slot in Overview (needs slice 6), cross-link Administrators from Catalog, retire the Permissions tab.
-
-**Security-tags / management-tags thread** — settable + admin-editable-on-update `{key,value}` reach labels
-(catalog `securityTags`; environment/source/credential `managementTags`). **DONE end-to-end** for all four
-entities: OpenAPI / server handler / durability + store-conformance / mock; the web edit UI via the shared
-`<arazzo-tag-editor>` (catalog + environment + credential); and the CLI `--manage`-on-update flag for
-environment/source/credential (parity with catalog's `--security-tag`, with integration tests). **Only remaining
-item:** the registered-**source** has no standalone UI edit panel — **parked** (the sources registry has no
-dedicated panel by design, §7.6); `updateSource` exists server- and mock-side for when a panel lands.
-
-**Actual app-shell tabs today** (`demo/index.html`): Runs · Runners · Catalog · Sources · Environments · Access ·
-Permissions · Promotions · Runner auth. (The §3 snapshot below predates several of these.)
-
----
-
 ## 1. The reframe: every access decision is **WHO can do WHAT, WHERE**
-
-> For the conceptual model on its own — capability (scopes) vs reach (grants + rules), why a grant's
-> verbs are `read`/`write`/`purge` and not scopes, and how the two planes compose — see
-> [`access-model.md`](./access-model.md).
 
 The model is clean; the UI today is not. Each access decision has three axes:
 
@@ -102,8 +29,7 @@ Two sub-mechanisms name "WHO", and that is the crux of today's inconsistency:
   `{dimension,value}` tuples (the §16.5.4 guessing hazard).
 - **Claim→rule bindings** (§14.2) name a principal by an inbound **claim** (`claimType`/`claimValue`, e.g.
   `team=payments`) and grant per-verb **reach** (a set of rule names, AND-ed, or `unrestricted`). This is the
-  *reach* plane. *(Originally CLI/API-only with no UI — since delivered: the Rules UI (`arazzo-rules-panel`, slice 4)
-  and the Bindings UI (`grants-panel`, slice 5) now exist under the Permissions tab. See §0.)*
+  *reach* plane and has **no UI at all** today — rules and bindings are CLI/API only.
 
 So the same question — *"what can Alice do, and where?"* — is unanswerable in the UI, and "who" is authored
 in three different mental models. **The overhaul makes WHO one consistent, correct-by-construction act, makes
@@ -145,10 +71,7 @@ identity) is the right primitive, not a raw tag editor (see memory: *security-ui
 
 ## 3. Current UI state + gaps (grounded)
 
-App shell today (`demo/index.html`): top-level tabs **Runs · Runners · Catalog · Sources · Environments ·
-Access · Permissions · Promotions · Runner auth** (see §0 for the live list). Rules + Bindings now live under
-**Permissions**; the Access tab holds Requests — the §7 item 7 reorg to fold them under one Access area is in progress.
-(The table below is the original "before" snapshot; §0 has the current per-surface status.)
+App shell today (`demo/index.html`): top-level tabs **Runs**, **Catalog**, **Sources**, **Access**.
 
 | Surface | Today | Verdict |
 |---------|-------|---------|
@@ -338,44 +261,35 @@ chosen for separation of duties + no-ambient-privilege (§16.5.3):
 Each slice keeps the warning-free build + tests + (for any server/wire change) the per-row ownership ledger +
 MemoryDiagnoser benchmark + container conformance gates. Web-only slices still get node/component/smoke tests.
 
-1. **[DONE] Shared grantee chip + kind/label parity.** Extract one renderer; apply to admin panel + (next slices)
+1. **Shared grantee chip + kind/label parity.** Extract one renderer; apply to admin panel + (next slices)
    credential usage + overview + bindings. *Web only.*
-2. **[DONE] Credential usage → picker + parity.** Web swap in `credential-dialog`/`credentials-table`; the wire
+2. **Credential usage → picker + parity.** Web swap in `credential-dialog`/`credentials-table`; the wire
    already carries `{dimension,value}` — **but** full parity (display kind/label) needs the binding to *store*
    the grantee kind/label, so this slice includes the credential-binding model + summary projection + mock +
    the OpenAPI shape (ledger + benchmark per the §803 protocol, mirroring the admin `AdministratorGrant` work).
-3. **[DONE — built as a separate engine, not as framed below] Rule grammar extension.** Adds **set membership**
-   `in (…)` and ordered **classification `<=`** (with absent-label semantics + a **defined ordering** of labels —
-   a configured `SecurityLabelOrderings`, surfaced as the read-only `/security/orderings` resource). **As built,
-   this is a standalone `SecurityRule` engine in the durability layer** (its own parser/AST + bytes-to-bytes
-   evaluator + per-backend SQL emitter). The originally-planned route — extend the shared `SimpleConditionEvaluator`
-   (runtime) + `SimpleCriterionInliner` (codegen) step-criterion grammar — was **not** taken; those were left
-   untouched, so security rules are runtime-compiled, never codegen-inlined. Per-backend store-predicate pushdown
-   (SQL + Cosmos native; InMemory/Mongo/Redis/Nats in-memory). Unit + container-conformance pushdown-oracle +
-   end-to-end tests. Landed before the Reach UI shipped those templates.
-4. **[DONE] Reach / Rules UI.** New web surface over `/security/rules` (template-first incl. the new set-membership +
+3. **Rule grammar extension** (engine + codegen, cross-cutting). Add **set membership** `in (…)` and the
+   ordered **classification `<=`** handling to the `simple`-criterion grammar (§14.2 "still-open" note) — these
+   touch `SimpleConditionEvaluator` (runtime) + `SimpleCriterionInliner` (codegen) **and** the per-backend
+   store-predicate translation, since the grammar is shared with step criteria. Bigger than a UI slice; needs
+   its own ground→tests→(codegen regen)→container-conformance pass. Classification `<=` also needs a **defined
+   ordering** of classification labels (numeric levels or a configured order) — labels aren't naturally
+   ordered. Land this **before** the Reach UI offers those templates.
+4. **Reach / Rules UI.** New web surface over `/security/rules` (template-first incl. the new set-membership +
    classification templates, raw-expression advanced). Mostly web + mock; server/OpenAPI already expose the ops.
-5. **[DONE] Bindings UI.** New web surface over `/security/bindings` with the WHO→WHAT→WHERE editor: **direct** for
+5. **Bindings UI.** New web surface over `/security/bindings` with the WHO→WHAT→WHERE editor: **direct** for
    group/role policy bindings (picker for well-known kinds + raw-claim fallback + the multi-IdP caveat banner,
    §6.5); per-person elevation routed to the request flow, not authored here. Web + mock; the server adds a
-   **self-elevation guard** (defense in depth, built + tested — create and update). Server/OpenAPI already expose the binding ops.
-6. **[DONE — server + UI] Access overview** (server-side aggregation, per your call). The reach-scoped endpoint
-   `GET /access/grants?grantee=…` aggregates a grantee's bindings + administered workflows + credential
-   usage server-side (client stays thin). Handler + 2 tests built + green; §803 ledger + MemoryDiagnoser proof landed
-   (bytes-native projection 256 B vs naive 1376 B; end-to-end 4601 B). Container-conformance and the Web surface (the
-   Overview screen + inline revoke — delete the underlying binding/grant) remain.
-7. **[IN PROGRESS] Access-area reorg.** Fold Overview/Bindings/Reach/Requests under the Access tab nav; cross-link
-   per-workflow Administrators from Catalog. *Started (decision taken): today an **Access** tab holds Requests and a
-   **Permissions** tab holds Bindings + Reach (split codified in `smoke.spec.js`). Remaining: one Access sub-nav
-   over Overview | Bindings | Reach | Requests, move Bindings+Reach out of Permissions, slot in Overview (needs
-   slice 6), cross-link Administrators, retire the Permissions tab.*
+   **self-elevation guard** (defense in depth). Server/OpenAPI already expose the binding ops.
+6. **Access overview** (server-side aggregation, per your call). New reach-scoped endpoint
+   `GET /access/grants?grantee=…` that aggregates a grantee's bindings + administered workflows + credential
+   usage server-side (client stays thin) → full ground→ownership-ledger→MemoryDiagnoser→container-conformance
+   per the §803 protocol. Web surface = the Overview screen + inline revoke (delete the underlying binding/grant).
+7. **Access-area reorg.** Fold Overview/Bindings/Reach/Requests under the Access tab nav; cross-link
+   per-workflow Administrators from Catalog.
 
 Recommended order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (grantee primitive, then credentials, then the grammar the rules
 need, then the two missing editors, then the server-aggregated overview, then the reorg). Each is
-independently demoable. **Status (2026-07-02): 1–5 DONE, 6 not started, 7 in progress — see §0.** The recommended
-order also predates a parallel thread — the **security-tags / management-tags** work (settable + editable reach
-labels on catalog/environment/source/credential) — which is now **done end-to-end** (API/store/mock/web/CLI),
-bar the parked registered-source UI edit panel (§0).
+independently demoable.
 
 ---
 
@@ -396,18 +310,13 @@ bar the parked registered-source UI edit panel (§0).
 4. **Credential usage parity** → **full parity**: store kind/label on the credential binding, mirroring
    `AdministratorGrant` (slice 2).
 5. **Rule templates** → **add classification `<=` and `in (…)` set membership** (common tag-based constructs).
-   *Built (slice 3) — but as a standalone `SecurityRule` engine in the durability layer with per-backend predicate
-   pushdown, NOT by changing `SimpleConditionEvaluator` / `SimpleCriterionInliner` (those were left untouched).
-   Classification ordering is a configured `SecurityLabelOrderings` surfaced as `/security/orderings`. See §0 / §7.3.*
+   This requires the grammar/engine extension (slice 3) — a cross-cutting `SimpleConditionEvaluator` /
+   `SimpleCriterionInliner` / per-backend-predicate change, plus a defined classification ordering.
 
-**Residual sub-questions:**
-- ~~Classification ordering: numeric levels vs a deployment-configured label order~~ → **resolved**: a
-  deployment-configured ascending label order (`SecurityLabelOrderings` / `/security/orderings`), fail-closed on
-  unranked labels.
-- ~~`in (…)` semantics for absent/null labels + per-backend store-predicate translation~~ → **resolved**: absent
-  dimension → empty set → `false`; per-backend pushdown implemented (SQL + Cosmos native; InMemory/Mongo/Redis/Nats
-  in-memory).
-- The exact claim a `person` grantee implies for the raw-claim fallback (deployment claim-map dependent). *(still open)*
+**Residual sub-questions to settle as we build:**
+- Classification ordering: numeric levels vs a deployment-configured label order (slice 3).
+- `in (…)` semantics for absent/null labels and the per-backend store-predicate translation (slice 3).
+- The exact claim a `person` grantee implies for the raw-claim fallback (deployment claim-map dependent).
 
 ---
 
