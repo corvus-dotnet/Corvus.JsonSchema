@@ -1371,3 +1371,34 @@ keywords (`TryGetHandlersFor`, ordered by `ValidationHandlerPriority`). Handlers
 The validator architecture is therefore the **extensible registry path**; §13.11's walk-the-model remains
 only as the initial fast feasibility proof. (A fully *non-standard* keyword additionally needs a custom
 vocabulary so the core surfaces the `IKeyword`; the handler-dispatch half — proven here — is identical.)
+
+### 13.14 Phase 0 - idiomatic type surface (implemented)
+
+Phase 0 (§9) graduated the spike to an idiomatic type surface on top of the registry-driven validators.
+For `person.json` the provider now emits:
+
+```ts
+export interface Person {
+  readonly address: Address;
+  readonly age?: number;
+  readonly name: string;
+  readonly price?: number;
+  readonly status?: Status;
+}
+export interface Address { readonly postcode: string; readonly street?: string; }
+export type Status = "active" | "archived" | "deleted";
+```
+
+-- real names (from `title` / property name), built-in scalar mapping (`string`/`number`, not empty
+interfaces), property type-references, required-vs-`?`-optional, named enum unions, unquoted identifiers.
+Type-checks `tsc --strict`; the registry-composed validators (incl. the runtime extension) still pass
+(12/12 + 4/4). Emission per type: object -> `interface`, enum -> `type X = ...`, scalar/array -> referenced
+inline; every type still gets an `evaluate{Name}` so validator recursion resolves.
+
+**Phase-0 done:** real naming, built-in type mapping, property type-refs, named enums, handler-framework
+validators, extensibility. **Phase-1 remaining:** array element typing (currently `readonly unknown[]`),
+format brands + date/time Temporal accessors (§5.5), `$ref` across files + barrel `index.ts`, composition
+(`allOf`/`anyOf`/`oneOf` -> discriminated unions), `unevaluated*`/`$dynamicRef` + location threading (§5.6),
+and the codegen-aware compliance harness (§8) over the JSON-Schema-Test-Suite. **Solution integration:**
+graduate the prototype to a real `Corvus.Text.Json.TypeScript.CodeGeneration` project and wire
+`--language ts` into `GenerationDriverV5`.
