@@ -35,6 +35,17 @@ export function isMode(v: unknown): v is Mode {
   return v === "auto" || v === 0 || v === false || v === null;
 }
 
+// object/array CONST: the validator does DEEP structural equality against the exact value (it rejects
+// extra object properties that the best-effort literal TYPE would allow). isOrigin/isUnit are the
+// generated deep-equal guards (design §5.3 enum/const row).
+export function isOrigin(v: unknown): v is Origin {
+  return typeof v === "object" && v !== null && !Array.isArray(v) &&
+    Object.keys(v).length === 2 && (v as Record<string, unknown>).x === 0 && (v as Record<string, unknown>).y === 0;
+}
+export function isUnit(v: unknown): v is Unit {
+  return Array.isArray(v) && v.length === 1 && v[0] === 1;
+}
+
 // exhaustive consumer switch over a mixed-type union
 export function describe(m: Mode): string {
   switch (m) {

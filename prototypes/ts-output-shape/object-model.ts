@@ -41,6 +41,16 @@ export function greet(p: Person): string {
   return p.age === undefined ? `Hi ${p.name}` : `Hi ${p.name} (age ${p.age})`;
 }
 
+// allOf INTERSECTION (design §5.3.1): allOf:[Person, Timestamped] -> `Person & Timestamped`. Under
+// structural typing the V5 `implicit operator Person(T)` is FREE — a value of the intersection already
+// IS a Person and a Timestamped, so the "conversion" is identity. Narrowing helpers are zero-runtime sugar.
+export interface Timestamped {
+  readonly createdAt: string;
+}
+export type AuditedPerson = Person & Timestamped;
+export function asPerson(t: AuditedPerson): Person { return t; }       // free (structural) — documentation sugar
+export function asTimestamped(t: AuditedPerson): Timestamped { return t; }
+
 // omitting an optional property is allowed
 const ok: Person = { name: "Ada", address: { street: "1 St", city: "London" } };
 

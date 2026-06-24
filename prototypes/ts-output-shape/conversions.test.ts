@@ -2,7 +2,7 @@
 // structural typing; the genuine V5 conversions worth porting are brand/format factories
 // (asUuid/asDateTime/toDate) and 64-bit -> bigint. Union widening to a branch is also free.
 import { suite } from "./harness";
-import { asUuid, asDateTime, toDate, useId } from "./format-brand-model";
+import { asUuid, asDateTime, toDate, useId, asPort, usePort } from "./format-brand-model";
 import { type Shape, type Circle } from "./union-model";
 
 const t = suite("conversions");
@@ -17,6 +17,11 @@ t.throws("asDateTime rejects nonsense", () => asDateTime("nonsense"));
 
 // --- richer parse helper: date-time -> Date (the JS analog of V5's NodaTime conversions) ---
 t.eq("toDate parses to the right instant", toDate(dt).getTime(), Date.parse("2026-06-24T10:00:00Z"));
+
+// --- single-core-type numeric wrapper: a range-checked branded number (§5.3) ---
+t.eq("asPort mints a brand that IS its base number", usePort(asPort(8080)), 8080);
+t.throws("asPort rejects out-of-range (> 65535)", () => asPort(70000));
+t.throws("asPort rejects non-integer", () => asPort(80.5));
 
 // --- 64-bit+ numeric format -> bigint (exact past 2^53; §4.1) ---
 const big = 9007199254740993n; // == 2^53 + 1, NOT representable exactly as a JS number

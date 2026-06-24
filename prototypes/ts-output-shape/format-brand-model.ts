@@ -37,6 +37,20 @@ export function useId(id: Uuid): string {
   return id;
 }
 
+// SINGLE-CORE-TYPE NUMERIC WRAPPER (design §5.3 "single core-type wrapper" + numeric formats): a
+// constrained `number` becomes a branded alias; the validating factory enforces the range (here a
+// uint16 port). The brand carries the constraint identity at zero runtime cost.
+export type Port = Brand<number, "Port">;
+export function asPort(n: number): Port {
+  if (!Number.isInteger(n) || n < 0 || n > 65535) {
+    throw new FormatError("port");
+  }
+  return n as Port;
+}
+export function usePort(p: Port): number {
+  return p; // a Port IS a number at runtime
+}
+
 const realId = asUuid("00000000-0000-0000-0000-000000000000");
 
 // ... but a plain string is NOT assignable to the brand (nominal safety, zero runtime cost)
