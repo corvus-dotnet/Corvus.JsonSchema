@@ -14,6 +14,14 @@
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, confirmDialog, define } from './base.js';
 
+// Load the full scope vocabulary, accumulating every keyset page (find, not scale: the panel lists and filters the
+// whole set client-side, so it must walk past the server's first page rather than silently stop at it).
+async function loadAllRules(client) {
+  const rules = [];
+  for await (const page of client.listSecurityRulesPaged()) rules.push(...page.rules);
+  return rules;
+}
+
 // The template-first goals. `build` writes the expression; `suggest` proposes a name from the fields.
 const TEMPLATES = [
   { id: 'label-eq', label: 'Records with a label value', build: (f) => `${dim(f, 'domain')} == ${lit(f.value)}`, suggest: (f) => `scope-${slug(f.value) || 'label'}` },
@@ -87,8 +95,8 @@ class ArazzoScopesPanel extends ArazzoElement {
     this._error = null;
     this.renderBody();
     try {
-      const [{ rules }, orderingsResult] = await Promise.all([
-        client.listSecurityRules(),
+      const [rules, orderingsResult] = await Promise.all([
+        loadAllRules(client),
         client.listSecurityOrderings().catch(() => ({ orderings: [] })),
       ]);
       if (seq !== this._reqSeq) return;
@@ -190,8 +198,7 @@ class ArazzoScopesPanel extends ArazzoElement {
   }
 
   async reloadAndEmit() {
-    const { rules } = await this.client.listSecurityRules();
-    this._scopes = rules;
+    this._scopes = await loadAllRules(this.client);
     this._error = null;
     this.renderBody();
     this.emit('scopes-changed', { scopes: this._scopes });

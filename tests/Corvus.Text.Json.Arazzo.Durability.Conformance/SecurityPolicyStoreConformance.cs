@@ -83,6 +83,92 @@ public abstract class SecurityPolicyStoreConformance
     }
 
     [TestMethod]
+    public async Task Listing_rules_keyset_pages_in_name_order_without_gaps_or_duplicates()
+    {
+        ISecurityPolicyStore store = await this.NewStoreAsync();
+        string[] names =
+        [
+            "tenant-scoped", "abac-superset", "shares-a-label", "team-scoped",
+            "viewer", "admin", "level-secret", "ordered-clearance",
+        ];
+
+        // Add out of order, to prove the store (not insertion order) establishes the page order.
+        foreach (string name in names.OrderByDescending(n => n, StringComparer.Ordinal))
+        {
+            using (await AddRuleDraftAsync(store, name, $"tenant == {name}", null, "system"))
+            {
+            }
+        }
+
+        // Walk every page via the continuation token with a small limit; collect the names in page order. The token is
+        // round-tripped through the JsonString seam exactly as the HTTP layer does: the store emits it as UTF-8, which the
+        // next request carries as a JSON string. The page owns the token buffer (freed on dispose), so copy it out per page.
+        var seen = new List<string>();
+        byte[]? token = null;
+        int pages = 0;
+        do
+        {
+            using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString>? tokenDoc = token is null ? null : AsPageToken(token);
+            using SecurityRulePage page = await store.ListRulesAsync(3, tokenDoc?.RootElement ?? default, null, default);
+            page.Rules.Count.ShouldBeLessThanOrEqualTo(3);
+            foreach (SecurityRuleDocument r in page.Rules)
+            {
+                seen.Add(r.NameValue);
+            }
+
+            token = page.NextPageToken.IsEmpty ? null : page.NextPageToken.ToArray();
+            pages++;
+        }
+        while (token is not null);
+
+        // 8 rules, 3 per page → 3 pages; no duplicates or gaps across boundaries; contractual name (ordinal) order.
+        pages.ShouldBe(3);
+        seen.ShouldBe(names.OrderBy(n => n, StringComparer.Ordinal).ToArray());
+
+        // A malformed token is rejected (rather than silently restarting from the first page).
+        await Should.ThrowAsync<FormatException>(async () =>
+        {
+            using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> badToken = AsPageToken("this~is~not~a~token"u8);
+            using SecurityRulePage bad = await store.ListRulesAsync(3, badToken.RootElement, null, default);
+        });
+    }
+
+    [TestMethod]
+    public async Task Listing_rules_filters_by_a_case_insensitive_substring_of_name_or_expression()
+    {
+        ISecurityPolicyStore store = await this.NewStoreAsync();
+        using (await AddRuleDraftAsync(store, "tenant-scoped", "tenant == $claim.tenant", null, "system"))
+        {
+        }
+
+        using (await AddRuleDraftAsync(store, "team-scoped", "team == $claim.team", null, "system"))
+        {
+        }
+
+        using (await AddRuleDraftAsync(store, "public", "true", "Everyone may read.", "system"))
+        {
+        }
+
+        // Matches the name, case-insensitively.
+        using (SecurityRulePage page = await store.ListRulesAsync(50, default, "TENANT", default))
+        {
+            page.Rules.Select(r => r.NameValue).ShouldBe(["tenant-scoped"]);
+        }
+
+        // Matches the expression, not just the name.
+        using (SecurityRulePage page = await store.ListRulesAsync(50, default, "team ==", default))
+        {
+            page.Rules.Select(r => r.NameValue).ShouldBe(["team-scoped"]);
+        }
+
+        // No filter returns every rule in name order.
+        using (SecurityRulePage page = await store.ListRulesAsync(50, default, null, default))
+        {
+            page.Rules.Select(r => r.NameValue).ShouldBe(["public", "team-scoped", "tenant-scoped"]);
+        }
+    }
+
+    [TestMethod]
     public async Task Adding_a_duplicate_rule_name_fails()
     {
         ISecurityPolicyStore store = await this.NewStoreAsync();
@@ -265,6 +351,17 @@ public abstract class SecurityPolicyStoreConformance
         }
 
         return store;
+    }
+
+    // Wraps an opaque page token's UTF-8 as the JSON string value a request carries it as — the conformance feeds a
+    // previous page's NextPageToken (the store's emitted bytes) back through the JsonString seam, mirroring HTTP.
+    private static ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> AsPageToken(ReadOnlySpan<byte> tokenUtf8)
+    {
+        byte[] quoted = new byte[tokenUtf8.Length + 2];
+        quoted[0] = (byte)'"';
+        tokenUtf8.CopyTo(quoted.AsSpan(1));
+        quoted[^1] = (byte)'"';
+        return ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString>.Parse(quoted);
     }
 
     // Builds the draft rule (a pooled, disposable document), adds it, and disposes the draft once the store has read it.
