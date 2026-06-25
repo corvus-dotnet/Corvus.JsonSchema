@@ -58,8 +58,8 @@ The command is `corvusjson jsonschema` (registered in `CliAppFactory.cs`).
 - `--outputRootTypeName` — name of the root generated type
 - `--outputPath` — output directory
 - `--engine` — `V4` or `V5` (default: V5 for `corvusjson`, V4 for legacy `generatejsonschematypes`)
-- `--assertFormat` — whether format validation asserts globally (default: true)
-- `--formatMode` — per-format assertion mode overrides as comma-separated `format=mode` pairs (`mode` ∈ `assert`/`disable`/`warning`), e.g. `date-time=disable,time=warning`; repeatable; takes precedence over `--assertFormat`. `warning` (string formats only) validates but always succeeds, emitting a `WARNING` annotation on mismatch
+- `--assertFormat` — whether format validation asserts globally (default: true). Takes a value: `--assertFormat false` gives annotation-only output where the vocabulary treats `format` as an annotation (e.g. 2020-12)
+- `--formatMode` — format assertion mode overrides as comma-separated entries (`mode` ∈ `assert`/`disable`/`warning`). `format=mode` targets one format (e.g. `date-time=disable,time=warning`); a bare `mode` (equivalently `*=mode`) sets the default for **all** formats across every draft — `--formatMode disable` is the way to get annotation-only output for draft-04/06/07 (whose vocabulary asserts `format`, so `--assertFormat false` alone doesn't). Repeatable; a per-format override beats the `*` default, `--assertFormat`, and the vocabulary. `warning` (string formats only) validates but always succeeds, emitting a `WARNING` annotation on mismatch
 - `--codeGenerationMode` — `TypeGeneration`, `SchemaEvaluationOnly`, or `Both`
 
 > **IMPORTANT:** Never invent option names. Verify against `GenerateCommand.cs`.
