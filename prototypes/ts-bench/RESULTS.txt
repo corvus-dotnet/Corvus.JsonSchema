@@ -3,48 +3,97 @@
 
 schema                dialect     inst    corvus-ts        ajv  hyperjump schemasafe   corvus vs ajv
 ----------------------------------------------------------------------------------------------------
-ansible-meta          07           333      7.87 us    6.55 us  235.03 us    2.38 us      0.83x
-aws-cdk               07           483       556 ns     155 ns   25.11 us     244 ns      0.28x
-babelrc               07           794       240 ns    1.06 us   18.42 us     627 ns      4.40x
-clang-format          07           133     14.50 us   18.65 us   27.38 us   19.19 us      1.29x
-cmake-presets         07           967     29.58 us   20.81 us  965.42 us       -         0.70x
-code-climate          07          2484       180 ns     341 ns    7.75 us     258 ns      1.90x
-cql2                  2020-12      109      9.16 us   11.92 us 8205.03 us    5.50 us      1.30x
-cspell                07           981      3.77 us    5.31 us   41.22 us    6.77 us      1.41x
-cypress               07           981       270 ns    6.18 us   13.36 us    6.35 us     22.86x
-deno                  07           987      1.03 us    2.55 us   20.40 us    3.06 us      2.49x
-dependabot            07           967      1.92 us     836 ns   23.82 us       -         0.44x
-draft-04              07           563     34.30 us   42.26 us       -      35.80 us      1.23x
-fabric-mod            07           911      2.14 us    3.04 us   24.07 us    3.48 us      1.42x
-geojson               07           500     53.88 us  229.32 us 7793.52 us  350.51 us      4.26x
-gitpod-configuration  07           986      1.70 us     967 ns   12.19 us    1.53 us      0.57x
-helm-chart-lock       07          3888       687 ns     231 ns   12.24 us    1.15 us      0.34x
-importmap             07           964       564 ns     263 ns    8.34 us     335 ns      0.47x
-jasmine               07           980       280 ns     158 ns    6.13 us     218 ns      0.56x
-jsconfig              07           981      1.80 us   10.00 us   15.57 us   10.60 us      5.57x
-jshintrc              07           966      2.31 us    8.23 us   19.03 us    9.13 us      3.56x
-krakend               07            47     38.55 us       -          -          -              
-lazygit               07           280      5.63 us    9.08 us   21.88 us   10.81 us      1.61x
-lerna                 07           985       271 ns     891 ns    7.34 us    1.16 us      3.28x
-nest-cli              07          1025      1.20 us     888 ns   11.95 us     832 ns      0.74x
-omnisharp             07           987       807 ns    3.60 us   11.30 us    3.99 us      4.45x
-openapi               2020-12      107     19.44 us  556.18 us13751.15 us       -        28.61x
-pre-commit-hooks      07           985      8.89 us    6.79 us   21.71 us    3.92 us      0.76x
-pulumi                07          3807       900 ns     757 ns    8.37 us     823 ns      0.84x
-semantic-release      07           794       332 ns     314 ns   14.02 us     427 ns      0.95x
-stale                 07           961       557 ns     268 ns    8.43 us     395 ns      0.48x
-stylecop              07           983      1.64 us    1.26 us   12.43 us       -         0.77x
-tmuxinator            07           382      1.04 us     897 ns   12.11 us    1.13 us      0.87x
-ui5                   07           942      4.31 us    3.70 us   44.15 us       -         0.86x
-ui5-manifest          07           611     17.46 us       -     180.40 us       -              
-unreal-engine-uproject07           859      6.38 us    6.30 us   25.03 us    8.92 us      0.99x
-vercel                07           710      3.78 us    3.73 us   18.03 us       -         0.99x
-yamllint              07           984        56 ns      31 ns    5.61 us      22 ns      0.56x
+ansible-meta          07           333      8.01 us    5.94 us  132.97 us    2.25 us      0.74x
+aws-cdk               07           483       472 ns     191 ns   16.22 us     296 ns      0.40x
+babelrc               07           794       619 ns    1.84 us    7.24 us     649 ns      2.97x
+clang-format          07           133     14.81 us   19.72 us   13.76 us   18.33 us      1.33x
+cmake-presets         07           967     23.14 us   21.24 us  996.09 us       -         0.92x
+code-climate          07          2484       193 ns     347 ns    7.76 us     327 ns      1.80x
+cql2                  2020-12      109      8.87 us   11.37 us 9395.72 us    7.26 us      1.28x
+cspell                07           981      4.47 us    6.69 us   41.07 us    7.14 us      1.50x
+cypress               07           981       290 ns    6.76 us   12.73 us    5.95 us     23.26x
+deno                  07           987      1.38 us    2.67 us   19.88 us    3.21 us      1.94x
+dependabot            07           967      2.04 us     844 ns   19.35 us       -         0.41x
+draft-04              07           563     29.30 us   42.63 us       -      34.21 us      1.46x
+fabric-mod            07           911      2.89 us    3.22 us   28.99 us    4.12 us      1.11x
+geojson               07           500     92.51 us  231.71 us 6756.87 us  252.77 us      2.50x
+gitpod-configuration  07           986      1.35 us     727 ns   10.84 us    1.27 us      0.54x
+helm-chart-lock       07          3888       584 ns     208 ns   12.20 us    1.10 us      0.36x
+importmap             07           964       727 ns     276 ns   10.33 us     413 ns      0.38x
+jasmine               07           980       314 ns     189 ns    8.20 us     250 ns      0.60x
+jsconfig              07           981      2.03 us   10.66 us   18.70 us   10.48 us      5.24x
+jshintrc              07           966      2.22 us    7.97 us   16.57 us    8.35 us      3.59x
+krakend               07            47     35.17 us       -          -          -              
+lazygit               07           280      5.50 us    8.25 us   19.64 us    9.95 us      1.50x
+lerna                 07           985       298 ns     737 ns    6.16 us     931 ns      2.47x
+nest-cli              07          1025      1.01 us     714 ns   11.00 us     750 ns      0.70x
+omnisharp             07           987       664 ns    3.26 us   13.43 us    4.88 us      4.92x
+openapi               2020-12      107    280.71 us  515.54 us13934.74 us       -         1.84x
+pre-commit-hooks      07           985      8.74 us    6.00 us   20.95 us    3.90 us      0.69x
+pulumi                07          3807       901 ns     730 ns    8.69 us     799 ns      0.81x
+semantic-release      07           794       426 ns     326 ns   13.30 us     398 ns      0.76x
+stale                 07           961       572 ns     264 ns    8.31 us     415 ns      0.46x
+stylecop              07           983      1.62 us    1.32 us   12.87 us       -         0.82x
+tmuxinator            07           382      1.25 us     993 ns   11.72 us    1.17 us      0.79x
+ui5                   07           942      4.62 us    3.67 us   43.45 us       -         0.79x
+ui5-manifest          07           611     18.78 us       -     177.65 us       -              
+unreal-engine-uproject07           859      8.66 us    9.33 us   26.42 us   10.47 us      1.08x
+vercel                07           710      4.18 us    5.39 us   16.70 us       -         1.29x
+yamllint              07           984        44 ns      26 ns    5.48 us      32 ns      0.59x
 
 # Geometric mean ns/instance (over schemas each impl validated):
-  corvus-ts    2124.1 ns   (ran 37/37)
-  ajv          2463.8 ns   (ran 35/37; compile-failed: krakend, ui5-manifest)
-  hyperjump    34009.0 ns   (ran 35/37; compile-failed: draft-04, krakend)
-  schemasafe   2134.5 ns   (ran 29/37; compile-failed: cmake-presets, dependabot, krakend, openapi, stylecop, ui5, ui5-manifest, vercel)
+  corvus-ts    2430.9 ns   (ran 37/37)
+  ajv          2531.7 ns   (ran 35/37; compile-failed: krakend, ui5-manifest)
+  hyperjump    31576.2 ns   (ran 35/37; compile-failed: draft-04, krakend)
+  schemasafe   2193.7 ns   (ran 29/37; compile-failed: cmake-presets, dependabot, krakend, openapi, stylecop, ui5, ui5-manifest, vercel)
 
 # Cross-check: 33/37 schemas — all validators agree on valid-counts. Disagreements: code-climate, draft-04, helm-chart-lock, openapi
+
+# Correctness-gated — fastest CORRECT validator per schema (WRONG/err results discounted):
+schema                consensus   discounted (wrong/err)         fastest correct
+----------------------------------------------------------------------------------
+ansible-meta                333                                  schemasafe (2.25 us)
+aws-cdk                     483                                  ajv (191 ns)
+babelrc                     794                                  corvus-ts (619 ns)
+clang-format                133                                  hyperjump (13.76 us)
+cmake-presets               967   schemasafe:err                 ajv (21.24 us)
+code-climate               2484   ajv:2375≠2484                  corvus-ts (193 ns)
+cql2                        109                                  schemasafe (7.26 us)
+cspell                      981                                  corvus-ts (4.47 us)
+cypress                     981                                  corvus-ts (290 ns)
+deno                        987                                  corvus-ts (1.38 us)
+dependabot                  967   schemasafe:err                 ajv (844 ns)
+draft-04                    563   schemasafe:561≠563 hyperjump:errcorvus-ts (29.30 us)
+fabric-mod                  911                                  corvus-ts (2.89 us)
+geojson                     500                                  corvus-ts (92.51 us)
+gitpod-configuration        986                                  ajv (727 ns)
+helm-chart-lock            3888   schemasafe:3760≠3888           ajv (208 ns)
+importmap                   964                                  ajv (276 ns)
+jasmine                     980                                  ajv (189 ns)
+jsconfig                    981                                  corvus-ts (2.03 us)
+jshintrc                    966                                  corvus-ts (2.22 us)
+krakend                      47   ajv:err hyperjump:err schemasafe:errcorvus-ts (35.17 us)
+lazygit                     280                                  corvus-ts (5.50 us)
+lerna                       985                                  corvus-ts (298 ns)
+nest-cli                   1025                                  ajv (714 ns)
+omnisharp                   987                                  corvus-ts (664 ns)
+openapi                     107   ajv:0≠107 schemasafe:err       corvus-ts (280.71 us)
+pre-commit-hooks            985                                  schemasafe (3.90 us)
+pulumi                     3807                                  ajv (730 ns)
+semantic-release            794                                  ajv (326 ns)
+stale                       961                                  ajv (264 ns)
+stylecop                    983   schemasafe:err                 ajv (1.32 us)
+tmuxinator                  382                                  ajv (993 ns)
+ui5                         942   schemasafe:err                 ajv (3.67 us)
+ui5-manifest                611   ajv:err schemasafe:err         corvus-ts (18.78 us)
+unreal-engine-uproject      859                                  corvus-ts (8.66 us)
+vercel                      710   schemasafe:err                 corvus-ts (4.18 us)
+yamllint                    984                                  ajv (26 ns)
+
+# Geomean ns/instance over each validator's CORRECT schemas only:
+  corvus-ts    2430.9 ns   (correct on 37/37)
+  ajv          2288.8 ns   (correct on 33/37)
+  hyperjump    31576.2 ns   (correct on 35/37)
+  schemasafe   2032.7 ns   (correct on 27/37)
+
+# Fastest CORRECT validator, schemas won: corvus-ts=18  ajv=15  hyperjump=1  schemasafe=3
