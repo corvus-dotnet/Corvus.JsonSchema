@@ -732,7 +732,7 @@ export function createMockControlPlane(options = {}) {
     const securityBindingsResponse = handleSecurityBindings(path, method, body);
     if (securityBindingsResponse) return securityBindingsResponse;
 
-    const securityRulesResponse = handleSecurityRules(path, method, body);
+    const securityRulesResponse = handleSecurityRules(path, method, u.searchParams, body);
     if (securityRulesResponse) return securityRulesResponse;
 
     // /runs collection
@@ -1255,13 +1255,32 @@ export function createMockControlPlane(options = {}) {
     return json(structuredClone(binding), 201);
   }
 
-  function handleSecurityRules(fullPath, method, body) {
+  // Keyset pagination over `name` plus a case-insensitive q over name/expression — the same contract the durable store
+  // implements: order, filter, seek strictly past the opaque token, take `limit`, emit a nextPageToken when more remain.
+  function listSecurityRulesPage(params) {
+    const limit = Math.max(1, Number(params.get('limit')) || 50);
+    const q = (params.get('q') || '').trim().toLowerCase();
+    const after = params.get('pageToken') ? atobSafe(params.get('pageToken')) : null;
+    const sorted = [...securityRules].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+    const matched = q
+      ? sorted.filter((r) => r.name.toLowerCase().includes(q) || (r.expression || '').toLowerCase().includes(q))
+      : sorted;
+    const start = after ? matched.findIndex((r) => r.name > after) : 0;
+    const from = start < 0 ? matched.length : start;
+    const pageItems = matched.slice(from, from + limit);
+    const more = from + limit < matched.length;
+    const last = pageItems[pageItems.length - 1];
+    const nextPageToken = more && last ? btoaSafe(last.name) : null;
+    return json({ rules: pageItems.map((r) => structuredClone(r)), nextPageToken });
+  }
+
+  function handleSecurityRules(fullPath, method, params, body) {
     const idx = fullPath.indexOf('/security/rules');
     if (idx < 0) return null;
     const path = fullPath.slice(idx);
 
     if (path === '/security/rules') {
-      if (method === 'GET') return json({ rules: securityRules.map((r) => structuredClone(r)) });
+      if (method === 'GET') return listSecurityRulesPage(params);
       if (method === 'POST') return createSecurityRule(body);
       return problem(405, 'Method not allowed');
     }
