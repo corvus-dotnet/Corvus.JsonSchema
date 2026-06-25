@@ -1,0 +1,133 @@
+// Tier 3 — <arazzo-grants-panel> mounted in a real browser against the in-memory mock.
+import { ArazzoControlPlaneClient } from '../../src/arazzo-client.js';
+import { createMockControlPlane } from '../../demo/mock-api.js';
+import '../../src/components/grants-panel.js';
+import { ok, equal, nextEvent, waitFor, mount } from './helpers.js';
+
+function panelWithMock(attrs = {}, mockOptions = {}) {
+  const mock = createMockControlPlane({ latencyMs: 0, ...mockOptions });
+  const el = document.createElement('arazzo-grants-panel');
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  el.client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+  return el;
+}
+
+const rows = (el) => el.shadowRoot.querySelectorAll('.grow-row');
+const $ = (el, sel) => el.shadowRoot.querySelector(sel);
+const setInput = (el, sel, value) => { const i = $(el, sel); i.value = value; i.dispatchEvent(new Event('input')); };
+const verbSelect = (el, verb) => [...el.shadowRoot.querySelectorAll('.verb-mode')].find((s) => s.dataset.verb === verb);
+const setVerbMode = (el, verb, mode) => { const s = verbSelect(el, verb); s.value = mode; s.dispatchEvent(new Event('change')); };
+const dialogOpen = (el) => $(el, 'dialog').open;
+
+async function pickGrantee(el, query) {
+  const picker = $(el, '.who-picker');
+  const q = picker.shadowRoot.querySelector('.q');
+  q.value = query;
+  q.dispatchEvent(new Event('input'));
+  await waitFor(() => picker.shadowRoot.querySelectorAll('.results li[data-index]').length >= 1);
+  picker.shadowRoot.querySelector('.results li[data-index]').click();
+}
+
+describe('<arazzo-grants-panel>', () => {
+  let el;
+  afterEach(() => el?.remove());
+
+  it('lists the seeded grants with per-action access and filters with search', async () => {
+    el = panelWithMock({ scopes: 'security:read' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    ok(rows(el).length >= 2, 'two seeded grants');
+    ok(el.shadowRoot.textContent.includes('team=payments'), 'shows a claim');
+    setInput(el, '.search', 'tenant');
+    ok([...rows(el)].every((r) => r.textContent.toLowerCase().includes('tenant')), 'search filters');
+  });
+
+  it('opens a modal editor and creates a grant from a raw claim + an unrestricted action', async () => {
+    el = panelWithMock({ scopes: 'security:read security:write' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    $(el, '.new').click();
+    ok(dialogOpen(el), 'modal editor opens');
+    setInput(el, '.f-claimType', 'region');
+    setInput(el, '.f-claimValue', 'eu');
+    setVerbMode(el, 'read', 'unrestricted');
+    const changed = nextEvent(el, 'grants-changed');
+    $(el, '.confirm').click();
+    const e = await changed;
+    ok(e.detail.grants.some((g) => g.claimType === 'region' && g.claimValue === 'eu' && g.read.unrestricted === true), 'grant created');
+    ok(!dialogOpen(el), 'dialog closes after create');
+  });
+
+  it('scopes an action by picking scopes with the typeahead (not a checkbox list)', async () => {
+    el = panelWithMock({ scopes: 'security:read security:write' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    $(el, '.new').click();
+    setInput(el, '.f-claimType', 'team');
+    setInput(el, '.f-claimValue', 'billing');
+    setVerbMode(el, 'write', 'scopes');
+    const scopeInput = [...el.shadowRoot.querySelectorAll('.scope-input')].find((i) => i.dataset.verb === 'write');
+    ok(scopeInput, 'a scope typeahead input is shown (no flat checkbox list)');
+    scopeInput.value = 'reach-payments';
+    scopeInput.dispatchEvent(new Event('change'));
+    ok([...el.shadowRoot.querySelectorAll('.chip')].some((c) => c.textContent.includes('reach-payments')), 'scope added as a chip');
+    const changed = nextEvent(el, 'grants-changed');
+    $(el, '.confirm').click();
+    const e = await changed;
+    ok(e.detail.grants.find((g) => g.claimType === 'team' && g.claimValue === 'billing')?.write.ruleNames?.includes('reach-payments'), 'scoped write');
+  });
+
+  it('derives the canonical claim from a group/role grantee via the picker', async () => {
+    el = panelWithMock({ scopes: 'security:read security:write' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    $(el, '.new').click();
+    await pickGrantee(el, 'payments');
+    equal($(el, '.f-claimType').value, 'team', 'claim type derived');
+    equal($(el, '.f-claimValue').value, 'payments', 'claim value derived');
+  });
+
+  it('steers a person grantee to the request flow instead of a direct grant', async () => {
+    el = panelWithMock({ scopes: 'security:read security:write' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    $(el, '.new').click();
+    await pickGrantee(el, 'ada');
+    ok($(el, '.steer'), 'request-flow steer banner');
+    $(el, '.confirm').click();
+    ok($(el, '.form-err .error-banner'), 'create blocked for a person');
+  });
+
+  it('edits a grant (claim is the immutable key) and saves the new access', async () => {
+    el = panelWithMock({ scopes: 'security:read security:write' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    [...el.shadowRoot.querySelectorAll('.edit')].find((b) => b.dataset.id === 'bind-1').click();
+    equal($(el, '.f-claimType').value, 'team', 'prefilled claim');
+    equal($(el, '.f-claimType').readOnly, true, 'claim is the key on edit');
+    setVerbMode(el, 'read', 'unrestricted');
+    const changed = nextEvent(el, 'grants-changed');
+    $(el, '.confirm').click();
+    const e = await changed;
+    equal(e.detail.grants.find((g) => g.id === 'bind-1').read.unrestricted, true, 'read access updated');
+  });
+
+  it('deletes a grant (via the client + reload) and emits grants-changed', async () => {
+    el = panelWithMock({ scopes: 'security:read security:write' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    const changed = nextEvent(el, 'grants-changed');
+    await el.client.deleteSecurityBinding('bind-2');
+    await el.reloadAndEmit();
+    const e = await changed;
+    ok(!e.detail.grants.some((g) => g.id === 'bind-2'), 'grant removed');
+  });
+
+  it('hides the mutating controls without security:write', async () => {
+    el = panelWithMock({ scopes: 'security:read' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    ok($(el, '.new').hidden, 'New grant button hidden');
+    ok(!$(el, '.edit'), 'no edit buttons');
+  });
+});
