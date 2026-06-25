@@ -159,7 +159,7 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
             conditions.Add("c.status = @status");
         }
 
-        if (query.BaseWorkflowId is not null)
+        if (query.BaseWorkflowId.IsNotUndefined())
         {
             conditions.Add("c.bw = @bw");
         }
@@ -181,9 +181,9 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
             definition = definition.WithParameter("@status", AccessRequestStatusNames.ToWire(statusFilter));
         }
 
-        if (query.BaseWorkflowId is { } baseWorkflowId)
+        if (query.BaseWorkflowId.IsNotUndefined())
         {
-            definition = definition.WithParameter("@bw", baseWorkflowId);
+            definition = definition.WithParameter("@bw", (string)query.BaseWorkflowId);
         }
 
         if (query.SubjectClaimType is { } subjectType)

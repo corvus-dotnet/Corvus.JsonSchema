@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A list of access requests (design &#167;16.5), oldest first.
+/// A keyset page of access requests (design &#167;16.5), oldest first by (createdAt, id).
 /// </para>
 /// </remarks>
 public readonly partial struct AccessRequestList
