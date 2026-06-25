@@ -583,6 +583,72 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `listSecurityBindings` — the deployment's claim→rule bindings (`GET /security/bindings`): each maps a principal
+   * claim to per-verb (read/write/purge) reach. Requires `security:read`.
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<{ bindings: object[] }>} A {@link SecurityBindingList} — each binding is
+   *   `{ id, claimType, claimValue?, read, write, purge, order, description?, createdBy, createdAt, etag }` where a verb
+   *   grant is `{ unrestricted?: boolean, ruleNames?: string[] }`.
+   */
+  async listSecurityBindings(opts = {}) {
+    const result = await this._request('GET', '/security/bindings', { signal: opts.signal });
+    return { bindings: result.bindings ?? [] };
+  }
+
+  /**
+   * `getSecurityBinding` — fetch a single binding by id (`GET /security/bindings/{bindingId}`). Requires `security:read`.
+   * @param {string} bindingId
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The {@link SecurityBindingSummary}. Throws {@link ProblemError} `404`.
+   */
+  getSecurityBinding(bindingId, opts = {}) {
+    if (!bindingId) throw new TypeError('getSecurityBinding requires a binding id.');
+    return this._request('GET', `/security/bindings/${encodeURIComponent(bindingId)}`, { signal: opts.signal });
+  }
+
+  // ---- security:write ---------------------------------------------------------------------------
+
+  /**
+   * `createSecurityBinding` — create a claim→rule binding (`POST /security/bindings`). The server **rejects
+   * self-elevation** (`403`): a caller may not grant a claim it holds write/purge reach — that goes through the
+   * access-request flow. Requires `security:write`.
+   * @param {{ claimType: string, claimValue?: string, read?: object, write?: object, purge?: object, order?: number, description?: string }} body
+   *   Each verb grant is `{ unrestricted: boolean }` or `{ ruleNames: string[] }`; omit a verb to deny it.
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The created {@link SecurityBindingSummary}.
+   */
+  createSecurityBinding(body, opts = {}) {
+    if (!body || !body.claimType) throw new TypeError('createSecurityBinding requires a claimType.');
+    return this._request('POST', '/security/bindings', { body, signal: opts.signal });
+  }
+
+  /**
+   * `updateSecurityBinding` — replace a binding's content (`PUT /security/bindings/{bindingId}`). Self-elevation is
+   * rejected (`403`); `404` if absent. Requires `security:write`.
+   * @param {string} bindingId
+   * @param {{ claimType: string, claimValue?: string, read?: object, write?: object, purge?: object, order?: number, description?: string }} body
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The updated {@link SecurityBindingSummary}.
+   */
+  updateSecurityBinding(bindingId, body, opts = {}) {
+    if (!bindingId) throw new TypeError('updateSecurityBinding requires a binding id.');
+    if (!body || !body.claimType) throw new TypeError('updateSecurityBinding requires a claimType.');
+    return this._request('PUT', `/security/bindings/${encodeURIComponent(bindingId)}`, { body, signal: opts.signal });
+  }
+
+  /**
+   * `deleteSecurityBinding` — delete a binding by id (`DELETE /security/bindings/{bindingId}`, `404` if absent).
+   * Requires `security:write`.
+   * @param {string} bindingId
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<void>}
+   */
+  async deleteSecurityBinding(bindingId, opts = {}) {
+    if (!bindingId) throw new TypeError('deleteSecurityBinding requires a binding id.');
+    await this._request('DELETE', `/security/bindings/${encodeURIComponent(bindingId)}`, { signal: opts.signal });
+  }
+
+  /**
    * `getSecurityRule` — fetch a single rule by name (`GET /security/rules/{ruleName}`). Requires `security:read`.
    * @param {string} name
    * @param {{ signal?: AbortSignal }} [opts]
