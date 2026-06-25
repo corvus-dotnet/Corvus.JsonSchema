@@ -293,7 +293,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowJsEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -314,7 +314,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnreachableCode.Mutable.DefaultInstance;
                 }
             }
 
@@ -335,7 +335,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnusedLabels.Mutable.DefaultInstance;
                 }
             }
 
@@ -356,7 +356,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.Mutable.DefaultInstance;
                 }
             }
 
@@ -377,7 +377,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -398,7 +398,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableExperimentalSupportForTc39Stage2DraftDecorators.Mutable.DefaultInstance;
                 }
             }
 
@@ -419,7 +419,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatJsxCodeIsGenerated.Mutable.DefaultInstance;
                 }
             }
 
@@ -440,7 +440,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -461,7 +461,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -482,7 +482,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxImportSourceEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -503,7 +503,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.KeyofStringsOnlyEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -524,7 +524,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsonStringArray.Mutable.DefaultInstance;
                 }
             }
 
@@ -545,7 +545,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DoNotTruncateErrorMessages.Mutable.DefaultInstance;
                 }
             }
 
@@ -566,7 +566,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoFallthroughCasesInSwitchEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -587,7 +587,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitAnyEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -608,7 +608,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitOverrideEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -629,7 +629,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitReturnsEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -650,7 +650,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenThisIsGivenTheTypeAny.Mutable.DefaultInstance;
                 }
             }
 
@@ -671,7 +671,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitUseStrictEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -692,7 +692,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoStrictGenericChecksEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -713,7 +713,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AddUndefinedToATypeWhenAccessedUsingAnIndex.Mutable.DefaultInstance;
                 }
             }
 
@@ -734,7 +734,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenALocalVariablesArenTRead.Mutable.DefaultInstance;
                 }
             }
 
@@ -755,7 +755,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RaiseAnErrorWhenAFunctionParameterIsnTRead.Mutable.DefaultInstance;
                 }
             }
 
@@ -776,7 +776,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableAllStrictTypeCheckingOptions.Mutable.DefaultInstance;
                 }
             }
 
@@ -797,7 +797,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictBindCallApplyEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -818,7 +818,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictFunctionTypesEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -839,7 +839,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WhenTypeCheckingTakeIntoAccountNullAndUndefined.Mutable.DefaultInstance;
                 }
             }
 
@@ -860,7 +860,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictPropertyInitializationEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -881,7 +881,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressExcessPropertyErrorsEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -902,7 +902,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressImplicitAnyIndexErrorsEntity.Mutable.DefaultInstance;
                 }
             }
 

@@ -266,7 +266,7 @@ public readonly partial struct KrakendSchema
                                     return value;
                                 }
 
-                                return default;
+                                return Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.TracesEntity.DetailedHttpConnection.Mutable.DefaultInstance;
                             }
                         }
 
@@ -291,7 +291,7 @@ public readonly partial struct KrakendSchema
                                     return value;
                                 }
 
-                                return default;
+                                return Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.TracesEntity.DisableThisStage.Mutable.DefaultInstance;
                             }
                         }
 
@@ -316,7 +316,7 @@ public readonly partial struct KrakendSchema
                                     return value;
                                 }
 
-                                return default;
+                                return Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.TracesEntity.DetailedPayloadRead.Mutable.DefaultInstance;
                             }
                         }
 
@@ -341,7 +341,7 @@ public readonly partial struct KrakendSchema
                                     return value;
                                 }
 
-                                return default;
+                                return Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.TracesEntity.ReportHeaders.Mutable.DefaultInstance;
                             }
                         }
 
@@ -366,7 +366,7 @@ public readonly partial struct KrakendSchema
                                     return value;
                                 }
 
-                                return default;
+                                return Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.TracesEntity.DetailedRoundTrip.Mutable.DefaultInstance;
                             }
                         }
 

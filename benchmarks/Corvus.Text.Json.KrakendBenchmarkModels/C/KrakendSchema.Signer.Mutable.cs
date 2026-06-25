@@ -296,7 +296,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.ObjectInArrayArray.Mutable.DefaultInstance;
                 }
             }
 
@@ -346,7 +346,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.DisableJwkSecurity.Mutable.DefaultInstance;
                 }
             }
 
@@ -371,7 +371,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.FullFormat.Mutable.DefaultInstance;
                 }
             }
 

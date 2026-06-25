@@ -334,7 +334,7 @@ public readonly partial struct Ui5ManifestSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefaultPropertiesDefinedForRouteAndTarget.AllOf0Entity.IndicatesWhetherTheViewsInRoutingAreLoadedAsyncly.Mutable.DefaultInstance;
                     }
                 }
 

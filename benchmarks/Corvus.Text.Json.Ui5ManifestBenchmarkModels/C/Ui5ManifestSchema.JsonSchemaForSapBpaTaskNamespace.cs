@@ -215,6 +215,15 @@ public readonly partial struct Ui5ManifestSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.RequiredInputsAndOutputs"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator JsonSchemaForSapBpaTaskNamespace(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.RequiredInputsAndOutputs.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Operator ==.
         /// </summary>
         /// <param name="left">The lhs of the operator.</param>

@@ -204,6 +204,15 @@ public readonly partial struct Ui5ManifestSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleUrl"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator EnhanceWithSetting(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleUrl.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleName"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -217,6 +226,15 @@ public readonly partial struct Ui5ManifestSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator EnhanceWithSetting(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleName value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleName"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator EnhanceWithSetting(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleName.Mutable value)
         {
             return From(value);
         }

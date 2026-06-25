@@ -12,4 +12,4 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 namespace Corvus.YamllintBenchmark.Current;
-internal delegate void PropertiesValidationHandler_NamedPropertyValidator(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex);
+internal delegate void PropertiesValidationHandler_NamedPropertyValidator(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context);

@@ -466,7 +466,7 @@ public readonly partial struct ImplementationsOfElement
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.TextBlock.IsSubtleEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -593,7 +593,7 @@ public readonly partial struct ImplementationsOfElement
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.TextBlock.TheStyleOfThisTextBlockForAccessibilityPurposes.Mutable.DefaultInstance;
                 }
             }
 
@@ -683,7 +683,7 @@ public readonly partial struct ImplementationsOfElement
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.TextBlock.IfTrueAllowTextToWrapOtherwiseTextIsClipped.Mutable.DefaultInstance;
                 }
             }
 

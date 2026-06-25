@@ -293,7 +293,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.TypeAcquisitionDefinition.TypeAcquisitionEntity.EnableAutoTypeAcquisition.Mutable.DefaultInstance;
                     }
                 }
 

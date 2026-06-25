@@ -252,7 +252,7 @@ public readonly partial struct TextRun
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.IsSubtleEntity.Mutable.DefaultInstance;
                 }
             }
 

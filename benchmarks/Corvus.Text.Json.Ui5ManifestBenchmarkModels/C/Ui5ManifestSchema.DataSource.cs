@@ -204,6 +204,15 @@ public readonly partial struct Ui5ManifestSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceEnum"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator DataSource(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceEnum.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceCustom"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -217,6 +226,15 @@ public readonly partial struct Ui5ManifestSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator DataSource(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceCustom value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceCustom"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator DataSource(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceCustom.Mutable value)
         {
             return From(value);
         }

@@ -288,7 +288,7 @@ public readonly partial struct FabricModSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.FabricModBenchmark.Current.FabricModSchema.Entrypoint.RequiredValue.TheLanguageAdapterToUse.Mutable.DefaultInstance;
                     }
                 }
 

@@ -229,6 +229,15 @@ public readonly partial struct Ui5Schema
                         }
 
                         /// <summary>
+                        /// Conversion from the <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredBeforeMiddlewareAndName"/> mutable view.
+                        /// </summary>
+                        /// <param name="value">The value from which to convert.</param>
+                        public static implicit operator CustomMiddlewareEntity(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredBeforeMiddlewareAndName.Mutable value)
+                        {
+                            return From(value);
+                        }
+
+                        /// <summary>
                         /// Conversion to <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredAfterMiddlewareAndName"/>.
                         /// </summary>
                         /// <param name="value">The value from which to convert.</param>
@@ -242,6 +251,15 @@ public readonly partial struct Ui5Schema
                         /// </summary>
                         /// <param name="value">The value from which to convert.</param>
                         public static implicit operator CustomMiddlewareEntity(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredAfterMiddlewareAndName value)
+                        {
+                            return From(value);
+                        }
+
+                        /// <summary>
+                        /// Conversion from the <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredAfterMiddlewareAndName"/> mutable view.
+                        /// </summary>
+                        /// <param name="value">The value from which to convert.</param>
+                        public static implicit operator CustomMiddlewareEntity(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredAfterMiddlewareAndName.Mutable value)
                         {
                             return From(value);
                         }

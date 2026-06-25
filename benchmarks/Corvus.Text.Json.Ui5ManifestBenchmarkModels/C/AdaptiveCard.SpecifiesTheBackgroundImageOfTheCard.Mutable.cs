@@ -818,6 +818,7 @@ public readonly partial struct AdaptiveCard
                 Unknown,
                 JsonElement,
                 BackgroundImageBuilder,
+                BackgroundImageSource,
                 RawUtf8StringRequiresUnescaping,
                 RawUtf8StringNotRequiresUnescaping,
                 Utf8String,
@@ -829,6 +830,7 @@ public readonly partial struct AdaptiveCard
             private readonly ReadOnlySpan<byte> _utf8Backing;
             private readonly ReadOnlySpan<char> _utf16Backing;
             private readonly Corvus.Ui5ManifestBenchmark.Current.BackgroundImage.Builder.Build? _backgroundImageBuilderInstance;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.BackgroundImage.Source _backgroundImageSourceInstance;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -861,6 +863,8 @@ public readonly partial struct AdaptiveCard
 
             public Source(Corvus.Ui5ManifestBenchmark.Current.BackgroundImage.Builder.Build value) {_backgroundImageBuilderInstance = value; _kind = Kind.BackgroundImageBuilder; }
 
+            public Source(Corvus.Ui5ManifestBenchmark.Current.BackgroundImage.Source value) { _backgroundImageSourceInstance = value; _kind = Kind.BackgroundImageSource; }
+
             private Source(Uri value) { _utf16Backing = value.OriginalString.AsSpan(); _kind = Kind.Utf16String; }
 
             public static implicit operator Source(SpecifiesTheBackgroundImageOfTheCard instance) => new(JsonElement.From(instance));
@@ -876,6 +880,9 @@ public readonly partial struct AdaptiveCard
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.BackgroundImage instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.BackgroundImage.Source value) => new(value);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Uri value) => new (value);
@@ -910,6 +917,9 @@ public readonly partial struct AdaptiveCard
                     case Kind.BackgroundImageBuilder:
                         valueBuilder.AddProperty(utf8Name, _backgroundImageBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.BackgroundImage.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.BackgroundImageSource:
+                        _backgroundImageSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -939,6 +949,9 @@ public readonly partial struct AdaptiveCard
                         break;
                     case Kind.BackgroundImageBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _backgroundImageBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.BackgroundImage.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.BackgroundImageSource:
+                        _backgroundImageSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -970,6 +983,9 @@ public readonly partial struct AdaptiveCard
                     case Kind.BackgroundImageBuilder:
                         valueBuilder.AddProperty(name, _backgroundImageBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.BackgroundImage.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.BackgroundImageSource:
+                        _backgroundImageSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1000,6 +1016,9 @@ public readonly partial struct AdaptiveCard
                     case Kind.BackgroundImageBuilder:
                         valueBuilder.AddProperty(name, _backgroundImageBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.BackgroundImage.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.BackgroundImageSource:
+                        _backgroundImageSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1029,6 +1048,9 @@ public readonly partial struct AdaptiveCard
                         break;
                     case Kind.BackgroundImageBuilder:
                         valueBuilder.AddItem(_backgroundImageBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.BackgroundImage.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.BackgroundImageSource:
+                        _backgroundImageSourceInstance.AddAsItem(ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

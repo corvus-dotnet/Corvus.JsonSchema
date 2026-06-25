@@ -927,17 +927,25 @@ public readonly partial struct JsconfigSchema
                 Unknown,
                 JsonElement,
                 ExcludeDefinitionBuilder,
+                ExcludeDefinitionSource,
                 FilesDefinitionBuilder,
+                FilesDefinitionSource,
                 IncludeDefinitionBuilder,
+                IncludeDefinitionSource,
                 ReferencesDefinitionBuilder,
+                ReferencesDefinitionSource,
             }
 
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition.Builder.Build? _excludeDefinitionBuilderInstance;
+            private readonly Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition.Source _excludeDefinitionSourceInstance;
             private readonly Corvus.JsconfigBenchmark.Current.JsconfigSchema.FilesDefinition.Builder.Build? _filesDefinitionBuilderInstance;
+            private readonly Corvus.JsconfigBenchmark.Current.JsconfigSchema.FilesDefinition.Source _filesDefinitionSourceInstance;
             private readonly Corvus.JsconfigBenchmark.Current.JsconfigSchema.IncludeDefinition.Builder.Build? _includeDefinitionBuilderInstance;
+            private readonly Corvus.JsconfigBenchmark.Current.JsconfigSchema.IncludeDefinition.Source _includeDefinitionSourceInstance;
             private readonly Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition.Builder.Build? _referencesDefinitionBuilderInstance;
+            private readonly Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition.Source _referencesDefinitionSourceInstance;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -952,11 +960,19 @@ public readonly partial struct JsconfigSchema
 
             public Source(Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition.Builder.Build value) {_excludeDefinitionBuilderInstance = value; _kind = Kind.ExcludeDefinitionBuilder; }
 
+            public Source(Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition.Source value) { _excludeDefinitionSourceInstance = value; _kind = Kind.ExcludeDefinitionSource; }
+
             public Source(Corvus.JsconfigBenchmark.Current.JsconfigSchema.FilesDefinition.Builder.Build value) {_filesDefinitionBuilderInstance = value; _kind = Kind.FilesDefinitionBuilder; }
+
+            public Source(Corvus.JsconfigBenchmark.Current.JsconfigSchema.FilesDefinition.Source value) { _filesDefinitionSourceInstance = value; _kind = Kind.FilesDefinitionSource; }
 
             public Source(Corvus.JsconfigBenchmark.Current.JsconfigSchema.IncludeDefinition.Builder.Build value) {_includeDefinitionBuilderInstance = value; _kind = Kind.IncludeDefinitionBuilder; }
 
+            public Source(Corvus.JsconfigBenchmark.Current.JsconfigSchema.IncludeDefinition.Source value) { _includeDefinitionSourceInstance = value; _kind = Kind.IncludeDefinitionSource; }
+
             public Source(Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition.Builder.Build value) {_referencesDefinitionBuilderInstance = value; _kind = Kind.ReferencesDefinitionBuilder; }
+
+            public Source(Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition.Source value) { _referencesDefinitionSourceInstance = value; _kind = Kind.ReferencesDefinitionSource; }
 
             public static implicit operator Source(AllOf6Entity instance) => new(JsonElement.From(instance));
 
@@ -964,13 +980,25 @@ public readonly partial struct JsconfigSchema
             public static implicit operator Source(Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition.Source value) => new(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.JsconfigBenchmark.Current.JsconfigSchema.FilesDefinition instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.JsconfigBenchmark.Current.JsconfigSchema.FilesDefinition.Source value) => new(value);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.JsconfigBenchmark.Current.JsconfigSchema.IncludeDefinition instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.JsconfigBenchmark.Current.JsconfigSchema.IncludeDefinition.Source value) => new(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition.Source value) => new(value);
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -984,14 +1012,26 @@ public readonly partial struct JsconfigSchema
                     case Kind.ExcludeDefinitionBuilder:
                         valueBuilder.AddProperty(utf8Name, _excludeDefinitionBuilderInstance!, static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.ExcludeDefinitionSource:
+                        _excludeDefinitionSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     case Kind.FilesDefinitionBuilder:
                         valueBuilder.AddProperty(utf8Name, _filesDefinitionBuilderInstance!, static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.FilesDefinition.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    case Kind.FilesDefinitionSource:
+                        _filesDefinitionSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                         break;
                     case Kind.IncludeDefinitionBuilder:
                         valueBuilder.AddProperty(utf8Name, _includeDefinitionBuilderInstance!, static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.IncludeDefinition.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.IncludeDefinitionSource:
+                        _includeDefinitionSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     case Kind.ReferencesDefinitionBuilder:
                         valueBuilder.AddProperty(utf8Name, _referencesDefinitionBuilderInstance!, static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    case Kind.ReferencesDefinitionSource:
+                        _referencesDefinitionSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1011,14 +1051,26 @@ public readonly partial struct JsconfigSchema
                     case Kind.ExcludeDefinitionBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _excludeDefinitionBuilderInstance!, static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.ExcludeDefinitionSource:
+                        _excludeDefinitionSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     case Kind.FilesDefinitionBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _filesDefinitionBuilderInstance!, static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.FilesDefinition.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.FilesDefinitionSource:
+                        _filesDefinitionSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                         break;
                     case Kind.IncludeDefinitionBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _includeDefinitionBuilderInstance!, static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.IncludeDefinition.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.IncludeDefinitionSource:
+                        _includeDefinitionSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     case Kind.ReferencesDefinitionBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _referencesDefinitionBuilderInstance!, static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ReferencesDefinitionSource:
+                        _referencesDefinitionSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1038,14 +1090,26 @@ public readonly partial struct JsconfigSchema
                     case Kind.ExcludeDefinitionBuilder:
                         valueBuilder.AddProperty(name, _excludeDefinitionBuilderInstance!, static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.ExcludeDefinitionSource:
+                        _excludeDefinitionSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.FilesDefinitionBuilder:
                         valueBuilder.AddProperty(name, _filesDefinitionBuilderInstance!, static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.FilesDefinition.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.FilesDefinitionSource:
+                        _filesDefinitionSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     case Kind.IncludeDefinitionBuilder:
                         valueBuilder.AddProperty(name, _includeDefinitionBuilderInstance!, static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.IncludeDefinition.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.IncludeDefinitionSource:
+                        _includeDefinitionSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.ReferencesDefinitionBuilder:
                         valueBuilder.AddProperty(name, _referencesDefinitionBuilderInstance!, static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ReferencesDefinitionSource:
+                        _referencesDefinitionSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1065,14 +1129,26 @@ public readonly partial struct JsconfigSchema
                     case Kind.ExcludeDefinitionBuilder:
                         valueBuilder.AddProperty(name, _excludeDefinitionBuilderInstance!, static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.ExcludeDefinitionSource:
+                        _excludeDefinitionSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.FilesDefinitionBuilder:
                         valueBuilder.AddProperty(name, _filesDefinitionBuilderInstance!, static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.FilesDefinition.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.FilesDefinitionSource:
+                        _filesDefinitionSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     case Kind.IncludeDefinitionBuilder:
                         valueBuilder.AddProperty(name, _includeDefinitionBuilderInstance!, static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.IncludeDefinition.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.IncludeDefinitionSource:
+                        _includeDefinitionSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.ReferencesDefinitionBuilder:
                         valueBuilder.AddProperty(name, _referencesDefinitionBuilderInstance!, static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ReferencesDefinitionSource:
+                        _referencesDefinitionSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1092,14 +1168,26 @@ public readonly partial struct JsconfigSchema
                     case Kind.ExcludeDefinitionBuilder:
                         valueBuilder.AddItem(_excludeDefinitionBuilderInstance!, static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.ExcludeDefinitionSource:
+                        _excludeDefinitionSourceInstance.AddAsItem(ref valueBuilder);
+                        break;
                     case Kind.FilesDefinitionBuilder:
                         valueBuilder.AddItem(_filesDefinitionBuilderInstance!, static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.FilesDefinition.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.FilesDefinitionSource:
+                        _filesDefinitionSourceInstance.AddAsItem(ref valueBuilder);
                         break;
                     case Kind.IncludeDefinitionBuilder:
                         valueBuilder.AddItem(_includeDefinitionBuilderInstance!, static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.IncludeDefinition.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.IncludeDefinitionSource:
+                        _includeDefinitionSourceInstance.AddAsItem(ref valueBuilder);
+                        break;
                     case Kind.ReferencesDefinitionBuilder:
                         valueBuilder.AddItem(_referencesDefinitionBuilderInstance!, static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ReferencesDefinitionSource:
+                        _referencesDefinitionSourceInstance.AddAsItem(ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

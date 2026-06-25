@@ -259,6 +259,15 @@ public readonly partial struct KrakendSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.BackendExtraConfig.Backend1httpEntity.RequiredReturnErrorDetails"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator Backend1httpEntity(Corvus.KrakendBenchmark.Current.KrakendSchema.BackendExtraConfig.Backend1httpEntity.RequiredReturnErrorDetails.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.BackendExtraConfig.Backend1httpEntity.RequiredReturnErrorCode"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -272,6 +281,15 @@ public readonly partial struct KrakendSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator Backend1httpEntity(Corvus.KrakendBenchmark.Current.KrakendSchema.BackendExtraConfig.Backend1httpEntity.RequiredReturnErrorCode value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.BackendExtraConfig.Backend1httpEntity.RequiredReturnErrorCode"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator Backend1httpEntity(Corvus.KrakendBenchmark.Current.KrakendSchema.BackendExtraConfig.Backend1httpEntity.RequiredReturnErrorCode.Mutable value)
             {
                 return From(value);
             }

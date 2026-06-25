@@ -325,7 +325,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.BundleUrlRelativeToEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -346,7 +346,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.DefaultBindingModeEntity.Mutable.DefaultInstance;
                 }
             }
 

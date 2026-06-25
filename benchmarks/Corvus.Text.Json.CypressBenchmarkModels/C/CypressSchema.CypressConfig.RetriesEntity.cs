@@ -79,7 +79,7 @@ public readonly partial struct CypressSchema
             /// <summary>
             /// Gets the default instance.
             /// </summary>
-            public static RetriesEntity DefaultInstance { get; } = RetriesEntity.ParseValue("{\r\n            \"runMode\": 0,\r\n            \"openMode\": 0\r\n          }"u8);
+            public static RetriesEntity DefaultInstance { get; } = RetriesEntity.ParseValue("{\n            \"runMode\": 0,\n            \"openMode\": 0\n          }"u8);
 
             /// <summary>
             /// Gets the value of the property with the given name.

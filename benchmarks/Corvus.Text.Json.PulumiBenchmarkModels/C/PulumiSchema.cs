@@ -250,11 +250,11 @@ public readonly partial struct PulumiSchema
     /// License is the optional license governing this project&#39;s usage.
     /// </para>
     /// </remarks>
-    public Corvus.PulumiBenchmark.Current.PulumiSchema.LicenseEntity License
+    public Corvus.PulumiBenchmark.Current.PulumiSchema.LicenseIsTheOptionalLicenseGoverningThisProjectSUsage License
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LicenseUtf8, out Corvus.PulumiBenchmark.Current.PulumiSchema.LicenseEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LicenseUtf8, out Corvus.PulumiBenchmark.Current.PulumiSchema.LicenseIsTheOptionalLicenseGoverningThisProjectSUsage value))
             {
                 return value;
             }

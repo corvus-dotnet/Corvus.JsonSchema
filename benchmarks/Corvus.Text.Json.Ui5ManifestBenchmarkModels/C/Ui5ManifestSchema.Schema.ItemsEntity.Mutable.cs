@@ -83,6 +83,16 @@ public readonly partial struct Ui5ManifestSchema
                     _documentVersion = _parent?.Version ?? 0;
                 }
 
+                /// <summary>
+                /// Gets a read-only default instance of the mutable type, surfacing the schema default value.
+                /// </summary>
+                /// <remarks>
+                /// The instance is a zero-copy facade over the immutable default, so it can be read but not
+                /// mutated; attempting to mutate it throws an <see cref="InvalidOperationException"/> directing
+                /// the caller to set the value on its parent first.
+                /// </remarks>
+                public static Mutable DefaultInstance { get; } = JsonElementHelpers.CreateDefaultValueElement<ItemsEntity, Mutable>(ItemsEntity.DefaultInstance);
+
                 /// <inheritdoc/>
                 public JsonValueKind ValueKind => TokenType.ToValueKind();
 
@@ -1230,6 +1240,7 @@ public readonly partial struct Ui5ManifestSchema
                     Unknown,
                     JsonElement,
                     SchemaBuilder,
+                    SchemaSource,
                     True,
                     False,
                     ArrayBuilder,
@@ -1239,6 +1250,7 @@ public readonly partial struct Ui5ManifestSchema
                 private readonly JsonElement _jsonElement;
                 private readonly ArrayBuilder.Build? _arrayBuilder;
                 private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Builder.Build? _schemaBuilderInstance;
+                private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source _schemaSourceInstance;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1257,6 +1269,8 @@ public readonly partial struct Ui5ManifestSchema
 
                 public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Builder.Build value) {_schemaBuilderInstance = value; _kind = Kind.SchemaBuilder; }
 
+                public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source value) { _schemaSourceInstance = value; _kind = Kind.SchemaSource; }
+
                 public static implicit operator Source(ItemsEntity instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1264,6 +1278,9 @@ public readonly partial struct Ui5ManifestSchema
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source value) => new(value);
 
                 internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                 {
@@ -1285,6 +1302,9 @@ public readonly partial struct Ui5ManifestSchema
                             break;
                         case Kind.SchemaBuilder:
                             valueBuilder.AddProperty(utf8Name, _schemaBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.SchemaSource:
+                            _schemaSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1313,6 +1333,9 @@ public readonly partial struct Ui5ManifestSchema
                         case Kind.SchemaBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _schemaBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.SchemaSource:
+                            _schemaSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1339,6 +1362,9 @@ public readonly partial struct Ui5ManifestSchema
                             break;
                         case Kind.SchemaBuilder:
                             valueBuilder.AddProperty(name, _schemaBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.SchemaSource:
+                            _schemaSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1367,6 +1393,9 @@ public readonly partial struct Ui5ManifestSchema
                         case Kind.SchemaBuilder:
                             valueBuilder.AddProperty(name, _schemaBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.SchemaSource:
+                            _schemaSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1393,6 +1422,9 @@ public readonly partial struct Ui5ManifestSchema
                             break;
                         case Kind.SchemaBuilder:
                             valueBuilder.AddItem(_schemaBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.SchemaSource:
+                            _schemaSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");

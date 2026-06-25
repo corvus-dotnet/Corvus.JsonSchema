@@ -303,7 +303,7 @@ public readonly partial struct Ui5ManifestSchema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Routing.RepresentsTheDefaultPropertiesDefinedForRouteAndTarget.AllOf0Entity.IndicatesWhetherTheViewsInRoutingAreLoadedAsyncly.Mutable.DefaultInstance;
                         }
                     }
 
@@ -345,7 +345,7 @@ public readonly partial struct Ui5ManifestSchema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Routing.RepresentsTheDefaultPropertiesDefinedForRouteAndTarget.AllOf0Entity.PropagateTitleEntity.Mutable.DefaultInstance;
                         }
                     }
 

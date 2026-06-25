@@ -204,6 +204,15 @@ public readonly partial struct Cql2Schema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ComparisonPredicate(Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -217,6 +226,15 @@ public readonly partial struct Cql2Schema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator ComparisonPredicate(Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ComparisonPredicate(Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Mutable value)
         {
             return From(value);
         }
@@ -240,6 +258,15 @@ public readonly partial struct Cql2Schema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ComparisonPredicate(Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -258,6 +285,15 @@ public readonly partial struct Cql2Schema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ComparisonPredicate(Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -271,6 +307,15 @@ public readonly partial struct Cql2Schema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator ComparisonPredicate(Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ComparisonPredicate(Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Mutable value)
         {
             return From(value);
         }

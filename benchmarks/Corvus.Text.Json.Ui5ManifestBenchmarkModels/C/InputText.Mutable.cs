@@ -291,7 +291,7 @@ public readonly partial struct InputText
                     return value;
                 }
 
-                return default;
+                return Corvus.Ui5ManifestBenchmark.Current.InputText.IfTrueAllowMultipleLinesOfInput.Mutable.DefaultInstance;
             }
         }
 

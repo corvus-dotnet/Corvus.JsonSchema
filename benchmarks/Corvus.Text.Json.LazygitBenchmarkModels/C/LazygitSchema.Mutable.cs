@@ -190,7 +190,7 @@ public readonly partial struct LazygitSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.LazygitBenchmark.Current.LazygitSchema.ConfirmOnQuit.Mutable.DefaultInstance;
             }
         }
 
@@ -240,7 +240,7 @@ public readonly partial struct LazygitSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.LazygitBenchmark.Current.LazygitSchema.DisableStartupPopups.Mutable.DefaultInstance;
             }
         }
 
@@ -340,7 +340,7 @@ public readonly partial struct LazygitSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.LazygitBenchmark.Current.LazygitSchema.NotARepository.Mutable.DefaultInstance;
             }
         }
 
@@ -390,7 +390,7 @@ public readonly partial struct LazygitSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.LazygitBenchmark.Current.LazygitSchema.PromptToReturnFromSubprocess.Mutable.DefaultInstance;
             }
         }
 
@@ -415,7 +415,7 @@ public readonly partial struct LazygitSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.LazygitBenchmark.Current.LazygitSchema.QuitOnTopLevelReturn.Mutable.DefaultInstance;
             }
         }
 

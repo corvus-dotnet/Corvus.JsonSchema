@@ -277,7 +277,7 @@ public readonly partial struct NestCliSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.NestCliBenchmark.Current.NestCliSchema.CollectionEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -298,7 +298,7 @@ public readonly partial struct NestCliSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Mutable.DefaultInstance;
             }
         }
 
@@ -319,7 +319,7 @@ public readonly partial struct NestCliSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.NestCliBenchmark.Current.NestCliSchema.DefaultImportPrefixForNewlyGeneratedLibraries.Mutable.DefaultInstance;
             }
         }
 
@@ -331,16 +331,16 @@ public readonly partial struct NestCliSchema
         /// The entry file where &#39;nest start&#39; work with. Default to &#39;main&#39;.
         /// </para>
         /// </remarks>
-        public Corvus.NestCliBenchmark.Current.NestCliSchema.EntryFileEntity.Mutable EntryFile
+        public Corvus.NestCliBenchmark.Current.NestCliSchema.TheEntryFileWhereNestStartWorkWithDefaultToMain.Mutable EntryFile
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EntryFileUtf8, out Corvus.NestCliBenchmark.Current.NestCliSchema.EntryFileEntity.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EntryFileUtf8, out Corvus.NestCliBenchmark.Current.NestCliSchema.TheEntryFileWhereNestStartWorkWithDefaultToMain.Mutable value))
                 {
                     return value;
                 }
 
-                return default;
+                return Corvus.NestCliBenchmark.Current.NestCliSchema.TheEntryFileWhereNestStartWorkWithDefaultToMain.Mutable.DefaultInstance;
             }
         }
 
@@ -361,7 +361,7 @@ public readonly partial struct NestCliSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Mutable.DefaultInstance;
             }
         }
 
@@ -377,7 +377,7 @@ public readonly partial struct NestCliSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.NestCliBenchmark.Current.NestCliSchema.LanguageEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -398,7 +398,7 @@ public readonly partial struct NestCliSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.NestCliBenchmark.Current.NestCliSchema.MonorepoEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -414,7 +414,7 @@ public readonly partial struct NestCliSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.NestCliBenchmark.Current.NestCliSchema.ProjectsEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -435,7 +435,7 @@ public readonly partial struct NestCliSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.NestCliBenchmark.Current.NestCliSchema.RootEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -456,7 +456,7 @@ public readonly partial struct NestCliSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.NestCliBenchmark.Current.NestCliSchema.SourceRootEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -674,7 +674,7 @@ public readonly partial struct NestCliSchema
         /// Set the <c>entryFile</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEntryFile(in Corvus.NestCliBenchmark.Current.NestCliSchema.EntryFileEntity.Source value)
+        public void SetEntryFile(in Corvus.NestCliBenchmark.Current.NestCliSchema.TheEntryFileWhereNestStartWorkWithDefaultToMain.Source value)
         {
             CheckValidInstance();
 
@@ -1390,7 +1390,7 @@ public readonly partial struct NestCliSchema
         private readonly Corvus.NestCliBenchmark.Current.NestCliSchema.CollectionEntity.Source _createArg1;
         private readonly Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source _createArg2;
         private readonly Corvus.NestCliBenchmark.Current.NestCliSchema.DefaultImportPrefixForNewlyGeneratedLibraries.Source _createArg3;
-        private readonly Corvus.NestCliBenchmark.Current.NestCliSchema.EntryFileEntity.Source _createArg4;
+        private readonly Corvus.NestCliBenchmark.Current.NestCliSchema.TheEntryFileWhereNestStartWorkWithDefaultToMain.Source _createArg4;
         private readonly Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source _createArg5;
         private readonly Corvus.NestCliBenchmark.Current.NestCliSchema.LanguageEntity.Source _createArg6;
         private readonly Corvus.NestCliBenchmark.Current.NestCliSchema.MonorepoEntity.Source _createArg7;
@@ -1411,7 +1411,7 @@ public readonly partial struct NestCliSchema
 
         internal Source(Corvus.NestCliBenchmark.Current.NestCliSchema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.NestCliBenchmark.Current.NestCliSchema.CollectionEntity.Source arg1, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source arg2, in Corvus.NestCliBenchmark.Current.NestCliSchema.DefaultImportPrefixForNewlyGeneratedLibraries.Source arg3, in Corvus.NestCliBenchmark.Current.NestCliSchema.EntryFileEntity.Source arg4, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source arg5, in Corvus.NestCliBenchmark.Current.NestCliSchema.LanguageEntity.Source arg6, in Corvus.NestCliBenchmark.Current.NestCliSchema.MonorepoEntity.Source arg7, in Corvus.NestCliBenchmark.Current.NestCliSchema.ProjectsEntity.Source arg8, in Corvus.NestCliBenchmark.Current.NestCliSchema.RootEntity.Source arg9, in Corvus.NestCliBenchmark.Current.NestCliSchema.SourceRootEntity.Source arg10)
+        internal Source(in Corvus.NestCliBenchmark.Current.NestCliSchema.CollectionEntity.Source arg1, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source arg2, in Corvus.NestCliBenchmark.Current.NestCliSchema.DefaultImportPrefixForNewlyGeneratedLibraries.Source arg3, in Corvus.NestCliBenchmark.Current.NestCliSchema.TheEntryFileWhereNestStartWorkWithDefaultToMain.Source arg4, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source arg5, in Corvus.NestCliBenchmark.Current.NestCliSchema.LanguageEntity.Source arg6, in Corvus.NestCliBenchmark.Current.NestCliSchema.MonorepoEntity.Source arg7, in Corvus.NestCliBenchmark.Current.NestCliSchema.ProjectsEntity.Source arg8, in Corvus.NestCliBenchmark.Current.NestCliSchema.RootEntity.Source arg9, in Corvus.NestCliBenchmark.Current.NestCliSchema.SourceRootEntity.Source arg10)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1574,7 +1574,7 @@ public readonly partial struct NestCliSchema
         private readonly Corvus.NestCliBenchmark.Current.NestCliSchema.CollectionEntity.Source _createArg1;
         private readonly Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source<TContext> _createArg2;
         private readonly Corvus.NestCliBenchmark.Current.NestCliSchema.DefaultImportPrefixForNewlyGeneratedLibraries.Source _createArg3;
-        private readonly Corvus.NestCliBenchmark.Current.NestCliSchema.EntryFileEntity.Source _createArg4;
+        private readonly Corvus.NestCliBenchmark.Current.NestCliSchema.TheEntryFileWhereNestStartWorkWithDefaultToMain.Source _createArg4;
         private readonly Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source<TContext> _createArg5;
         private readonly Corvus.NestCliBenchmark.Current.NestCliSchema.LanguageEntity.Source _createArg6;
         private readonly Corvus.NestCliBenchmark.Current.NestCliSchema.MonorepoEntity.Source _createArg7;
@@ -1593,7 +1593,7 @@ public readonly partial struct NestCliSchema
 
         internal Source(scoped in TContext context, Corvus.NestCliBenchmark.Current.NestCliSchema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.NestCliBenchmark.Current.NestCliSchema.CollectionEntity.Source arg1, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source<TContext> arg2, in Corvus.NestCliBenchmark.Current.NestCliSchema.DefaultImportPrefixForNewlyGeneratedLibraries.Source arg3, in Corvus.NestCliBenchmark.Current.NestCliSchema.EntryFileEntity.Source arg4, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source<TContext> arg5, in Corvus.NestCliBenchmark.Current.NestCliSchema.LanguageEntity.Source arg6, in Corvus.NestCliBenchmark.Current.NestCliSchema.MonorepoEntity.Source arg7, in Corvus.NestCliBenchmark.Current.NestCliSchema.ProjectsEntity.Source<TContext> arg8, in Corvus.NestCliBenchmark.Current.NestCliSchema.RootEntity.Source arg9, in Corvus.NestCliBenchmark.Current.NestCliSchema.SourceRootEntity.Source arg10)
+        internal Source(scoped in TContext context, in Corvus.NestCliBenchmark.Current.NestCliSchema.CollectionEntity.Source arg1, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source<TContext> arg2, in Corvus.NestCliBenchmark.Current.NestCliSchema.DefaultImportPrefixForNewlyGeneratedLibraries.Source arg3, in Corvus.NestCliBenchmark.Current.NestCliSchema.TheEntryFileWhereNestStartWorkWithDefaultToMain.Source arg4, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source<TContext> arg5, in Corvus.NestCliBenchmark.Current.NestCliSchema.LanguageEntity.Source arg6, in Corvus.NestCliBenchmark.Current.NestCliSchema.MonorepoEntity.Source arg7, in Corvus.NestCliBenchmark.Current.NestCliSchema.ProjectsEntity.Source<TContext> arg8, in Corvus.NestCliBenchmark.Current.NestCliSchema.RootEntity.Source arg9, in Corvus.NestCliBenchmark.Current.NestCliSchema.SourceRootEntity.Source arg10)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1761,7 +1761,7 @@ public readonly partial struct NestCliSchema
             in Corvus.NestCliBenchmark.Current.NestCliSchema.CollectionEntity.Source collection = default,
             in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source compilerOptions = default,
             in Corvus.NestCliBenchmark.Current.NestCliSchema.DefaultImportPrefixForNewlyGeneratedLibraries.Source defaultLibraryPrefix = default,
-            in Corvus.NestCliBenchmark.Current.NestCliSchema.EntryFileEntity.Source entryFile = default,
+            in Corvus.NestCliBenchmark.Current.NestCliSchema.TheEntryFileWhereNestStartWorkWithDefaultToMain.Source entryFile = default,
             in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source generateOptions = default,
             in Corvus.NestCliBenchmark.Current.NestCliSchema.LanguageEntity.Source language = default,
             in Corvus.NestCliBenchmark.Current.NestCliSchema.MonorepoEntity.Source monorepo = default,
@@ -1788,7 +1788,7 @@ public readonly partial struct NestCliSchema
             in Corvus.NestCliBenchmark.Current.NestCliSchema.CollectionEntity.Source collection = default,
             in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source compilerOptions = default,
             in Corvus.NestCliBenchmark.Current.NestCliSchema.DefaultImportPrefixForNewlyGeneratedLibraries.Source defaultLibraryPrefix = default,
-            in Corvus.NestCliBenchmark.Current.NestCliSchema.EntryFileEntity.Source entryFile = default,
+            in Corvus.NestCliBenchmark.Current.NestCliSchema.TheEntryFileWhereNestStartWorkWithDefaultToMain.Source entryFile = default,
             in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source generateOptions = default,
             in Corvus.NestCliBenchmark.Current.NestCliSchema.LanguageEntity.Source language = default,
             in Corvus.NestCliBenchmark.Current.NestCliSchema.MonorepoEntity.Source monorepo = default,
@@ -1808,7 +1808,7 @@ public readonly partial struct NestCliSchema
             in Corvus.NestCliBenchmark.Current.NestCliSchema.CollectionEntity.Source collection = default,
             in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source<TContext> compilerOptions = default,
             in Corvus.NestCliBenchmark.Current.NestCliSchema.DefaultImportPrefixForNewlyGeneratedLibraries.Source defaultLibraryPrefix = default,
-            in Corvus.NestCliBenchmark.Current.NestCliSchema.EntryFileEntity.Source entryFile = default,
+            in Corvus.NestCliBenchmark.Current.NestCliSchema.TheEntryFileWhereNestStartWorkWithDefaultToMain.Source entryFile = default,
             in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source<TContext> generateOptions = default,
             in Corvus.NestCliBenchmark.Current.NestCliSchema.LanguageEntity.Source language = default,
             in Corvus.NestCliBenchmark.Current.NestCliSchema.MonorepoEntity.Source monorepo = default,
@@ -1839,7 +1839,7 @@ public readonly partial struct NestCliSchema
             in Corvus.NestCliBenchmark.Current.NestCliSchema.CollectionEntity.Source collection = default,
             in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source<TContext> compilerOptions = default,
             in Corvus.NestCliBenchmark.Current.NestCliSchema.DefaultImportPrefixForNewlyGeneratedLibraries.Source defaultLibraryPrefix = default,
-            in Corvus.NestCliBenchmark.Current.NestCliSchema.EntryFileEntity.Source entryFile = default,
+            in Corvus.NestCliBenchmark.Current.NestCliSchema.TheEntryFileWhereNestStartWorkWithDefaultToMain.Source entryFile = default,
             in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source<TContext> generateOptions = default,
             in Corvus.NestCliBenchmark.Current.NestCliSchema.LanguageEntity.Source language = default,
             in Corvus.NestCliBenchmark.Current.NestCliSchema.MonorepoEntity.Source monorepo = default,
@@ -1959,7 +1959,7 @@ public readonly partial struct NestCliSchema
         /// <param name="arg9">The value of the property.</param>
         /// <param name="arg10">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.NestCliBenchmark.Current.NestCliSchema.CollectionEntity.Source arg1, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source arg2, in Corvus.NestCliBenchmark.Current.NestCliSchema.DefaultImportPrefixForNewlyGeneratedLibraries.Source arg3, in Corvus.NestCliBenchmark.Current.NestCliSchema.EntryFileEntity.Source arg4, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source arg5, in Corvus.NestCliBenchmark.Current.NestCliSchema.LanguageEntity.Source arg6, in Corvus.NestCliBenchmark.Current.NestCliSchema.MonorepoEntity.Source arg7, in Corvus.NestCliBenchmark.Current.NestCliSchema.ProjectsEntity.Source arg8, in Corvus.NestCliBenchmark.Current.NestCliSchema.RootEntity.Source arg9, in Corvus.NestCliBenchmark.Current.NestCliSchema.SourceRootEntity.Source arg10, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(in Corvus.NestCliBenchmark.Current.NestCliSchema.CollectionEntity.Source arg1, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source arg2, in Corvus.NestCliBenchmark.Current.NestCliSchema.DefaultImportPrefixForNewlyGeneratedLibraries.Source arg3, in Corvus.NestCliBenchmark.Current.NestCliSchema.TheEntryFileWhereNestStartWorkWithDefaultToMain.Source arg4, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source arg5, in Corvus.NestCliBenchmark.Current.NestCliSchema.LanguageEntity.Source arg6, in Corvus.NestCliBenchmark.Current.NestCliSchema.MonorepoEntity.Source arg7, in Corvus.NestCliBenchmark.Current.NestCliSchema.ProjectsEntity.Source arg8, in Corvus.NestCliBenchmark.Current.NestCliSchema.RootEntity.Source arg9, in Corvus.NestCliBenchmark.Current.NestCliSchema.SourceRootEntity.Source arg10, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
@@ -1982,7 +1982,7 @@ public readonly partial struct NestCliSchema
         /// <param name="arg9">The value of the property.</param>
         /// <param name="arg10">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.NestCliBenchmark.Current.NestCliSchema.CollectionEntity.Source arg1, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source<TContext> arg2, in Corvus.NestCliBenchmark.Current.NestCliSchema.DefaultImportPrefixForNewlyGeneratedLibraries.Source arg3, in Corvus.NestCliBenchmark.Current.NestCliSchema.EntryFileEntity.Source arg4, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source<TContext> arg5, in Corvus.NestCliBenchmark.Current.NestCliSchema.LanguageEntity.Source arg6, in Corvus.NestCliBenchmark.Current.NestCliSchema.MonorepoEntity.Source arg7, in Corvus.NestCliBenchmark.Current.NestCliSchema.ProjectsEntity.Source<TContext> arg8, in Corvus.NestCliBenchmark.Current.NestCliSchema.RootEntity.Source arg9, in Corvus.NestCliBenchmark.Current.NestCliSchema.SourceRootEntity.Source arg10, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.NestCliBenchmark.Current.NestCliSchema.CollectionEntity.Source arg1, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source<TContext> arg2, in Corvus.NestCliBenchmark.Current.NestCliSchema.DefaultImportPrefixForNewlyGeneratedLibraries.Source arg3, in Corvus.NestCliBenchmark.Current.NestCliSchema.TheEntryFileWhereNestStartWorkWithDefaultToMain.Source arg4, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source<TContext> arg5, in Corvus.NestCliBenchmark.Current.NestCliSchema.LanguageEntity.Source arg6, in Corvus.NestCliBenchmark.Current.NestCliSchema.MonorepoEntity.Source arg7, in Corvus.NestCliBenchmark.Current.NestCliSchema.ProjectsEntity.Source<TContext> arg8, in Corvus.NestCliBenchmark.Current.NestCliSchema.RootEntity.Source arg9, in Corvus.NestCliBenchmark.Current.NestCliSchema.SourceRootEntity.Source arg10, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -2036,7 +2036,7 @@ public readonly partial struct NestCliSchema
     /// <param name="root">The value of the <c>"root"</c> property.</param>
     /// <param name="sourceRoot">The value of the <c>"sourceRoot"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.NestCliBenchmark.Current.NestCliSchema.CollectionEntity.Source collection = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source compilerOptions = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.DefaultImportPrefixForNewlyGeneratedLibraries.Source defaultLibraryPrefix = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.EntryFileEntity.Source entryFile = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source generateOptions = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.LanguageEntity.Source language = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.MonorepoEntity.Source monorepo = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.ProjectsEntity.Source projects = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.RootEntity.Source root = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.SourceRootEntity.Source sourceRoot = default)
+    public static Source Build(in Corvus.NestCliBenchmark.Current.NestCliSchema.CollectionEntity.Source collection = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source compilerOptions = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.DefaultImportPrefixForNewlyGeneratedLibraries.Source defaultLibraryPrefix = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.TheEntryFileWhereNestStartWorkWithDefaultToMain.Source entryFile = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source generateOptions = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.LanguageEntity.Source language = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.MonorepoEntity.Source monorepo = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.ProjectsEntity.Source projects = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.RootEntity.Source root = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.SourceRootEntity.Source sourceRoot = default)
     {
         return new Source(collection, compilerOptions, defaultLibraryPrefix, entryFile, generateOptions, language, monorepo, projects, root, sourceRoot);
     }
@@ -2057,7 +2057,7 @@ public readonly partial struct NestCliSchema
     /// <param name="root">The value of the <c>"root"</c> property.</param>
     /// <param name="sourceRoot">The value of the <c>"sourceRoot"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.NestCliBenchmark.Current.NestCliSchema.CollectionEntity.Source collection = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source<TContext> compilerOptions = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.DefaultImportPrefixForNewlyGeneratedLibraries.Source defaultLibraryPrefix = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.EntryFileEntity.Source entryFile = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source<TContext> generateOptions = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.LanguageEntity.Source language = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.MonorepoEntity.Source monorepo = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.ProjectsEntity.Source<TContext> projects = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.RootEntity.Source root = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.SourceRootEntity.Source sourceRoot = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.NestCliBenchmark.Current.NestCliSchema.CollectionEntity.Source collection = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source<TContext> compilerOptions = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.DefaultImportPrefixForNewlyGeneratedLibraries.Source defaultLibraryPrefix = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.TheEntryFileWhereNestStartWorkWithDefaultToMain.Source entryFile = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source<TContext> generateOptions = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.LanguageEntity.Source language = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.MonorepoEntity.Source monorepo = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.ProjectsEntity.Source<TContext> projects = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.RootEntity.Source root = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.SourceRootEntity.Source sourceRoot = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -2147,7 +2147,7 @@ public readonly partial struct NestCliSchema
     /// <param name="sourceRoot">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.NestCliBenchmark.Current.NestCliSchema.CollectionEntity.Source collection = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source compilerOptions = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.DefaultImportPrefixForNewlyGeneratedLibraries.Source defaultLibraryPrefix = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.EntryFileEntity.Source entryFile = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source generateOptions = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.LanguageEntity.Source language = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.MonorepoEntity.Source monorepo = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.ProjectsEntity.Source projects = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.RootEntity.Source root = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.SourceRootEntity.Source sourceRoot = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.NestCliBenchmark.Current.NestCliSchema.CollectionEntity.Source collection = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source compilerOptions = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.DefaultImportPrefixForNewlyGeneratedLibraries.Source defaultLibraryPrefix = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.TheEntryFileWhereNestStartWorkWithDefaultToMain.Source entryFile = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source generateOptions = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.LanguageEntity.Source language = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.MonorepoEntity.Source monorepo = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.ProjectsEntity.Source projects = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.RootEntity.Source root = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.SourceRootEntity.Source sourceRoot = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -2178,7 +2178,7 @@ public readonly partial struct NestCliSchema
     /// <param name="sourceRoot">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.NestCliBenchmark.Current.NestCliSchema.CollectionEntity.Source collection = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source<TContext> compilerOptions = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.DefaultImportPrefixForNewlyGeneratedLibraries.Source defaultLibraryPrefix = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.EntryFileEntity.Source entryFile = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source<TContext> generateOptions = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.LanguageEntity.Source language = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.MonorepoEntity.Source monorepo = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.ProjectsEntity.Source<TContext> projects = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.RootEntity.Source root = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.SourceRootEntity.Source sourceRoot = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.NestCliBenchmark.Current.NestCliSchema.CollectionEntity.Source collection = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source<TContext> compilerOptions = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.DefaultImportPrefixForNewlyGeneratedLibraries.Source defaultLibraryPrefix = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.TheEntryFileWhereNestStartWorkWithDefaultToMain.Source entryFile = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source<TContext> generateOptions = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.LanguageEntity.Source language = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.MonorepoEntity.Source monorepo = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.ProjectsEntity.Source<TContext> projects = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.RootEntity.Source root = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.SourceRootEntity.Source sourceRoot = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

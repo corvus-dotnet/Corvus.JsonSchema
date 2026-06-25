@@ -350,6 +350,15 @@ public readonly partial struct KrakendSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Gcp.RequiredAudience"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Gcp(Corvus.KrakendBenchmark.Current.KrakendSchema.Gcp.RequiredAudience.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Gcp.RequiredAudienceAndCredentialsFile"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -368,6 +377,15 @@ public readonly partial struct KrakendSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Gcp.RequiredAudienceAndCredentialsFile"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Gcp(Corvus.KrakendBenchmark.Current.KrakendSchema.Gcp.RequiredAudienceAndCredentialsFile.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Gcp.RequiredAudienceAndCredentialsJson"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -381,6 +399,15 @@ public readonly partial struct KrakendSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator Gcp(Corvus.KrakendBenchmark.Current.KrakendSchema.Gcp.RequiredAudienceAndCredentialsJson value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Gcp.RequiredAudienceAndCredentialsJson"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Gcp(Corvus.KrakendBenchmark.Current.KrakendSchema.Gcp.RequiredAudienceAndCredentialsJson.Mutable value)
         {
             return From(value);
         }

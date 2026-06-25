@@ -762,13 +762,17 @@ public readonly partial struct Ui5ManifestSchema
                 Unknown,
                 JsonElement,
                 MicrochartBulletBuilder,
+                MicrochartBulletSource,
                 MicrochartStackedBarBuilder,
+                MicrochartStackedBarSource,
             }
 
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.Builder.Build? _microchartBulletBuilderInstance;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.Source _microchartBulletSourceInstance;
             private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.Builder.Build? _microchartStackedBarBuilderInstance;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.Source _microchartStackedBarSourceInstance;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -783,7 +787,11 @@ public readonly partial struct Ui5ManifestSchema
 
             public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.Builder.Build value) {_microchartBulletBuilderInstance = value; _kind = Kind.MicrochartBulletBuilder; }
 
+            public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.Source value) { _microchartBulletSourceInstance = value; _kind = Kind.MicrochartBulletSource; }
+
             public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.Builder.Build value) {_microchartStackedBarBuilderInstance = value; _kind = Kind.MicrochartStackedBarBuilder; }
+
+            public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.Source value) { _microchartStackedBarSourceInstance = value; _kind = Kind.MicrochartStackedBarSource; }
 
             public static implicit operator Source(Microchart instance) => new(JsonElement.From(instance));
 
@@ -791,7 +799,13 @@ public readonly partial struct Ui5ManifestSchema
             public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.Source value) => new(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.Source value) => new(value);
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -805,8 +819,14 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.MicrochartBulletBuilder:
                         valueBuilder.AddProperty(utf8Name, _microchartBulletBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.MicrochartBulletSource:
+                        _microchartBulletSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     case Kind.MicrochartStackedBarBuilder:
                         valueBuilder.AddProperty(utf8Name, _microchartStackedBarBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    case Kind.MicrochartStackedBarSource:
+                        _microchartStackedBarSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -826,8 +846,14 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.MicrochartBulletBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _microchartBulletBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.MicrochartBulletSource:
+                        _microchartBulletSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     case Kind.MicrochartStackedBarBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _microchartStackedBarBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.MicrochartStackedBarSource:
+                        _microchartStackedBarSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -847,8 +873,14 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.MicrochartBulletBuilder:
                         valueBuilder.AddProperty(name, _microchartBulletBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.MicrochartBulletSource:
+                        _microchartBulletSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.MicrochartStackedBarBuilder:
                         valueBuilder.AddProperty(name, _microchartStackedBarBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.MicrochartStackedBarSource:
+                        _microchartStackedBarSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -868,8 +900,14 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.MicrochartBulletBuilder:
                         valueBuilder.AddProperty(name, _microchartBulletBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.MicrochartBulletSource:
+                        _microchartBulletSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.MicrochartStackedBarBuilder:
                         valueBuilder.AddProperty(name, _microchartStackedBarBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.MicrochartStackedBarSource:
+                        _microchartStackedBarSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -889,8 +927,14 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.MicrochartBulletBuilder:
                         valueBuilder.AddItem(_microchartBulletBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.MicrochartBulletSource:
+                        _microchartBulletSourceInstance.AddAsItem(ref valueBuilder);
+                        break;
                     case Kind.MicrochartStackedBarBuilder:
                         valueBuilder.AddItem(_microchartStackedBarBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.MicrochartStackedBarSource:
+                        _microchartStackedBarSourceInstance.AddAsItem(ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

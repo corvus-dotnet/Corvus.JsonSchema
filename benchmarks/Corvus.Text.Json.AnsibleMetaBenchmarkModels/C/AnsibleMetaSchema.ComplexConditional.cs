@@ -171,6 +171,15 @@ public readonly partial struct AnsibleMetaSchema
             return From(value);
         }
 
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ComplexConditional.JsonStringArray"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ComplexConditional(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ComplexConditional.JsonStringArray.Mutable value)
+        {
+            return From(value);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator string(ComplexConditional value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 

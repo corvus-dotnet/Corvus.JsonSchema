@@ -239,6 +239,15 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.I18nEntity.OneOf0Entity"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator I18nEntity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.I18nEntity.OneOf0Entity.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.I18nEntity.RequiredBundleName"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -257,6 +266,15 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.I18nEntity.RequiredBundleName"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator I18nEntity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.I18nEntity.RequiredBundleName.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.I18nEntity.RequiredBundleUrl"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -270,6 +288,15 @@ public readonly partial struct Ui5ManifestSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator I18nEntity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.I18nEntity.RequiredBundleUrl value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.I18nEntity.RequiredBundleUrl"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator I18nEntity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.I18nEntity.RequiredBundleUrl.Mutable value)
             {
                 return From(value);
             }

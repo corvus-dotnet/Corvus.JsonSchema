@@ -804,6 +804,7 @@ public readonly partial struct ClangFormatSchema
                 Unknown,
                 JsonElement,
                 ClangFormat16AlignmentOptionsBuilder,
+                ClangFormat16AlignmentOptionsSource,
                 True,
                 False,
             }
@@ -811,6 +812,7 @@ public readonly partial struct ClangFormatSchema
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignTrailingCommentsEntity.ClangFormat16AlignmentOptions.Builder.Build? _clangFormat16AlignmentOptionsBuilderInstance;
+            private readonly Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignTrailingCommentsEntity.ClangFormat16AlignmentOptions.Source _clangFormat16AlignmentOptionsSourceInstance;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -827,6 +829,8 @@ public readonly partial struct ClangFormatSchema
 
             public Source(Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignTrailingCommentsEntity.ClangFormat16AlignmentOptions.Builder.Build value) {_clangFormat16AlignmentOptionsBuilderInstance = value; _kind = Kind.ClangFormat16AlignmentOptionsBuilder; }
 
+            public Source(Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignTrailingCommentsEntity.ClangFormat16AlignmentOptions.Source value) { _clangFormat16AlignmentOptionsSourceInstance = value; _kind = Kind.ClangFormat16AlignmentOptionsSource; }
+
             public static implicit operator Source(AlignTrailingCommentsEntity instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -834,6 +838,9 @@ public readonly partial struct ClangFormatSchema
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignTrailingCommentsEntity.ClangFormat16AlignmentOptions instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignTrailingCommentsEntity.ClangFormat16AlignmentOptions.Source value) => new(value);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.ClangFormatBenchmark.Current.JsonBoolean instance) => new(JsonElement.From(instance));
@@ -855,6 +862,9 @@ public readonly partial struct ClangFormatSchema
                         break;
                     case Kind.ClangFormat16AlignmentOptionsBuilder:
                         valueBuilder.AddProperty(utf8Name, _clangFormat16AlignmentOptionsBuilderInstance!, static (in b, ref o) => Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignTrailingCommentsEntity.ClangFormat16AlignmentOptions.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    case Kind.ClangFormat16AlignmentOptionsSource:
+                        _clangFormat16AlignmentOptionsSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -880,6 +890,9 @@ public readonly partial struct ClangFormatSchema
                     case Kind.ClangFormat16AlignmentOptionsBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _clangFormat16AlignmentOptionsBuilderInstance!, static (in b, ref o) => Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignTrailingCommentsEntity.ClangFormat16AlignmentOptions.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.ClangFormat16AlignmentOptionsSource:
+                        _clangFormat16AlignmentOptionsSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -903,6 +916,9 @@ public readonly partial struct ClangFormatSchema
                         break;
                     case Kind.ClangFormat16AlignmentOptionsBuilder:
                         valueBuilder.AddProperty(name, _clangFormat16AlignmentOptionsBuilderInstance!, static (in b, ref o) => Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignTrailingCommentsEntity.ClangFormat16AlignmentOptions.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ClangFormat16AlignmentOptionsSource:
+                        _clangFormat16AlignmentOptionsSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -928,6 +944,9 @@ public readonly partial struct ClangFormatSchema
                     case Kind.ClangFormat16AlignmentOptionsBuilder:
                         valueBuilder.AddProperty(name, _clangFormat16AlignmentOptionsBuilderInstance!, static (in b, ref o) => Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignTrailingCommentsEntity.ClangFormat16AlignmentOptions.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.ClangFormat16AlignmentOptionsSource:
+                        _clangFormat16AlignmentOptionsSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -951,6 +970,9 @@ public readonly partial struct ClangFormatSchema
                         break;
                     case Kind.ClangFormat16AlignmentOptionsBuilder:
                         valueBuilder.AddItem(_clangFormat16AlignmentOptionsBuilderInstance!, static (in b, ref o) => Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignTrailingCommentsEntity.ClangFormat16AlignmentOptions.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ClangFormat16AlignmentOptionsSource:
+                        _clangFormat16AlignmentOptionsSourceInstance.AddAsItem(ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

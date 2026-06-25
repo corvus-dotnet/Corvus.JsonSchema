@@ -890,7 +890,9 @@ public readonly partial struct Cql2Schema
                 Unknown,
                 JsonElement,
                 AccentiBuilder,
+                AccentiSource,
                 CaseiBuilder,
+                CaseiSource,
                 RawUtf8StringRequiresUnescaping,
                 RawUtf8StringNotRequiresUnescaping,
                 Utf8String,
@@ -902,7 +904,9 @@ public readonly partial struct Cql2Schema
             private readonly ReadOnlySpan<byte> _utf8Backing;
             private readonly ReadOnlySpan<char> _utf16Backing;
             private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Builder.Build? _accentiBuilderInstance;
+            private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Source _accentiSourceInstance;
             private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Builder.Build? _caseiBuilderInstance;
+            private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Source _caseiSourceInstance;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -935,7 +939,11 @@ public readonly partial struct Cql2Schema
 
             public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Builder.Build value) {_accentiBuilderInstance = value; _kind = Kind.AccentiBuilder; }
 
+            public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Source value) { _accentiSourceInstance = value; _kind = Kind.AccentiSource; }
+
             public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Builder.Build value) {_caseiBuilderInstance = value; _kind = Kind.CaseiBuilder; }
+
+            public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Source value) { _caseiSourceInstance = value; _kind = Kind.CaseiSource; }
 
             public static implicit operator Source(CharacterExpression instance) => new(JsonElement.From(instance));
 
@@ -952,7 +960,13 @@ public readonly partial struct Cql2Schema
             public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Source value) => new(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Casei instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Source value) => new(value);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Cql2Benchmark.Current.JsonString instance) => new(JsonElement.From(instance));
@@ -984,8 +998,14 @@ public readonly partial struct Cql2Schema
                     case Kind.AccentiBuilder:
                         valueBuilder.AddProperty(utf8Name, _accentiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.AccentiSource:
+                        _accentiSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     case Kind.CaseiBuilder:
                         valueBuilder.AddProperty(utf8Name, _caseiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    case Kind.CaseiSource:
+                        _caseiSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1017,8 +1037,14 @@ public readonly partial struct Cql2Schema
                     case Kind.AccentiBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _accentiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.AccentiSource:
+                        _accentiSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     case Kind.CaseiBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _caseiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.CaseiSource:
+                        _caseiSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1050,8 +1076,14 @@ public readonly partial struct Cql2Schema
                     case Kind.AccentiBuilder:
                         valueBuilder.AddProperty(name, _accentiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.AccentiSource:
+                        _accentiSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.CaseiBuilder:
                         valueBuilder.AddProperty(name, _caseiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.CaseiSource:
+                        _caseiSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1083,8 +1115,14 @@ public readonly partial struct Cql2Schema
                     case Kind.AccentiBuilder:
                         valueBuilder.AddProperty(name, _accentiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.AccentiSource:
+                        _accentiSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.CaseiBuilder:
                         valueBuilder.AddProperty(name, _caseiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.CaseiSource:
+                        _caseiSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1116,8 +1154,14 @@ public readonly partial struct Cql2Schema
                     case Kind.AccentiBuilder:
                         valueBuilder.AddItem(_accentiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.AccentiSource:
+                        _accentiSourceInstance.AddAsItem(ref valueBuilder);
+                        break;
                     case Kind.CaseiBuilder:
                         valueBuilder.AddItem(_caseiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.CaseiSource:
+                        _caseiSourceInstance.AddAsItem(ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

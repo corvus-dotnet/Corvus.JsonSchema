@@ -1442,6 +1442,7 @@ public readonly partial struct PulumiSchema
                     Unknown,
                     JsonElement,
                     ConfigTypeDeclarationBuilder,
+                    ConfigTypeDeclarationSource,
                     RawUtf8StringRequiresUnescaping,
                     RawUtf8StringNotRequiresUnescaping,
                     Utf8String,
@@ -1460,6 +1461,7 @@ public readonly partial struct PulumiSchema
                 private readonly SimpleTypesBacking _simpleTypeBacking;
                 private readonly ArrayBuilder.Build? _arrayBuilder;
                 private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration.Builder.Build? _configTypeDeclarationBuilderInstance;
+                private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration.Source _configTypeDeclarationSourceInstance;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1507,6 +1509,8 @@ public readonly partial struct PulumiSchema
 
                 public Source(Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration.Builder.Build value) {_configTypeDeclarationBuilderInstance = value; _kind = Kind.ConfigTypeDeclarationBuilder; }
 
+                public Source(Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration.Source value) { _configTypeDeclarationSourceInstance = value; _kind = Kind.ConfigTypeDeclarationSource; }
+
                 public static implicit operator Source(AdditionalPropertiesEntity instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1532,6 +1536,9 @@ public readonly partial struct PulumiSchema
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);
@@ -1578,6 +1585,9 @@ public readonly partial struct PulumiSchema
                         case Kind.ConfigTypeDeclarationBuilder:
                             valueBuilder.AddProperty(utf8Name, _configTypeDeclarationBuilderInstance!, static (in b, ref o) => Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.ConfigTypeDeclarationSource:
+                            _configTypeDeclarationSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1622,6 +1632,9 @@ public readonly partial struct PulumiSchema
                             break;
                         case Kind.ConfigTypeDeclarationBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _configTypeDeclarationBuilderInstance!, static (in b, ref o) => Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.ConfigTypeDeclarationSource:
+                            _configTypeDeclarationSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1668,6 +1681,9 @@ public readonly partial struct PulumiSchema
                         case Kind.ConfigTypeDeclarationBuilder:
                             valueBuilder.AddProperty(name, _configTypeDeclarationBuilderInstance!, static (in b, ref o) => Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.ConfigTypeDeclarationSource:
+                            _configTypeDeclarationSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1713,6 +1729,9 @@ public readonly partial struct PulumiSchema
                         case Kind.ConfigTypeDeclarationBuilder:
                             valueBuilder.AddProperty(name, _configTypeDeclarationBuilderInstance!, static (in b, ref o) => Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.ConfigTypeDeclarationSource:
+                            _configTypeDeclarationSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1757,6 +1776,9 @@ public readonly partial struct PulumiSchema
                             break;
                         case Kind.ConfigTypeDeclarationBuilder:
                             valueBuilder.AddItem(_configTypeDeclarationBuilderInstance!, static (in b, ref o) => Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.ConfigTypeDeclarationSource:
+                            _configTypeDeclarationSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");

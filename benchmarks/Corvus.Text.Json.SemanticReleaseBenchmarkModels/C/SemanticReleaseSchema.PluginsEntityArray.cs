@@ -76,7 +76,7 @@ public readonly partial struct SemanticReleaseSchema
         /// <summary>
         /// Gets the default instance.
         /// </summary>
-        public static PluginsEntityArray DefaultInstance { get; } = PluginsEntityArray.ParseValue("[\r\n        \"@semantic-release/commit-analyzer\",\r\n        \"@semantic-release/release-notes-generator\",\r\n        \"@semantic-release/npm\",\r\n        \"@semantic-release/github\"\r\n      ]"u8);
+        public static PluginsEntityArray DefaultInstance { get; } = PluginsEntityArray.ParseValue("[\n        \"@semantic-release/commit-analyzer\",\n        \"@semantic-release/release-notes-generator\",\n        \"@semantic-release/npm\",\n        \"@semantic-release/github\"\n      ]"u8);
 
         /// <summary>
         /// Gets the rank of the array.

@@ -277,7 +277,7 @@ public readonly partial struct SemanticReleaseSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Mutable.DefaultInstance;
             }
         }
 
@@ -298,7 +298,7 @@ public readonly partial struct SemanticReleaseSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.CiEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -361,7 +361,7 @@ public readonly partial struct SemanticReleaseSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.Mutable.DefaultInstance;
             }
         }
 
@@ -403,7 +403,7 @@ public readonly partial struct SemanticReleaseSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TagFormatEntity.Mutable.DefaultInstance;
             }
         }
 

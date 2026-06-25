@@ -146,6 +146,15 @@ public readonly partial struct Draft04Schema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Draft04Benchmark.Current.Draft04Schema.SimpleTypes"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator TypeEntity(Corvus.Draft04Benchmark.Current.Draft04Schema.SimpleTypes.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Draft04Benchmark.Current.Draft04Schema.TypeEntity.SimpleTypesArray"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -159,6 +168,15 @@ public readonly partial struct Draft04Schema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator TypeEntity(Corvus.Draft04Benchmark.Current.Draft04Schema.TypeEntity.SimpleTypesArray value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Draft04Benchmark.Current.Draft04Schema.TypeEntity.SimpleTypesArray"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator TypeEntity(Corvus.Draft04Benchmark.Current.Draft04Schema.TypeEntity.SimpleTypesArray.Mutable value)
         {
             return From(value);
         }

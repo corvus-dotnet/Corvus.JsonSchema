@@ -204,7 +204,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Os.CopyToClipboardCmd.Mutable.DefaultInstance;
                 }
             }
 
@@ -229,7 +229,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Os.Edit.Mutable.DefaultInstance;
                 }
             }
 
@@ -254,7 +254,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditAtLine.Mutable.DefaultInstance;
                 }
             }
 
@@ -279,7 +279,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditAtLineAndWait.Mutable.DefaultInstance;
                 }
             }
 
@@ -304,7 +304,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditPreset.Mutable.DefaultInstance;
                 }
             }
 
@@ -329,7 +329,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Os.Open.Mutable.DefaultInstance;
                 }
             }
 
@@ -354,7 +354,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Os.OpenLink.Mutable.DefaultInstance;
                 }
             }
 

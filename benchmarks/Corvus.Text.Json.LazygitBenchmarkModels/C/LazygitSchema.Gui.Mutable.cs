@@ -204,7 +204,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.AnimateExplosion.Mutable.DefaultInstance;
                 }
             }
 
@@ -254,7 +254,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Border.Mutable.DefaultInstance;
                 }
             }
 
@@ -304,7 +304,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.CommandLogSize.Mutable.DefaultInstance;
                 }
             }
 
@@ -354,7 +354,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ExpandFocusedSidePanel.Mutable.DefaultInstance;
                 }
             }
 
@@ -379,7 +379,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Language.Mutable.DefaultInstance;
                 }
             }
 
@@ -404,7 +404,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.MainPanelSplitMode.Mutable.DefaultInstance;
                 }
             }
 
@@ -429,7 +429,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.MouseEvents.Mutable.DefaultInstance;
                 }
             }
 
@@ -454,7 +454,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.NerdFontsVersion.Mutable.DefaultInstance;
                 }
             }
 
@@ -479,7 +479,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ScrollHeight.Mutable.DefaultInstance;
                 }
             }
 
@@ -504,7 +504,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ScrollPastBottom.Mutable.DefaultInstance;
                 }
             }
 
@@ -529,7 +529,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShortTimeFormat.Mutable.DefaultInstance;
                 }
             }
 
@@ -554,7 +554,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowBottomLine.Mutable.DefaultInstance;
                 }
             }
 
@@ -579,7 +579,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowBranchCommitHash.Mutable.DefaultInstance;
                 }
             }
 
@@ -607,7 +607,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowCommandLog.Mutable.DefaultInstance;
                 }
             }
 
@@ -632,7 +632,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowFileTree.Mutable.DefaultInstance;
                 }
             }
 
@@ -657,7 +657,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowListFooter.Mutable.DefaultInstance;
                 }
             }
 
@@ -682,7 +682,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowRandomTip.Mutable.DefaultInstance;
                 }
             }
 
@@ -707,7 +707,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SidePanelWidth.Mutable.DefaultInstance;
                 }
             }
 
@@ -732,7 +732,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SkipDiscardChangeWarning.Mutable.DefaultInstance;
                 }
             }
 
@@ -757,7 +757,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SkipRewordInEditorWarning.Mutable.DefaultInstance;
                 }
             }
 
@@ -782,7 +782,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SkipStashWarning.Mutable.DefaultInstance;
                 }
             }
 
@@ -807,7 +807,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SplitDiff.Mutable.DefaultInstance;
                 }
             }
 
@@ -857,7 +857,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.TimeFormat.Mutable.DefaultInstance;
                 }
             }
 
@@ -882,7 +882,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.WindowSize.Mutable.DefaultInstance;
                 }
             }
 

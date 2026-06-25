@@ -2298,11 +2298,11 @@ public readonly partial struct JsconfigSchema
             /// Specify multiple folders that act like `./node_modules/@types`.
             /// </para>
             /// </remarks>
-            public Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TypeRootsJArray TypeRoots
+            public Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyMulArray TypeRoots
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TypeRootsUtf8, out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TypeRootsJArray value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TypeRootsUtf8, out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyMulArray value))
                     {
                         return value;
                     }

@@ -335,7 +335,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowJsEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -377,7 +377,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowAccessingUmdGlobalsFromModules.Mutable.DefaultInstance;
                     }
                 }
 
@@ -524,7 +524,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.Mutable.DefaultInstance;
                     }
                 }
 
@@ -545,7 +545,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CompositeEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -587,7 +587,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DeclarationEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -629,7 +629,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CreateSourcemapsForDTsFiles.Mutable.DefaultInstance;
                     }
                 }
 
@@ -692,7 +692,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableSizeLimitEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -755,7 +755,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DownlevelIterationEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -776,7 +776,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitBomEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -797,7 +797,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.OnlyOutputDTsFilesAndNotJavaScriptFiles.Mutable.DefaultInstance;
                     }
                 }
 
@@ -839,7 +839,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EsModuleInteropEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -860,7 +860,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -902,7 +902,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExtendedDiagnosticsEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -944,7 +944,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnsureThatCasingIsCorrectInImports.Mutable.DefaultInstance;
                     }
                 }
 
@@ -965,7 +965,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitAV8CpuProfileOfTheCompilerRunForDebugging.Mutable.DefaultInstance;
                     }
                 }
 
@@ -986,7 +986,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ImportHelpersEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1007,7 +1007,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ImportsNotUsedAsValuesEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1049,7 +1049,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.IncludeSourcemapFilesInsideTheEmittedJavaScript.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1070,7 +1070,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.InlineSourcesEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1091,7 +1091,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.IsolatedModulesEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1133,7 +1133,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1154,7 +1154,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1175,7 +1175,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxImportSourceEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1196,7 +1196,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.KeyofStringsOnlyEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1238,7 +1238,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrintTheNamesOfEmittedFilesAfterACompilation.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1259,7 +1259,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrintAllOfTheFilesReadDuringTheCompilation.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1322,7 +1322,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.MaxNodeModuleJsDepthEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1364,7 +1364,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ModuleResolutionEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1406,7 +1406,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableEmittingFileFromACompilation.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1427,7 +1427,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoEmitHelpersEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1448,7 +1448,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoEmitOnErrorEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1469,7 +1469,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableTruncatingTypesInErrorMessages.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1490,7 +1490,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoFallthroughCasesInSwitchEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1532,7 +1532,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitOverrideEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1553,7 +1553,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitReturnsEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1595,7 +1595,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitUseStrictEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1616,7 +1616,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoLibEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1658,7 +1658,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoResolveEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1679,7 +1679,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoStrictGenericChecksEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1721,7 +1721,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenALocalVariablesArenTRead.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1742,7 +1742,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RaiseAnErrorWhenAFunctionParameterIsnTRead.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1847,7 +1847,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErasingConstEnumDeclarationsInGeneratedCode.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1868,7 +1868,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PreserveSymlinksEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1889,7 +1889,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PreserveValueImportsEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1931,7 +1931,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrettyEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1952,7 +1952,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ReactNamespaceEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1973,7 +1973,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableEmittingComments.Mutable.DefaultInstance;
                     }
                 }
 
@@ -1994,7 +1994,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableImportingJsonFiles.Mutable.DefaultInstance;
                     }
                 }
 
@@ -2015,7 +2015,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ResolvePackageJsonExportsEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -2036,7 +2036,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.UseThePackageJsonImportsFieldWhenResolvingImports.Mutable.DefaultInstance;
                     }
                 }
 
@@ -2099,7 +2099,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SkipDefaultLibCheckEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -2120,7 +2120,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SkipTypeCheckingAllDTsFiles.Mutable.DefaultInstance;
                     }
                 }
 
@@ -2141,7 +2141,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CreateSourceMapFilesForEmittedJavaScriptFiles.Mutable.DefaultInstance;
                     }
                 }
 
@@ -2183,7 +2183,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableAllStrictTypeCheckingOptions.Mutable.DefaultInstance;
                     }
                 }
 
@@ -2204,7 +2204,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictBindCallApplyEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -2225,7 +2225,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictFunctionTypesEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -2246,7 +2246,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WhenTypeCheckingTakeIntoAccountNullAndUndefined.Mutable.DefaultInstance;
                     }
                 }
 
@@ -2267,7 +2267,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictPropertyInitializationEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -2309,7 +2309,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressExcessPropertyErrorsEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -2330,7 +2330,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressImplicitAnyIndexErrorsEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -2351,7 +2351,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TargetEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -2372,7 +2372,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TraceResolutionEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -2393,7 +2393,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TsBuildInfoFileEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -2405,11 +2405,11 @@ public readonly partial struct JsconfigSchema
                 /// Specify multiple folders that act like `./node_modules/@types`.
                 /// </para>
                 /// </remarks>
-                public Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TypeRootsJArray.Mutable TypeRoots
+                public Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyMulArray.Mutable TypeRoots
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TypeRootsUtf8, out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TypeRootsJArray.Mutable value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TypeRootsUtf8, out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyMulArray.Mutable value))
                         {
                             return value;
                         }
@@ -2456,7 +2456,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitEcmaScriptStandardCompliantClassFields.Mutable.DefaultInstance;
                     }
                 }
 
@@ -2477,7 +2477,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DefaultCatchClauseVariablesAsUnknownInsteadOfAny.Mutable.DefaultInstance;
                     }
                 }
 
@@ -2540,7 +2540,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WatchDirectoryEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -2561,7 +2561,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WatchFileEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -7333,7 +7333,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>typeRoots</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetTypeRoots(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TypeRootsJArray.Source value)
+                public void SetTypeRoots(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyMulArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -7366,7 +7366,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>typeRoots</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetTypeRoots<TContext>(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TypeRootsJArray.Source<TContext> value)
+                public void SetTypeRoots<TContext>(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyMulArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -8440,7 +8440,7 @@ public readonly partial struct JsconfigSchema
                     in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TargetEntity.Source target = default,
                     in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TraceResolutionEntity.Source traceResolution = default,
                     in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TsBuildInfoFileEntity.Source tsBuildInfoFile = default,
-                    in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TypeRootsJArray.Source typeRoots = default,
+                    in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyMulArray.Source typeRoots = default,
                     in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TypesJsonSArray.Source types = default,
                     in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitEcmaScriptStandardCompliantClassFields.Source useDefineForClassFields = default,
                     in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DefaultCatchClauseVariablesAsUnknownInsteadOfAny.Source useUnknownInCatchVariables = default,
@@ -8665,7 +8665,7 @@ public readonly partial struct JsconfigSchema
                     in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TargetEntity.Source target = default,
                     in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TraceResolutionEntity.Source traceResolution = default,
                     in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TsBuildInfoFileEntity.Source tsBuildInfoFile = default,
-                    in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TypeRootsJArray.Source typeRoots = default,
+                    in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyMulArray.Source typeRoots = default,
                     in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TypesJsonSArray.Source types = default,
                     in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitEcmaScriptStandardCompliantClassFields.Source useDefineForClassFields = default,
                     in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DefaultCatchClauseVariablesAsUnknownInsteadOfAny.Source useUnknownInCatchVariables = default,
@@ -8784,7 +8784,7 @@ public readonly partial struct JsconfigSchema
                     in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TargetEntity.Source target = default,
                     in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TraceResolutionEntity.Source traceResolution = default,
                     in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TsBuildInfoFileEntity.Source tsBuildInfoFile = default,
-                    in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TypeRootsJArray.Source<TContext> typeRoots = default,
+                    in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyMulArray.Source<TContext> typeRoots = default,
                     in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TypesJsonSArray.Source<TContext> types = default,
                     in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitEcmaScriptStandardCompliantClassFields.Source useDefineForClassFields = default,
                     in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DefaultCatchClauseVariablesAsUnknownInsteadOfAny.Source useUnknownInCatchVariables = default,
@@ -9013,7 +9013,7 @@ public readonly partial struct JsconfigSchema
                     in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TargetEntity.Source target = default,
                     in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TraceResolutionEntity.Source traceResolution = default,
                     in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TsBuildInfoFileEntity.Source tsBuildInfoFile = default,
-                    in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TypeRootsJArray.Source<TContext> typeRoots = default,
+                    in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyMulArray.Source<TContext> typeRoots = default,
                     in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TypesJsonSArray.Source<TContext> types = default,
                     in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitEcmaScriptStandardCompliantClassFields.Source useDefineForClassFields = default,
                     in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DefaultCatchClauseVariablesAsUnknownInsteadOfAny.Source useUnknownInCatchVariables = default,
@@ -9355,7 +9355,7 @@ public readonly partial struct JsconfigSchema
             /// <param name="watchFile">The value of the property.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
             /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-            public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowArbitraryExtensions = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowImportingTsExtensions = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowJsEntity.Source allowJs = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowSyntheticDefaultImports = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowAccessingUmdGlobalsFromModules.Source allowUmdGlobalAccess = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowUnreachableCode = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowUnusedLabels = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source alwaysStrict = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source assumeChangesOnlyAffectDirectDependencies = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source baseUrl = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source charset = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.Source checkJs = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CompositeEntity.Source composite = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsonStringArray.Source customConditions = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DeclarationEntity.Source declaration = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyTheOutputDirectoryForGeneratedDeclarationFiles.Source declarationDir = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CreateSourcemapsForDTsFiles.Source declarationMap = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source diagnostics = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source disableReferencedProjectLoad = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableSizeLimitEntity.Source disableSizeLimit = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source disableSolutionSearching = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source disableSourceOfProjectReferenceRedirect = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DownlevelIterationEntity.Source downlevelIteration = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitBomEntity.Source emitBom = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.OnlyOutputDTsFilesAndNotJavaScriptFiles.Source emitDeclarationOnly = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source emitDecoratorMetadata = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EsModuleInteropEntity.Source esModuleInterop = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.Source exactOptionalPropertyTypes = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source experimentalDecorators = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExtendedDiagnosticsEntity.Source extendedDiagnostics = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.FallbackPollingEntity.Source fallbackPolling = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnsureThatCasingIsCorrectInImports.Source forceConsistentCasingInFileNames = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitAV8CpuProfileOfTheCompilerRunForDebugging.Source generateCpuProfile = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ImportHelpersEntity.Source importHelpers = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ImportsNotUsedAsValuesEntity.Source importsNotUsedAsValues = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source incremental = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.IncludeSourcemapFilesInsideTheEmittedJavaScript.Source inlineSourceMap = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.InlineSourcesEntity.Source inlineSources = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.IsolatedModulesEntity.Source isolatedModules = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatJsxCodeIsGenerated.Source jsx = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.Source jsxFactory = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.Source jsxFragmentFactory = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxImportSourceEntity.Source jsxImportSource = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.KeyofStringsOnlyEntity.Source keyofStringsOnly = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.Source lib = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrintTheNamesOfEmittedFilesAfterACompilation.Source listEmittedFiles = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrintAllOfTheFilesReadDuringTheCompilation.Source listFiles = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source listFilesOnly = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source mapRoot = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.MaxNodeModuleJsDepthEntity.Source maxNodeModuleJsDepth = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatModuleCodeIsGenerated.Source module = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ModuleResolutionEntity.Source moduleResolution = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SetTheNewlineCharacterForEmittingFiles.Source newLine = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableEmittingFileFromACompilation.Source noEmit = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoEmitHelpersEntity.Source noEmitHelpers = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoEmitOnErrorEntity.Source noEmitOnError = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableTruncatingTypesInErrorMessages.Source noErrorTruncation = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoFallthroughCasesInSwitchEntity.Source noFallthroughCasesInSwitch = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source noImplicitAny = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitOverrideEntity.Source noImplicitOverride = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitReturnsEntity.Source noImplicitReturns = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source noImplicitThis = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitUseStrictEntity.Source noImplicitUseStrict = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoLibEntity.Source noLib = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source noPropertyAccessFromIndexSignature = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoResolveEntity.Source noResolve = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoStrictGenericChecksEntity.Source noStrictGenericChecks = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source noUncheckedIndexedAccess = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenALocalVariablesArenTRead.Source noUnusedLocals = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RaiseAnErrorWhenAFunctionParameterIsnTRead.Source noUnusedParameters = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source outDir = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source outFile = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PathsEntity.Source paths = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PluginsEntityArray.Source plugins = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErasingConstEnumDeclarationsInGeneratedCode.Source preserveConstEnums = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PreserveSymlinksEntity.Source preserveSymlinks = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PreserveValueImportsEntity.Source preserveValueImports = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source preserveWatchOutput = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrettyEntity.Source pretty = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ReactNamespaceEntity.Source reactNamespace = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableEmittingComments.Source removeComments = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableImportingJsonFiles.Source resolveJsonModule = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ResolvePackageJsonExportsEntity.Source resolvePackageJsonExports = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.UseThePackageJsonImportsFieldWhenResolvingImports.Source resolvePackageJsonImports = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source rootDir = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RootDirsJsArray.Source rootDirs = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SkipDefaultLibCheckEntity.Source skipDefaultLibCheck = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SkipTypeCheckingAllDTsFiles.Source skipLibCheck = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CreateSourceMapFilesForEmittedJavaScriptFiles.Source sourceMap = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source sourceRoot = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableAllStrictTypeCheckingOptions.Source strict = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictBindCallApplyEntity.Source strictBindCallApply = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictFunctionTypesEntity.Source strictFunctionTypes = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WhenTypeCheckingTakeIntoAccountNullAndUndefined.Source strictNullChecks = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictPropertyInitializationEntity.Source strictPropertyInitialization = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source stripInternal = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressExcessPropertyErrorsEntity.Source suppressExcessPropertyErrors = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressImplicitAnyIndexErrorsEntity.Source suppressImplicitAnyIndexErrors = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TargetEntity.Source target = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TraceResolutionEntity.Source traceResolution = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TsBuildInfoFileEntity.Source tsBuildInfoFile = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TypeRootsJArray.Source typeRoots = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TypesJsonSArray.Source types = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitEcmaScriptStandardCompliantClassFields.Source useDefineForClassFields = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DefaultCatchClauseVariablesAsUnknownInsteadOfAny.Source useUnknownInCatchVariables = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source verbatimModuleSyntax = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source watch = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WatchDirectoryEntity.Source watchDirectory = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WatchFileEntity.Source watchFile = default, int initialCapacity = 30)
+            public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowArbitraryExtensions = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowImportingTsExtensions = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowJsEntity.Source allowJs = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowSyntheticDefaultImports = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowAccessingUmdGlobalsFromModules.Source allowUmdGlobalAccess = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowUnreachableCode = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowUnusedLabels = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source alwaysStrict = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source assumeChangesOnlyAffectDirectDependencies = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source baseUrl = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source charset = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.Source checkJs = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CompositeEntity.Source composite = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsonStringArray.Source customConditions = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DeclarationEntity.Source declaration = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyTheOutputDirectoryForGeneratedDeclarationFiles.Source declarationDir = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CreateSourcemapsForDTsFiles.Source declarationMap = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source diagnostics = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source disableReferencedProjectLoad = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableSizeLimitEntity.Source disableSizeLimit = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source disableSolutionSearching = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source disableSourceOfProjectReferenceRedirect = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DownlevelIterationEntity.Source downlevelIteration = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitBomEntity.Source emitBom = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.OnlyOutputDTsFilesAndNotJavaScriptFiles.Source emitDeclarationOnly = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source emitDecoratorMetadata = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EsModuleInteropEntity.Source esModuleInterop = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.Source exactOptionalPropertyTypes = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source experimentalDecorators = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExtendedDiagnosticsEntity.Source extendedDiagnostics = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.FallbackPollingEntity.Source fallbackPolling = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnsureThatCasingIsCorrectInImports.Source forceConsistentCasingInFileNames = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitAV8CpuProfileOfTheCompilerRunForDebugging.Source generateCpuProfile = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ImportHelpersEntity.Source importHelpers = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ImportsNotUsedAsValuesEntity.Source importsNotUsedAsValues = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source incremental = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.IncludeSourcemapFilesInsideTheEmittedJavaScript.Source inlineSourceMap = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.InlineSourcesEntity.Source inlineSources = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.IsolatedModulesEntity.Source isolatedModules = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatJsxCodeIsGenerated.Source jsx = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.Source jsxFactory = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.Source jsxFragmentFactory = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxImportSourceEntity.Source jsxImportSource = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.KeyofStringsOnlyEntity.Source keyofStringsOnly = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.Source lib = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrintTheNamesOfEmittedFilesAfterACompilation.Source listEmittedFiles = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrintAllOfTheFilesReadDuringTheCompilation.Source listFiles = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source listFilesOnly = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source mapRoot = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.MaxNodeModuleJsDepthEntity.Source maxNodeModuleJsDepth = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatModuleCodeIsGenerated.Source module = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ModuleResolutionEntity.Source moduleResolution = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SetTheNewlineCharacterForEmittingFiles.Source newLine = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableEmittingFileFromACompilation.Source noEmit = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoEmitHelpersEntity.Source noEmitHelpers = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoEmitOnErrorEntity.Source noEmitOnError = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableTruncatingTypesInErrorMessages.Source noErrorTruncation = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoFallthroughCasesInSwitchEntity.Source noFallthroughCasesInSwitch = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source noImplicitAny = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitOverrideEntity.Source noImplicitOverride = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitReturnsEntity.Source noImplicitReturns = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source noImplicitThis = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitUseStrictEntity.Source noImplicitUseStrict = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoLibEntity.Source noLib = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source noPropertyAccessFromIndexSignature = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoResolveEntity.Source noResolve = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoStrictGenericChecksEntity.Source noStrictGenericChecks = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source noUncheckedIndexedAccess = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenALocalVariablesArenTRead.Source noUnusedLocals = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RaiseAnErrorWhenAFunctionParameterIsnTRead.Source noUnusedParameters = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source outDir = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source outFile = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PathsEntity.Source paths = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PluginsEntityArray.Source plugins = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErasingConstEnumDeclarationsInGeneratedCode.Source preserveConstEnums = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PreserveSymlinksEntity.Source preserveSymlinks = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PreserveValueImportsEntity.Source preserveValueImports = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source preserveWatchOutput = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrettyEntity.Source pretty = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ReactNamespaceEntity.Source reactNamespace = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableEmittingComments.Source removeComments = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableImportingJsonFiles.Source resolveJsonModule = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ResolvePackageJsonExportsEntity.Source resolvePackageJsonExports = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.UseThePackageJsonImportsFieldWhenResolvingImports.Source resolvePackageJsonImports = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source rootDir = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RootDirsJsArray.Source rootDirs = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SkipDefaultLibCheckEntity.Source skipDefaultLibCheck = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SkipTypeCheckingAllDTsFiles.Source skipLibCheck = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CreateSourceMapFilesForEmittedJavaScriptFiles.Source sourceMap = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source sourceRoot = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableAllStrictTypeCheckingOptions.Source strict = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictBindCallApplyEntity.Source strictBindCallApply = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictFunctionTypesEntity.Source strictFunctionTypes = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WhenTypeCheckingTakeIntoAccountNullAndUndefined.Source strictNullChecks = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictPropertyInitializationEntity.Source strictPropertyInitialization = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source stripInternal = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressExcessPropertyErrorsEntity.Source suppressExcessPropertyErrors = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressImplicitAnyIndexErrorsEntity.Source suppressImplicitAnyIndexErrors = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TargetEntity.Source target = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TraceResolutionEntity.Source traceResolution = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TsBuildInfoFileEntity.Source tsBuildInfoFile = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyMulArray.Source typeRoots = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TypesJsonSArray.Source types = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitEcmaScriptStandardCompliantClassFields.Source useDefineForClassFields = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DefaultCatchClauseVariablesAsUnknownInsteadOfAny.Source useUnknownInCatchVariables = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source verbatimModuleSyntax = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source watch = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WatchDirectoryEntity.Source watchDirectory = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WatchFileEntity.Source watchFile = default, int initialCapacity = 30)
             {
                 JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -9485,7 +9485,7 @@ public readonly partial struct JsconfigSchema
             /// <param name="watchFile">The value of the property.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
             /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-            public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowArbitraryExtensions = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowImportingTsExtensions = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowJsEntity.Source allowJs = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowSyntheticDefaultImports = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowAccessingUmdGlobalsFromModules.Source allowUmdGlobalAccess = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowUnreachableCode = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowUnusedLabels = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source alwaysStrict = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source assumeChangesOnlyAffectDirectDependencies = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source baseUrl = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source charset = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.Source checkJs = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CompositeEntity.Source composite = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsonStringArray.Source<TContext> customConditions = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DeclarationEntity.Source declaration = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyTheOutputDirectoryForGeneratedDeclarationFiles.Source declarationDir = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CreateSourcemapsForDTsFiles.Source declarationMap = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source diagnostics = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source disableReferencedProjectLoad = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableSizeLimitEntity.Source disableSizeLimit = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source disableSolutionSearching = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source disableSourceOfProjectReferenceRedirect = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DownlevelIterationEntity.Source downlevelIteration = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitBomEntity.Source emitBom = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.OnlyOutputDTsFilesAndNotJavaScriptFiles.Source emitDeclarationOnly = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source emitDecoratorMetadata = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EsModuleInteropEntity.Source esModuleInterop = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.Source exactOptionalPropertyTypes = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source experimentalDecorators = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExtendedDiagnosticsEntity.Source extendedDiagnostics = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.FallbackPollingEntity.Source fallbackPolling = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnsureThatCasingIsCorrectInImports.Source forceConsistentCasingInFileNames = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitAV8CpuProfileOfTheCompilerRunForDebugging.Source generateCpuProfile = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ImportHelpersEntity.Source importHelpers = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ImportsNotUsedAsValuesEntity.Source importsNotUsedAsValues = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source incremental = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.IncludeSourcemapFilesInsideTheEmittedJavaScript.Source inlineSourceMap = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.InlineSourcesEntity.Source inlineSources = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.IsolatedModulesEntity.Source isolatedModules = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatJsxCodeIsGenerated.Source jsx = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.Source jsxFactory = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.Source jsxFragmentFactory = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxImportSourceEntity.Source jsxImportSource = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.KeyofStringsOnlyEntity.Source keyofStringsOnly = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.Source<TContext> lib = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrintTheNamesOfEmittedFilesAfterACompilation.Source listEmittedFiles = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrintAllOfTheFilesReadDuringTheCompilation.Source listFiles = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source listFilesOnly = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source mapRoot = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.MaxNodeModuleJsDepthEntity.Source maxNodeModuleJsDepth = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatModuleCodeIsGenerated.Source module = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ModuleResolutionEntity.Source moduleResolution = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SetTheNewlineCharacterForEmittingFiles.Source newLine = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableEmittingFileFromACompilation.Source noEmit = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoEmitHelpersEntity.Source noEmitHelpers = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoEmitOnErrorEntity.Source noEmitOnError = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableTruncatingTypesInErrorMessages.Source noErrorTruncation = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoFallthroughCasesInSwitchEntity.Source noFallthroughCasesInSwitch = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source noImplicitAny = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitOverrideEntity.Source noImplicitOverride = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitReturnsEntity.Source noImplicitReturns = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source noImplicitThis = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitUseStrictEntity.Source noImplicitUseStrict = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoLibEntity.Source noLib = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source noPropertyAccessFromIndexSignature = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoResolveEntity.Source noResolve = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoStrictGenericChecksEntity.Source noStrictGenericChecks = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source noUncheckedIndexedAccess = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenALocalVariablesArenTRead.Source noUnusedLocals = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RaiseAnErrorWhenAFunctionParameterIsnTRead.Source noUnusedParameters = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source outDir = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source outFile = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PathsEntity.Source<TContext> paths = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PluginsEntityArray.Source<TContext> plugins = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErasingConstEnumDeclarationsInGeneratedCode.Source preserveConstEnums = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PreserveSymlinksEntity.Source preserveSymlinks = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PreserveValueImportsEntity.Source preserveValueImports = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source preserveWatchOutput = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrettyEntity.Source pretty = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ReactNamespaceEntity.Source reactNamespace = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableEmittingComments.Source removeComments = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableImportingJsonFiles.Source resolveJsonModule = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ResolvePackageJsonExportsEntity.Source resolvePackageJsonExports = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.UseThePackageJsonImportsFieldWhenResolvingImports.Source resolvePackageJsonImports = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source rootDir = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RootDirsJsArray.Source<TContext> rootDirs = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SkipDefaultLibCheckEntity.Source skipDefaultLibCheck = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SkipTypeCheckingAllDTsFiles.Source skipLibCheck = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CreateSourceMapFilesForEmittedJavaScriptFiles.Source sourceMap = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source sourceRoot = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableAllStrictTypeCheckingOptions.Source strict = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictBindCallApplyEntity.Source strictBindCallApply = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictFunctionTypesEntity.Source strictFunctionTypes = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WhenTypeCheckingTakeIntoAccountNullAndUndefined.Source strictNullChecks = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictPropertyInitializationEntity.Source strictPropertyInitialization = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source stripInternal = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressExcessPropertyErrorsEntity.Source suppressExcessPropertyErrors = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressImplicitAnyIndexErrorsEntity.Source suppressImplicitAnyIndexErrors = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TargetEntity.Source target = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TraceResolutionEntity.Source traceResolution = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TsBuildInfoFileEntity.Source tsBuildInfoFile = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TypeRootsJArray.Source<TContext> typeRoots = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TypesJsonSArray.Source<TContext> types = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitEcmaScriptStandardCompliantClassFields.Source useDefineForClassFields = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DefaultCatchClauseVariablesAsUnknownInsteadOfAny.Source useUnknownInCatchVariables = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source verbatimModuleSyntax = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source watch = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WatchDirectoryEntity.Source watchDirectory = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WatchFileEntity.Source watchFile = default, int initialCapacity = 30)
+            public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowArbitraryExtensions = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowImportingTsExtensions = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowJsEntity.Source allowJs = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowSyntheticDefaultImports = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowAccessingUmdGlobalsFromModules.Source allowUmdGlobalAccess = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowUnreachableCode = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowUnusedLabels = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source alwaysStrict = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source assumeChangesOnlyAffectDirectDependencies = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source baseUrl = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source charset = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.Source checkJs = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CompositeEntity.Source composite = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsonStringArray.Source<TContext> customConditions = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DeclarationEntity.Source declaration = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyTheOutputDirectoryForGeneratedDeclarationFiles.Source declarationDir = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CreateSourcemapsForDTsFiles.Source declarationMap = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source diagnostics = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source disableReferencedProjectLoad = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableSizeLimitEntity.Source disableSizeLimit = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source disableSolutionSearching = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source disableSourceOfProjectReferenceRedirect = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DownlevelIterationEntity.Source downlevelIteration = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitBomEntity.Source emitBom = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.OnlyOutputDTsFilesAndNotJavaScriptFiles.Source emitDeclarationOnly = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source emitDecoratorMetadata = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EsModuleInteropEntity.Source esModuleInterop = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.Source exactOptionalPropertyTypes = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source experimentalDecorators = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExtendedDiagnosticsEntity.Source extendedDiagnostics = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.FallbackPollingEntity.Source fallbackPolling = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnsureThatCasingIsCorrectInImports.Source forceConsistentCasingInFileNames = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitAV8CpuProfileOfTheCompilerRunForDebugging.Source generateCpuProfile = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ImportHelpersEntity.Source importHelpers = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ImportsNotUsedAsValuesEntity.Source importsNotUsedAsValues = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source incremental = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.IncludeSourcemapFilesInsideTheEmittedJavaScript.Source inlineSourceMap = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.InlineSourcesEntity.Source inlineSources = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.IsolatedModulesEntity.Source isolatedModules = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatJsxCodeIsGenerated.Source jsx = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.Source jsxFactory = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.Source jsxFragmentFactory = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxImportSourceEntity.Source jsxImportSource = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.KeyofStringsOnlyEntity.Source keyofStringsOnly = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.Source<TContext> lib = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrintTheNamesOfEmittedFilesAfterACompilation.Source listEmittedFiles = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrintAllOfTheFilesReadDuringTheCompilation.Source listFiles = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source listFilesOnly = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source mapRoot = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.MaxNodeModuleJsDepthEntity.Source maxNodeModuleJsDepth = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatModuleCodeIsGenerated.Source module = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ModuleResolutionEntity.Source moduleResolution = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SetTheNewlineCharacterForEmittingFiles.Source newLine = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableEmittingFileFromACompilation.Source noEmit = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoEmitHelpersEntity.Source noEmitHelpers = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoEmitOnErrorEntity.Source noEmitOnError = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableTruncatingTypesInErrorMessages.Source noErrorTruncation = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoFallthroughCasesInSwitchEntity.Source noFallthroughCasesInSwitch = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source noImplicitAny = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitOverrideEntity.Source noImplicitOverride = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitReturnsEntity.Source noImplicitReturns = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source noImplicitThis = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitUseStrictEntity.Source noImplicitUseStrict = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoLibEntity.Source noLib = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source noPropertyAccessFromIndexSignature = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoResolveEntity.Source noResolve = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoStrictGenericChecksEntity.Source noStrictGenericChecks = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source noUncheckedIndexedAccess = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenALocalVariablesArenTRead.Source noUnusedLocals = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RaiseAnErrorWhenAFunctionParameterIsnTRead.Source noUnusedParameters = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source outDir = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source outFile = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PathsEntity.Source<TContext> paths = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PluginsEntityArray.Source<TContext> plugins = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErasingConstEnumDeclarationsInGeneratedCode.Source preserveConstEnums = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PreserveSymlinksEntity.Source preserveSymlinks = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PreserveValueImportsEntity.Source preserveValueImports = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source preserveWatchOutput = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrettyEntity.Source pretty = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ReactNamespaceEntity.Source reactNamespace = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableEmittingComments.Source removeComments = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableImportingJsonFiles.Source resolveJsonModule = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ResolvePackageJsonExportsEntity.Source resolvePackageJsonExports = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.UseThePackageJsonImportsFieldWhenResolvingImports.Source resolvePackageJsonImports = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source rootDir = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RootDirsJsArray.Source<TContext> rootDirs = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SkipDefaultLibCheckEntity.Source skipDefaultLibCheck = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SkipTypeCheckingAllDTsFiles.Source skipLibCheck = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CreateSourceMapFilesForEmittedJavaScriptFiles.Source sourceMap = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source sourceRoot = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableAllStrictTypeCheckingOptions.Source strict = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictBindCallApplyEntity.Source strictBindCallApply = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictFunctionTypesEntity.Source strictFunctionTypes = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WhenTypeCheckingTakeIntoAccountNullAndUndefined.Source strictNullChecks = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictPropertyInitializationEntity.Source strictPropertyInitialization = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source stripInternal = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressExcessPropertyErrorsEntity.Source suppressExcessPropertyErrors = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressImplicitAnyIndexErrorsEntity.Source suppressImplicitAnyIndexErrors = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TargetEntity.Source target = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TraceResolutionEntity.Source traceResolution = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TsBuildInfoFileEntity.Source tsBuildInfoFile = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyMulArray.Source<TContext> typeRoots = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TypesJsonSArray.Source<TContext> types = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitEcmaScriptStandardCompliantClassFields.Source useDefineForClassFields = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DefaultCatchClauseVariablesAsUnknownInsteadOfAny.Source useUnknownInCatchVariables = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source verbatimModuleSyntax = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source watch = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WatchDirectoryEntity.Source watchDirectory = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WatchFileEntity.Source watchFile = default, int initialCapacity = 30)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

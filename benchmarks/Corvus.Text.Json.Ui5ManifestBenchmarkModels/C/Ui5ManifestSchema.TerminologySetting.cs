@@ -204,6 +204,15 @@ public readonly partial struct Ui5ManifestSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TerminologySetting.RequiredBundleName"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator TerminologySetting(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TerminologySetting.RequiredBundleName.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TerminologySetting.RequiredBundleUrl"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -217,6 +226,15 @@ public readonly partial struct Ui5ManifestSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator TerminologySetting(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TerminologySetting.RequiredBundleUrl value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TerminologySetting.RequiredBundleUrl"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator TerminologySetting(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TerminologySetting.RequiredBundleUrl.Mutable value)
         {
             return From(value);
         }

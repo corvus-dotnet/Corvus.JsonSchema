@@ -313,7 +313,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.AnimationDistanceThresholdEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -334,7 +334,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.BaseUrlEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -355,7 +355,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.BlockHostsArray.Mutable.DefaultInstance;
             }
         }
 
@@ -376,7 +376,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ChromeWebSecurityEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -439,7 +439,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ComponentFolderEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -460,7 +460,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.DefaultCommandTimeoutEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -481,7 +481,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereFilesDownloadedDuringATestAreSaved.Mutable.DefaultInstance;
             }
         }
 
@@ -544,7 +544,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExecTimeoutEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -565,7 +565,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PolyfillsWindowFetchToEnableNetworkSpyingAndStubbing.Mutable.DefaultInstance;
             }
         }
 
@@ -586,7 +586,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalInteractiveRunEventsEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -607,7 +607,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSessionSupportEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -628,7 +628,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSourceRewritingEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -649,7 +649,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalStudioEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -670,7 +670,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FileServerFolderEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -682,16 +682,16 @@ public readonly partial struct CypressSchema
         /// Path to folder containing fixture files (Pass false to disable)
         /// </para>
         /// </remarks>
-        public Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FixturesFolderEntity.Mutable FixturesFolder
+        public Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingFixtureFilesPassFalseToDisable.Mutable FixturesFolder
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FixturesFolderUtf8, out Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FixturesFolderEntity.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FixturesFolderUtf8, out Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingFixtureFilesPassFalseToDisable.Mutable value))
                 {
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingFixtureFilesPassFalseToDisable.Mutable.DefaultInstance;
             }
         }
 
@@ -733,7 +733,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IncludeShadowDomEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -754,7 +754,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingIntegrationTestFiles.Mutable.DefaultInstance;
             }
         }
 
@@ -775,7 +775,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ModifyObstructiveCodeEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -796,7 +796,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.NodeVersionEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -817,7 +817,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.NumTestsKeptInMemoryEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -838,7 +838,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PageLoadTimeoutEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -859,7 +859,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToPluginsFilePassFalseToDisable.Mutable.DefaultInstance;
             }
         }
 
@@ -880,7 +880,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PortEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -901,7 +901,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ProjectIdEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -922,7 +922,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ReporterEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -943,7 +943,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ReporterOptionsEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -964,7 +964,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequestTimeoutEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -985,7 +985,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ResponseTimeoutEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -1006,7 +1006,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RetriesEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -1027,7 +1027,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScreenshotOnRunFailureEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -1048,7 +1048,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScreenshotsFolderEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -1069,7 +1069,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScrollBehaviorEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -1090,7 +1090,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.SlowTestThresholdEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -1111,7 +1111,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.SupportFileEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -1132,7 +1132,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TaskTimeoutEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -1153,7 +1153,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TestFilesArray.Mutable.DefaultInstance;
             }
         }
 
@@ -1174,7 +1174,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TrashAssetsBeforeRunsEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -1195,7 +1195,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.UserAgentEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -1216,7 +1216,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -1237,7 +1237,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoCompressionEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -1258,7 +1258,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereVideosWillBeSavedDuringCypressRun.Mutable.DefaultInstance;
             }
         }
 
@@ -1279,7 +1279,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoUploadOnPassesEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -1300,7 +1300,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ViewportHeightEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -1321,7 +1321,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ViewportWidthEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -1342,7 +1342,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.WaitForAnimationsEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -1363,7 +1363,7 @@ public readonly partial struct CypressSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.WatchForFileChangesEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -2400,7 +2400,7 @@ public readonly partial struct CypressSchema
         /// Set the <c>fixturesFolder</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFixturesFolder(in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FixturesFolderEntity.Source value)
+        public void SetFixturesFolder(in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingFixtureFilesPassFalseToDisable.Source value)
         {
             CheckValidInstance();
 
@@ -4749,7 +4749,7 @@ public readonly partial struct CypressSchema
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSourceRewritingEntity.Source experimentalSourceRewriting = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalStudioEntity.Source experimentalStudio = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FileServerFolderEntity.Source fileServerFolder = default,
-            in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FixturesFolderEntity.Source fixturesFolder = default,
+            in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingFixtureFilesPassFalseToDisable.Source fixturesFolder = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IgnoreTestFilesArray.Source ignoreTestFiles = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IncludeShadowDomEntity.Source includeShadowDom = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingIntegrationTestFiles.Source integrationFolder = default,
@@ -4858,7 +4858,7 @@ public readonly partial struct CypressSchema
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSourceRewritingEntity.Source experimentalSourceRewriting = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalStudioEntity.Source experimentalStudio = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FileServerFolderEntity.Source fileServerFolder = default,
-            in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FixturesFolderEntity.Source fixturesFolder = default,
+            in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingFixtureFilesPassFalseToDisable.Source fixturesFolder = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IgnoreTestFilesArray.Source ignoreTestFiles = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IncludeShadowDomEntity.Source includeShadowDom = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingIntegrationTestFiles.Source integrationFolder = default,
@@ -4919,7 +4919,7 @@ public readonly partial struct CypressSchema
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSourceRewritingEntity.Source experimentalSourceRewriting = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalStudioEntity.Source experimentalStudio = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FileServerFolderEntity.Source fileServerFolder = default,
-            in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FixturesFolderEntity.Source fixturesFolder = default,
+            in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingFixtureFilesPassFalseToDisable.Source fixturesFolder = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IgnoreTestFilesArray.Source<TContext> ignoreTestFiles = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IncludeShadowDomEntity.Source includeShadowDom = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingIntegrationTestFiles.Source integrationFolder = default,
@@ -5032,7 +5032,7 @@ public readonly partial struct CypressSchema
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSourceRewritingEntity.Source experimentalSourceRewriting = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalStudioEntity.Source experimentalStudio = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FileServerFolderEntity.Source fileServerFolder = default,
-            in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FixturesFolderEntity.Source fixturesFolder = default,
+            in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingFixtureFilesPassFalseToDisable.Source fixturesFolder = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IgnoreTestFilesArray.Source<TContext> ignoreTestFiles = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IncludeShadowDomEntity.Source includeShadowDom = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingIntegrationTestFiles.Source integrationFolder = default,
@@ -5341,7 +5341,7 @@ public readonly partial struct CypressSchema
     /// <param name="watchForFileChanges">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.AnimationDistanceThresholdEntity.Source animationDistanceThreshold = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.BaseUrlEntity.Source baseUrl = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.BlockHostsArray.Source blockHosts = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ChromeWebSecurityEntity.Source chromeWebSecurity = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.Source clientCertificates = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.Source component = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ComponentFolderEntity.Source componentFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.DefaultCommandTimeoutEntity.Source defaultCommandTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereFilesDownloadedDuringATestAreSaved.Source downloadsFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.Source e2e = default, in Corvus.CypressBenchmark.Current.JsonObject.Source env = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExecTimeoutEntity.Source execTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PolyfillsWindowFetchToEnableNetworkSpyingAndStubbing.Source experimentalFetchPolyfill = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalInteractiveRunEventsEntity.Source experimentalInteractiveRunEvents = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSessionSupportEntity.Source experimentalSessionSupport = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSourceRewritingEntity.Source experimentalSourceRewriting = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalStudioEntity.Source experimentalStudio = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FileServerFolderEntity.Source fileServerFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FixturesFolderEntity.Source fixturesFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IgnoreTestFilesArray.Source ignoreTestFiles = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IncludeShadowDomEntity.Source includeShadowDom = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingIntegrationTestFiles.Source integrationFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ModifyObstructiveCodeEntity.Source modifyObstructiveCode = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.NodeVersionEntity.Source nodeVersion = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.NumTestsKeptInMemoryEntity.Source numTestsKeptInMemory = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PageLoadTimeoutEntity.Source pageLoadTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToPluginsFilePassFalseToDisable.Source pluginsFile = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PortEntity.Source port = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ProjectIdEntity.Source projectId = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ReporterEntity.Source reporter = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ReporterOptionsEntity.Source reporterOptions = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequestTimeoutEntity.Source requestTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ResponseTimeoutEntity.Source responseTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RetriesEntity.Source retries = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScreenshotOnRunFailureEntity.Source screenshotOnRunFailure = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScreenshotsFolderEntity.Source screenshotsFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScrollBehaviorEntity.Source scrollBehavior = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.SlowTestThresholdEntity.Source slowTestThreshold = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.SupportFileEntity.Source supportFile = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TaskTimeoutEntity.Source taskTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TestFilesArray.Source testFiles = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TrashAssetsBeforeRunsEntity.Source trashAssetsBeforeRuns = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.UserAgentEntity.Source userAgent = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoEntity.Source video = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoCompressionEntity.Source videoCompression = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereVideosWillBeSavedDuringCypressRun.Source videosFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoUploadOnPassesEntity.Source videoUploadOnPasses = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ViewportHeightEntity.Source viewportHeight = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ViewportWidthEntity.Source viewportWidth = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.WaitForAnimationsEntity.Source waitForAnimations = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.WatchForFileChangesEntity.Source watchForFileChanges = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.AnimationDistanceThresholdEntity.Source animationDistanceThreshold = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.BaseUrlEntity.Source baseUrl = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.BlockHostsArray.Source blockHosts = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ChromeWebSecurityEntity.Source chromeWebSecurity = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.Source clientCertificates = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.Source component = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ComponentFolderEntity.Source componentFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.DefaultCommandTimeoutEntity.Source defaultCommandTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereFilesDownloadedDuringATestAreSaved.Source downloadsFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.Source e2e = default, in Corvus.CypressBenchmark.Current.JsonObject.Source env = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExecTimeoutEntity.Source execTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PolyfillsWindowFetchToEnableNetworkSpyingAndStubbing.Source experimentalFetchPolyfill = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalInteractiveRunEventsEntity.Source experimentalInteractiveRunEvents = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSessionSupportEntity.Source experimentalSessionSupport = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSourceRewritingEntity.Source experimentalSourceRewriting = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalStudioEntity.Source experimentalStudio = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FileServerFolderEntity.Source fileServerFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingFixtureFilesPassFalseToDisable.Source fixturesFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IgnoreTestFilesArray.Source ignoreTestFiles = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IncludeShadowDomEntity.Source includeShadowDom = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingIntegrationTestFiles.Source integrationFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ModifyObstructiveCodeEntity.Source modifyObstructiveCode = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.NodeVersionEntity.Source nodeVersion = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.NumTestsKeptInMemoryEntity.Source numTestsKeptInMemory = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PageLoadTimeoutEntity.Source pageLoadTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToPluginsFilePassFalseToDisable.Source pluginsFile = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PortEntity.Source port = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ProjectIdEntity.Source projectId = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ReporterEntity.Source reporter = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ReporterOptionsEntity.Source reporterOptions = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequestTimeoutEntity.Source requestTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ResponseTimeoutEntity.Source responseTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RetriesEntity.Source retries = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScreenshotOnRunFailureEntity.Source screenshotOnRunFailure = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScreenshotsFolderEntity.Source screenshotsFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScrollBehaviorEntity.Source scrollBehavior = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.SlowTestThresholdEntity.Source slowTestThreshold = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.SupportFileEntity.Source supportFile = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TaskTimeoutEntity.Source taskTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TestFilesArray.Source testFiles = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TrashAssetsBeforeRunsEntity.Source trashAssetsBeforeRuns = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.UserAgentEntity.Source userAgent = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoEntity.Source video = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoCompressionEntity.Source videoCompression = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereVideosWillBeSavedDuringCypressRun.Source videosFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoUploadOnPassesEntity.Source videoUploadOnPasses = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ViewportHeightEntity.Source viewportHeight = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ViewportWidthEntity.Source viewportWidth = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.WaitForAnimationsEntity.Source waitForAnimations = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.WatchForFileChangesEntity.Source watchForFileChanges = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -5413,7 +5413,7 @@ public readonly partial struct CypressSchema
     /// <param name="watchForFileChanges">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.AnimationDistanceThresholdEntity.Source animationDistanceThreshold = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.BaseUrlEntity.Source baseUrl = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.BlockHostsArray.Source<TContext> blockHosts = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ChromeWebSecurityEntity.Source chromeWebSecurity = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.Source<TContext> clientCertificates = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.Source<TContext> component = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ComponentFolderEntity.Source componentFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.DefaultCommandTimeoutEntity.Source defaultCommandTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereFilesDownloadedDuringATestAreSaved.Source downloadsFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.Source<TContext> e2e = default, in Corvus.CypressBenchmark.Current.JsonObject.Source<TContext> env = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExecTimeoutEntity.Source execTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PolyfillsWindowFetchToEnableNetworkSpyingAndStubbing.Source experimentalFetchPolyfill = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalInteractiveRunEventsEntity.Source experimentalInteractiveRunEvents = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSessionSupportEntity.Source experimentalSessionSupport = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSourceRewritingEntity.Source experimentalSourceRewriting = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalStudioEntity.Source experimentalStudio = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FileServerFolderEntity.Source fileServerFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FixturesFolderEntity.Source fixturesFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IgnoreTestFilesArray.Source<TContext> ignoreTestFiles = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IncludeShadowDomEntity.Source includeShadowDom = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingIntegrationTestFiles.Source integrationFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ModifyObstructiveCodeEntity.Source modifyObstructiveCode = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.NodeVersionEntity.Source nodeVersion = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.NumTestsKeptInMemoryEntity.Source numTestsKeptInMemory = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PageLoadTimeoutEntity.Source pageLoadTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToPluginsFilePassFalseToDisable.Source pluginsFile = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PortEntity.Source port = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ProjectIdEntity.Source projectId = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ReporterEntity.Source reporter = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ReporterOptionsEntity.Source<TContext> reporterOptions = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequestTimeoutEntity.Source requestTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ResponseTimeoutEntity.Source responseTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RetriesEntity.Source<TContext> retries = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScreenshotOnRunFailureEntity.Source screenshotOnRunFailure = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScreenshotsFolderEntity.Source screenshotsFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScrollBehaviorEntity.Source scrollBehavior = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.SlowTestThresholdEntity.Source slowTestThreshold = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.SupportFileEntity.Source supportFile = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TaskTimeoutEntity.Source taskTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TestFilesArray.Source<TContext> testFiles = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TrashAssetsBeforeRunsEntity.Source trashAssetsBeforeRuns = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.UserAgentEntity.Source userAgent = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoEntity.Source video = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoCompressionEntity.Source videoCompression = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereVideosWillBeSavedDuringCypressRun.Source videosFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoUploadOnPassesEntity.Source videoUploadOnPasses = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ViewportHeightEntity.Source viewportHeight = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ViewportWidthEntity.Source viewportWidth = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.WaitForAnimationsEntity.Source waitForAnimations = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.WatchForFileChangesEntity.Source watchForFileChanges = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.AnimationDistanceThresholdEntity.Source animationDistanceThreshold = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.BaseUrlEntity.Source baseUrl = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.BlockHostsArray.Source<TContext> blockHosts = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ChromeWebSecurityEntity.Source chromeWebSecurity = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.Source<TContext> clientCertificates = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.Source<TContext> component = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ComponentFolderEntity.Source componentFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.DefaultCommandTimeoutEntity.Source defaultCommandTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereFilesDownloadedDuringATestAreSaved.Source downloadsFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.Source<TContext> e2e = default, in Corvus.CypressBenchmark.Current.JsonObject.Source<TContext> env = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExecTimeoutEntity.Source execTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PolyfillsWindowFetchToEnableNetworkSpyingAndStubbing.Source experimentalFetchPolyfill = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalInteractiveRunEventsEntity.Source experimentalInteractiveRunEvents = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSessionSupportEntity.Source experimentalSessionSupport = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSourceRewritingEntity.Source experimentalSourceRewriting = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalStudioEntity.Source experimentalStudio = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FileServerFolderEntity.Source fileServerFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingFixtureFilesPassFalseToDisable.Source fixturesFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IgnoreTestFilesArray.Source<TContext> ignoreTestFiles = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IncludeShadowDomEntity.Source includeShadowDom = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingIntegrationTestFiles.Source integrationFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ModifyObstructiveCodeEntity.Source modifyObstructiveCode = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.NodeVersionEntity.Source nodeVersion = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.NumTestsKeptInMemoryEntity.Source numTestsKeptInMemory = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PageLoadTimeoutEntity.Source pageLoadTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToPluginsFilePassFalseToDisable.Source pluginsFile = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PortEntity.Source port = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ProjectIdEntity.Source projectId = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ReporterEntity.Source reporter = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ReporterOptionsEntity.Source<TContext> reporterOptions = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequestTimeoutEntity.Source requestTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ResponseTimeoutEntity.Source responseTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RetriesEntity.Source<TContext> retries = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScreenshotOnRunFailureEntity.Source screenshotOnRunFailure = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScreenshotsFolderEntity.Source screenshotsFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScrollBehaviorEntity.Source scrollBehavior = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.SlowTestThresholdEntity.Source slowTestThreshold = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.SupportFileEntity.Source supportFile = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TaskTimeoutEntity.Source taskTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TestFilesArray.Source<TContext> testFiles = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TrashAssetsBeforeRunsEntity.Source trashAssetsBeforeRuns = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.UserAgentEntity.Source userAgent = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoEntity.Source video = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoCompressionEntity.Source videoCompression = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereVideosWillBeSavedDuringCypressRun.Source videosFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoUploadOnPassesEntity.Source videoUploadOnPasses = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ViewportHeightEntity.Source viewportHeight = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ViewportWidthEntity.Source viewportWidth = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.WaitForAnimationsEntity.Source waitForAnimations = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.WatchForFileChangesEntity.Source watchForFileChanges = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

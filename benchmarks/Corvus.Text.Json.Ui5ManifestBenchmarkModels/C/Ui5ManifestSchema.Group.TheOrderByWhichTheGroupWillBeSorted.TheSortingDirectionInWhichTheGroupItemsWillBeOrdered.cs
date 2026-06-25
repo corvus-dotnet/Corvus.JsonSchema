@@ -121,6 +121,15 @@ public readonly partial struct Ui5ManifestSchema
                     return From(value);
                 }
 
+                /// <summary>
+                /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.TheOrderByWhichTheGroupWillBeSorted.TheSortingDirectionInWhichTheGroupItemsWillBeOrdered.OneOf0Entity"/> mutable view.
+                /// </summary>
+                /// <param name="value">The value from which to convert.</param>
+                public static implicit operator TheSortingDirectionInWhichTheGroupItemsWillBeOrdered(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.TheOrderByWhichTheGroupWillBeSorted.TheSortingDirectionInWhichTheGroupItemsWillBeOrdered.OneOf0Entity.Mutable value)
+                {
+                    return From(value);
+                }
+
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static explicit operator string(TheSortingDirectionInWhichTheGroupItemsWillBeOrdered value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 

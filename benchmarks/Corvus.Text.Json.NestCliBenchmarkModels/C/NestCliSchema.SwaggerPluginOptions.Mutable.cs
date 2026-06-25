@@ -283,7 +283,7 @@ public readonly partial struct NestCliSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.NestCliBenchmark.Current.NestCliSchema.SwaggerPluginOptions.ClassValidatorShimEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -304,7 +304,7 @@ public readonly partial struct NestCliSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.NestCliBenchmark.Current.NestCliSchema.SwaggerPluginOptions.ControllerFileNameSuffixEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -325,7 +325,7 @@ public readonly partial struct NestCliSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.NestCliBenchmark.Current.NestCliSchema.SwaggerPluginOptions.ControllerKeyOfCommentEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -346,7 +346,7 @@ public readonly partial struct NestCliSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.NestCliBenchmark.Current.NestCliSchema.SwaggerPluginOptions.JsonStringArray.Mutable.DefaultInstance;
                 }
             }
 
@@ -367,7 +367,7 @@ public readonly partial struct NestCliSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.NestCliBenchmark.Current.NestCliSchema.SwaggerPluginOptions.DtoKeyOfCommentEntity.Mutable.DefaultInstance;
                 }
             }
 

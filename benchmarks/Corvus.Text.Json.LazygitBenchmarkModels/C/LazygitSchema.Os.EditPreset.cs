@@ -134,6 +134,15 @@ public readonly partial struct LazygitSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditPreset.OneOf0Entity"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator EditPreset(Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditPreset.OneOf0Entity.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditPreset.OneOf1Entity"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -147,6 +156,15 @@ public readonly partial struct LazygitSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator EditPreset(Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditPreset.OneOf1Entity value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditPreset.OneOf1Entity"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator EditPreset(Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditPreset.OneOf1Entity.Mutable value)
             {
                 return From(value);
             }

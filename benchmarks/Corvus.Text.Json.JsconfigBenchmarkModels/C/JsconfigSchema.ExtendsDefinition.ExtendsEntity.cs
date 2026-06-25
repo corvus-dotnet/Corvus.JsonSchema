@@ -143,6 +143,15 @@ public readonly partial struct JsconfigSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExtendsDefinition.ExtendsEntity.OneOf0Entity"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator ExtendsEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExtendsDefinition.ExtendsEntity.OneOf0Entity.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExtendsDefinition.ExtendsEntity.JsonStringArray"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -156,6 +165,15 @@ public readonly partial struct JsconfigSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator ExtendsEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExtendsDefinition.ExtendsEntity.JsonStringArray value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExtendsDefinition.ExtendsEntity.JsonStringArray"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator ExtendsEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExtendsDefinition.ExtendsEntity.JsonStringArray.Mutable value)
             {
                 return From(value);
             }

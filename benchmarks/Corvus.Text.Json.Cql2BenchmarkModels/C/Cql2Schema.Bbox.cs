@@ -154,6 +154,15 @@ public readonly partial struct Cql2Schema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Bbox.OneOf0Entity"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Bbox(Corvus.Cql2Benchmark.Current.Cql2Schema.Bbox.OneOf0Entity.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Bbox.OneOf1Entity"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -167,6 +176,15 @@ public readonly partial struct Cql2Schema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator Bbox(Corvus.Cql2Benchmark.Current.Cql2Schema.Bbox.OneOf1Entity value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Bbox.OneOf1Entity"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Bbox(Corvus.Cql2Benchmark.Current.Cql2Schema.Bbox.OneOf1Entity.Mutable value)
         {
             return From(value);
         }

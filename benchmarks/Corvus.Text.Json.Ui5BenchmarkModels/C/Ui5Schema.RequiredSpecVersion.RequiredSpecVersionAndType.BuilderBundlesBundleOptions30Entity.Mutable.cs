@@ -194,7 +194,7 @@ public readonly partial struct Ui5Schema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.AddTryCatchRestartWrapperEntity.Mutable.DefaultInstance;
                         }
                     }
 
@@ -210,7 +210,7 @@ public readonly partial struct Ui5Schema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.DecorateBootstrapModuleEntity.Mutable.DefaultInstance;
                         }
                     }
 
@@ -226,7 +226,7 @@ public readonly partial struct Ui5Schema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.NumberOfPartsEntity.Mutable.DefaultInstance;
                         }
                     }
 
@@ -242,7 +242,7 @@ public readonly partial struct Ui5Schema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.OptimizeEntity.Mutable.DefaultInstance;
                         }
                     }
 
@@ -258,7 +258,7 @@ public readonly partial struct Ui5Schema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.SourceMapEntity.Mutable.DefaultInstance;
                         }
                     }
 
@@ -274,7 +274,7 @@ public readonly partial struct Ui5Schema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.UsePredefineCallsEntity.Mutable.DefaultInstance;
                         }
                     }
 

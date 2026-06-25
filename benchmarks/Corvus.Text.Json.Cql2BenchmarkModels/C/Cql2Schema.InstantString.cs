@@ -97,6 +97,15 @@ public readonly partial struct Cql2Schema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.DateString"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator InstantString(Corvus.Cql2Benchmark.Current.Cql2Schema.DateString.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampString"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -110,6 +119,15 @@ public readonly partial struct Cql2Schema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator InstantString(Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampString value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampString"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator InstantString(Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampString.Mutable value)
         {
             return From(value);
         }

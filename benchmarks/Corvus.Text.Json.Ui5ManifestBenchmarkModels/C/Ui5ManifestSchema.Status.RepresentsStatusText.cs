@@ -230,6 +230,15 @@ public readonly partial struct Ui5ManifestSchema
                 return From(value);
             }
 
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.StatusTextFormatter"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator RepresentsStatusText(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.StatusTextFormatter.Mutable value)
+            {
+                return From(value);
+            }
+
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static explicit operator string(RepresentsStatusText value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 

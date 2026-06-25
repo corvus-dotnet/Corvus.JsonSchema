@@ -65,6 +65,16 @@ public readonly partial struct Draft04Schema
             _documentVersion = _parent?.Version ?? 0;
         }
 
+        /// <summary>
+        /// Gets a read-only default instance of the mutable type, surfacing the schema default value.
+        /// </summary>
+        /// <remarks>
+        /// The instance is a zero-copy facade over the immutable default, so it can be read but not
+        /// mutated; attempting to mutate it throws an <see cref="InvalidOperationException"/> directing
+        /// the caller to set the value on its parent first.
+        /// </remarks>
+        public static Mutable DefaultInstance { get; } = JsonElementHelpers.CreateDefaultValueElement<Draft04Schema, Mutable>(Draft04Schema.DefaultInstance);
+
         /// <inheritdoc/>
         public JsonValueKind ValueKind => TokenType.ToValueKind();
 
@@ -301,7 +311,7 @@ public readonly partial struct Draft04Schema
                     return value;
                 }
 
-                return default;
+                return Corvus.Draft04Benchmark.Current.Draft04Schema.AdditionalItemsEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -317,7 +327,7 @@ public readonly partial struct Draft04Schema
                     return value;
                 }
 
-                return default;
+                return Corvus.Draft04Benchmark.Current.Draft04Schema.AdditionalPropertiesEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -381,7 +391,7 @@ public readonly partial struct Draft04Schema
                     return value;
                 }
 
-                return default;
+                return Corvus.Draft04Benchmark.Current.Draft04Schema.DefinitionsEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -445,7 +455,7 @@ public readonly partial struct Draft04Schema
                     return value;
                 }
 
-                return default;
+                return Corvus.Draft04Benchmark.Current.Draft04Schema.ExclusiveMaximumEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -461,7 +471,7 @@ public readonly partial struct Draft04Schema
                     return value;
                 }
 
-                return default;
+                return Corvus.Draft04Benchmark.Current.Draft04Schema.ExclusiveMinimumEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -509,7 +519,7 @@ public readonly partial struct Draft04Schema
                     return value;
                 }
 
-                return default;
+                return Corvus.Draft04Benchmark.Current.Draft04Schema.ItemsEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -674,7 +684,7 @@ public readonly partial struct Draft04Schema
                     return value;
                 }
 
-                return default;
+                return Corvus.Draft04Benchmark.Current.Draft04Schema.Mutable.DefaultInstance;
             }
         }
 
@@ -722,7 +732,7 @@ public readonly partial struct Draft04Schema
                     return value;
                 }
 
-                return default;
+                return Corvus.Draft04Benchmark.Current.Draft04Schema.PatternPropertiesEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -738,7 +748,7 @@ public readonly partial struct Draft04Schema
                     return value;
                 }
 
-                return default;
+                return Corvus.Draft04Benchmark.Current.Draft04Schema.PropertiesEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -802,7 +812,7 @@ public readonly partial struct Draft04Schema
                     return value;
                 }
 
-                return default;
+                return Corvus.Draft04Benchmark.Current.Draft04Schema.UniqueItemsEntity.Mutable.DefaultInstance;
             }
         }
 

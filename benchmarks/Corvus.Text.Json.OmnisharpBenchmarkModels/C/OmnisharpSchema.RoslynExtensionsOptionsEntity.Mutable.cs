@@ -283,7 +283,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.DocumentAnalysisTimeoutMsEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -304,7 +304,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.IfSetToFalseOnlyRefactoringsAreAvailable.Mutable.DefaultInstance;
                 }
             }
 
@@ -320,7 +320,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.EnableDecompilationSupportEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -336,7 +336,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.LocationPathsArray.Mutable.DefaultInstance;
                 }
             }
 

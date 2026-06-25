@@ -369,7 +369,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.RevokeServerMaxRetries.Mutable.DefaultInstance;
                 }
             }
 
@@ -394,7 +394,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.MaxWorkers.Mutable.DefaultInstance;
                 }
             }
 

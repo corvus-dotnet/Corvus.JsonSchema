@@ -88,7 +88,7 @@ public readonly partial struct DenoSchema
             /// <summary>
             /// Gets the default instance.
             /// </summary>
-            public static JsonStringArray DefaultInstance { get; } = JsonStringArray.ParseValue("[\r\n            \"deno.window\"\r\n          ]"u8);
+            public static JsonStringArray DefaultInstance { get; } = JsonStringArray.ParseValue("[\n            \"deno.window\"\n          ]"u8);
 
             /// <summary>
             /// Gets the rank of the array.

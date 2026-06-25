@@ -266,7 +266,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Logging.LogFormat.Mutable.DefaultInstance;
                 }
             }
 
@@ -344,7 +344,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Logging.LogsToStdout.Mutable.DefaultInstance;
                 }
             }
 
@@ -369,7 +369,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Logging.LogsToSyslog.Mutable.DefaultInstance;
                 }
             }
 
@@ -394,7 +394,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Logging.SyslogFacility.Mutable.DefaultInstance;
                 }
             }
 

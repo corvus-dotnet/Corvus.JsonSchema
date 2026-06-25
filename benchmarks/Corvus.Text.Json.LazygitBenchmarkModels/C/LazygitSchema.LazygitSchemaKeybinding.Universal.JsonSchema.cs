@@ -122,7 +122,7 @@ public readonly partial struct LazygitSchema
                 private static readonly JsonSchemaPathProvider ToggleWhitespaceInDiffViewSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/toggleWhitespaceInDiffView/$ref"u8, buffer, out written);
                 private static readonly JsonSchemaPathProvider UndoSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/undo/$ref"u8, buffer, out written);
 
-                private static void MatchConfirm(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchConfirm(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext =
@@ -137,7 +137,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext.IsMatch, ref childContext);
                 }
 
-                private static void MatchCopyToClipboard(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchCopyToClipboard(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext1 =
@@ -152,7 +152,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext1.IsMatch, ref childContext1);
                 }
 
-                private static void MatchCreatePatchOptionsMenu(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchCreatePatchOptionsMenu(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext2 =
@@ -167,7 +167,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext2.IsMatch, ref childContext2);
                 }
 
-                private static void MatchCreateRebaseOptionsMenu(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchCreateRebaseOptionsMenu(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext3 =
@@ -182,7 +182,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext3.IsMatch, ref childContext3);
                 }
 
-                private static void MatchDecreaseContextInDiffView(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchDecreaseContextInDiffView(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext4 =
@@ -197,7 +197,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext4.IsMatch, ref childContext4);
                 }
 
-                private static void MatchDiffingMenu(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchDiffingMenu(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext5 =
@@ -212,7 +212,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext5.IsMatch, ref childContext5);
                 }
 
-                private static void MatchDiffingMenuAlt(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchDiffingMenuAlt(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext6 =
@@ -227,7 +227,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext6.IsMatch, ref childContext6);
                 }
 
-                private static void MatchEdit(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchEdit(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext7 =
@@ -242,7 +242,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext7.IsMatch, ref childContext7);
                 }
 
-                private static void MatchExecuteCustomCommand(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchExecuteCustomCommand(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext8 =
@@ -257,7 +257,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext8.IsMatch, ref childContext8);
                 }
 
-                private static void MatchExtrasMenu(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchExtrasMenu(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext9 =
@@ -272,7 +272,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext9.IsMatch, ref childContext9);
                 }
 
-                private static void MatchFilteringMenu(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchFilteringMenu(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext10 =
@@ -287,7 +287,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext10.IsMatch, ref childContext10);
                 }
 
-                private static void MatchGoInto(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchGoInto(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext11 =
@@ -302,7 +302,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext11.IsMatch, ref childContext11);
                 }
 
-                private static void MatchGotoBottom(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchGotoBottom(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext12 =
@@ -317,7 +317,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext12.IsMatch, ref childContext12);
                 }
 
-                private static void MatchGotoTop(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchGotoTop(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext13 =
@@ -332,7 +332,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext13.IsMatch, ref childContext13);
                 }
 
-                private static void MatchIncreaseContextInDiffView(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchIncreaseContextInDiffView(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext14 =
@@ -347,7 +347,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext14.IsMatch, ref childContext14);
                 }
 
-                private static void MatchJumpToBlockValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchJumpToBlockValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext15 =
@@ -362,7 +362,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext15.IsMatch, ref childContext15);
                 }
 
-                private static void MatchNew(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNew(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext16 =
@@ -377,7 +377,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext16.IsMatch, ref childContext16);
                 }
 
-                private static void MatchNextBlock(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNextBlock(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext17 =
@@ -392,7 +392,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext17.IsMatch, ref childContext17);
                 }
 
-                private static void MatchNextBlockAlt(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNextBlockAlt(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext18 =
@@ -407,7 +407,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext18.IsMatch, ref childContext18);
                 }
 
-                private static void MatchNextItem(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNextItem(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext19 =
@@ -422,7 +422,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext19.IsMatch, ref childContext19);
                 }
 
-                private static void MatchNextItemAlt(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNextItemAlt(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext20 =
@@ -437,7 +437,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext20.IsMatch, ref childContext20);
                 }
 
-                private static void MatchNextMatch(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNextMatch(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext21 =
@@ -452,7 +452,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext21.IsMatch, ref childContext21);
                 }
 
-                private static void MatchNextPage(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNextPage(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext22 =
@@ -467,7 +467,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext22.IsMatch, ref childContext22);
                 }
 
-                private static void MatchNextScreenMode(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNextScreenMode(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext23 =
@@ -482,7 +482,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext23.IsMatch, ref childContext23);
                 }
 
-                private static void MatchNextTab(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNextTab(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext24 =
@@ -497,7 +497,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext24.IsMatch, ref childContext24);
                 }
 
-                private static void MatchOpenFile(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchOpenFile(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext25 =
@@ -512,7 +512,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext25.IsMatch, ref childContext25);
                 }
 
-                private static void MatchOpenRecentRepos(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchOpenRecentRepos(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext26 =
@@ -527,7 +527,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext26.IsMatch, ref childContext26);
                 }
 
-                private static void MatchOptionMenuValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchOptionMenuValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext27 =
@@ -542,7 +542,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext27.IsMatch, ref childContext27);
                 }
 
-                private static void MatchOptionMenuAlt1(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchOptionMenuAlt1(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext28 =
@@ -557,7 +557,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext28.IsMatch, ref childContext28);
                 }
 
-                private static void MatchPrevBlock(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchPrevBlock(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext29 =
@@ -572,7 +572,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext29.IsMatch, ref childContext29);
                 }
 
-                private static void MatchPrevBlockAlt(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchPrevBlockAlt(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext30 =
@@ -587,7 +587,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext30.IsMatch, ref childContext30);
                 }
 
-                private static void MatchPrevItem(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchPrevItem(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext31 =
@@ -602,7 +602,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext31.IsMatch, ref childContext31);
                 }
 
-                private static void MatchPrevItemAlt(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchPrevItemAlt(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext32 =
@@ -617,7 +617,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext32.IsMatch, ref childContext32);
                 }
 
-                private static void MatchPrevMatch(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchPrevMatch(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext33 =
@@ -632,7 +632,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext33.IsMatch, ref childContext33);
                 }
 
-                private static void MatchPrevPage(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchPrevPage(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext34 =
@@ -647,7 +647,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext34.IsMatch, ref childContext34);
                 }
 
-                private static void MatchPrevScreenMode(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchPrevScreenMode(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext35 =
@@ -662,7 +662,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext35.IsMatch, ref childContext35);
                 }
 
-                private static void MatchPrevTab(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchPrevTab(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext36 =
@@ -677,7 +677,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext36.IsMatch, ref childContext36);
                 }
 
-                private static void MatchPullFiles(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchPullFiles(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext37 =
@@ -692,7 +692,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext37.IsMatch, ref childContext37);
                 }
 
-                private static void MatchPushFiles(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchPushFiles(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext38 =
@@ -707,7 +707,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext38.IsMatch, ref childContext38);
                 }
 
-                private static void MatchQuit(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchQuit(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext39 =
@@ -722,7 +722,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext39.IsMatch, ref childContext39);
                 }
 
-                private static void MatchQuitAlt1(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchQuitAlt1(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext40 =
@@ -737,7 +737,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext40.IsMatch, ref childContext40);
                 }
 
-                private static void MatchQuitWithoutChangingDirectory(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchQuitWithoutChangingDirectory(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext41 =
@@ -752,7 +752,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext41.IsMatch, ref childContext41);
                 }
 
-                private static void MatchRedo(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchRedo(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext42 =
@@ -767,7 +767,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext42.IsMatch, ref childContext42);
                 }
 
-                private static void MatchRefresh(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchRefresh(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext43 =
@@ -782,7 +782,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext43.IsMatch, ref childContext43);
                 }
 
-                private static void MatchRemoveValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchRemoveValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext44 =
@@ -797,7 +797,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext44.IsMatch, ref childContext44);
                 }
 
-                private static void MatchReturn(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchReturn(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext45 =
@@ -812,7 +812,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext45.IsMatch, ref childContext45);
                 }
 
-                private static void MatchScrollDownMain(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchScrollDownMain(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext46 =
@@ -827,7 +827,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext46.IsMatch, ref childContext46);
                 }
 
-                private static void MatchScrollDownMainAlt1(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchScrollDownMainAlt1(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext47 =
@@ -842,7 +842,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext47.IsMatch, ref childContext47);
                 }
 
-                private static void MatchScrollDownMainAlt2(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchScrollDownMainAlt2(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext48 =
@@ -857,7 +857,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext48.IsMatch, ref childContext48);
                 }
 
-                private static void MatchScrollLeft(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchScrollLeft(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext49 =
@@ -872,7 +872,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext49.IsMatch, ref childContext49);
                 }
 
-                private static void MatchScrollRight(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchScrollRight(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext50 =
@@ -887,7 +887,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext50.IsMatch, ref childContext50);
                 }
 
-                private static void MatchScrollUpMain(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchScrollUpMain(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext51 =
@@ -902,7 +902,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext51.IsMatch, ref childContext51);
                 }
 
-                private static void MatchScrollUpMainAlt1(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchScrollUpMainAlt1(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext52 =
@@ -917,7 +917,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext52.IsMatch, ref childContext52);
                 }
 
-                private static void MatchScrollUpMainAlt2(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchScrollUpMainAlt2(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext53 =
@@ -932,7 +932,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext53.IsMatch, ref childContext53);
                 }
 
-                private static void MatchSelect(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchSelect(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext54 =
@@ -947,7 +947,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext54.IsMatch, ref childContext54);
                 }
 
-                private static void MatchSubmitEditorText(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchSubmitEditorText(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext55 =
@@ -962,7 +962,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext55.IsMatch, ref childContext55);
                 }
 
-                private static void MatchTogglePanel(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchTogglePanel(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext56 =
@@ -977,7 +977,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext56.IsMatch, ref childContext56);
                 }
 
-                private static void MatchToggleWhitespaceInDiffView(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchToggleWhitespaceInDiffView(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext57 =
@@ -992,7 +992,7 @@ public readonly partial struct LazygitSchema
                     context.CommitChildContext(childContext57.IsMatch, ref childContext57);
                 }
 
-                private static void MatchUndo(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchUndo(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext58 =
@@ -1140,7 +1140,7 @@ public readonly partial struct LazygitSchema
 
                             if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.LazygitBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator? validator))
                             {
-                                validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex);
+                                validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context);
 
                                 if (!context.HasCollector && !context.IsMatch)
                                 {

@@ -288,7 +288,7 @@ public readonly partial struct ClangFormatSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.MaximumEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -304,7 +304,7 @@ public readonly partial struct ClangFormatSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.MinimumEntity.Mutable.DefaultInstance;
                 }
             }
 

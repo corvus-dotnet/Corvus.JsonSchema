@@ -137,6 +137,15 @@ public readonly partial struct SemanticReleaseSchema
             return From(value);
         }
 
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.ExtendsEntity.JsonStringArray"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ExtendsEntity(Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.ExtendsEntity.JsonStringArray.Mutable value)
+        {
+            return From(value);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator string(ExtendsEntity value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 

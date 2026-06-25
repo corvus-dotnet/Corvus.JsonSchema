@@ -335,7 +335,7 @@ public readonly partial struct KrakendSchema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValue.Mutable.DefaultInstance;
                         }
                     }
 
@@ -360,7 +360,7 @@ public readonly partial struct KrakendSchema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValueAs.Mutable.DefaultInstance;
                         }
                     }
 

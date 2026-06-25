@@ -1777,31 +1777,57 @@ public readonly partial struct Cql2Schema
                     Unknown,
                     JsonElement,
                     AccentiBuilder,
+                    AccentiSource,
                     AndOrExpressionBuilder,
+                    AndOrExpressionSource,
                     ArithmeticExpressionBuilder,
+                    ArithmeticExpressionSource,
                     ArrayPredicateBuilder,
+                    ArrayPredicateSource,
                     BboxLiteralBuilder,
+                    BboxLiteralSource,
                     BinaryComparisonPredicateBuilder,
+                    BinaryComparisonPredicateSource,
                     CaseiBuilder,
+                    CaseiSource,
                     DateInstantBuilder,
+                    DateInstantSource,
                     FunctionRefBuilder,
+                    FunctionRefSource,
                     GeometrycollectionBuilder,
+                    GeometrycollectionSource,
                     IntervalInstanceBuilder,
+                    IntervalInstanceSource,
                     IsBetweenPredicateBuilder,
+                    IsBetweenPredicateSource,
                     IsInListPredicateBuilder,
+                    IsInListPredicateSource,
                     IsLikePredicateBuilder,
+                    IsLikePredicateSource,
                     IsNullPredicateBuilder,
+                    IsNullPredicateSource,
                     LinestringBuilder,
+                    LinestringSource,
                     MultilinestringBuilder,
+                    MultilinestringSource,
                     MultipointBuilder,
+                    MultipointSource,
                     MultipolygonBuilder,
+                    MultipolygonSource,
                     NotExpressionBuilder,
+                    NotExpressionSource,
                     PointBuilder,
+                    PointSource,
                     PolygonBuilder,
+                    PolygonSource,
                     PropertyRefBuilder,
+                    PropertyRefSource,
                     SpatialPredicateBuilder,
+                    SpatialPredicateSource,
                     TemporalPredicateBuilder,
+                    TemporalPredicateSource,
                     TimestampInstantBuilder,
+                    TimestampInstantSource,
                     RawUtf8StringRequiresUnescaping,
                     RawUtf8StringNotRequiresUnescaping,
                     Utf8String,
@@ -1818,31 +1844,57 @@ public readonly partial struct Cql2Schema
                 private readonly ReadOnlySpan<char> _utf16Backing;
                 private readonly SimpleTypesBacking _simpleTypeBacking;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Builder.Build? _accentiBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Source _accentiSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.AndOrExpression.Builder.Build? _andOrExpressionBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.AndOrExpression.Source _andOrExpressionSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Builder.Build? _arithmeticExpressionBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Source _arithmeticExpressionSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.ArrayPredicate.Builder.Build? _arrayPredicateBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.ArrayPredicate.Source _arrayPredicateSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral.Builder.Build? _bboxLiteralBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral.Source _bboxLiteralSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Builder.Build? _binaryComparisonPredicateBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Source _binaryComparisonPredicateSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Builder.Build? _caseiBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Source _caseiSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Builder.Build? _dateInstantBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Source _dateInstantSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.Build? _functionRefBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Source _functionRefSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Builder.Build? _geometrycollectionBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Source _geometrycollectionSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.IntervalInstance.Builder.Build? _intervalInstanceBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.IntervalInstance.Source _intervalInstanceSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Builder.Build? _isBetweenPredicateBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Source _isBetweenPredicateSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Builder.Build? _isInListPredicateBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Source _isInListPredicateSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Builder.Build? _isLikePredicateBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Source _isLikePredicateSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Builder.Build? _isNullPredicateBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Source _isNullPredicateSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.Builder.Build? _linestringBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.Source _linestringSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.Builder.Build? _multilinestringBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.Source _multilinestringSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.Builder.Build? _multipointBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.Source _multipointSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.Builder.Build? _multipolygonBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.Source _multipolygonSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.NotExpression.Builder.Build? _notExpressionBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.NotExpression.Source _notExpressionSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Point.Builder.Build? _pointBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Point.Source _pointSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Builder.Build? _polygonBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Source _polygonSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.Build? _propertyRefBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Source _propertyRefSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialPredicate.Builder.Build? _spatialPredicateBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialPredicate.Source _spatialPredicateSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate.Builder.Build? _temporalPredicateBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate.Source _temporalPredicateSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Builder.Build? _timestampInstantBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Source _timestampInstantSourceInstance;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1890,55 +1942,107 @@ public readonly partial struct Cql2Schema
 
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Builder.Build value) {_accentiBuilderInstance = value; _kind = Kind.AccentiBuilder; }
 
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Source value) { _accentiSourceInstance = value; _kind = Kind.AccentiSource; }
+
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.AndOrExpression.Builder.Build value) {_andOrExpressionBuilderInstance = value; _kind = Kind.AndOrExpressionBuilder; }
+
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.AndOrExpression.Source value) { _andOrExpressionSourceInstance = value; _kind = Kind.AndOrExpressionSource; }
 
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Builder.Build value) {_arithmeticExpressionBuilderInstance = value; _kind = Kind.ArithmeticExpressionBuilder; }
 
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Source value) { _arithmeticExpressionSourceInstance = value; _kind = Kind.ArithmeticExpressionSource; }
+
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.ArrayPredicate.Builder.Build value) {_arrayPredicateBuilderInstance = value; _kind = Kind.ArrayPredicateBuilder; }
+
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.ArrayPredicate.Source value) { _arrayPredicateSourceInstance = value; _kind = Kind.ArrayPredicateSource; }
 
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral.Builder.Build value) {_bboxLiteralBuilderInstance = value; _kind = Kind.BboxLiteralBuilder; }
 
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral.Source value) { _bboxLiteralSourceInstance = value; _kind = Kind.BboxLiteralSource; }
+
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Builder.Build value) {_binaryComparisonPredicateBuilderInstance = value; _kind = Kind.BinaryComparisonPredicateBuilder; }
+
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Source value) { _binaryComparisonPredicateSourceInstance = value; _kind = Kind.BinaryComparisonPredicateSource; }
 
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Builder.Build value) {_caseiBuilderInstance = value; _kind = Kind.CaseiBuilder; }
 
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Source value) { _caseiSourceInstance = value; _kind = Kind.CaseiSource; }
+
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Builder.Build value) {_dateInstantBuilderInstance = value; _kind = Kind.DateInstantBuilder; }
+
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Source value) { _dateInstantSourceInstance = value; _kind = Kind.DateInstantSource; }
 
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.Build value) {_functionRefBuilderInstance = value; _kind = Kind.FunctionRefBuilder; }
 
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Source value) { _functionRefSourceInstance = value; _kind = Kind.FunctionRefSource; }
+
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Builder.Build value) {_geometrycollectionBuilderInstance = value; _kind = Kind.GeometrycollectionBuilder; }
+
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Source value) { _geometrycollectionSourceInstance = value; _kind = Kind.GeometrycollectionSource; }
 
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IntervalInstance.Builder.Build value) {_intervalInstanceBuilderInstance = value; _kind = Kind.IntervalInstanceBuilder; }
 
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IntervalInstance.Source value) { _intervalInstanceSourceInstance = value; _kind = Kind.IntervalInstanceSource; }
+
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Builder.Build value) {_isBetweenPredicateBuilderInstance = value; _kind = Kind.IsBetweenPredicateBuilder; }
+
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Source value) { _isBetweenPredicateSourceInstance = value; _kind = Kind.IsBetweenPredicateSource; }
 
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Builder.Build value) {_isInListPredicateBuilderInstance = value; _kind = Kind.IsInListPredicateBuilder; }
 
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Source value) { _isInListPredicateSourceInstance = value; _kind = Kind.IsInListPredicateSource; }
+
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Builder.Build value) {_isLikePredicateBuilderInstance = value; _kind = Kind.IsLikePredicateBuilder; }
+
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Source value) { _isLikePredicateSourceInstance = value; _kind = Kind.IsLikePredicateSource; }
 
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Builder.Build value) {_isNullPredicateBuilderInstance = value; _kind = Kind.IsNullPredicateBuilder; }
 
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Source value) { _isNullPredicateSourceInstance = value; _kind = Kind.IsNullPredicateSource; }
+
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.Builder.Build value) {_linestringBuilderInstance = value; _kind = Kind.LinestringBuilder; }
+
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.Source value) { _linestringSourceInstance = value; _kind = Kind.LinestringSource; }
 
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.Builder.Build value) {_multilinestringBuilderInstance = value; _kind = Kind.MultilinestringBuilder; }
 
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.Source value) { _multilinestringSourceInstance = value; _kind = Kind.MultilinestringSource; }
+
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.Builder.Build value) {_multipointBuilderInstance = value; _kind = Kind.MultipointBuilder; }
+
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.Source value) { _multipointSourceInstance = value; _kind = Kind.MultipointSource; }
 
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.Builder.Build value) {_multipolygonBuilderInstance = value; _kind = Kind.MultipolygonBuilder; }
 
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.Source value) { _multipolygonSourceInstance = value; _kind = Kind.MultipolygonSource; }
+
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.NotExpression.Builder.Build value) {_notExpressionBuilderInstance = value; _kind = Kind.NotExpressionBuilder; }
+
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.NotExpression.Source value) { _notExpressionSourceInstance = value; _kind = Kind.NotExpressionSource; }
 
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Point.Builder.Build value) {_pointBuilderInstance = value; _kind = Kind.PointBuilder; }
 
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Point.Source value) { _pointSourceInstance = value; _kind = Kind.PointSource; }
+
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Builder.Build value) {_polygonBuilderInstance = value; _kind = Kind.PolygonBuilder; }
+
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Source value) { _polygonSourceInstance = value; _kind = Kind.PolygonSource; }
 
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.Build value) {_propertyRefBuilderInstance = value; _kind = Kind.PropertyRefBuilder; }
 
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Source value) { _propertyRefSourceInstance = value; _kind = Kind.PropertyRefSource; }
+
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialPredicate.Builder.Build value) {_spatialPredicateBuilderInstance = value; _kind = Kind.SpatialPredicateBuilder; }
+
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialPredicate.Source value) { _spatialPredicateSourceInstance = value; _kind = Kind.SpatialPredicateSource; }
 
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate.Builder.Build value) {_temporalPredicateBuilderInstance = value; _kind = Kind.TemporalPredicateBuilder; }
 
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate.Source value) { _temporalPredicateSourceInstance = value; _kind = Kind.TemporalPredicateSource; }
+
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Builder.Build value) {_timestampInstantBuilderInstance = value; _kind = Kind.TimestampInstantBuilder; }
+
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Source value) { _timestampInstantSourceInstance = value; _kind = Kind.TimestampInstantSource; }
 
                 public static implicit operator Source(IsNullOperandEntity instance) => new(JsonElement.From(instance));
 
@@ -1958,79 +2062,157 @@ public readonly partial struct Cql2Schema
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.AndOrExpression instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.AndOrExpression.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.ArrayPredicate instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.ArrayPredicate.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Casei instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IntervalInstance instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IntervalInstance.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.NotExpression instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.NotExpression.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Point instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Point.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialPredicate instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialPredicate.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.JsonBoolean instance) => new(JsonElement.From(instance));
@@ -2083,80 +2265,158 @@ public readonly partial struct Cql2Schema
                         case Kind.AccentiBuilder:
                             valueBuilder.AddProperty(utf8Name, _accentiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.AccentiSource:
+                            _accentiSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.AndOrExpressionBuilder:
                             valueBuilder.AddProperty(utf8Name, _andOrExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.AndOrExpression.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.AndOrExpressionSource:
+                            _andOrExpressionSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.ArithmeticExpressionBuilder:
                             valueBuilder.AddProperty(utf8Name, _arithmeticExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.ArithmeticExpressionSource:
+                            _arithmeticExpressionSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.ArrayPredicateBuilder:
                             valueBuilder.AddProperty(utf8Name, _arrayPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.ArrayPredicate.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.ArrayPredicateSource:
+                            _arrayPredicateSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.BboxLiteralBuilder:
                             valueBuilder.AddProperty(utf8Name, _bboxLiteralBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.BboxLiteralSource:
+                            _bboxLiteralSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.BinaryComparisonPredicateBuilder:
                             valueBuilder.AddProperty(utf8Name, _binaryComparisonPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.BinaryComparisonPredicateSource:
+                            _binaryComparisonPredicateSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.CaseiBuilder:
                             valueBuilder.AddProperty(utf8Name, _caseiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.CaseiSource:
+                            _caseiSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.DateInstantBuilder:
                             valueBuilder.AddProperty(utf8Name, _dateInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.DateInstantSource:
+                            _dateInstantSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.FunctionRefBuilder:
                             valueBuilder.AddProperty(utf8Name, _functionRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.FunctionRefSource:
+                            _functionRefSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.GeometrycollectionBuilder:
                             valueBuilder.AddProperty(utf8Name, _geometrycollectionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.GeometrycollectionSource:
+                            _geometrycollectionSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.IntervalInstanceBuilder:
                             valueBuilder.AddProperty(utf8Name, _intervalInstanceBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IntervalInstance.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.IntervalInstanceSource:
+                            _intervalInstanceSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.IsBetweenPredicateBuilder:
                             valueBuilder.AddProperty(utf8Name, _isBetweenPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.IsBetweenPredicateSource:
+                            _isBetweenPredicateSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.IsInListPredicateBuilder:
                             valueBuilder.AddProperty(utf8Name, _isInListPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.IsInListPredicateSource:
+                            _isInListPredicateSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.IsLikePredicateBuilder:
                             valueBuilder.AddProperty(utf8Name, _isLikePredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.IsLikePredicateSource:
+                            _isLikePredicateSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.IsNullPredicateBuilder:
                             valueBuilder.AddProperty(utf8Name, _isNullPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.IsNullPredicateSource:
+                            _isNullPredicateSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.LinestringBuilder:
                             valueBuilder.AddProperty(utf8Name, _linestringBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.LinestringSource:
+                            _linestringSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.MultilinestringBuilder:
                             valueBuilder.AddProperty(utf8Name, _multilinestringBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.MultilinestringSource:
+                            _multilinestringSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.MultipointBuilder:
                             valueBuilder.AddProperty(utf8Name, _multipointBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.MultipointSource:
+                            _multipointSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.MultipolygonBuilder:
                             valueBuilder.AddProperty(utf8Name, _multipolygonBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.MultipolygonSource:
+                            _multipolygonSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.NotExpressionBuilder:
                             valueBuilder.AddProperty(utf8Name, _notExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.NotExpression.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.NotExpressionSource:
+                            _notExpressionSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.PointBuilder:
                             valueBuilder.AddProperty(utf8Name, _pointBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Point.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.PointSource:
+                            _pointSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.PolygonBuilder:
                             valueBuilder.AddProperty(utf8Name, _polygonBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.PolygonSource:
+                            _polygonSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.PropertyRefBuilder:
                             valueBuilder.AddProperty(utf8Name, _propertyRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.PropertyRefSource:
+                            _propertyRefSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.SpatialPredicateBuilder:
                             valueBuilder.AddProperty(utf8Name, _spatialPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialPredicate.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.SpatialPredicateSource:
+                            _spatialPredicateSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.TemporalPredicateBuilder:
                             valueBuilder.AddProperty(utf8Name, _temporalPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.TemporalPredicateSource:
+                            _temporalPredicateSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.TimestampInstantBuilder:
                             valueBuilder.AddProperty(utf8Name, _timestampInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.TimestampInstantSource:
+                            _timestampInstantSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -2200,80 +2460,158 @@ public readonly partial struct Cql2Schema
                         case Kind.AccentiBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _accentiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.AccentiSource:
+                            _accentiSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.AndOrExpressionBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _andOrExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.AndOrExpression.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.AndOrExpressionSource:
+                            _andOrExpressionSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.ArithmeticExpressionBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _arithmeticExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.ArithmeticExpressionSource:
+                            _arithmeticExpressionSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.ArrayPredicateBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _arrayPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.ArrayPredicate.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.ArrayPredicateSource:
+                            _arrayPredicateSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.BboxLiteralBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _bboxLiteralBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.BboxLiteralSource:
+                            _bboxLiteralSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.BinaryComparisonPredicateBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _binaryComparisonPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.BinaryComparisonPredicateSource:
+                            _binaryComparisonPredicateSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.CaseiBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _caseiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.CaseiSource:
+                            _caseiSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.DateInstantBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _dateInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.DateInstantSource:
+                            _dateInstantSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.FunctionRefBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _functionRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.FunctionRefSource:
+                            _functionRefSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.GeometrycollectionBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _geometrycollectionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GeometrycollectionSource:
+                            _geometrycollectionSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.IntervalInstanceBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _intervalInstanceBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IntervalInstance.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.IntervalInstanceSource:
+                            _intervalInstanceSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.IsBetweenPredicateBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _isBetweenPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.IsBetweenPredicateSource:
+                            _isBetweenPredicateSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.IsInListPredicateBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _isInListPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.IsInListPredicateSource:
+                            _isInListPredicateSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.IsLikePredicateBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _isLikePredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.IsLikePredicateSource:
+                            _isLikePredicateSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.IsNullPredicateBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _isNullPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.IsNullPredicateSource:
+                            _isNullPredicateSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.LinestringBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _linestringBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.LinestringSource:
+                            _linestringSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.MultilinestringBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _multilinestringBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.MultilinestringSource:
+                            _multilinestringSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.MultipointBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _multipointBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.MultipointSource:
+                            _multipointSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.MultipolygonBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _multipolygonBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.MultipolygonSource:
+                            _multipolygonSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.NotExpressionBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _notExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.NotExpression.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.NotExpressionSource:
+                            _notExpressionSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.PointBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _pointBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Point.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.PointSource:
+                            _pointSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.PolygonBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _polygonBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.PolygonSource:
+                            _polygonSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.PropertyRefBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _propertyRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.PropertyRefSource:
+                            _propertyRefSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.SpatialPredicateBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _spatialPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialPredicate.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.SpatialPredicateSource:
+                            _spatialPredicateSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.TemporalPredicateBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _temporalPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.TemporalPredicateSource:
+                            _temporalPredicateSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.TimestampInstantBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _timestampInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.TimestampInstantSource:
+                            _timestampInstantSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -2317,80 +2655,158 @@ public readonly partial struct Cql2Schema
                         case Kind.AccentiBuilder:
                             valueBuilder.AddProperty(name, _accentiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.AccentiSource:
+                            _accentiSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.AndOrExpressionBuilder:
                             valueBuilder.AddProperty(name, _andOrExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.AndOrExpression.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.AndOrExpressionSource:
+                            _andOrExpressionSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.ArithmeticExpressionBuilder:
                             valueBuilder.AddProperty(name, _arithmeticExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.ArithmeticExpressionSource:
+                            _arithmeticExpressionSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.ArrayPredicateBuilder:
                             valueBuilder.AddProperty(name, _arrayPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.ArrayPredicate.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.ArrayPredicateSource:
+                            _arrayPredicateSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.BboxLiteralBuilder:
                             valueBuilder.AddProperty(name, _bboxLiteralBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.BboxLiteralSource:
+                            _bboxLiteralSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.BinaryComparisonPredicateBuilder:
                             valueBuilder.AddProperty(name, _binaryComparisonPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.BinaryComparisonPredicateSource:
+                            _binaryComparisonPredicateSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.CaseiBuilder:
                             valueBuilder.AddProperty(name, _caseiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.CaseiSource:
+                            _caseiSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.DateInstantBuilder:
                             valueBuilder.AddProperty(name, _dateInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.DateInstantSource:
+                            _dateInstantSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.FunctionRefBuilder:
                             valueBuilder.AddProperty(name, _functionRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.FunctionRefSource:
+                            _functionRefSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.GeometrycollectionBuilder:
                             valueBuilder.AddProperty(name, _geometrycollectionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GeometrycollectionSource:
+                            _geometrycollectionSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.IntervalInstanceBuilder:
                             valueBuilder.AddProperty(name, _intervalInstanceBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IntervalInstance.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.IntervalInstanceSource:
+                            _intervalInstanceSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.IsBetweenPredicateBuilder:
                             valueBuilder.AddProperty(name, _isBetweenPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.IsBetweenPredicateSource:
+                            _isBetweenPredicateSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.IsInListPredicateBuilder:
                             valueBuilder.AddProperty(name, _isInListPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.IsInListPredicateSource:
+                            _isInListPredicateSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.IsLikePredicateBuilder:
                             valueBuilder.AddProperty(name, _isLikePredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.IsLikePredicateSource:
+                            _isLikePredicateSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.IsNullPredicateBuilder:
                             valueBuilder.AddProperty(name, _isNullPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.IsNullPredicateSource:
+                            _isNullPredicateSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.LinestringBuilder:
                             valueBuilder.AddProperty(name, _linestringBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.LinestringSource:
+                            _linestringSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.MultilinestringBuilder:
                             valueBuilder.AddProperty(name, _multilinestringBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.MultilinestringSource:
+                            _multilinestringSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.MultipointBuilder:
                             valueBuilder.AddProperty(name, _multipointBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.MultipointSource:
+                            _multipointSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.MultipolygonBuilder:
                             valueBuilder.AddProperty(name, _multipolygonBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.MultipolygonSource:
+                            _multipolygonSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.NotExpressionBuilder:
                             valueBuilder.AddProperty(name, _notExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.NotExpression.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.NotExpressionSource:
+                            _notExpressionSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.PointBuilder:
                             valueBuilder.AddProperty(name, _pointBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Point.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.PointSource:
+                            _pointSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.PolygonBuilder:
                             valueBuilder.AddProperty(name, _polygonBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.PolygonSource:
+                            _polygonSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.PropertyRefBuilder:
                             valueBuilder.AddProperty(name, _propertyRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.PropertyRefSource:
+                            _propertyRefSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.SpatialPredicateBuilder:
                             valueBuilder.AddProperty(name, _spatialPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialPredicate.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.SpatialPredicateSource:
+                            _spatialPredicateSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.TemporalPredicateBuilder:
                             valueBuilder.AddProperty(name, _temporalPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.TemporalPredicateSource:
+                            _temporalPredicateSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.TimestampInstantBuilder:
                             valueBuilder.AddProperty(name, _timestampInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.TimestampInstantSource:
+                            _timestampInstantSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -2434,80 +2850,158 @@ public readonly partial struct Cql2Schema
                         case Kind.AccentiBuilder:
                             valueBuilder.AddProperty(name, _accentiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.AccentiSource:
+                            _accentiSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.AndOrExpressionBuilder:
                             valueBuilder.AddProperty(name, _andOrExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.AndOrExpression.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.AndOrExpressionSource:
+                            _andOrExpressionSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.ArithmeticExpressionBuilder:
                             valueBuilder.AddProperty(name, _arithmeticExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.ArithmeticExpressionSource:
+                            _arithmeticExpressionSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.ArrayPredicateBuilder:
                             valueBuilder.AddProperty(name, _arrayPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.ArrayPredicate.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.ArrayPredicateSource:
+                            _arrayPredicateSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.BboxLiteralBuilder:
                             valueBuilder.AddProperty(name, _bboxLiteralBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.BboxLiteralSource:
+                            _bboxLiteralSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.BinaryComparisonPredicateBuilder:
                             valueBuilder.AddProperty(name, _binaryComparisonPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.BinaryComparisonPredicateSource:
+                            _binaryComparisonPredicateSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.CaseiBuilder:
                             valueBuilder.AddProperty(name, _caseiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.CaseiSource:
+                            _caseiSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.DateInstantBuilder:
                             valueBuilder.AddProperty(name, _dateInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.DateInstantSource:
+                            _dateInstantSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.FunctionRefBuilder:
                             valueBuilder.AddProperty(name, _functionRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.FunctionRefSource:
+                            _functionRefSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.GeometrycollectionBuilder:
                             valueBuilder.AddProperty(name, _geometrycollectionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GeometrycollectionSource:
+                            _geometrycollectionSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.IntervalInstanceBuilder:
                             valueBuilder.AddProperty(name, _intervalInstanceBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IntervalInstance.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.IntervalInstanceSource:
+                            _intervalInstanceSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.IsBetweenPredicateBuilder:
                             valueBuilder.AddProperty(name, _isBetweenPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.IsBetweenPredicateSource:
+                            _isBetweenPredicateSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.IsInListPredicateBuilder:
                             valueBuilder.AddProperty(name, _isInListPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.IsInListPredicateSource:
+                            _isInListPredicateSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.IsLikePredicateBuilder:
                             valueBuilder.AddProperty(name, _isLikePredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.IsLikePredicateSource:
+                            _isLikePredicateSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.IsNullPredicateBuilder:
                             valueBuilder.AddProperty(name, _isNullPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.IsNullPredicateSource:
+                            _isNullPredicateSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.LinestringBuilder:
                             valueBuilder.AddProperty(name, _linestringBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.LinestringSource:
+                            _linestringSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.MultilinestringBuilder:
                             valueBuilder.AddProperty(name, _multilinestringBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.MultilinestringSource:
+                            _multilinestringSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.MultipointBuilder:
                             valueBuilder.AddProperty(name, _multipointBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.MultipointSource:
+                            _multipointSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.MultipolygonBuilder:
                             valueBuilder.AddProperty(name, _multipolygonBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.MultipolygonSource:
+                            _multipolygonSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.NotExpressionBuilder:
                             valueBuilder.AddProperty(name, _notExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.NotExpression.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.NotExpressionSource:
+                            _notExpressionSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.PointBuilder:
                             valueBuilder.AddProperty(name, _pointBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Point.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.PointSource:
+                            _pointSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.PolygonBuilder:
                             valueBuilder.AddProperty(name, _polygonBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.PolygonSource:
+                            _polygonSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.PropertyRefBuilder:
                             valueBuilder.AddProperty(name, _propertyRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.PropertyRefSource:
+                            _propertyRefSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.SpatialPredicateBuilder:
                             valueBuilder.AddProperty(name, _spatialPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialPredicate.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.SpatialPredicateSource:
+                            _spatialPredicateSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.TemporalPredicateBuilder:
                             valueBuilder.AddProperty(name, _temporalPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.TemporalPredicateSource:
+                            _temporalPredicateSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.TimestampInstantBuilder:
                             valueBuilder.AddProperty(name, _timestampInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.TimestampInstantSource:
+                            _timestampInstantSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -2551,80 +3045,158 @@ public readonly partial struct Cql2Schema
                         case Kind.AccentiBuilder:
                             valueBuilder.AddItem(_accentiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.AccentiSource:
+                            _accentiSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.AndOrExpressionBuilder:
                             valueBuilder.AddItem(_andOrExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.AndOrExpression.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.AndOrExpressionSource:
+                            _andOrExpressionSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.ArithmeticExpressionBuilder:
                             valueBuilder.AddItem(_arithmeticExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.ArithmeticExpressionSource:
+                            _arithmeticExpressionSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.ArrayPredicateBuilder:
                             valueBuilder.AddItem(_arrayPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.ArrayPredicate.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.ArrayPredicateSource:
+                            _arrayPredicateSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.BboxLiteralBuilder:
                             valueBuilder.AddItem(_bboxLiteralBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.BboxLiteralSource:
+                            _bboxLiteralSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.BinaryComparisonPredicateBuilder:
                             valueBuilder.AddItem(_binaryComparisonPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.BinaryComparisonPredicateSource:
+                            _binaryComparisonPredicateSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.CaseiBuilder:
                             valueBuilder.AddItem(_caseiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.CaseiSource:
+                            _caseiSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.DateInstantBuilder:
                             valueBuilder.AddItem(_dateInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.DateInstantSource:
+                            _dateInstantSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.FunctionRefBuilder:
                             valueBuilder.AddItem(_functionRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.FunctionRefSource:
+                            _functionRefSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.GeometrycollectionBuilder:
                             valueBuilder.AddItem(_geometrycollectionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GeometrycollectionSource:
+                            _geometrycollectionSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.IntervalInstanceBuilder:
                             valueBuilder.AddItem(_intervalInstanceBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IntervalInstance.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.IntervalInstanceSource:
+                            _intervalInstanceSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.IsBetweenPredicateBuilder:
                             valueBuilder.AddItem(_isBetweenPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.IsBetweenPredicateSource:
+                            _isBetweenPredicateSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.IsInListPredicateBuilder:
                             valueBuilder.AddItem(_isInListPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.IsInListPredicateSource:
+                            _isInListPredicateSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.IsLikePredicateBuilder:
                             valueBuilder.AddItem(_isLikePredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.IsLikePredicateSource:
+                            _isLikePredicateSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.IsNullPredicateBuilder:
                             valueBuilder.AddItem(_isNullPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.IsNullPredicateSource:
+                            _isNullPredicateSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.LinestringBuilder:
                             valueBuilder.AddItem(_linestringBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.LinestringSource:
+                            _linestringSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.MultilinestringBuilder:
                             valueBuilder.AddItem(_multilinestringBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.MultilinestringSource:
+                            _multilinestringSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.MultipointBuilder:
                             valueBuilder.AddItem(_multipointBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.MultipointSource:
+                            _multipointSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.MultipolygonBuilder:
                             valueBuilder.AddItem(_multipolygonBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.MultipolygonSource:
+                            _multipolygonSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.NotExpressionBuilder:
                             valueBuilder.AddItem(_notExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.NotExpression.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.NotExpressionSource:
+                            _notExpressionSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.PointBuilder:
                             valueBuilder.AddItem(_pointBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Point.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.PointSource:
+                            _pointSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.PolygonBuilder:
                             valueBuilder.AddItem(_polygonBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.PolygonSource:
+                            _polygonSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.PropertyRefBuilder:
                             valueBuilder.AddItem(_propertyRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.PropertyRefSource:
+                            _propertyRefSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.SpatialPredicateBuilder:
                             valueBuilder.AddItem(_spatialPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialPredicate.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.SpatialPredicateSource:
+                            _spatialPredicateSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.TemporalPredicateBuilder:
                             valueBuilder.AddItem(_temporalPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.TemporalPredicateSource:
+                            _temporalPredicateSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.TimestampInstantBuilder:
                             valueBuilder.AddItem(_timestampInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.TimestampInstantSource:
+                            _timestampInstantSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");

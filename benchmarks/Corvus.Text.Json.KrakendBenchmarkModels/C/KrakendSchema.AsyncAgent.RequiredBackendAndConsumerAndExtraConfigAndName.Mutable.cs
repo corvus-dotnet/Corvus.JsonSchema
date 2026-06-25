@@ -318,7 +318,7 @@ public readonly partial struct KrakendSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.RequiredBackendAndConsumerAndExtraConfigAndName.BackendEncoding.Mutable.DefaultInstance;
                     }
                 }
 

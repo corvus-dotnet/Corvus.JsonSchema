@@ -245,7 +245,7 @@ public readonly partial struct LazygitSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Command.Mutable.DefaultInstance;
                     }
                 }
 
@@ -298,7 +298,7 @@ public readonly partial struct LazygitSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Description.Mutable.DefaultInstance;
                     }
                 }
 
@@ -351,7 +351,7 @@ public readonly partial struct LazygitSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.LoadingText.Mutable.DefaultInstance;
                     }
                 }
 
@@ -401,7 +401,7 @@ public readonly partial struct LazygitSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.ShowOutput.Mutable.DefaultInstance;
                     }
                 }
 
@@ -426,7 +426,7 @@ public readonly partial struct LazygitSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Stream.Mutable.DefaultInstance;
                     }
                 }
 
@@ -451,7 +451,7 @@ public readonly partial struct LazygitSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Subprocess.Mutable.DefaultInstance;
                     }
                 }
 

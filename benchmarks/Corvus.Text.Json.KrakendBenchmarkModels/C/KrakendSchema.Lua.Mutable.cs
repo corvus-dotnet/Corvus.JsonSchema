@@ -311,7 +311,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.OpenExternalLibs.Mutable.DefaultInstance;
                 }
             }
 
@@ -336,7 +336,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.LiveReload.Mutable.DefaultInstance;
                 }
             }
 
@@ -436,7 +436,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.SkipNext.Mutable.DefaultInstance;
                 }
             }
 

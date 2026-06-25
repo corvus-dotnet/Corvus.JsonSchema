@@ -313,7 +313,7 @@ public readonly partial struct KrakendSchema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.ResponsePolicies.ErrorEntity.ErrorBody.Mutable.DefaultInstance;
                         }
                     }
 
@@ -338,7 +338,7 @@ public readonly partial struct KrakendSchema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.ResponsePolicies.ErrorEntity.ContentType.Mutable.DefaultInstance;
                         }
                     }
 
@@ -363,7 +363,7 @@ public readonly partial struct KrakendSchema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.ResponsePolicies.ErrorEntity.HttpStatusCode.Mutable.DefaultInstance;
                         }
                     }
 

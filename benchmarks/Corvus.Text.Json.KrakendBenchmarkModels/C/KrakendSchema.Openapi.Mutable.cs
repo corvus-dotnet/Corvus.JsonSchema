@@ -454,7 +454,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.JwtKey.Mutable.DefaultInstance;
                 }
             }
 
@@ -654,7 +654,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.SupportedSchemes.Mutable.DefaultInstance;
                 }
             }
 

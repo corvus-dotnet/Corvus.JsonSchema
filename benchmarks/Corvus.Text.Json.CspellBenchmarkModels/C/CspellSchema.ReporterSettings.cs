@@ -153,6 +153,15 @@ public readonly partial struct CspellSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.ReporterSettings.JsonStringArray"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ReporterSettings(Corvus.CspellBenchmark.Current.CspellSchema.ReporterSettings.JsonStringArray.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.CspellBenchmark.Current.CspellSchema.ReporterSettings.AnyOf2Array"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -166,6 +175,15 @@ public readonly partial struct CspellSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator ReporterSettings(Corvus.CspellBenchmark.Current.CspellSchema.ReporterSettings.AnyOf2Array value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.ReporterSettings.AnyOf2Array"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ReporterSettings(Corvus.CspellBenchmark.Current.CspellSchema.ReporterSettings.AnyOf2Array.Mutable value)
         {
             return From(value);
         }

@@ -204,7 +204,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.TheNameOfTheCompanyWhichAppearsInFileHeaders.Mutable.DefaultInstance;
                     }
                 }
 
@@ -225,7 +225,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.TheCopyrightTextWhichShouldAppearInFileHeaders.Mutable.DefaultInstance;
                     }
                 }
 
@@ -246,7 +246,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.TheCultureThatShouldBeUsedForDocumentationComments.Mutable.DefaultInstance;
                     }
                 }
 
@@ -267,7 +267,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.DocumentExposedElementsEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -288,7 +288,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.DocumentInterfacesEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -309,7 +309,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.DocumentInternalElementsEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -330,7 +330,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.DocumentPrivateElementsEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -351,7 +351,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.DocumentPrivateFieldsEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -372,7 +372,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.ExcludeFromPunctuationCheckArray.Mutable.DefaultInstance;
                     }
                 }
 
@@ -393,7 +393,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.FileNamingConventionEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -414,7 +414,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.TheTextUsedAsDecorationForTheCopyrightHeaderComment.Mutable.DefaultInstance;
                     }
                 }
 
@@ -456,7 +456,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.XmlHeaderEntity.Mutable.DefaultInstance;
                     }
                 }
 

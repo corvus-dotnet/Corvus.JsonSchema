@@ -217,7 +217,7 @@ public readonly partial struct LazygitSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Order.Mutable.DefaultInstance;
                     }
                 }
 
@@ -242,7 +242,7 @@ public readonly partial struct LazygitSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.ShowGraph.Mutable.DefaultInstance;
                     }
                 }
 
@@ -267,7 +267,7 @@ public readonly partial struct LazygitSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.ShowWholeGraph.Mutable.DefaultInstance;
                     }
                 }
 

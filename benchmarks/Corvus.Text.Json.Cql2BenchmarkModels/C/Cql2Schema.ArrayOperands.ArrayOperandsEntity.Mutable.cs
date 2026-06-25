@@ -1235,7 +1235,9 @@ public readonly partial struct Cql2Schema
                     Unknown,
                     JsonElement,
                     FunctionRefBuilder,
+                    FunctionRefSource,
                     PropertyRefBuilder,
+                    PropertyRefSource,
                     ArrayBuilder,
                 }
 
@@ -1243,7 +1245,9 @@ public readonly partial struct Cql2Schema
                 private readonly JsonElement _jsonElement;
                 private readonly ArrayBuilder.Build? _arrayBuilder;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.Build? _functionRefBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Source _functionRefSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.Build? _propertyRefBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Source _propertyRefSourceInstance;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1260,7 +1264,11 @@ public readonly partial struct Cql2Schema
 
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.Build value) {_functionRefBuilderInstance = value; _kind = Kind.FunctionRefBuilder; }
 
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Source value) { _functionRefSourceInstance = value; _kind = Kind.FunctionRefSource; }
+
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.Build value) {_propertyRefBuilderInstance = value; _kind = Kind.PropertyRefBuilder; }
+
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Source value) { _propertyRefSourceInstance = value; _kind = Kind.PropertyRefSource; }
 
                 public static implicit operator Source(ArrayOperandsEntity instance) => new(JsonElement.From(instance));
 
@@ -1268,7 +1276,13 @@ public readonly partial struct Cql2Schema
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Source value) => new(value);
 
                 internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                 {
@@ -1285,8 +1299,14 @@ public readonly partial struct Cql2Schema
                         case Kind.FunctionRefBuilder:
                             valueBuilder.AddProperty(utf8Name, _functionRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.FunctionRefSource:
+                            _functionRefSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.PropertyRefBuilder:
                             valueBuilder.AddProperty(utf8Name, _propertyRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.PropertyRefSource:
+                            _propertyRefSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1309,8 +1329,14 @@ public readonly partial struct Cql2Schema
                         case Kind.FunctionRefBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _functionRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.FunctionRefSource:
+                            _functionRefSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.PropertyRefBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _propertyRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.PropertyRefSource:
+                            _propertyRefSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1333,8 +1359,14 @@ public readonly partial struct Cql2Schema
                         case Kind.FunctionRefBuilder:
                             valueBuilder.AddProperty(name, _functionRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.FunctionRefSource:
+                            _functionRefSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.PropertyRefBuilder:
                             valueBuilder.AddProperty(name, _propertyRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.PropertyRefSource:
+                            _propertyRefSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1357,8 +1389,14 @@ public readonly partial struct Cql2Schema
                         case Kind.FunctionRefBuilder:
                             valueBuilder.AddProperty(name, _functionRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.FunctionRefSource:
+                            _functionRefSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.PropertyRefBuilder:
                             valueBuilder.AddProperty(name, _propertyRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.PropertyRefSource:
+                            _propertyRefSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1381,8 +1419,14 @@ public readonly partial struct Cql2Schema
                         case Kind.FunctionRefBuilder:
                             valueBuilder.AddItem(_functionRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.FunctionRefSource:
+                            _functionRefSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.PropertyRefBuilder:
                             valueBuilder.AddItem(_propertyRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.PropertyRefSource:
+                            _propertyRefSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");

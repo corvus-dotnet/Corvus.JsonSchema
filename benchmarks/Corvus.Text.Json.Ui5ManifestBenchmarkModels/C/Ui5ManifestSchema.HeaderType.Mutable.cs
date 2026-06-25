@@ -757,13 +757,17 @@ public readonly partial struct Ui5ManifestSchema
                 Unknown,
                 JsonElement,
                 HeaderTypeDefaultBuilder,
+                HeaderTypeDefaultSource,
                 HeaderTypeNumericBuilder,
+                HeaderTypeNumericSource,
             }
 
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.Builder.Build? _headerTypeDefaultBuilderInstance;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.Source _headerTypeDefaultSourceInstance;
             private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.Builder.Build? _headerTypeNumericBuilderInstance;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.Source _headerTypeNumericSourceInstance;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -778,7 +782,11 @@ public readonly partial struct Ui5ManifestSchema
 
             public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.Builder.Build value) {_headerTypeDefaultBuilderInstance = value; _kind = Kind.HeaderTypeDefaultBuilder; }
 
+            public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.Source value) { _headerTypeDefaultSourceInstance = value; _kind = Kind.HeaderTypeDefaultSource; }
+
             public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.Builder.Build value) {_headerTypeNumericBuilderInstance = value; _kind = Kind.HeaderTypeNumericBuilder; }
+
+            public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.Source value) { _headerTypeNumericSourceInstance = value; _kind = Kind.HeaderTypeNumericSource; }
 
             public static implicit operator Source(HeaderType instance) => new(JsonElement.From(instance));
 
@@ -786,7 +794,13 @@ public readonly partial struct Ui5ManifestSchema
             public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.Source value) => new(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.Source value) => new(value);
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -800,8 +814,14 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.HeaderTypeDefaultBuilder:
                         valueBuilder.AddProperty(utf8Name, _headerTypeDefaultBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.HeaderTypeDefaultSource:
+                        _headerTypeDefaultSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     case Kind.HeaderTypeNumericBuilder:
                         valueBuilder.AddProperty(utf8Name, _headerTypeNumericBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    case Kind.HeaderTypeNumericSource:
+                        _headerTypeNumericSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -821,8 +841,14 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.HeaderTypeDefaultBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _headerTypeDefaultBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.HeaderTypeDefaultSource:
+                        _headerTypeDefaultSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     case Kind.HeaderTypeNumericBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _headerTypeNumericBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.HeaderTypeNumericSource:
+                        _headerTypeNumericSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -842,8 +868,14 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.HeaderTypeDefaultBuilder:
                         valueBuilder.AddProperty(name, _headerTypeDefaultBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.HeaderTypeDefaultSource:
+                        _headerTypeDefaultSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.HeaderTypeNumericBuilder:
                         valueBuilder.AddProperty(name, _headerTypeNumericBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.HeaderTypeNumericSource:
+                        _headerTypeNumericSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -863,8 +895,14 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.HeaderTypeDefaultBuilder:
                         valueBuilder.AddProperty(name, _headerTypeDefaultBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.HeaderTypeDefaultSource:
+                        _headerTypeDefaultSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.HeaderTypeNumericBuilder:
                         valueBuilder.AddProperty(name, _headerTypeNumericBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.HeaderTypeNumericSource:
+                        _headerTypeNumericSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -884,8 +922,14 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.HeaderTypeDefaultBuilder:
                         valueBuilder.AddItem(_headerTypeDefaultBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.HeaderTypeDefaultSource:
+                        _headerTypeDefaultSourceInstance.AddAsItem(ref valueBuilder);
+                        break;
                     case Kind.HeaderTypeNumericBuilder:
                         valueBuilder.AddItem(_headerTypeNumericBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.HeaderTypeNumericSource:
+                        _headerTypeNumericSourceInstance.AddAsItem(ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

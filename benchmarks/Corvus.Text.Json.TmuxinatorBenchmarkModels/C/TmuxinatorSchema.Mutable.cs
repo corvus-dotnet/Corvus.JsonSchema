@@ -178,7 +178,7 @@ public readonly partial struct TmuxinatorSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Mutable.DefaultInstance;
             }
         }
 

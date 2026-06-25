@@ -346,6 +346,15 @@ public readonly partial struct PulumiSchema
                 return From(value);
             }
 
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator AdditionalPropertiesEntity(Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration.Mutable value)
+            {
+                return From(value);
+            }
+
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static explicit operator string(AdditionalPropertiesEntity value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 

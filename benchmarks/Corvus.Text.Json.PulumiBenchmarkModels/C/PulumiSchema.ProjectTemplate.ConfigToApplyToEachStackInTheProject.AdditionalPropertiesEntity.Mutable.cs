@@ -341,11 +341,11 @@ public readonly partial struct PulumiSchema
                     /// Boolean indicating if the configuration is labeled as a secret.
                     /// </para>
                     /// </remarks>
-                    public Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.SecretEntity.Mutable Secret
+                    public Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.BooleanIndicatingIfTheConfigurationIsLabeledAsASecret.Mutable Secret
                     {
                         get
                         {
-                            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SecretUtf8, out Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.SecretEntity.Mutable value))
+                            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SecretUtf8, out Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.BooleanIndicatingIfTheConfigurationIsLabeledAsASecret.Mutable value))
                             {
                                 return value;
                             }
@@ -523,7 +523,7 @@ public readonly partial struct PulumiSchema
                     /// Set the <c>secret</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetSecret(in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.SecretEntity.Source value)
+                    public void SetSecret(in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.BooleanIndicatingIfTheConfigurationIsLabeledAsASecret.Source value)
                     {
                         CheckValidInstance();
 
@@ -896,7 +896,7 @@ public readonly partial struct PulumiSchema
                     private readonly Builder.Build? _objectBuilder;
                     private readonly Corvus.Text.Json.JsonElement.Source _createArg1;
                     private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.DescriptionOfTheConfig.Source _createArg2;
-                    private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.SecretEntity.Source _createArg3;
+                    private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.BooleanIndicatingIfTheConfigurationIsLabeledAsASecret.Source _createArg3;
 
                     /// <summary>
                     /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -911,7 +911,7 @@ public readonly partial struct PulumiSchema
 
                     internal Source(Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(in Corvus.Text.Json.JsonElement.Source arg1, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.DescriptionOfTheConfig.Source arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.SecretEntity.Source arg3)
+                    internal Source(in Corvus.Text.Json.JsonElement.Source arg1, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.DescriptionOfTheConfig.Source arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.BooleanIndicatingIfTheConfigurationIsLabeledAsASecret.Source arg3)
                     {
                         _createArg1 = arg1;
                         _createArg2 = arg2;
@@ -1066,7 +1066,7 @@ public readonly partial struct PulumiSchema
                     private readonly Builder.Build<TContext>? _objectBuilder;
                     private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg1;
                     private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.DescriptionOfTheConfig.Source _createArg2;
-                    private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.SecretEntity.Source _createArg3;
+                    private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.BooleanIndicatingIfTheConfigurationIsLabeledAsASecret.Source _createArg3;
 
                     /// <summary>
                     /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1079,7 +1079,7 @@ public readonly partial struct PulumiSchema
 
                     internal Source(scoped in TContext context, Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> arg1, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.DescriptionOfTheConfig.Source arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.SecretEntity.Source arg3)
+                    internal Source(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> arg1, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.DescriptionOfTheConfig.Source arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.BooleanIndicatingIfTheConfigurationIsLabeledAsASecret.Source arg3)
                     {
                         _context = context;
                         _createArg1 = arg1;
@@ -1239,7 +1239,7 @@ public readonly partial struct PulumiSchema
                         ref ComplexValueBuilder builder,
                         in Corvus.Text.Json.JsonElement.Source defaultValue = default,
                         in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.DescriptionOfTheConfig.Source description = default,
-                        in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.SecretEntity.Source secret = default)
+                        in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.BooleanIndicatingIfTheConfigurationIsLabeledAsASecret.Source secret = default)
                     {
                         defaultValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Default, ref builder);
                         description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
@@ -1252,7 +1252,7 @@ public readonly partial struct PulumiSchema
                     public void Create(
                         in Corvus.Text.Json.JsonElement.Source defaultValue = default,
                         in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.DescriptionOfTheConfig.Source description = default,
-                        in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.SecretEntity.Source secret = default)
+                        in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.BooleanIndicatingIfTheConfigurationIsLabeledAsASecret.Source secret = default)
                     {
                         Create(ref _builder, defaultValue, description, secret);
                     }
@@ -1265,7 +1265,7 @@ public readonly partial struct PulumiSchema
                         ref ComplexValueBuilder builder,
                         in Corvus.Text.Json.JsonElement.Source<TContext> defaultValue = default,
                         in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.DescriptionOfTheConfig.Source description = default,
-                        in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.SecretEntity.Source secret = default)
+                        in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.BooleanIndicatingIfTheConfigurationIsLabeledAsASecret.Source secret = default)
                     #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
                     #endif
@@ -1282,7 +1282,7 @@ public readonly partial struct PulumiSchema
                         in TContext context,
                         in Corvus.Text.Json.JsonElement.Source<TContext> defaultValue = default,
                         in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.DescriptionOfTheConfig.Source description = default,
-                        in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.SecretEntity.Source secret = default)
+                        in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.BooleanIndicatingIfTheConfigurationIsLabeledAsASecret.Source secret = default)
                     #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
                     #endif
@@ -1389,7 +1389,7 @@ public readonly partial struct PulumiSchema
                     /// <param name="arg2">The value of the property.</param>
                     /// <param name="arg3">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue(in Corvus.Text.Json.JsonElement.Source arg1, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.DescriptionOfTheConfig.Source arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.SecretEntity.Source arg3, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue(in Corvus.Text.Json.JsonElement.Source arg1, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.DescriptionOfTheConfig.Source arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.BooleanIndicatingIfTheConfigurationIsLabeledAsASecret.Source arg3, ref ComplexValueBuilder o)
                     {
                         o.StartObject();
                         Create(ref o, arg1, arg2, arg3);
@@ -1405,7 +1405,7 @@ public readonly partial struct PulumiSchema
                     /// <param name="arg2">The value of the property.</param>
                     /// <param name="arg3">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> arg1, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.DescriptionOfTheConfig.Source arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.SecretEntity.Source arg3, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> arg1, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.DescriptionOfTheConfig.Source arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.BooleanIndicatingIfTheConfigurationIsLabeledAsASecret.Source arg3, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                         where TContext : allows ref struct
 #endif
@@ -1452,7 +1452,7 @@ public readonly partial struct PulumiSchema
                 /// <param name="description">The value of the <c>"description"</c> property.</param>
                 /// <param name="secret">The value of the <c>"secret"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source Build(in Corvus.Text.Json.JsonElement.Source defaultValue = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.DescriptionOfTheConfig.Source description = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.SecretEntity.Source secret = default)
+                public static Source Build(in Corvus.Text.Json.JsonElement.Source defaultValue = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.DescriptionOfTheConfig.Source description = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.BooleanIndicatingIfTheConfigurationIsLabeledAsASecret.Source secret = default)
                 {
                     return new Source(defaultValue, description, secret);
                 }
@@ -1466,7 +1466,7 @@ public readonly partial struct PulumiSchema
                 /// <param name="description">The value of the <c>"description"</c> property.</param>
                 /// <param name="secret">The value of the <c>"secret"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> defaultValue = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.DescriptionOfTheConfig.Source description = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.SecretEntity.Source secret = default)
+                public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> defaultValue = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.DescriptionOfTheConfig.Source description = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.BooleanIndicatingIfTheConfigurationIsLabeledAsASecret.Source secret = default)
                     #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
                     #endif
@@ -1549,7 +1549,7 @@ public readonly partial struct PulumiSchema
                 /// <param name="secret">The value of the property.</param>
                 /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
                 /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-                public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.JsonElement.Source defaultValue = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.DescriptionOfTheConfig.Source description = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.SecretEntity.Source secret = default, int initialCapacity = 30)
+                public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.JsonElement.Source defaultValue = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.DescriptionOfTheConfig.Source description = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.BooleanIndicatingIfTheConfigurationIsLabeledAsASecret.Source secret = default, int initialCapacity = 30)
                 {
                     JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
                     ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1573,7 +1573,7 @@ public readonly partial struct PulumiSchema
                 /// <param name="secret">The value of the property.</param>
                 /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
                 /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-                public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> defaultValue = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.DescriptionOfTheConfig.Source description = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.SecretEntity.Source secret = default, int initialCapacity = 30)
+                public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> defaultValue = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.DescriptionOfTheConfig.Source description = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.BooleanIndicatingIfTheConfigurationIsLabeledAsASecret.Source secret = default, int initialCapacity = 30)
                     #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
                     #endif

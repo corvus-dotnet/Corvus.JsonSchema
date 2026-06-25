@@ -592,7 +592,7 @@ public readonly partial struct LazygitSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Universal.JumpToBlock.Mutable.DefaultInstance;
                     }
                 }
 
@@ -892,7 +892,7 @@ public readonly partial struct LazygitSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Universal.OptionMenu.Mutable.DefaultInstance;
                     }
                 }
 

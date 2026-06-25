@@ -409,7 +409,7 @@ public readonly partial struct ImplementationsOfElement
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.InputText.IfTrueAllowMultipleLinesOfInput.Mutable.DefaultInstance;
                 }
             }
 

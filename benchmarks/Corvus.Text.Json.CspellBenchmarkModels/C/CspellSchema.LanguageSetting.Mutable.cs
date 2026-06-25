@@ -184,7 +184,7 @@ public readonly partial struct CspellSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.AllowCompoundWordsEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -211,7 +211,7 @@ public readonly partial struct CspellSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.CaseSensitiveEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -310,7 +310,7 @@ public readonly partial struct CspellSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IsTheSpellCheckerEnabled.Mutable.DefaultInstance;
                 }
             }
 

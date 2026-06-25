@@ -288,7 +288,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.BuildOptionsDefinition.BuildOptionsEntity.AssumeChangesOnlyAffectDirectDependenciesEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -309,7 +309,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.BuildOptionsDefinition.BuildOptionsEntity.Entity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -330,7 +330,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.BuildOptionsDefinition.BuildOptionsEntity.ForceEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -351,7 +351,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.BuildOptionsDefinition.BuildOptionsEntity.IncrementalEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -372,7 +372,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.BuildOptionsDefinition.BuildOptionsEntity.LogPathsUsedDuringTheModuleResolutionProcess.Mutable.DefaultInstance;
                     }
                 }
 
@@ -393,7 +393,7 @@ public readonly partial struct JsconfigSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.JsconfigBenchmark.Current.JsconfigSchema.BuildOptionsDefinition.BuildOptionsEntity.EnableVerboseLogging.Mutable.DefaultInstance;
                     }
                 }
 

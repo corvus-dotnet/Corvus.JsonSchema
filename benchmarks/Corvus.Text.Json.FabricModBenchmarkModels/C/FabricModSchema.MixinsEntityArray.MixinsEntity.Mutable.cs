@@ -828,6 +828,7 @@ public readonly partial struct FabricModSchema
                     Unknown,
                     JsonElement,
                     OneOf1EntityBuilder,
+                    OneOf1EntitySource,
                     RawUtf8StringRequiresUnescaping,
                     RawUtf8StringNotRequiresUnescaping,
                     Utf8String,
@@ -839,6 +840,7 @@ public readonly partial struct FabricModSchema
                 private readonly ReadOnlySpan<byte> _utf8Backing;
                 private readonly ReadOnlySpan<char> _utf16Backing;
                 private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.MixinsEntity.OneOf1Entity.Builder.Build? _oneOf1EntityBuilderInstance;
+                private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.MixinsEntity.OneOf1Entity.Source _oneOf1EntitySourceInstance;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -871,6 +873,8 @@ public readonly partial struct FabricModSchema
 
                 public Source(Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.MixinsEntity.OneOf1Entity.Builder.Build value) {_oneOf1EntityBuilderInstance = value; _kind = Kind.OneOf1EntityBuilder; }
 
+                public Source(Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.MixinsEntity.OneOf1Entity.Source value) { _oneOf1EntitySourceInstance = value; _kind = Kind.OneOf1EntitySource; }
+
                 public static implicit operator Source(MixinsEntity instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -884,6 +888,9 @@ public readonly partial struct FabricModSchema
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.MixinsEntity.OneOf1Entity instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.MixinsEntity.OneOf1Entity.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.FabricModBenchmark.Current.JsonString instance) => new(JsonElement.From(instance));
@@ -915,6 +922,9 @@ public readonly partial struct FabricModSchema
                         case Kind.OneOf1EntityBuilder:
                             valueBuilder.AddProperty(utf8Name, _oneOf1EntityBuilderInstance!, static (in b, ref o) => Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.MixinsEntity.OneOf1Entity.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.OneOf1EntitySource:
+                            _oneOf1EntitySourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -944,6 +954,9 @@ public readonly partial struct FabricModSchema
                             break;
                         case Kind.OneOf1EntityBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _oneOf1EntityBuilderInstance!, static (in b, ref o) => Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.MixinsEntity.OneOf1Entity.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.OneOf1EntitySource:
+                            _oneOf1EntitySourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -975,6 +988,9 @@ public readonly partial struct FabricModSchema
                         case Kind.OneOf1EntityBuilder:
                             valueBuilder.AddProperty(name, _oneOf1EntityBuilderInstance!, static (in b, ref o) => Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.MixinsEntity.OneOf1Entity.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.OneOf1EntitySource:
+                            _oneOf1EntitySourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1005,6 +1021,9 @@ public readonly partial struct FabricModSchema
                         case Kind.OneOf1EntityBuilder:
                             valueBuilder.AddProperty(name, _oneOf1EntityBuilderInstance!, static (in b, ref o) => Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.MixinsEntity.OneOf1Entity.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.OneOf1EntitySource:
+                            _oneOf1EntitySourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1034,6 +1053,9 @@ public readonly partial struct FabricModSchema
                             break;
                         case Kind.OneOf1EntityBuilder:
                             valueBuilder.AddItem(_oneOf1EntityBuilderInstance!, static (in b, ref o) => Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.MixinsEntity.OneOf1Entity.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.OneOf1EntitySource:
+                            _oneOf1EntitySourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");

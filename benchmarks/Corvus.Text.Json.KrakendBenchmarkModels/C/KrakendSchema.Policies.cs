@@ -391,6 +391,15 @@ public readonly partial struct KrakendSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequiredReq"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Policies(Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequiredReq.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequiredResp"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -409,6 +418,15 @@ public readonly partial struct KrakendSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequiredResp"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Policies(Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequiredResp.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequiredJwt"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -422,6 +440,15 @@ public readonly partial struct KrakendSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator Policies(Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequiredJwt value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequiredJwt"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Policies(Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequiredJwt.Mutable value)
         {
             return From(value);
         }

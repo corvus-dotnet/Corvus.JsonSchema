@@ -73,7 +73,7 @@ public readonly partial struct Ui5Schema
                                 private static readonly JsonSchemaPathProvider SpecVersionSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/specVersion"u8, buffer, out written);
                                 private static readonly JsonSchemaPathProvider TypeSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/type"u8, buffer, out written);
 
-                                private static void MatchBuilderValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                                private static void MatchBuilderValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                                 {
                                     context.AddLocalEvaluatedProperty(propertyCount);
                                     JsonSchemaContext childContext =
@@ -88,7 +88,7 @@ public readonly partial struct Ui5Schema
                                     context.CommitChildContext(childContext.IsMatch, ref childContext);
                                 }
 
-                                private static void MatchCustomConfiguration(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                                private static void MatchCustomConfiguration(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                                 {
                                     context.AddLocalEvaluatedProperty(propertyCount);
                                     JsonSchemaContext childContext1 =
@@ -103,7 +103,7 @@ public readonly partial struct Ui5Schema
                                     context.CommitChildContext(childContext1.IsMatch, ref childContext1);
                                 }
 
-                                private static void MatchFramework(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                                private static void MatchFramework(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                                 {
                                     context.AddLocalEvaluatedProperty(propertyCount);
                                     JsonSchemaContext childContext2 =
@@ -118,7 +118,7 @@ public readonly partial struct Ui5Schema
                                     context.CommitChildContext(childContext2.IsMatch, ref childContext2);
                                 }
 
-                                private static void MatchKind(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                                private static void MatchKind(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                                 {
                                     context.AddLocalEvaluatedProperty(propertyCount);
                                     JsonSchemaContext childContext3 =
@@ -133,7 +133,7 @@ public readonly partial struct Ui5Schema
                                     context.CommitChildContext(childContext3.IsMatch, ref childContext3);
                                 }
 
-                                private static void MatchMetadata(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                                private static void MatchMetadata(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                                 {
                                     context.AddLocalEvaluatedProperty(propertyCount);
                                     JsonSchemaContext childContext4 =
@@ -148,7 +148,7 @@ public readonly partial struct Ui5Schema
                                     context.CommitChildContext(childContext4.IsMatch, ref childContext4);
                                 }
 
-                                private static void MatchResources(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                                private static void MatchResources(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                                 {
                                     context.AddLocalEvaluatedProperty(propertyCount);
                                     JsonSchemaContext childContext5 =
@@ -163,7 +163,7 @@ public readonly partial struct Ui5Schema
                                     context.CommitChildContext(childContext5.IsMatch, ref childContext5);
                                 }
 
-                                private static void MatchServer(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                                private static void MatchServer(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                                 {
                                     context.AddLocalEvaluatedProperty(propertyCount);
                                     JsonSchemaContext childContext6 =
@@ -178,7 +178,7 @@ public readonly partial struct Ui5Schema
                                     context.CommitChildContext(childContext6.IsMatch, ref childContext6);
                                 }
 
-                                private static void MatchSpecVersion(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                                private static void MatchSpecVersion(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                                 {
                                     context.AddLocalEvaluatedProperty(propertyCount);
                                     JsonSchemaContext childContext7 =
@@ -193,7 +193,7 @@ public readonly partial struct Ui5Schema
                                     context.CommitChildContext(childContext7.IsMatch, ref childContext7);
                                 }
 
-                                private static void MatchType(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                                private static void MatchType(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                                 {
                                     context.AddLocalEvaluatedProperty(propertyCount);
                                     JsonSchemaContext childContext8 =
@@ -282,7 +282,7 @@ public readonly partial struct Ui5Schema
 
                                             if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Ui5Benchmark.Current.PropertiesValidationHandler_NamedPropertyValidator1? validator))
                                             {
-                                                validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex);
+                                                validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context);
 
                                                 if (!context.HasCollector && !context.IsMatch)
                                                 {

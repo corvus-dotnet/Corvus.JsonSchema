@@ -234,11 +234,11 @@ public readonly partial struct PulumiSchema
                 /// Boolean indicating if the configuration is labeled as a secret.
                 /// </para>
                 /// </remarks>
-                public Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.SecretEntity Secret
+                public Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.BooleanIndicatingIfTheConfigurationIsLabeledAsASecret Secret
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SecretUtf8, out Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.SecretEntity value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SecretUtf8, out Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.AdditionalPropertiesEntity.BooleanIndicatingIfTheConfigurationIsLabeledAsASecret value))
                         {
                             return value;
                         }

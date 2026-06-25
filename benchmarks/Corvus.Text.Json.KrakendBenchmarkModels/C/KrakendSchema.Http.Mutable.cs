@@ -235,7 +235,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Http.AllowedHosts.Mutable.DefaultInstance;
                 }
             }
 
@@ -260,7 +260,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HostsAreRegexps.Mutable.DefaultInstance;
                 }
             }
 
@@ -279,7 +279,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Http.BrowserXssFilterEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -304,7 +304,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ContentSecurityPolicyCsp.Mutable.DefaultInstance;
                 }
             }
 
@@ -329,7 +329,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Http.Nosniff.Mutable.DefaultInstance;
                 }
             }
 
@@ -354,7 +354,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtectionFrameOptionsValue.Mutable.DefaultInstance;
                 }
             }
 
@@ -379,7 +379,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ForceStsHeader.Mutable.DefaultInstance;
                 }
             }
 
@@ -404,7 +404,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtection.Mutable.DefaultInstance;
                 }
             }
 
@@ -454,7 +454,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpPublicKeyPinningHpkp.Mutable.DefaultInstance;
                 }
             }
 
@@ -479,7 +479,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Http.DevelopmentFlag.Mutable.DefaultInstance;
                 }
             }
 
@@ -504,7 +504,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ReferrerPolicy.Mutable.DefaultInstance;
                 }
             }
 
@@ -529,7 +529,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslHost.Mutable.DefaultInstance;
                 }
             }
 
@@ -579,7 +579,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslRedirect.Mutable.DefaultInstance;
                 }
             }
 
@@ -604,7 +604,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Http.StrictTransportSecurityIncludeSubdomains.Mutable.DefaultInstance;
                 }
             }
 
@@ -629,7 +629,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpStrictTransportSecurityHstsSeconds.Mutable.DefaultInstance;
                 }
             }
 

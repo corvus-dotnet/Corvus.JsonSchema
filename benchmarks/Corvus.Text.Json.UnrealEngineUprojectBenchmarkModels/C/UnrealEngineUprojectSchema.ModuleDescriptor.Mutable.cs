@@ -314,7 +314,7 @@ public readonly partial struct UnrealEngineUprojectSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.HasExplicitPlatformsEntity.Mutable.DefaultInstance;
                 }
             }
 

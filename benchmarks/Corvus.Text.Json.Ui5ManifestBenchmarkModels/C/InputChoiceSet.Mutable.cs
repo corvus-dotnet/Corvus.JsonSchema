@@ -291,7 +291,7 @@ public readonly partial struct InputChoiceSet
                     return value;
                 }
 
-                return default;
+                return Corvus.Ui5ManifestBenchmark.Current.InputChoiceSet.AllowMultipleChoicesToBeSelected.Mutable.DefaultInstance;
             }
         }
 

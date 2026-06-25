@@ -284,7 +284,7 @@ public readonly partial struct CodeClimateSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.EnabledEntity.Mutable.DefaultInstance;
                 }
             }
 

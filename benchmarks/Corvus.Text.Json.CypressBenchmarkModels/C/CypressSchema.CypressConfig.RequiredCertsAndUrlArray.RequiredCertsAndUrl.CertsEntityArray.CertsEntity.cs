@@ -229,6 +229,15 @@ public readonly partial struct CypressSchema
                         }
 
                         /// <summary>
+                        /// Conversion from the <see cref="Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PemFileSpecificProperties"/> mutable view.
+                        /// </summary>
+                        /// <param name="value">The value from which to convert.</param>
+                        public static implicit operator CertsEntity(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PemFileSpecificProperties.Mutable value)
+                        {
+                            return From(value);
+                        }
+
+                        /// <summary>
                         /// Conversion to <see cref="Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PfxFileSpecificProperties"/>.
                         /// </summary>
                         /// <param name="value">The value from which to convert.</param>
@@ -242,6 +251,15 @@ public readonly partial struct CypressSchema
                         /// </summary>
                         /// <param name="value">The value from which to convert.</param>
                         public static implicit operator CertsEntity(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PfxFileSpecificProperties value)
+                        {
+                            return From(value);
+                        }
+
+                        /// <summary>
+                        /// Conversion from the <see cref="Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PfxFileSpecificProperties"/> mutable view.
+                        /// </summary>
+                        /// <param name="value">The value from which to convert.</param>
+                        public static implicit operator CertsEntity(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PfxFileSpecificProperties.Mutable value)
                         {
                             return From(value);
                         }

@@ -230,11 +230,11 @@ public readonly partial struct Ui5ManifestSchema
         /// Represents the products and service that the pacakge depends on
         /// </para>
         /// </remarks>
-        public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.DependenciesEntity Dependencies
+        public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn Dependencies
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DependenciesUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.DependenciesEntity value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DependenciesUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn value))
                 {
                     return value;
                 }

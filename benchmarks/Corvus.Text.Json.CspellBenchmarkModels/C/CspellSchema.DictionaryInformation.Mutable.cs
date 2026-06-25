@@ -237,7 +237,7 @@ public readonly partial struct CspellSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAlphabetToUse.Mutable.DefaultInstance;
                 }
             }
 

@@ -255,6 +255,15 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.PagesEntity.PagesArrayArray"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PagesEntity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.PagesEntity.PagesArrayArray.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.PagesEntity.OneOf1Entity"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -268,6 +277,15 @@ public readonly partial struct Ui5ManifestSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator PagesEntity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.PagesEntity.OneOf1Entity value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.PagesEntity.OneOf1Entity"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PagesEntity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.PagesEntity.OneOf1Entity.Mutable value)
             {
                 return From(value);
             }

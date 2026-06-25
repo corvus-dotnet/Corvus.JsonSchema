@@ -235,7 +235,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Hash.Mutable.DefaultInstance;
                 }
             }
 
@@ -260,7 +260,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Identifier.Mutable.DefaultInstance;
                 }
             }
 
@@ -313,7 +313,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.PropagateRoleAsHeader.Mutable.DefaultInstance;
                 }
             }
 
@@ -338,7 +338,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Salt.Mutable.DefaultInstance;
                 }
             }
 
@@ -363,7 +363,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Strategy.Mutable.DefaultInstance;
                 }
             }
 

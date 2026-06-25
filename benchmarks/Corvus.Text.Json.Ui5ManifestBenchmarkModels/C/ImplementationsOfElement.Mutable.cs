@@ -2085,41 +2085,71 @@ public readonly partial struct ImplementationsOfElement
             Unknown,
             JsonElement,
             ImplementationsOfElementRequiredTypeBuilder,
+            ImplementationsOfElementRequiredTypeSource,
             ImplementationsOfElementRequiredType1Builder,
+            ImplementationsOfElementRequiredType1Source,
             ImplementationsOfElementRequiredType10Builder,
+            ImplementationsOfElementRequiredType10Source,
             ImplementationsOfElementRequiredType11Builder,
+            ImplementationsOfElementRequiredType11Source,
             ImplementationsOfElementRequiredType12Builder,
+            ImplementationsOfElementRequiredType12Source,
             ImplementationsOfElementRequiredType13Builder,
+            ImplementationsOfElementRequiredType13Source,
             ImplementationsOfElementRequiredType14Builder,
+            ImplementationsOfElementRequiredType14Source,
             ImplementationsOfElementRequiredType2Builder,
+            ImplementationsOfElementRequiredType2Source,
             ImplementationsOfElementRequiredType3Builder,
+            ImplementationsOfElementRequiredType3Source,
             ImplementationsOfElementRequiredType4Builder,
+            ImplementationsOfElementRequiredType4Source,
             ImplementationsOfElementRequiredType5Builder,
+            ImplementationsOfElementRequiredType5Source,
             ImplementationsOfElementRequiredType6Builder,
+            ImplementationsOfElementRequiredType6Source,
             ImplementationsOfElementRequiredType7Builder,
+            ImplementationsOfElementRequiredType7Source,
             ImplementationsOfElementRequiredType8Builder,
+            ImplementationsOfElementRequiredType8Source,
             ImplementationsOfElementRequiredType9Builder,
             RequiredTypeBuilder,
+            RequiredTypeSource,
         }
 
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType.Builder.Build? _implementationsOfElementRequiredTypeBuilderInstance;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType.Source _implementationsOfElementRequiredTypeSourceInstance;
         private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType1.Builder.Build? _implementationsOfElementRequiredType1BuilderInstance;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType1.Source _implementationsOfElementRequiredType1SourceInstance;
         private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType10.Builder.Build? _implementationsOfElementRequiredType10BuilderInstance;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType10.Source _implementationsOfElementRequiredType10SourceInstance;
         private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType11.Builder.Build? _implementationsOfElementRequiredType11BuilderInstance;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType11.Source _implementationsOfElementRequiredType11SourceInstance;
         private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType12.Builder.Build? _implementationsOfElementRequiredType12BuilderInstance;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType12.Source _implementationsOfElementRequiredType12SourceInstance;
         private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType13.Builder.Build? _implementationsOfElementRequiredType13BuilderInstance;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType13.Source _implementationsOfElementRequiredType13SourceInstance;
         private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType14.Builder.Build? _implementationsOfElementRequiredType14BuilderInstance;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType14.Source _implementationsOfElementRequiredType14SourceInstance;
         private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType2.Builder.Build? _implementationsOfElementRequiredType2BuilderInstance;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType2.Source _implementationsOfElementRequiredType2SourceInstance;
         private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType3.Builder.Build? _implementationsOfElementRequiredType3BuilderInstance;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType3.Source _implementationsOfElementRequiredType3SourceInstance;
         private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType4.Builder.Build? _implementationsOfElementRequiredType4BuilderInstance;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType4.Source _implementationsOfElementRequiredType4SourceInstance;
         private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType5.Builder.Build? _implementationsOfElementRequiredType5BuilderInstance;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType5.Source _implementationsOfElementRequiredType5SourceInstance;
         private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType6.Builder.Build? _implementationsOfElementRequiredType6BuilderInstance;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType6.Source _implementationsOfElementRequiredType6SourceInstance;
         private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType7.Builder.Build? _implementationsOfElementRequiredType7BuilderInstance;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType7.Source _implementationsOfElementRequiredType7SourceInstance;
         private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType8.Builder.Build? _implementationsOfElementRequiredType8BuilderInstance;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType8.Source _implementationsOfElementRequiredType8SourceInstance;
         private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType9.Builder.Build? _implementationsOfElementRequiredType9BuilderInstance;
         private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.RequiredType.Builder.Build? _requiredTypeBuilderInstance;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.RequiredType.Source _requiredTypeSourceInstance;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -2134,35 +2164,65 @@ public readonly partial struct ImplementationsOfElement
 
         public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType.Builder.Build value) {_implementationsOfElementRequiredTypeBuilderInstance = value; _kind = Kind.ImplementationsOfElementRequiredTypeBuilder; }
 
+        public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType.Source value) { _implementationsOfElementRequiredTypeSourceInstance = value; _kind = Kind.ImplementationsOfElementRequiredTypeSource; }
+
         public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType1.Builder.Build value) {_implementationsOfElementRequiredType1BuilderInstance = value; _kind = Kind.ImplementationsOfElementRequiredType1Builder; }
+
+        public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType1.Source value) { _implementationsOfElementRequiredType1SourceInstance = value; _kind = Kind.ImplementationsOfElementRequiredType1Source; }
 
         public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType10.Builder.Build value) {_implementationsOfElementRequiredType10BuilderInstance = value; _kind = Kind.ImplementationsOfElementRequiredType10Builder; }
 
+        public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType10.Source value) { _implementationsOfElementRequiredType10SourceInstance = value; _kind = Kind.ImplementationsOfElementRequiredType10Source; }
+
         public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType11.Builder.Build value) {_implementationsOfElementRequiredType11BuilderInstance = value; _kind = Kind.ImplementationsOfElementRequiredType11Builder; }
+
+        public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType11.Source value) { _implementationsOfElementRequiredType11SourceInstance = value; _kind = Kind.ImplementationsOfElementRequiredType11Source; }
 
         public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType12.Builder.Build value) {_implementationsOfElementRequiredType12BuilderInstance = value; _kind = Kind.ImplementationsOfElementRequiredType12Builder; }
 
+        public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType12.Source value) { _implementationsOfElementRequiredType12SourceInstance = value; _kind = Kind.ImplementationsOfElementRequiredType12Source; }
+
         public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType13.Builder.Build value) {_implementationsOfElementRequiredType13BuilderInstance = value; _kind = Kind.ImplementationsOfElementRequiredType13Builder; }
+
+        public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType13.Source value) { _implementationsOfElementRequiredType13SourceInstance = value; _kind = Kind.ImplementationsOfElementRequiredType13Source; }
 
         public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType14.Builder.Build value) {_implementationsOfElementRequiredType14BuilderInstance = value; _kind = Kind.ImplementationsOfElementRequiredType14Builder; }
 
+        public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType14.Source value) { _implementationsOfElementRequiredType14SourceInstance = value; _kind = Kind.ImplementationsOfElementRequiredType14Source; }
+
         public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType2.Builder.Build value) {_implementationsOfElementRequiredType2BuilderInstance = value; _kind = Kind.ImplementationsOfElementRequiredType2Builder; }
+
+        public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType2.Source value) { _implementationsOfElementRequiredType2SourceInstance = value; _kind = Kind.ImplementationsOfElementRequiredType2Source; }
 
         public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType3.Builder.Build value) {_implementationsOfElementRequiredType3BuilderInstance = value; _kind = Kind.ImplementationsOfElementRequiredType3Builder; }
 
+        public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType3.Source value) { _implementationsOfElementRequiredType3SourceInstance = value; _kind = Kind.ImplementationsOfElementRequiredType3Source; }
+
         public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType4.Builder.Build value) {_implementationsOfElementRequiredType4BuilderInstance = value; _kind = Kind.ImplementationsOfElementRequiredType4Builder; }
+
+        public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType4.Source value) { _implementationsOfElementRequiredType4SourceInstance = value; _kind = Kind.ImplementationsOfElementRequiredType4Source; }
 
         public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType5.Builder.Build value) {_implementationsOfElementRequiredType5BuilderInstance = value; _kind = Kind.ImplementationsOfElementRequiredType5Builder; }
 
+        public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType5.Source value) { _implementationsOfElementRequiredType5SourceInstance = value; _kind = Kind.ImplementationsOfElementRequiredType5Source; }
+
         public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType6.Builder.Build value) {_implementationsOfElementRequiredType6BuilderInstance = value; _kind = Kind.ImplementationsOfElementRequiredType6Builder; }
+
+        public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType6.Source value) { _implementationsOfElementRequiredType6SourceInstance = value; _kind = Kind.ImplementationsOfElementRequiredType6Source; }
 
         public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType7.Builder.Build value) {_implementationsOfElementRequiredType7BuilderInstance = value; _kind = Kind.ImplementationsOfElementRequiredType7Builder; }
 
+        public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType7.Source value) { _implementationsOfElementRequiredType7SourceInstance = value; _kind = Kind.ImplementationsOfElementRequiredType7Source; }
+
         public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType8.Builder.Build value) {_implementationsOfElementRequiredType8BuilderInstance = value; _kind = Kind.ImplementationsOfElementRequiredType8Builder; }
+
+        public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType8.Source value) { _implementationsOfElementRequiredType8SourceInstance = value; _kind = Kind.ImplementationsOfElementRequiredType8Source; }
 
         public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType9.Builder.Build value) {_implementationsOfElementRequiredType9BuilderInstance = value; _kind = Kind.ImplementationsOfElementRequiredType9Builder; }
 
         public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.RequiredType.Builder.Build value) {_requiredTypeBuilderInstance = value; _kind = Kind.RequiredTypeBuilder; }
+
+        public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.RequiredType.Source value) { _requiredTypeSourceInstance = value; _kind = Kind.RequiredTypeSource; }
 
         public static implicit operator Source(ImplementationsOfElement instance) => new(JsonElement.From(instance));
 
@@ -2170,49 +2230,94 @@ public readonly partial struct ImplementationsOfElement
         public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType instance) => new(JsonElement.From(instance));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType.Source value) => new(value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType1 instance) => new(JsonElement.From(instance));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType1.Source value) => new(value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType10 instance) => new(JsonElement.From(instance));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType10.Source value) => new(value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType11 instance) => new(JsonElement.From(instance));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType11.Source value) => new(value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType12 instance) => new(JsonElement.From(instance));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType12.Source value) => new(value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType13 instance) => new(JsonElement.From(instance));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType13.Source value) => new(value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType14 instance) => new(JsonElement.From(instance));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType14.Source value) => new(value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType2 instance) => new(JsonElement.From(instance));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType2.Source value) => new(value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType3 instance) => new(JsonElement.From(instance));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType3.Source value) => new(value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType4 instance) => new(JsonElement.From(instance));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType4.Source value) => new(value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType5 instance) => new(JsonElement.From(instance));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType5.Source value) => new(value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType6 instance) => new(JsonElement.From(instance));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType6.Source value) => new(value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType7 instance) => new(JsonElement.From(instance));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType7.Source value) => new(value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType8 instance) => new(JsonElement.From(instance));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType8.Source value) => new(value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType9 instance) => new(JsonElement.From(instance));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.RequiredType instance) => new(JsonElement.From(instance));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.RequiredType.Source value) => new(value);
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -2226,50 +2331,95 @@ public readonly partial struct ImplementationsOfElement
                 case Kind.ImplementationsOfElementRequiredTypeBuilder:
                     valueBuilder.AddProperty(utf8Name, _implementationsOfElementRequiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.ImplementationsOfElementRequiredTypeSource:
+                    _implementationsOfElementRequiredTypeSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType1Builder:
                     valueBuilder.AddProperty(utf8Name, _implementationsOfElementRequiredType1BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType1.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                    break;
+                case Kind.ImplementationsOfElementRequiredType1Source:
+                    _implementationsOfElementRequiredType1SourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                     break;
                 case Kind.ImplementationsOfElementRequiredType10Builder:
                     valueBuilder.AddProperty(utf8Name, _implementationsOfElementRequiredType10BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType10.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.ImplementationsOfElementRequiredType10Source:
+                    _implementationsOfElementRequiredType10SourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType11Builder:
                     valueBuilder.AddProperty(utf8Name, _implementationsOfElementRequiredType11BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType11.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                    break;
+                case Kind.ImplementationsOfElementRequiredType11Source:
+                    _implementationsOfElementRequiredType11SourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                     break;
                 case Kind.ImplementationsOfElementRequiredType12Builder:
                     valueBuilder.AddProperty(utf8Name, _implementationsOfElementRequiredType12BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType12.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.ImplementationsOfElementRequiredType12Source:
+                    _implementationsOfElementRequiredType12SourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType13Builder:
                     valueBuilder.AddProperty(utf8Name, _implementationsOfElementRequiredType13BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType13.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                    break;
+                case Kind.ImplementationsOfElementRequiredType13Source:
+                    _implementationsOfElementRequiredType13SourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                     break;
                 case Kind.ImplementationsOfElementRequiredType14Builder:
                     valueBuilder.AddProperty(utf8Name, _implementationsOfElementRequiredType14BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType14.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.ImplementationsOfElementRequiredType14Source:
+                    _implementationsOfElementRequiredType14SourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType2Builder:
                     valueBuilder.AddProperty(utf8Name, _implementationsOfElementRequiredType2BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType2.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                    break;
+                case Kind.ImplementationsOfElementRequiredType2Source:
+                    _implementationsOfElementRequiredType2SourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                     break;
                 case Kind.ImplementationsOfElementRequiredType3Builder:
                     valueBuilder.AddProperty(utf8Name, _implementationsOfElementRequiredType3BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType3.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.ImplementationsOfElementRequiredType3Source:
+                    _implementationsOfElementRequiredType3SourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType4Builder:
                     valueBuilder.AddProperty(utf8Name, _implementationsOfElementRequiredType4BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType4.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                    break;
+                case Kind.ImplementationsOfElementRequiredType4Source:
+                    _implementationsOfElementRequiredType4SourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                     break;
                 case Kind.ImplementationsOfElementRequiredType5Builder:
                     valueBuilder.AddProperty(utf8Name, _implementationsOfElementRequiredType5BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType5.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.ImplementationsOfElementRequiredType5Source:
+                    _implementationsOfElementRequiredType5SourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType6Builder:
                     valueBuilder.AddProperty(utf8Name, _implementationsOfElementRequiredType6BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType6.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                    break;
+                case Kind.ImplementationsOfElementRequiredType6Source:
+                    _implementationsOfElementRequiredType6SourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                     break;
                 case Kind.ImplementationsOfElementRequiredType7Builder:
                     valueBuilder.AddProperty(utf8Name, _implementationsOfElementRequiredType7BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType7.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.ImplementationsOfElementRequiredType7Source:
+                    _implementationsOfElementRequiredType7SourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType8Builder:
                     valueBuilder.AddProperty(utf8Name, _implementationsOfElementRequiredType8BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType8.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                    break;
+                case Kind.ImplementationsOfElementRequiredType8Source:
+                    _implementationsOfElementRequiredType8SourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                     break;
                 case Kind.ImplementationsOfElementRequiredType9Builder:
                     valueBuilder.AddProperty(utf8Name, _implementationsOfElementRequiredType9BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType9.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
                 case Kind.RequiredTypeBuilder:
                     valueBuilder.AddProperty(utf8Name, _requiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.RequiredType.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                    break;
+                case Kind.RequiredTypeSource:
+                    _requiredTypeSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -2289,50 +2439,95 @@ public readonly partial struct ImplementationsOfElement
                 case Kind.ImplementationsOfElementRequiredTypeBuilder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredTypeSource:
+                    _implementationsOfElementRequiredTypeSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType1Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType1BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType1.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType1Source:
+                    _implementationsOfElementRequiredType1SourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType10Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType10BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType10.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredType10Source:
+                    _implementationsOfElementRequiredType10SourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType11Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType11BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType11.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType11Source:
+                    _implementationsOfElementRequiredType11SourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType12Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType12BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType12.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredType12Source:
+                    _implementationsOfElementRequiredType12SourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType13Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType13BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType13.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType13Source:
+                    _implementationsOfElementRequiredType13SourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType14Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType14BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType14.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredType14Source:
+                    _implementationsOfElementRequiredType14SourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType2Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType2BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType2.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType2Source:
+                    _implementationsOfElementRequiredType2SourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType3Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType3BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType3.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredType3Source:
+                    _implementationsOfElementRequiredType3SourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType4Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType4BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType4.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType4Source:
+                    _implementationsOfElementRequiredType4SourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType5Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType5BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType5.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredType5Source:
+                    _implementationsOfElementRequiredType5SourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType6Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType6BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType6.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType6Source:
+                    _implementationsOfElementRequiredType6SourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType7Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType7BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType7.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredType7Source:
+                    _implementationsOfElementRequiredType7SourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType8Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType8BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType8.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType8Source:
+                    _implementationsOfElementRequiredType8SourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType9Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType9BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType9.Builder.BuildValue(b, ref o));
                     break;
                 case Kind.RequiredTypeBuilder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.RequiredType.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.RequiredTypeSource:
+                    _requiredTypeSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -2352,50 +2547,95 @@ public readonly partial struct ImplementationsOfElement
                 case Kind.ImplementationsOfElementRequiredTypeBuilder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredTypeSource:
+                    _implementationsOfElementRequiredTypeSourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType1Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType1BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType1.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType1Source:
+                    _implementationsOfElementRequiredType1SourceInstance.AddAsProperty(name, ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType10Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType10BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType10.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredType10Source:
+                    _implementationsOfElementRequiredType10SourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType11Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType11BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType11.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType11Source:
+                    _implementationsOfElementRequiredType11SourceInstance.AddAsProperty(name, ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType12Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType12BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType12.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredType12Source:
+                    _implementationsOfElementRequiredType12SourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType13Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType13BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType13.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType13Source:
+                    _implementationsOfElementRequiredType13SourceInstance.AddAsProperty(name, ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType14Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType14BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType14.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredType14Source:
+                    _implementationsOfElementRequiredType14SourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType2Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType2BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType2.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType2Source:
+                    _implementationsOfElementRequiredType2SourceInstance.AddAsProperty(name, ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType3Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType3BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType3.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredType3Source:
+                    _implementationsOfElementRequiredType3SourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType4Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType4BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType4.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType4Source:
+                    _implementationsOfElementRequiredType4SourceInstance.AddAsProperty(name, ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType5Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType5BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType5.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredType5Source:
+                    _implementationsOfElementRequiredType5SourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType6Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType6BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType6.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType6Source:
+                    _implementationsOfElementRequiredType6SourceInstance.AddAsProperty(name, ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType7Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType7BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType7.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredType7Source:
+                    _implementationsOfElementRequiredType7SourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType8Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType8BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType8.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType8Source:
+                    _implementationsOfElementRequiredType8SourceInstance.AddAsProperty(name, ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType9Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType9BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType9.Builder.BuildValue(b, ref o));
                     break;
                 case Kind.RequiredTypeBuilder:
                     valueBuilder.AddProperty(name, _requiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.RequiredType.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.RequiredTypeSource:
+                    _requiredTypeSourceInstance.AddAsProperty(name, ref valueBuilder);
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -2415,50 +2655,95 @@ public readonly partial struct ImplementationsOfElement
                 case Kind.ImplementationsOfElementRequiredTypeBuilder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredTypeSource:
+                    _implementationsOfElementRequiredTypeSourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType1Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType1BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType1.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType1Source:
+                    _implementationsOfElementRequiredType1SourceInstance.AddAsProperty(name, ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType10Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType10BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType10.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredType10Source:
+                    _implementationsOfElementRequiredType10SourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType11Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType11BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType11.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType11Source:
+                    _implementationsOfElementRequiredType11SourceInstance.AddAsProperty(name, ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType12Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType12BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType12.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredType12Source:
+                    _implementationsOfElementRequiredType12SourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType13Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType13BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType13.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType13Source:
+                    _implementationsOfElementRequiredType13SourceInstance.AddAsProperty(name, ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType14Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType14BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType14.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredType14Source:
+                    _implementationsOfElementRequiredType14SourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType2Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType2BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType2.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType2Source:
+                    _implementationsOfElementRequiredType2SourceInstance.AddAsProperty(name, ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType3Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType3BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType3.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredType3Source:
+                    _implementationsOfElementRequiredType3SourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType4Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType4BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType4.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType4Source:
+                    _implementationsOfElementRequiredType4SourceInstance.AddAsProperty(name, ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType5Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType5BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType5.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredType5Source:
+                    _implementationsOfElementRequiredType5SourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType6Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType6BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType6.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType6Source:
+                    _implementationsOfElementRequiredType6SourceInstance.AddAsProperty(name, ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType7Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType7BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType7.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredType7Source:
+                    _implementationsOfElementRequiredType7SourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType8Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType8BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType8.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType8Source:
+                    _implementationsOfElementRequiredType8SourceInstance.AddAsProperty(name, ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType9Builder:
                     valueBuilder.AddProperty(name, _implementationsOfElementRequiredType9BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType9.Builder.BuildValue(b, ref o));
                     break;
                 case Kind.RequiredTypeBuilder:
                     valueBuilder.AddProperty(name, _requiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.RequiredType.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.RequiredTypeSource:
+                    _requiredTypeSourceInstance.AddAsProperty(name, ref valueBuilder);
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -2478,50 +2763,95 @@ public readonly partial struct ImplementationsOfElement
                 case Kind.ImplementationsOfElementRequiredTypeBuilder:
                     valueBuilder.AddItem(_implementationsOfElementRequiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredTypeSource:
+                    _implementationsOfElementRequiredTypeSourceInstance.AddAsItem(ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType1Builder:
                     valueBuilder.AddItem(_implementationsOfElementRequiredType1BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType1.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType1Source:
+                    _implementationsOfElementRequiredType1SourceInstance.AddAsItem(ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType10Builder:
                     valueBuilder.AddItem(_implementationsOfElementRequiredType10BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType10.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredType10Source:
+                    _implementationsOfElementRequiredType10SourceInstance.AddAsItem(ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType11Builder:
                     valueBuilder.AddItem(_implementationsOfElementRequiredType11BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType11.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType11Source:
+                    _implementationsOfElementRequiredType11SourceInstance.AddAsItem(ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType12Builder:
                     valueBuilder.AddItem(_implementationsOfElementRequiredType12BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType12.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredType12Source:
+                    _implementationsOfElementRequiredType12SourceInstance.AddAsItem(ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType13Builder:
                     valueBuilder.AddItem(_implementationsOfElementRequiredType13BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType13.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType13Source:
+                    _implementationsOfElementRequiredType13SourceInstance.AddAsItem(ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType14Builder:
                     valueBuilder.AddItem(_implementationsOfElementRequiredType14BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType14.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredType14Source:
+                    _implementationsOfElementRequiredType14SourceInstance.AddAsItem(ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType2Builder:
                     valueBuilder.AddItem(_implementationsOfElementRequiredType2BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType2.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType2Source:
+                    _implementationsOfElementRequiredType2SourceInstance.AddAsItem(ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType3Builder:
                     valueBuilder.AddItem(_implementationsOfElementRequiredType3BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType3.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredType3Source:
+                    _implementationsOfElementRequiredType3SourceInstance.AddAsItem(ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType4Builder:
                     valueBuilder.AddItem(_implementationsOfElementRequiredType4BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType4.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType4Source:
+                    _implementationsOfElementRequiredType4SourceInstance.AddAsItem(ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType5Builder:
                     valueBuilder.AddItem(_implementationsOfElementRequiredType5BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType5.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredType5Source:
+                    _implementationsOfElementRequiredType5SourceInstance.AddAsItem(ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType6Builder:
                     valueBuilder.AddItem(_implementationsOfElementRequiredType6BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType6.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType6Source:
+                    _implementationsOfElementRequiredType6SourceInstance.AddAsItem(ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType7Builder:
                     valueBuilder.AddItem(_implementationsOfElementRequiredType7BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType7.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfElementRequiredType7Source:
+                    _implementationsOfElementRequiredType7SourceInstance.AddAsItem(ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfElementRequiredType8Builder:
                     valueBuilder.AddItem(_implementationsOfElementRequiredType8BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType8.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfElementRequiredType8Source:
+                    _implementationsOfElementRequiredType8SourceInstance.AddAsItem(ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfElementRequiredType9Builder:
                     valueBuilder.AddItem(_implementationsOfElementRequiredType9BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType9.Builder.BuildValue(b, ref o));
                     break;
                 case Kind.RequiredTypeBuilder:
                     valueBuilder.AddItem(_requiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.RequiredType.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.RequiredTypeSource:
+                    _requiredTypeSourceInstance.AddAsItem(ref valueBuilder);
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");

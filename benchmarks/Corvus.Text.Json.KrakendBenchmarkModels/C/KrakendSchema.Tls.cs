@@ -573,6 +573,15 @@ public readonly partial struct KrakendSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.RequiredKeys"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Tls(Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.RequiredKeys.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Operator ==.
         /// </summary>
         /// <param name="left">The lhs of the operator.</param>

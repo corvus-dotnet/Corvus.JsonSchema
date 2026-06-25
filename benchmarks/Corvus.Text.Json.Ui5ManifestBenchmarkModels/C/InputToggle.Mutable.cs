@@ -411,7 +411,7 @@ public readonly partial struct InputToggle
                     return value;
                 }
 
-                return default;
+                return Corvus.Ui5ManifestBenchmark.Current.InputToggle.ValueEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -432,7 +432,7 @@ public readonly partial struct InputToggle
                     return value;
                 }
 
-                return default;
+                return Corvus.Ui5ManifestBenchmark.Current.InputToggle.TheValueWhenToggleIsOff.Mutable.DefaultInstance;
             }
         }
 
@@ -453,7 +453,7 @@ public readonly partial struct InputToggle
                     return value;
                 }
 
-                return default;
+                return Corvus.Ui5ManifestBenchmark.Current.InputToggle.TheValueWhenToggleIsOn.Mutable.DefaultInstance;
             }
         }
 

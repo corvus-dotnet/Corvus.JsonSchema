@@ -127,6 +127,15 @@ public readonly partial struct OtherNames
     }
 
     /// <summary>
+    /// Conversion from the <see cref="Corvus.ClassicBenchmark.Current.PersonNameElement"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator OtherNames(Corvus.ClassicBenchmark.Current.PersonNameElement.Mutable value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
     /// Conversion to <see cref="Corvus.ClassicBenchmark.Current.PersonNameElementArray"/>.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
@@ -140,6 +149,15 @@ public readonly partial struct OtherNames
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator OtherNames(Corvus.ClassicBenchmark.Current.PersonNameElementArray value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
+    /// Conversion from the <see cref="Corvus.ClassicBenchmark.Current.PersonNameElementArray"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator OtherNames(Corvus.ClassicBenchmark.Current.PersonNameElementArray.Mutable value)
     {
         return From(value);
     }

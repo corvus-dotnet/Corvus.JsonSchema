@@ -271,7 +271,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Algorithm.Mutable.DefaultInstance;
                 }
             }
 
@@ -321,7 +321,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.AuthorizationHeader.Mutable.DefaultInstance;
                 }
             }
 
@@ -346,7 +346,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Cache.Mutable.DefaultInstance;
                 }
             }
 
@@ -371,7 +371,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.CacheDuration.Mutable.DefaultInstance;
                 }
             }
 
@@ -396,7 +396,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ObjectInArrayArray.Mutable.DefaultInstance;
                 }
             }
 
@@ -471,7 +471,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DisableJwkSecurity.Mutable.DefaultInstance;
                 }
             }
 
@@ -702,7 +702,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DebugEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -877,7 +877,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ScopesMatcher.Mutable.DefaultInstance;
                 }
             }
 

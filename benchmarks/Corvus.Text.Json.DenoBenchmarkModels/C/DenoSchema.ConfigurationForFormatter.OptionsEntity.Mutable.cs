@@ -298,7 +298,7 @@ public readonly partial struct DenoSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.TheNumberOfCharactersForAnIndent.Mutable.DefaultInstance;
                     }
                 }
 
@@ -319,7 +319,7 @@ public readonly partial struct DenoSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.LineWidthEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -340,7 +340,7 @@ public readonly partial struct DenoSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.DefineHowProseShouldBeWrappedInMarkdownFiles.Mutable.DefaultInstance;
                     }
                 }
 
@@ -361,7 +361,7 @@ public readonly partial struct DenoSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.WhetherToPreferUsingSemicolons.Mutable.DefaultInstance;
                     }
                 }
 
@@ -382,7 +382,7 @@ public readonly partial struct DenoSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.SingleQuoteEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -403,7 +403,7 @@ public readonly partial struct DenoSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.WhetherToUseTabsTrueOrSpacesFalseForIndentation.Mutable.DefaultInstance;
                     }
                 }
 

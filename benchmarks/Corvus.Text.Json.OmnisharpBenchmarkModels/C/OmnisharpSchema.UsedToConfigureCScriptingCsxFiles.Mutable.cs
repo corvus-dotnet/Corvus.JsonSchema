@@ -283,7 +283,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.DefaultTargetFrameworkEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -299,7 +299,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.EnabledEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -315,7 +315,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.EnableScriptNuGetReferencesEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -336,7 +336,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.RspFilePathEntity.Mutable.DefaultInstance;
                 }
             }
 

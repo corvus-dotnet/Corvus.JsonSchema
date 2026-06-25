@@ -98,7 +98,7 @@ public readonly partial struct StylecopSchema
                 /// <summary>
                 /// Gets the default instance.
                 /// </summary>
-                public static TopLevelTypesEntityArray DefaultInstance { get; } = TopLevelTypesEntityArray.ParseValue("[\r\n                \"class\"\r\n              ]"u8);
+                public static TopLevelTypesEntityArray DefaultInstance { get; } = TopLevelTypesEntityArray.ParseValue("[\n                \"class\"\n              ]"u8);
 
                 /// <summary>
                 /// Gets the rank of the array.

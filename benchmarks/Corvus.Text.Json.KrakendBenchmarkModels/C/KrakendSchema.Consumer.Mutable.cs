@@ -235,7 +235,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.AutoAck.Mutable.DefaultInstance;
                 }
             }
 
@@ -260,7 +260,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.BackoffStrategy.Mutable.DefaultInstance;
                 }
             }
 
@@ -285,7 +285,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Delete.Mutable.DefaultInstance;
                 }
             }
 
@@ -310,7 +310,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Durable.Mutable.DefaultInstance;
                 }
             }
 
@@ -363,7 +363,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Exclusive.Mutable.DefaultInstance;
                 }
             }
 
@@ -388,7 +388,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.MaxRetries.Mutable.DefaultInstance;
                 }
             }
 
@@ -491,7 +491,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.PrefetchCount.Mutable.DefaultInstance;
                 }
             }
 

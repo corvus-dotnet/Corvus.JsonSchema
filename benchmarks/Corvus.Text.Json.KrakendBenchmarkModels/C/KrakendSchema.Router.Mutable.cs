@@ -323,7 +323,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Capacity.Mutable.DefaultInstance;
                 }
             }
 
@@ -376,7 +376,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Router.CleanupThreads.Mutable.DefaultInstance;
                 }
             }
 
@@ -401,7 +401,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Router.ClientCapacity.Mutable.DefaultInstance;
                 }
             }
 
@@ -529,7 +529,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Router.NumShards.Mutable.DefaultInstance;
                 }
             }
 

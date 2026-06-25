@@ -944,6 +944,7 @@ public readonly partial struct CmakePresetsSchema
                             Unknown,
                             JsonElement,
                             AnObjectRepresentingTheTypeAndValueOfTheVariableBuilder,
+                            AnObjectRepresentingTheTypeAndValueOfTheVariableSource,
                             RawUtf8StringRequiresUnescaping,
                             RawUtf8StringNotRequiresUnescaping,
                             Utf8String,
@@ -958,6 +959,7 @@ public readonly partial struct CmakePresetsSchema
                         private readonly ReadOnlySpan<byte> _utf8Backing;
                         private readonly ReadOnlySpan<char> _utf16Backing;
                         private readonly Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.AdditionalPropertiesEntity.AnObjectRepresentingTheTypeAndValueOfTheVariable.Builder.Build? _anObjectRepresentingTheTypeAndValueOfTheVariableBuilderInstance;
+                        private readonly Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.AdditionalPropertiesEntity.AnObjectRepresentingTheTypeAndValueOfTheVariable.Source _anObjectRepresentingTheTypeAndValueOfTheVariableSourceInstance;
 
                         /// <summary>
                         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -994,6 +996,8 @@ public readonly partial struct CmakePresetsSchema
 
                         public Source(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.AdditionalPropertiesEntity.AnObjectRepresentingTheTypeAndValueOfTheVariable.Builder.Build value) {_anObjectRepresentingTheTypeAndValueOfTheVariableBuilderInstance = value; _kind = Kind.AnObjectRepresentingTheTypeAndValueOfTheVariableBuilder; }
 
+                        public Source(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.AdditionalPropertiesEntity.AnObjectRepresentingTheTypeAndValueOfTheVariable.Source value) { _anObjectRepresentingTheTypeAndValueOfTheVariableSourceInstance = value; _kind = Kind.AnObjectRepresentingTheTypeAndValueOfTheVariableSource; }
+
                         public static implicit operator Source(AdditionalPropertiesEntity instance) => new(JsonElement.From(instance));
 
                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1010,6 +1014,9 @@ public readonly partial struct CmakePresetsSchema
 
                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
                         public static implicit operator Source(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.AdditionalPropertiesEntity.AnObjectRepresentingTheTypeAndValueOfTheVariable instance) => new(JsonElement.From(instance));
+
+                        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                        public static implicit operator Source(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.AdditionalPropertiesEntity.AnObjectRepresentingTheTypeAndValueOfTheVariable.Source value) => new(value);
 
                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
                         public static implicit operator Source(Corvus.CmakePresetsBenchmark.Current.JsonBoolean instance) => new(JsonElement.From(instance));
@@ -1059,6 +1066,9 @@ public readonly partial struct CmakePresetsSchema
                                 case Kind.AnObjectRepresentingTheTypeAndValueOfTheVariableBuilder:
                                     valueBuilder.AddProperty(utf8Name, _anObjectRepresentingTheTypeAndValueOfTheVariableBuilderInstance!, static (in b, ref o) => Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.AdditionalPropertiesEntity.AnObjectRepresentingTheTypeAndValueOfTheVariable.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                                     break;
+                                case Kind.AnObjectRepresentingTheTypeAndValueOfTheVariableSource:
+                                    _anObjectRepresentingTheTypeAndValueOfTheVariableSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                                    break;
                                 default:
                                     Debug.Fail("Unexpected Kind");
                                     break;
@@ -1097,6 +1107,9 @@ public readonly partial struct CmakePresetsSchema
                                     break;
                                 case Kind.AnObjectRepresentingTheTypeAndValueOfTheVariableBuilder:
                                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _anObjectRepresentingTheTypeAndValueOfTheVariableBuilderInstance!, static (in b, ref o) => Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.AdditionalPropertiesEntity.AnObjectRepresentingTheTypeAndValueOfTheVariable.Builder.BuildValue(b, ref o));
+                                    break;
+                                case Kind.AnObjectRepresentingTheTypeAndValueOfTheVariableSource:
+                                    _anObjectRepresentingTheTypeAndValueOfTheVariableSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                                     break;
                                 default:
                                     Debug.Fail("Unexpected Kind");
@@ -1137,6 +1150,9 @@ public readonly partial struct CmakePresetsSchema
                                 case Kind.AnObjectRepresentingTheTypeAndValueOfTheVariableBuilder:
                                     valueBuilder.AddProperty(name, _anObjectRepresentingTheTypeAndValueOfTheVariableBuilderInstance!, static (in b, ref o) => Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.AdditionalPropertiesEntity.AnObjectRepresentingTheTypeAndValueOfTheVariable.Builder.BuildValue(b, ref o));
                                     break;
+                                case Kind.AnObjectRepresentingTheTypeAndValueOfTheVariableSource:
+                                    _anObjectRepresentingTheTypeAndValueOfTheVariableSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                    break;
                                 default:
                                     Debug.Fail("Unexpected Kind");
                                     break;
@@ -1176,6 +1192,9 @@ public readonly partial struct CmakePresetsSchema
                                 case Kind.AnObjectRepresentingTheTypeAndValueOfTheVariableBuilder:
                                     valueBuilder.AddProperty(name, _anObjectRepresentingTheTypeAndValueOfTheVariableBuilderInstance!, static (in b, ref o) => Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.AdditionalPropertiesEntity.AnObjectRepresentingTheTypeAndValueOfTheVariable.Builder.BuildValue(b, ref o));
                                     break;
+                                case Kind.AnObjectRepresentingTheTypeAndValueOfTheVariableSource:
+                                    _anObjectRepresentingTheTypeAndValueOfTheVariableSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                    break;
                                 default:
                                     Debug.Fail("Unexpected Kind");
                                     break;
@@ -1214,6 +1233,9 @@ public readonly partial struct CmakePresetsSchema
                                     break;
                                 case Kind.AnObjectRepresentingTheTypeAndValueOfTheVariableBuilder:
                                     valueBuilder.AddItem(_anObjectRepresentingTheTypeAndValueOfTheVariableBuilderInstance!, static (in b, ref o) => Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.AdditionalPropertiesEntity.AnObjectRepresentingTheTypeAndValueOfTheVariable.Builder.BuildValue(b, ref o));
+                                    break;
+                                case Kind.AnObjectRepresentingTheTypeAndValueOfTheVariableSource:
+                                    _anObjectRepresentingTheTypeAndValueOfTheVariableSourceInstance.AddAsItem(ref valueBuilder);
                                     break;
                                 default:
                                     Debug.Fail("Unexpected Kind");

@@ -836,15 +836,21 @@ public readonly partial struct Ui5ManifestSchema
                             Unknown,
                             JsonElement,
                             ConfigurationFilterTypeDateRangeBuilder,
+                            ConfigurationFilterTypeDateRangeSource,
                             ConfigurationFilterTypeSearchBuilder,
+                            ConfigurationFilterTypeSearchSource,
                             ConfigurationFilterTypeSelectBuilder,
+                            ConfigurationFilterTypeSelectSource,
                         }
 
                         private readonly Kind _kind;
                         private readonly JsonElement _jsonElement;
                         private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeDateRange.Builder.Build? _configurationFilterTypeDateRangeBuilderInstance;
+                        private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeDateRange.Source _configurationFilterTypeDateRangeSourceInstance;
                         private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSearch.Builder.Build? _configurationFilterTypeSearchBuilderInstance;
+                        private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSearch.Source _configurationFilterTypeSearchSourceInstance;
                         private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSelect.Builder.Build? _configurationFilterTypeSelectBuilderInstance;
+                        private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSelect.Source _configurationFilterTypeSelectSourceInstance;
 
                         /// <summary>
                         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -859,9 +865,15 @@ public readonly partial struct Ui5ManifestSchema
 
                         public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeDateRange.Builder.Build value) {_configurationFilterTypeDateRangeBuilderInstance = value; _kind = Kind.ConfigurationFilterTypeDateRangeBuilder; }
 
+                        public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeDateRange.Source value) { _configurationFilterTypeDateRangeSourceInstance = value; _kind = Kind.ConfigurationFilterTypeDateRangeSource; }
+
                         public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSearch.Builder.Build value) {_configurationFilterTypeSearchBuilderInstance = value; _kind = Kind.ConfigurationFilterTypeSearchBuilder; }
 
+                        public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSearch.Source value) { _configurationFilterTypeSearchSourceInstance = value; _kind = Kind.ConfigurationFilterTypeSearchSource; }
+
                         public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSelect.Builder.Build value) {_configurationFilterTypeSelectBuilderInstance = value; _kind = Kind.ConfigurationFilterTypeSelectBuilder; }
+
+                        public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSelect.Source value) { _configurationFilterTypeSelectSourceInstance = value; _kind = Kind.ConfigurationFilterTypeSelectSource; }
 
                         public static implicit operator Source(AdditionalPropertiesEntity instance) => new(JsonElement.From(instance));
 
@@ -869,10 +881,19 @@ public readonly partial struct Ui5ManifestSchema
                         public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeDateRange instance) => new(JsonElement.From(instance));
 
                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                        public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeDateRange.Source value) => new(value);
+
+                        [MethodImpl(MethodImplOptions.AggressiveInlining)]
                         public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSearch instance) => new(JsonElement.From(instance));
 
                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                        public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSearch.Source value) => new(value);
+
+                        [MethodImpl(MethodImplOptions.AggressiveInlining)]
                         public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSelect instance) => new(JsonElement.From(instance));
+
+                        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                        public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSelect.Source value) => new(value);
 
                         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                         {
@@ -886,11 +907,20 @@ public readonly partial struct Ui5ManifestSchema
                                 case Kind.ConfigurationFilterTypeDateRangeBuilder:
                                     valueBuilder.AddProperty(utf8Name, _configurationFilterTypeDateRangeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeDateRange.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                                     break;
+                                case Kind.ConfigurationFilterTypeDateRangeSource:
+                                    _configurationFilterTypeDateRangeSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                                    break;
                                 case Kind.ConfigurationFilterTypeSearchBuilder:
                                     valueBuilder.AddProperty(utf8Name, _configurationFilterTypeSearchBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSearch.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                                     break;
+                                case Kind.ConfigurationFilterTypeSearchSource:
+                                    _configurationFilterTypeSearchSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                                    break;
                                 case Kind.ConfigurationFilterTypeSelectBuilder:
                                     valueBuilder.AddProperty(utf8Name, _configurationFilterTypeSelectBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSelect.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                                    break;
+                                case Kind.ConfigurationFilterTypeSelectSource:
+                                    _configurationFilterTypeSelectSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                                     break;
                                 default:
                                     Debug.Fail("Unexpected Kind");
@@ -910,11 +940,20 @@ public readonly partial struct Ui5ManifestSchema
                                 case Kind.ConfigurationFilterTypeDateRangeBuilder:
                                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _configurationFilterTypeDateRangeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeDateRange.Builder.BuildValue(b, ref o));
                                     break;
+                                case Kind.ConfigurationFilterTypeDateRangeSource:
+                                    _configurationFilterTypeDateRangeSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                    break;
                                 case Kind.ConfigurationFilterTypeSearchBuilder:
                                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _configurationFilterTypeSearchBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSearch.Builder.BuildValue(b, ref o));
                                     break;
+                                case Kind.ConfigurationFilterTypeSearchSource:
+                                    _configurationFilterTypeSearchSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                    break;
                                 case Kind.ConfigurationFilterTypeSelectBuilder:
                                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _configurationFilterTypeSelectBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSelect.Builder.BuildValue(b, ref o));
+                                    break;
+                                case Kind.ConfigurationFilterTypeSelectSource:
+                                    _configurationFilterTypeSelectSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                                     break;
                                 default:
                                     Debug.Fail("Unexpected Kind");
@@ -934,11 +973,20 @@ public readonly partial struct Ui5ManifestSchema
                                 case Kind.ConfigurationFilterTypeDateRangeBuilder:
                                     valueBuilder.AddProperty(name, _configurationFilterTypeDateRangeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeDateRange.Builder.BuildValue(b, ref o));
                                     break;
+                                case Kind.ConfigurationFilterTypeDateRangeSource:
+                                    _configurationFilterTypeDateRangeSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                    break;
                                 case Kind.ConfigurationFilterTypeSearchBuilder:
                                     valueBuilder.AddProperty(name, _configurationFilterTypeSearchBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSearch.Builder.BuildValue(b, ref o));
                                     break;
+                                case Kind.ConfigurationFilterTypeSearchSource:
+                                    _configurationFilterTypeSearchSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                    break;
                                 case Kind.ConfigurationFilterTypeSelectBuilder:
                                     valueBuilder.AddProperty(name, _configurationFilterTypeSelectBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSelect.Builder.BuildValue(b, ref o));
+                                    break;
+                                case Kind.ConfigurationFilterTypeSelectSource:
+                                    _configurationFilterTypeSelectSourceInstance.AddAsProperty(name, ref valueBuilder);
                                     break;
                                 default:
                                     Debug.Fail("Unexpected Kind");
@@ -958,11 +1006,20 @@ public readonly partial struct Ui5ManifestSchema
                                 case Kind.ConfigurationFilterTypeDateRangeBuilder:
                                     valueBuilder.AddProperty(name, _configurationFilterTypeDateRangeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeDateRange.Builder.BuildValue(b, ref o));
                                     break;
+                                case Kind.ConfigurationFilterTypeDateRangeSource:
+                                    _configurationFilterTypeDateRangeSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                    break;
                                 case Kind.ConfigurationFilterTypeSearchBuilder:
                                     valueBuilder.AddProperty(name, _configurationFilterTypeSearchBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSearch.Builder.BuildValue(b, ref o));
                                     break;
+                                case Kind.ConfigurationFilterTypeSearchSource:
+                                    _configurationFilterTypeSearchSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                    break;
                                 case Kind.ConfigurationFilterTypeSelectBuilder:
                                     valueBuilder.AddProperty(name, _configurationFilterTypeSelectBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSelect.Builder.BuildValue(b, ref o));
+                                    break;
+                                case Kind.ConfigurationFilterTypeSelectSource:
+                                    _configurationFilterTypeSelectSourceInstance.AddAsProperty(name, ref valueBuilder);
                                     break;
                                 default:
                                     Debug.Fail("Unexpected Kind");
@@ -982,11 +1039,20 @@ public readonly partial struct Ui5ManifestSchema
                                 case Kind.ConfigurationFilterTypeDateRangeBuilder:
                                     valueBuilder.AddItem(_configurationFilterTypeDateRangeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeDateRange.Builder.BuildValue(b, ref o));
                                     break;
+                                case Kind.ConfigurationFilterTypeDateRangeSource:
+                                    _configurationFilterTypeDateRangeSourceInstance.AddAsItem(ref valueBuilder);
+                                    break;
                                 case Kind.ConfigurationFilterTypeSearchBuilder:
                                     valueBuilder.AddItem(_configurationFilterTypeSearchBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSearch.Builder.BuildValue(b, ref o));
                                     break;
+                                case Kind.ConfigurationFilterTypeSearchSource:
+                                    _configurationFilterTypeSearchSourceInstance.AddAsItem(ref valueBuilder);
+                                    break;
                                 case Kind.ConfigurationFilterTypeSelectBuilder:
                                     valueBuilder.AddItem(_configurationFilterTypeSelectBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSelect.Builder.BuildValue(b, ref o));
+                                    break;
+                                case Kind.ConfigurationFilterTypeSelectSource:
+                                    _configurationFilterTypeSelectSourceInstance.AddAsItem(ref valueBuilder);
                                     break;
                                 default:
                                     Debug.Fail("Unexpected Kind");

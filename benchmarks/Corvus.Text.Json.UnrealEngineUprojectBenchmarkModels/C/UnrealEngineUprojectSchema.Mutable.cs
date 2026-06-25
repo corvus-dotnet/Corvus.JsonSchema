@@ -225,7 +225,7 @@ public readonly partial struct UnrealEngineUprojectSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DisableEnginePluginsByDefaultEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -294,7 +294,7 @@ public readonly partial struct UnrealEngineUprojectSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DescriptorVersionNumber.Mutable.DefaultInstance;
             }
         }
 
@@ -315,7 +315,7 @@ public readonly partial struct UnrealEngineUprojectSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.IndicatesIfThisProjectIsAnEnterpriseProject.Mutable.DefaultInstance;
             }
         }
 

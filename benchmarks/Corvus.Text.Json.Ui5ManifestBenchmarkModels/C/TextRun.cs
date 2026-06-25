@@ -214,6 +214,15 @@ public readonly partial struct TextRun
         return From(value);
     }
 
+    /// <summary>
+    /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator TextRun(Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.Mutable value)
+    {
+        return From(value);
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static explicit operator string(TextRun value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 

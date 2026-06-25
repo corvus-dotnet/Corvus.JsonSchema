@@ -1027,29 +1027,49 @@ public readonly partial struct Cql2Schema
                     Unknown,
                     JsonElement,
                     BboxLiteralBuilder,
+                    BboxLiteralSource,
                     FunctionRefBuilder,
+                    FunctionRefSource,
                     GeometrycollectionBuilder,
+                    GeometrycollectionSource,
                     LinestringBuilder,
+                    LinestringSource,
                     MultilinestringBuilder,
+                    MultilinestringSource,
                     MultipointBuilder,
+                    MultipointSource,
                     MultipolygonBuilder,
+                    MultipolygonSource,
                     PointBuilder,
+                    PointSource,
                     PolygonBuilder,
+                    PolygonSource,
                     PropertyRefBuilder,
+                    PropertyRefSource,
                 }
 
                 private readonly Kind _kind;
                 private readonly JsonElement _jsonElement;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral.Builder.Build? _bboxLiteralBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral.Source _bboxLiteralSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.Build? _functionRefBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Source _functionRefSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Builder.Build? _geometrycollectionBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Source _geometrycollectionSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.Builder.Build? _linestringBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.Source _linestringSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.Builder.Build? _multilinestringBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.Source _multilinestringSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.Builder.Build? _multipointBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.Source _multipointSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.Builder.Build? _multipolygonBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.Source _multipolygonSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Point.Builder.Build? _pointBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Point.Source _pointSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Builder.Build? _polygonBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Source _polygonSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.Build? _propertyRefBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Source _propertyRefSourceInstance;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1064,23 +1084,43 @@ public readonly partial struct Cql2Schema
 
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral.Builder.Build value) {_bboxLiteralBuilderInstance = value; _kind = Kind.BboxLiteralBuilder; }
 
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral.Source value) { _bboxLiteralSourceInstance = value; _kind = Kind.BboxLiteralSource; }
+
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.Build value) {_functionRefBuilderInstance = value; _kind = Kind.FunctionRefBuilder; }
+
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Source value) { _functionRefSourceInstance = value; _kind = Kind.FunctionRefSource; }
 
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Builder.Build value) {_geometrycollectionBuilderInstance = value; _kind = Kind.GeometrycollectionBuilder; }
 
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Source value) { _geometrycollectionSourceInstance = value; _kind = Kind.GeometrycollectionSource; }
+
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.Builder.Build value) {_linestringBuilderInstance = value; _kind = Kind.LinestringBuilder; }
+
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.Source value) { _linestringSourceInstance = value; _kind = Kind.LinestringSource; }
 
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.Builder.Build value) {_multilinestringBuilderInstance = value; _kind = Kind.MultilinestringBuilder; }
 
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.Source value) { _multilinestringSourceInstance = value; _kind = Kind.MultilinestringSource; }
+
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.Builder.Build value) {_multipointBuilderInstance = value; _kind = Kind.MultipointBuilder; }
+
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.Source value) { _multipointSourceInstance = value; _kind = Kind.MultipointSource; }
 
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.Builder.Build value) {_multipolygonBuilderInstance = value; _kind = Kind.MultipolygonBuilder; }
 
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.Source value) { _multipolygonSourceInstance = value; _kind = Kind.MultipolygonSource; }
+
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Point.Builder.Build value) {_pointBuilderInstance = value; _kind = Kind.PointBuilder; }
+
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Point.Source value) { _pointSourceInstance = value; _kind = Kind.PointSource; }
 
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Builder.Build value) {_polygonBuilderInstance = value; _kind = Kind.PolygonBuilder; }
 
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Source value) { _polygonSourceInstance = value; _kind = Kind.PolygonSource; }
+
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.Build value) {_propertyRefBuilderInstance = value; _kind = Kind.PropertyRefBuilder; }
+
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Source value) { _propertyRefSourceInstance = value; _kind = Kind.PropertyRefSource; }
 
                 public static implicit operator Source(SpatialOperandsEntity instance) => new(JsonElement.From(instance));
 
@@ -1088,31 +1128,61 @@ public readonly partial struct Cql2Schema
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Point instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Point.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Source value) => new(value);
 
                 internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                 {
@@ -1126,32 +1196,62 @@ public readonly partial struct Cql2Schema
                         case Kind.BboxLiteralBuilder:
                             valueBuilder.AddProperty(utf8Name, _bboxLiteralBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.BboxLiteralSource:
+                            _bboxLiteralSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.FunctionRefBuilder:
                             valueBuilder.AddProperty(utf8Name, _functionRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.FunctionRefSource:
+                            _functionRefSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.GeometrycollectionBuilder:
                             valueBuilder.AddProperty(utf8Name, _geometrycollectionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.GeometrycollectionSource:
+                            _geometrycollectionSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.LinestringBuilder:
                             valueBuilder.AddProperty(utf8Name, _linestringBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.LinestringSource:
+                            _linestringSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.MultilinestringBuilder:
                             valueBuilder.AddProperty(utf8Name, _multilinestringBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.MultilinestringSource:
+                            _multilinestringSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.MultipointBuilder:
                             valueBuilder.AddProperty(utf8Name, _multipointBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.MultipointSource:
+                            _multipointSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.MultipolygonBuilder:
                             valueBuilder.AddProperty(utf8Name, _multipolygonBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.MultipolygonSource:
+                            _multipolygonSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.PointBuilder:
                             valueBuilder.AddProperty(utf8Name, _pointBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Point.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.PointSource:
+                            _pointSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.PolygonBuilder:
                             valueBuilder.AddProperty(utf8Name, _polygonBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.PolygonSource:
+                            _polygonSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.PropertyRefBuilder:
                             valueBuilder.AddProperty(utf8Name, _propertyRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.PropertyRefSource:
+                            _propertyRefSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1171,32 +1271,62 @@ public readonly partial struct Cql2Schema
                         case Kind.BboxLiteralBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _bboxLiteralBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.BboxLiteralSource:
+                            _bboxLiteralSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.FunctionRefBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _functionRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.FunctionRefSource:
+                            _functionRefSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.GeometrycollectionBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _geometrycollectionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GeometrycollectionSource:
+                            _geometrycollectionSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.LinestringBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _linestringBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.LinestringSource:
+                            _linestringSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.MultilinestringBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _multilinestringBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.MultilinestringSource:
+                            _multilinestringSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.MultipointBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _multipointBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.MultipointSource:
+                            _multipointSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.MultipolygonBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _multipolygonBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.MultipolygonSource:
+                            _multipolygonSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.PointBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _pointBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Point.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.PointSource:
+                            _pointSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.PolygonBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _polygonBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.PolygonSource:
+                            _polygonSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.PropertyRefBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _propertyRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.PropertyRefSource:
+                            _propertyRefSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1216,32 +1346,62 @@ public readonly partial struct Cql2Schema
                         case Kind.BboxLiteralBuilder:
                             valueBuilder.AddProperty(name, _bboxLiteralBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.BboxLiteralSource:
+                            _bboxLiteralSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.FunctionRefBuilder:
                             valueBuilder.AddProperty(name, _functionRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.FunctionRefSource:
+                            _functionRefSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.GeometrycollectionBuilder:
                             valueBuilder.AddProperty(name, _geometrycollectionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GeometrycollectionSource:
+                            _geometrycollectionSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.LinestringBuilder:
                             valueBuilder.AddProperty(name, _linestringBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.LinestringSource:
+                            _linestringSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.MultilinestringBuilder:
                             valueBuilder.AddProperty(name, _multilinestringBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.MultilinestringSource:
+                            _multilinestringSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.MultipointBuilder:
                             valueBuilder.AddProperty(name, _multipointBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.MultipointSource:
+                            _multipointSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.MultipolygonBuilder:
                             valueBuilder.AddProperty(name, _multipolygonBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.MultipolygonSource:
+                            _multipolygonSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.PointBuilder:
                             valueBuilder.AddProperty(name, _pointBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Point.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.PointSource:
+                            _pointSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.PolygonBuilder:
                             valueBuilder.AddProperty(name, _polygonBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.PolygonSource:
+                            _polygonSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.PropertyRefBuilder:
                             valueBuilder.AddProperty(name, _propertyRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.PropertyRefSource:
+                            _propertyRefSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1261,32 +1421,62 @@ public readonly partial struct Cql2Schema
                         case Kind.BboxLiteralBuilder:
                             valueBuilder.AddProperty(name, _bboxLiteralBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.BboxLiteralSource:
+                            _bboxLiteralSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.FunctionRefBuilder:
                             valueBuilder.AddProperty(name, _functionRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.FunctionRefSource:
+                            _functionRefSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.GeometrycollectionBuilder:
                             valueBuilder.AddProperty(name, _geometrycollectionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GeometrycollectionSource:
+                            _geometrycollectionSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.LinestringBuilder:
                             valueBuilder.AddProperty(name, _linestringBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.LinestringSource:
+                            _linestringSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.MultilinestringBuilder:
                             valueBuilder.AddProperty(name, _multilinestringBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.MultilinestringSource:
+                            _multilinestringSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.MultipointBuilder:
                             valueBuilder.AddProperty(name, _multipointBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.MultipointSource:
+                            _multipointSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.MultipolygonBuilder:
                             valueBuilder.AddProperty(name, _multipolygonBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.MultipolygonSource:
+                            _multipolygonSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.PointBuilder:
                             valueBuilder.AddProperty(name, _pointBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Point.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.PointSource:
+                            _pointSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.PolygonBuilder:
                             valueBuilder.AddProperty(name, _polygonBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.PolygonSource:
+                            _polygonSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.PropertyRefBuilder:
                             valueBuilder.AddProperty(name, _propertyRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.PropertyRefSource:
+                            _propertyRefSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1306,32 +1496,62 @@ public readonly partial struct Cql2Schema
                         case Kind.BboxLiteralBuilder:
                             valueBuilder.AddItem(_bboxLiteralBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.BboxLiteralSource:
+                            _bboxLiteralSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.FunctionRefBuilder:
                             valueBuilder.AddItem(_functionRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.FunctionRefSource:
+                            _functionRefSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.GeometrycollectionBuilder:
                             valueBuilder.AddItem(_geometrycollectionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GeometrycollectionSource:
+                            _geometrycollectionSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.LinestringBuilder:
                             valueBuilder.AddItem(_linestringBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.LinestringSource:
+                            _linestringSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.MultilinestringBuilder:
                             valueBuilder.AddItem(_multilinestringBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.MultilinestringSource:
+                            _multilinestringSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.MultipointBuilder:
                             valueBuilder.AddItem(_multipointBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.MultipointSource:
+                            _multipointSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.MultipolygonBuilder:
                             valueBuilder.AddItem(_multipolygonBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.MultipolygonSource:
+                            _multipolygonSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.PointBuilder:
                             valueBuilder.AddItem(_pointBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Point.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.PointSource:
+                            _pointSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.PolygonBuilder:
                             valueBuilder.AddItem(_polygonBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.PolygonSource:
+                            _polygonSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.PropertyRefBuilder:
                             valueBuilder.AddItem(_propertyRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.PropertyRefSource:
+                            _propertyRefSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");

@@ -252,7 +252,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheDetailsText.Mutable.DefaultInstance;
                 }
             }
 
@@ -381,7 +381,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Mutable.DefaultInstance;
                 }
             }
 
@@ -423,7 +423,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheTitle.Mutable.DefaultInstance;
                 }
             }
 

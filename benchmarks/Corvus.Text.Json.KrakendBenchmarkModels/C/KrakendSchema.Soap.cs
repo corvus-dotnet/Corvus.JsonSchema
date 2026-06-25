@@ -446,6 +446,15 @@ public readonly partial struct KrakendSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Soap.RequiredPath"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Soap(Corvus.KrakendBenchmark.Current.KrakendSchema.Soap.RequiredPath.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Soap.RequiredTemplate"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -459,6 +468,15 @@ public readonly partial struct KrakendSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator Soap(Corvus.KrakendBenchmark.Current.KrakendSchema.Soap.RequiredTemplate value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Soap.RequiredTemplate"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Soap(Corvus.KrakendBenchmark.Current.KrakendSchema.Soap.RequiredTemplate.Mutable value)
         {
             return From(value);
         }

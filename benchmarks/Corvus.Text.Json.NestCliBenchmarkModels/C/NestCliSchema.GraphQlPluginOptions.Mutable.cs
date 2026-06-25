@@ -283,7 +283,7 @@ public readonly partial struct NestCliSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.NestCliBenchmark.Current.NestCliSchema.GraphQlPluginOptions.TypeFileNameSuffixArray.Mutable.DefaultInstance;
                 }
             }
 

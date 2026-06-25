@@ -293,7 +293,7 @@ public readonly partial struct PulumiSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.IfTrueThisConfigurationValueShouldBeEncrypted.Mutable.DefaultInstance;
                 }
             }
 

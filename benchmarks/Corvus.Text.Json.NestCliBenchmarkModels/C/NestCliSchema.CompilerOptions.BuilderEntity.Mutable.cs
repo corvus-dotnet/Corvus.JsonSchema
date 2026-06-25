@@ -859,6 +859,7 @@ public readonly partial struct NestCliSchema
                     Unknown,
                     JsonElement,
                     AnyOf1EntityBuilder,
+                    AnyOf1EntitySource,
                     RawUtf8StringRequiresUnescaping,
                     RawUtf8StringNotRequiresUnescaping,
                     Utf8String,
@@ -870,6 +871,7 @@ public readonly partial struct NestCliSchema
                 private readonly ReadOnlySpan<byte> _utf8Backing;
                 private readonly ReadOnlySpan<char> _utf16Backing;
                 private readonly Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.Builder.Build? _anyOf1EntityBuilderInstance;
+                private readonly Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.Source _anyOf1EntitySourceInstance;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -902,6 +904,8 @@ public readonly partial struct NestCliSchema
 
                 public Source(Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.Builder.Build value) {_anyOf1EntityBuilderInstance = value; _kind = Kind.AnyOf1EntityBuilder; }
 
+                public Source(Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.Source value) { _anyOf1EntitySourceInstance = value; _kind = Kind.AnyOf1EntitySource; }
+
                 public static implicit operator Source(BuilderEntity instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -918,6 +922,9 @@ public readonly partial struct NestCliSchema
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);
@@ -945,6 +952,9 @@ public readonly partial struct NestCliSchema
                             break;
                         case Kind.AnyOf1EntityBuilder:
                             valueBuilder.AddProperty(utf8Name, _anyOf1EntityBuilderInstance!, static (in b, ref o) => Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.AnyOf1EntitySource:
+                            _anyOf1EntitySourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -976,6 +986,9 @@ public readonly partial struct NestCliSchema
                         case Kind.AnyOf1EntityBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _anyOf1EntityBuilderInstance!, static (in b, ref o) => Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.AnyOf1EntitySource:
+                            _anyOf1EntitySourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1005,6 +1018,9 @@ public readonly partial struct NestCliSchema
                             break;
                         case Kind.AnyOf1EntityBuilder:
                             valueBuilder.AddProperty(name, _anyOf1EntityBuilderInstance!, static (in b, ref o) => Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.AnyOf1EntitySource:
+                            _anyOf1EntitySourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1036,6 +1052,9 @@ public readonly partial struct NestCliSchema
                         case Kind.AnyOf1EntityBuilder:
                             valueBuilder.AddProperty(name, _anyOf1EntityBuilderInstance!, static (in b, ref o) => Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.AnyOf1EntitySource:
+                            _anyOf1EntitySourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1065,6 +1084,9 @@ public readonly partial struct NestCliSchema
                             break;
                         case Kind.AnyOf1EntityBuilder:
                             valueBuilder.AddItem(_anyOf1EntityBuilderInstance!, static (in b, ref o) => Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.AnyOf1EntitySource:
+                            _anyOf1EntitySourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");

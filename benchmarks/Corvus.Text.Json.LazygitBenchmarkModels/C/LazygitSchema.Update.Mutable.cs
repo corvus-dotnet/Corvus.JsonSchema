@@ -204,7 +204,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Update.Days.Mutable.DefaultInstance;
                 }
             }
 
@@ -229,7 +229,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Update.Method.Mutable.DefaultInstance;
                 }
             }
 

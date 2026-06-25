@@ -266,7 +266,7 @@ public readonly partial struct KrakendSchema
                                     return value;
                                 }
 
-                                return default;
+                                return Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.DetailedHttpConnectionMetrics.Mutable.DefaultInstance;
                             }
                         }
 
@@ -291,7 +291,7 @@ public readonly partial struct KrakendSchema
                                     return value;
                                 }
 
-                                return default;
+                                return Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.DisableThisStage.Mutable.DefaultInstance;
                             }
                         }
 
@@ -316,7 +316,7 @@ public readonly partial struct KrakendSchema
                                     return value;
                                 }
 
-                                return default;
+                                return Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.DetailedPayloadRead.Mutable.DefaultInstance;
                             }
                         }
 
@@ -341,7 +341,7 @@ public readonly partial struct KrakendSchema
                                     return value;
                                 }
 
-                                return default;
+                                return Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.DetailedRoundTrip.Mutable.DefaultInstance;
                             }
                         }
 

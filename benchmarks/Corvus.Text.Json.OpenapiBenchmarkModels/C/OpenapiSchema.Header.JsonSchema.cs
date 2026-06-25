@@ -45,7 +45,7 @@ public readonly partial struct OpenapiSchema
             private static readonly JsonSchemaPathProvider RequiredSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/required"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider SchemaValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/schema/$dynamicRef"u8, buffer, out written);
 
-            private static void MatchContent(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchContent(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext =
@@ -60,7 +60,7 @@ public readonly partial struct OpenapiSchema
                 context.CommitChildContext(childContext.IsMatch, ref childContext);
             }
 
-            private static void MatchDeprecated(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchDeprecated(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext1 =
@@ -75,7 +75,7 @@ public readonly partial struct OpenapiSchema
                 context.CommitChildContext(childContext1.IsMatch, ref childContext1);
             }
 
-            private static void MatchDescription(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchDescription(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext2 =
@@ -90,7 +90,7 @@ public readonly partial struct OpenapiSchema
                 context.CommitChildContext(childContext2.IsMatch, ref childContext2);
             }
 
-            private static void MatchRequired(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchRequired(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext3 =
@@ -105,7 +105,7 @@ public readonly partial struct OpenapiSchema
                 context.CommitChildContext(childContext3.IsMatch, ref childContext3);
             }
 
-            private static void MatchSchemaValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSchemaValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext4 =
@@ -118,31 +118,6 @@ public readonly partial struct OpenapiSchema
 
                 Corvus.OpenapiBenchmark.Current.OpenapiSchema.Schema.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext4);
                 context.CommitChildContext(childContext4.IsMatch, ref childContext4);
-
-                if (!context.HasCollector && !context.IsMatch)
-                {
-                    return;
-                }
-
-                JsonSchemaContext childContext5 = Corvus.OpenapiBenchmark.Current.OpenapiSchema.Header.WithStyleSimple.JsonSchema.PushChildContext(
-                    parentDocument,
-                    depdendentSchemasChildHandler_propertyParentDocumentIndex,
-                    ref context,
-                    schemaEvaluationPath: DependentSchemas0SchemaEvaluationPath);
-
-                Corvus.OpenapiBenchmark.Current.OpenapiSchema.Header.WithStyleSimple.JsonSchema.Evaluate(parentDocument, depdendentSchemasChildHandler_propertyParentDocumentIndex, ref childContext5);
-
-                if (!childContext5.IsMatch)
-                {
-                    context.CommitChildContext(false, ref childContext5);
-                    context.EvaluatedKeyword(false, "schema", messageProvider: JsonSchemaEvaluation.ExpectedMatchesDependentSchema, "dependentSchemas"u8);
-                }
-                else
-                {
-                    context.ApplyEvaluated(ref childContext5);
-                    context.CommitChildContext(true, ref childContext5);
-                    context.EvaluatedKeyword(true, "schema", messageProvider: JsonSchemaEvaluation.ExpectedMatchesDependentSchema, "dependentSchemas"u8);
-                }
             }
 
             private static PropertySchemaMatchers<Corvus.OpenapiBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator1> MatchersBuilder()
@@ -287,6 +262,28 @@ public readonly partial struct OpenapiSchema
 
                 if (tokenType == JsonTokenType.StartObject)
                 {
+                    if (parentDocument.TryGetNamedPropertyValue(parentIndex, "schema"u8, out _, out _))
+                    {
+                        JsonSchemaContext dependentSchemaContext = Corvus.OpenapiBenchmark.Current.OpenapiSchema.Header.WithStyleSimple.JsonSchema.PushChildContext(
+                            parentDocument,
+                            parentIndex,
+                            ref context,
+                            schemaEvaluationPath: DependentSchemas0SchemaEvaluationPath);
+
+                        Corvus.OpenapiBenchmark.Current.OpenapiSchema.Header.WithStyleSimple.JsonSchema.Evaluate(parentDocument, parentIndex, ref dependentSchemaContext);
+
+                        if (!dependentSchemaContext.IsMatch)
+                        {
+                            context.CommitChildContext(false, ref dependentSchemaContext);
+                            context.EvaluatedKeyword(false, "schema", messageProvider: JsonSchemaEvaluation.ExpectedMatchesDependentSchema, "dependentSchemas"u8);
+                        }
+                        else
+                        {
+                            context.ApplyEvaluated(ref dependentSchemaContext);
+                            context.CommitChildContext(true, ref dependentSchemaContext);
+                            context.EvaluatedKeyword(true, "schema", messageProvider: JsonSchemaEvaluation.ExpectedMatchesDependentSchema, "dependentSchemas"u8);
+                        }
+                    }
                     int objectValidation_propertyCount = 0;
 
                     var objectValidation_enumerator = new ObjectEnumerator(parentDocument, parentIndex);
@@ -297,7 +294,7 @@ public readonly partial struct OpenapiSchema
 
                         if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.OpenapiBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator1? validator))
                         {
-                            validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex);
+                            validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context);
 
                             if (!context.HasCollector && !context.IsMatch)
                             {

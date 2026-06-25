@@ -348,11 +348,11 @@ public readonly partial struct CmakePresetsSchema
             /// A required integer representing the version of the JSON schema.
             /// </para>
             /// </remarks>
-            public Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.VersionEntity.Mutable Version
+            public Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.ARequiredIntegerRepresentingTheVersionOfTheJsonSchema.Mutable Version
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VersionUtf8, out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.VersionEntity.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VersionUtf8, out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.ARequiredIntegerRepresentingTheVersionOfTheJsonSchema.Mutable value))
                     {
                         return value;
                     }
@@ -1027,7 +1027,7 @@ public readonly partial struct CmakePresetsSchema
             /// Set the <c>version</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVersion(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.VersionEntity.Source value)
+            public void SetVersion(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.ARequiredIntegerRepresentingTheVersionOfTheJsonSchema.Source value)
             {
                 CheckValidInstance();
 
@@ -1311,7 +1311,7 @@ public readonly partial struct CmakePresetsSchema
             private readonly Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.PackagePresetsV6.Source _createArg6;
             private readonly Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsV6.Source _createArg7;
             private readonly Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Vendor.Source _createArg8;
-            private readonly Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.VersionEntity.Source _createArg9;
+            private readonly Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.ARequiredIntegerRepresentingTheVersionOfTheJsonSchema.Source _createArg9;
             private readonly Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsV6.Source _createArg10;
 
             /// <summary>
@@ -1327,7 +1327,7 @@ public readonly partial struct CmakePresetsSchema
 
             internal Source(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.CmakePresetsBenchmark.Current.JsonUriReference.Source arg1, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.BuildPresetsV4.Source arg2, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.CmakeMinimumRequired.Source arg3, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsV7.Source arg4, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Include.Source arg5, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.PackagePresetsV6.Source arg6, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsV6.Source arg7, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Vendor.Source arg8, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.VersionEntity.Source arg9, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsV6.Source arg10)
+            internal Source(in Corvus.CmakePresetsBenchmark.Current.JsonUriReference.Source arg1, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.BuildPresetsV4.Source arg2, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.CmakeMinimumRequired.Source arg3, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsV7.Source arg4, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Include.Source arg5, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.PackagePresetsV6.Source arg6, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsV6.Source arg7, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Vendor.Source arg8, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.ARequiredIntegerRepresentingTheVersionOfTheJsonSchema.Source arg9, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsV6.Source arg10)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1495,7 +1495,7 @@ public readonly partial struct CmakePresetsSchema
             private readonly Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.PackagePresetsV6.Source<TContext> _createArg6;
             private readonly Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsV6.Source<TContext> _createArg7;
             private readonly Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Vendor.Source<TContext> _createArg8;
-            private readonly Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.VersionEntity.Source _createArg9;
+            private readonly Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.ARequiredIntegerRepresentingTheVersionOfTheJsonSchema.Source _createArg9;
             private readonly Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsV6.Source<TContext> _createArg10;
 
             /// <summary>
@@ -1509,7 +1509,7 @@ public readonly partial struct CmakePresetsSchema
 
             internal Source(scoped in TContext context, Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.CmakePresetsBenchmark.Current.JsonUriReference.Source arg1, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.BuildPresetsV4.Source<TContext> arg2, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.CmakeMinimumRequired.Source<TContext> arg3, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsV7.Source<TContext> arg4, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Include.Source<TContext> arg5, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.PackagePresetsV6.Source<TContext> arg6, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsV6.Source<TContext> arg7, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Vendor.Source<TContext> arg8, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.VersionEntity.Source arg9, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsV6.Source<TContext> arg10)
+            internal Source(scoped in TContext context, in Corvus.CmakePresetsBenchmark.Current.JsonUriReference.Source arg1, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.BuildPresetsV4.Source<TContext> arg2, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.CmakeMinimumRequired.Source<TContext> arg3, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsV7.Source<TContext> arg4, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Include.Source<TContext> arg5, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.PackagePresetsV6.Source<TContext> arg6, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsV6.Source<TContext> arg7, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Vendor.Source<TContext> arg8, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.ARequiredIntegerRepresentingTheVersionOfTheJsonSchema.Source arg9, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsV6.Source<TContext> arg10)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1682,7 +1682,7 @@ public readonly partial struct CmakePresetsSchema
                 in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.PackagePresetsV6.Source packagePresets = default,
                 in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsV6.Source testPresets = default,
                 in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Vendor.Source vendor = default,
-                in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.VersionEntity.Source version = default,
+                in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.ARequiredIntegerRepresentingTheVersionOfTheJsonSchema.Source version = default,
                 in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsV6.Source workflowPresets = default)
             {
                 schema.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Schema, ref builder);
@@ -1709,7 +1709,7 @@ public readonly partial struct CmakePresetsSchema
                 in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.PackagePresetsV6.Source packagePresets = default,
                 in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsV6.Source testPresets = default,
                 in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Vendor.Source vendor = default,
-                in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.VersionEntity.Source version = default,
+                in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.ARequiredIntegerRepresentingTheVersionOfTheJsonSchema.Source version = default,
                 in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsV6.Source workflowPresets = default)
             {
                 Create(ref _builder, schema, buildPresets, cmakeMinimumRequired, configurePresets, include, packagePresets, testPresets, vendor, version, workflowPresets);
@@ -1729,7 +1729,7 @@ public readonly partial struct CmakePresetsSchema
                 in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.PackagePresetsV6.Source<TContext> packagePresets = default,
                 in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsV6.Source<TContext> testPresets = default,
                 in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Vendor.Source<TContext> vendor = default,
-                in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.VersionEntity.Source version = default,
+                in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.ARequiredIntegerRepresentingTheVersionOfTheJsonSchema.Source version = default,
                 in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsV6.Source<TContext> workflowPresets = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
@@ -1760,7 +1760,7 @@ public readonly partial struct CmakePresetsSchema
                 in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.PackagePresetsV6.Source<TContext> packagePresets = default,
                 in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsV6.Source<TContext> testPresets = default,
                 in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Vendor.Source<TContext> vendor = default,
-                in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.VersionEntity.Source version = default,
+                in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.ARequiredIntegerRepresentingTheVersionOfTheJsonSchema.Source version = default,
                 in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsV6.Source<TContext> workflowPresets = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
@@ -1806,7 +1806,7 @@ public readonly partial struct CmakePresetsSchema
             /// <param name="arg9">The value of the property.</param>
             /// <param name="arg10">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.CmakePresetsBenchmark.Current.JsonUriReference.Source arg1, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.BuildPresetsV4.Source arg2, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.CmakeMinimumRequired.Source arg3, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsV7.Source arg4, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Include.Source arg5, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.PackagePresetsV6.Source arg6, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsV6.Source arg7, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Vendor.Source arg8, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.VersionEntity.Source arg9, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsV6.Source arg10, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(in Corvus.CmakePresetsBenchmark.Current.JsonUriReference.Source arg1, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.BuildPresetsV4.Source arg2, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.CmakeMinimumRequired.Source arg3, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsV7.Source arg4, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Include.Source arg5, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.PackagePresetsV6.Source arg6, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsV6.Source arg7, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Vendor.Source arg8, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.ARequiredIntegerRepresentingTheVersionOfTheJsonSchema.Source arg9, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsV6.Source arg10, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
@@ -1829,7 +1829,7 @@ public readonly partial struct CmakePresetsSchema
             /// <param name="arg9">The value of the property.</param>
             /// <param name="arg10">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.CmakePresetsBenchmark.Current.JsonUriReference.Source arg1, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.BuildPresetsV4.Source<TContext> arg2, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.CmakeMinimumRequired.Source<TContext> arg3, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsV7.Source<TContext> arg4, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Include.Source<TContext> arg5, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.PackagePresetsV6.Source<TContext> arg6, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsV6.Source<TContext> arg7, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Vendor.Source<TContext> arg8, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.VersionEntity.Source arg9, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsV6.Source<TContext> arg10, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.CmakePresetsBenchmark.Current.JsonUriReference.Source arg1, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.BuildPresetsV4.Source<TContext> arg2, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.CmakeMinimumRequired.Source<TContext> arg3, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsV7.Source<TContext> arg4, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Include.Source<TContext> arg5, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.PackagePresetsV6.Source<TContext> arg6, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsV6.Source<TContext> arg7, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Vendor.Source<TContext> arg8, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.ARequiredIntegerRepresentingTheVersionOfTheJsonSchema.Source arg9, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsV6.Source<TContext> arg10, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1883,7 +1883,7 @@ public readonly partial struct CmakePresetsSchema
         /// <param name="version">The value of the <c>"version"</c> property.</param>
         /// <param name="workflowPresets">The value of the <c>"workflowPresets"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.CmakePresetsBenchmark.Current.JsonUriReference.Source schema = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.BuildPresetsV4.Source buildPresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.CmakeMinimumRequired.Source cmakeMinimumRequired = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsV7.Source configurePresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Include.Source include = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.PackagePresetsV6.Source packagePresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsV6.Source testPresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Vendor.Source vendor = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.VersionEntity.Source version = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsV6.Source workflowPresets = default)
+        public static Source Build(in Corvus.CmakePresetsBenchmark.Current.JsonUriReference.Source schema = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.BuildPresetsV4.Source buildPresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.CmakeMinimumRequired.Source cmakeMinimumRequired = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsV7.Source configurePresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Include.Source include = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.PackagePresetsV6.Source packagePresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsV6.Source testPresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Vendor.Source vendor = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.ARequiredIntegerRepresentingTheVersionOfTheJsonSchema.Source version = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsV6.Source workflowPresets = default)
         {
             return new Source(schema, buildPresets, cmakeMinimumRequired, configurePresets, include, packagePresets, testPresets, vendor, version, workflowPresets);
         }
@@ -1904,7 +1904,7 @@ public readonly partial struct CmakePresetsSchema
         /// <param name="version">The value of the <c>"version"</c> property.</param>
         /// <param name="workflowPresets">The value of the <c>"workflowPresets"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.CmakePresetsBenchmark.Current.JsonUriReference.Source schema = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.BuildPresetsV4.Source<TContext> buildPresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.CmakeMinimumRequired.Source<TContext> cmakeMinimumRequired = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsV7.Source<TContext> configurePresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Include.Source<TContext> include = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.PackagePresetsV6.Source<TContext> packagePresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsV6.Source<TContext> testPresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Vendor.Source<TContext> vendor = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.VersionEntity.Source version = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsV6.Source<TContext> workflowPresets = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.CmakePresetsBenchmark.Current.JsonUriReference.Source schema = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.BuildPresetsV4.Source<TContext> buildPresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.CmakeMinimumRequired.Source<TContext> cmakeMinimumRequired = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsV7.Source<TContext> configurePresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Include.Source<TContext> include = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.PackagePresetsV6.Source<TContext> packagePresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsV6.Source<TContext> testPresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Vendor.Source<TContext> vendor = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.ARequiredIntegerRepresentingTheVersionOfTheJsonSchema.Source version = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsV6.Source<TContext> workflowPresets = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
@@ -1994,7 +1994,7 @@ public readonly partial struct CmakePresetsSchema
         /// <param name="workflowPresets">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.CmakePresetsBenchmark.Current.JsonUriReference.Source schema = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.BuildPresetsV4.Source buildPresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.CmakeMinimumRequired.Source cmakeMinimumRequired = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsV7.Source configurePresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Include.Source include = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.PackagePresetsV6.Source packagePresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsV6.Source testPresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Vendor.Source vendor = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.VersionEntity.Source version = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsV6.Source workflowPresets = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.CmakePresetsBenchmark.Current.JsonUriReference.Source schema = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.BuildPresetsV4.Source buildPresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.CmakeMinimumRequired.Source cmakeMinimumRequired = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsV7.Source configurePresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Include.Source include = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.PackagePresetsV6.Source packagePresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsV6.Source testPresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Vendor.Source vendor = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.ARequiredIntegerRepresentingTheVersionOfTheJsonSchema.Source version = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsV6.Source workflowPresets = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -2025,7 +2025,7 @@ public readonly partial struct CmakePresetsSchema
         /// <param name="workflowPresets">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.CmakePresetsBenchmark.Current.JsonUriReference.Source schema = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.BuildPresetsV4.Source<TContext> buildPresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.CmakeMinimumRequired.Source<TContext> cmakeMinimumRequired = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsV7.Source<TContext> configurePresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Include.Source<TContext> include = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.PackagePresetsV6.Source<TContext> packagePresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsV6.Source<TContext> testPresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Vendor.Source<TContext> vendor = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.VersionEntity.Source version = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsV6.Source<TContext> workflowPresets = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.CmakePresetsBenchmark.Current.JsonUriReference.Source schema = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.BuildPresetsV4.Source<TContext> buildPresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.CmakeMinimumRequired.Source<TContext> cmakeMinimumRequired = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsV7.Source<TContext> configurePresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Include.Source<TContext> include = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.PackagePresetsV6.Source<TContext> packagePresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsV6.Source<TContext> testPresets = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Vendor.Source<TContext> vendor = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.ARequiredIntegerRepresentingTheVersionOfTheJsonSchema.Source version = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsV6.Source<TContext> workflowPresets = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

@@ -364,7 +364,7 @@ public readonly partial struct ImplementationsOfElement
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Image.HeightEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -427,7 +427,7 @@ public readonly partial struct ImplementationsOfElement
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Image.IfFalseThisItemWillBeRemovedFromTheVisualTree.Mutable.DefaultInstance;
                 }
             }
 

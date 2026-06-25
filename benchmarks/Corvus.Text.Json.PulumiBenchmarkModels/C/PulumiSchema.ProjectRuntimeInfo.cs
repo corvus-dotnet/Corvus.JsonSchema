@@ -221,6 +221,15 @@ public readonly partial struct PulumiSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.Name"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ProjectRuntimeInfo(Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.Name.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.OneOf1Entity"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -234,6 +243,15 @@ public readonly partial struct PulumiSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator ProjectRuntimeInfo(Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.OneOf1Entity value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.OneOf1Entity"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ProjectRuntimeInfo(Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.OneOf1Entity.Mutable value)
         {
             return From(value);
         }

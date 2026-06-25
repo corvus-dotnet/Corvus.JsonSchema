@@ -263,6 +263,15 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator ArithmeticOperandsEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -281,6 +290,15 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator ArithmeticOperandsEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -294,6 +312,15 @@ public readonly partial struct Cql2Schema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator ArithmeticOperandsEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator ArithmeticOperandsEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Mutable value)
             {
                 return From(value);
             }

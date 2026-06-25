@@ -218,7 +218,7 @@ public readonly partial struct Ui5ManifestSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.MinimumSubTitleRowEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -239,7 +239,7 @@ public readonly partial struct Ui5ManifestSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.MinimumTitleRowEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -284,7 +284,7 @@ public readonly partial struct Ui5ManifestSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.ShowOnlyHeaderEntity.Mutable.DefaultInstance;
                     }
                 }
 

@@ -301,6 +301,15 @@ public readonly partial struct OpenapiSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.OpenapiBenchmark.Current.OpenapiSchema.Header.RequiredSchema"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Header(Corvus.OpenapiBenchmark.Current.OpenapiSchema.Header.RequiredSchema.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.OpenapiBenchmark.Current.OpenapiSchema.Header.RequiredContent"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -314,6 +323,15 @@ public readonly partial struct OpenapiSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator Header(Corvus.OpenapiBenchmark.Current.OpenapiSchema.Header.RequiredContent value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.OpenapiBenchmark.Current.OpenapiSchema.Header.RequiredContent"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Header(Corvus.OpenapiBenchmark.Current.OpenapiSchema.Header.RequiredContent.Mutable value)
         {
             return From(value);
         }

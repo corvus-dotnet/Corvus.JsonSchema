@@ -235,7 +235,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.BackoffStrategy.Mutable.DefaultInstance;
                 }
             }
 
@@ -260,7 +260,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Delete.Mutable.DefaultInstance;
                 }
             }
 
@@ -285,7 +285,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Durable.Mutable.DefaultInstance;
                 }
             }
 
@@ -338,7 +338,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Exclusive.Mutable.DefaultInstance;
                 }
             }
 
@@ -363,7 +363,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ExpirationKey.Mutable.DefaultInstance;
                 }
             }
 
@@ -388,7 +388,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Immediate.Mutable.DefaultInstance;
                 }
             }
 
@@ -413,7 +413,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Mandatory.Mutable.DefaultInstance;
                 }
             }
 
@@ -438,7 +438,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.MaxRetries.Mutable.DefaultInstance;
                 }
             }
 
@@ -463,7 +463,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey.Mutable.DefaultInstance;
                 }
             }
 
@@ -566,7 +566,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey1.Mutable.DefaultInstance;
                 }
             }
 
@@ -591,7 +591,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey2.Mutable.DefaultInstance;
                 }
             }
 
@@ -619,7 +619,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.RoutingKey.Mutable.DefaultInstance;
                 }
             }
 
@@ -644,7 +644,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.StaticRoutingKey.Mutable.DefaultInstance;
                 }
             }
 

@@ -96,6 +96,15 @@ public readonly partial struct ActionMode
     }
 
     /// <summary>
+    /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ActionMode.AnyOf0Entity"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator ActionMode(Corvus.Ui5ManifestBenchmark.Current.ActionMode.AnyOf0Entity.Mutable value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
     /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.ActionMode.AnyOf1Entity"/>.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
@@ -109,6 +118,15 @@ public readonly partial struct ActionMode
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator ActionMode(Corvus.Ui5ManifestBenchmark.Current.ActionMode.AnyOf1Entity value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
+    /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ActionMode.AnyOf1Entity"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator ActionMode(Corvus.Ui5ManifestBenchmark.Current.ActionMode.AnyOf1Entity.Mutable value)
     {
         return From(value);
     }

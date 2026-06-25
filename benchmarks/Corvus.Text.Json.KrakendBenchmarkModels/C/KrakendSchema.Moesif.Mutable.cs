@@ -263,7 +263,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.BatchSize.Mutable.DefaultInstance;
                 }
             }
 
@@ -288,7 +288,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EnableDebug.Mutable.DefaultInstance;
                 }
             }
 
@@ -313,7 +313,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EventQueueSize.Mutable.DefaultInstance;
                 }
             }
 
@@ -363,7 +363,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.SendTheBody.Mutable.DefaultInstance;
                 }
             }
 
@@ -488,7 +488,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ShouldSkip.Mutable.DefaultInstance;
                 }
             }
 
@@ -513,7 +513,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.TimerWakeUp.Mutable.DefaultInstance;
                 }
             }
 
@@ -566,7 +566,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.UserIdJwtClaim.Mutable.DefaultInstance;
                 }
             }
 

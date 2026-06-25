@@ -1029,17 +1029,25 @@ public readonly partial struct ImplementationsOfISelectAction
             Unknown,
             JsonElement,
             ImplementationsOfISelectActionRequiredTypeBuilder,
+            ImplementationsOfISelectActionRequiredTypeSource,
             ImplementationsOfISelectActionRequiredType1Builder,
+            ImplementationsOfISelectActionRequiredType1Source,
             ImplementationsOfISelectActionRequiredType2Builder,
+            ImplementationsOfISelectActionRequiredType2Source,
             RequiredTypeBuilder,
+            RequiredTypeSource,
         }
 
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType.Builder.Build? _implementationsOfISelectActionRequiredTypeBuilderInstance;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType.Source _implementationsOfISelectActionRequiredTypeSourceInstance;
         private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType1.Builder.Build? _implementationsOfISelectActionRequiredType1BuilderInstance;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType1.Source _implementationsOfISelectActionRequiredType1SourceInstance;
         private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType2.Builder.Build? _implementationsOfISelectActionRequiredType2BuilderInstance;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType2.Source _implementationsOfISelectActionRequiredType2SourceInstance;
         private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.RequiredType.Builder.Build? _requiredTypeBuilderInstance;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.RequiredType.Source _requiredTypeSourceInstance;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1054,11 +1062,19 @@ public readonly partial struct ImplementationsOfISelectAction
 
         public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType.Builder.Build value) {_implementationsOfISelectActionRequiredTypeBuilderInstance = value; _kind = Kind.ImplementationsOfISelectActionRequiredTypeBuilder; }
 
+        public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType.Source value) { _implementationsOfISelectActionRequiredTypeSourceInstance = value; _kind = Kind.ImplementationsOfISelectActionRequiredTypeSource; }
+
         public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType1.Builder.Build value) {_implementationsOfISelectActionRequiredType1BuilderInstance = value; _kind = Kind.ImplementationsOfISelectActionRequiredType1Builder; }
+
+        public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType1.Source value) { _implementationsOfISelectActionRequiredType1SourceInstance = value; _kind = Kind.ImplementationsOfISelectActionRequiredType1Source; }
 
         public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType2.Builder.Build value) {_implementationsOfISelectActionRequiredType2BuilderInstance = value; _kind = Kind.ImplementationsOfISelectActionRequiredType2Builder; }
 
+        public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType2.Source value) { _implementationsOfISelectActionRequiredType2SourceInstance = value; _kind = Kind.ImplementationsOfISelectActionRequiredType2Source; }
+
         public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.RequiredType.Builder.Build value) {_requiredTypeBuilderInstance = value; _kind = Kind.RequiredTypeBuilder; }
+
+        public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.RequiredType.Source value) { _requiredTypeSourceInstance = value; _kind = Kind.RequiredTypeSource; }
 
         public static implicit operator Source(ImplementationsOfISelectAction instance) => new(JsonElement.From(instance));
 
@@ -1066,13 +1082,25 @@ public readonly partial struct ImplementationsOfISelectAction
         public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType instance) => new(JsonElement.From(instance));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType.Source value) => new(value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType1 instance) => new(JsonElement.From(instance));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType1.Source value) => new(value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType2 instance) => new(JsonElement.From(instance));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType2.Source value) => new(value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.RequiredType instance) => new(JsonElement.From(instance));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.RequiredType.Source value) => new(value);
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1086,14 +1114,26 @@ public readonly partial struct ImplementationsOfISelectAction
                 case Kind.ImplementationsOfISelectActionRequiredTypeBuilder:
                     valueBuilder.AddProperty(utf8Name, _implementationsOfISelectActionRequiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.ImplementationsOfISelectActionRequiredTypeSource:
+                    _implementationsOfISelectActionRequiredTypeSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                    break;
                 case Kind.ImplementationsOfISelectActionRequiredType1Builder:
                     valueBuilder.AddProperty(utf8Name, _implementationsOfISelectActionRequiredType1BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType1.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                    break;
+                case Kind.ImplementationsOfISelectActionRequiredType1Source:
+                    _implementationsOfISelectActionRequiredType1SourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                     break;
                 case Kind.ImplementationsOfISelectActionRequiredType2Builder:
                     valueBuilder.AddProperty(utf8Name, _implementationsOfISelectActionRequiredType2BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType2.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.ImplementationsOfISelectActionRequiredType2Source:
+                    _implementationsOfISelectActionRequiredType2SourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                    break;
                 case Kind.RequiredTypeBuilder:
                     valueBuilder.AddProperty(utf8Name, _requiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.RequiredType.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                    break;
+                case Kind.RequiredTypeSource:
+                    _requiredTypeSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -1113,14 +1153,26 @@ public readonly partial struct ImplementationsOfISelectAction
                 case Kind.ImplementationsOfISelectActionRequiredTypeBuilder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfISelectActionRequiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfISelectActionRequiredTypeSource:
+                    _implementationsOfISelectActionRequiredTypeSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfISelectActionRequiredType1Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfISelectActionRequiredType1BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType1.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfISelectActionRequiredType1Source:
+                    _implementationsOfISelectActionRequiredType1SourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfISelectActionRequiredType2Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfISelectActionRequiredType2BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType2.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfISelectActionRequiredType2Source:
+                    _implementationsOfISelectActionRequiredType2SourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
                 case Kind.RequiredTypeBuilder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.RequiredType.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.RequiredTypeSource:
+                    _requiredTypeSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -1140,14 +1192,26 @@ public readonly partial struct ImplementationsOfISelectAction
                 case Kind.ImplementationsOfISelectActionRequiredTypeBuilder:
                     valueBuilder.AddProperty(name, _implementationsOfISelectActionRequiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfISelectActionRequiredTypeSource:
+                    _implementationsOfISelectActionRequiredTypeSourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfISelectActionRequiredType1Builder:
                     valueBuilder.AddProperty(name, _implementationsOfISelectActionRequiredType1BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType1.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfISelectActionRequiredType1Source:
+                    _implementationsOfISelectActionRequiredType1SourceInstance.AddAsProperty(name, ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfISelectActionRequiredType2Builder:
                     valueBuilder.AddProperty(name, _implementationsOfISelectActionRequiredType2BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType2.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfISelectActionRequiredType2Source:
+                    _implementationsOfISelectActionRequiredType2SourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
                 case Kind.RequiredTypeBuilder:
                     valueBuilder.AddProperty(name, _requiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.RequiredType.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.RequiredTypeSource:
+                    _requiredTypeSourceInstance.AddAsProperty(name, ref valueBuilder);
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -1167,14 +1231,26 @@ public readonly partial struct ImplementationsOfISelectAction
                 case Kind.ImplementationsOfISelectActionRequiredTypeBuilder:
                     valueBuilder.AddProperty(name, _implementationsOfISelectActionRequiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfISelectActionRequiredTypeSource:
+                    _implementationsOfISelectActionRequiredTypeSourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfISelectActionRequiredType1Builder:
                     valueBuilder.AddProperty(name, _implementationsOfISelectActionRequiredType1BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType1.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfISelectActionRequiredType1Source:
+                    _implementationsOfISelectActionRequiredType1SourceInstance.AddAsProperty(name, ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfISelectActionRequiredType2Builder:
                     valueBuilder.AddProperty(name, _implementationsOfISelectActionRequiredType2BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType2.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfISelectActionRequiredType2Source:
+                    _implementationsOfISelectActionRequiredType2SourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
                 case Kind.RequiredTypeBuilder:
                     valueBuilder.AddProperty(name, _requiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.RequiredType.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.RequiredTypeSource:
+                    _requiredTypeSourceInstance.AddAsProperty(name, ref valueBuilder);
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -1194,14 +1270,26 @@ public readonly partial struct ImplementationsOfISelectAction
                 case Kind.ImplementationsOfISelectActionRequiredTypeBuilder:
                     valueBuilder.AddItem(_implementationsOfISelectActionRequiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfISelectActionRequiredTypeSource:
+                    _implementationsOfISelectActionRequiredTypeSourceInstance.AddAsItem(ref valueBuilder);
+                    break;
                 case Kind.ImplementationsOfISelectActionRequiredType1Builder:
                     valueBuilder.AddItem(_implementationsOfISelectActionRequiredType1BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType1.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfISelectActionRequiredType1Source:
+                    _implementationsOfISelectActionRequiredType1SourceInstance.AddAsItem(ref valueBuilder);
                     break;
                 case Kind.ImplementationsOfISelectActionRequiredType2Builder:
                     valueBuilder.AddItem(_implementationsOfISelectActionRequiredType2BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType2.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.ImplementationsOfISelectActionRequiredType2Source:
+                    _implementationsOfISelectActionRequiredType2SourceInstance.AddAsItem(ref valueBuilder);
+                    break;
                 case Kind.RequiredTypeBuilder:
                     valueBuilder.AddItem(_requiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.RequiredType.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.RequiredTypeSource:
+                    _requiredTypeSourceInstance.AddAsItem(ref valueBuilder);
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");

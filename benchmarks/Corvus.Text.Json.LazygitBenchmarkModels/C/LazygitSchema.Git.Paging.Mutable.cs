@@ -217,7 +217,7 @@ public readonly partial struct LazygitSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.ColorArgument.Mutable.DefaultInstance;
                     }
                 }
 
@@ -267,7 +267,7 @@ public readonly partial struct LazygitSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.UseConfig.Mutable.DefaultInstance;
                     }
                 }
 

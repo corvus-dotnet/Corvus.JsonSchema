@@ -392,7 +392,7 @@ public readonly partial struct ImplementationsOfElement
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Table.FirstRowAsHeaderEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -413,7 +413,7 @@ public readonly partial struct ImplementationsOfElement
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Table.GridStyleEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -556,7 +556,7 @@ public readonly partial struct ImplementationsOfElement
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Table.SpecifiesWhetherGridLinesShouldBeDisplayed.Mutable.DefaultInstance;
                 }
             }
 

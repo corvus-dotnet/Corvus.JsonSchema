@@ -982,8 +982,11 @@ public readonly partial struct Cql2Schema
                     Unknown,
                     JsonElement,
                     ArithmeticExpressionBuilder,
+                    ArithmeticExpressionSource,
                     FunctionRefBuilder,
+                    FunctionRefSource,
                     PropertyRefBuilder,
+                    PropertyRefSource,
                     NumericSimpleType,
                     FormattedNumber,
                 }
@@ -993,8 +996,11 @@ public readonly partial struct Cql2Schema
                 private readonly ReadOnlySpan<byte> _utf8Backing;
                 private readonly SimpleTypesBacking _simpleTypeBacking;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Builder.Build? _arithmeticExpressionBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Source _arithmeticExpressionSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.Build? _functionRefBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Source _functionRefSourceInstance;
                 private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.Build? _propertyRefBuilderInstance;
+                private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Source _propertyRefSourceInstance;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1022,9 +1028,15 @@ public readonly partial struct Cql2Schema
 
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Builder.Build value) {_arithmeticExpressionBuilderInstance = value; _kind = Kind.ArithmeticExpressionBuilder; }
 
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Source value) { _arithmeticExpressionSourceInstance = value; _kind = Kind.ArithmeticExpressionSource; }
+
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.Build value) {_functionRefBuilderInstance = value; _kind = Kind.FunctionRefBuilder; }
 
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Source value) { _functionRefSourceInstance = value; _kind = Kind.FunctionRefSource; }
+
                 public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.Build value) {_propertyRefBuilderInstance = value; _kind = Kind.PropertyRefBuilder; }
+
+                public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Source value) { _propertyRefSourceInstance = value; _kind = Kind.PropertyRefSource; }
 
                 public static implicit operator Source(IsBetweenOperandsEntity instance) => new(JsonElement.From(instance));
 
@@ -1032,10 +1044,19 @@ public readonly partial struct Cql2Schema
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Cql2Benchmark.Current.JsonNumber instance) => new(JsonElement.From(instance));
@@ -1061,11 +1082,20 @@ public readonly partial struct Cql2Schema
                         case Kind.ArithmeticExpressionBuilder:
                             valueBuilder.AddProperty(utf8Name, _arithmeticExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.ArithmeticExpressionSource:
+                            _arithmeticExpressionSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.FunctionRefBuilder:
                             valueBuilder.AddProperty(utf8Name, _functionRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.FunctionRefSource:
+                            _functionRefSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.PropertyRefBuilder:
                             valueBuilder.AddProperty(utf8Name, _propertyRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.PropertyRefSource:
+                            _propertyRefSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1091,11 +1121,20 @@ public readonly partial struct Cql2Schema
                         case Kind.ArithmeticExpressionBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _arithmeticExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.ArithmeticExpressionSource:
+                            _arithmeticExpressionSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.FunctionRefBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _functionRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.FunctionRefSource:
+                            _functionRefSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.PropertyRefBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _propertyRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.PropertyRefSource:
+                            _propertyRefSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1121,11 +1160,20 @@ public readonly partial struct Cql2Schema
                         case Kind.ArithmeticExpressionBuilder:
                             valueBuilder.AddProperty(name, _arithmeticExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.ArithmeticExpressionSource:
+                            _arithmeticExpressionSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.FunctionRefBuilder:
                             valueBuilder.AddProperty(name, _functionRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.FunctionRefSource:
+                            _functionRefSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.PropertyRefBuilder:
                             valueBuilder.AddProperty(name, _propertyRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.PropertyRefSource:
+                            _propertyRefSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1151,11 +1199,20 @@ public readonly partial struct Cql2Schema
                         case Kind.ArithmeticExpressionBuilder:
                             valueBuilder.AddProperty(name, _arithmeticExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.ArithmeticExpressionSource:
+                            _arithmeticExpressionSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.FunctionRefBuilder:
                             valueBuilder.AddProperty(name, _functionRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.FunctionRefSource:
+                            _functionRefSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.PropertyRefBuilder:
                             valueBuilder.AddProperty(name, _propertyRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.PropertyRefSource:
+                            _propertyRefSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1181,11 +1238,20 @@ public readonly partial struct Cql2Schema
                         case Kind.ArithmeticExpressionBuilder:
                             valueBuilder.AddItem(_arithmeticExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.ArithmeticExpressionSource:
+                            _arithmeticExpressionSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.FunctionRefBuilder:
                             valueBuilder.AddItem(_functionRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.FunctionRefSource:
+                            _functionRefSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.PropertyRefBuilder:
                             valueBuilder.AddItem(_propertyRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.PropertyRefSource:
+                            _propertyRefSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");

@@ -235,7 +235,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.BotDetector.Allow.Mutable.DefaultInstance;
                 }
             }
 
@@ -285,7 +285,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.BotDetector.Deny.Mutable.DefaultInstance;
                 }
             }
 
@@ -310,7 +310,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.BotDetector.EmptyUserAgentIsABot.Mutable.DefaultInstance;
                 }
             }
 
@@ -335,7 +335,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.BotDetector.BotPatterns.Mutable.DefaultInstance;
                 }
             }
 

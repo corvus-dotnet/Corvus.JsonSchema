@@ -301,6 +301,15 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.CharacterExpression"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.CharacterExpression.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.NumericExpression"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -314,6 +323,15 @@ public readonly partial struct Cql2Schema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.NumericExpression value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.NumericExpression"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.NumericExpression.Mutable value)
             {
                 return From(value);
             }
@@ -337,6 +355,15 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialInstance"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -350,6 +377,15 @@ public readonly partial struct Cql2Schema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialInstance value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialInstance"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialInstance.Mutable value)
             {
                 return From(value);
             }
@@ -373,6 +409,15 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalInstance"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalInstance.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -386,6 +431,15 @@ public readonly partial struct Cql2Schema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Mutable value)
             {
                 return From(value);
             }
@@ -409,6 +463,15 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Casei"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -422,6 +485,15 @@ public readonly partial struct Cql2Schema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Mutable value)
             {
                 return From(value);
             }
@@ -445,6 +517,15 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.AndOrExpression"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -458,6 +539,15 @@ public readonly partial struct Cql2Schema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.AndOrExpression value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.AndOrExpression"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.AndOrExpression.Mutable value)
             {
                 return From(value);
             }
@@ -481,6 +571,15 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.NotExpression"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.NotExpression.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.ComparisonPredicate"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -494,6 +593,15 @@ public readonly partial struct Cql2Schema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.ComparisonPredicate value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.ComparisonPredicate"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.ComparisonPredicate.Mutable value)
             {
                 return From(value);
             }
@@ -517,6 +625,15 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialPredicate"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialPredicate.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -530,6 +647,15 @@ public readonly partial struct Cql2Schema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate.Mutable value)
             {
                 return From(value);
             }
@@ -553,6 +679,15 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.ArrayPredicate"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.ArrayPredicate.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -566,6 +701,15 @@ public readonly partial struct Cql2Schema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Mutable value)
             {
                 return From(value);
             }
@@ -589,6 +733,15 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.GeometryLiteral"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.GeometryLiteral.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -602,6 +755,15 @@ public readonly partial struct Cql2Schema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral.Mutable value)
             {
                 return From(value);
             }
@@ -625,6 +787,15 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.InstantInstance"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.InstantInstance.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.IntervalInstance"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -638,6 +809,15 @@ public readonly partial struct Cql2Schema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.IntervalInstance value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.IntervalInstance"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.IntervalInstance.Mutable value)
             {
                 return From(value);
             }
@@ -661,6 +841,15 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -674,6 +863,15 @@ public readonly partial struct Cql2Schema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Mutable value)
             {
                 return From(value);
             }
@@ -697,6 +895,15 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -710,6 +917,15 @@ public readonly partial struct Cql2Schema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Mutable value)
             {
                 return From(value);
             }
@@ -733,6 +949,15 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Point"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -746,6 +971,15 @@ public readonly partial struct Cql2Schema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.Point value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Point"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.Point.Mutable value)
             {
                 return From(value);
             }
@@ -769,6 +1003,15 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -782,6 +1025,15 @@ public readonly partial struct Cql2Schema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Mutable value)
             {
                 return From(value);
             }
@@ -805,6 +1057,15 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -818,6 +1079,15 @@ public readonly partial struct Cql2Schema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.Mutable value)
             {
                 return From(value);
             }
@@ -841,6 +1111,15 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -854,6 +1133,15 @@ public readonly partial struct Cql2Schema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Mutable value)
             {
                 return From(value);
             }
@@ -877,6 +1165,15 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -890,6 +1187,15 @@ public readonly partial struct Cql2Schema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IsNullOperandEntity(Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Mutable value)
             {
                 return From(value);
             }

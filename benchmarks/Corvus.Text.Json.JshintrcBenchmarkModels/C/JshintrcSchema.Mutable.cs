@@ -277,7 +277,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutMissingSemicolons.Mutable.DefaultInstance;
             }
         }
 
@@ -298,7 +298,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitTheUseOfBitwiseOperatorsEtc.Mutable.DefaultInstance;
             }
         }
 
@@ -319,7 +319,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.BossEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -340,7 +340,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWebBrowserWindowDocumentEtc.Mutable.DefaultInstance;
             }
         }
 
@@ -361,7 +361,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentBrowserify.Mutable.DefaultInstance;
             }
         }
 
@@ -382,7 +382,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentCouchDb.Mutable.DefaultInstance;
             }
         }
 
@@ -403,7 +403,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.CurlyEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -424,7 +424,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.DebugEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -445,7 +445,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDevelopmentDebuggingAlertConfirmEtc.Mutable.DefaultInstance;
             }
         }
 
@@ -466,7 +466,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDojoToolkit.Mutable.DefaultInstance;
             }
         }
 
@@ -487,7 +487,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.ElisionEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -508,7 +508,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAndInFavorOfAnd.Mutable.DefaultInstance;
             }
         }
 
@@ -529,7 +529,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutNullComparisons.Mutable.DefaultInstance;
             }
         }
 
@@ -550,7 +550,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.TheEcmaScriptVersionToWhichTheCodeMustAdhere.Mutable.DefaultInstance;
             }
         }
 
@@ -571,7 +571,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheUseOfEval.Mutable.DefaultInstance;
             }
         }
 
@@ -592,7 +592,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.ExprEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -634,7 +634,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.ForinEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -655,7 +655,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.FreezeEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -676,7 +676,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.FuncscopeEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -697,7 +697,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.FuturehostileEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -739,7 +739,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheIteratorProperty.Mutable.DefaultInstance;
             }
         }
 
@@ -760,7 +760,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentJasmineUnitTestingFramework.Mutable.DefaultInstance;
             }
         }
 
@@ -781,7 +781,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentJQuery.Mutable.DefaultInstance;
             }
         }
 
@@ -802,7 +802,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.LastsemicEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -823,7 +823,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAVariableBeforeItWasDefined.Mutable.DefaultInstance;
             }
         }
 
@@ -844,7 +844,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsUnnecessaryClausesWithinSwitchStatements.Mutable.DefaultInstance;
             }
         }
 
@@ -865,7 +865,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutFunctionsInsideOfLoops.Mutable.DefaultInstance;
             }
         }
 
@@ -886,7 +886,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxCyclomaticComplexityPerFunction.Mutable.DefaultInstance;
             }
         }
 
@@ -907,7 +907,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxDepthOfNestedBlocks.Mutable.DefaultInstance;
             }
         }
 
@@ -919,16 +919,16 @@ public readonly partial struct JshintrcSchema
         /// Maximum amount of warnings JSHint will produce before giving up
         /// </para>
         /// </remarks>
-        public Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxerrEntity.Mutable Maxerr
+        public Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp.Mutable Maxerr
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxerrUtf8, out Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxerrEntity.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxerrUtf8, out Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp.Mutable value))
                 {
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp.Mutable.DefaultInstance;
             }
         }
 
@@ -970,7 +970,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxNumberStatementsPerFunction.Mutable.DefaultInstance;
             }
         }
 
@@ -991,7 +991,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentMochaUnitTestingFramework.Mutable.DefaultInstance;
             }
         }
 
@@ -1012,7 +1012,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentEs6Module.Mutable.DefaultInstance;
             }
         }
 
@@ -1033,7 +1033,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentMooTools.Mutable.DefaultInstance;
             }
         }
 
@@ -1054,7 +1054,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.TellsJsHintThatYourCodeUsesMozillaJavaScriptExtensions.Mutable.DefaultInstance;
             }
         }
 
@@ -1075,7 +1075,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfArgumentsCallerAndArgumentsCallee.Mutable.DefaultInstance;
             }
         }
 
@@ -1096,7 +1096,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfTheCommaOperator.Mutable.DefaultInstance;
             }
         }
 
@@ -1117,7 +1117,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentNodeJs.Mutable.DefaultInstance;
             }
         }
 
@@ -1138,7 +1138,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.WarnsAboutNonBreakingWhitespaceCharacters.Mutable.DefaultInstance;
             }
         }
 
@@ -1159,7 +1159,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.NonewEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -1180,7 +1180,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWidelyAdoptedGlobalsEscapeUnescapeEtc.Mutable.DefaultInstance;
             }
         }
 
@@ -1201,7 +1201,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.NoreturnawaitEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -1222,7 +1222,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutInvalidTypeofOperatorValues.Mutable.DefaultInstance;
             }
         }
 
@@ -1243,7 +1243,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.NoyieldEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -1285,7 +1285,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentPhantomJsRuntimeEnvironment.Mutable.DefaultInstance;
             }
         }
 
@@ -1306,7 +1306,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAnd.Mutable.DefaultInstance;
             }
         }
 
@@ -1327,7 +1327,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheProtoProperty.Mutable.DefaultInstance;
             }
         }
 
@@ -1348,7 +1348,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentPrototypeJavaScriptFramework.Mutable.DefaultInstance;
             }
         }
 
@@ -1369,7 +1369,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.RegexpuEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -1390,7 +1390,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentRhino.Mutable.DefaultInstance;
             }
         }
 
@@ -1411,7 +1411,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheUseOfScriptTargetedUrLs.Mutable.DefaultInstance;
             }
         }
 
@@ -1432,7 +1432,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.ShadowEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -1453,7 +1453,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDefinesGlobalsExposedByTheShellJsLibrary.Mutable.DefaultInstance;
             }
         }
 
@@ -1474,7 +1474,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.SingleGroupsEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -1495,7 +1495,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.RequiresAllCodeToRunInEs5StrictMode.Mutable.DefaultInstance;
             }
         }
 
@@ -1516,7 +1516,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.SupernewEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -1537,7 +1537,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.TrailingcommaEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -1558,7 +1558,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDefinesGlobalsForTypedArrayConstructors.Mutable.DefaultInstance;
             }
         }
 
@@ -1579,7 +1579,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfExplicitlyUndeclaredVariables.Mutable.DefaultInstance;
             }
         }
 
@@ -1600,7 +1600,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.WarnsWhenYouDefineAndNeverUseYourVariables.Mutable.DefaultInstance;
             }
         }
 
@@ -1621,7 +1621,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.ValidthisEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -1642,7 +1642,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.VarstmtEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -1663,7 +1663,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheUseOfTheWithStatement.Mutable.DefaultInstance;
             }
         }
 
@@ -1684,7 +1684,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWebWorkers.Mutable.DefaultInstance;
             }
         }
 
@@ -1705,7 +1705,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWindowsScriptingHost.Mutable.DefaultInstance;
             }
         }
 
@@ -1726,7 +1726,7 @@ public readonly partial struct JshintrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentYahooUserInterface.Mutable.DefaultInstance;
             }
         }
 
@@ -3204,7 +3204,7 @@ public readonly partial struct JshintrcSchema
         /// Set the <c>maxerr</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMaxerr(in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxerrEntity.Source value)
+        public void SetMaxerr(in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp.Source value)
         {
             CheckValidInstance();
 
@@ -5600,7 +5600,7 @@ public readonly partial struct JshintrcSchema
             in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutFunctionsInsideOfLoops.Source loopfunc = default,
             in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxCyclomaticComplexityPerFunction.Source maxcomplexity = default,
             in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxDepthOfNestedBlocks.Source maxdepth = default,
-            in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxerrEntity.Source maxerr = default,
+            in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp.Source maxerr = default,
             in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxNumberOfFormalParametersAllowedPerFunction.Source maxparams = default,
             in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxNumberStatementsPerFunction.Source maxstatements = default,
             in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentMochaUnitTestingFramework.Source mocha = default,
@@ -5747,7 +5747,7 @@ public readonly partial struct JshintrcSchema
             in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutFunctionsInsideOfLoops.Source loopfunc = default,
             in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxCyclomaticComplexityPerFunction.Source maxcomplexity = default,
             in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxDepthOfNestedBlocks.Source maxdepth = default,
-            in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxerrEntity.Source maxerr = default,
+            in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp.Source maxerr = default,
             in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxNumberOfFormalParametersAllowedPerFunction.Source maxparams = default,
             in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxNumberStatementsPerFunction.Source maxstatements = default,
             in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentMochaUnitTestingFramework.Source mocha = default,
@@ -5827,7 +5827,7 @@ public readonly partial struct JshintrcSchema
             in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutFunctionsInsideOfLoops.Source loopfunc = default,
             in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxCyclomaticComplexityPerFunction.Source maxcomplexity = default,
             in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxDepthOfNestedBlocks.Source maxdepth = default,
-            in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxerrEntity.Source maxerr = default,
+            in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp.Source maxerr = default,
             in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxNumberOfFormalParametersAllowedPerFunction.Source maxparams = default,
             in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxNumberStatementsPerFunction.Source maxstatements = default,
             in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentMochaUnitTestingFramework.Source mocha = default,
@@ -5978,7 +5978,7 @@ public readonly partial struct JshintrcSchema
             in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutFunctionsInsideOfLoops.Source loopfunc = default,
             in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxCyclomaticComplexityPerFunction.Source maxcomplexity = default,
             in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxDepthOfNestedBlocks.Source maxdepth = default,
-            in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxerrEntity.Source maxerr = default,
+            in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp.Source maxerr = default,
             in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxNumberOfFormalParametersAllowedPerFunction.Source maxparams = default,
             in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxNumberStatementsPerFunction.Source maxstatements = default,
             in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentMochaUnitTestingFramework.Source mocha = default,
@@ -6312,7 +6312,7 @@ public readonly partial struct JshintrcSchema
     /// <param name="yui">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutMissingSemicolons.Source asi = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitTheUseOfBitwiseOperatorsEtc.Source bitwise = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.BossEntity.Source boss = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWebBrowserWindowDocumentEtc.Source browser = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentBrowserify.Source browserify = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentCouchDb.Source couch = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.CurlyEntity.Source curly = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.DebugEntity.Source debug = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDevelopmentDebuggingAlertConfirmEtc.Source devel = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDojoToolkit.Source dojo = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ElisionEntity.Source elision = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAndInFavorOfAnd.Source eqeqeq = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutNullComparisons.Source eqnull = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.TheEcmaScriptVersionToWhichTheCodeMustAdhere.Source esversion = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheUseOfEval.Source evil = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ExprEntity.Source expr = default, in Corvus.JshintrcBenchmark.Current.JsonString.Source extends = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ForinEntity.Source forin = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.FreezeEntity.Source freeze = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.FuncscopeEntity.Source funcscope = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.FuturehostileEntity.Source futurehostile = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.GlobalsEntity.Source globals = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheIteratorProperty.Source iterator = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentJasmineUnitTestingFramework.Source jasmine = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentJQuery.Source jquery = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.LastsemicEntity.Source lastsemic = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAVariableBeforeItWasDefined.Source latedef = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsUnnecessaryClausesWithinSwitchStatements.Source leanswitch = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutFunctionsInsideOfLoops.Source loopfunc = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxCyclomaticComplexityPerFunction.Source maxcomplexity = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxDepthOfNestedBlocks.Source maxdepth = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxerrEntity.Source maxerr = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxNumberOfFormalParametersAllowedPerFunction.Source maxparams = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxNumberStatementsPerFunction.Source maxstatements = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentMochaUnitTestingFramework.Source mocha = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentEs6Module.Source module = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentMooTools.Source mootools = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.TellsJsHintThatYourCodeUsesMozillaJavaScriptExtensions.Source moz = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfArgumentsCallerAndArgumentsCallee.Source noarg = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfTheCommaOperator.Source nocomma = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentNodeJs.Source node = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.WarnsAboutNonBreakingWhitespaceCharacters.Source nonbsp = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.NonewEntity.Source nonew = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWidelyAdoptedGlobalsEscapeUnescapeEtc.Source nonstandard = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.NoreturnawaitEntity.Source noreturnawait = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutInvalidTypeofOperatorValues.Source notypeof = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.NoyieldEntity.Source noyield = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.Source overrides = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentPhantomJsRuntimeEnvironment.Source phantom = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAnd.Source plusplus = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheProtoProperty.Source proto = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentPrototypeJavaScriptFramework.Source prototypejs = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.RegexpuEntity.Source regexpu = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentRhino.Source rhino = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheUseOfScriptTargetedUrLs.Source scripturl = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ShadowEntity.Source shadow = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDefinesGlobalsExposedByTheShellJsLibrary.Source shelljs = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SingleGroupsEntity.Source singleGroups = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.RequiresAllCodeToRunInEs5StrictMode.Source strict = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SupernewEntity.Source supernew = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.TrailingcommaEntity.Source trailingcomma = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDefinesGlobalsForTypedArrayConstructors.Source typed = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfExplicitlyUndeclaredVariables.Source undef = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.WarnsWhenYouDefineAndNeverUseYourVariables.Source unused = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ValidthisEntity.Source validthis = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.VarstmtEntity.Source varstmt = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheUseOfTheWithStatement.Source withstmt = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWebWorkers.Source worker = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWindowsScriptingHost.Source wsh = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentYahooUserInterface.Source yui = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutMissingSemicolons.Source asi = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitTheUseOfBitwiseOperatorsEtc.Source bitwise = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.BossEntity.Source boss = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWebBrowserWindowDocumentEtc.Source browser = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentBrowserify.Source browserify = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentCouchDb.Source couch = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.CurlyEntity.Source curly = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.DebugEntity.Source debug = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDevelopmentDebuggingAlertConfirmEtc.Source devel = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDojoToolkit.Source dojo = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ElisionEntity.Source elision = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAndInFavorOfAnd.Source eqeqeq = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutNullComparisons.Source eqnull = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.TheEcmaScriptVersionToWhichTheCodeMustAdhere.Source esversion = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheUseOfEval.Source evil = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ExprEntity.Source expr = default, in Corvus.JshintrcBenchmark.Current.JsonString.Source extends = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ForinEntity.Source forin = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.FreezeEntity.Source freeze = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.FuncscopeEntity.Source funcscope = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.FuturehostileEntity.Source futurehostile = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.GlobalsEntity.Source globals = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheIteratorProperty.Source iterator = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentJasmineUnitTestingFramework.Source jasmine = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentJQuery.Source jquery = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.LastsemicEntity.Source lastsemic = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAVariableBeforeItWasDefined.Source latedef = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsUnnecessaryClausesWithinSwitchStatements.Source leanswitch = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutFunctionsInsideOfLoops.Source loopfunc = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxCyclomaticComplexityPerFunction.Source maxcomplexity = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxDepthOfNestedBlocks.Source maxdepth = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp.Source maxerr = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxNumberOfFormalParametersAllowedPerFunction.Source maxparams = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxNumberStatementsPerFunction.Source maxstatements = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentMochaUnitTestingFramework.Source mocha = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentEs6Module.Source module = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentMooTools.Source mootools = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.TellsJsHintThatYourCodeUsesMozillaJavaScriptExtensions.Source moz = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfArgumentsCallerAndArgumentsCallee.Source noarg = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfTheCommaOperator.Source nocomma = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentNodeJs.Source node = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.WarnsAboutNonBreakingWhitespaceCharacters.Source nonbsp = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.NonewEntity.Source nonew = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWidelyAdoptedGlobalsEscapeUnescapeEtc.Source nonstandard = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.NoreturnawaitEntity.Source noreturnawait = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutInvalidTypeofOperatorValues.Source notypeof = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.NoyieldEntity.Source noyield = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.Source overrides = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentPhantomJsRuntimeEnvironment.Source phantom = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAnd.Source plusplus = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheProtoProperty.Source proto = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentPrototypeJavaScriptFramework.Source prototypejs = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.RegexpuEntity.Source regexpu = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentRhino.Source rhino = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheUseOfScriptTargetedUrLs.Source scripturl = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ShadowEntity.Source shadow = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDefinesGlobalsExposedByTheShellJsLibrary.Source shelljs = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SingleGroupsEntity.Source singleGroups = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.RequiresAllCodeToRunInEs5StrictMode.Source strict = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SupernewEntity.Source supernew = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.TrailingcommaEntity.Source trailingcomma = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDefinesGlobalsForTypedArrayConstructors.Source typed = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfExplicitlyUndeclaredVariables.Source undef = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.WarnsWhenYouDefineAndNeverUseYourVariables.Source unused = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ValidthisEntity.Source validthis = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.VarstmtEntity.Source varstmt = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheUseOfTheWithStatement.Source withstmt = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWebWorkers.Source worker = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWindowsScriptingHost.Source wsh = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentYahooUserInterface.Source yui = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -6403,7 +6403,7 @@ public readonly partial struct JshintrcSchema
     /// <param name="yui">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutMissingSemicolons.Source asi = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitTheUseOfBitwiseOperatorsEtc.Source bitwise = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.BossEntity.Source boss = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWebBrowserWindowDocumentEtc.Source browser = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentBrowserify.Source browserify = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentCouchDb.Source couch = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.CurlyEntity.Source curly = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.DebugEntity.Source debug = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDevelopmentDebuggingAlertConfirmEtc.Source devel = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDojoToolkit.Source dojo = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ElisionEntity.Source elision = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAndInFavorOfAnd.Source eqeqeq = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutNullComparisons.Source eqnull = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.TheEcmaScriptVersionToWhichTheCodeMustAdhere.Source esversion = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheUseOfEval.Source evil = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ExprEntity.Source expr = default, in Corvus.JshintrcBenchmark.Current.JsonString.Source extends = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ForinEntity.Source forin = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.FreezeEntity.Source freeze = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.FuncscopeEntity.Source funcscope = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.FuturehostileEntity.Source futurehostile = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.GlobalsEntity.Source<TContext> globals = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheIteratorProperty.Source iterator = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentJasmineUnitTestingFramework.Source jasmine = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentJQuery.Source jquery = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.LastsemicEntity.Source lastsemic = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAVariableBeforeItWasDefined.Source latedef = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsUnnecessaryClausesWithinSwitchStatements.Source leanswitch = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutFunctionsInsideOfLoops.Source loopfunc = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxCyclomaticComplexityPerFunction.Source maxcomplexity = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxDepthOfNestedBlocks.Source maxdepth = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxerrEntity.Source maxerr = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxNumberOfFormalParametersAllowedPerFunction.Source maxparams = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxNumberStatementsPerFunction.Source maxstatements = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentMochaUnitTestingFramework.Source mocha = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentEs6Module.Source module = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentMooTools.Source mootools = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.TellsJsHintThatYourCodeUsesMozillaJavaScriptExtensions.Source moz = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfArgumentsCallerAndArgumentsCallee.Source noarg = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfTheCommaOperator.Source nocomma = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentNodeJs.Source node = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.WarnsAboutNonBreakingWhitespaceCharacters.Source nonbsp = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.NonewEntity.Source nonew = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWidelyAdoptedGlobalsEscapeUnescapeEtc.Source nonstandard = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.NoreturnawaitEntity.Source noreturnawait = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutInvalidTypeofOperatorValues.Source notypeof = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.NoyieldEntity.Source noyield = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.Source<TContext> overrides = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentPhantomJsRuntimeEnvironment.Source phantom = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAnd.Source plusplus = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheProtoProperty.Source proto = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentPrototypeJavaScriptFramework.Source prototypejs = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.RegexpuEntity.Source regexpu = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentRhino.Source rhino = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheUseOfScriptTargetedUrLs.Source scripturl = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ShadowEntity.Source shadow = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDefinesGlobalsExposedByTheShellJsLibrary.Source shelljs = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SingleGroupsEntity.Source singleGroups = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.RequiresAllCodeToRunInEs5StrictMode.Source strict = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SupernewEntity.Source supernew = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.TrailingcommaEntity.Source trailingcomma = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDefinesGlobalsForTypedArrayConstructors.Source typed = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfExplicitlyUndeclaredVariables.Source undef = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.WarnsWhenYouDefineAndNeverUseYourVariables.Source unused = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ValidthisEntity.Source validthis = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.VarstmtEntity.Source varstmt = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheUseOfTheWithStatement.Source withstmt = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWebWorkers.Source worker = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWindowsScriptingHost.Source wsh = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentYahooUserInterface.Source yui = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutMissingSemicolons.Source asi = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitTheUseOfBitwiseOperatorsEtc.Source bitwise = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.BossEntity.Source boss = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWebBrowserWindowDocumentEtc.Source browser = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentBrowserify.Source browserify = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentCouchDb.Source couch = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.CurlyEntity.Source curly = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.DebugEntity.Source debug = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDevelopmentDebuggingAlertConfirmEtc.Source devel = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDojoToolkit.Source dojo = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ElisionEntity.Source elision = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAndInFavorOfAnd.Source eqeqeq = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutNullComparisons.Source eqnull = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.TheEcmaScriptVersionToWhichTheCodeMustAdhere.Source esversion = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheUseOfEval.Source evil = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ExprEntity.Source expr = default, in Corvus.JshintrcBenchmark.Current.JsonString.Source extends = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ForinEntity.Source forin = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.FreezeEntity.Source freeze = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.FuncscopeEntity.Source funcscope = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.FuturehostileEntity.Source futurehostile = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.GlobalsEntity.Source<TContext> globals = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheIteratorProperty.Source iterator = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentJasmineUnitTestingFramework.Source jasmine = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentJQuery.Source jquery = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.LastsemicEntity.Source lastsemic = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAVariableBeforeItWasDefined.Source latedef = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsUnnecessaryClausesWithinSwitchStatements.Source leanswitch = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutFunctionsInsideOfLoops.Source loopfunc = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxCyclomaticComplexityPerFunction.Source maxcomplexity = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxDepthOfNestedBlocks.Source maxdepth = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp.Source maxerr = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxNumberOfFormalParametersAllowedPerFunction.Source maxparams = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxNumberStatementsPerFunction.Source maxstatements = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentMochaUnitTestingFramework.Source mocha = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentEs6Module.Source module = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentMooTools.Source mootools = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.TellsJsHintThatYourCodeUsesMozillaJavaScriptExtensions.Source moz = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfArgumentsCallerAndArgumentsCallee.Source noarg = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfTheCommaOperator.Source nocomma = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentNodeJs.Source node = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.WarnsAboutNonBreakingWhitespaceCharacters.Source nonbsp = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.NonewEntity.Source nonew = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWidelyAdoptedGlobalsEscapeUnescapeEtc.Source nonstandard = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.NoreturnawaitEntity.Source noreturnawait = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutInvalidTypeofOperatorValues.Source notypeof = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.NoyieldEntity.Source noyield = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.Source<TContext> overrides = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentPhantomJsRuntimeEnvironment.Source phantom = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAnd.Source plusplus = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheProtoProperty.Source proto = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentPrototypeJavaScriptFramework.Source prototypejs = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.RegexpuEntity.Source regexpu = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentRhino.Source rhino = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheUseOfScriptTargetedUrLs.Source scripturl = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ShadowEntity.Source shadow = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDefinesGlobalsExposedByTheShellJsLibrary.Source shelljs = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SingleGroupsEntity.Source singleGroups = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.RequiresAllCodeToRunInEs5StrictMode.Source strict = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SupernewEntity.Source supernew = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.TrailingcommaEntity.Source trailingcomma = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDefinesGlobalsForTypedArrayConstructors.Source typed = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfExplicitlyUndeclaredVariables.Source undef = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.WarnsWhenYouDefineAndNeverUseYourVariables.Source unused = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ValidthisEntity.Source validthis = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.VarstmtEntity.Source varstmt = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheUseOfTheWithStatement.Source withstmt = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWebWorkers.Source worker = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWindowsScriptingHost.Source wsh = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentYahooUserInterface.Source yui = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

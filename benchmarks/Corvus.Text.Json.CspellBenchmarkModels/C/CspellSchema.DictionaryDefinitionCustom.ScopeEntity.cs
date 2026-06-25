@@ -154,6 +154,15 @@ public readonly partial struct CspellSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.CustomDictionaryScope"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator ScopeEntity(Corvus.CspellBenchmark.Current.CspellSchema.CustomDictionaryScope.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.ScopeEntity.CustomDictionaryScopeArray"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -167,6 +176,15 @@ public readonly partial struct CspellSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator ScopeEntity(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.ScopeEntity.CustomDictionaryScopeArray value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.ScopeEntity.CustomDictionaryScopeArray"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator ScopeEntity(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.ScopeEntity.CustomDictionaryScopeArray.Mutable value)
             {
                 return From(value);
             }

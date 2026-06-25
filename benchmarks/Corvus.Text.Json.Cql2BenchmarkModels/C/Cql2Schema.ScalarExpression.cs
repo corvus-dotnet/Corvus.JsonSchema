@@ -296,6 +296,15 @@ public readonly partial struct Cql2Schema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.CharacterExpression"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ScalarExpression(Corvus.Cql2Benchmark.Current.Cql2Schema.CharacterExpression.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.NumericExpression"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -309,6 +318,15 @@ public readonly partial struct Cql2Schema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator ScalarExpression(Corvus.Cql2Benchmark.Current.Cql2Schema.NumericExpression value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.NumericExpression"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ScalarExpression(Corvus.Cql2Benchmark.Current.Cql2Schema.NumericExpression.Mutable value)
         {
             return From(value);
         }
@@ -332,6 +350,15 @@ public readonly partial struct Cql2Schema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.InstantInstance"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ScalarExpression(Corvus.Cql2Benchmark.Current.Cql2Schema.InstantInstance.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -345,6 +372,15 @@ public readonly partial struct Cql2Schema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator ScalarExpression(Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ScalarExpression(Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Mutable value)
         {
             return From(value);
         }
@@ -368,6 +404,15 @@ public readonly partial struct Cql2Schema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ScalarExpression(Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Casei"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -381,6 +426,15 @@ public readonly partial struct Cql2Schema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator ScalarExpression(Corvus.Cql2Benchmark.Current.Cql2Schema.Casei value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Casei"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ScalarExpression(Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Mutable value)
         {
             return From(value);
         }
@@ -404,6 +458,15 @@ public readonly partial struct Cql2Schema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ScalarExpression(Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -417,6 +480,15 @@ public readonly partial struct Cql2Schema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator ScalarExpression(Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ScalarExpression(Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Mutable value)
         {
             return From(value);
         }
@@ -440,6 +512,15 @@ public readonly partial struct Cql2Schema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ScalarExpression(Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -453,6 +534,15 @@ public readonly partial struct Cql2Schema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator ScalarExpression(Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ScalarExpression(Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Mutable value)
         {
             return From(value);
         }

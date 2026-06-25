@@ -1098,10 +1098,15 @@ public readonly partial struct ExtendableAction
                 Unknown,
                 JsonElement,
                 ImplementationsOfActionRequiredTypeBuilder,
+                ImplementationsOfActionRequiredTypeSource,
                 ImplementationsOfActionRequiredType1Builder,
+                ImplementationsOfActionRequiredType1Source,
                 ImplementationsOfActionRequiredType2Builder,
+                ImplementationsOfActionRequiredType2Source,
                 ImplementationsOfActionRequiredType3Builder,
+                ImplementationsOfActionRequiredType3Source,
                 RequiredTypeBuilder,
+                RequiredTypeSource,
                 RawUtf8StringRequiresUnescaping,
                 RawUtf8StringNotRequiresUnescaping,
                 Utf8String,
@@ -1113,10 +1118,15 @@ public readonly partial struct ExtendableAction
             private readonly ReadOnlySpan<byte> _utf8Backing;
             private readonly ReadOnlySpan<char> _utf16Backing;
             private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType.Builder.Build? _implementationsOfActionRequiredTypeBuilderInstance;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType.Source _implementationsOfActionRequiredTypeSourceInstance;
             private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType1.Builder.Build? _implementationsOfActionRequiredType1BuilderInstance;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType1.Source _implementationsOfActionRequiredType1SourceInstance;
             private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType2.Builder.Build? _implementationsOfActionRequiredType2BuilderInstance;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType2.Source _implementationsOfActionRequiredType2SourceInstance;
             private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType3.Builder.Build? _implementationsOfActionRequiredType3BuilderInstance;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType3.Source _implementationsOfActionRequiredType3SourceInstance;
             private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.RequiredType.Builder.Build? _requiredTypeBuilderInstance;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.RequiredType.Source _requiredTypeSourceInstance;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1149,13 +1159,23 @@ public readonly partial struct ExtendableAction
 
             public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType.Builder.Build value) {_implementationsOfActionRequiredTypeBuilderInstance = value; _kind = Kind.ImplementationsOfActionRequiredTypeBuilder; }
 
+            public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType.Source value) { _implementationsOfActionRequiredTypeSourceInstance = value; _kind = Kind.ImplementationsOfActionRequiredTypeSource; }
+
             public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType1.Builder.Build value) {_implementationsOfActionRequiredType1BuilderInstance = value; _kind = Kind.ImplementationsOfActionRequiredType1Builder; }
+
+            public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType1.Source value) { _implementationsOfActionRequiredType1SourceInstance = value; _kind = Kind.ImplementationsOfActionRequiredType1Source; }
 
             public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType2.Builder.Build value) {_implementationsOfActionRequiredType2BuilderInstance = value; _kind = Kind.ImplementationsOfActionRequiredType2Builder; }
 
+            public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType2.Source value) { _implementationsOfActionRequiredType2SourceInstance = value; _kind = Kind.ImplementationsOfActionRequiredType2Source; }
+
             public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType3.Builder.Build value) {_implementationsOfActionRequiredType3BuilderInstance = value; _kind = Kind.ImplementationsOfActionRequiredType3Builder; }
 
+            public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType3.Source value) { _implementationsOfActionRequiredType3SourceInstance = value; _kind = Kind.ImplementationsOfActionRequiredType3Source; }
+
             public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.RequiredType.Builder.Build value) {_requiredTypeBuilderInstance = value; _kind = Kind.RequiredTypeBuilder; }
+
+            public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.RequiredType.Source value) { _requiredTypeSourceInstance = value; _kind = Kind.RequiredTypeSource; }
 
             public static implicit operator Source(FallbackEntity instance) => new(JsonElement.From(instance));
 
@@ -1181,16 +1201,31 @@ public readonly partial struct ExtendableAction
             public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType.Source value) => new(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType1 instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType1.Source value) => new(value);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType2 instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType2.Source value) => new(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType3 instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType3.Source value) => new(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.RequiredType instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.RequiredType.Source value) => new(value);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);
@@ -1219,17 +1254,32 @@ public readonly partial struct ExtendableAction
                     case Kind.ImplementationsOfActionRequiredTypeBuilder:
                         valueBuilder.AddProperty(utf8Name, _implementationsOfActionRequiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.ImplementationsOfActionRequiredTypeSource:
+                        _implementationsOfActionRequiredTypeSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     case Kind.ImplementationsOfActionRequiredType1Builder:
                         valueBuilder.AddProperty(utf8Name, _implementationsOfActionRequiredType1BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType1.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    case Kind.ImplementationsOfActionRequiredType1Source:
+                        _implementationsOfActionRequiredType1SourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                         break;
                     case Kind.ImplementationsOfActionRequiredType2Builder:
                         valueBuilder.AddProperty(utf8Name, _implementationsOfActionRequiredType2BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType2.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.ImplementationsOfActionRequiredType2Source:
+                        _implementationsOfActionRequiredType2SourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     case Kind.ImplementationsOfActionRequiredType3Builder:
                         valueBuilder.AddProperty(utf8Name, _implementationsOfActionRequiredType3BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType3.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.ImplementationsOfActionRequiredType3Source:
+                        _implementationsOfActionRequiredType3SourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     case Kind.RequiredTypeBuilder:
                         valueBuilder.AddProperty(utf8Name, _requiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.RequiredType.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    case Kind.RequiredTypeSource:
+                        _requiredTypeSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1261,17 +1311,32 @@ public readonly partial struct ExtendableAction
                     case Kind.ImplementationsOfActionRequiredTypeBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfActionRequiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.ImplementationsOfActionRequiredTypeSource:
+                        _implementationsOfActionRequiredTypeSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     case Kind.ImplementationsOfActionRequiredType1Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfActionRequiredType1BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType1.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ImplementationsOfActionRequiredType1Source:
+                        _implementationsOfActionRequiredType1SourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                         break;
                     case Kind.ImplementationsOfActionRequiredType2Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfActionRequiredType2BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType2.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.ImplementationsOfActionRequiredType2Source:
+                        _implementationsOfActionRequiredType2SourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     case Kind.ImplementationsOfActionRequiredType3Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfActionRequiredType3BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType3.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.ImplementationsOfActionRequiredType3Source:
+                        _implementationsOfActionRequiredType3SourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     case Kind.RequiredTypeBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.RequiredType.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.RequiredTypeSource:
+                        _requiredTypeSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1303,17 +1368,32 @@ public readonly partial struct ExtendableAction
                     case Kind.ImplementationsOfActionRequiredTypeBuilder:
                         valueBuilder.AddProperty(name, _implementationsOfActionRequiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.ImplementationsOfActionRequiredTypeSource:
+                        _implementationsOfActionRequiredTypeSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.ImplementationsOfActionRequiredType1Builder:
                         valueBuilder.AddProperty(name, _implementationsOfActionRequiredType1BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType1.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ImplementationsOfActionRequiredType1Source:
+                        _implementationsOfActionRequiredType1SourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     case Kind.ImplementationsOfActionRequiredType2Builder:
                         valueBuilder.AddProperty(name, _implementationsOfActionRequiredType2BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType2.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.ImplementationsOfActionRequiredType2Source:
+                        _implementationsOfActionRequiredType2SourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.ImplementationsOfActionRequiredType3Builder:
                         valueBuilder.AddProperty(name, _implementationsOfActionRequiredType3BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType3.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.ImplementationsOfActionRequiredType3Source:
+                        _implementationsOfActionRequiredType3SourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.RequiredTypeBuilder:
                         valueBuilder.AddProperty(name, _requiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.RequiredType.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.RequiredTypeSource:
+                        _requiredTypeSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1345,17 +1425,32 @@ public readonly partial struct ExtendableAction
                     case Kind.ImplementationsOfActionRequiredTypeBuilder:
                         valueBuilder.AddProperty(name, _implementationsOfActionRequiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.ImplementationsOfActionRequiredTypeSource:
+                        _implementationsOfActionRequiredTypeSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.ImplementationsOfActionRequiredType1Builder:
                         valueBuilder.AddProperty(name, _implementationsOfActionRequiredType1BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType1.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ImplementationsOfActionRequiredType1Source:
+                        _implementationsOfActionRequiredType1SourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     case Kind.ImplementationsOfActionRequiredType2Builder:
                         valueBuilder.AddProperty(name, _implementationsOfActionRequiredType2BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType2.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.ImplementationsOfActionRequiredType2Source:
+                        _implementationsOfActionRequiredType2SourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.ImplementationsOfActionRequiredType3Builder:
                         valueBuilder.AddProperty(name, _implementationsOfActionRequiredType3BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType3.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.ImplementationsOfActionRequiredType3Source:
+                        _implementationsOfActionRequiredType3SourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.RequiredTypeBuilder:
                         valueBuilder.AddProperty(name, _requiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.RequiredType.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.RequiredTypeSource:
+                        _requiredTypeSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1387,17 +1482,32 @@ public readonly partial struct ExtendableAction
                     case Kind.ImplementationsOfActionRequiredTypeBuilder:
                         valueBuilder.AddItem(_implementationsOfActionRequiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.ImplementationsOfActionRequiredTypeSource:
+                        _implementationsOfActionRequiredTypeSourceInstance.AddAsItem(ref valueBuilder);
+                        break;
                     case Kind.ImplementationsOfActionRequiredType1Builder:
                         valueBuilder.AddItem(_implementationsOfActionRequiredType1BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType1.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ImplementationsOfActionRequiredType1Source:
+                        _implementationsOfActionRequiredType1SourceInstance.AddAsItem(ref valueBuilder);
                         break;
                     case Kind.ImplementationsOfActionRequiredType2Builder:
                         valueBuilder.AddItem(_implementationsOfActionRequiredType2BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType2.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.ImplementationsOfActionRequiredType2Source:
+                        _implementationsOfActionRequiredType2SourceInstance.AddAsItem(ref valueBuilder);
+                        break;
                     case Kind.ImplementationsOfActionRequiredType3Builder:
                         valueBuilder.AddItem(_implementationsOfActionRequiredType3BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType3.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.ImplementationsOfActionRequiredType3Source:
+                        _implementationsOfActionRequiredType3SourceInstance.AddAsItem(ref valueBuilder);
+                        break;
                     case Kind.RequiredTypeBuilder:
                         valueBuilder.AddItem(_requiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.RequiredType.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.RequiredTypeSource:
+                        _requiredTypeSourceInstance.AddAsItem(ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

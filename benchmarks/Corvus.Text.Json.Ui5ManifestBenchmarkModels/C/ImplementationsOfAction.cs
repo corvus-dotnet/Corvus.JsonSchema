@@ -198,6 +198,15 @@ public readonly partial struct ImplementationsOfAction
     }
 
     /// <summary>
+    /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.RequiredType"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator ImplementationsOfAction(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.RequiredType.Mutable value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
     /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.ActionExecute"/>.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
@@ -270,6 +279,15 @@ public readonly partial struct ImplementationsOfAction
     }
 
     /// <summary>
+    /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator ImplementationsOfAction(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType.Mutable value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
     /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.ActionOpenUrl"/>.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
@@ -301,6 +319,15 @@ public readonly partial struct ImplementationsOfAction
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator ImplementationsOfAction(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType1 value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
+    /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType1"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator ImplementationsOfAction(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType1.Mutable value)
     {
         return From(value);
     }
@@ -342,6 +369,15 @@ public readonly partial struct ImplementationsOfAction
     }
 
     /// <summary>
+    /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType2"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator ImplementationsOfAction(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType2.Mutable value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
     /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.ActionSubmit"/>.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
@@ -373,6 +409,15 @@ public readonly partial struct ImplementationsOfAction
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator ImplementationsOfAction(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType3 value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
+    /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType3"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator ImplementationsOfAction(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType3.Mutable value)
     {
         return From(value);
     }

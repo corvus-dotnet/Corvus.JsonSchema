@@ -98,7 +98,7 @@ public readonly partial struct LazygitSchema
             /// <summary>
             /// Gets the default instance.
             /// </summary>
-            public static MainBranchesEntityArray DefaultInstance { get; } = MainBranchesEntityArray.ParseValue("[\r\n            \"main\",\r\n            \"master\"\r\n          ]"u8);
+            public static MainBranchesEntityArray DefaultInstance { get; } = MainBranchesEntityArray.ParseValue("[\n            \"main\",\n            \"master\"\n          ]"u8);
 
             /// <summary>
             /// Gets the rank of the array.

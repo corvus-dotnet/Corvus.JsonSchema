@@ -184,7 +184,7 @@ public readonly partial struct CspellSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.AccentCostsEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -205,7 +205,7 @@ public readonly partial struct CspellSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.ThisIsTheBaseCostForMakingAnEdit.Mutable.DefaultInstance;
                 }
             }
 
@@ -226,7 +226,7 @@ public readonly partial struct CspellSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.CapsCostsEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -247,7 +247,7 @@ public readonly partial struct CspellSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.FirstLetterPenaltyEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -268,7 +268,7 @@ public readonly partial struct CspellSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.ThisIsTheCostForCharactersNotInTheAlphabet.Mutable.DefaultInstance;
                 }
             }
 

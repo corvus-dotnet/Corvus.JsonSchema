@@ -221,6 +221,15 @@ public readonly partial struct ClangFormatSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat38StyleOfAligningConsecutiveAssignments"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator AlignConsecutiveAssignmentsEntity(Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat38StyleOfAligningConsecutiveAssignments.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat15AlignmentOptions"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -234,6 +243,15 @@ public readonly partial struct ClangFormatSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator AlignConsecutiveAssignmentsEntity(Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat15AlignmentOptions value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat15AlignmentOptions"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator AlignConsecutiveAssignmentsEntity(Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat15AlignmentOptions.Mutable value)
         {
             return From(value);
         }

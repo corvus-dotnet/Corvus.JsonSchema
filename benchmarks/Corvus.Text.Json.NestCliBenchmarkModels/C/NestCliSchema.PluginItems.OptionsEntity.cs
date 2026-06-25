@@ -209,6 +209,15 @@ public readonly partial struct NestCliSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.NestCliBenchmark.Current.NestCliSchema.PluginOptions"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator OptionsEntity(Corvus.NestCliBenchmark.Current.NestCliSchema.PluginOptions.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.NestCliBenchmark.Current.NestCliSchema.GraphQlPluginOptions"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -227,6 +236,15 @@ public readonly partial struct NestCliSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.NestCliBenchmark.Current.NestCliSchema.GraphQlPluginOptions"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator OptionsEntity(Corvus.NestCliBenchmark.Current.NestCliSchema.GraphQlPluginOptions.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.NestCliBenchmark.Current.NestCliSchema.SwaggerPluginOptions"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -240,6 +258,15 @@ public readonly partial struct NestCliSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator OptionsEntity(Corvus.NestCliBenchmark.Current.NestCliSchema.SwaggerPluginOptions value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.NestCliBenchmark.Current.NestCliSchema.SwaggerPluginOptions"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator OptionsEntity(Corvus.NestCliBenchmark.Current.NestCliSchema.SwaggerPluginOptions.Mutable value)
             {
                 return From(value);
             }

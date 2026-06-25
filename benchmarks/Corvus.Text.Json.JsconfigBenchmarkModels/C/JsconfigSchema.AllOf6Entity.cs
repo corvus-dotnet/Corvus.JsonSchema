@@ -204,6 +204,15 @@ public readonly partial struct JsconfigSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.FilesDefinition"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator AllOf6Entity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.FilesDefinition.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -217,6 +226,15 @@ public readonly partial struct JsconfigSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator AllOf6Entity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator AllOf6Entity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition.Mutable value)
         {
             return From(value);
         }
@@ -240,6 +258,15 @@ public readonly partial struct JsconfigSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.IncludeDefinition"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator AllOf6Entity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.IncludeDefinition.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -253,6 +280,15 @@ public readonly partial struct JsconfigSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator AllOf6Entity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator AllOf6Entity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition.Mutable value)
         {
             return From(value);
         }

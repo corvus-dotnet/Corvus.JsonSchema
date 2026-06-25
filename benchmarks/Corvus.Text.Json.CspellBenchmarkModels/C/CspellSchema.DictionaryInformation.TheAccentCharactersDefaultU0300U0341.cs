@@ -153,6 +153,15 @@ public readonly partial struct CspellSchema
                 return From(value);
             }
 
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAccentCharactersDefaultU0300U0341.CharacterSetCostsArray"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator TheAccentCharactersDefaultU0300U0341(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAccentCharactersDefaultU0300U0341.CharacterSetCostsArray.Mutable value)
+            {
+                return From(value);
+            }
+
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static explicit operator string(TheAccentCharactersDefaultU0300U0341 value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 

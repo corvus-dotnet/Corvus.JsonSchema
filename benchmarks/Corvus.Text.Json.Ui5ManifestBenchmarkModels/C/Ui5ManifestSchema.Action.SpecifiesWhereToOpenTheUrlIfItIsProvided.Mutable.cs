@@ -856,6 +856,7 @@ public readonly partial struct Ui5ManifestSchema
                     Unknown,
                     JsonElement,
                     TargetBuilder,
+                    TargetSource,
                     RawUtf8StringRequiresUnescaping,
                     RawUtf8StringNotRequiresUnescaping,
                     Utf8String,
@@ -867,6 +868,7 @@ public readonly partial struct Ui5ManifestSchema
                 private readonly ReadOnlySpan<byte> _utf8Backing;
                 private readonly ReadOnlySpan<char> _utf16Backing;
                 private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.Builder.Build? _targetBuilderInstance;
+                private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.Source _targetSourceInstance;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -899,6 +901,8 @@ public readonly partial struct Ui5ManifestSchema
 
                 public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.Builder.Build value) {_targetBuilderInstance = value; _kind = Kind.TargetBuilder; }
 
+                public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.Source value) { _targetSourceInstance = value; _kind = Kind.TargetSource; }
+
                 public static implicit operator Source(SpecifiesWhereToOpenTheUrlIfItIsProvided instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -915,6 +919,9 @@ public readonly partial struct Ui5ManifestSchema
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);
@@ -942,6 +949,9 @@ public readonly partial struct Ui5ManifestSchema
                             break;
                         case Kind.TargetBuilder:
                             valueBuilder.AddProperty(utf8Name, _targetBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.TargetSource:
+                            _targetSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -973,6 +983,9 @@ public readonly partial struct Ui5ManifestSchema
                         case Kind.TargetBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _targetBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.TargetSource:
+                            _targetSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1002,6 +1015,9 @@ public readonly partial struct Ui5ManifestSchema
                             break;
                         case Kind.TargetBuilder:
                             valueBuilder.AddProperty(name, _targetBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.TargetSource:
+                            _targetSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1033,6 +1049,9 @@ public readonly partial struct Ui5ManifestSchema
                         case Kind.TargetBuilder:
                             valueBuilder.AddProperty(name, _targetBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.TargetSource:
+                            _targetSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1062,6 +1081,9 @@ public readonly partial struct Ui5ManifestSchema
                             break;
                         case Kind.TargetBuilder:
                             valueBuilder.AddItem(_targetBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.TargetSource:
+                            _targetSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");

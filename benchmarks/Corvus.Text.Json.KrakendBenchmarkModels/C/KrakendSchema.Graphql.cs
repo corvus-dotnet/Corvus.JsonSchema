@@ -372,6 +372,15 @@ public readonly partial struct KrakendSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Graphql.RequiredQueryAndType"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Graphql(Corvus.KrakendBenchmark.Current.KrakendSchema.Graphql.RequiredQueryAndType.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Graphql.RequiredQueryPathAndType"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -385,6 +394,15 @@ public readonly partial struct KrakendSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator Graphql(Corvus.KrakendBenchmark.Current.KrakendSchema.Graphql.RequiredQueryPathAndType value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Graphql.RequiredQueryPathAndType"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Graphql(Corvus.KrakendBenchmark.Current.KrakendSchema.Graphql.RequiredQueryPathAndType.Mutable value)
         {
             return From(value);
         }

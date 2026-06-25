@@ -204,6 +204,15 @@ public readonly partial struct Ui5ManifestSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ImplementingComponentDef.RequiredComponentName"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ImplementingComponentDef(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ImplementingComponentDef.RequiredComponentName.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ImplementingComponentDef.RequiredComponentUsage"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -217,6 +226,15 @@ public readonly partial struct Ui5ManifestSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator ImplementingComponentDef(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ImplementingComponentDef.RequiredComponentUsage value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ImplementingComponentDef.RequiredComponentUsage"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ImplementingComponentDef(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ImplementingComponentDef.RequiredComponentUsage.Mutable value)
         {
             return From(value);
         }
