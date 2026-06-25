@@ -64,6 +64,7 @@
     <Compile Include="BigNumber\BigNumberArithmeticTests.cs" />
     <Compile Include="BigNumber\BigNumberComparisonTests.cs" />
     <Compile Include="BigNumber\BigNumberConversionTests.cs" />
+    <Compile Include="InlineEvaluatedBufferOverflowTests.cs" />
     <Compile Include="JsonStringUnescaperTests.cs" />
     <Compile Include="JsonMarshalRefreshUnsafeTests.cs" />
     <Compile Include="MigrationEquivalenceTests\AllOfConversionEquivalenceTests.cs" />
