@@ -233,3 +233,51 @@ status/workflow/subject filter test now carries `baseWorkflowId` as a `JsonStrin
 `?limit`/`?pageToken` over the queue. `corvus-bytes-to-bytes` self-audit: zero string realisations in the token/page/pager;
 `baseWorkflowId` reifies only at the per-backend leaves above. Verified: warning-free slnx (0W/0E); InMemory + Sqlite
 conformance (7 each), server API (6), JS (74) — green.
+
+### `listRunners` — `IRunnerRegistry` (the runner fleet) — single-key keyset on `runnerId`
+
+The runner registry grows with the fleet (every live runner self-registers and heartbeats), so `GET /runners` is paged.
+Keyset on the unique **`runnerId`** — the simplest token of the campaign: `RunnerRegistryContinuationToken` is just
+`base64url(runnerIdUtf8)` (the last page row's id carried verbatim as bytes, no instant/compound key), with
+`RunnerRegistryPage`, `RunnerRegistryPaging.PageInMemory`, and a **default seam** `ListAsync(limit, pageToken, ct)` on
+`IRunnerRegistry` that pages over the existing full `ListAsync(ct)` read in memory (ordinal `runnerId` UTF-8 sort + cursor
+skip + limit). All 9 persistent backends inherit that default unchanged; Phase 2 swaps in native keyset queries so the read
+itself is bounded.
+
+**Detached-rows ownership (the row's distinguishing feature).** Unlike the rules/bindings/access-request rows (whose pages
+carry pooled `PooledDocumentList<T>` documents), the registry contract already states each listed `RunnerRegistration` is
+**detached** from any store-side buffer. So `RunnerRegistryPage` holds the subset `IReadOnlyList<RunnerRegistration>` plus
+the pooled token only — no `PooledDocumentList`, no `TransferOwnershipTo`, no re-parse. The handler's `using page` returns
+**just the token buffer**; the body's congruent `Models.Runner.From(registration)` wraps keep the detached registrations
+GC-reachable through the synchronous `Ok`. There is no `q` filter (runners have no search dimension), and no
+CLI/JS/SPA/mock consumer — `/runners` is a server-only observability read.
+
+OpenAPI `/runners` gained `limit`/`pageToken` + `RunnerPage.nextPageToken` (regen 515 server / 522 client; the rest are
+line-ending no-ops). Benchmark (`RunnerListPagingBenchmarks`, production-faithful, workspace disposed per op):
+
+| Method | RunnerCount | Mean | Allocated |
+|---|---|---|---|
+| `Unpaged_All` | 50 | 23.9 µs | 168 B |
+| `Paged_FirstPage` | 50 | 14.6 µs | 168 B |
+| `Unpaged_All` | 500 | 104.2 µs | 169 B |
+| `Paged_FirstPage` | 500 | **11.0 µs** | 168 B |
+
+Same conclusion as every list row: alloc-clean either way (~168 B; the pooled arena returns per request — the detached
+registrations are GC, not pooled), and paging bounds CPU and response size O(total) → O(page) (104.2 → 11.0 µs at 500; the
+50-row means are noisy under ShortRun but directionally identical). `corvus-bytes-to-bytes` self-audit: zero string
+realisations — `pageToken` flows in as its JSON value (`JsonString.From`) and is base64url-decoded into a *pooled* cursor
+buffer; the `runnerId` sort/compare reads each row's persisted UTF-8 (`GetUtf8String().Span`, ordinal); the next token is
+base64url-encoded from the last row's `runnerId` UTF-8 into a pooled buffer and written verbatim into the response; the only
+leaf is the malformed-token `FormatException` message. Verified: warning-free slnx (0W/0E); InMemory + Sqlite
+`RunnerRegistryConformance` (12 each, incl. keyset no-gaps/dupes + malformed-token); server HTTP
+`ListRunners_keyset_pages_over_http` (27 server tests) — green.
+
+### `listAdministrators` — exempt (bounded single-record get, not a multi-row store list)
+
+Grounding showed `GET /administrators/{baseWorkflowId}` returns **one** `WorkflowAdministrators` record (the admin store's
+`GetAsync(baseWorkflowId)`) whose `administrators[]` array the handler projects — a single-record get, not a multi-result
+store query. There is no store query to "get caught out by scale": it is bounded by one workflow's admin count
+(privileged identities — inherently small), structurally like `listSecurityOrderings`. The Phase-0 audit penciled in
+"keyset on digest" assuming a multi-row store; the implementation is a single record. **Exempted** (decision recorded
+with the user) — paging it would bound only the response projection over an already-whole-loaded record, no store-read
+benefit.
