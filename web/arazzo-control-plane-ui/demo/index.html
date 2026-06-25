@@ -69,7 +69,8 @@
     </div>
 
     <div id="view-access" role="tabpanel" hidden>
-      <arazzo-reach-rules-panel base-url="https://mock/arazzo/v1" scopes="security:read security:write"></arazzo-reach-rules-panel>
+      <arazzo-grants-panel base-url="https://mock/arazzo/v1" scopes="security:read security:write"></arazzo-grants-panel>
+      <arazzo-scopes-panel base-url="https://mock/arazzo/v1" scopes="security:read security:write" style="margin-top: 16px;"></arazzo-scopes-panel>
       <arazzo-access-requests base-url="https://mock/arazzo/v1" theme="auto" style="margin-top: 16px;"></arazzo-access-requests>
     </div>
 
@@ -88,7 +89,8 @@
     import '../src/components/credentials-table.js';
     import '../src/components/credential-dialog.js';
     import '../src/components/access-requests-panel.js';
-    import '../src/components/reach-rules-panel.js';
+    import '../src/components/scopes-panel.js';
+    import '../src/components/grants-panel.js';
 
     const mock = createMockControlPlane();
     const panel = document.querySelector('arazzo-control-plane');
@@ -102,11 +104,13 @@
     const credTable = document.querySelector('arazzo-credentials-table');
     const credDialog = document.querySelector('arazzo-credential-dialog');
     const access = document.querySelector('arazzo-access-requests');
-    const reach = document.querySelector('arazzo-reach-rules-panel');
+    const reach = document.querySelector('arazzo-scopes-panel');
+    const bindings = document.querySelector('arazzo-grants-panel');
     credTable.client = client;
     credDialog.client = client;
     access.client = client;
     reach.client = client;
+    bindings.client = client;
 
     // Credentials: the table emits; wire its new/select to the dialog, and the dialog's save back to a refresh.
     credTable.addEventListener('credential-new', () => credDialog.open());
