@@ -558,15 +558,34 @@ export class ArazzoControlPlaneClient {
   // ---- security rules (§14.2) — the reusable reach vocabulary -----------------------------------
 
   /**
-   * `listSecurityRules` — the deployment's row-security rules (`GET /security/rules`): the reusable WHERE
-   * vocabulary a binding scopes read/write/purge reach with. Requires `security:read`.
-   * @param {{ signal?: AbortSignal }} [opts]
-   * @returns {Promise<{ rules: object[] }>} A {@link SecurityRuleList} — each rule is
+   * `listSecurityRules` — a keyset page of the deployment's row-security rules (`GET /security/rules`): the reusable
+   * scope vocabulary a grant binds read/write/purge with, ordered by name. `q` filters by a case-insensitive substring
+   * of the name or expression; `limit`/`pageToken` page. Requires `security:read`.
+   * @param {{ q?: string, limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ rules: object[], nextPageToken: (string|null) }>} A {@link SecurityRuleList} — each rule is
    *   `{ name, expression, description?, createdBy, createdAt, lastUpdatedBy?, lastUpdatedAt?, etag }`.
    */
-  async listSecurityRules(opts = {}) {
-    const result = await this._request('GET', '/security/rules', { signal: opts.signal });
-    return { rules: result.rules ?? [] };
+  async listSecurityRules(query = {}) {
+    const search = new URLSearchParams();
+    if (query.q) search.set('q', query.q);
+    if (query.limit != null) search.set('limit', String(query.limit));
+    if (query.pageToken) search.set('pageToken', query.pageToken);
+    const result = await this._request('GET', `/security/rules${qs(search)}`, { signal: query.signal });
+    return { rules: result.rules ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
+   * `listSecurityRules`, as an async iterator that walks every page via the keyset `nextPageToken`.
+   * @param {{ q?: string, limit?: number, signal?: AbortSignal }} [query]
+   * @returns {AsyncGenerator<{ rules: object[], nextPageToken: (string|null) }>}
+   */
+  async *listSecurityRulesPaged(query = {}) {
+    let pageToken;
+    do {
+      const page = await this.listSecurityRules({ ...query, pageToken });
+      yield page;
+      pageToken = page.nextPageToken || undefined;
+    } while (pageToken);
   }
 
   /**

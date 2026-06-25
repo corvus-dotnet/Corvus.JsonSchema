@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// All security rules.
+/// A keyset page of security rules, ordered by name.
 /// </para>
 /// </remarks>
 public readonly partial struct SecurityRuleList

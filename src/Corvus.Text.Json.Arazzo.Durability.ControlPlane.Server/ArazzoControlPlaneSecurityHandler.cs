@@ -54,17 +54,29 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     /// <inheritdoc/>
     public async ValueTask<ListSecurityRulesResult> HandleListSecurityRulesAsync(ListSecurityRulesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        using PooledDocumentList<SecurityRuleDocument> rules = await this.store.ListRulesAsync(cancellationToken).ConfigureAwait(false);
+        // An absent limit passes 0 — the contract's "use the store's default page size" sentinel (the store owns that
+        // size; the handler does not duplicate it).
+        int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 0;
+        string? q = parameters.Q.IsNotUndefined() ? (string)parameters.Q : null;
+
+        // The opaque page token flows to the store as its JSON value (From() rewraps parameters.PageToken — free, no
+        // reify, no managed string; an undefined token rewraps to an undefined JsonString); the store decodes it
+        // bytes-native from the request UTF-8 and returns one keyset page (bounded — never all rules).
+        JsonString pageToken = JsonString.From(parameters.PageToken);
+        using SecurityRulePage page = await this.store.ListRulesAsync(limit, pageToken, q, cancellationToken).ConfigureAwait(false);
 
         // Each summary is a whole-document SecurityRuleSummary.From wrap (the congruent projection the single-document
         // sites use), so it references its pooled document; the body is validated/serialized after this handler returns,
-        // so hand the documents to the workspace (it disposes them at request end; `using rules` then only returns the
-        // batch's backing array). The list body is built closure-free and consumed in place.
-        rules.TransferOwnershipTo(workspace);
-        IReadOnlyList<SecurityRuleDocument> ruleList = rules;
+        // so hand the documents to the workspace (it disposes them at request end; `using page` then only returns the
+        // batch's backing array + the token buffer). The list body is built closure-free and consumed in place; the
+        // continuation token is copied verbatim from the page's UTF-8 (the Ok materialisation copies it before dispose).
+        page.Rules.TransferOwnershipTo(workspace);
+        IReadOnlyList<SecurityRuleDocument> ruleList = page.Rules;
+        ReadOnlyMemory<byte> nextPageToken = page.NextPageToken;
         Models.SecurityRuleList.Source<IReadOnlyList<SecurityRuleDocument>> body = Models.SecurityRuleList.Build(
             in ruleList,
-            rules: Models.SecurityRuleList.SecurityRuleSummaryArray.Build(in ruleList, BuildRuleSummaries));
+            rules: Models.SecurityRuleList.SecurityRuleSummaryArray.Build(in ruleList, BuildRuleSummaries),
+            nextPageToken: nextPageToken.IsEmpty ? default : (Models.JsonString.Source)nextPageToken.Span);
         return ListSecurityRulesResult.Ok(body, workspace);
     }
 

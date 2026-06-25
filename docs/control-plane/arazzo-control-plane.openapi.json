@@ -725,6 +725,24 @@
           "security"
         ],
         "summary": "List security rules",
+        "description": "Returns a keyset page of rules ordered by name, bounded by limit and resumable via the page token; q filters by a case-insensitive substring of the name or expression.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "description": "Free-text filter matched against each rule's name and expression (case-insensitive contains).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/LimitQuery"
+          },
+          {
+            "$ref": "#/components/parameters/PageTokenQuery"
+          }
+        ],
         "responses": {
           "200": {
             "description": "The rules.",
@@ -2551,13 +2569,17 @@
       },
       "SecurityRuleList": {
         "type": "object",
-        "description": "All security rules.",
+        "description": "A keyset page of security rules, ordered by name.",
         "properties": {
           "rules": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SecurityRuleSummary"
             }
+          },
+          "nextPageToken": {
+            "type": "string",
+            "description": "An opaque token to fetch the next page, or null/absent if this is the last page."
           }
         },
         "required": [

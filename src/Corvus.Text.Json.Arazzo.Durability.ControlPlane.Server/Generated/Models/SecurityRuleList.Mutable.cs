@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// All security rules.
+/// A keyset page of security rules, ordered by name.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -266,6 +266,27 @@ public readonly partial struct SecurityRuleList
         }
 
         /// <summary>
+        /// Gets the (optional) <c>nextPageToken</c> property.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// An opaque token to fetch the next page, or null/absent if this is the last page.
+        /// </para>
+        /// </remarks>
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable NextPageToken
+        {
+            get
+            {
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NextPageTokenUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable value))
+                {
+                    return value;
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
         /// Gets the <c>rules</c> property.
         /// </summary>
         /// <remarks>
@@ -323,6 +344,51 @@ public readonly partial struct SecurityRuleList
             where T : struct, IJsonElement
         {
             return JsonElementHelpers.DeepEquals(this, other);
+        }
+
+        /// <summary>
+        /// Set the <c>nextPageToken</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetNextPageToken(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.NextPageTokenUtf8);
+                _documentVersion = _parent.Version;
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NextPageTokenUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NextPageToken, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Remove the <c>nextPageToken</c> property, if present.
+        /// </summary>
+        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
+        public bool RemoveNextPageToken()
+        {
+            CheckValidInstance();
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.NextPageTokenUtf8);
+            _documentVersion = _parent.Version;
+            return result;
         }
 
         /// <summary>
@@ -721,6 +787,7 @@ public readonly partial struct SecurityRuleList
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.Source _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg2;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -735,9 +802,10 @@ public readonly partial struct SecurityRuleList
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.Source arg1)
+        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2)
         {
             _createArg1 = arg1;
+            _createArg2 = arg2;
             _kind = Kind.Create;
         }
 
@@ -758,7 +826,7 @@ public readonly partial struct SecurityRuleList
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -783,7 +851,7 @@ public readonly partial struct SecurityRuleList
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -808,7 +876,7 @@ public readonly partial struct SecurityRuleList
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -833,7 +901,7 @@ public readonly partial struct SecurityRuleList
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -858,7 +926,7 @@ public readonly partial struct SecurityRuleList
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -887,6 +955,7 @@ public readonly partial struct SecurityRuleList
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.Source<TContext> _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg2;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -899,10 +968,11 @@ public readonly partial struct SecurityRuleList
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.Source<TContext> arg1)
+        internal Source(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.Source<TContext> arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2)
         {
             _context = context;
             _createArg1 = arg1;
+            _createArg2 = arg2;
             _kind = Kind.Create;
         }
 
@@ -921,7 +991,7 @@ public readonly partial struct SecurityRuleList
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_context, _createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -946,7 +1016,7 @@ public readonly partial struct SecurityRuleList
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_context, _createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -971,7 +1041,7 @@ public readonly partial struct SecurityRuleList
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -996,7 +1066,7 @@ public readonly partial struct SecurityRuleList
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1021,7 +1091,7 @@ public readonly partial struct SecurityRuleList
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_context, _createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -1053,17 +1123,21 @@ public readonly partial struct SecurityRuleList
         /// <summary>
         /// Creates an instance of a <see cref="SecurityRuleList"/>.
         /// </summary>
-        internal static void Create(ref ComplexValueBuilder builder, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.Source rules)
+        internal static void Create(
+            ref ComplexValueBuilder builder,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.Source rules,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source nextPageToken = default)
         {
             rules.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Rules, ref builder);
+            nextPageToken.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NextPageToken, ref builder);
         }
 
         /// <summary>
         /// Creates an instance of a <see cref="SecurityRuleList"/>.
         /// </summary>
-        public void Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.Source rules)
+        public void Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.Source rules, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source nextPageToken = default)
         {
-            Create(ref _builder, rules);
+            Create(ref _builder, rules, nextPageToken);
         }
 
         /// <summary>
@@ -1072,23 +1146,28 @@ public readonly partial struct SecurityRuleList
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.Source<TContext> rules)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.Source<TContext> rules,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source nextPageToken = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
         {
             rules.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Rules, ref builder);
+            nextPageToken.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NextPageToken, ref builder);
         }
 
         /// <summary>
         /// Creates an instance of a <see cref="SecurityRuleList"/>.
         /// </summary>
-        public void Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.Source<TContext> rules)
+        public void Create<TContext>(
+            in TContext context,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.Source<TContext> rules,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source nextPageToken = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
         {
-            Create(context, ref _builder, rules);
+            Create(context, ref _builder, rules, nextPageToken);
         }
 
         /// <summary>
@@ -1187,11 +1266,12 @@ public readonly partial struct SecurityRuleList
         /// Builds the object value directly from its captured property values into the given complex value builder.
         /// </summary>
         /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.Source arg1, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, ref ComplexValueBuilder o)
         {
             o.StartObject();
-            Create(ref o, arg1);
+            Create(ref o, arg1, arg2);
             o.EndObject();
         }
 
@@ -1201,14 +1281,15 @@ public readonly partial struct SecurityRuleList
         /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.Source<TContext> arg1, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.Source<TContext> arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
         {
             o.StartObject();
-            Create(context, ref o, arg1);
+            Create(context, ref o, arg1, arg2);
             o.EndObject();
         }
     }
@@ -1246,10 +1327,11 @@ public readonly partial struct SecurityRuleList
     /// Build an instance of the value directly from its property values.
     /// </summary>
     /// <param name="rules">The value of the <c>"rules"</c> property.</param>
+    /// <param name="nextPageToken">The value of the <c>"nextPageToken"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.Source rules)
+    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.Source rules, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source nextPageToken = default)
     {
-        return new Source(rules);
+        return new Source(rules, nextPageToken);
     }
 
     /// <summary>
@@ -1258,13 +1340,14 @@ public readonly partial struct SecurityRuleList
     /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
     /// <param name="context">The context to pass to the builder.</param>
     /// <param name="rules">The value of the <c>"rules"</c> property.</param>
+    /// <param name="nextPageToken">The value of the <c>"nextPageToken"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.Source<TContext> rules)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.Source<TContext> rules, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source nextPageToken = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
     {
-        return new Source<TContext>(context, rules);
+        return new Source<TContext>(context, rules, nextPageToken);
     }
 
     /// <summary>
@@ -1361,15 +1444,16 @@ public readonly partial struct SecurityRuleList
     /// </summary>
     /// <param name="workspace">The JSON workspace.</param>
     /// <param name="rules">The value of the property.</param>
+    /// <param name="nextPageToken">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.Source rules, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.Source rules, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source nextPageToken = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(rules);
+        ovb.Create(rules, nextPageToken);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1383,9 +1467,10 @@ public readonly partial struct SecurityRuleList
     /// <param name="workspace">The JSON workspace.</param>
     /// <param name="context">The value of the property.</param>
     /// <param name="rules">The value of the property.</param>
+    /// <param name="nextPageToken">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.Source<TContext> rules, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleList.SecurityRuleSummaryArray.Source<TContext> rules, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source nextPageToken = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1394,7 +1479,7 @@ public readonly partial struct SecurityRuleList
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(context, rules);
+        ovb.Create(context, rules, nextPageToken);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
