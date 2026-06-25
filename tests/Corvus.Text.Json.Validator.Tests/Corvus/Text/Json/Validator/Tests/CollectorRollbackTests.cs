@@ -14,7 +14,7 @@ namespace Corvus.Text.Json.Validator.Tests;
 /// <c>(0, 0)</c>, clobbering earlier committed results and faulting <c>ReadResult</c> when the detailed
 /// results were later enumerated. It takes a deeply-branching schema (nested <c>oneOf</c>/<c>if</c>/
 /// <c>dependentSchemas</c> over a recursive <c>$dynamicRef</c>) to trigger it; the bundled OpenAPI 3.1
-/// metaschema and a real specification that fails validation are the minimal reproduction. Enumerating the
+/// metaschema and a real specification (which validates successfully) is the minimal reproduction. Enumerating the
 /// detailed results must not fault.
 /// </summary>
 [TestClass]
@@ -32,7 +32,7 @@ public class CollectorRollbackTests
         using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
         bool valid = schema.Validate(new ReadOnlyMemory<byte>(instance), collector);
 
-        Assert.IsFalse(valid, "The bundled specification is rejected by the OpenAPI 3.1 metaschema validator.");
+        Assert.IsTrue(valid, "The bundled specification validates against the OpenAPI 3.1 metaschema.");
 
         // Walking each result's length headers faulted with an out-of-range index before the rollback fix.
         int resultCount = 0;
