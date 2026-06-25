@@ -179,6 +179,59 @@ public abstract class RunnerRegistryConformance
         (await registry.IsVersionHostedAsync("shipping", 4, default)).ShouldBeTrue();
     }
 
+    [TestMethod]
+    public async Task Listing_keyset_pages_by_runner_id_without_gaps_or_duplicates()
+    {
+        IRunnerRegistry registry = await this.NewRegistryAsync();
+        string[] ids = ["runner-3", "runner-1", "runner-5", "runner-2", "runner-8", "runner-0", "runner-4", "runner-6"];
+        foreach (string id in ids)
+        {
+            await registry.RegisterAsync(Reg(id, T0, T0), default);
+        }
+
+        // Walk every page via the continuation token with a small limit; collect ids in page order. The token is
+        // round-tripped through the JsonString seam exactly as the HTTP layer does.
+        var seen = new List<string>();
+        byte[]? token = null;
+        int pages = 0;
+        do
+        {
+            using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString>? tokenDoc = token is null ? null : AsJsonString(token);
+            using RunnerRegistryPage page = await registry.ListAsync(3, tokenDoc?.RootElement ?? default, default);
+            page.Runners.Count.ShouldBeLessThanOrEqualTo(3);
+            foreach (RunnerRegistration runner in page.Runners)
+            {
+                seen.Add(runner.RunnerIdValue);
+            }
+
+            token = page.NextPageToken.IsEmpty ? null : page.NextPageToken.ToArray();
+            pages++;
+        }
+        while (token is not null);
+
+        // 8 runners, 3 per page → 3 pages; no duplicates or gaps across boundaries; contractual runnerId (ordinal) order.
+        pages.ShouldBe(3);
+        seen.ShouldBe(ids.OrderBy(x => x, StringComparer.Ordinal).ToArray());
+
+        // A malformed token is rejected (rather than silently restarting from the first page).
+        await Should.ThrowAsync<FormatException>(async () =>
+        {
+            using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> badToken = AsJsonString("this~is~not~a~token"u8);
+            using RunnerRegistryPage bad = await registry.ListAsync(3, badToken.RootElement, default);
+        });
+    }
+
+    // Wraps a value's UTF-8 as the JSON string a request carries it as — the conformance feeds a previous page's
+    // NextPageToken (the store's emitted bytes) back through the JsonString pageToken seam, mirroring HTTP.
+    private static ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> AsJsonString(ReadOnlySpan<byte> valueUtf8)
+    {
+        byte[] quoted = new byte[valueUtf8.Length + 2];
+        quoted[0] = (byte)'"';
+        valueUtf8.CopyTo(quoted.AsSpan(1));
+        quoted[^1] = (byte)'"';
+        return ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString>.Parse(quoted);
+    }
+
     private static RunnerRegistration Reg(
         string runnerId,
         DateTimeOffset startedAt,

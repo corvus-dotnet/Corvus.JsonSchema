@@ -17,7 +17,17 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// <summary>
 /// Parameters for the ListRunners operation (GET /runners).
 /// </summary>
-/// <remarks>Returns the workflow runners currently registered with the control plane: each runner's identity, liveness timestamps, capacity, supported transports, and the catalog versions it hosts. Runners self-register and heartbeat directly against the durability layer; this endpoint reads that registry for observability.</remarks>
+/// <remarks>Returns a keyset page of the workflow runners currently registered with the control plane (ordered by runnerId): each runner's identity, liveness timestamps, capacity, supported transports, and the catalog versions it hosts. Runners self-register and heartbeat directly against the durability layer; this endpoint reads that registry for observability. Bounded by limit and resumable via the page token.</remarks>
 public readonly struct ListRunnersParams
 {
+
+    /// <summary>
+    /// Gets the 'limit' query parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PageLimit Limit { get; init; }
+
+    /// <summary>
+    /// Gets the 'pageToken' query parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString PageToken { get; init; }
 }
