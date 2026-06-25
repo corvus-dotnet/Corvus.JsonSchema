@@ -100,8 +100,10 @@ public interface IApiAccessRequestsClient : IAsyncDisposable
     /// </remarks>
     /// <param name="status">The status parameter.</param>
     /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="limit">The limit parameter.</param>
+    /// <param name="pageToken">The pageToken parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<ListAccessRequestsResponse> ListAccessRequestsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetAccessRequestsStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<ListAccessRequestsResponse> ListAccessRequestsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetAccessRequestsStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Submit an access request

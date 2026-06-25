@@ -30,4 +30,14 @@ public readonly struct ListAccessRequestsParams
     /// Gets the 'baseWorkflowId' query parameter.
     /// </summary>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString BaseWorkflowId { get; init; }
+
+    /// <summary>
+    /// Gets the 'limit' query parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PageLimit Limit { get; init; }
+
+    /// <summary>
+    /// Gets the 'pageToken' query parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString PageToken { get; init; }
 }

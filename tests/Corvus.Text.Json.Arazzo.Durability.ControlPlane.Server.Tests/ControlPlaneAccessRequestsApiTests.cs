@@ -62,6 +62,44 @@ public sealed class ControlPlaneAccessRequestsApiTests
     }
 
     [TestMethod]
+    public async Task The_request_queue_keyset_pages_over_http()
+    {
+        await using Scoped host = await StartAsync();
+        await EstablishAsync(host.Catalog, "flow", "boss");
+
+        var submitted = new List<string>();
+        foreach (string who in new[] { "alice", "bob", "carol" })
+        {
+            using Stj.JsonDocument s = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/accessRequests", """{"baseWorkflowId":"flow","requestedScopes":["runs:write"]}""", Auth, who));
+            submitted.Add(s.RootElement.GetProperty("id").GetString()!);
+        }
+
+        // First page (limit 2): two of the three, oldest-first by (createdAt, id), plus a continuation token.
+        var seen = new List<string>();
+        string token;
+        using (Stj.JsonDocument page1 = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/accessRequests?baseWorkflowId=flow&limit=2", Auth, "boss")))
+        {
+            List<string> ids = page1.RootElement.GetProperty("accessRequests").EnumerateArray().Select(r => r.GetProperty("id").GetString()!).ToList();
+            ids.Count.ShouldBe(2);
+            seen.AddRange(ids);
+            token = page1.RootElement.GetProperty("nextPageToken").GetString()!;
+            token.ShouldNotBeNullOrEmpty();
+        }
+
+        // Following the token returns the remainder; the last page omits nextPageToken.
+        using (Stj.JsonDocument page2 = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, $"/accessRequests?baseWorkflowId=flow&limit=2&pageToken={token}", Auth, "boss")))
+        {
+            List<string> ids = page2.RootElement.GetProperty("accessRequests").EnumerateArray().Select(r => r.GetProperty("id").GetString()!).ToList();
+            ids.Count.ShouldBe(1);
+            seen.AddRange(ids);
+            page2.RootElement.TryGetProperty("nextPageToken", out _).ShouldBeFalse();
+        }
+
+        // No gaps or duplicates across the page boundary — every submitted request appears exactly once.
+        seen.OrderBy(x => x, StringComparer.Ordinal).ShouldBe(submitted.OrderBy(x => x, StringComparer.Ordinal).ToList());
+    }
+
+    [TestMethod]
     public async Task A_non_administrator_cannot_approve()
     {
         await using Scoped host = await StartAsync();

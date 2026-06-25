@@ -38,14 +38,18 @@ public sealed class ApiAccessRequestsClient : IApiAccessRequestsClient
     /// </remarks>
     /// <param name="status">The status parameter.</param>
     /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="limit">The limit parameter.</param>
+    /// <param name="pageToken">The pageToken parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<ListAccessRequestsResponse> ListAccessRequestsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetAccessRequestsStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<ListAccessRequestsResponse> ListAccessRequestsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetAccessRequestsStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         ListAccessRequestsRequest request = new()
         {
             Status = status.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetAccessRequestsStatus)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetAccessRequestsStatus.CreateBuilder(workspace, status, 30).RootElement,
             BaseWorkflowId = baseWorkflowId.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, baseWorkflowId, 30).RootElement,
+            Limit = limit.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.CreateBuilder(workspace, limit, 30).RootElement,
+            PageToken = pageToken.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, pageToken, 30).RootElement,
         }
         ;
 

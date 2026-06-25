@@ -788,17 +788,34 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
-   * `listAccessRequests` — without `baseWorkflowId`, the caller's own requests; with it, that workflow's request
-   * queue (the caller must be an administrator of it, `403` otherwise). Optionally filtered by `status`.
-   * @param {{ status?: string, baseWorkflowId?: string, signal?: AbortSignal }} [query]
-   * @returns {Promise<{ accessRequests: object[] }>} An {@link AccessRequestList}, oldest first.
+   * `listAccessRequests` — a keyset page (oldest first by `(createdAt, id)`). Without `baseWorkflowId`, the caller's own
+   * requests; with it, that workflow's request queue (the caller must be an administrator of it, `403` otherwise).
+   * Optionally filtered by `status`; `limit`/`pageToken` page.
+   * @param {{ status?: string, baseWorkflowId?: string, limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ accessRequests: object[], nextPageToken: (string|null) }>} An {@link AccessRequestList}, oldest first.
    */
   async listAccessRequests(query = {}) {
     const search = new URLSearchParams();
     if (query.status) search.set('status', query.status);
     if (query.baseWorkflowId) search.set('baseWorkflowId', query.baseWorkflowId);
+    if (query.limit != null) search.set('limit', String(query.limit));
+    if (query.pageToken) search.set('pageToken', query.pageToken);
     const result = await this._request('GET', `/accessRequests${qs(search)}`, { signal: query.signal });
-    return { accessRequests: result.accessRequests ?? [] };
+    return { accessRequests: result.accessRequests ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
+   * `listAccessRequests`, as an async iterator that walks every page via the keyset `nextPageToken`.
+   * @param {{ status?: string, baseWorkflowId?: string, limit?: number, signal?: AbortSignal }} [query]
+   * @returns {AsyncGenerator<{ accessRequests: object[], nextPageToken: (string|null) }>}
+   */
+  async *listAccessRequestsPaged(query = {}) {
+    let pageToken;
+    do {
+      const page = await this.listAccessRequests({ ...query, pageToken });
+      yield page;
+      pageToken = page.nextPageToken || undefined;
+    } while (pageToken);
   }
 
   /**

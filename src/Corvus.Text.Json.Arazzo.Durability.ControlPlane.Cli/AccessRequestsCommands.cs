@@ -105,14 +105,50 @@ internal sealed class AccessRequestListCommand : AsyncCommand<AccessRequestListS
         using (http)
         await using (transport)
         {
-            Models.GetAccessRequestsStatus.Source status = settings.Status is { } s ? (Models.GetAccessRequestsStatus.Source)s : default;
-            Models.JsonString.Source workflow = settings.Workflow is { } w ? (Models.JsonString.Source)w : default;
-            await using ListAccessRequestsResponse response = await client.ListAccessRequestsAsync(status, workflow, cancellationToken);
-            bool asJson = settings.Output.Equals("json", StringComparison.OrdinalIgnoreCase);
-            return response.MatchResult(
-                list => asJson ? Output.Print(list.ToString()) : AccessRequestCommandHelpers.RenderTable(list, settings.Workflow),
-                Output.Problem,
-                Output.Unexpected);
+            // Walk every keyset page (the store pages server-side) so the output is the complete queue, never the first
+            // page alone. Each view is materialised (ToString) while its page response is alive, then the accumulated set
+            // is rendered/printed once. The Source filter values are built inline per call (they are ref structs that
+            // cannot be held across the loop's await).
+            var items = new List<string>();
+            string? pageToken = null;
+            do
+            {
+                string? next = null;
+                await using ListAccessRequestsResponse response = await client.ListAccessRequestsAsync(
+                    status: settings.Status is { } s ? (Models.GetAccessRequestsStatus.Source)s : default,
+                    baseWorkflowId: settings.Workflow is { } w ? (Models.JsonString.Source)w : default,
+                    pageToken: pageToken is { } token ? (Models.JsonString.Source)token : default,
+                    cancellationToken: cancellationToken);
+                int rc = response.MatchResult(
+                    list =>
+                    {
+                        next = list.NextPageToken.IsNotUndefined() ? (string)list.NextPageToken : null;
+                        foreach (Models.AccessRequestView view in list.AccessRequests.EnumerateArray())
+                        {
+                            items.Add(view.ToString());
+                        }
+
+                        return 0;
+                    },
+                    Output.Problem,
+                    Output.Unexpected);
+                if (rc != 0)
+                {
+                    return rc;
+                }
+
+                pageToken = next;
+            }
+            while (pageToken is not null);
+
+            string combined = $"{{\"accessRequests\":[{string.Join(",", items)}]}}";
+            if (settings.Output.Equals("json", StringComparison.OrdinalIgnoreCase))
+            {
+                return Output.Print(combined);
+            }
+
+            using ParsedJsonDocument<Models.AccessRequestList> rendered = ParsedJsonDocument<Models.AccessRequestList>.Parse(System.Text.Encoding.UTF8.GetBytes(combined).AsMemory());
+            return AccessRequestCommandHelpers.RenderTable(rendered.RootElement, settings.Workflow);
         }
     }
 }

@@ -130,10 +130,10 @@ public sealed class SqliteAccessRequestStore : IAccessRequestStore, IAsyncDispos
                 select.Parameters.AddWithValue("@status", AccessRequestStatusNames.ToWire(status));
             }
 
-            if (query.BaseWorkflowId is { } baseWorkflowId)
+            if (query.BaseWorkflowId.IsNotUndefined())
             {
                 conditions.Add("BaseWorkflowId = @bw");
-                select.Parameters.AddWithValue("@bw", baseWorkflowId);
+                select.Parameters.AddWithValue("@bw", (string)query.BaseWorkflowId);
             }
 
             if (query.SubjectClaimType is { } subjectType)
