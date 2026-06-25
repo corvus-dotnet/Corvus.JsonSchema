@@ -370,12 +370,12 @@ dotnet tool install Corvus.Json.Cli
 <tr>
 <td><code>--assertFormat</code></td>
 <td><code>true</code></td>
-<td>Enforce <code>format</code> keyword as a validation assertion (global default)</td>
+<td>Enforce the <code>format</code> keyword as a validation assertion (global default). Takes a value: pass <code>--assertFormat false</code> for annotation-only output (effective where the schema's vocabulary already treats <code>format</code> as an annotation, e.g. 2020-12; for drafts whose vocabulary asserts <code>format</code>, such as draft-04/06/07, use <code>--formatMode disable</code>).</td>
 </tr>
 <tr>
 <td><code>--formatMode</code></td>
 <td>—</td>
-<td>Per-format assertion mode overrides as comma-separated <code>format=mode</code> pairs, where <code>mode</code> is <code>assert</code>, <code>disable</code>, or <code>warning</code> (e.g. <code>date-time=disable,time=warning</code>). Repeatable. An override takes precedence over <code>--assertFormat</code>. Warning mode applies to string formats only.</td>
+<td>Format assertion mode overrides as comma-separated entries, where <code>mode</code> is <code>assert</code>, <code>disable</code>, or <code>warning</code>. Use <code>format=mode</code> for one format (e.g. <code>date-time=disable,time=warning</code>), or a bare <code>mode</code> (equivalently <code>*=mode</code>) to set the default for <strong>all</strong> formats — e.g. <code>--formatMode disable</code> for annotation-only output across every draft, which overrides even a vocabulary that asserts <code>format</code>. Repeatable. A per-format override takes precedence over the <code>*</code> default, <code>--assertFormat</code>, and the vocabulary. Warning mode applies to string formats only.</td>
 </tr>
 <tr>
 <td><code>--optionalAsNullable</code></td>
@@ -542,7 +542,7 @@ corvusjson jsonschema Schemas/config.json \
 <td><code>formatMode</code></td>
 <td>No</td>
 <td>—</td>
-<td>A dictionary of per-format assertion mode overrides. Keys are format names (e.g. <code>date-time</code>); values are <code>assert</code>, <code>disable</code>, or <code>warning</code>. An override takes precedence over <code>assertFormat</code> and the vocabulary's format-assertion behaviour. <code>assert</code> validates and fails on a non-conformant value; <code>disable</code> makes the format annotation-only; <code>warning</code> validates but always succeeds, emitting a <code>WARNING</code> annotation on a mismatch. Warning mode applies to string formats only; for a numeric format it falls back to <code>assert</code>.</td>
+<td>A dictionary of format assertion mode overrides. Keys are format names (e.g. <code>date-time</code>); values are <code>assert</code>, <code>disable</code>, or <code>warning</code>. The wildcard key <code>*</code> sets the default for <strong>all</strong> formats (e.g. <code>{ &quot;*&quot;: &quot;disable&quot; }</code> for annotation-only output across every draft). A specific per-format override takes precedence over the <code>*</code> default, <code>assertFormat</code>, and the vocabulary's format-assertion behaviour. <code>assert</code> validates and fails on a non-conformant value; <code>disable</code> makes the format annotation-only; <code>warning</code> validates but always succeeds, emitting a <code>WARNING</code> annotation on a mismatch. Warning mode applies to string formats only; for a numeric format it falls back to <code>assert</code>.</td>
 </tr>
 <tr>
 <td><code>optionalAsNullable</code></td>

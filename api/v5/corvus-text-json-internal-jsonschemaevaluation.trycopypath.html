@@ -98,7 +98,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/fea2e4e1d95e7f309acdff5f0baf5b2b2f19b78e/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaEvaluation.cs#L154">JsonSchemaEvaluation.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/1c6b7a08c9ad46e8cf90ea7c68b70a7e0f159880/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaEvaluation.cs#L156">JsonSchemaEvaluation.cs</a></p>
 <h2 id="trycopypath-readonlyspan-byte-span-byte-int">TryCopyPath(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int)</h2>
 <p>Tries to copy the path to the output buffer.</p>
 <pre><code class="language-csharp">public static bool TryCopyPath(ReadOnlySpan&lt;byte&gt; readOnlySpan, Span&lt;byte&gt; buffer, out int written)
@@ -133,7 +133,7 @@
 <h3 id="returns">Returns</h3>
 <p><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>bool</code></a></p>
 <h3 id="remarks">Remarks</h3>
-<p>The path must be a fully canonical URI.</p>
+<p>The path is a schema evaluation location — a JSON Pointer (RFC 6901), optionally <code>#</code>-prefixed and/or preceded by a base URI, or an anchor fragment. It is copied verbatim: a reference token may legally contain characters that are unsafe in a URI (e.g. <code>^</code> from a <code>patternProperties</code> key), which are valid in a JSON Pointer and are only percent-encoded when a location is rendered as a URI. We therefore do not require the input to be a canonical URI.</p>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>
