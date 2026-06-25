@@ -195,3 +195,41 @@ projection is genuinely alloc-clean).
 backends decode the token to a **string cursor that is a DB query parameter** — a string-typed sink, i.e. a genuine leaf;
 and the discriminator is a computed canonical tag string used as a string-keyed identity system-wide. So the credential
 realisation is confined/leaf, not the shared-path debt the rule/binding pagers had — left as-is by design.
+
+### `listAccessRequests` — `IAccessRequestStore` (the unbounded approval queue) + bytes-native `AccessRequestQuery`
+
+The §16.5 access-request queue grows without bound (every elevation request, retained for audit), so it was the
+highest-value paging target after the trigger pair. Keyset on **`(createdAt, id)`** (oldest-first): the new
+`AccessRequestContinuationToken` (`base64url(utcTicks \0 id)` — the instant as UTC ticks via `Utf8Formatter`/`Utf8Parser`,
+exact and offset-independent; id a span), `AccessRequestPage`, and a default paged seam
+`ListAsync(query, limit, pageToken, ct)` that pages over the store's existing **filtered** read (the pager does only the
+keyset + limit, bytes-native: `CreatedAtValue` is a `DateTimeOffset` value compare, the id compares on its UTF-8 span — no
+managed string). OpenAPI `/accessRequests` gained `limit`/`pageToken` + `AccessRequestList.nextPageToken` (regen); paged
+handler; JS client (`listAccessRequests` paged + `listAccessRequestsPaged`); the access-requests SPA panel accumulates;
+demo mock pages; CLI list walks every page.
+
+**Bytes-native `AccessRequestQuery` (the request value stays JSON to the store).** The filter's `baseWorkflowId` arrives as
+the request's JSON value, so `AccessRequestQuery.BaseWorkflowId` was changed from `string?` to `JsonString` — carried
+through the handler (`JsonString.From(parameters.BaseWorkflowId)`, no `(string)` cast for the query) to the store, and
+reified only at **each backend's own leaf**: `(string)query.BaseWorkflowId` for the SQL/doc `@param` (a genuine DB-param
+string sink, across Sqlite/Postgres/MySql/SqlServer/Cosmos/Mongo/AzureStorage), and a `GetUtf8String().Span` **span
+compare** in the in-memory-filtering backends (InMemory/Redis/Nats). `status` stays a closed enum; `subjectClaim*` stay
+genuine `ClaimsPrincipal`/config string leaves. (The status/subject row-field reads in the in-memory backends' `Matches`
+are a separate axis — confined stored-field reads — left as-is.)
+
+Benchmark (`AccessRequestListPagingBenchmarks`, production-faithful, workspace disposed per op):
+
+| Method | RequestCount | Mean | Allocated |
+|---|---|---|---|
+| `Unpaged_All` | 50 | 11.5 µs | 168 B |
+| `Paged_FirstPage` | 50 | 12.4 µs | 168 B |
+| `Unpaged_All` | 500 | 105.9 µs | 169 B |
+| `Paged_FirstPage` | 500 | **11.4 µs** | 168 B |
+
+Same conclusion as the trigger pair: alloc-clean either way (~168 B; the pooled arena returns per request), and paging
+bounds CPU and response size O(total) → O(page) (105.9 → 11.4 µs at 500). Conformance (`AccessRequestStoreConformance`,
+all 10 backends) gained keyset `(createdAt, id)` oldest-first no-gaps/dupes + malformed-token, and the existing
+status/workflow/subject filter test now carries `baseWorkflowId` as a `JsonString`; the server HTTP test covers
+`?limit`/`?pageToken` over the queue. `corvus-bytes-to-bytes` self-audit: zero string realisations in the token/page/pager;
+`baseWorkflowId` reifies only at the per-backend leaves above. Verified: warning-free slnx (0W/0E); InMemory + Sqlite
+conformance (7 each), server API (6), JS (74) — green.

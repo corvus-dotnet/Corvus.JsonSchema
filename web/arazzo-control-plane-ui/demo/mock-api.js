@@ -1430,13 +1430,25 @@ export function createMockControlPlane(options = {}) {
     return null;
   }
 
+  // Keyset pagination over (createdAt, id) oldest-first plus the status / base-workflow filters — the same contract the
+  // durable store implements: filter, order, seek strictly past the opaque token, take `limit`, emit a nextPageToken.
   function listAccessRequests(params) {
     const status = params.get('status');
     const base = params.get('baseWorkflowId');
-    let rows = [...accessRequests].sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt));
+    const limit = Math.max(1, Number(params.get('limit')) || 50);
+    let rows = [...accessRequests].sort((a, b) => (Date.parse(a.createdAt) - Date.parse(b.createdAt)) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
     if (base) rows = rows.filter((r) => r.baseWorkflowId === base);
     if (status) rows = rows.filter((r) => r.status === status);
-    return json({ accessRequests: rows });
+    const tok = params.get('pageToken') ? atobSafe(params.get('pageToken')).split(' ') : null;
+    const afterTicks = tok ? Number(tok[0]) : null;
+    const afterId = tok ? tok[1] : null;
+    const start = tok ? rows.findIndex((r) => { const t = Date.parse(r.createdAt); return t > afterTicks || (t === afterTicks && r.id > afterId); }) : 0;
+    const from = start < 0 ? rows.length : start;
+    const pageItems = rows.slice(from, from + limit);
+    const more = from + limit < rows.length;
+    const last = pageItems[pageItems.length - 1];
+    const nextPageToken = more && last ? btoaSafe(`${Date.parse(last.createdAt)} ${last.id}`) : null;
+    return json({ accessRequests: pageItems, nextPageToken });
   }
 
   function submitAccessRequest(body) {

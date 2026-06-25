@@ -196,9 +196,14 @@ public sealed class RedisAccessRequestStore : IAccessRequestStore, IAsyncDisposa
             return false;
         }
 
-        if (query.BaseWorkflowId is { } baseWorkflowId && !string.Equals(request.BaseWorkflowIdValue, baseWorkflowId, StringComparison.Ordinal))
+        if (query.BaseWorkflowId.IsNotUndefined())
         {
-            return false;
+            using UnescapedUtf8JsonString filterBaseWorkflowId = query.BaseWorkflowId.GetUtf8String();
+            using UnescapedUtf8JsonString rowBaseWorkflowId = request.BaseWorkflowId.GetUtf8String();
+            if (!rowBaseWorkflowId.Span.SequenceEqual(filterBaseWorkflowId.Span))
+            {
+                return false;
+            }
         }
 
         if (query.SubjectClaimType is { } subjectType && !string.Equals(request.SubjectClaimTypeValue, subjectType, StringComparison.Ordinal))

@@ -120,7 +120,13 @@ class ArazzoAccessRequests extends ArazzoElement {
     this.renderBody();
     try {
       const query = this.view === 'queue' ? { baseWorkflowId: this.baseWorkflowId } : {};
-      const { accessRequests } = await client.listAccessRequests(query);
+      // Accumulate every keyset page (the panel lists and filters the whole queue client-side, so it must walk past the
+      // server's first page rather than silently stop at it).
+      const accessRequests = [];
+      for await (const page of client.listAccessRequestsPaged(query)) {
+        if (seq !== this._reqSeq) return;
+        accessRequests.push(...page.accessRequests);
+      }
       if (seq !== this._reqSeq) return;
       this._requests = accessRequests;
       this._loading = false;

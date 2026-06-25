@@ -112,7 +112,9 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
                 return ListAccessRequestsResult.Forbidden(NotAdministratorProblem(baseWorkflowId), workspace);
             }
 
-            query = new AccessRequestQuery(status, baseWorkflowId);
+            // Carry the base workflow id to the store as its request JSON value (reified only inside the store at its own
+            // leaf — a DB parameter / a span compare); the string above is the handler's own leaf for the admin check + error.
+            query = new AccessRequestQuery(status, JsonString.From(parameters.BaseWorkflowId));
         }
         else
         {
@@ -123,20 +125,28 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
                 return ListAccessRequestsResult.Ok(EmptyList(), workspace);
             }
 
-            query = new AccessRequestQuery(status, null, this.subjectClaimType, subject);
+            query = new AccessRequestQuery(status, default, this.subjectClaimType, subject);
         }
 
-        using PooledDocumentList<AccessRequest> list = await this.requests.ListAsync(query, cancellationToken).ConfigureAwait(false);
+        // An absent limit passes 0 — the contract's "use the store's default page size" sentinel; the page token flows to
+        // the store as its JSON value (From() rewraps parameters.PageToken — free, no managed string), decoded
+        // bytes-native into one keyset page (bounded — never the whole queue).
+        int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 0;
+        JsonString pageToken = JsonString.From(parameters.PageToken);
+        using AccessRequestPage page = await this.requests.ListAsync(query, limit, pageToken, cancellationToken).ConfigureAwait(false);
 
         // Each item is a whole-document AccessRequestView.From wrap (the congruent projection ToView uses), so it
         // references its pooled document; the body is validated/serialized after this handler returns, so hand the
-        // documents to the workspace (it disposes them at request end; `using list` then only returns the batch's
-        // backing array). The list body is built closure-free and consumed in place.
-        list.TransferOwnershipTo(workspace);
-        IReadOnlyList<AccessRequest> requestList = list;
+        // documents to the workspace (it disposes them at request end; `using page` then only returns the batch's backing
+        // array + the token buffer). The list body is built closure-free; the continuation token is copied verbatim from
+        // the page's UTF-8 (the Ok materialisation copies the scalar before dispose).
+        page.Requests.TransferOwnershipTo(workspace);
+        IReadOnlyList<AccessRequest> requestList = page.Requests;
+        ReadOnlyMemory<byte> nextPageToken = page.NextPageToken;
         Models.AccessRequestList.Source<IReadOnlyList<AccessRequest>> body = Models.AccessRequestList.Build(
             in requestList,
-            accessRequests: Models.AccessRequestList.AccessRequestViewArray.Build(in requestList, BuildAccessRequestViews));
+            accessRequests: Models.AccessRequestList.AccessRequestViewArray.Build(in requestList, BuildAccessRequestViews),
+            nextPageToken: nextPageToken.IsEmpty ? default : (Models.JsonString.Source)nextPageToken.Span);
         return ListAccessRequestsResult.Ok(body, workspace);
     }
 

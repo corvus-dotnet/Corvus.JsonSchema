@@ -86,14 +86,20 @@ public abstract class AccessRequestStoreConformance
         string bobReconcile = await this.CreateAsync(store, "nightly-reconcile", "bob");
         string aliceOnboard = await this.CreateAsync(store, "onboard-customer", "alice");
 
-        // By workflow.
-        (await this.IdsAsync(store, new AccessRequestQuery(BaseWorkflowId: "nightly-reconcile"))).ShouldBe([aliceReconcile, bobReconcile], ignoreOrder: true);
+        // By workflow (baseWorkflowId carried as its request JSON value, reified at the store's own leaf).
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> bw = AsJsonString("nightly-reconcile"))
+        {
+            (await this.IdsAsync(store, new AccessRequestQuery(BaseWorkflowId: bw.RootElement))).ShouldBe([aliceReconcile, bobReconcile], ignoreOrder: true);
+        }
 
         // By subject (alice's requests across workflows).
         (await this.IdsAsync(store, new AccessRequestQuery(SubjectClaimType: "sub", SubjectClaimValue: "alice"))).ShouldBe([aliceReconcile, aliceOnboard], ignoreOrder: true);
 
         // By workflow AND subject.
-        (await this.IdsAsync(store, new AccessRequestQuery(BaseWorkflowId: "nightly-reconcile", SubjectClaimType: "sub", SubjectClaimValue: "bob"))).ShouldBe([bobReconcile]);
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> bw = AsJsonString("nightly-reconcile"))
+        {
+            (await this.IdsAsync(store, new AccessRequestQuery(BaseWorkflowId: bw.RootElement, SubjectClaimType: "sub", SubjectClaimValue: "bob"))).ShouldBe([bobReconcile]);
+        }
 
         // By status: all are Pending until decided; deny one and filter.
         await store.DecideAsync(bobReconcile, new AccessRequestDecision(AccessRequestStatus.Denied), WorkflowEtag.None, "admin", default);
@@ -172,6 +178,66 @@ public abstract class AccessRequestStoreConformance
         using ParsedJsonDocument<AccessRequest>? overridden = await store.DecideAsync(id, new AccessRequestDecision(AccessRequestStatus.Withdrawn), WorkflowEtag.None, "ops", default);
         overridden!.RootElement.StatusValue.ShouldBe("Withdrawn");
     }
+
+    [TestMethod]
+    public async Task Listing_keyset_pages_oldest_first_without_gaps_or_duplicates()
+    {
+        var clock = new StepClock(new DateTimeOffset(2026, 6, 1, 9, 0, 0, TimeSpan.Zero));
+        IAccessRequestStore store = await this.NewStoreAsync(clock);
+
+        // Distinct createdAt per request (the clock steps), so (createdAt, id) order is creation order.
+        var expected = new List<string>();
+        for (int i = 0; i < 8; i++)
+        {
+            expected.Add(await this.CreateAsync(store, "w", $"user-{i}"));
+            clock.Advance(TimeSpan.FromSeconds(1));
+        }
+
+        // Walk every page via the continuation token with a small limit; collect the ids in page order. The token is
+        // round-tripped through the JsonString seam exactly as the HTTP layer does.
+        var seen = new List<string>();
+        byte[]? token = null;
+        int pages = 0;
+        do
+        {
+            using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString>? tokenDoc = token is null ? null : AsJsonString(token);
+            using AccessRequestPage page = await store.ListAsync(default, 3, tokenDoc?.RootElement ?? default, default);
+            page.Requests.Count.ShouldBeLessThanOrEqualTo(3);
+            foreach (AccessRequest request in page.Requests)
+            {
+                seen.Add(request.IdValue);
+            }
+
+            token = page.NextPageToken.IsEmpty ? null : page.NextPageToken.ToArray();
+            pages++;
+        }
+        while (token is not null);
+
+        // 8 items, 3 per page → 3 pages; oldest-first, no duplicates or gaps across boundaries.
+        pages.ShouldBe(3);
+        seen.ShouldBe(expected);
+
+        // A malformed token is rejected (rather than silently restarting from the first page).
+        await Should.ThrowAsync<FormatException>(async () =>
+        {
+            using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> badToken = AsJsonString("this~is~not~a~token"u8);
+            using AccessRequestPage bad = await store.ListAsync(default, 3, badToken.RootElement, default);
+        });
+    }
+
+    // Wraps a value as the JSON string a request carries it as — the conformance carries a filter value as the request
+    // JSON the store reifies at its own leaf, and round-trips a page token (the store's emitted bytes) the same way.
+    private static ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> AsJsonString(ReadOnlySpan<byte> valueUtf8)
+    {
+        byte[] quoted = new byte[valueUtf8.Length + 2];
+        quoted[0] = (byte)'"';
+        valueUtf8.CopyTo(quoted.AsSpan(1));
+        quoted[^1] = (byte)'"';
+        return ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString>.Parse(quoted);
+    }
+
+    private static ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> AsJsonString(string value)
+        => AsJsonString(System.Text.Encoding.UTF8.GetBytes(value));
 
     private async ValueTask<IAccessRequestStore> NewStoreAsync(TimeProvider? timeProvider = null)
     {

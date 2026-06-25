@@ -31,6 +31,16 @@ public readonly struct ListAccessRequestsRequest : IApiRequest<ListAccessRequest
     /// </summary>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString BaseWorkflowId { get; init; }
 
+    /// <summary>
+    /// Gets the limit parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit Limit { get; init; }
+
+    /// <summary>
+    /// Gets the pageToken parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString PageToken { get; init; }
+
     /// <inheritdoc/>
     public static ReadOnlySpan<byte> PathTemplateUtf8 => "/accessRequests"u8;
 
@@ -103,6 +113,45 @@ public readonly struct ListAccessRequestsRequest : IApiRequest<ListAccessRequest
             first = false;
         }
 
+        if (this.Limit.IsNotUndefined())
+        {
+            if (!first)
+            {
+                writer.Write("&"u8);
+                totalWritten++;
+            }
+
+            writer.Write("limit="u8);
+            totalWritten += 6;
+            Span<byte> bufLimit = stackalloc byte[11];
+            this.Limit.TryFormat(bufLimit, out int bwLimit, default, default);
+            writer.Write(bufLimit[..bwLimit]);
+            totalWritten += bwLimit;
+
+            first = false;
+        }
+
+        if (this.PageToken.IsNotUndefined())
+        {
+            if (!first)
+            {
+                writer.Write("&"u8);
+                totalWritten++;
+            }
+
+            writer.Write("pageToken="u8);
+            totalWritten += 10;
+            using UnescapedUtf8JsonString utf8PageToken = ((JsonElement)this.PageToken).GetUtf8String();
+            Span<byte> escPageToken = stackalloc byte[utf8PageToken.Span.Length * 3];
+            if (Utf8Uri.TryEscapeDataString(utf8PageToken.Span, escPageToken, out int ewPageToken))
+            {
+                writer.Write(escPageToken[..ewPageToken]);
+                totalWritten += ewPageToken;
+            }
+
+            first = false;
+        }
+
         return totalWritten;
     }
 
@@ -147,6 +196,24 @@ public readonly struct ListAccessRequestsRequest : IApiRequest<ListAccessRequest
                 }
             }
 
+            if (this.Limit.IsNotUndefined())
+            {
+                using JsonSchemaResultsCollector collectorLimit = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!this.Limit.EvaluateSchema(collectorLimit))
+                {
+                    ThrowHelper.ThrowRequestParameterValidationFailed("limit", SchemaValidationDetail.FormatResults(collectorLimit));
+                }
+            }
+
+            if (this.PageToken.IsNotUndefined())
+            {
+                using JsonSchemaResultsCollector collectorPageToken = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!this.PageToken.EvaluateSchema(collectorPageToken))
+                {
+                    ThrowHelper.ThrowRequestParameterValidationFailed("pageToken", SchemaValidationDetail.FormatResults(collectorPageToken));
+                }
+            }
+
         }
         else
         {
@@ -158,6 +225,16 @@ public readonly struct ListAccessRequestsRequest : IApiRequest<ListAccessRequest
             if (this.BaseWorkflowId.IsNotUndefined() && !this.BaseWorkflowId.EvaluateSchema())
             {
                 ThrowHelper.ThrowRequestParameterValidationFailed("baseWorkflowId");
+            }
+
+            if (this.Limit.IsNotUndefined() && !this.Limit.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestParameterValidationFailed("limit");
+            }
+
+            if (this.PageToken.IsNotUndefined() && !this.PageToken.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestParameterValidationFailed("pageToken");
             }
 
         }
