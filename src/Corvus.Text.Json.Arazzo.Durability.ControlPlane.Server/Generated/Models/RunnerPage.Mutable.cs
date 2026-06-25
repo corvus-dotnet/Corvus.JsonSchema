@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The workflow runners currently registered with the control plane.
+/// A keyset page of the workflow runners currently registered with the control plane, ordered by runnerId.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -266,6 +266,27 @@ public readonly partial struct RunnerPage
         }
 
         /// <summary>
+        /// Gets the (optional) <c>nextPageToken</c> property.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// An opaque token to fetch the next page, or null/absent if this is the last page.
+        /// </para>
+        /// </remarks>
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable NextPageToken
+        {
+            get
+            {
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NextPageTokenUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable value))
+                {
+                    return value;
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
         /// Gets the <c>runners</c> property.
         /// </summary>
         /// <remarks>
@@ -323,6 +344,51 @@ public readonly partial struct RunnerPage
             where T : struct, IJsonElement
         {
             return JsonElementHelpers.DeepEquals(this, other);
+        }
+
+        /// <summary>
+        /// Set the <c>nextPageToken</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetNextPageToken(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.NextPageTokenUtf8);
+                _documentVersion = _parent.Version;
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NextPageTokenUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NextPageToken, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Remove the <c>nextPageToken</c> property, if present.
+        /// </summary>
+        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
+        public bool RemoveNextPageToken()
+        {
+            CheckValidInstance();
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.NextPageTokenUtf8);
+            _documentVersion = _parent.Version;
+            return result;
         }
 
         /// <summary>
@@ -721,6 +787,7 @@ public readonly partial struct RunnerPage
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.Source _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg2;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -735,9 +802,10 @@ public readonly partial struct RunnerPage
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.Source arg1)
+        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2)
         {
             _createArg1 = arg1;
+            _createArg2 = arg2;
             _kind = Kind.Create;
         }
 
@@ -758,7 +826,7 @@ public readonly partial struct RunnerPage
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -783,7 +851,7 @@ public readonly partial struct RunnerPage
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -808,7 +876,7 @@ public readonly partial struct RunnerPage
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -833,7 +901,7 @@ public readonly partial struct RunnerPage
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -858,7 +926,7 @@ public readonly partial struct RunnerPage
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -887,6 +955,7 @@ public readonly partial struct RunnerPage
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.Source<TContext> _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg2;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -899,10 +968,11 @@ public readonly partial struct RunnerPage
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.Source<TContext> arg1)
+        internal Source(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.Source<TContext> arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2)
         {
             _context = context;
             _createArg1 = arg1;
+            _createArg2 = arg2;
             _kind = Kind.Create;
         }
 
@@ -921,7 +991,7 @@ public readonly partial struct RunnerPage
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_context, _createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -946,7 +1016,7 @@ public readonly partial struct RunnerPage
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_context, _createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -971,7 +1041,7 @@ public readonly partial struct RunnerPage
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -996,7 +1066,7 @@ public readonly partial struct RunnerPage
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1021,7 +1091,7 @@ public readonly partial struct RunnerPage
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_context, _createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -1053,17 +1123,21 @@ public readonly partial struct RunnerPage
         /// <summary>
         /// Creates an instance of a <see cref="RunnerPage"/>.
         /// </summary>
-        internal static void Create(ref ComplexValueBuilder builder, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.Source runners)
+        internal static void Create(
+            ref ComplexValueBuilder builder,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.Source runners,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source nextPageToken = default)
         {
             runners.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Runners, ref builder);
+            nextPageToken.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NextPageToken, ref builder);
         }
 
         /// <summary>
         /// Creates an instance of a <see cref="RunnerPage"/>.
         /// </summary>
-        public void Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.Source runners)
+        public void Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.Source runners, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source nextPageToken = default)
         {
-            Create(ref _builder, runners);
+            Create(ref _builder, runners, nextPageToken);
         }
 
         /// <summary>
@@ -1072,23 +1146,28 @@ public readonly partial struct RunnerPage
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.Source<TContext> runners)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.Source<TContext> runners,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source nextPageToken = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
         {
             runners.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Runners, ref builder);
+            nextPageToken.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NextPageToken, ref builder);
         }
 
         /// <summary>
         /// Creates an instance of a <see cref="RunnerPage"/>.
         /// </summary>
-        public void Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.Source<TContext> runners)
+        public void Create<TContext>(
+            in TContext context,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.Source<TContext> runners,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source nextPageToken = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
         {
-            Create(context, ref _builder, runners);
+            Create(context, ref _builder, runners, nextPageToken);
         }
 
         /// <summary>
@@ -1187,11 +1266,12 @@ public readonly partial struct RunnerPage
         /// Builds the object value directly from its captured property values into the given complex value builder.
         /// </summary>
         /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.Source arg1, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, ref ComplexValueBuilder o)
         {
             o.StartObject();
-            Create(ref o, arg1);
+            Create(ref o, arg1, arg2);
             o.EndObject();
         }
 
@@ -1201,14 +1281,15 @@ public readonly partial struct RunnerPage
         /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.Source<TContext> arg1, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.Source<TContext> arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
         {
             o.StartObject();
-            Create(context, ref o, arg1);
+            Create(context, ref o, arg1, arg2);
             o.EndObject();
         }
     }
@@ -1246,10 +1327,11 @@ public readonly partial struct RunnerPage
     /// Build an instance of the value directly from its property values.
     /// </summary>
     /// <param name="runners">The value of the <c>"runners"</c> property.</param>
+    /// <param name="nextPageToken">The value of the <c>"nextPageToken"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.Source runners)
+    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.Source runners, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source nextPageToken = default)
     {
-        return new Source(runners);
+        return new Source(runners, nextPageToken);
     }
 
     /// <summary>
@@ -1258,13 +1340,14 @@ public readonly partial struct RunnerPage
     /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
     /// <param name="context">The context to pass to the builder.</param>
     /// <param name="runners">The value of the <c>"runners"</c> property.</param>
+    /// <param name="nextPageToken">The value of the <c>"nextPageToken"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.Source<TContext> runners)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.Source<TContext> runners, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source nextPageToken = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
     {
-        return new Source<TContext>(context, runners);
+        return new Source<TContext>(context, runners, nextPageToken);
     }
 
     /// <summary>
@@ -1361,15 +1444,16 @@ public readonly partial struct RunnerPage
     /// </summary>
     /// <param name="workspace">The JSON workspace.</param>
     /// <param name="runners">The value of the property.</param>
+    /// <param name="nextPageToken">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.Source runners, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.Source runners, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source nextPageToken = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(runners);
+        ovb.Create(runners, nextPageToken);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1383,9 +1467,10 @@ public readonly partial struct RunnerPage
     /// <param name="workspace">The JSON workspace.</param>
     /// <param name="context">The value of the property.</param>
     /// <param name="runners">The value of the property.</param>
+    /// <param name="nextPageToken">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.Source<TContext> runners, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerPage.RunnerArray.Source<TContext> runners, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source nextPageToken = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1394,7 +1479,7 @@ public readonly partial struct RunnerPage
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(context, runners);
+        ovb.Create(context, runners, nextPageToken);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);

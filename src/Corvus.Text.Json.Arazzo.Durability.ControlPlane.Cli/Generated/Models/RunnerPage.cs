@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The workflow runners currently registered with the control plane.
+/// A keyset page of the workflow runners currently registered with the control plane, ordered by runnerId.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -156,6 +156,27 @@ public readonly partial struct RunnerPage
     {
         CheckValidInstance();
         return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>nextPageToken</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// An opaque token to fetch the next page, or null/absent if this is the last page.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NextPageToken
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NextPageTokenUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
+            {
+                return value;
+            }
+
+            return default;
+        }
     }
 
     /// <summary>
@@ -623,9 +644,19 @@ public readonly partial struct RunnerPage
     public static class JsonPropertyNames
     {
         /// <summary>
+        /// Gets the JSON property name for <see cref="NextPageToken"/>.
+        /// </summary>
+        public const string NextPageToken = "nextPageToken";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Runners"/>.
         /// </summary>
         public const string Runners = "runners";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="NextPageToken"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> NextPageTokenUtf8 => "nextPageToken"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Runners"/>.
@@ -639,6 +670,11 @@ public readonly partial struct RunnerPage
     private static class JsonPropertyNamesEscaped
     {
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="NextPageToken"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> NextPageToken => "nextPageToken"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Runners"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Runners => "runners"u8;
@@ -650,6 +686,11 @@ public readonly partial struct RunnerPage
     /// </summary>
     private static class JsonPropertyNamesPrebaked
     {
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="NextPageToken"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> NextPageToken => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x65, 0x78, 0x74, 0x50, 0x61, 0x67, 0x65, 0x54, 0x6F, 0x6B, 0x65, 0x6E, 0x22];
+
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Runners"/>.
         /// </summary>

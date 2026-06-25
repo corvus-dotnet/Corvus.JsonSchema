@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The workflow runners currently registered with the control plane.
+/// A keyset page of the workflow runners currently registered with the control plane, ordered by runnerId.
 /// </para>
 /// </remarks>
 public readonly partial struct RunnerPage

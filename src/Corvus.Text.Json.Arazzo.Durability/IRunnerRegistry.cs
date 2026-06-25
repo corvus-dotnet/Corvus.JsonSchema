@@ -37,11 +37,29 @@ public interface IRunnerRegistry
     ValueTask<bool> HeartbeatAsync(string runnerId, DateTimeOffset at, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Lists the currently-registered runners.
+    /// Lists the currently-registered runners. The full read used by hosting/scan paths and by the default keyset pager;
+    /// the paged <see cref="ListAsync(int, JsonString, CancellationToken)"/> is the API list seam.
     /// </summary>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A snapshot of the registered runners. Each value is detached from any store-side buffer.</returns>
     ValueTask<IReadOnlyList<RunnerRegistration>> ListAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Lists runners as a keyset page: runners ordered by <c>runnerId</c>, bounded to <paramref name="limit"/>, resuming
+    /// strictly after <paramref name="pageToken"/>. The default implementation pages over
+    /// <see cref="ListAsync(CancellationToken)"/> in memory; a backend overrides it with a native keyset query so the read
+    /// itself is bounded.
+    /// </summary>
+    /// <param name="limit">The maximum runners to return (a non-positive value uses the store's default page size).</param>
+    /// <param name="pageToken">The opaque token (its JSON value) from a previous page's <see cref="RunnerRegistryPage.NextPageToken"/>, or undefined for the first page; decoded bytes-native from its UTF-8.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>One keyset page, as a disposable the caller must dispose.</returns>
+    /// <exception cref="FormatException"><paramref name="pageToken"/> is not a valid continuation token.</exception>
+    async ValueTask<RunnerRegistryPage> ListAsync(int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        IReadOnlyList<RunnerRegistration> all = await this.ListAsync(cancellationToken).ConfigureAwait(false);
+        return RunnerRegistryPaging.PageInMemory(all, limit, pageToken);
+    }
 
     /// <summary>
     /// Determines whether any registered runner currently hosts (with the version loaded) the given catalog version.

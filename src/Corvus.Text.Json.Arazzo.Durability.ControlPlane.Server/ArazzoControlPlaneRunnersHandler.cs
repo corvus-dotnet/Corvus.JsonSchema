@@ -26,15 +26,23 @@ public sealed class ArazzoControlPlaneRunnersHandler : IApiRunnersHandler
     /// <inheritdoc/>
     public async ValueTask<ListRunnersResult> HandleListRunnersAsync(ListRunnersParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<RunnerRegistration> registered = await this.runners.ListAsync(cancellationToken).ConfigureAwait(false);
+        // An absent limit passes 0 — the contract's "use the store's default page size" sentinel; the page token flows to
+        // the store as its JSON value (From() rewraps parameters.PageToken — free, no managed string), decoded
+        // bytes-native into one keyset page (bounded — never all runners).
+        int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 0;
+        JsonString pageToken = JsonString.From(parameters.PageToken);
+        using RunnerRegistryPage page = await this.runners.ListAsync(limit, pageToken, cancellationToken).ConfigureAwait(false);
 
         // The persisted RunnerRegistration and the API Runner share the same JSON shape, so each runner is a free
-        // whole-document re-wrap (Models.Runner.From) — no per-field projection. The page is built closure-free (the
-        // registration list threaded as the context through the static BuildRunners) and consumed in place
-        // (RunnerPage.Build is ref-scoped to its `in` argument, so it cannot be returned from a helper).
+        // whole-document re-wrap (Models.Runner.From) — no per-field projection. The registrations are detached (no pooled
+        // buffer), so the body's From-wraps keep them GC-reachable through the synchronous Ok materialisation — no ownership
+        // transfer; `using page` only returns the token buffer (the continuation token is copied into the response by Ok).
+        IReadOnlyList<RunnerRegistration> registered = page.Runners;
+        ReadOnlyMemory<byte> nextPageToken = page.NextPageToken;
         Models.RunnerPage.Source<IReadOnlyList<RunnerRegistration>> body = Models.RunnerPage.Build(
             in registered,
-            runners: Models.RunnerPage.RunnerArray.Build(in registered, BuildRunners));
+            runners: Models.RunnerPage.RunnerArray.Build(in registered, BuildRunners),
+            nextPageToken: nextPageToken.IsEmpty ? default : (Models.JsonString.Source)nextPageToken.Span);
         return ListRunnersResult.Ok(body, workspace);
     }
 

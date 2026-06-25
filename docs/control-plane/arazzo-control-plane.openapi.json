@@ -254,7 +254,11 @@
         ],
         "tags": ["runners"],
         "summary": "List runners",
-        "description": "Returns the workflow runners currently registered with the control plane: each runner's identity, liveness timestamps, capacity, supported transports, and the catalog versions it hosts. Runners self-register and heartbeat directly against the durability layer; this endpoint reads that registry for observability.",
+        "description": "Returns a keyset page of the workflow runners currently registered with the control plane (ordered by runnerId): each runner's identity, liveness timestamps, capacity, supported transports, and the catalog versions it hosts. Runners self-register and heartbeat directly against the durability layer; this endpoint reads that registry for observability. Bounded by limit and resumable via the page token.",
+        "parameters": [
+          { "$ref": "#/components/parameters/LimitQuery" },
+          { "$ref": "#/components/parameters/PageTokenQuery" }
+        ],
         "responses": {
           "200": {
             "description": "The registered runners.",
@@ -2474,9 +2478,10 @@
       },
       "RunnerPage": {
         "type": "object",
-        "description": "The workflow runners currently registered with the control plane.",
+        "description": "A keyset page of the workflow runners currently registered with the control plane, ordered by runnerId.",
         "properties": {
-          "runners": { "type": "array", "items": { "$ref": "#/components/schemas/Runner" } }
+          "runners": { "type": "array", "items": { "$ref": "#/components/schemas/Runner" } },
+          "nextPageToken": { "type": "string", "description": "An opaque token to fetch the next page, or null/absent if this is the last page." }
         },
         "required": ["runners"]
       },

@@ -725,6 +725,46 @@ public sealed class ControlPlaneServerTests
         await app.StopAsync();
     }
 
+    [TestMethod]
+    public async Task ListRunners_keyset_pages_over_http()
+    {
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock);
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(clock), runStore, "ops");
+
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        var runnerRegistry = new InMemoryRunnerRegistry();
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open);
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+
+        await runnerRegistry.RegisterAsync(Runner("flow", 1, "runner-a"), default);
+        await runnerRegistry.RegisterAsync(Runner("flow", 1, "runner-b"), default);
+        await runnerRegistry.RegisterAsync(Runner("flow", 1, "runner-c"), default);
+
+        // First page (limit 2): the two lowest runnerIds in keyset order plus a continuation token.
+        string token;
+        using (Stj.JsonDocument page1 = await ReadJsonAsync(await client.GetAsync("/runners?limit=2")))
+        {
+            page1.RootElement.GetProperty("runners").EnumerateArray().Select(r => r.GetProperty("runnerId").GetString()).ShouldBe(["runner-a", "runner-b"]);
+            token = page1.RootElement.GetProperty("nextPageToken").GetString()!;
+            token.ShouldNotBeNullOrEmpty();
+        }
+
+        // Following the token returns the remainder; the last page omits nextPageToken.
+        using (Stj.JsonDocument page2 = await ReadJsonAsync(await client.GetAsync($"/runners?limit=2&pageToken={token}")))
+        {
+            page2.RootElement.GetProperty("runners").EnumerateArray().Select(r => r.GetProperty("runnerId").GetString()).ShouldBe(["runner-c"]);
+            page2.RootElement.TryGetProperty("nextPageToken", out _).ShouldBeFalse();
+        }
+
+        await app.StopAsync();
+    }
+
     private static RunnerRegistration Runner(string baseWorkflowId, int versionNumber, string runnerId = "r1")
     {
         var buffer = new System.Buffers.ArrayBufferWriter<byte>();
