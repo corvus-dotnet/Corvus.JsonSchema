@@ -72,6 +72,32 @@ do not pile up backgrounded builds (a prior session accumulated 77 MSBuild nodes
 3. **Remaining stores:** administrator, access-request (priority — unbounded queue), runner registry.
 4. **UI:** panels → server-paged search + Load-more; grant scope-picker → paged scope search.
 
+## Phase 0 — findings (audit complete)
+
+**Stores + backends.** Each of the four stores has **10 backend implementations** — InMemory + the 9 persistent
+(AzureStorage, Cosmos, Mongo, MySql, NatsJetStream, Postgres, Redis, SqlServer, Sqlite):
+
+| Endpoint | Store | Backends | Keyset sort key (stable order) |
+|---|---|---|---|
+| `listSecurityRules` | `ISecurityPolicyStore` | 10 | `name` (unique) |
+| `listSecurityBindings` | `ISecurityPolicyStore` | 10 | `(order, id)` — "ordered by Order then id" |
+| `listAdministrators` | `IWorkflowAdministratorStore` | 10 | `digest` (unique), scoped to the base workflow id |
+| `listAccessRequests` | `IAccessRequestStore` | 10 | `(createdAt, id)` — "oldest first"; **priority (unbounded queue)** |
+| `listRunners` | `IRunnerRegistry` | 10 | `id` |
+
+**Page size:** default 50, max 1000 (sensible; some siblings differ — runs 100, credentials 25 — pick per endpoint at
+implementation). **`listSecurityOrderings`** stays unpaged (bounded deployment config, not a store).
+
+**True scope (eyes open):** 4 stores × 10 backends = **40 backend paged-query implementations**, plus per store: the
+interface seam + InMemory impl + OpenAPI params/response + regen + handler + client iterator + container conformance
+(×10) + a §803 MemoryDiagnoser. This is a **multi-session campaign**, not a single pass — sequence it store-by-store,
+backend-by-backend, per the protocol; `IAccessRequestStore` (the growing queue) is the highest-value store after the
+two `ISecurityPolicyStore` trigger endpoints.
+
+**Phase 0: DONE.** Next: Phase 1 foundation for `ISecurityPolicyStore` (`listSecurityRules` first) — ground the
+already-paged `listCredentials` sibling, baseline-benchmark the current unpaged projection, post the ownership ledger,
+then implement the paged seam + InMemory impl + OpenAPI + handler + client.
+
 ## Matrix — Part D (measured before→after)
 
 _(empty — fill per row as work lands; a row is "done" only when a measured before→after + paging conformance appears
