@@ -1,4 +1,4 @@
 node_modules/
-bench-gen/
+bench-gen*/
 jsonschema-benchmark/
 dist/

@@ -1,0 +1,46 @@
+
+# Controlled A/B: corvus OLD vs NEW (same run). ns/instance, median of 7 passes. Lower better.
+
+schema                  inst      old      new      ajv   NEW/OLD   NEW vs ajv
+------------------------------------------------------------------------------
+ansible-meta             333    4.25us   4.27us   3.29us     1.00x      0.77x
+aws-cdk                  483     242ns    249ns     84ns     0.97x      0.34x
+babelrc                  794     133ns    234ns    504ns     0.57x      2.16x
+clang-format             133    8.89us   9.62us  10.72us     0.92x      1.11x
+cmake-presets            967   12.25us  65.77us  13.90us     0.19x      0.21x
+code-climate            2484      93ns    104ns    192ns     0.90x      1.86x
+cql2                     109    4.63us  29.06us   5.88us     0.16x      0.20x
+cspell                   981    2.10us   2.69us   3.15us     0.78x      1.17x
+cypress                  981     162ns    636ns   2.83us     0.25x      4.44x
+deno                     987     592ns    934ns   1.37us     0.63x      1.47x
+dependabot               967    1.07us   1.12us    410ns     0.95x      0.36x
+draft-04                 563   18.65us  31.05us  26.89us     0.60x      0.87x
+fabric-mod               911    1.47us   2.25us   1.75us     0.65x      0.78x
+geojson                  500   46.44us  45.19us 147.58us     1.03x      3.27x
+gitpod-configuration     986     829ns   1.05us    614ns     0.79x      0.58x
+helm-chart-lock         3888     410ns    506ns    131ns     0.81x      0.26x
+importmap                964     372ns    541ns    198ns     0.69x      0.37x
+jasmine                  980     172ns    235ns    278ns     0.73x      1.18x
+jsconfig                 981     952ns   1.61us   5.26us     0.59x      3.26x
+jshintrc                 966    1.28us   2.16us   4.99us     0.59x      2.31x
+krakend                   47   20.92us  25.03us     -       0.84x           
+lazygit                  280    2.68us   3.52us   4.24us     0.76x      1.21x
+lerna                    985     159ns    339ns    482ns     0.47x      1.42x
+nest-cli                1025     661ns    915ns    424ns     0.72x      0.46x
+omnisharp                987     397ns    884ns   1.92us     0.45x      2.17x
+openapi                  107   11.71us  36.37us  28.31us     0.32x      0.78x
+pre-commit-hooks         985    4.44us   5.42us   3.16us     0.82x      0.58x
+pulumi                  3807     534ns    798ns    409ns     0.67x      0.51x
+semantic-release         794     204ns    231ns    190ns     0.88x      0.82x
+stale                    961     305ns    429ns    149ns     0.71x      0.35x
+stylecop                 983    1.04us   1.25us    773ns     0.83x      0.62x
+tmuxinator               382     638ns    772ns    642ns     0.83x      0.83x
+ui5                      942    2.47us   3.42us   2.13us     0.72x      0.62x
+ui5-manifest             611   11.57us  15.78us     -       0.73x           
+unreal-engine-uproject   859    4.05us   4.26us   4.99us     0.95x      1.17x
+vercel                   710    2.59us   2.77us   3.46us     0.93x      1.25x
+yamllint                 984      45ns     29ns     24ns     1.58x      0.83x
+
+# Geomean ns/instance:   old 1222   new 1820   ajv 1376
+# Geomean NEW/OLD speedup (per-schema, same run): 0.672x   (>1 = refactor faster)
+# Per-schema: NEW faster on 1, OLD faster on 34, ~tie on 2 (of 37)

@@ -70,3 +70,29 @@ back to non-`u` for identity-escape patterns. `format: regex` deliberately stays
 ECMA-262 validity — `\a` *is* an invalid escape there, per the test suite). After the fix corvus-ts
 validates krakend 47/47 and is the **only** validator in this set that compiles all 37 schemas, while the
 full JSON-Schema-Test-Suite still passes 7848/7849.
+
+## Optimization study — direct property access (NEGATIVE result; do not re-attempt without an A/B)
+
+We lose to Ajv on a few tiny flat objects, so we tried Ajv's strategy: replace the `Object.keys` + key
+loop with **direct property access** (`if (Object.hasOwn(o, "x")) …`), which required switching the
+evaluation tracker's property marks from an **index bitmask** to a **name `Set<string>`**. It passed the
+suite (7848/7849) but was a **33% regression** — measured by a *controlled same-run A/B*
+(`bench-compare.mjs`, median of 7 passes, old vs new vs ajv adjacently, so machine-state noise hits all
+impls equally):
+
+```
+Geomean NEW/OLD speedup: 0.672x   (>1 = faster)   →  refactor 33% SLOWER
+Per-schema: NEW faster on 1, OLD faster on 34, ~tie on 2
+Geomean ns/instance:  old 1222   new 1820   ajv 1376    →  the BASELINE already beats ajv
+```
+
+Why the baseline wins: the index bitmask `markProp(i)` = `pl |= 1<<i` is zero-allocation; a `Set<string>`
+allocates + hashes (brutal for `unevaluated*`/`allOf` tracking schemas — openapi 0.32×). And in V8,
+`Object.keys(o)` (a fast intrinsic over a stable hidden class) + interned-string identity compares beats
+N× `Object.hasOwn` + N× property accesses. Ajv's edge is its *whole* specialised machinery, not "direct
+access" in isolation.
+
+**Method lesson:** a single noisy run (a concurrent process on the box) had shown the refactor *improving*
+2,300→1,957 ns — pure machine-state noise that would have led to committing a 33% regression. Only the
+same-run A/B exposed it. **Measure optimizations with `bench-compare.mjs`, never by comparing two separate
+full runs.**
