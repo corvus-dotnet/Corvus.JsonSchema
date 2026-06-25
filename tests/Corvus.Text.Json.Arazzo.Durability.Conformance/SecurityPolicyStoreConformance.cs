@@ -108,8 +108,8 @@ public abstract class SecurityPolicyStoreConformance
         int pages = 0;
         do
         {
-            using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString>? tokenDoc = token is null ? null : AsPageToken(token);
-            using SecurityRulePage page = await store.ListRulesAsync(3, tokenDoc?.RootElement ?? default, null, default);
+            using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString>? tokenDoc = token is null ? null : AsJsonString(token);
+            using SecurityRulePage page = await store.ListRulesAsync(3, tokenDoc?.RootElement ?? default, default, default);
             page.Rules.Count.ShouldBeLessThanOrEqualTo(3);
             foreach (SecurityRuleDocument r in page.Rules)
             {
@@ -128,8 +128,8 @@ public abstract class SecurityPolicyStoreConformance
         // A malformed token is rejected (rather than silently restarting from the first page).
         await Should.ThrowAsync<FormatException>(async () =>
         {
-            using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> badToken = AsPageToken("this~is~not~a~token"u8);
-            using SecurityRulePage bad = await store.ListRulesAsync(3, badToken.RootElement, null, default);
+            using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> badToken = AsJsonString("this~is~not~a~token"u8);
+            using SecurityRulePage bad = await store.ListRulesAsync(3, badToken.RootElement, default, default);
         });
     }
 
@@ -150,19 +150,21 @@ public abstract class SecurityPolicyStoreConformance
         }
 
         // Matches the name, case-insensitively.
-        using (SecurityRulePage page = await store.ListRulesAsync(50, default, "TENANT", default))
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> q = AsJsonString("TENANT"u8))
+        using (SecurityRulePage page = await store.ListRulesAsync(50, default, q.RootElement, default))
         {
             page.Rules.Select(r => r.NameValue).ShouldBe(["tenant-scoped"]);
         }
 
         // Matches the expression, not just the name.
-        using (SecurityRulePage page = await store.ListRulesAsync(50, default, "team ==", default))
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> q = AsJsonString("team =="u8))
+        using (SecurityRulePage page = await store.ListRulesAsync(50, default, q.RootElement, default))
         {
             page.Rules.Select(r => r.NameValue).ShouldBe(["team-scoped"]);
         }
 
         // No filter returns every rule in name order.
-        using (SecurityRulePage page = await store.ListRulesAsync(50, default, null, default))
+        using (SecurityRulePage page = await store.ListRulesAsync(50, default, default, default))
         {
             page.Rules.Select(r => r.NameValue).ShouldBe(["public", "team-scoped", "tenant-scoped"]);
         }
@@ -270,6 +272,93 @@ public abstract class SecurityPolicyStoreConformance
     }
 
     [TestMethod]
+    public async Task Listing_bindings_keyset_pages_in_order_id_without_gaps_or_duplicates()
+    {
+        ISecurityPolicyStore store = await this.NewStoreAsync();
+
+        // Distinct orders plus a couple sharing an order, to exercise the id tie-breaker. Added out of order.
+        int[] orders = [30, 10, 20, 10, 40, 0, 20, 50];
+        var added = new List<(int Order, string Id)>();
+        foreach (int order in orders)
+        {
+            using ParsedJsonDocument<SecurityBindingDocument> doc = await AddBindingDraftAsync(
+                store,
+                SecurityBindingDocument.Draft("role", $"role-{added.Count}", VerbGrant.Rules("r"), VerbGrant.None, VerbGrant.None, order: order),
+                "alice",
+                default);
+            added.Add((order, doc.RootElement.IdValue));
+        }
+
+        // Walk every page via the continuation token with a small limit; collect the (order, id) in page order.
+        var seen = new List<(int Order, string Id)>();
+        byte[]? token = null;
+        int pages = 0;
+        do
+        {
+            using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString>? tokenDoc = token is null ? null : AsJsonString(token);
+            using SecurityBindingPage page = await store.ListBindingsAsync(3, tokenDoc?.RootElement ?? default, default, default);
+            page.Bindings.Count.ShouldBeLessThanOrEqualTo(3);
+            foreach (SecurityBindingDocument b in page.Bindings)
+            {
+                seen.Add((b.OrderValue, b.IdValue));
+            }
+
+            token = page.NextPageToken.IsEmpty ? null : page.NextPageToken.ToArray();
+            pages++;
+        }
+        while (token is not null);
+
+        // 8 items, 3 per page → 3 pages; the page sequence is exactly the (order asc, id ordinal asc) total order.
+        pages.ShouldBe(3);
+        seen.ShouldBe(added.OrderBy(a => a.Order).ThenBy(a => a.Id, StringComparer.Ordinal).ToList());
+
+        // A malformed token is rejected (rather than silently restarting from the first page).
+        await Should.ThrowAsync<FormatException>(async () =>
+        {
+            using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> badToken = AsJsonString("this~is~not~a~token"u8);
+            using SecurityBindingPage bad = await store.ListBindingsAsync(3, badToken.RootElement, default, default);
+        });
+    }
+
+    [TestMethod]
+    public async Task Listing_bindings_filters_by_a_case_insensitive_substring_of_claim_or_description()
+    {
+        ISecurityPolicyStore store = await this.NewStoreAsync();
+        using (await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "tenant-admin", VerbGrant.Full, VerbGrant.None, VerbGrant.None, order: 1, description: "Tenant admins."), "alice", default))
+        {
+        }
+
+        using (await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("team", "payments", VerbGrant.Full, VerbGrant.None, VerbGrant.None, order: 2), "alice", default))
+        {
+        }
+
+        using (await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("group", "ops", VerbGrant.Full, VerbGrant.None, VerbGrant.None, order: 3, description: "Operators."), "alice", default))
+        {
+        }
+
+        // Matches the claim value, case-insensitively.
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> q = AsJsonString("PAYMENTS"u8))
+        using (SecurityBindingPage page = await store.ListBindingsAsync(50, default, q.RootElement, default))
+        {
+            page.Bindings.Select(b => b.ClaimValueOrNull).ShouldBe(["payments"]);
+        }
+
+        // Matches the claim type.
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> q = AsJsonString("group"u8))
+        using (SecurityBindingPage page = await store.ListBindingsAsync(50, default, q.RootElement, default))
+        {
+            page.Bindings.Select(b => b.ClaimTypeValue).ShouldBe(["group"]);
+        }
+
+        // Matches the description, not just the claim.
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> q = AsJsonString("operators"u8))
+        using (SecurityBindingPage page = await store.ListBindingsAsync(50, default, q.RootElement, default))
+        {
+            page.Bindings.Select(b => b.ClaimValueOrNull).ShouldBe(["ops"]);
+        }
+    }
+
+    [TestMethod]
     public async Task A_binding_updates_and_deletes_under_optimistic_concurrency()
     {
         ISecurityPolicyStore store = await this.NewStoreAsync();
@@ -353,13 +442,13 @@ public abstract class SecurityPolicyStoreConformance
         return store;
     }
 
-    // Wraps an opaque page token's UTF-8 as the JSON string value a request carries it as — the conformance feeds a
-    // previous page's NextPageToken (the store's emitted bytes) back through the JsonString seam, mirroring HTTP.
-    private static ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> AsPageToken(ReadOnlySpan<byte> tokenUtf8)
+    // Wraps UTF-8 as the JSON string value a request carries it as — used both to feed a previous page's NextPageToken
+    // (the store's emitted bytes) back through the pageToken seam and to pass the q filter, mirroring HTTP.
+    private static ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> AsJsonString(ReadOnlySpan<byte> valueUtf8)
     {
-        byte[] quoted = new byte[tokenUtf8.Length + 2];
+        byte[] quoted = new byte[valueUtf8.Length + 2];
         quoted[0] = (byte)'"';
-        tokenUtf8.CopyTo(quoted.AsSpan(1));
+        valueUtf8.CopyTo(quoted.AsSpan(1));
         quoted[^1] = (byte)'"';
         return ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString>.Parse(quoted);
     }

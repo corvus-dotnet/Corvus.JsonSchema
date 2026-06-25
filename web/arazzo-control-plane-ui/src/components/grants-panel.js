@@ -30,6 +30,14 @@ async function loadAllRules(client) {
   return rules;
 }
 
+// Load every grant, accumulating each keyset page (the panel lists and filters the whole set client-side, so it must
+// walk past the server's first page rather than silently stop at it).
+async function loadAllBindings(client) {
+  const bindings = [];
+  for await (const page of client.listSecurityBindingsPaged()) bindings.push(...page.bindings);
+  return bindings;
+}
+
 const VERBS = ['read', 'write', 'purge'];
 
 const grantMode = (g) => (g?.unrestricted ? 'unrestricted' : (Array.isArray(g?.ruleNames) && g.ruleNames.length > 0 ? 'scopes' : 'denied'));
@@ -90,8 +98,8 @@ class ArazzoGrantsPanel extends ArazzoElement {
     this.renderBody();
     try {
       // Grants are required; the scope names (for the scoped-action typeahead) are best-effort.
-      const [{ bindings }, scopes] = await Promise.all([
-        client.listSecurityBindings(),
+      const [bindings, scopes] = await Promise.all([
+        loadAllBindings(client),
         loadAllRules(client).catch(() => []),
       ]);
       if (seq !== this._reqSeq) return;
@@ -232,8 +240,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
   }
 
   async reloadAndEmit() {
-    const { bindings } = await this.client.listSecurityBindings();
-    this._grants = bindings;
+    this._grants = await loadAllBindings(this.client);
     this._error = null;
     this.renderBody();
     this.emit('grants-changed', { grants: this._grants });
