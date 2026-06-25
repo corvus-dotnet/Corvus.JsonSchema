@@ -1,0 +1,10 @@
+{
+  "title": "Employee",
+  "type": "object",
+  "allOf": [
+    { "title": "Person", "type": "object", "properties": {
+        "name": { "type": "string" }, "age": { "type": "integer" } } },
+    { "title": "Worker", "type": "object", "properties": {
+        "employeeId": { "type": "string" }, "department": { "type": "string" } } }
+  ]
+}

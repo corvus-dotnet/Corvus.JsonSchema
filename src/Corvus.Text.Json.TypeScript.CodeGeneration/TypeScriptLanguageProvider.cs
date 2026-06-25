@@ -350,6 +350,288 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         }
         """;
 
+    // Model C byte-level RMW (design §13.4): a wire read-modify-write that copies unchanged
+    // bytes through and splices only the changed members' value byte-spans -- the unchanged
+    // document is never parsed or re-serialised. scanTargets locates the edited members by name
+    // (byte-only; UTF-16 offsets are the separate LSP package's concern, not the wire path);
+    // applyEditsBytes is the jsonc-parser byte splice. Ported from the benchmark-proven prototype
+    // (prototypes/rmw-scanner/{scanner,rmw}.mjs).
+    private const string RmwRuntime = """
+
+        export interface RmwEdit { offset: number; length: number; content: Uint8Array; }
+        export interface RmwTarget { name: Uint8Array; content: Uint8Array; vbs: number; vbe: number; }
+        const QUOTE = 0x22, BACKSLASH = 0x5c, COMMA = 0x2c, LBRACE = 0x7b, RBRACE = 0x7d, LBRACK = 0x5b, RBRACK = 0x5d;
+        function isWsB(b: number): boolean { return b === 0x20 || b === 0x09 || b === 0x0a || b === 0x0d; }
+        function skipStringFrom(buf: Uint8Array, i: number): number {
+          i++;
+          for (;;) {
+            const q = buf.indexOf(QUOTE, i);
+            if (q < 0) throw new Error("unterminated string");
+            let b = q - 1, bs = 0;
+            while (b >= 0 && buf[b] === BACKSLASH) { bs++; b--; }
+            i = q + 1;
+            if ((bs & 1) === 0) return i;
+          }
+        }
+        function skipContainerFrom(buf: Uint8Array, i: number, len: number): number {
+          let depth = 0;
+          for (;;) {
+            if (i >= len) throw new Error("unterminated container");
+            const b = buf[i];
+            if (b === QUOTE) { i = skipStringFrom(buf, i); continue; }
+            if (b === LBRACE || b === LBRACK) { depth++; i++; continue; }
+            if (b === RBRACE || b === RBRACK) { depth--; i++; if (depth === 0) return i; continue; }
+            i++;
+          }
+        }
+        function skipValueFrom(buf: Uint8Array, i: number, len: number): number {
+          const b = buf[i];
+          if (b === QUOTE) return skipStringFrom(buf, i);
+          if (b === LBRACE || b === LBRACK) return skipContainerFrom(buf, i, len);
+          while (i < len) { const c = buf[i]; if (c === COMMA || c === RBRACE || c === RBRACK || isWsB(c)) break; i++; }
+          return i;
+        }
+        function eqName(buf: Uint8Array, start: number, end: number, name: Uint8Array): boolean {
+          if (end - start !== name.length) return false;
+          for (let k = 0; k < name.length; k++) { if (buf[start + k] !== name[k]) return false; }
+          return true;
+        }
+        function scanTargets(buf: Uint8Array, targets: RmwTarget[]): boolean {
+          const len = buf.length;
+          let i = 0, remaining = targets.length;
+          for (let k = 0; k < targets.length; k++) { targets[k].vbs = -1; }
+          if (len >= 3 && buf[0] === 0xef && buf[1] === 0xbb && buf[2] === 0xbf) { i = 3; }
+          while (i < len && isWsB(buf[i])) { i++; }
+          i++;
+          while (remaining > 0 && i < len) {
+            while (i < len && isWsB(buf[i])) { i++; }
+            if (buf[i] === RBRACE) break;
+            const ns = i + 1;
+            i = skipStringFrom(buf, i);
+            const ne = i - 1;
+            let hit = -1;
+            for (let k = 0; k < targets.length; k++) {
+              if (targets[k].vbs === -1 && eqName(buf, ns, ne, targets[k].name)) { hit = k; break; }
+            }
+            while (i < len && isWsB(buf[i])) { i++; }
+            i++;
+            while (i < len && isWsB(buf[i])) { i++; }
+            const vs = i;
+            i = skipValueFrom(buf, i, len);
+            if (hit >= 0) { targets[hit].vbs = vs; targets[hit].vbe = i; remaining--; }
+            while (i < len && isWsB(buf[i])) { i++; }
+            if (buf[i] === COMMA) { i++; continue; }
+            if (buf[i] === RBRACE) break;
+          }
+          return remaining === 0;
+        }
+        function applyEditsBytes(buf: Uint8Array, edits: RmwEdit[]): Uint8Array {
+          edits.sort((a, b) => a.offset - b.offset);
+          let delta = 0;
+          for (let i = 0; i < edits.length; i++) { delta += edits[i].content.length - edits[i].length; }
+          const out = new Uint8Array(buf.length + delta);
+          let src = 0, dst = 0;
+          for (let i = 0; i < edits.length; i++) {
+            const e = edits[i];
+            out.set(buf.subarray(src, e.offset), dst); dst += e.offset - src;
+            out.set(e.content, dst); dst += e.content.length;
+            src = e.offset + e.length;
+          }
+          out.set(buf.subarray(src), dst);
+          return out;
+        }
+        export interface RmwMember { ns: number; ne: number; vs: number; ve: number; }
+        export interface FlatArrayOps { set?: { readonly [i: number]: unknown }; insert?: { readonly [i: number]: readonly unknown[] }; removeAt?: readonly number[]; append?: readonly unknown[]; }
+        export interface RmwArrayOps extends FlatArrayOps { rest?: FlatArrayOps; }
+        export interface ListOps<T> { set?: { readonly [i: number]: T }; insert?: { readonly [i: number]: readonly T[] }; removeAt?: readonly number[]; append?: readonly T[]; }
+        export interface RmwArrayEdit { name: Uint8Array; ops: RmwArrayOps; prefixLen: number; }
+        const RMW_EMPTY = new Uint8Array(0);
+        const RBRACKET = 0x5d;
+        function scanAll(buf: Uint8Array): { members: RmwMember[]; close: number } {
+          const len = buf.length;
+          let i = 0;
+          if (len >= 3 && buf[0] === 0xef && buf[1] === 0xbb && buf[2] === 0xbf) { i = 3; }
+          while (i < len && isWsB(buf[i])) { i++; }
+          i++;
+          const out: RmwMember[] = [];
+          for (;;) {
+            while (i < len && isWsB(buf[i])) { i++; }
+            if (buf[i] === RBRACE) break;
+            const ns = i;
+            i = skipStringFrom(buf, i);
+            const ne = i;
+            while (i < len && isWsB(buf[i])) { i++; }
+            i++;
+            while (i < len && isWsB(buf[i])) { i++; }
+            const vs = i;
+            i = skipValueFrom(buf, i, len);
+            out.push({ ns, ne, vs, ve: i });
+            while (i < len && isWsB(buf[i])) { i++; }
+            if (buf[i] === COMMA) { i++; continue; }
+            if (buf[i] === RBRACE) break;
+          }
+          return { members: out, close: i };
+        }
+        function findMember(buf: Uint8Array, members: RmwMember[], name: Uint8Array): number {
+          for (let k = 0; k < members.length; k++) {
+            const m = members[k];
+            if (eqName(buf, m.ns + 1, m.ne - 1, name)) return k;
+          }
+          return -1;
+        }
+        function memberBytes(name: Uint8Array, content: Uint8Array): Uint8Array {
+          const out = new Uint8Array(name.length + content.length + 3);
+          out[0] = 0x22; out.set(name, 1); out[name.length + 1] = 0x22; out[name.length + 2] = 0x3a; out.set(content, name.length + 3);
+          return out;
+        }
+        function concatBytes(parts: Uint8Array[]): Uint8Array {
+          let len = 0;
+          for (let k = 0; k < parts.length; k++) { len += parts[k].length; }
+          const out = new Uint8Array(len);
+          let o = 0;
+          for (let k = 0; k < parts.length; k++) { out.set(parts[k], o); o += parts[k].length; }
+          return out;
+        }
+        function rmwJoinObject(parts: Uint8Array[]): Uint8Array {
+          const seq: Uint8Array[] = [new Uint8Array([0x7b])];
+          for (let i = 0; i < parts.length; i++) { if (i > 0) seq.push(new Uint8Array([0x2c])); seq.push(parts[i]); }
+          seq.push(new Uint8Array([0x7d]));
+          return concatBytes(seq);
+        }
+        function scanArrayElements(buf: Uint8Array): { elems: Array<{ vs: number; ve: number }>; close: number } {
+          const len = buf.length;
+          let i = 0;
+          if (len >= 3 && buf[0] === 0xef && buf[1] === 0xbb && buf[2] === 0xbf) { i = 3; }
+          while (i < len && isWsB(buf[i])) { i++; }
+          i++;
+          const out: Array<{ vs: number; ve: number }> = [];
+          for (;;) {
+            while (i < len && isWsB(buf[i])) { i++; }
+            if (buf[i] === RBRACKET) break;
+            const vs = i;
+            i = skipValueFrom(buf, i, len);
+            out.push({ vs, ve: i });
+            while (i < len && isWsB(buf[i])) { i++; }
+            if (buf[i] === COMMA) { i++; continue; }
+            if (buf[i] === RBRACKET) break;
+          }
+          return { elems: out, close: i };
+        }
+        function rmwArrayBytes(source: Uint8Array, ops: RmwArrayOps, prefixLen: number): Uint8Array {
+          const enc = new TextEncoder();
+          const scan = scanArrayElements(source);
+          const elems = scan.elems;
+          const m = elems.length;
+          const edits: RmwEdit[] = [];
+          const COMMA = new Uint8Array([0x2c]);
+          const removed: boolean[] = new Array<boolean>(m).fill(false);
+          const appends: unknown[] = [];
+          const applyOps = (o: FlatArrayOps, off: number): void => {
+            if (o.set) {
+              for (const [k, v] of Object.entries(o.set)) {
+                const i = off + Number(k);
+                edits.push({ offset: elems[i].vs, length: elems[i].ve - elems[i].vs, content: enc.encode(JSON.stringify(v)) });
+              }
+            }
+            if (o.insert) {
+              for (const [k, vals] of Object.entries(o.insert)) {
+                const i = off + Number(k);
+                const parts: Uint8Array[] = [];
+                for (let v = 0; v < vals.length; v++) { parts.push(enc.encode(JSON.stringify(vals[v]))); parts.push(COMMA); }
+                edits.push({ offset: elems[i].vs, length: 0, content: concatBytes(parts) });
+              }
+            }
+            if (o.removeAt) { for (let r = 0; r < o.removeAt.length; r++) { removed[off + o.removeAt[r]] = true; } }
+            if (o.append) { for (let a = 0; a < o.append.length; a++) { appends.push(o.append[a]); } }
+          };
+          applyOps(ops, 0);
+          if (ops.rest) { applyOps(ops.rest, prefixLen); }
+          let j = 0;
+          while (j < m) {
+            if (!removed[j]) { j++; continue; }
+            let hi = j;
+            while (hi + 1 < m && removed[hi + 1]) { hi++; }
+            if (j === 0 && hi === m - 1) { edits.push({ offset: elems[0].vs, length: elems[m - 1].ve - elems[0].vs, content: RMW_EMPTY }); }
+            else if (j === 0) { edits.push({ offset: elems[0].vs, length: elems[hi + 1].vs - elems[0].vs, content: RMW_EMPTY }); }
+            else if (hi === m - 1) { edits.push({ offset: elems[j - 1].ve, length: elems[m - 1].ve - elems[j - 1].ve, content: RMW_EMPTY }); }
+            else { edits.push({ offset: elems[j - 1].ve, length: elems[hi + 1].vs - elems[j - 1].ve, content: COMMA }); }
+            j = hi + 1;
+          }
+          if (appends.length > 0) {
+            let surviving = 0;
+            for (let k = 0; k < m; k++) { if (!removed[k]) surviving++; }
+            const parts: Uint8Array[] = [];
+            for (let a = 0; a < appends.length; a++) {
+              if (a > 0 || surviving > 0) { parts.push(COMMA); }
+              parts.push(enc.encode(JSON.stringify(appends[a])));
+            }
+            edits.push({ offset: scan.close, length: 0, content: concatBytes(parts) });
+          }
+          if (edits.length === 0) return source;
+          return applyEditsBytes(source, edits);
+        }
+        function rmwUpsert(source: Uint8Array, targets: RmwTarget[]): Uint8Array {
+          if (targets.length === 0) return source;
+          scanTargets(source, targets);
+          let anyMissing = false;
+          for (let i = 0; i < targets.length; i++) { if (targets[i].vbs < 0) { anyMissing = true; break; } }
+          if (!anyMissing) {
+            const edits: RmwEdit[] = [];
+            for (let i = 0; i < targets.length; i++) { edits.push({ offset: targets[i].vbs, length: targets[i].vbe - targets[i].vbs, content: targets[i].content }); }
+            return applyEditsBytes(source, edits);
+          }
+          return rmwProduceFull(source, targets, [], []);
+        }
+        function rmwProduceFull(source: Uint8Array, setTargets: RmwTarget[], removeNames: Uint8Array[], arrayEdits: RmwArrayEdit[]): Uint8Array {
+          const scan = scanAll(source);
+          const members = scan.members;
+          const n = members.length;
+          const edits: RmwEdit[] = [];
+          const adds: RmwTarget[] = [];
+          for (let t = 0; t < setTargets.length; t++) {
+            const i = findMember(source, members, setTargets[t].name);
+            if (i < 0) { adds.push(setTargets[t]); }
+            else { edits.push({ offset: members[i].vs, length: members[i].ve - members[i].vs, content: setTargets[t].content }); }
+          }
+          for (let q = 0; q < arrayEdits.length; q++) {
+            const i = findMember(source, members, arrayEdits[q].name);
+            if (i < 0) throw new Error("patch: array member not present in source");
+            const newArr = rmwArrayBytes(source.subarray(members[i].vs, members[i].ve), arrayEdits[q].ops, arrayEdits[q].prefixLen);
+            edits.push({ offset: members[i].vs, length: members[i].ve - members[i].vs, content: newArr });
+          }
+          const removed: boolean[] = new Array<boolean>(n).fill(false);
+          for (let r = 0; r < removeNames.length; r++) {
+            const i = findMember(source, members, removeNames[r]);
+            if (i < 0) throw new Error("patch: removed member not present in source");
+            removed[i] = true;
+          }
+          const COMMA_BYTE = new Uint8Array([0x2c]);
+          let j = 0;
+          while (j < n) {
+            if (!removed[j]) { j++; continue; }
+            let hi = j;
+            while (hi + 1 < n && removed[hi + 1]) { hi++; }
+            if (j === 0 && hi === n - 1) { edits.push({ offset: members[0].ns, length: members[n - 1].ve - members[0].ns, content: RMW_EMPTY }); }
+            else if (j === 0) { edits.push({ offset: members[0].ns, length: members[hi + 1].ns - members[0].ns, content: RMW_EMPTY }); }
+            else if (hi === n - 1) { edits.push({ offset: members[j - 1].ve, length: members[n - 1].ve - members[j - 1].ve, content: RMW_EMPTY }); }
+            else { edits.push({ offset: members[j - 1].ve, length: members[hi + 1].ns - members[j - 1].ve, content: COMMA_BYTE }); }
+            j = hi + 1;
+          }
+          if (adds.length > 0) {
+            let surviving = 0;
+            for (let k = 0; k < n; k++) { if (!removed[k]) surviving++; }
+            const parts: Uint8Array[] = [];
+            for (let a = 0; a < adds.length; a++) {
+              if (a > 0 || surviving > 0) { parts.push(COMMA_BYTE); }
+              parts.push(memberBytes(adds[a].name, adds[a].content));
+            }
+            edits.push({ offset: scan.close, length: 0, content: concatBytes(parts) });
+          }
+          if (edits.length === 0) return source;
+          return applyEditsBytes(source, edits);
+        }
+        """;
+
     private readonly KeywordValidationHandlerRegistry validationHandlers = new();
 
     // Every top-level identifier emitted into the current module, so the root entry-point name can be
@@ -361,7 +643,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
     // the third-party imports (lossless-json for source-text numbers, Temporal + tr46 for formats) at top.
     public static string RuntimeModuleSource()
     {
-        string body = NumericRuntime + KindRuntime + DeepEqual + EvRuntime + FormatRuntime + BrandRuntime + MutationRuntime;
+        string body = NumericRuntime + KindRuntime + DeepEqual + EvRuntime + FormatRuntime + BrandRuntime + MutationRuntime + RmwRuntime;
         body = body.Replace("import { isLosslessNumber } from \"lossless-json\";\n", string.Empty);
         body = body.Replace("\nfunction ", "\nexport function ")
                    .Replace("\nconst ", "\nexport const ")
@@ -499,7 +781,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         // (@corvus/json-runtime, §5.5) that every generated module imports — never inlined per module.
         var sb = new StringBuilder();
         sb.Append("// AUTO-GENERATED: idiomatic TS types + registry-composed validators.\n");
-        sb.Append("import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, type Brand } from \"./corvus-runtime.js\";\n\n");
+        sb.Append("import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, rmwUpsert, rmwProduceFull, memberBytes, rmwJoinObject, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand } from \"./corvus-runtime.js\";\n\n");
         var moduleGuards = new HashSet<string>(StringComparer.Ordinal); // union guard names, unique per module
         foreach (TypeDeclaration td in types)
         {
@@ -515,6 +797,9 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
                 else
                 {
                     EmitInterface(sb, td);
+                    EmitPatch(sb, td);
+                    EmitBuild(sb, td);
+                    EmitApplyTo(sb, td);
                 }
             }
             else if (IsEnum(td))
@@ -555,6 +840,187 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
     // ---- type surface ----
     private static string FinalName(TypeDeclaration td)
         => td.TryGetMetadata<string>(TsFinalKey, out string? n) && !string.IsNullOrEmpty(n) ? n! : "Entity";
+
+    // Classify an array/tuple property for the patch `arrays` surface: returns the strongly-typed ops type
+    // and the prefix length (for the rest-offset), or null if the property is not an array.
+    //   list  T[]           -> ListOps<T>
+    //   pure tuple [A,B,C]   -> { set?: { 0?: A; 1?: B; 2?: C } }
+    //   prefix tuple [A,...C]-> { set?: { 0?: A }; rest?: ListOps<C> }  (prefixLen = 1)
+    private static (string OpsType, int PrefixLen)? ClassifyArrayProp(TypeDeclaration td)
+    {
+        TupleTypeDeclaration? tuple = td.ExplicitTupleType();
+        ArrayItemsTypeDeclaration? items = td.ExplicitNonTupleItemsType() ?? td.ArrayItemsType();
+        bool hasRest = items is not null && items.ReducedType.LocatedSchema.Schema.ValueKind != JsonValueKind.False;
+        if (tuple is not null)
+        {
+            var positions = tuple.ItemsTypes.ToList();
+            var setProps = new StringBuilder();
+            for (int i = 0; i < positions.Count; i++)
+            {
+                if (i > 0)
+                {
+                    setProps.Append("; ");
+                }
+
+                setProps.Append("readonly ").Append(i).Append("?: ").Append(TsTypeRef(positions[i].ReducedType));
+            }
+
+            string setObj = "{ readonly set?: { " + setProps + " }";
+            return hasRest
+                ? (setObj + "; readonly rest?: ListOps<" + TsTypeRef(items!.ReducedType) + "> }", positions.Count)
+                : (setObj + " }", 0);
+        }
+
+        return hasRest ? ("ListOps<" + TsTypeRef(items!.ReducedType) + ">", 0) : null;
+    }
+
+    // Model C byte-level RMW (design §13.4): produce a new document by splicing ONLY the changed members'
+    // value byte-spans into the source and copying the rest through verbatim. `changes` upserts members,
+    // `removals` deletes optional members, `arrays` edits array elements in place.
+    private static void EmitPatch(StringBuilder sb, TypeDeclaration td)
+    {
+        if (!td.HasPropertyDeclarations)
+        {
+            return;
+        }
+
+        string name = FinalName(td);
+        var arrayProps = new List<(PropertyDeclaration P, string OpsType, int PrefixLen)>();
+        foreach (PropertyDeclaration p in td.PropertyDeclarations)
+        {
+            (string OpsType, int PrefixLen)? cls = ClassifyArrayProp(p.ReducedPropertyType);
+            if (cls is not null)
+            {
+                arrayProps.Add((p, cls.Value.OpsType, cls.Value.PrefixLen));
+            }
+        }
+
+        var optionalKeys = td.PropertyDeclarations
+            .Where(p => p.RequiredOrOptional == RequiredOrOptional.Optional)
+            .Select(p => TsEmit.Str(p.JsonPropertyName))
+            .ToList();
+        bool hasArrays = arrayProps.Count > 0;
+        bool hasRemovals = optionalKeys.Count > 0;
+
+        sb.Append("export function patch").Append(name).Append("(source: Uint8Array, changes: Partial<").Append(name).Append(">");
+        if (hasRemovals)
+        {
+            sb.Append(", removals?: ReadonlyArray<").Append(string.Join(" | ", optionalKeys)).Append(">");
+        }
+
+        if (hasArrays)
+        {
+            sb.Append(", arrays?: ").Append(name).Append("ArrayOps");
+        }
+
+        sb.Append("): Uint8Array {\n");
+        sb.Append("  const enc = new TextEncoder();\n");
+        sb.Append("  const targets: RmwTarget[] = [];\n");
+        foreach (PropertyDeclaration p in td.PropertyDeclarations)
+        {
+            string k = TsEmit.Str(p.JsonPropertyName);
+            sb.Append("  if (changes[").Append(k).Append("] !== undefined) { targets.push({ name: enc.encode(").Append(k).Append("), content: enc.encode(JSON.stringify(changes[").Append(k).Append("])), vbs: -1, vbe: -1 }); }\n");
+        }
+
+        if (hasArrays)
+        {
+            sb.Append("  const arrayEdits: RmwArrayEdit[] = [];\n");
+            foreach ((PropertyDeclaration p, string _, int prefixLen) in arrayProps)
+            {
+                string k = TsEmit.Str(p.JsonPropertyName);
+                sb.Append("  if (arrays !== undefined && arrays[").Append(k).Append("] !== undefined) { arrayEdits.push({ name: enc.encode(").Append(k).Append("), ops: arrays[").Append(k).Append("]! as RmwArrayOps, prefixLen: ").Append(prefixLen).Append(" }); }\n");
+            }
+        }
+
+        if (hasRemovals || hasArrays)
+        {
+            sb.Append("  if (");
+            bool needOr = false;
+            if (hasRemovals)
+            {
+                sb.Append("(removals !== undefined && removals.length > 0)");
+                needOr = true;
+            }
+
+            if (hasArrays)
+            {
+                if (needOr)
+                {
+                    sb.Append(" || ");
+                }
+
+                sb.Append("arrayEdits.length > 0");
+            }
+
+            sb.Append(") {\n");
+            sb.Append("    const removeNames: Uint8Array[] = [];\n");
+            if (hasRemovals)
+            {
+                sb.Append("    if (removals !== undefined) { for (let ri = 0; ri < removals.length; ri++) { removeNames.push(enc.encode(String(removals[ri]))); } }\n");
+            }
+
+            sb.Append("    return rmwProduceFull(source, targets, removeNames, ").Append(hasArrays ? "arrayEdits" : "[]").Append(");\n");
+            sb.Append("  }\n");
+        }
+
+        sb.Append("  return rmwUpsert(source, targets);\n");
+        sb.Append("}\n\n");
+
+        if (hasArrays)
+        {
+            sb.Append("export interface ").Append(name).Append("ArrayOps {\n");
+            foreach ((PropertyDeclaration p, string opsType, int _) in arrayProps)
+            {
+                sb.Append("  readonly ").Append(Ident(p.JsonPropertyName)).Append("?: ").Append(opsType).Append(";\n");
+            }
+
+            sb.Append("}\n\n");
+        }
+    }
+
+    private static void EmitBuild(StringBuilder sb, TypeDeclaration td)
+    {
+        if (!td.HasPropertyDeclarations)
+        {
+            return;
+        }
+
+        string name = FinalName(td);
+        sb.Append("export function build").Append(name).Append("(props: ").Append(name).Append("): Uint8Array {\n");
+        sb.Append("  const enc = new TextEncoder();\n");
+        sb.Append("  const parts: Uint8Array[] = [];\n");
+        foreach (PropertyDeclaration p in td.PropertyDeclarations)
+        {
+            string k = TsEmit.Str(p.JsonPropertyName);
+            sb.Append("  if (props[").Append(k).Append("] !== undefined) { parts.push(memberBytes(enc.encode(").Append(k).Append("), enc.encode(JSON.stringify(props[").Append(k).Append("])))); }\n");
+        }
+
+        sb.Append("  return rmwJoinObject(parts);\n");
+        sb.Append("}\n\n");
+    }
+
+    // V5 allOf composition (Apply): overlay one of the allOf constituent types onto the
+    // document. Emitted ONLY for composition types; the argument is the union of the members.
+    private static void EmitApplyTo(StringBuilder sb, TypeDeclaration td)
+    {
+        if (!td.HasPropertyDeclarations)
+        {
+            return;
+        }
+
+        var members = new List<TypeDeclaration>();
+        CollectMembers(td.AllOfCompositionTypes(), members);
+        if (members.Count == 0)
+        {
+            return;
+        }
+
+        string name = FinalName(td);
+        string union = string.Join(" | ", members.Select(TsTypeRef).Distinct());
+        sb.Append("export function applyTo").Append(name).Append("(source: Uint8Array, member: ").Append(union).Append("): Uint8Array {\n");
+        sb.Append("  return patch").Append(name).Append("(source, member as Partial<").Append(name).Append(">);\n");
+        sb.Append("}\n\n");
+    }
 
     private static void EmitInterface(StringBuilder sb, TypeDeclaration td)
     {

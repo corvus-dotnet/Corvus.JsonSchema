@@ -13,3 +13,7 @@ node_modules/
 
 out-mutation/
 prov-test-mutation/
+
+# generated output + tsc build artifacts for any fixture
+out-*/
+prov-*/
