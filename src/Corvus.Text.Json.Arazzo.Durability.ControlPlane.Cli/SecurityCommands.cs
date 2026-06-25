@@ -215,8 +215,38 @@ internal sealed class SecurityBindingListCommand : AsyncCommand<RunsSettings>
         using (http)
         await using (transport)
         {
-            await using ListSecurityBindingsResponse response = await client.ListSecurityBindingsAsync(cancellationToken);
-            return response.MatchResult(list => Output.Print(list.ToString()), Output.Unexpected);
+            // Walk every keyset page (the store pages server-side) so the output is the complete binding set, never the
+            // first page alone.
+            var items = new List<string>();
+            string? pageToken = null;
+            do
+            {
+                string? next = null;
+                await using ListSecurityBindingsResponse response = await client.ListSecurityBindingsAsync(
+                    pageToken: pageToken is { } token ? (Models.JsonString.Source)token : default,
+                    cancellationToken: cancellationToken);
+                int rc = response.MatchResult(
+                    list =>
+                    {
+                        next = list.NextPageToken.IsNotUndefined() ? (string)list.NextPageToken : null;
+                        foreach (Models.SecurityBindingSummary summary in list.Bindings.EnumerateArray())
+                        {
+                            items.Add(summary.ToString());
+                        }
+
+                        return 0;
+                    },
+                    Output.Unexpected);
+                if (rc != 0)
+                {
+                    return rc;
+                }
+
+                pageToken = next;
+            }
+            while (pageToken is not null);
+
+            return Output.Print($"{{\"bindings\":[{string.Join(",", items)}]}}");
         }
     }
 }

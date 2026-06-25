@@ -41,18 +41,18 @@ public sealed class SecurityRulePage : IDisposable
     public static SecurityRulePage Create(PooledDocumentList<SecurityRuleDocument> rules)
         => new(rules, default, null);
 
-    /// <summary>Creates a page with a continuation token, encoding the last row's <paramref name="lastName"/> straight into
-    /// a pooled buffer (no intermediate token string).</summary>
+    /// <summary>Creates a page with a continuation token, Base64URL-encoding the last row's name (its UTF-8) straight into
+    /// a pooled buffer (no intermediate token string, no name string).</summary>
     /// <param name="rules">The page's rules.</param>
-    /// <param name="lastName">The last row's rule name (the keyset cursor the next page resumes after).</param>
+    /// <param name="lastNameUtf8">The last row's rule name as UTF-8 (the keyset cursor the next page resumes after).</param>
     /// <returns>The page, owning the pooled token buffer.</returns>
-    public static SecurityRulePage Create(PooledDocumentList<SecurityRuleDocument> rules, string lastName)
+    public static SecurityRulePage Create(PooledDocumentList<SecurityRuleDocument> rules, ReadOnlySpan<byte> lastNameUtf8)
     {
-        int maxLength = SecurityRuleContinuationToken.GetMaxEncodedLength(lastName);
+        int maxLength = SecurityRuleContinuationToken.GetMaxEncodedLength(lastNameUtf8.Length);
         byte[] buffer = ArrayPool<byte>.Shared.Rent(maxLength);
         try
         {
-            int written = SecurityRuleContinuationToken.EncodeToUtf8(lastName, buffer);
+            int written = SecurityRuleContinuationToken.EncodeToUtf8(lastNameUtf8, buffer);
             return new SecurityRulePage(rules, buffer.AsMemory(0, written), buffer);
         }
         catch

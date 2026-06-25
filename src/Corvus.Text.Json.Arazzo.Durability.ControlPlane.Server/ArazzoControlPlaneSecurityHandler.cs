@@ -55,13 +55,11 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     public async ValueTask<ListSecurityRulesResult> HandleListSecurityRulesAsync(ListSecurityRulesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         // An absent limit passes 0 — the contract's "use the store's default page size" sentinel (the store owns that
-        // size; the handler does not duplicate it).
+        // size; the handler does not duplicate it). The page token and the q filter flow to the store as their JSON
+        // values (From() rewraps each — free, no reify, no managed string; an undefined value rewraps to undefined); the
+        // store decodes/matches bytes-native and returns one keyset page (bounded — never all rules).
         int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 0;
-        string? q = parameters.Q.IsNotUndefined() ? (string)parameters.Q : null;
-
-        // The opaque page token flows to the store as its JSON value (From() rewraps parameters.PageToken — free, no
-        // reify, no managed string; an undefined token rewraps to an undefined JsonString); the store decodes it
-        // bytes-native from the request UTF-8 and returns one keyset page (bounded — never all rules).
+        JsonString q = JsonString.From(parameters.Q);
         JsonString pageToken = JsonString.From(parameters.PageToken);
         using SecurityRulePage page = await this.store.ListRulesAsync(limit, pageToken, q, cancellationToken).ConfigureAwait(false);
 
@@ -181,20 +179,28 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     /// <inheritdoc/>
     public async ValueTask<ListSecurityBindingsResult> HandleListSecurityBindingsAsync(ListSecurityBindingsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        using PooledDocumentList<SecurityBindingDocument> bindings = await this.store.ListBindingsAsync(cancellationToken).ConfigureAwait(false);
+        // An absent limit passes 0 — the contract's "use the store's default page size" sentinel (the store owns that
+        // size; the handler does not duplicate it). The page token and the q filter flow to the store as their JSON values
+        // (From() rewraps each — free, no reify, no managed string; an undefined value rewraps to undefined); the store
+        // decodes/matches bytes-native and returns one keyset page (bounded — never all bindings).
+        int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 0;
+        JsonString q = JsonString.From(parameters.Q);
+        JsonString pageToken = JsonString.From(parameters.PageToken);
+        using SecurityBindingPage page = await this.store.ListBindingsAsync(limit, pageToken, q, cancellationToken).ConfigureAwait(false);
 
         // Each summary references its pooled binding document (the per-field From() projection is a zero-copy element
         // wrap), and the body is validated/serialized after this handler returns — so hand the documents to the
-        // workspace (it disposes them at request end); `using bindings` then only returns the batch's backing array.
-        bindings.TransferOwnershipTo(workspace);
-
-        // The list body is built closure-free and consumed in place: SecurityBindingList.Build scopes its result to the
-        // `in bindings` argument (ref-safety), so it cannot be returned from a helper — the array is projected through the
-        // static BuildBindingSummaries, with the binding list threaded as the context.
-        IReadOnlyList<SecurityBindingDocument> bindingList = bindings;
+        // workspace (it disposes them at request end); `using page` then only returns the batch's backing array + the
+        // token buffer. The list body is built closure-free and consumed in place (the array projected through the static
+        // BuildBindingSummaries, the binding list threaded as the context); the continuation token is copied verbatim
+        // from the page's UTF-8 (the Ok materialisation copies the scalar before dispose).
+        page.Bindings.TransferOwnershipTo(workspace);
+        IReadOnlyList<SecurityBindingDocument> bindingList = page.Bindings;
+        ReadOnlyMemory<byte> nextPageToken = page.NextPageToken;
         Models.SecurityBindingList.Source<IReadOnlyList<SecurityBindingDocument>> body = Models.SecurityBindingList.Build(
             in bindingList,
-            bindings: Models.SecurityBindingList.SecurityBindingSummaryArray.Build(in bindingList, BuildBindingSummaries));
+            bindings: Models.SecurityBindingList.SecurityBindingSummaryArray.Build(in bindingList, BuildBindingSummaries),
+            nextPageToken: nextPageToken.IsEmpty ? default : (Models.JsonString.Source)nextPageToken.Span);
         return ListSecurityBindingsResult.Ok(body, workspace);
     }
 

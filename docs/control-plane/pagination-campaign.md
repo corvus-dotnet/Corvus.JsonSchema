@@ -149,3 +149,49 @@ Server-level `ControlPlaneSecurityApiTests` gained an end-to-end HTTP test (`?li
 omission). Verified locally: warning-free `dotnet build Corvus.Text.Json.slnx` (0W/0E); InMemory conformance + bootstrap
 (11), server API (8), Sqlite conformance (9), JS client + conformance (74) — all green. Container conformance for the 8
 remaining persistent backends rides their existing suites (default seam) and is re-asserted natively in Phase 2.
+
+### `listSecurityBindings` — `ISecurityPolicyStore` (foundation seam, same shape as rules)
+
+Mirror of the rules row for `GET /security/bindings`, keyset on **`(order, id)`** (order ascending, the unique id the
+tie-breaker): `SecurityBindingContinuationToken`/`SecurityBindingPage`, the default paged seam over the full read
+(`SecurityBindingPaging.PageInMemory`), OpenAPI `q`/`limit`/`pageToken` + `SecurityBindingList.nextPageToken` (regen),
+the handler, the JS client (`listSecurityBindings` paged + `listSecurityBindingsPaged`), the grants panel, and the demo
+mock. Benchmark (`SecurityBindingListPagingBenchmarks`, production-faithful — workspace disposed per op):
+
+| Method | BindingCount | Mean | Allocated |
+|---|---|---|---|
+| `Unpaged_All` | 50 | 75.0 µs | 168 B |
+| `Paged_FirstPage` | 50 | 81.6 µs | 169 B |
+| `Unpaged_All` | 500 | 803.4 µs | 177 B |
+| `Paged_FirstPage` | 500 | **90.4 µs** | 169 B |
+
+Same conclusion as rules: alloc-clean either way (~168 B; the pooled arena returns per request), and paging bounds CPU
+and response size O(total) → O(page) (803 → 90 µs at 500). Conformance (`SecurityPolicyStoreConformance`, all 10 backends)
+gained keyset `(order, id)` no-gaps/dupes + malformed-token + `q` over claim type/value/description; the server HTTP test
+covers `?limit`/`?pageToken`/`?q`.
+
+### Bytes-native pagers (both rows) — the string/null realisation rework
+
+The first cut of both in-memory pagers (and tokens) realised the keyset / cursor / `q` to **managed strings**
+(`NameValue`/`IdValue`/`ClaimValueOrNull`/`string.CompareOrdinal`/`Encoding.UTF8.GetString`) — the record↔document string
+seam `corvus-bytes-to-bytes` forbids (and not confined to InMemory: it ran in the shared seam/handler/default pager the
+persistent backends inherit). Reworked fully bytes-native:
+
+- **keyset order + cursor** compare the persisted UTF-8 directly (`GetUtf8String().Span.SequenceCompareTo`); no name/id string;
+- **tokens** are `base64url` straight over the row's UTF-8 (rule = name; binding = `order \0 id` via `Utf8Formatter`/`Utf8Parser`), decoded into a caller-owned pooled buffer with the cursor a **span**, never a string;
+- the **seam** takes `q` as its `JsonString` (not `string?`); the handler rewraps via `JsonString.From` (no `(string)`); the case-insensitive substring transcodes the field + query into a **reused pooled UTF-16 scratch** (`ArrayPool<char>`, `SecurityPagingText`) and matches `OrdinalIgnoreCase` — no managed string, no `OrNull` null realisation.
+
+Pre-commit `corvus-bytes-to-bytes` self-audit: **zero** string realisations across the 7 paging files; the only `(string)`
+casts left in the handler are the pre-existing CRUD endpoints whose store seam is genuinely `string`-keyed
+(`GetRuleAsync(string name)` etc.) — string-typed sinks, i.e. genuine leaves. Retrofitting
+`SecurityBindingListProjectionBenchmarks` to the production-faithful lifecycle additionally surfaced the real closure cost
+the old reuse-no-reset harness masked: `PerItemClosure 1224 B → ContextThreaded 168 B` (the shipped context-threaded
+projection is genuinely alloc-clean).
+
+### Credentials — deliberately not reworked (confined realisation, not debt)
+
+`InMemorySourceCredentialStore` realises source/environment/discriminator strings for its in-memory sort, but those are
+**retained inside the InMemory backend** (used locally, emitted only as a bytes-native token). The 9 persistent credential
+backends decode the token to a **string cursor that is a DB query parameter** — a string-typed sink, i.e. a genuine leaf;
+and the discriminator is a computed canonical tag string used as a string-keyed identity system-wide. So the credential
+realisation is confined/leaf, not the shared-path debt the rule/binding pagers had — left as-is by design.

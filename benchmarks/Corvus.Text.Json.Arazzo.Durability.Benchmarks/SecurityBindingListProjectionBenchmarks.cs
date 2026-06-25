@@ -58,7 +58,6 @@ public class SecurityBindingListProjectionBenchmarks
 
     private ParsedJsonDocument<SecurityBindingDocument> document = null!;
     private SecurityBindingDocument[] bindings = null!;
-    private JsonWorkspace workspace = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -69,23 +68,21 @@ public class SecurityBindingListProjectionBenchmarks
         {
             this.bindings[i] = this.document.RootElement;
         }
-
-        this.workspace = JsonWorkspace.Create();
     }
 
     [GlobalCleanup]
     public void Cleanup()
     {
         this.document.Dispose();
-        this.workspace.Dispose();
     }
 
     /// <summary>The pre-refactor shape: the list, the nested array and each summary are built through capturing builder
-    /// closures; one materialisation into the response workspace.</summary>
+    /// closures; one materialisation into the response workspace (rented + disposed per op, as the request pipeline does).</summary>
     /// <returns>The summary count (defeats dead-code elimination).</returns>
     [Benchmark(Baseline = true)]
     public int PerItemClosure()
     {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
         Models.SecurityBindingList.Source body = Models.SecurityBindingList.Build((ref Models.SecurityBindingList.Builder b) => b.Create(
             bindings: Models.SecurityBindingList.SecurityBindingSummaryArray.Build((ref Models.SecurityBindingList.SecurityBindingSummaryArray.Builder ab) =>
             {
@@ -94,20 +91,21 @@ public class SecurityBindingListProjectionBenchmarks
                     ab.AddItem(ClosureBindingSummary(binding));
                 }
             })));
-        return Models.SecurityBindingList.CreateBuilder(this.workspace, body, 30).RootElement.Bindings.GetArrayLength();
+        return Models.SecurityBindingList.CreateBuilder(workspace, body, 30).RootElement.Bindings.GetArrayLength();
     }
 
     /// <summary>The shipped shape: the whole body is a context-threaded <c>SecurityBindingList.Source&lt;TContext&gt;</c>
-    /// (no closure) materialised once via the generic <c>CreateBuilder&lt;TContext&gt;</c>.</summary>
+    /// (no closure) materialised once via the generic <c>CreateBuilder&lt;TContext&gt;</c> into a per-op workspace.</summary>
     /// <returns>The summary count.</returns>
     [Benchmark]
     public int ContextThreaded()
     {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
         IReadOnlyList<SecurityBindingDocument> list = this.bindings;
         Models.SecurityBindingList.Source<IReadOnlyList<SecurityBindingDocument>> body = Models.SecurityBindingList.Build(
             in list,
             bindings: Models.SecurityBindingList.SecurityBindingSummaryArray.Build(in list, BuildBindingSummaries));
-        return Models.SecurityBindingList.CreateBuilder(this.workspace, in body, 30).RootElement.Bindings.GetArrayLength();
+        return Models.SecurityBindingList.CreateBuilder(workspace, in body, 30).RootElement.Bindings.GetArrayLength();
     }
 
     // ── pre-refactor closure projection (the optional scalars realised via the IsNotUndefined/UpdatedAtValue guards) ──

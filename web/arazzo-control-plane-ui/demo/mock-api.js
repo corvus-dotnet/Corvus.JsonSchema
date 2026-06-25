@@ -729,7 +729,7 @@ export function createMockControlPlane(options = {}) {
     const securityOrderingsResponse = handleSecurityOrderings(path, method);
     if (securityOrderingsResponse) return securityOrderingsResponse;
 
-    const securityBindingsResponse = handleSecurityBindings(path, method, body);
+    const securityBindingsResponse = handleSecurityBindings(path, method, u.searchParams, body);
     if (securityBindingsResponse) return securityBindingsResponse;
 
     const securityRulesResponse = handleSecurityRules(path, method, u.searchParams, body);
@@ -1198,13 +1198,35 @@ export function createMockControlPlane(options = {}) {
     return json({ orderings: securityOrderings.map((o) => structuredClone(o)) });
   }
 
-  function handleSecurityBindings(fullPath, method, body) {
+  // Keyset pagination over (order, id) plus a case-insensitive q over claim type/value/description — the same contract
+  // the durable store implements: order, filter, seek strictly past the opaque token, take `limit`, emit a nextPageToken
+  // when more remain.
+  function listSecurityBindingsPage(params) {
+    const limit = Math.max(1, Number(params.get('limit')) || 50);
+    const q = (params.get('q') || '').trim().toLowerCase();
+    const tok = params.get('pageToken') ? atobSafe(params.get('pageToken')).split(' ') : null;
+    const afterOrder = tok ? Number(tok[0]) : null;
+    const afterId = tok ? tok[1] : null;
+    const sorted = [...securityBindings].sort((a, b) => (a.order - b.order) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    const matched = q
+      ? sorted.filter((b) => `${b.claimType} ${b.claimValue || ''} ${b.description || ''}`.toLowerCase().includes(q))
+      : sorted;
+    const start = tok ? matched.findIndex((b) => b.order > afterOrder || (b.order === afterOrder && b.id > afterId)) : 0;
+    const from = start < 0 ? matched.length : start;
+    const pageItems = matched.slice(from, from + limit);
+    const more = from + limit < matched.length;
+    const last = pageItems[pageItems.length - 1];
+    const nextPageToken = more && last ? btoaSafe(`${last.order} ${last.id}`) : null;
+    return json({ bindings: pageItems.map((b) => structuredClone(b)), nextPageToken });
+  }
+
+  function handleSecurityBindings(fullPath, method, params, body) {
     const idx = fullPath.indexOf('/security/bindings');
     if (idx < 0) return null;
     const path = fullPath.slice(idx);
 
     if (path === '/security/bindings') {
-      if (method === 'GET') return json({ bindings: securityBindings.map((b) => structuredClone(b)) });
+      if (method === 'GET') return listSecurityBindingsPage(params);
       if (method === 'POST') return createSecurityBinding(body);
       return problem(405, 'Method not allowed');
     }

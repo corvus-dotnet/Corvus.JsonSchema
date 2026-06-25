@@ -136,6 +136,40 @@ public sealed class ControlPlaneSecurityApiTests
     }
 
     [TestMethod]
+    public async Task The_binding_list_keyset_pages_and_filters_over_http()
+    {
+        await using Scoped host = await StartAsync();
+
+        foreach ((int order, string claim) in new[] { (30, "charlie"), (10, "alpha"), (20, "bravo") })
+        {
+            (await host.SendJsonAsync(HttpMethod.Post, "/security/bindings", $$"""{"claimType":"role","claimValue":"{{claim}}","read":{"unrestricted":true},"write":{"unrestricted":false},"purge":{"unrestricted":false},"order":{{order}}}""", Write))
+                .StatusCode.ShouldBe(HttpStatusCode.Created);
+        }
+
+        // First page (limit 2): the two lowest-order bindings in (order, id) order plus a continuation token.
+        string token;
+        using (Stj.JsonDocument page1 = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/security/bindings?limit=2", Read)))
+        {
+            page1.RootElement.GetProperty("bindings").EnumerateArray().Select(b => b.GetProperty("claimValue").GetString()).ShouldBe(["alpha", "bravo"]);
+            token = page1.RootElement.GetProperty("nextPageToken").GetString()!;
+            token.ShouldNotBeNullOrEmpty();
+        }
+
+        // Following the token returns the remainder; the last page omits nextPageToken.
+        using (Stj.JsonDocument page2 = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, $"/security/bindings?limit=2&pageToken={token}", Read)))
+        {
+            page2.RootElement.GetProperty("bindings").EnumerateArray().Select(b => b.GetProperty("claimValue").GetString()).ShouldBe(["charlie"]);
+            page2.RootElement.TryGetProperty("nextPageToken", out _).ShouldBeFalse();
+        }
+
+        // The q filter matches a case-insensitive substring of the claim type, claim value, or description.
+        using (Stj.JsonDocument filtered = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/security/bindings?q=ALPHA", Read)))
+        {
+            filtered.RootElement.GetProperty("bindings").EnumerateArray().Select(b => b.GetProperty("claimValue").GetString()).ShouldBe(["alpha"]);
+        }
+    }
+
+    [TestMethod]
     public async Task A_binding_has_a_full_lifecycle()
     {
         await using Scoped host = await StartAsync();
