@@ -189,9 +189,9 @@ public sealed class AzureStorageAccessRequestStore : IAccessRequestStore
             conditions.Add(TableClient.CreateQueryFilter($"Status eq {AccessRequestStatusNames.ToWire(status)}"));
         }
 
-        if (query.BaseWorkflowId is { } baseWorkflowId)
+        if (query.BaseWorkflowId.IsNotUndefined())
         {
-            conditions.Add(TableClient.CreateQueryFilter($"BaseWorkflowId eq {baseWorkflowId}"));
+            conditions.Add(TableClient.CreateQueryFilter($"BaseWorkflowId eq {(string)query.BaseWorkflowId}"));
         }
 
         if (query.SubjectClaimType is { } subjectType)

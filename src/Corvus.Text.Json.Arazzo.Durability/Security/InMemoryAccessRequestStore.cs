@@ -111,9 +111,16 @@ public sealed class InMemoryAccessRequestStore : IAccessRequestStore
             return false;
         }
 
-        if (query.BaseWorkflowId is { } baseWorkflowId && !string.Equals(request.BaseWorkflowIdValue, baseWorkflowId, StringComparison.Ordinal))
+        if (query.BaseWorkflowId.IsNotUndefined())
         {
-            return false;
+            // baseWorkflowId arrives as the request's JSON value and is reified nowhere on the way here; compare it to the
+            // row's persisted UTF-8 directly (no managed string).
+            using UnescapedUtf8JsonString filterBaseWorkflowId = query.BaseWorkflowId.GetUtf8String();
+            using UnescapedUtf8JsonString rowBaseWorkflowId = request.BaseWorkflowId.GetUtf8String();
+            if (!rowBaseWorkflowId.Span.SequenceEqual(filterBaseWorkflowId.Span))
+            {
+                return false;
+            }
         }
 
         if (query.SubjectClaimType is { } subjectType && !string.Equals(request.SubjectClaimTypeValue, subjectType, StringComparison.Ordinal))

@@ -41,12 +41,12 @@ public readonly record struct AccessRequestDecision(
 
 /// <summary>A filter over access requests (all criteria optional; an absent criterion matches anything).</summary>
 /// <param name="Status">Only requests in this state.</param>
-/// <param name="BaseWorkflowId">Only requests targeting this base workflow id.</param>
-/// <param name="SubjectClaimType">Only requests whose subject keys on this claim type (with <paramref name="SubjectClaimValue"/>, "mine").</param>
-/// <param name="SubjectClaimValue">Only requests whose subject value matches.</param>
+/// <param name="BaseWorkflowId">Only requests targeting this base workflow id, carried as its request JSON value (undefined matches anything); the store reifies it at its own leaf (a DB parameter, or a bytes-native span compare).</param>
+/// <param name="SubjectClaimType">Only requests whose subject keys on this claim type (with <paramref name="SubjectClaimValue"/>, "mine"); a server-derived/config string leaf.</param>
+/// <param name="SubjectClaimValue">Only requests whose subject value matches; a server-derived (ClaimsPrincipal) string leaf.</param>
 public readonly record struct AccessRequestQuery(
     AccessRequestStatus? Status = null,
-    string? BaseWorkflowId = null,
+    JsonString BaseWorkflowId = default,
     string? SubjectClaimType = null,
     string? SubjectClaimValue = null);
 

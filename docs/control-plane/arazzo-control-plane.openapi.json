@@ -1495,7 +1495,9 @@
         "description": "Lists access requests visible to the caller, oldest first. Without baseWorkflowId, returns the caller's own requests; with baseWorkflowId, returns that workflow's request queue — the caller must be an administrator of it (403 otherwise). Optionally filtered by status.",
         "parameters": [
           { "name": "status", "in": "query", "required": false, "schema": { "type": "string", "enum": ["Pending", "Approved", "Denied", "Withdrawn", "Revoked"] }, "description": "Only requests in this state." },
-          { "name": "baseWorkflowId", "in": "query", "required": false, "schema": { "type": "string" }, "description": "The target workflow whose request queue to list (requires administrator of it); absent lists the caller's own requests." }
+          { "name": "baseWorkflowId", "in": "query", "required": false, "schema": { "type": "string" }, "description": "The target workflow whose request queue to list (requires administrator of it); absent lists the caller's own requests." },
+          { "$ref": "#/components/parameters/LimitQuery" },
+          { "$ref": "#/components/parameters/PageTokenQuery" }
         ],
         "responses": {
           "200": {
@@ -3133,9 +3135,10 @@
       },
       "AccessRequestList": {
         "type": "object",
-        "description": "A list of access requests (design §16.5), oldest first.",
+        "description": "A keyset page of access requests (design §16.5), oldest first by (createdAt, id).",
         "properties": {
-          "accessRequests": { "type": "array", "items": { "$ref": "#/components/schemas/AccessRequestView" } }
+          "accessRequests": { "type": "array", "items": { "$ref": "#/components/schemas/AccessRequestView" } },
+          "nextPageToken": { "type": "string", "description": "An opaque token to fetch the next page, or null/absent if this is the last page." }
         },
         "required": ["accessRequests"]
       },

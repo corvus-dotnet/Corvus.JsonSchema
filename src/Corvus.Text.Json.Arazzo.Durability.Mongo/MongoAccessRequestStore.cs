@@ -104,9 +104,9 @@ public sealed class MongoAccessRequestStore : IAccessRequestStore, IAsyncDisposa
             filter &= Builders<BsonDocument>.Filter.Eq("status", AccessRequestStatusNames.ToWire(status));
         }
 
-        if (query.BaseWorkflowId is { } baseWorkflowId)
+        if (query.BaseWorkflowId.IsNotUndefined())
         {
-            filter &= Builders<BsonDocument>.Filter.Eq("baseWorkflowId", baseWorkflowId);
+            filter &= Builders<BsonDocument>.Filter.Eq("baseWorkflowId", (string)query.BaseWorkflowId);
         }
 
         if (query.SubjectClaimType is { } subjectType)
