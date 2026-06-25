@@ -149,7 +149,11 @@ public class EnumStringSet
                     + key[0],
             1 => key[0],
             0 => 0,
-            _ => ((ulong)((length + key[7] + key[key.Length - 1]) % 256) << 56)
+
+            // The top byte stays 0 for short (<8 byte) keys, a marker the lookup fast-path trusts; it must be
+            // non-zero for 8+ byte keys, so map (length + key[7] + last) into 1..255 — otherwise a long key
+            // whose sum is a multiple of 256 collides with a short key sharing its first 7 bytes. See PropertySchemaMatchers.GetHashCode.
+            _ => ((ulong)(((length + key[7] + key[key.Length - 1]) % 255) + 1) << 56)
                     + MemoryMarshal.Read<uint>(key.Slice(0, 4))
                     + ((ulong)key[4] << 32)
                     + ((ulong)key[5] << 40)
