@@ -101,7 +101,7 @@ public class PropertyNamesValidationHandler : IChildObjectPropertyValidationHand
                 .AppendLineIndent(
                     "private static readonly JsonSchemaPathProvider ",
                     evaluationPathProperty,
-                    " = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath(", SymbolDisplay.FormatLiteral(propertyNameType.KeywordPathModifier, true), "u8, buffer, out written);");
+                    " = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath(", SymbolDisplay.FormatLiteral(SchemaLocationEncoding.EncodeAsUriFragment(propertyNameType.KeywordPathModifier), true), "u8, buffer, out written);");
         }
 
         return generator;

@@ -29,6 +29,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EcmaRegexTranslator.cs" />
+    <Compile Include="SchemaLocationEncoding.cs" />
     <Compile Include="StandaloneEvaluatorGenerator.cs" />
     <Compile Include="CodeGenerationMode.cs" />
     <Compile Include="RegexPatternCategory.cs" />

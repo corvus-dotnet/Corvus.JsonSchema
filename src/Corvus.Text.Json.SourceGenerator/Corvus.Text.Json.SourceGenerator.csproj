@@ -169,6 +169,7 @@
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)CodeFileBuilders\JsonSchemaPartial.cs" LinkBase="Corvus.Text.Json.CodeGeneration/CodeFileBuilders" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)CodeFileBuilders\MutableCorePartial.cs" LinkBase="Corvus.Text.Json.CodeGeneration/CodeFileBuilders" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)CodeFileBuilders\CorePartial.cs" LinkBase="Corvus.Text.Json.CodeGeneration/CodeFileBuilders" />
+    <Compile Include="$(CorvusTextJsonCodeGenerationPath)SchemaLocationEncoding.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)CodeGeneratorExtensions.Validation.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)CodeGeneratorExtensions.JsonSchema.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)CodeGeneratorExtensions.Array.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />

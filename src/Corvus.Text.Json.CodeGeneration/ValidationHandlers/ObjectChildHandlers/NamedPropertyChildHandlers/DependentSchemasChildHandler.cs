@@ -154,7 +154,7 @@ internal class DependentSchemasChildHandler : INamedPropertyChildHandler
                     }
 
                     string evaluationPathProperty = generator.GetUniqueStaticReadOnlyPropertyNameInScope($"{dependentSchema.Keyword.Keyword}{i++}", suffix: "SchemaEvaluationPath");
-                    string keywordPathProperty = SymbolDisplay.FormatLiteral(dependentSchema.KeywordPathModifier, true);
+                    string keywordPathProperty = SymbolDisplay.FormatLiteral(SchemaLocationEncoding.EncodeAsUriFragment(dependentSchema.KeywordPathModifier), true);
                     evaluationPathProperties.Add(dependentSchema, evaluationPathProperty);
                     generator
                         .AppendSeparatorLine()

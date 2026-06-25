@@ -38,7 +38,7 @@ internal class PropertySubschemaChildHandler : INamedPropertyChildHandler
         if (property.LocalOrComposed == LocalOrComposed.Local && property.Keyword is IObjectPropertyValidationKeyword)
         {
             string evaluationPathProperty = generator.GetPropertyNameInScope($"{property.DotnetPropertyName()}SchemaEvaluationPath");
-            string evaluationPath = SymbolDisplay.FormatLiteral(property.KeywordPathModifier, true);
+            string evaluationPath = SymbolDisplay.FormatLiteral(SchemaLocationEncoding.EncodeAsUriFragment(property.KeywordPathModifier), true);
             generator
                 .AppendLineIndent(
                     "private static readonly JsonSchemaPathProvider ",

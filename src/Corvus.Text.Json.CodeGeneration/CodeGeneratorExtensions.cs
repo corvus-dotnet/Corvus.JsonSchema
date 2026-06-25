@@ -1122,7 +1122,7 @@ internal static partial class CodeGeneratorExtensions
 
                     ReducedTypeDeclaration reducedType = subschemaType.ReducedTypeDeclaration();
                     string evaluationPathProperty = generator.GetPropertyNameInScope($"{keyword.Keyword}{i}SchemaEvaluationPath");
-                    string evaluationPath = SymbolDisplay.FormatLiteral(keyword.GetPathModifier(reducedType, i), true);
+                    string evaluationPath = SymbolDisplay.FormatLiteral(SchemaLocationEncoding.EncodeAsUriFragment(keyword.GetPathModifier(reducedType, i)), true);
                     generator
                         .AppendLineIndent(
                             "private static readonly JsonSchemaPathProvider ",
@@ -1154,7 +1154,7 @@ internal static partial class CodeGeneratorExtensions
 
                     ReducedTypeDeclaration reducedType = subschemaType.ReducedTypeDeclaration();
                     string evaluationPathProperty = generator.GetPropertyNameInScope($"{keyword.Keyword}{i}SchemaEvaluationPath");
-                    string evaluationPath = SymbolDisplay.FormatLiteral(keyword.GetPathModifier(reducedType, i), true);
+                    string evaluationPath = SymbolDisplay.FormatLiteral(SchemaLocationEncoding.EncodeAsUriFragment(keyword.GetPathModifier(reducedType, i)), true);
                     generator
                         .AppendLineIndent(
                             "private static readonly JsonSchemaPathProvider ",
@@ -1186,7 +1186,7 @@ internal static partial class CodeGeneratorExtensions
 
                     ReducedTypeDeclaration reducedType = subschemaType.ReducedTypeDeclaration();
                     string evaluationPathProperty = generator.GetPropertyNameInScope($"{keyword.Keyword}{i}SchemaEvaluationPath");
-                    string evaluationPath = SymbolDisplay.FormatLiteral(keyword.GetPathModifier(reducedType, i), true);
+                    string evaluationPath = SymbolDisplay.FormatLiteral(SchemaLocationEncoding.EncodeAsUriFragment(keyword.GetPathModifier(reducedType, i)), true);
                     generator
                         .AppendLineIndent(
                             "private static readonly JsonSchemaPathProvider ",
@@ -1211,7 +1211,7 @@ internal static partial class CodeGeneratorExtensions
             }
 
             string evaluationPathProperty = generator.GetPropertyNameInScope($"{keyword.Keyword}SchemaEvaluationPath");
-            string evaluationPath = SymbolDisplay.FormatLiteral(keyword.GetPathModifier(rdt), true);
+            string evaluationPath = SymbolDisplay.FormatLiteral(SchemaLocationEncoding.EncodeAsUriFragment(keyword.GetPathModifier(rdt)), true);
             generator
                 .AppendLineIndent(
                     "private static readonly JsonSchemaPathProvider ",
@@ -1223,7 +1223,7 @@ internal static partial class CodeGeneratorExtensions
         if (typeDeclaration.IfSubschemaType() is SingleSubschemaKeywordTypeDeclaration ifType)
         {
             string evaluationPathProperty = generator.GetPropertyNameInScope($"{ifType.Keyword.Keyword}SchemaEvaluationPath");
-            string evaluationPath = SymbolDisplay.FormatLiteral(ifType.KeywordPathModifier, true);
+            string evaluationPath = SymbolDisplay.FormatLiteral(SchemaLocationEncoding.EncodeAsUriFragment(ifType.KeywordPathModifier), true);
             generator
                 .AppendLineIndent(
                     "private static readonly JsonSchemaPathProvider ",
@@ -1235,7 +1235,7 @@ internal static partial class CodeGeneratorExtensions
         if (typeDeclaration.ThenSubschemaType() is SingleSubschemaKeywordTypeDeclaration thenType)
         {
             string evaluationPathProperty = generator.GetPropertyNameInScope($"{thenType.Keyword.Keyword}SchemaEvaluationPath");
-            string evaluationPath = SymbolDisplay.FormatLiteral(thenType.KeywordPathModifier, true);
+            string evaluationPath = SymbolDisplay.FormatLiteral(SchemaLocationEncoding.EncodeAsUriFragment(thenType.KeywordPathModifier), true);
             generator
                 .AppendLineIndent(
                     "private static readonly JsonSchemaPathProvider ",
@@ -1247,7 +1247,7 @@ internal static partial class CodeGeneratorExtensions
         if (typeDeclaration.ElseSubschemaType() is SingleSubschemaKeywordTypeDeclaration elseType)
         {
             string evaluationPathProperty = generator.GetPropertyNameInScope($"{elseType.Keyword.Keyword}SchemaEvaluationPath");
-            string evaluationPath = SymbolDisplay.FormatLiteral(elseType.KeywordPathModifier, true);
+            string evaluationPath = SymbolDisplay.FormatLiteral(SchemaLocationEncoding.EncodeAsUriFragment(elseType.KeywordPathModifier), true);
             generator
                 .AppendLineIndent(
                     "private static readonly JsonSchemaPathProvider ",
