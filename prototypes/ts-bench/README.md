@@ -30,23 +30,25 @@ npm install
 node bench.mjs /path/to/jsonschema-benchmark      # WARMUP=N to override
 ```
 
-## Results (WARMUP=30; see `RESULTS.txt` for the full per-schema table)
+## Results (WARMUP=30, ROUNDS=7 median; see `RESULTS.txt` for the full per-schema table)
 
-Geometric mean of ns/instance (warm, compile excluded) — **lower is better**:
+Geometric mean of ns/instance (warm, compile excluded; **median of 7 passes** — single-pass runs are too
+noisy to trust, see the optimization study below) — **lower is better**:
 
-| Validator | Geomean ns/instance | Schemas handled |
-|---|---:|:---:|
-| **corvus-ts** | **2,301** | **37 / 37** |
-| @exodus/schemasafe | 2,312 | 29 / 37 |
-| ajv | 2,393 | 35 / 37 |
-| @hyperjump/json-schema | 29,506 | 35 / 37 |
+| Validator | Geomean ns/instance | Schemas handled | Fastest on |
+|---|---:|:---:|:---:|
+| **corvus-ts** | **2,124** | **37 / 37** | 17 |
+| @exodus/schemasafe | 2,135 | 29 / 37 | 5 |
+| ajv | 2,464 | 35 / 37 | 15 |
+| @hyperjump/json-schema | 34,009 | 35 / 37 | 0 |
 
 **corvus-ts has the best geometric-mean throughput *and* is the only validator that handles all 37
-schemas.** schemasafe (nominally comparable on the schemas it can compile) fails to compile 8 of the 37
-real-world schemas; ajv and hyperjump each fail 2; hyperjump is ~13× slower. Notable per-schema speedups
-vs ajv: cypress 20×, omnisharp 5.3×, jsconfig 5.2×, geojson 3.8×, jshintrc 3.6×, lerna/code-climate ~2×.
-(corvus is slower than ajv on some small/flat schemas — e.g. helm-chart-lock, yamllint — where ajv's
-property-table dispatch wins; the geomean still favours corvus.)
+schemas.** It is the single fastest validator on 17 of 37 (ajv 15, schemasafe 5, hyperjump 0). schemasafe
+fails to compile 8 of the 37 real-world schemas; ajv and hyperjump each fail 2; hyperjump is ~16× slower.
+The wins are large on complex schemas (openapi **28.6×** vs ajv, cypress 22.9×, jsconfig 5.6×, omnisharp
+4.5×, geojson 4.3×, babelrc 4.4×), which dominate the geomean; the losses are on small/flat schemas where
+ajv's hand-tuned property dispatch wins, mostly by < 2× and several within ~1–6% (effectively ties). We
+**never** lose to hyperjump.
 
 ## Correctness
 

@@ -21,6 +21,8 @@ const DATASET = process.argv[2] || new URL("./jsonschema-benchmark", import.meta
 const SCHEMAS_DIR = `${DATASET}/schemas`;
 const GEN_DIR = new URL("./dist/bench-gen", import.meta.url).pathname;
 const WARMUP = Number(process.env.WARMUP || 100);
+const ROUNDS = Number(process.env.ROUNDS || 1);
+const median = (a) => { const s = [...a].sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; };
 
 const AJV_FOR = {
   "https://json-schema.org/draft/2020-12/schema": Ajv2020,
@@ -42,10 +44,9 @@ function timeSync(fn, instances) {
   try { for (const i of instances) { if (fn(i) === true) valid++; } }
   catch (e) { return { error: String(e.message || e) }; }
   for (let w = 0; w < WARMUP; w++) { for (const i of instances) fn(i); }
-  const t0 = performance.now();
-  for (const i of instances) fn(i);
-  const t1 = performance.now();
-  return { ns: (t1 - t0) * 1e6, valid };
+  const times = [];
+  for (let r = 0; r < ROUNDS; r++) { const t0 = performance.now(); for (const i of instances) fn(i); times.push((performance.now() - t0) * 1e6); }
+  return { ns: median(times), valid };
 }
 
 async function timeAsync(fn, instances) {
@@ -53,10 +54,9 @@ async function timeAsync(fn, instances) {
   try { for (const i of instances) { if ((await fn(i)) === true) valid++; } }
   catch (e) { return { error: String(e.message || e) }; }
   for (let w = 0; w < WARMUP; w++) { for (const i of instances) await fn(i); }
-  const t0 = performance.now();
-  for (const i of instances) await fn(i);
-  const t1 = performance.now();
-  return { ns: (t1 - t0) * 1e6, valid };
+  const times = [];
+  for (let r = 0; r < ROUNDS; r++) { const t0 = performance.now(); for (const i of instances) await fn(i); times.push((performance.now() - t0) * 1e6); }
+  return { ns: median(times), valid };
 }
 
 async function buildValidators(name, schema, schemaId) {
