@@ -32,23 +32,36 @@ node bench.mjs /path/to/jsonschema-benchmark      # WARMUP=N to override
 
 ## Results (WARMUP=30, ROUNDS=7 median; see `RESULTS.txt` for the full per-schema table)
 
-Geometric mean of ns/instance (warm, compile excluded; **median of 7 passes** — single-pass runs are too
-noisy to trust, see the optimization study below) — **lower is better**:
+A validator should only get *credit* on a schema where it produces the **correct** result — being fast
+because you skip/mis-validate isn't a win. So the headline metric is **correctness-gated**: per schema, the
+consensus valid-count is ground truth, wrong/err results are discounted, and we rank the *correct* runners.
+(Median of 7 passes — single-pass runs are too noisy to compare; see the optimization study below.)
 
-| Validator | Geomean ns/instance | Schemas handled | Fastest on |
-|---|---:|:---:|:---:|
-| **corvus-ts** | **2,124** | **37 / 37** | 17 |
-| @exodus/schemasafe | 2,135 | 29 / 37 | 5 |
-| ajv | 2,464 | 35 / 37 | 15 |
-| @hyperjump/json-schema | 34,009 | 35 / 37 | 0 |
+| Validator | Correct on | **Fastest *correct* on** | Geomean over its correct schemas |
+|---|:---:|:---:|---:|
+| **corvus-ts** | **37 / 37** | **18** | 2,431 ns |
+| ajv | 33 / 37 | 15 | 2,289 ns |
+| @exodus/schemasafe | 27 / 37 | 3 | 2,033 ns |
+| @hyperjump/json-schema | 35 / 37 | 1 | 31,576 ns |
 
-**corvus-ts has the best geometric-mean throughput *and* is the only validator that handles all 37
-schemas.** It is the single fastest validator on 17 of 37 (ajv 15, schemasafe 5, hyperjump 0). schemasafe
-fails to compile 8 of the 37 real-world schemas; ajv and hyperjump each fail 2; hyperjump is ~16× slower.
-The wins are large on complex schemas (openapi **28.6×** vs ajv, cypress 22.9×, jsconfig 5.6×, omnisharp
-4.5×, geojson 4.3×, babelrc 4.4×), which dominate the geomean; the losses are on small/flat schemas where
-ajv's hand-tuned property dispatch wins, mostly by < 2× and several within ~1–6% (effectively ties). We
-**never** lose to hyperjump.
+**corvus-ts is the only validator correct on all 37 schemas, and it is the fastest *correct* validator on
+the most schemas (18, vs ajv's 15).** ajv is wrong on **openapi (0/107)** and **code-climate** and fails to
+compile 2; schemasafe is wrong on draft-04/helm-chart-lock and fails to compile 8; hyperjump is correct but
+~13–50× slower. The geomean columns are over **different schema sets** (each validator's *correct* ones), so
+they are not directly comparable — schemasafe's 2,033 ns is only over the 27 easy schemas it can handle;
+corvus's 2,431 is over all 37, including hard ones like openapi (~280 µs of fully-correct `$dynamicRef` +
+`unevaluatedProperties` validation, which ajv "does" in 42 µs by accepting **none** of them).
+
+corvus wins large on complex schemas (cypress 15–22×, jsconfig/omnisharp/jshintrc 4–6×, geojson ~3×) and
+loses on small/flat schemas to ajv's hand-tuned dispatch, mostly by < 2×, several within noise. It **never**
+loses to hyperjump.
+
+**Dispatch micro-optimizations don't help in JS (A/B-disproven).** We tried, behind the controlled
+`bench-compare.mjs` A/B: Ajv-style direct property access (33% *slower* — our O(instanceKeys) loop beats
+O(declaredProps) on sparse instances), a name→validator **Map** (the C# generator's dictionary trick;
+**0.99×**, a wash), and a **`switch`** (**1.015×**, within noise, with an unexplained ui5 deopt). Reason:
+V8 compares interned-string `k === "name"` by pointer identity, so the if/else-if chain is already
+near-optimal — unlike C#'s UTF-8 `SequenceEqual`, where the dictionary is a real win.
 
 ## Correctness
 

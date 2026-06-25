@@ -142,3 +142,38 @@ for (const impl of IMPLS) {
 }
 const disagree = rows.filter((r) => { const b = r.valid["corvus-ts"]; return IMPLS.some((i) => r.valid[i] !== "-" && r.valid[i] !== "ERR" && r.valid[i] !== b); });
 console.log(`\n# Cross-check: ${rows.length - disagree.length}/${rows.length} schemas — all validators agree on valid-counts.` + (disagree.length ? ` Disagreements: ${disagree.map((r) => r.name).join(", ")}` : ""));
+
+// ---- correctness-gated: a validator only counts on a schema where it produced the CORRECT result
+// (consensus valid-count = ground truth). Being fast because you're WRONG earns no credit. ----
+const consensus = (r) => {
+  const c = {};
+  for (const i of IMPLS) { const v = r.valid[i]; if (typeof v === "number") { c[v] = (c[v] || 0) + 1; } }
+  let best = null, bn = 0;
+  for (const [v, n] of Object.entries(c)) { if (n > bn) { bn = n; best = Number(v); } }
+  return best;
+};
+const isCorrect = (i, r) => typeof r.valid[i] === "number" && r.valid[i] === consensus(r);
+console.log("\n# Correctness-gated — fastest CORRECT validator per schema (WRONG/err results discounted):");
+console.log("schema".padEnd(22) + "consensus".padStart(9) + "   discounted (wrong/err)".padEnd(34) + "fastest correct");
+console.log("-".repeat(82));
+for (const r of rows) {
+  const cons = consensus(r);
+  const bad = IMPLS.filter((i) => typeof r.valid[i] === "number" && r.valid[i] !== cons).map((i) => `${i}:${r.valid[i]}≠${cons}`);
+  const err = IMPLS.filter((i) => r.valid[i] === "ERR").map((i) => `${i}:err`);
+  const correct = IMPLS.filter((i) => isCorrect(i, r) && r.per[i] != null);
+  const fastest = correct.length ? correct.reduce((a, b) => (r.per[a] < r.per[b] ? a : b)) : null;
+  const disc = [...bad, ...err].join(" ");
+  console.log(r.name.padEnd(22) + String(cons).padStart(9) + "   " + disc.padEnd(31) + (fastest ? `${fastest} (${fmt(r.per[fastest]).trim()})` : "-"));
+}
+console.log("\n# Geomean ns/instance over each validator's CORRECT schemas only:");
+for (const impl of IMPLS) {
+  const vals = rows.filter((r) => isCorrect(impl, r)).map((r) => r.per[impl]).filter((v) => v != null && v > 0);
+  const geo = vals.length ? Math.exp(vals.reduce((a, v) => a + Math.log(v), 0) / vals.length) : NaN;
+  console.log(`  ${impl.padEnd(12)} ${vals.length ? geo.toFixed(1) + " ns" : "-"}   (correct on ${vals.length}/${rows.length})`);
+}
+const fwins = Object.fromEntries(IMPLS.map((i) => [i, 0]));
+for (const r of rows) {
+  const c = IMPLS.filter((i) => isCorrect(i, r) && r.per[i] != null);
+  if (c.length) { fwins[c.reduce((a, b) => (r.per[a] < r.per[b] ? a : b))]++; }
+}
+console.log("\n# Fastest CORRECT validator, schemas won: " + IMPLS.map((i) => `${i}=${fwins[i]}`).join("  "));
